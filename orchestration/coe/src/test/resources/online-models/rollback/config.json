@@ -1,0 +1,19 @@
+{
+  "fmus": {
+    "{FMU}": "target/online-cache/rollback-test.fmu",
+    "{Controller}": "target/online-cache/rollback-end.fmu"
+  },
+  "connections": {
+    "{FMU}.roller.level": [
+      "{Controller}.cont.level"
+    ]
+  },
+  "parameters": {
+
+  },
+  "livestream": {},
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.1
+  }
+}

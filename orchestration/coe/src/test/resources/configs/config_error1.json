@@ -1,0 +1,26 @@
+{
+    "fmus":[
+        "../fmus/A.fmu",
+        "../fmus/B.fmu"
+    ],
+    "connections":{
+        "{e3d53cd9-92fb-4cd5-b94a-7cd8a7121e81}.tank.output1":
+            ["{2aa2782c-b298-476f-9f1f-e6b805fc58b3}.controller.A"],
+        "{e3d53cd9-92fb-4cd5-b94a-7cd8a7121e81}.tank.output":
+            ["{2aa2782c-b298-476f-9f1f-e6b805fc58b3}.controller.B"],
+"{2aa2782c-b298-476f-9f1f-e6b805fc58b3}.controller.control":
+            ["{e3d53cd9-92fb-4cd5-b94a-7cd8a7121e81}.tank.input"]
+    },
+    "parameters":{
+    },
+    "algorithm":{
+        "type":"var-step",
+        "size":{
+         1E-6,
+         1.0
+         },
+        "initsize":1E-4,
+        "constraints":{
+         }
+  }
+}

@@ -1,0 +1,11 @@
+
+t (time) : Real * causality = <independent>
+v : SV -- any sv
+P : {p | p : v * p.causality = <parameter>}
+P_calculated : {p | p : v * p.causality = <calculatedparameter>}
+P_tune : {p | p : v * p.causality = <parameter> and p.variability = <tunable>}
+
+u : SV * u.causality = <input> and (u.variability=<discrete> or u.variability=<continuous>)
+y : SV * y.causality = <output> and (u.variability=<discrete> or u.variability=<continuous>)
+w : SV * w.causality = <local>
+Xc: map t to set of SV * SV.initial=<excat>

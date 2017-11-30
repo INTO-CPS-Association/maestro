@@ -1,0 +1,41 @@
+\documentclass[11pt,twoside,a4paper]{article}
+
+%\usepackage{bera}% optional: just to have a nice mono-spaced font
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fullpage}
+\usepackage[toc,page]{appendix}
+
+\def\sectionautorefname{Section}
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
+
+\begin{document}
+
+\section{Protocol}
+
+\input{coe-protocol-description.tex}
+
+\section{Variable Stepsize Calculation}
+
+\input{varstepcalc-description.tex}
+
+\appendix
+
+\section{Variable stepsize }
+
+\input{varstepcalc-appendix.tex}
+
+\section{Program properties}
+
+\input{program-properties.tex}
+
+\bibliographystyle{unsrt}
+\bibliography{coe}
+
+\end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

@@ -1,0 +1,37 @@
+Running the simulation on windows
+
+# Please make sure that the following is installed
+
+* Java 1.7 or higher
+* curl or another program that can be used to send commands to the COE
+
+
+
+# Simulating
+
+## Start the COE
+
+Use a terminal and navigate to coe/
+
+start the coe like:
+
+java -jar coe-0.0.1-SNAPSHOT-jar-with-dependencies.jar
+
+
+## Run the simulation
+
+(the shell script simulate.sh describe how to simulate on Linux)
+
+Initialize the coe using the config.json file
+
+curl -H "Content-Type: application/json" --data @config.json http://localhost:8082/initialize
+
+Start the simulation
+
+The SESSION_ID is returned from initialize
+
+curl -s -H "Content-Type: application/json" --data "{\"startTime\":0.0, \"endTime\":10.1}" http://localhost:8082/simulate/SESSION_ID
+
+Obtain the result
+
+curl http://localhost:8082/result/SESSION_ID

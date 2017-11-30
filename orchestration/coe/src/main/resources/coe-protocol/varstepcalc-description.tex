@@ -1,0 +1,354 @@
+%
+%
+%
+% This source file belongs to the repository at: git@github.com:twt-gmbh/INTO-CPS-COE.git
+%
+%	So ONLY edit the file at this location!
+%
+
+% !TeX root = coe-protocol.tex
+
+
+
+Three of the four constraint types (Zero Crossing, Bounded Difference, and Sampling Rate) are defined in a JSON file that is posted to the COE with the initialize command (see Section~\ref{sec:initcmd}), and one (FMU-requested) is requested by the simulated FMUs.
+
+\noindent After initialization, the variable stepsize calculator holds a set of constraint handlers. Each handler is responsible for one constraint. When asked for the next stepsize by the COE, the variable stepsize calculator asks each handler for the next stepsize and returns the minimum of these values.
+
+\subsection{Interface with the Master Algorithm}
+
+The variable stepsize calculator is called by the master algorithm before each \texttt{doStep}. It is given by the master algorithm the current time, the previous stepsize, the current output values, and the (estimated) output derivatives of the FMUs. The variable stepsize calculator returns to the master algorithm the next stepsize.
+
+After a \texttt{doStep}, the master algorithm asks the variable stepsize calculator to validate the taken step, i.e. to check whether any constraints have been violated. If that is the case, a warning is issued. If all FMUs support rollback, a rollback is initiated and the master algorithm asks the variable stepsize calculator for a new, reduced stepsize.
+
+The algorithm for derivative estimation, see Section~\ref{sec:derest}, has been moved from the variable stepsize calculator to the COE. This is done so that the master algorithm may estimate derivatives and supply these to FMUs that have the capability canInterpolateInputs. To be clear, if the FMU that supplies these signals also provides derivatives, these are used, but if that FMU has \texttt{maxOutputDerivativeOrder=0} (or \texttt{<=1} in the case of second order input derivatives]), the estimated values are used.
+
+\subsection{Constraint Types}
+
+\noindent There are four constraint types:
+
+\begin{itemize}
+	\item Zero Crossing
+	\item Bounded Difference
+	\item Sampling Rate
+	\item FMU Max Step Size
+\end{itemize}
+
+\noindent The constraints are defined in the JSON file (see Section~\ref{sec:initcmd}). The fourth constraint, FMU Max Step Size, was enabled by default until COE version 0.2.14. See \autoref{sec:fmureqconstraint} for more info on the FMU Max Step Size Constraint.
+
+\subsection{Zero Crossing Constraints}
+
+A zero crossing constraint is a continuous constraint. A zero crossing occurs at the point where a function changes its sign. In simulation, it can be important to adjust the stepsize such that a zero crossing is hit (more or less) exactly. For instance, a ball should rebound from a wall exactly when the distance between the ball and the wall hits zero and not before or after that.
+
+\noindent A solver in a tool such as Simulink can adjust the stepsize using iterative approaches, but in a co-simulation a rollback of the participating models' internal states is in general not possible or efficient. Hence, the variable stepsize calculator bases its stepsize adjustments on the \textit{prediction} of a future zero crossing.
+
+%\noindent For the definition of a zero crossing constraint in the JSON file, see Section~\ref{sec:defzcconstraints}.
+
+\subsubsection{Extrapolation}\label{sec:extrapolation}
+
+To predict a future zero crossing, the zero crossing function $f$ must be extrapolated.
+
+\noindent For first order extrapolation, the following calculation is used:
+
+$f(t+\Delta t) = f(t) + \dot{f}(t) \Delta t$
+
+\noindent For second order extrapolation, the following calculation is used:
+
+$f(t+\Delta t) = f(t) + \dot{f}(t) \Delta t + 0.5 \ddot{f}(t) \left(\Delta t\right)^{2}$
+
+\subsubsection{Derivative Estimation}\label{sec:derest}
+
+The derivatives $\dot{f}(t)$ and $\ddot{f}(t)$ are either provided by the FMUs (if the capability \texttt{maxOutputDerivativeOrder} is high enough), or estimated. For first order extrapolation, the last two data points are used to estimate the first derivative. For second order extrapolation, either the last three data points are used to estimate the first and second derivate, or, if the FMU provides the first but not the second derivative, the last two data points and their first derivatives are used to estimate the second derivative.
+
+\subsubsection{Extrapolation Error Estimation}
+
+Extrapolation will generally incur an extrapolation error; the variable stepsize calculator estimates that error based on past extrapolation errors. After completion of a time step, the variable stepsize calculator compares the actual value $x$ of the zero crossing function $f$ with the value $\hat{x}$ that was predicted one time step earlier. The estimated extrapolation error $\hat{\epsilon}$ follows:
+
+\begin{equation}
+\epsilon \leftarrow \left\{
+\begin{array}{ll}
+	\alpha \hat{\varepsilon}+(1-\alpha) \left|x-\hat{x}\right| & \mbox{if $\hat{\varepsilon} > \left|x-\hat{x}\right|$}\\
+	\left|x-\hat{x}\right| & \mbox{otherwise}
+\end{array}\right\}
+\end {equation}
+
+\noindent For example, it decreases slowly ($\alpha=0.7$) with a first order IIR-filter rule when the extrapolation error becomes smaller, and rises abruptly to the actual value when the extrapolation error becomes larger.
+
+\subsubsection{Estimation of the number of timesteps to a zero crossing}
+
+The variable stepsize calculator (conservatively) estimates the number of timesteps $n$ to hit the predicted zero crossing $f(t_{ZC}) = 0$ at time $t_{ZC}$, when starting from the current time $t$ (with $t \leq t_{ZC}$) and when keeping the current stepsize $\Delta t$ constant, to:
+
+\begin{equation}
+n = \frac{t_{ZC} - t}{\Delta t}\cdot \frac{1}{1+\hat{\varepsilon} + \sigma}
+\end{equation}
+
+\noindent where $\hat{\varepsilon}$ is the estimated extrapolation error and $\sigma$ the (additional) level of conservatism optionally specified by the attribute {\ttfamily safety} in the JSON config file.
+
+\noindent The rationale of this equation is that the left term predicts the zero crossing exactly when the zero crossing function $f$ is, in the case of first order extrapolation, a straight line, or, in the case of second order extrapolation, a straight line or second order parabola. An extrapolation error generally occurs for all other functions $f$, with the danger of overestimating $n$ and thus potentially choosing a too large stepsize (that steps over the zero crossing with the consequence that the tolerance of the zero crossing may be violated). Therefore, $n$ is conservatively underestimated. The degree of this conservatism is defined by the second term and depends on both the (time-varying) estimated extrapolation error $\hat{\varepsilon}$ and the (constant) value of the safety attribute $\sigma$.
+
+\subsubsection{Detection of unstable oscillations}
+
+Unstable oscillations around the zero crossing are detected by monitoring the last three data points and checking whether these lie on alternating sides of the zero crossing and increase in absolute value.
+
+\subsubsection{Stepsize adjustment strategy}\label{sec:sizeadjstrat}
+
+The chosen stepsize $\Delta t$ is in most cases determined by a factor $\rho$ that is multiplied with the previous stepsize $\Delta t_{prev}$ (and saturated to lie within the specified stepsize interval). The stepsize is said to be \textit{adjusted to hit} the zero crossing when $\rho = n$ (for $n \leq 1$). The stepsize is said to be \textit{tightened} when $\rho = TIGHTENING\_FACTOR$. The stepsize is \textit{held constant}, when $\rho = 1$. The stepsize is said to be \textit{relaxed} when $\rho = RELAXATION\_FACTOR$. The stepsize is said to be \textit{strongly relaxed} when $\rho = STRONG\_\-RE\-LA\-XA\-TION\_\-FACTOR$. The default values for these factors are listed in Table~\ref{tab:defvalsizeadjfactors}.
+
+\begin{table}[h!]
+\begin{center}
+\caption{Default values for the stepsize adjustment factors.}
+\label{tab:defvalsizeadjfactors}
+\begin{tabular}{ l l }
+	\hline
+  $TIGHTENING\_FACTOR$ & 0.5 \\
+  $RELAXATION\_FACTOR$ & 1.2 \\
+  $STRONG\_RELAXATION\_FACTOR$ & 3.0 \\
+	\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\noindent By inspecting the last two data points, the direction of the simulated trajectory with respect to the zero crossing can be either:
+
+\begin{itemize}
+	\item	\textit{distancing zero crossing},
+	\item \textit{approaching zero crossing} or
+	\item \textit{crossed zero}.
+\end{itemize}
+
+\noindent When \textit{distancing a zero crossing}, the stepsize is \textit{strongly relaxed}.
+
+\noindent When \textit{approaching a zero crossing}, the current value of the zero crossing function, $f(t)$, is compared to the value of the absolute tolerance, $abstol$.
+
+\noindent If:
+
+\begin{equation}
+|f(t)| \leq abstol \cdot TOLERANCE\_SAFETY\_FACTOR
+\end{equation}
+
+\noindent where $TOLERANCE\_SAFETY\_FACTOR \leq 1.0$ and a default value of 0.5, then $f(t)$ is said to be \textit{well within tolerance}, and the stepsize is \textit{relaxed} (the zero crossing has not yet occurred but is already precisely resolved).
+
+\noindent If
+
+\begin{equation}
+|f(t)| \leq abstol
+\end{equation}
+
+\noindent then $f(t)$ is said to be \textit{within tolerance}, and the stepsize is \textit{held constant} (the zero crossing has not yet occurred but is already resolved).
+
+\noindent If
+
+\begin{equation}
+|f(t)| > abstol
+\end{equation}
+
+\noindent then $f(t)$ is said to be \textit{outside tolerance}, and the (conservatively) estimated value for the number of timesteps to hit the predicted zero crossing, $n$, is considered.
+
+\begin{itemize}
+	\item If $n \leq 1$, then the stepsize is \textit{adjusted to hit} the zero crossing.
+	\item If $1<n \leq \delta_{tighten}$, then the stepsize is \textit{tightened}.
+	\item If $\delta_{tighten}<n\leq \delta_{relax}$, then the stepsize is \textit{held constant}.
+	\item If $\delta_{relax}<n \leq \delta_{stronglyrelax}$, then the stepsize is \textit{relaxed}.
+	\item If $\delta_{stronglyrelax}<n$, then the stepsize is \textit{strongly relaxed}.
+\end{itemize}
+
+\noindent The default values of the parameters $\delta_i$ are listed in Table~\ref{tab:defvalbinsep}.
+
+\begin{table}[h!]
+\begin{center}
+\caption{Default values of the distance bin separators for the number of timesteps to hit a predicted zero crossing.}
+\label{tab:defvalbinsep}
+\begin{tabular}{ l l }
+	\hline
+  $\delta_{tighten}$ & 1.8 ($= 1.5 \cdot RELAXATION\_FACTOR$) \\
+  $\delta_{relax}$ & 3.0 ($= STRONG\_RELAXATION\_FACTOR$) \\
+  $\delta_{stronglyrelax}$ & 30.0 ($= 10.0 \cdot \delta_{relax}$) \\
+	\hline
+\end{tabular}
+\end{center}
+\end{table}
+\medskip
+
+\noindent When the simulated trajectory \textit{crossed zero} in the previous time step, it is checked whether or not unstable oscillations around the zero crossing are building up.
+
+\begin{itemize}
+	\item If unstable oscillations occur, and $f(t)$ is \textit{well within tolerance}, then the stepsize is \textit{held constant}.
+	\item If unstable oscillations occur, and $f(t)$ is \textit{within tolerance}, then the stepsize is \textit{tightened}.
+	\item If unstable oscillations occur, and $f(t)$ is \textit{outside tolerance}, then the stepsize is set to its minimal value.
+	\item If unstable oscillations do not occur, and $f(t)$ is \textit{well within tolerance}, then the stepsize is \textit{relaxed}.
+	\item If unstable oscillations do not occur, and $f(t)$ is \textit{within tolerance}, then the stepsize is \textit{held constant}.
+	\item If unstable oscillations do not occur, and $f(t)$ is \textit{outside tolerance}, then the stepsize is \textit{tightened}.
+\end{itemize}
+
+\noindent The final three reactions (when unstable oscillations do not occur) are somewhat conservative, with the intention of discouraging possible oscillations around the zero crossing from developing. Therefore, the stepsize immediately after the zero crossing is kept small. Altogether, these are the 14 possible reactions of the variable step size calculator to exhaustively handle a zero crossing constraint.
+
+\subsection {Bounded Difference Constraints}\label{sec:bdimpl} 
+
+A bounded difference constraint is a continuous constraint. A bounded difference ensures that the minimal and maximal value of a set of values do not differ by more than a specified amount (the underlying assumption is that this difference becomes smaller when the stepsize is reduced). For the definition of a bounded difference constraint in the JSON file, see Section~\ref{sec:bdconstraint}.
+
+\noindent The capability to impose a bounded difference can be useful in co-simulation, for instance, in the calculation of the heat exchange between model $A$ of temperature $T_A$ and model $B$ of temperature $T_B$. Here, at least one of the models must calculate the heat flow, which is a function of both $T_A$ and $T_B$. The model that calculates the heat flow, say model $A$, knows its own temperature $T_A$ but only has a view, $T_{B,view}$, on model $B$'s true temperature $T_B$. To bound the error of the calculated heat flow, a bounded difference between $T_B$ and $T_{B,view}$ is imposed. 
+
+\noindent The bounded difference problem is distinct from the zero crossing problem in that there is not a specific time \textit{instant} (the zero crossing) to hit, but rather a specific time \textit{difference} (the stepsize that keeps the difference bounded).
+
+\noindent To choose the next stepsize, the current absolute and relative differences between the minimal and maximal values, $\delta_A$  and $\delta_R$, are calculated and compared to the absolute and relative tolerances, $\varepsilon_A$  and $\varepsilon_R$, respectively. Based on this comparison, the absolute and relative differences are each assigned to one of five distance bins. The bins are determined with the safety factor:
+
+\begin{equation}
+\sigma= \frac{1}{1+safety},
+\end{equation}
+
+\noindent where $i = {A, R}$, and with the default values of the parameters
+
+\begin{equation}
+\alpha_{SAFE} \leq \alpha_{TARGET} \leq \alpha_{RISKY} \leq 1
+\end{equation}
+
+\noindent listed in Table~\ref{tab:defvalbdbin}.
+
+\begin{table}[h!]
+\begin{center}
+\caption{Default values of the parameters used in the distance bin assignment of the bounded difference algorithm.}
+\label{tab:defvalbdbin}
+\begin{tabular}{ l l }
+	\hline
+  $\alpha_{RISKY}$ & 0.6 \\
+  $\alpha_{TARGET}$ & 0.4 \\
+  $\alpha_{SAFE}$ & 0.2 \\
+	\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\noindent If:
+
+\begin{itemize}
+\item $\delta_i > \varepsilon_i$ , then the difference i is assigned to the VIOLATION bin.
+\item $\varepsilon_i \geq \delta_i > \varepsilon_i \sigma \alpha_{RISKY}$ , then the difference i is assigned to the RISKY bin.
+\item $\varepsilon_i \sigma \alpha_{RISKY} \geq \delta_i > \varepsilon_i \sigma \alpha_{TARGET}$ , then the difference i is assigned to the TARGET bin.
+\item $\varepsilon_i \sigma \alpha_{TARGET} \geq \delta_i > \varepsilon_i \sigma \alpha_{SAFE}$ , then the difference i is assigned to the SAFE bin.
+\item $\varepsilon_i \sigma \alpha_{SAFE} \geq \delta_i$ , then the difference i is assigned to the SAFEST bin. 
+\end{itemize}
+
+\noindent Of the two assigned distance bins, the less safe one (the one ranking higher in the bullet list above) is chosen. If this distance bin is the
+
+\begin{itemize}
+\item	VIOLATION bin, then the stepsize is \textit{strongly tightened}.
+\item	RISKY bin, then the stepsize is \textit{tightened}.
+\item TARGET bin, then the stepsize is \textit{held constant}.
+\item	SAFE bin, then the stepsize is \textit{relaxed}.
+\item SAFEST bin, then the stepsize is \textit{strongly relaxed}.
+\end{itemize}
+
+\noindent A \textit{strongly tightened} stepsize means that $\delta = STRONG\_\-TIGHTENING\_\-FACTOR$ with default value 0.01 is multiplied with the previous stepsize $(\Delta t)_{prev}$ to obtain the next stepsize $\Delta t$. The meaning of the other stepsize adjustments is analogous to the implementation of the zero crossing algorithm (see Section~\ref{sec:sizeadjstrat}). The chosen stepsize is saturated to the stepsize interval.
+
+\noindent This algorithm for the bounded difference handler tries to adjust the stepsize such that it is kept within the TARGET bin throughout the simulation. Because a variable stepsize calculator in a co-simulation cannot (efficiently) obtain the stepsize through an iterative approach, it needs to make fairly sure that the stepsize it selects does not lead to a tolerance violation. The stepsize calculation must therefore be somewhat conservative, which is essentially manifested in the RISKY bin as a buffer between the TARGET and VIOLATION bins.
+
+\noindent On the safe side of the TARGET bin, two bins must exist. The SAFE bin has an associated relaxation factor that is small enough so that a stepsize relaxation should not lead to an overshoot of the bound difference beyond the TARGET bin in the next time step. The SAFEST bin has an associated strong relaxation factor that is equal to the strong relaxation factor used by all other continuous constraints to prevent interference between continuous constraints (see Section~\ref{sec:interferencecc}).
+
+\noindent Note that the above described algorithm of the Bound Difference handler is extended below to prevent interference by discrete events (see Section~\ref{sec:interferencedc}).
+
+\subsection{Sampling Rate Constraints}
+
+A sampling rate constraint is a discrete constraint. It constrains the stepsize such that repetitive, predefined time instants are exactly hit. This can be useful in co-simulation, for instance, when a modeled control unit reads a sensor value every $x$ milliseconds. For the definition of a sampling rate constraint in the JSON file, see Section~\ref{sec:defsrconstraint}.
+
+\noindent The chosen stepsize is either the time difference between the current time and the time instant of the next sampling, or the maximal stepsize, whichever is smaller. Note that the minimal stepsize may be violated to hit a sampling event.
+
+\subsection{FMU Max Step Size Constraints}\label{sec:fmureqconstraint}
+
+The FMU Max Step Size constraint limits the step size to the value returned from an FMU if the function is supported by the FMU. A proposal is underway to extend the FMI standard with the procedure:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+fmi2Status fmi2GetMaxStepSize(fmi2Component c, fmi2Real *maxStepSize);
+\end{lstlisting}
+\noindent This means that an FMU can report in advance the maximal stepsize that it will accept in the next time step. The variable stepsize calculator queries all FMUs for these stepsizes and uses the minimum of the reported values as upper bound for the next stepsize. The implementation in the COE is based on the principle presented in \cite{Broman&13a,Cremona&16} for \textit{Master-Step With Predictable Step Sizes}. To the authors knowledge, this feature is implemented in FMUs exported from the tools: 20-sim, OpenModelica and Overture. 
+
+\subsection{Interference between constraint handlers}
+
+When multiple constraints are present, their handlers may interfere with each other in the sense that one constraint may become active only because another one has been active in the previous step. Measures are taken to counter such interference.
+
+\subsubsection{Interference between continuous constraints handlers}\label{sec:interferencecc}
+
+Interference between continuous constraint handlers occurs when:
+\begin{enumerate}
+\item In one time step, Constraint A is active (i.e. constrains the stepsize);
+\item	In the next time step, the handler for Constraint A relaxes the stepsize by a factor $\rho_A > 1$, and
+\item Constraint B becomes active -- not because its handler protects against a potential violation, but only because it cannot relax the stepsize by more than a factor $\rho_B < \rho_A$.
+\end{enumerate}
+	
+\noindent To prevent such interference, all continous contraints must have the same value for their respective maximal relaxation factors. Therefore, in the implementation of the variable stepsize calculator, $STRONG\_\-RE\-LA\-XA\-TION\_\-FACTOR$ is the maximal relaxation factor for both Zero Crossing and Bounded Difference constraints and defined in the scope of the whole calculator -- not in the scope of individual constraints (as other factors are). When constraints \textit{relax strongly}, $STRONG\_\-RELAXATION\_\-FACTOR$ is used\footnote{Strictly speaking, when all continuous constraints \textit{relax strongly} with the same relaxation factor, they all become active. The important point is that none of them slows down the relaxation process unnecessarily by relaxing less than the others.}.
+
+
+\subsubsection{Interference between discrete constraints handlers}
+
+Discrete constraints handlers base their stepsize requirements on independent time instants and therefore do not interfere with each other.
+
+\subsubsection{Interference between discrete and continuous constraint handlers}\label{sec:interferencedc}
+
+When a discrete constraint handler has limited the stepsize in the previous step, the question arises how a continuous constraint handlers shall proceed with its calculation of the next stepsize. The situation that shall be avoided is this: all continuous constraint handlers would allow a large stepsize, but a discrete constraint handler enforces a sudden, strong reduction of the stepsize. In the steps that follow, there are no discrete events, but the continuous constraint handlers require potentially many steps to repeatedly \textit{strongly relax} the stepsize until it becomes large again.
+
+\noindent The solution to this problem is different for Zero Crossing and Bounded Difference constraint handlers.
+
+\paragraph{Extension of the Zero Crossing handler}
+
+To prevent the above described undesired situation, Zero Crossing handlers calculate the next stepsize based on the last stepsize \textit{that was not limited by a discrete constraint.}
+
+\noindent To be precise, a Zero Crossing handler uses the previous data points irrespective of the previously active constraints to calculate the extrapolation. But when it calculates the next stepsize, it discards all previous stepsizes that were limited by a discrete constraint and chooses the last stepsize that was limited by a continuous constraint. With the thus chosen previous stepsize (and the result of the extrapolation), the handler calculates the factor $\rho$ that is multiplied to the chosen previous stepsize in order to obtain the next stepsize. With this approach, introduced discrete events do not markedly affect the tightening and relaxation of the stepsize selected by a Zero Crossing handler.
+
+\noindent This approach is safe, in the sense that a zero crossing should not be crossed prematurely, for two reasons. First, introduced discrete events always shorten the stepsize when approaching the zero crossing, which is conservative. Second, the assumed previous stepsize may be larger than the true previous stepsize (that was limited by a discrete constraint handler), but this does no harm: The calculation of the next stepsize is based on the number of timesteps to the predicted zero crossing, $n$, with the assumption that the (assumed) previous stepsize is held constant. When the previous stepsize is larger, $n$ becomes smaller, favoring a stronger tightening of the next stepsize in particular close to the zero crossing, where the stepsize is \textit{adjusted to hit}.
+
+\noindent Essentially, the Zero Crossing handler can safely ignore previous stepsizes that were limited by discrete constraints because it needs to hit a time \textit{instant} (i.e. the zero crossing) and that time instant does not depend on the previous stepsizes (time \textit{differences}). The situation is different for the Bounded Difference handler.
+
+\paragraph{Extension of the Bounded Difference handler}
+
+Whereas the Zero Crossing handler needs to hit a time \textit{instant} (i.e. the zero crossing) that does not depend on the previous stepsizes (time \textit{differences}), the Bounded Difference handler needs to limit a value difference that does depend on the stepsize. When the Bounded Difference handler notices that the previous stepsize was limited by a discrete constraint, it may proceed in either of two ways.
+
+\noindent First, the Bounded Difference handler could simply go forward as usual (i.e. it calculates the next stepsize by scaling the previous stepsize by the factor that is associated with the determined diffe-rence bin). Because the previous stepsize was limited by a discrete event and was therefore shorter than the stepsize that the Bounded Difference handler would have chosen, this strategy will frequently lead to the stepsize being \textit{relaxed} or \textit{strongly relaxed}.
+
+\noindent Second, the Bounded Difference handler could take the last stepsize that was limited by a continuous constraint and repeat the decision it made then \emph{on that stepsize}. To prevent that a repeated decision overly relaxes the stepsize, the repeated decision will \textit{hold} the stepsize \textit{constant} whenever the past decision was to \textit{relax} or \textit{strongly relax} it. To prevent that a repeated decision overly tightens the step-size, the chosen next stepsize may never be smaller than the one obtained with the above (usual) strategy.
+
+\noindent By default, the second strategy is enabled. However, in rare cases that strategy may lead to a tolerance violation (a chain of discrete events could carry a past decision to \textit{hold} the stepsize \textit{constant} through time; when the chain of discrete events stops, the stepsize will be \textit{held constant} in the next step but it might have needed to be \textit{tightened} instead). Therefore, it is possible to disable the second strategy by setting the optional attribute {\ttfamily "skipDiscrete"} to {\ttfamily false} in the definition of the Bounded Difference constraint in the JSON configuration file (see Section~\ref{sec:bdconstraint}).
+
+\noindent When the second strategy is disabled, an active discrete constraint will likely reduce the next stepsize(s) proposed by the Bounded Difference constraint handler, potentially reducing efficiency.
+
+\subsection{Logging}
+
+The variable stepsize calculator writes to the same log as the COE.
+
+\noindent When a step is taken with maximal stepsize, the variable stepsize calculator produces no log output.
+
+\noindent When a step is taken with a less than maximal stepsize, the variable stepsize calculator logs the identifiers of the active constraints and the action of their handlers. For instance, a log entry would read
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+Time 0.9499999999999998, stepsize 0.09, limited by constraint
+"bd" with decision to hold the stepsize constant
+(absolute difference within target range)
+\end{lstlisting}
+
+\noindent When all continuous constraints relax strongly, the log entry does not list all constraints but is shortened to:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+Time 5.000458745644138, stepsize 9.536808544011453E-4,
+all continuous constraint handlers allow strong relaxation}
+\end{lstlisting}
+
+\noindent When a Zero Crossing constraint handler detects a zero crossing, it produces a log entry which would read:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+A zerocrossing of constraint "zc" occurred in the time interval
+[ 14.999971188014648 ; 15.000117672389647 ] and was hit
+with a distance of 0.18103104302103257
+\end{lstlisting} 
+\noindent When the variable stepsize calculator detects that a constraint has been violated in the previous step, it logs a warning. For instance, such a warning would read:
+
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+Absolute tolerance violated!
+	| A zerocrossing of constraint "zc"
+	| occurred in the time interval [ 4.998123597131701 ; 5.008123597131701 ]
+	| and could only be resolved with a distance of 11.789784201164633
+	| which is greather than the absolute tolerance of 1.0
+	| The stepsize equals the minimal stepsize of 0.01 !
+	| Decrease the minimal stepsize
+	or increase this constraint's	tolerance}
+\end{lstlisting}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "coe-protocol"
+%%% End:

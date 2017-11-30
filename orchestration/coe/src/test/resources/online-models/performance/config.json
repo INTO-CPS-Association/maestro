@@ -1,0 +1,22 @@
+{
+  "fmus":{
+    "{integrate}":"target/online-cache/performance-integrate-20sim.fmu",
+    "{sine}":"target/online-cache/performance-sine-20sim.fmu"
+  },
+  "connections":{
+    "{sine}.sine.output":["{integrate}.int1.input"]
+  },
+  "parameters":{
+
+  },
+  "algorithm":{
+    "type":"fixed-step",
+    "size":0.1
+  },
+  "livestream":{
+    "{integrate}.int1":["output"]
+  },
+  "logVariables":{
+	"{integrate}.int1":["output"]
+  }
+}

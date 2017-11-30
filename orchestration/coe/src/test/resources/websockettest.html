@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket Test</title>
+  <script language="javascript" type="text/javascript">
+  var wsUri = "ws://localhost:8082/attachSession/73885"
+
+  function testWebSocket()
+  {
+    websocket = new WebSocket(wsUri);
+    websocket.onopen = function(evt) { onOpen(evt) };
+    websocket.onclose = function(evt) { onClose(evt) };
+    websocket.onmessage = function(evt) { onMessage(evt) };
+    websocket.onerror = function(evt) { onError(evt) };
+  }
+
+  function onOpen(evt)
+  {
+    output("CONNECTED");
+  }
+
+  function onClose(evt)
+  {
+	output('<span style="color: orange;">CLOSE: </span> ' )
+    output("DISCONNECTED");
+  }
+
+  function onMessage(evt)
+  {
+	
+	var str = JSON.stringify(JSON.parse(evt.data), undefined, 4);
+	output(syntaxHighlight(str));
+  }
+
+  function onError(evt)
+  {
+    output('<span style="color: red;">ERROR:</span> ' + evt.data);
+  }
+
+  window.addEventListener("load", testWebSocket, false);
+
+  function output(inp) {
+    document.body.appendChild(document.createElement('pre')).innerHTML = inp;
+}
+
+function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+  
+  </script>
+  
+  <style>
+  pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: red; }
+  </style>
+</head>
+<body></body>
+</html>

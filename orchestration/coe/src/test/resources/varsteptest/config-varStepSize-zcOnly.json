@@ -1,0 +1,40 @@
+{
+	"fmus":{
+		"{massA}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_MassA",
+		"{massB}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_MassB",
+		"{sine}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_Sine",
+		"{sink}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_Sink"
+	},
+	"connections":{
+		"{massA}.massA.QA":[
+			"{massB}.massB.QA",
+			"{sink}.sink.QA"
+		],
+		"{sine}.sine.EXTSIG":[
+			"{massB}.massB.EXTSIG",
+			"{sink}.sink.EXTSIG"
+		],
+		"{massB}.massB.TB":[
+			"{massA}.massA.TB",
+			"{sink}.sink.TB"
+		],
+		"{massA}.massA.TB_used":["{sink}.sink.TB_used"]
+	},
+	"parameters":{
+	},
+	"algorithm":{
+		"type":"var-step",
+		"size": [1E-6, 1.0],
+		"initsize" : 1E-4,
+		"constraints":{
+			"zc": {
+				"type":"zerocrossing",
+				"order":2,
+				"ports":[
+					"{sine}.sine.EXTSIG"
+				],
+				"abstol":1.0
+			}
+		}
+	}
+}

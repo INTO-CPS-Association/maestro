@@ -1,0 +1,22 @@
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+syntax_highlighter: rouge
+
+collections:
+  netmeetings:
+    output: true
+  workshops:
+    output: true
+
+url: https://twt-gmbh.github.io/INTO-CPS-COE
+future: true
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: "default"
+      

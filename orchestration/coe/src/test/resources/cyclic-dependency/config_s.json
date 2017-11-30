@@ -1,0 +1,21 @@
+{
+  "algorithm": {
+    "size": 0.1,
+    "type": "fixed-step"
+  },
+  "overrideLogLevel": "TRACE",
+ 
+  "parameters": null,
+  "connections": {
+    "{controller}.controllerInstance.SteamValve": [
+      "{boiler}.boilerInstance.steamValve"
+    ],
+    "{boiler}.boilerInstance.steamFlow": [
+      "{controller}.controllerInstance.SteamFlow"
+    ]
+  },
+  "fmus": {
+    "{controller}": "src/resources/cyclic-dependency/controller.fmu",
+    "{boiler}": "src/resources/cyclic-dependency/boiler.fmu"
+  }
+}

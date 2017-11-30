@@ -1,0 +1,44 @@
+{
+  "algorithm": {
+    "size": 0.001,
+    "type": "fixed-step"
+  },
+  "parameters": {
+    "{m2}.i2.m2": 1,
+    "{m2}.i2.dc": 100,
+    "{m2}.i2.d2": 2,
+    "{m2}.i2.cc": 100,
+    "{m2}.i2.c2": 1,
+    "{m2}.i2.v2_initial": 0,
+    "{m2}.i2.x2_initial": 0,
+    "{m1}.i1.v1_initial": 0,
+    "{m1}.i1.x1_initial": 1,
+    "{m1}.i1.m1": 1,
+    "{m1}.i1.d1": 1,
+    "{m1}.i1.c1": 1,
+    "{x1}.controller.maxLevel":8,
+    "{x1}.controller.minLevel":2
+
+  },
+  "connections": {
+    "{m2}.i2.fk": [
+      "{m1}.i1.fk"
+    ],
+    "{m1}.i1.x1": [
+      "{m2}.i2.x1"
+    ],
+    "{m1}.i1.v1": [
+      "{m2}.i2.v1"
+    ],
+    "{x1}.controller.valve":["{x2}.tank.valve"],
+    "{x2}.tank.level":["{x1}.controller.level"]
+  },
+  "fmus": {
+    "{m2}": "target/online-cache/MassSpringDamper2.fmu",
+    "{m1}": "target/online-cache/MassSpringDamper1.fmu",
+    "{x1}":"target/online-cache/watertankcontroller-c.fmu",
+    "{x2}":"target/online-cache/watertank-c.fmu"
+  },
+  "stabalizationEnabled":true,
+"global_relative_tolerance":0.01
+}

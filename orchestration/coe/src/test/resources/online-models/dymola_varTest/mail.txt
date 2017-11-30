@@ -1,0 +1,43 @@
+Hello Kenneth, hello Casper, 
+
+I have created a small FMU with some basic operations called VarTest.fmu. I hope it satisfies your needs? Otherwise let me know, and I will modify it. 
+
+There are three input signals SigIn1, SigIn2 and SigIn3. For checking reasons, these signals are routed outside directly to SigOut1, SigOut2 and SigOut3 (see picture). 
+
+The basic math operations are: 
+
+SigOut4 = SigIn1 + SigIn2; 
+SigOut5 = SigIn3 * 3; 
+SigOut 6 = (SigIn1+SigIn2)*SigIn3*3; 
+SigOut7 is the integrator of SigOut6. 
+
+
+If this is too basic, I can add some more complex blocks. 
+
+The FMU is of type CoSimulation with standard 2.0. It should be runnable without license (otherwise tell me). 
+
+It has the following properties: 
+
+<fmiModelDescription 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  fmiVersion="2.0" 
+  modelName="VarTest" 
+  guid="{7f445bcf-5755-4993-a604-7545b90f141e}" 
+  generationTool="Dymola Version 2016 FD01 (32-bit), 2015-10-13" 
+  generationDateAndTime="2016-09-12T12:56:11Z" 
+  variableNamingConvention="structured" 
+  numberOfEventIndicators="0"> 
+  <ModelExchange 
+    modelIdentifier="VarTest" 
+    canGetAndSetFMUstate="true" 
+    providesDirectionalDerivative="true"/> 
+  <CoSimulation 
+    modelIdentifier="VarTest" 
+    canHandleVariableCommunicationStepSize="true" 
+    canInterpolateInputs="true" 
+    maxOutputDerivativeOrder="1" 
+    canGetAndSetFMUstate="true" 
+    providesDirectionalDerivative="true"/> 
+
+In the pictures you will find more details about the inside mechanics, the version and the export configuration. 
+

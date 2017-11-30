@@ -1,0 +1,30 @@
+{
+  "fmus": {
+    "{end}": "target/online-cache/m-end.fmu",
+    "{in}": "target/online-cache/m-in.fmu"
+  },
+  "connections": {
+    "{in}.i1.valee": [
+      "{end}.end.in1"
+    ],
+    "{in}.i2.valee": [
+      "{end}.end.in2"
+    ]
+  },
+  "parameters": {
+    "{in}.i1.offset": 0,
+    "{in}.i2.offset": 1000
+  },
+  "livestream": {
+    "{in}.i1": [
+      "valee"
+    ],
+    "{in}.i2": [
+      "valee"
+    ]
+  },
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.1
+  }
+}

@@ -1,0 +1,21 @@
+The COE program flow can be changed using the following Java properties which can be set on program launch using \texttt{-D} followed by the property and a value can be specified after an equal sign:
+
+\begin{description}
+\item[\texttt{simulation.program.delay.enable}] If this property is set to \texttt{true} then the COE will interpret the time step size in seconds and make sure that the steps are at least separated by a program delay of that time step size. It only introduces a delay if the execution of \texttt{doStep} on all FMU instances are faster than the requested time step size.
+\item[\texttt{fmi.instantiate.with.empty.authority}] This inserts an empty authority into the URI sent to the FMU in \texttt{instantiate}. E.g. \texttt{file:/} will become \texttt{file:///}. This can be necessary for faulty FMU implementations.
+\item[\texttt{coe.fmu.custom.factory}] This must be given a fully qualified name to a class which implements \texttt{org.intocps.orchestration.coe.IFmuFactory} if set this class will be instantiated and ask to handle FMU creation before the internal factory. This can thus be used to override the default behaviour.
+\item[\texttt{coe.livestream.filter}] Limits the time resolution on the values send using live logging. The values will only be send at the given interval or greater.
+
+\item[\texttt{simulation.parallelise.resolveinputs}] Run all per instance input actions in parallel. 
+\item[\texttt{simulation.parallelise.setinputs}]  Run all per instance set inputs in parallel.
+\item[\texttt{simulation.parallelise.dostep}]  Run all per instance \texttt{doSte} calls in parallel.
+\item[\texttt{simulation.parallelise.obtainstate}] Run all per instance calls to obtain a global state in parallel.
+\item[\texttt{simulation.profile.executiontime}] Log execution time for the main calls involved in performing a global step.
+
+\end{description}
+
+Note that enabling parallel execution may not give faster simulations it is highly dependent on the number of instances, the amount of inputs/outputs and the actual execution to of the \texttt{doStep} call per instance.
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "coe-protocol"
+%%% End:

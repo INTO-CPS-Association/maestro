@@ -1,0 +1,21 @@
+{
+	"fmus":[
+		"src/test/resources/fmus/cascading/tank1",
+		"src/test/resources/fmus/cascading/tank2",
+		"src/test/resources/fmus/cascading/controller"
+	],
+	"connections":{
+		"{8c4e810f-3df3-4a00-8276-176fa3c9f003}.controller.valve":"{8b64c710-8b85-4222-a52d-bb5ab5882ee1}.tank.valveControl",
+		"{8c4e810f-3df3-4a00-8276-176fa3c9f003}.controller.valve2":"{67d835d6-8a93-41f6-bd55-ed668d3c5b52}.tank.valveControl",
+		"{8b64c710-8b85-4222-a52d-bb5ab5882ee1}.tank.level":"{8c4e810f-3df3-4a00-8276-176fa3c9f003}.controller.level",
+		"{67d835d6-8a93-41f6-bd55-ed668d3c5b52}.tank.level":"{8c4e810f-3df3-4a00-8276-176fa3c9f003}.controller.level2",
+		"{8b64c710-8b85-4222-a52d-bb5ab5882ee1}.tank.waterOut.f":"{67d835d6-8a93-41f6-bd55-ed668d3c5b52}.tank.p.phi"
+	},
+	"parameters":{
+	
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.00001
+	}
+}

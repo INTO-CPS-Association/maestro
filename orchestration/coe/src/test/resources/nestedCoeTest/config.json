@@ -1,0 +1,27 @@
+{
+	"fmus": {
+		"{hier}": "coe:target/online-cache/CoePackage.fmu",
+		"{crtlOuter}": "target/online-cache/watertankcontroller-c.fmu"
+	},
+	"connections": {
+		"{hier}.hier.{tank}.tank.level": ["{crtlOuter}.crtl.level"],
+		"{crtlOuter}.crtl.valve": ["{hier}.hier.{tank}.tank.valvecontrol"]
+	},
+	"parameters": {
+		"{crtlOuter}.crtl.maxlevel": 2,
+		"{crtlOuter}.crtl.minlevel": 1
+	},
+	"liveGraphColumns": 1,
+	"liveGraphVisibleRowCount": 1,
+	"logVariables": {},
+	"algorithm": {
+		"type": "fixed-step",
+		"size": 30
+	},
+	"parallelSimulation": false,
+	"stabalizationEnabled": false,
+	"global_absolute_tolerance": 0,
+	"global_relative_tolerance": 0.01,
+	"simulationProgramDelay": false,
+	"livestream": {}
+}

@@ -1,0 +1,18 @@
+{
+	"fmus":{
+		"{x1}":"target/online-cache/watertankcontroller-overture.fmu",
+		"{x2}":"target/online-cache/watertank-c.fmu"
+	},
+	"connections":{
+		"{x1}.controller.System.valveActuator.valveState":["{x2}.tank.valve"],
+		"{x2}.tank.level":["{x1}.controller.System.levelSensor.level"]
+	},
+	"parameters":{
+		"{x1}.controller.Controller.maxLevel":20,
+		"{x1}.controller.Controller.minLevel":1
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.01
+	}
+}

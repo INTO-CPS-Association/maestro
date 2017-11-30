@@ -1,0 +1,13 @@
+{
+	"root":{
+		"ROOT":{
+			valueType:"JSON"
+		}
+	},
+	"root/":{
+		"start":{
+			valueType:"INTEGER"
+		}
+		
+	}
+}

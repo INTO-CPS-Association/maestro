@@ -1,0 +1,497 @@
+%
+%
+%
+% This source file belongs to the repository at: git@github.com:twt-gmbh/INTO-CPS-COE.git
+%
+%	So ONLY edit the file at this location!
+%
+
+% !TeX root = coe-protocol.tex
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+	basicstyle=\normalfont\ttfamily\footnotesize,
+	numbers=left,
+	numberstyle=\scriptsize,
+	stepnumber=1,
+	numbersep=8pt,
+	showstringspaces=false,
+	breaklines=true,
+	frame=lines,
+	tabsize=4,
+	backgroundcolor=\color{background},
+	literate=
+	*{0}{{{\color{numb}0}}}{1}
+	{1}{{{\color{numb}1}}}{1}
+	{2}{{{\color{numb}2}}}{1}
+	{3}{{{\color{numb}3}}}{1}
+	{4}{{{\color{numb}4}}}{1}
+	{5}{{{\color{numb}5}}}{1}
+	{6}{{{\color{numb}6}}}{1}
+	{7}{{{\color{numb}7}}}{1}
+	{8}{{{\color{numb}8}}}{1}
+	{9}{{{\color{numb}9}}}{1}
+	{:}{{{\color{punct}{:}}}}{1}
+	{,}{{{\color{punct}{,}}}}{1}
+	{\{}{{{\color{delim}{\{}}}}{1}
+	{\}}{{{\color{delim}{\}}}}}{1}
+	{[}{{{\color{delim}{[}}}}{1}
+	{]}{{{\color{delim}{]}}}}{1},
+}
+
+\lstnewenvironment{json}[1][]{\lstset{language=json}\lstset{#1}}
+{}
+\newcommand{\mparagraph}[1]{\paragraph{#1}\mbox{}\\}
+
+The COE protocol is based on a JSON over HTTP protocol using a similar approach as REST.
+%
+However, unlike REST, the COE keeps state. The format used to describe each command is: URL and any arguments, prefixed with a colon, \emph{e.\@g.\@} ``\textit{:section}''.
+%
+%
+%
+\subsection{COE Information}
+Information about the COE is available at:
+
+\url{http://localhost:8082/}
+%
+%
+%
+\subsection{The API Command}
+
+The command is available at:
+
+\url{http://localhost:8082/api}\\
+
+\noindent or the following for a PDF version:
+
+\url{http://localhost:8082/api/pdf}\\
+
+\noindent If successful, the command returns one of two types of content:
+%
+\begin{description}
+	\item[Content-Type: application/pdf] A PDF version of this document.
+	\item[Content-Type: text/plain] The LaTeX source file of this document.
+\end{description}
+%
+%
+%
+\subsection{The Status Command}
+The command is available at:
+
+\url{http://localhost:8082/status/:session}\\
+
+\noindent The command takes the following arguments:
+
+\begin{description}
+	\item[:session] Optional session id filtering the returned data array to the single instance with the given session id.
+\end{description}
+
+\noindent If no session is provided, then the command returns an array of all
+sessions status similar to the example below.
+%
+%
+%
+\begin{json}
+	[	
+	{
+		"status":"idle",
+		"sessionid": "-1"
+	},
+	{
+		"status":"idle",
+		"sessionid": "0"
+	}
+	]
+\end{json}
+%
+%
+%
+If a session ID is given, then a single session is returned
+%
+%
+%
+\begin{json}
+	{
+		"status":"idle",
+		"sessionid": "-1"
+	}
+\end{json}
+%
+%
+%
+%
+\subsection{The Create Session Command}\label{subsec:createSessionCmd}
+The command is available at:
+
+\url{http://localhost:8082/createSession}
+
+\noindent The command takes no argument and returns a JSON string containing the
+session id. An example is presented below, where the sessionId is 12345:
+%
+%
+%
+\begin{json}
+	{"sessionId":"12345"}
+\end{json}
+%
+%
+%
+%
+\subsection{The Attach Session Command}\label{subsec:createSessionCmd}
+The command is available at:
+
+\url{ws://localhost:8082/attachSession/:session}
+
+\noindent The command takes no arguments and opens a WebSocket (\url{https://tools.ietf.org/html/rfc6455}). Output data from connected outputs will be live streamed according to the following format: 
+%
+%
+%
+\begin{json}
+	{
+		"{fmuName}":{
+			"instanceName":{
+				"variableName": variableValue
+			}
+		}
+	}
+\end{json}
+%
+%
+%
+%
+%
+%
+%
+\subsection{The Initialize Command}\label{sec:initcmd}
+The command is available at:
+
+\url{http://localhost:8082/initialize/:session}\\
+
+\noindent The command takes the following argument and requires a JSON payload, Content-Type: application/json:
+
+\begin{description}
+	\item[:session] The session ID.
+\end{description}
+
+\noindent The Data payload:
+
+%
+%
+%
+\begin{json}
+	{
+		"fmus":{
+			"{controllerFmu}":"file://controller.fmu",
+			"{tankFmu}":"file://tank.fmu"
+		},
+		"connections":{
+			"{controllerFmu}.crtlIns.valve":["{tankFmu}.tankIns.valve"],
+			"{tankFmu}.tankIns.level":["{controllerFmu}.crtlIns.level"]
+		},
+		"parameters":{
+			"{controllerFmu}.crtlIns.maxLevel":8,
+			"{controllerFmu}.crtlIns.minLevel":2
+		},
+		"algorithm":{
+			FIXED-STEP-SIZE-CONFIG or VARIABLE-STEP-SIZE-CONFIG
+		},
+		"livestream":{
+			"{controllerFmu}.crtlIns":["local","local2"],
+			"{tankFmu}.tankIns":["level"]
+		},
+		"logVariables":{
+			"{tankFmu}.tankIns":["local"]
+		},
+		"parallelSimulation": false,
+		"stabalizationEnabled":false,
+		"global_absolute_tolerance": 0.0,
+		"global_relative_tolerance":0.01
+			
+	}
+\end{json}
+%
+%
+%
+\begin{description}
+	\item[\texttt{FIXED-STEP-SIZE-CONFIG} ] The fixed step size configuration contains the following:
+	\begin{json}
+		"type":"fixed-step",
+		"size":0.1
+	\end{json}
+	\item[\texttt{VARIABLE-STEP-SIZE-CONFIG} ] The variable step size configuration contains the following:
+	\begin{json}
+		"type":"var-step",
+		"size":[1E-6, 1.0],
+		"initsize":1E-4,
+		"constraints":{
+			STEPSIZE-CONSTRAINT*
+		}
+	\end{json} 
+	Where the properties are defined as:
+	\begin{description}
+		\item [\texttt{type:"var-step"}] selects the variable stepsize calculator (each algorithm has a {\ttfamily type}).
+		\item [\texttt{size:[<minimal stepsize> , <maximal step size>]}] de\-fi\-nes the stepsize interval as an array of double values.
+		\item [\texttt{initsize:<initial stepsize>}] defines the initial stepsize as double value.
+		\item [\texttt{constraints:}] defines the stepsize constraints as follows:
+		
+		\begin{json}
+			"id":{
+				type:"[zerocrossing|boundeddifference|samplingrate|fmumaxstepsize]",
+				...
+			}
+		\end{json}
+		
+		The \texttt{id} is a string that is used to identify the constraint e.g. in the log. All constraints have a single common name-value pair with name \texttt{type}. The value of \texttt{type} specifies the type of the constraint; the other name-value pairs of the constraint depend on the value of \texttt{type}. The \texttt{zerocrossing} is described in \autoref{sec:defzcconstraint}, \texttt{boundeddifference} in \autoref{sec:bdconstraint}, and \texttt{samplingrate} in \autoref{sec:defsrconstraint} \texttt{fmumaxstepsize} in \autoref{sec:fmumaxstepsize}.
+	\end{description}
+	%A full JSON example can be found in \autoref{sec:var-step-config-example}.
+\end{description}
+
+
+\noindent The JSON payload contains the following entries:
+
+\begin{description}
+	\item[fmus] A list of the location of the FMUs.
+	\item[connections] A map of connections, output to input.
+	\item[parameters] A map from parameter to value.
+	\item[algorithm] Step size algorithm configuration:
+	\begin{description}
+		\item[fixed-step] A fixed step size algorithm is available requiring a step size to be specified.
+	\end{description}
+	\item[livestream] These scalar variables will be livestreamed via websockets. They must have a causality of either local or output.
+	\item[logVariables] These scalar variables will be logged. They must have a causality of either local or output.
+	\item[parallelSimulation] Optional boolean condition specifying if the COE should parallelize certain parts of the simulation. This condition is or'ed together with all \texttt{simulation.parallelise.*} properties.
+	\item[stabalizationEnabled] This enabled stabilization mode in the COE. Currently it makes use of \textit{successive substitution} retrying a maximum of 5 steps. It uses the \texttt{global\_absolute\_tolerance} and \texttt{global\_relative\_tolerance} to decide if the signals are stable or another stabilization step is needed. The implementation uses the \textit{Numpy.isclose} function. When this option is enabled the cyclic check is disabled and a warning is for any FMU that is in a cycle that does not support get and set state from FMI.
+	\item [global\_absolute\_tolerance] The global absolute tolerance used for stabilization.
+	\item [global\_relative\_tolerance] The global relative tolerance used for stabilization.
+\end{description}
+
+\noindent The command returns the following response on success:
+
+\begin{json}
+	{
+		"status":"initialized",
+		"sessionid": "1234",
+		"avaliableLogLevels":{
+			"{8c4e810f-3df3-4a00-8276-176fa3c9f001}.tank":[
+			{
+				"name":"logAll",
+				"description":"Description of this loggin level"
+			},
+			{
+				"name":"logError",
+				"description":null
+			}],
+			"{8c4e810f-3df3-4a00-8276-176fa3c9f000}.controller":[
+			{
+				"name":"logAll",
+			}]
+		}
+	}
+\end{json}
+
+The \texttt{avaliableLogLevels} value will be specific to the FMUs given in the initial payload. The \texttt{sessionid} is the ID that must be supplied in any subsequent calls.
+%
+%
+%
+\subsubsection{Definition of a Zero Crossing Constraint}\label{sec:defzcconstraint}
+A constraint of {\ttfamily "type":"zerocrossing"} is defined by
+
+\begin{json}
+	"id":{
+		"type":"zerocrossing",
+		"ports":[
+		"<guid>.<instance>.<outport>",
+		"<guid>.<instance>.<outport>"
+		],
+		"order":[1|2],
+		"abstol":<double>,
+		"safety":<double>
+	}
+\end{json}
+
+\noindent where the second entry in the {\ttfamily ports} list and the attributes {\ttfamily order}, {\ttfamily abstol} and {\ttfamily safety} are optional. The name-value pairs have the following meaning.
+
+\begin{itemize}
+	\item {\ttfamily ports:} Defines the zero crossing function $f$ as an array of strings of size 1 or 2. If one output port is provided, then $f$ is the value of that output port. If two output ports are provided, then $f$ is the difference between the values of the first and second output ports. Any other size of the string array is not supported.
+	\item {\ttfamily order:} This name-value pair is optional; it specifies the extrapolation order that is used to predict a zero crossing (see Section~\ref{sec:extrapolation}). First and second order extrapolation are supported. The default is second order extrapolation.
+	\item {\ttfamily abstol:} This name-value pair is optional; it specifies the absolute tolerance. The stepsize calculator attempts to adjust the stepsize such that at a time instant $t_{ZC}$ the absolute value of the zero crossing function $f$ is smaller or equal to the absolute tolerance, $\left|f(t_{ZC})\right| \leq abstol$. The default value for the absolute tolerance is $10^{-3}$.
+	\item {\ttfamily safety:} This name-value pair is optional; it adjusts the conservatism of the zero crossing prediction. The neutral default value is 0.0. If the variable stepsize calculator fails to resolve a zero crossing of a particular co-simulation within the absolute tolerance (and the minimal stepsize is not the limiting factor), then the value for {\ttfamily safety} can be increased for more conservatism in the zero crossing prediction. Negative values for less conservatism are mathematically possible, but should probably not be used.
+	\end {itemize}
+	%
+	%
+	%
+	\subsubsection{Definition of a Bounded Difference Constraint}\label{sec:bdconstraint}
+	A constraint of {\ttfamily "type":"boundeddifference"} is defined by
+	
+	\begin{json}
+		"id":{
+			"type":"boundeddifference",
+			"ports":[
+			"<guid>.<instance>.<outport>"
+			,"<guid>.<instance>.<outport>"
+			,"<guid>.<instance>.<outport>"
+			...
+			]
+			,"abstol":<double>
+			,"reltol":<double>
+			,"safety":<double>
+			,"skipDiscrete":<boolean>
+		}
+	\end{json}
+	
+	\noindent where entries after the first in the {\ttfamily ports} list and the attributes {\ttfamily abstol}, {\ttfamily reltol}, {\ttfamily safety} and {\ttfamily skipDiscrete} are optional. The name-value pairs have the following meaning.
+	
+	\begin{itemize}
+		\item {\ttfamily ports:} Defines a set of values whose minimal and maximal value shall have a bounded difference. The set of values is defined by a non-empty array of strings. If one output port is provided, then the set of values comprises that output port's current value and its previous value. If at least two output ports are provided, then the set of values comprises the output ports' current values.
+		\item	{\ttfamily abstol:} This name-value pair is optional; it specifies the absolute tolerance. The stepsize calculator attempts to adjust the stepsize such that the absolute difference between the minimal and maximal value is smaller than the value of {\ttfamily abstol}. The default value for the absolute tolerance is $10^{-3}$.
+		\item {\ttfamily reltol:} This name-value pair is optional; it specifies the relative tolerance. The stepsize calculator attempts to adjust the stepsize such that the relative difference between the minimal and maximal value is smaller than the value of {\ttfamily reltol}. The default value for the relative tolerance is $10^{-2}$.
+		\item {\ttfamily safety:} This name-value pair is optional; it adjusts the conservatism of the algorithm that selects the next stepsize. The neutral default value is 0.0. If the variable stepsize calculator fails to keep the difference bounded (and the minimal stepsize is not the limiting factor), then the value of {\ttfamily safety} can be increased for more conservatism in the stepsize selection algorithm. Small negative values above $\alpha_{RISKY}-1$, i.e. per default above $-0.4$ (see Table~\ref{tab:defvalbdbin}), are possible for less conservatism. Negative values below or equal to $\alpha_{RISKY}-1$ lead to undefined behavior of the difference bin assignment algorithm (see Section~\ref{sec:bdimpl}).
+		\item {\ttfamily skipDiscrete:} This optional name-value pair is by default set to {\ttfamily true}, i.e. the skipping over previous stepsizes that were limited by discrete constraints (see Section~\ref{sec:interferencedc}) is by default enabled. It may be disabled by setting this value to {\ttfamily false}.
+	\end{itemize}
+	
+	\subsubsection{Definition of a Sampling Rate Constraint}\label{sec:defsrconstraint}
+	
+	A constraint of {\ttfamily "type":"samplingrate"} is defined by
+	
+	\begin{json}
+		"id":{
+			"type":"samplingrate",
+			"base":<integer>,
+			"rate":<integer>,
+			"startTime":<integer>
+		} 
+	\end{json}
+	
+	\noindent with the following name-value pairs.
+	
+	\begin{itemize}
+		\item {\ttfamily base:} Defines the exponent of 10 of the time base in seconds.
+		\item {\ttfamily rate:} Defines the sample rate in multiples of $10^{base}$.
+		\item	{\ttfamily startTime:} Defines the occurrence of the first sample hit in multiples of $10^{base}$.
+	\end{itemize}
+	
+	\subsubsection{Definition of a FMU Max Step Size Constraint}\label{sec:fmumaxstepsize}
+	
+	A constraint of {\ttfamily "type":"fmumaxstepsize"} is defined by
+	
+	\begin{json}
+		"id":{
+			"type":"fmumaxstepsize"
+		} 
+	\end{json}
+	
+	\noindent The constraint limits the step size to the minimum of the step size returned by \texttt{getMaxStepSize} from all instances that support the function.
+	
+	%%
+	%%
+	
+	\subsection{The Simulate Command}
+	
+	The command is available at:
+	
+	\url{http://localhost:8082/simulate/:session}\\
+	
+	\noindent The command takes the following arguments and requires a JSON payload, Content-Type: application/json:
+	
+	\begin{description}
+		\item[:session] The session ID.
+	\end{description}
+	
+	\noindent The Data payload:
+	
+	\begin{json}
+		{
+			"startTime":0.0,
+			"endTime":10.1,
+			"logLevels": {
+				"{8c4e810f-3df3-4a00-8276-176fa3c9f001}.tank":
+				["logAll", "logError"],
+				"{8c4e810f-3df3-4a00-8276-176fa3c9f000}.tank":
+				["logError"]
+			}
+		}
+	\end{json}
+	
+	The payload contains the start and end time interval plus the log levels.
+	
+	\noindent The command returns the following response on success:
+	
+	\begin{json}
+		[
+		{
+			"status":"Finished",
+			"sessionid": "1234"
+		}
+		]
+	\end{json}
+
+	\subsection{The Stop Simulation Command}
+	This command sets a flag such that the simulation related to a given sessionID is stopped on completion of its current step.\\
+	
+	\noindent The command is available at:
+	
+	\url{http://localhost:8082/stopsimulation/:session}\\
+	
+	\noindent The command takes the following arguments:
+	
+	\begin{description}
+		\item[:session] The session ID.
+	\end{description}
+	
+	\subsection{The Result Command}
+	The command is available at:
+	
+	\url{http://localhost:8082/result/:session/:type}\\
+	
+	\noindent The command takes the following arguments:
+	
+	\begin{description}
+		\item[:session] The session ID.
+		\item[:type] Optional parameter. Possible parameters are: plain/zip and default is plain.
+	\end{description}
+	
+	\noindent The command returns the following response on success.
+	%
+	A response supports two return formats selected by the \texttt{:type} argument and indicated using the content type:
+	%
+	%
+	%
+	\begin{description}
+		\item[Content-Type: application/zip] Returns a zip file containing the initialization data + start data + the result obtained during the simulation
+		\item[Content-Type: text/plain] Returns the result obtained during the simulation as text. The result is a CSV formatted string with: time, stepsize, and all outputs at that time
+	\end{description}
+	%
+	%
+	%
+	\subsection{The Destroy Command}
+	The command is available at:
+	
+	\url{http://localhost:8082/destroy/:session}\\
+	
+	\noindent The command takes the following arguments:
+	
+	\begin{description}
+		\item[:session] The session ID.
+	\end{description}
+	
+	\noindent The command destroys a session and releases all resources bound to the session on success full termination.
+	%
+	%
+	%
+	\subsection{The Reset Command}
+	The command is available at:
+	
+	\url{http://localhost:8082/reset}\\
+	
+	\noindent The command resets the COE to its initial state on success full termination.
+	
+	\subsection{Example}\label{subsec:example}
+	\input{coe-protocol-description/example}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "coe-protocol"
+%%% End:

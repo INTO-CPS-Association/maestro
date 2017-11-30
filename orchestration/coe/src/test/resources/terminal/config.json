@@ -1,0 +1,18 @@
+{
+	"fmus":[
+		"../src/test/resources/fmus/tankcontroller",
+		"../src/test/resources/fmus/tank"
+	],
+	"connections":{
+		"{8c4e810f-3df3-4a00-8276-176fa3c9f000}.controller.valve":"{8c4e810f-3df3-4a00-8276-176fa3c9f001}.tank.valve",
+		"{8c4e810f-3df3-4a00-8276-176fa3c9f001}.tank.level":"{8c4e810f-3df3-4a00-8276-176fa3c9f000}.controller.level"
+	},
+	"parameters":{
+		"{guid-controller}.controller.maxLevel":8,
+		"{guid-controller}.controller.minLevel":2
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.1
+	}
+}

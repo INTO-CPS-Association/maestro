@@ -1,0 +1,40 @@
+{
+	"fmus": {
+		"{massive}":"target/online-cache/massive.fmu"
+	},
+	"connections":{
+		"{massive}.FMU1-1.signal_2_out":[
+			"{massive}.FMU1-2.signal_1_in"
+		],
+		"{massive}.FMU1-1.signal_1_out":[
+			"{massive}.FMU1-3.signal_2_in"
+		],
+		"{massive}.FMU1-1.signal_ext_out":[
+			"{massive}.FMU1-1.signal_ext_in"
+		],
+		"{massive}.FMU1-2.signal_2_out":[
+			"{massive}.FMU1-3.signal_1_in"
+		],
+		"{massive}.FMU1-2.signal_1_out":[
+			"{massive}.FMU1-1.signal_2_in"
+		],
+		"{massive}.FMU1-2.signal_ext_out":[
+			"{massive}.FMU1-2.signal_ext_in"
+		],
+		"{massive}.FMU1-3.signal_2_out":[
+			"{massive}.FMU1-1.signal_1_in"
+		],
+		"{massive}.FMU1-3.signal_1_out":[
+			"{massive}.FMU1-2.signal_2_in"
+		],
+		"{massive}.FMU1-3.signal_ext_out":[
+			"{massive}.FMU1-3.signal_ext_in"
+		]
+	},
+	"parameters":{
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.05
+	}
+}

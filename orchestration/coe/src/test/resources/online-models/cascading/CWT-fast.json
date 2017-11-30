@@ -1,0 +1,26 @@
+{
+	"fmus":{
+		"{x1}":"target/online-cache/cascading-watertank1-20sim.fmu",
+		"{x2}":"target/online-cache/cascading-watertank2-20sim.fmu",
+		"{x3}":"target/online-cache/cascading-watertankcontroller-overture.fmu"
+	},
+	"connections":{
+		"{x3}.controller.System.upperValveActuator.valveState":["{x1}.tank1.valveControl"],
+		"{x3}.controller.System.lowerValveActuator.valveState":["{x2}.tank2.valveControl"],
+		"{x1}.tank1.level":["{x3}.controller.System.upperLevelSensor.upperlevel"],
+		"{x2}.tank2.level":["{x3}.controller.System.lowerLevelSensor.lowerlevel"],
+		
+		"{x1}.tank1.waterOut.f":["{x2}.tank2.p.phi"],
+		"{x2}.tank2.p.p":["{x1}.tank1.waterOut.e"]
+	},
+	"parameters":{
+		"{x3}.controller.Controller.maxlevel1":2,
+		"{x3}.controller.Controller.minlevel1":1,
+		"{x3}.controller.Controller.maxlevel2":2,
+		"{x3}.controller.Controller.minlevel2":1
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.001
+	}
+}

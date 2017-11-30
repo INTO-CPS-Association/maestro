@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="boiler"
+  guid="boiler">
+
+<CoSimulation
+  modelIdentifier="boiler"
+  canHandleVariableCommunicationStepSize="true"/>
+
+<LogCategories>
+  <Category name="logAll"/>
+  <Category name="logError"/>
+  <Category name="logCalls"/>
+</LogCategories>
+
+<ModelVariables>
+  <ScalarVariable name="steamValve" valueReference="0" description=""
+                  causality="input" variability="continuous">
+    <Real start="0"/>
+  </ScalarVariable>
+ 
+  <ScalarVariable name="steamFlow" valueReference="3" description=""
+                  causality="output" variability="continuous" initial="exact">
+    <Real start="0"/>
+  </ScalarVariable>
+ 
+</ModelVariables>
+
+<ModelStructure>
+  <Outputs>
+    <Unknown index="2" />
+  
+  </Outputs>
+</ModelStructure>
+
+</fmiModelDescription>

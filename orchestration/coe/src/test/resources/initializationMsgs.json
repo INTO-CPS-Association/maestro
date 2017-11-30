@@ -1,0 +1,22 @@
+{
+  "fmus":{
+    "{integrate}":"../fmus/performance/integrate",
+    "{sine}":"../fmus/performance/sine"
+  },
+  "connections":{
+    "{sine}.sine.output":["{integrate}.int1.input"]
+  },
+  "parameters":{
+
+  },
+  "algorithm":{
+    "type":"fixed-step",
+    "size":0.1
+  },
+  "livestream":{
+    "{sine}.sine":["output"]
+  },
+  "logVariables":{
+	"{integrate}.int1":["output"]
+  }
+}

@@ -1,0 +1,4999 @@
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.34094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.340942664240718]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.5934380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.5952158515823023, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.595216
+fmi2SetTime(time=0.5952158515823023)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.35694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.356942664240718]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.5952158515823023, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.5974380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.597438
+fmi2SetTime(time=0.5974380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.37694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.376942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.5974380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.5974380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.5974380738045245, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.5974380738045245, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.597438
+fmi2SetTime(time=0.5974380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.5974380738045245
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.37694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.376942664240717]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.5974380738045245, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.5974380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6014380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.601438
+fmi2SetTime(time=0.6014380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.41294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.412942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6014380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6034380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.603438
+fmi2SetTime(time=0.6034380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.43094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.430942664240718]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6034380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6134380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.613438
+fmi2SetTime(time=0.6134380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.52094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.520942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6134380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6152158515823023, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.615216
+fmi2SetTime(time=0.6152158515823023)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.53694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.536942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6152158515823023, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6174380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.617438
+fmi2SetTime(time=0.6174380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.55694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.556942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6174380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6174380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6174380738045245, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.6174380738045245, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.617438
+fmi2SetTime(time=0.6174380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.6174380738045245
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.55694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.556942664240717]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6174380738045245, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6174380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6214380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.621438
+fmi2SetTime(time=0.6214380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.59294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.592942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6214380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6234380738045245, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.623438
+fmi2SetTime(time=0.6234380738045245)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.61094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.610942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6234380738045245, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6334380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.633438
+fmi2SetTime(time=0.6334380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.70094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.700942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6334380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6352158515823023, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.635216
+fmi2SetTime(time=0.6352158515823023)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.71694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.716942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6352158515823023, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6374380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.637438
+fmi2SetTime(time=0.6374380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.73694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.736942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6374380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.6374380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.637438
+fmi2SetTime(time=0.6374380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.6374380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.73694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.736942664240717]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6374380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6414380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.641438
+fmi2SetTime(time=0.6414380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.77294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.772942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6414380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6434380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.643438
+fmi2SetTime(time=0.6434380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.79094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.790942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6434380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6534380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.653438
+fmi2SetTime(time=0.6534380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.88094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.880942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6534380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6552158515823023, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.655216
+fmi2SetTime(time=0.6552158515823023)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.89694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.896942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6552158515823023, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6574380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.657438
+fmi2SetTime(time=0.6574380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.91694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.916942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6574380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6574380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6574380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.6574380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.657438
+fmi2SetTime(time=0.6574380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.6574380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.91694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.916942664240716]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6574380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6574380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6614380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.661438
+fmi2SetTime(time=0.6614380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.95294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.952942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6614380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6634380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.663438
+fmi2SetTime(time=0.6634380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -5.97094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-5.970942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6634380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6734380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.673438
+fmi2SetTime(time=0.6734380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.06094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.060942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6734380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6752158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.675216
+fmi2SetTime(time=0.6752158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.07694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.076942664240717]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6752158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6774380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.677438
+fmi2SetTime(time=0.6774380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.09694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.096942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6774380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6774380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6774380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.6774380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.677438
+fmi2SetTime(time=0.6774380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.6774380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.09694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.096942664240716]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6774380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6774380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6814380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.681438
+fmi2SetTime(time=0.6814380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.13294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.132942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6814380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6834380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.683438
+fmi2SetTime(time=0.6834380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.15094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.150942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6834380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6934380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.693438
+fmi2SetTime(time=0.6934380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.24094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.240942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6934380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6952158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.695216
+fmi2SetTime(time=0.6952158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.25694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.256942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6952158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.6974380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.697438
+fmi2SetTime(time=0.6974380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.27694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.276942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6974380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6974380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6974380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.6974380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.697438
+fmi2SetTime(time=0.6974380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.6974380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.27694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.276942664240716]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.6974380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.6974380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7014380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.701438
+fmi2SetTime(time=0.7014380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.31294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.312942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7014380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7034380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.703438
+fmi2SetTime(time=0.7034380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.33094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.330942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7034380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7134380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.713438
+fmi2SetTime(time=0.7134380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.42094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.420942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7134380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7152158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.715216
+fmi2SetTime(time=0.7152158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.43694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.436942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7152158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7174380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.717438
+fmi2SetTime(time=0.7174380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.45694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.456942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7174380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7174380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7174380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.7174380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.717438
+fmi2SetTime(time=0.7174380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.7174380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.45694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.456942664240716]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7174380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7174380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7214380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.721438
+fmi2SetTime(time=0.7214380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.49294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.492942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7214380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7234380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.723438
+fmi2SetTime(time=0.7234380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.51094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.510942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7234380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7334380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.733438
+fmi2SetTime(time=0.7334380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.60094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.600942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7334380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7352158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.735216
+fmi2SetTime(time=0.7352158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.61694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.616942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7352158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7374380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.737438
+fmi2SetTime(time=0.7374380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.63694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.636942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7374380738045246, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.7374380738045246, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.737438
+fmi2SetTime(time=0.7374380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.7374380738045246
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.63694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.636942664240715]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7374380738045246, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7374380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7414380738045246, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.741438
+fmi2SetTime(time=0.7414380738045246)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.67294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.672942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7414380738045246, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7434380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.743438
+fmi2SetTime(time=0.7434380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.69094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.690942664240716]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7434380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7534380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.753438
+fmi2SetTime(time=0.7534380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.78094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.780942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7534380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7552158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.755216
+fmi2SetTime(time=0.7552158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.79694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.796942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7552158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7574380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.757438
+fmi2SetTime(time=0.7574380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.81694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.816942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7574380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7574380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7574380738045247, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.7574380738045247, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.757438
+fmi2SetTime(time=0.7574380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.7574380738045247
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.81694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.816942664240715]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7574380738045247, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7574380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7614380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.761438
+fmi2SetTime(time=0.7614380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.85294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.852942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7614380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7634380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.763438
+fmi2SetTime(time=0.7634380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.87094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.870942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7634380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7734380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.773438
+fmi2SetTime(time=0.7734380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.96094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.960942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7734380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7752158515823024, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.775216
+fmi2SetTime(time=0.7752158515823024)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.97694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.976942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7752158515823024, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7774380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.777438
+fmi2SetTime(time=0.7774380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.99694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.996942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7774380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7774380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7774380738045247, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.7774380738045247, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.777438
+fmi2SetTime(time=0.7774380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.7774380738045247
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -6.99694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-6.996942664240715]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7774380738045247, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7774380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7814380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.781438
+fmi2SetTime(time=0.7814380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.03294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.032942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7814380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7834380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.783438
+fmi2SetTime(time=0.7834380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.05094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.050942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7834380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7934380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.793438
+fmi2SetTime(time=0.7934380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.14094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.140942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7934380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7952158515823025, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.795216
+fmi2SetTime(time=0.7952158515823025)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.15694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.156942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7952158515823025, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.7974380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.797438
+fmi2SetTime(time=0.7974380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.17694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.176942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7974380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7974380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7974380738045247, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.7974380738045247, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.797438
+fmi2SetTime(time=0.7974380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.7974380738045247
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.17694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.176942664240714]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.7974380738045247, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.7974380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8014380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.801438
+fmi2SetTime(time=0.8014380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.21294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.212942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8014380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8034380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.803438
+fmi2SetTime(time=0.8034380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.23094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.230942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8034380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8134380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.813438
+fmi2SetTime(time=0.8134380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.32094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.320942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8134380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8152158515823025, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.815216
+fmi2SetTime(time=0.8152158515823025)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.33694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.336942664240715]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8152158515823025, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8174380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.817438
+fmi2SetTime(time=0.8174380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.35694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.356942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8174380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8174380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8174380738045247, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.8174380738045247, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.817438
+fmi2SetTime(time=0.8174380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.8174380738045247
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.35694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.356942664240714]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8174380738045247, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8174380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8214380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.821438
+fmi2SetTime(time=0.8214380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.39294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.392942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8214380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8234380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.823438
+fmi2SetTime(time=0.8234380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.41094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.410942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8234380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8334380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.833438
+fmi2SetTime(time=0.8334380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.50094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.500942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8334380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8352158515823025, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.835216
+fmi2SetTime(time=0.8352158515823025)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.51694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.516942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8352158515823025, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8374380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.837438
+fmi2SetTime(time=0.8374380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.53694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.536942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8374380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8374380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8374380738045247, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.8374380738045247, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.837438
+fmi2SetTime(time=0.8374380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.8374380738045247
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.53694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.536942664240714]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8374380738045247, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8374380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8414380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.841438
+fmi2SetTime(time=0.8414380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.57294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.572942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8414380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8434380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.843438
+fmi2SetTime(time=0.8434380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.59094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.590942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8434380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8534380738045247, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.853438
+fmi2SetTime(time=0.8534380738045247)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.68094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.680942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8534380738045247, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8552158515823025, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.855216
+fmi2SetTime(time=0.8552158515823025)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.69694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.696942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8552158515823025, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8574380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.857438
+fmi2SetTime(time=0.8574380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.71694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.716942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8574380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.8574380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.857438
+fmi2SetTime(time=0.8574380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.8574380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.71694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.716942664240714]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8574380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8614380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.861438
+fmi2SetTime(time=0.8614380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.75294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.752942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8614380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8634380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.863438
+fmi2SetTime(time=0.8634380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.77094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.770942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8634380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8734380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.873438
+fmi2SetTime(time=0.8734380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.86094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.860942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8734380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8752158515823025, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.875216
+fmi2SetTime(time=0.8752158515823025)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.87694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.876942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8752158515823025, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8774380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.877438
+fmi2SetTime(time=0.8774380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.89694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.896942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8774380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8774380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8774380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.8774380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.877438
+fmi2SetTime(time=0.8774380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.8774380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.89694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.896942664240713]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8774380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8774380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8814380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.881438
+fmi2SetTime(time=0.8814380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.93294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.932942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8814380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8834380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.883438
+fmi2SetTime(time=0.8834380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -7.95094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-7.950942664240714]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8834380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8934380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.893438
+fmi2SetTime(time=0.8934380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.04094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.040942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8934380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8952158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.895216
+fmi2SetTime(time=0.8952158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.05694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.056942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8952158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.8974380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.897438
+fmi2SetTime(time=0.8974380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.07694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.076942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8974380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8974380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8974380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.8974380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.897438
+fmi2SetTime(time=0.8974380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.8974380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.07694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.076942664240713]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.8974380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.8974380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9014380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.901438
+fmi2SetTime(time=0.9014380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.11294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.112942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9014380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9034380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.903438
+fmi2SetTime(time=0.9034380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.13094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.130942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9034380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9134380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.913438
+fmi2SetTime(time=0.9134380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.22094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.220942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9134380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9152158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.915216
+fmi2SetTime(time=0.9152158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.23694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.236942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9152158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9174380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.917438
+fmi2SetTime(time=0.9174380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.25694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.256942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9174380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9174380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9174380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.9174380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.917438
+fmi2SetTime(time=0.9174380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.9174380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.25694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.256942664240713]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9174380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9174380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9214380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.921438
+fmi2SetTime(time=0.9214380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.29294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.292942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9214380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9234380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.923438
+fmi2SetTime(time=0.9234380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.31094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.310942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9234380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9334380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.933438
+fmi2SetTime(time=0.9334380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.40094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.400942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9334380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9352158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.935216
+fmi2SetTime(time=0.9352158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.41694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.416942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9352158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9374380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.937438
+fmi2SetTime(time=0.9374380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.43694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.436942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9374380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9374380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9374380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.9374380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.937438
+fmi2SetTime(time=0.9374380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.9374380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.43694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.436942664240712]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9374380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9374380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9414380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.941438
+fmi2SetTime(time=0.9414380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.47294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.472942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9414380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9434380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.943438
+fmi2SetTime(time=0.9434380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.49094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.490942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9434380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9534380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.953438
+fmi2SetTime(time=0.9534380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.58094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.580942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9534380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9552158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.955216
+fmi2SetTime(time=0.9552158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.59694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.596942664240713]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9552158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9574380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.957438
+fmi2SetTime(time=0.9574380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.61694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.616942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9574380738045248, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.9574380738045248, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.957438
+fmi2SetTime(time=0.9574380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.9574380738045248
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.61694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.616942664240712]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9574380738045248, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9574380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9614380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.961438
+fmi2SetTime(time=0.9614380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.65294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.652942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9614380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9634380738045248, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.963438
+fmi2SetTime(time=0.9634380738045248)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.67094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.670942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9634380738045248, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9734380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.973438
+fmi2SetTime(time=0.9734380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.76094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.760942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9734380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9752158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.975216
+fmi2SetTime(time=0.9752158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.77694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.776942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9752158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9774380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.977438
+fmi2SetTime(time=0.9774380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.79694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.796942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9774380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9774380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9774380738045249, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.9774380738045249, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.977438
+fmi2SetTime(time=0.9774380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.9774380738045249
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.79694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.796942664240712]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9774380738045249, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9774380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9814380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.981438
+fmi2SetTime(time=0.9814380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.83294
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.832942664240711]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9814380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9834380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.983438
+fmi2SetTime(time=0.9834380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.85094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.850942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9834380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9934380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.993438
+fmi2SetTime(time=0.9934380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.94094
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.940942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9934380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9952158515823026, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.995216
+fmi2SetTime(time=0.9952158515823026)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.95694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.956942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9952158515823026, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9974380738045249, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.997438
+fmi2SetTime(time=0.9974380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.97694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.976942664240712]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9974380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9974380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9974380738045249, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=0.9974380738045249, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.997438
+fmi2SetTime(time=0.9974380738045249)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=0.9974380738045249
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.97694
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.976942664240712]
+
+mdlZeroCrossings() called on VarTest/VarTest (t=0.9974380738045249, minor)
+
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9974380738045249, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9979504590436199, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.99795
+fmi2SetTime(time=0.9979504590436199)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.98155
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.981554131392567]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9979504590436199, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9982066516631674, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.998207
+fmi2SetTime(time=0.9982066516631674)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.98386
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.983859864968494]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9982066516631674, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.999487614760905, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.999488
+fmi2SetTime(time=0.999487614760905)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.99539
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.995388532848132]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.999487614760905, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=0.9997153415338361, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 0.999715
+fmi2SetTime(time=0.9997153415338361)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -8.99744
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.997438073804513]
+
+mdlDerivatives() called on VarTest/VarTest (t=0.9997153415338361, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlOutputs() called on VarTest/VarTest (t=1, minor)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 1
+fmi2SetTime(time=1)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -9
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.999999999999988]
+
+mdlDerivatives() called on VarTest/VarTest (t=1, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlDerivatives() called on VarTest/VarTest (t=1, minor) 
+
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetDerivatives
+fmi2GetDerivatives(derivatives=[...], nx=1)
+
+mdlZeroCrossings() called on VarTest/VarTest (t=1, minor)
+
+
+mdlOutputs() called on VarTest/VarTest (t=1, major)
+
+fmiSetReal: #r352321536# = 1
+fmi2SetReal(vr=[352321536], nvr=1, value=[1])
+fmiSetReal: #r352321537# = -2
+fmi2SetReal(vr=[352321537], nvr=1, value=[-2])
+fmiSetReal: #r352321538# = 3
+fmi2SetReal(vr=[352321538], nvr=1, value=[3])
+fmiSetTime to 1
+fmi2SetTime(time=1)
+fmiSetContinuousStates
+fmi2SetContinuousStates(x=[...], nx=1)
+Time event at t=1
+fmiCompletedIntegratorStep
+fmi2CompletedIntegratorStep(noSetFMUStatePriorToCurrentPoint=fmi2True): enterEventMode=0, terminateSimulation=0
+fmiEnterEventMode...
+fmiEnterEventMode done
+fmi2EnterEventMode()
+fmi2NewDiscreteStates()
+fmiNewDiscreteStates...
+fmiNewDiscreteStates completed
+fmi2EnterContinuousTimeMode()
+fmiEnterContinuousTimeMode...
+fmiEnterContinuousTimeMode done
+fmiGetContinuousStates
+fmi2GetContinuousStates(x=[...], nx=1)
+fmiGetReal: #r335544320# = 1
+fmi2GetReal(vr=[335544320], nvr=1): value=[1]
+fmiGetReal: #r335544321# = -2
+fmi2GetReal(vr=[335544321], nvr=1): value=[-2]
+fmiGetReal: #r335544322# = 3
+fmi2GetReal(vr=[335544322], nvr=1): value=[3]
+fmiGetReal: #r335544323# = -1
+fmi2GetReal(vr=[335544323], nvr=1): value=[-1]
+fmiGetReal: #r335544324# = 9
+fmi2GetReal(vr=[335544324], nvr=1): value=[9]
+fmiGetReal: #r335544325# = -9
+fmi2GetReal(vr=[335544325], nvr=1): value=[-9]
+fmiGetReal: #r335544326# = -9
+fmi2GetReal(vr=[335544326], nvr=1): value=[-8.999999999999988]
+
+mdlTerminate() called on VarTest/VarTest
+
+fmi2Terminate
+fmi2Terminate()
+fmiFreeModelInstance
+fmi2FreeInstance()

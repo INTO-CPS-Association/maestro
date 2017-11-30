@@ -1,0 +1,24 @@
+{
+  "fmus": {
+    "{FMU}": "target/online-cache/var-stepper.fmu",
+    "{Controller}": "target/online-cache/rollback-end.fmu"
+  },
+  "connections": {
+    "{FMU}.roller.level": [
+      "{Controller}.cont.level"
+    ]
+  },
+  "parameters": {
+
+  },
+  "livestream": {},
+  "algorithm": {
+    "type":"var-step",
+    "size":[1E-10, 1.0],
+    "initsize":1E-4, "constraints":{
+      "maxstepsize": {
+        "type": "fmumaxstepsize"
+      }
+    }
+  }
+}

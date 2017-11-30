@@ -1,0 +1,21 @@
+{
+	"fmus":{
+		"{x1}":"target/online-cache/watertankcontroller-c.fmu",
+		"{x2}":"target/online-cache/watertank-c.fmu"
+	},
+	"connections":{
+		"{x1}.controller.valve":["{x2}.tank.valve"],
+		"{x2}.tank.level":["{x1}.controller.level"]
+	},
+	"parameters":{
+		"{x1}.controller.maxLevel":8,
+		"{x1}.controller.minLevel":2
+	},
+"algorithm": {
+		"type":"var-step",
+		"size":[1E-10, 1.0],
+		"initsize":1E-4, "constraints":{
+
+		}
+	  }
+}

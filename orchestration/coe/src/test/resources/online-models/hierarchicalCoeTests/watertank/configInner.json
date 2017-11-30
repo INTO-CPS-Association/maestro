@@ -1,0 +1,21 @@
+{
+  "fmus": {
+    "{ext}": "external://external",
+    "{x2}": "watertank-c.fmu"
+  },
+  "connections": {
+    "{ext}.controller.valve": [
+      "{x2}.tank.valve"
+    ]
+  },
+  "logVariables": {
+    "{x2}.tank": [
+      "level"
+    ]
+  },
+  "hasExternalSignals": true,
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.1
+  }
+}

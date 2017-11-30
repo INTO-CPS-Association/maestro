@@ -1,0 +1,59 @@
+This sections exemplifies how to use the COE in terms of creating a configuration file and invoking the COE. Two FMUs are used in the example below: A sine FMU generating a sine wave and an integrate FMU that integrates the sine wave.
+
+First the configuration file will be presented and described in section \ref{subsubsec:configurationFile}. Afterwards the HTTP requests required to run a simulation will be demonstrated and explained in section \ref{subsubsec:requests}.
+%
+%
+%
+%
+\subsubsection{Configuration file}\label{subsubsec:configurationFile}
+The configuration file is in JSON format, and the full file is shown below:
+%
+%
+%
+\begin{json}
+	{
+		"fmus":{
+			"{integrate}":"./integrate",
+			"{sine}":"./sine"
+		},
+		"connections":{
+			"{sine}.sine.output":["{integrate}.inst1.input","{integrate}.inst2.input"],
+			"{integrate}.inst2.output":["{integrate}.inst3.input"]
+		},
+		"parameters":{
+			"{sine}.sine.amplitude":1
+		},
+		"algorithm":{
+			"type":"fixed-step",
+			"size":0.1
+		},
+		"livestream":{
+			"{sine}.sine":["output"],
+			"{integrate}.inst2":["output"]
+		},
+		"logVariables":{
+			"{integrate}.inst3":["output"]
+		}
+	}
+\end{json}
+\mparagraph{FMUs JSON object}
+The \texttt{"fmus"} JSON object contains two name/value pairs: \texttt{"\{integrate\}":"./integrate"} and \texttt{"\{sine\}":"./sine"}. Note the \texttt{,} separating the pairs. \texttt{\{integrate\}} and \texttt{\{sine\}} are user-defined identifiers for the respective FMUs, they must not contain additional ``\{\}'', and they must be consistent throughout the configuration file, when referring to the respective FMUs. The COE accepts two different kind of paths: a path to a directory as in this example, or path to a zip-file with the extension ``.fmu''. If the integrate FMU was packaged in a zip-file with the extension ``.fmu'', the path would be \texttt{"./integrate.fmu"} instead of \texttt{"./integrate"}. The paths must be relative to the ``COE.jar'' file, which means the directories in this example are in the same directory as the ``COE.jar'' file. 
+%
+%
+%
+\mparagraph{Connections JSON object}
+The \texttt{"connections"} json object defines the relations between the FMUs. In this case there a two name/value pairs:
+\begin{json}
+"{sine}.sine.output":["{integrate}.inst1.input","{integrate}.inst2.input"],
+"{integrate}.inst2.output":["{integrate}.inst3.input"]
+\end{json}
+Once again, note the \texttt{,} separating the pairs. To address the FMU variables, the following format is used: \texttt{fmuReference.instancename.variablename}. This introduces the concept of ``instances''. Some FMUs can be used to create multiple instances. In the example above the integrate FMU is used to instantiate three instances called: \texttt{inst1}, \texttt{inst2}, and \texttt{inst3}. Therefore \texttt{"\{integrate\}.inst2.output"} means: The variable \texttt{output} of instance \texttt{inst2} in the FMU \texttt{\{integrate\}}.
+%
+%
+%
+%
+\subsubsection{Requests}\label{subsubsec:requests}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../coe-protocol"
+%%% End:

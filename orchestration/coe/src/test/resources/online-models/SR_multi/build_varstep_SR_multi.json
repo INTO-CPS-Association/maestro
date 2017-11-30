@@ -1,0 +1,36 @@
+{
+	"fmus":{
+		"{sine}":"target/online-cache/sine.fmu",
+		"{sink}":"target/online-cache/sink.fmu"
+	},
+	"connections":{
+		"{sine}.sine.y":["{sink}.sink.sig1"]
+	},
+	"parameters":{
+		"{sine}.sine.amp":1,
+		"{sine}.sine.sineFreq":0.5,
+		"{sine}.sine.start":1
+	},
+	"algorithm":{
+		"type":"var-step",
+		"size":[
+			1E-3,
+			0.31
+		],
+		"initsize":1E-2,
+		"constraints":{
+		"sr":{
+			"type":"samplingrate",
+			"base":0,
+			"rate":1,
+			"startTime":2
+			},
+		"sr2":{
+			"type":"samplingrate",
+			"base":-1,
+			"rate":10,
+			"startTime":15
+			}						
+		}
+	}	
+}

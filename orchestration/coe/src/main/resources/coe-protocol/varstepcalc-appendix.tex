@@ -1,0 +1,86 @@
+%
+%
+%
+% This source file belongs to the repository at: git@github.com:twt-gmbh/INTO-CPS-COE.git
+%
+%	So ONLY edit the file at this location!
+%
+
+% !TeX root = coe-protocol.tex
+
+
+
+\subsection{Variable step size configuration example}\label{sec:var-step-config-example}
+
+The variable stepsize calculator is selected and configured in a JSON config file. This file is posted to the COE with the initialize command (see Section~\ref{sec:initcmd}). An example JSON config file follows.
+
+\begin{json}
+{
+    "fmus":[
+        "{MassAFMU}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_MassA",
+        "{MassBFMU}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_MassB",
+        "{SineFMU}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_Sine",
+        "{SinkFMU}":"src/test/resources/varsteptest/VarStepSolverTest_FMUs_Sink"
+    ],
+    "connections":{
+        "{MassAFMU}.massA.QA":[
+            "{MassBFMU}.massB.QA",
+            "{SinkFMU}.sink.QA"
+        ],
+        "{SineFMU}.sine.EXTSIG":[
+            "{MassBFMU}.massB.EXTSIG",
+            "{SinkFMU}.sink.EXTSIG"
+        ],
+        "{MassBFMU}.massB.TB":[
+            "{MassAFMU}.massA.TB",
+            "{SinkFMU}.sink.TB"
+        ],
+        "{MassAFMU}.massA.TB_used":[
+            "{SinkFMU}.sink.TB_used"
+        ]
+    },
+    "parameters":{
+        "{MassBFMU}.massB.B.C":15000.0,
+        "{MassAFMU}.massA.A.C":120000.0
+    },
+    "algorithm":{
+        "type":"var-step",
+        "size":[
+            1E-6,
+            1.0
+        ],
+        "initsize":1E-4,
+        "constraints":{
+            "zc":{
+                "type":"zerocrossing",
+                "ports":[
+                    "{SineFMU}.sine.EXTSIG"
+                ],
+                "order":2,
+                "abstol":1.0,
+                "safety":0.0,
+            },
+            "bd":{
+                "type":"boundeddifference",
+                "ports":[
+                    "{MassBFMU}.massB.TB",
+                    "{MassAFMU}.massA.TB_used"
+                ],
+                "abstol":1.0,
+                "reltol":1.0,
+                "safety":0.0,
+            },
+            "sr":{
+                "type":"samplingrate",
+                "base":-1,
+                "rate":10,
+                "startTime":15
+            }        
+        }   
+    }
+} 
+\end{json}
+
+
+
+

@@ -1,0 +1,1 @@
+The modelDescription.xml has been edited. More specifically canBeInstantiatedOnlyOncePerProcess has been made false instead of true.

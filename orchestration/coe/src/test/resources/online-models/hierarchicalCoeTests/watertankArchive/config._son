@@ -1,0 +1,18 @@
+{
+	"fmus":{
+		"{x1}":"target/online-cache/watertankcontroller-c.fmu",
+		"{x2}":"coe:target/online-cache/hierarchicalCoeWatertank.fmu"
+	},
+	"connections":{
+		"{x1}.controller.valve":["{x2}.tank.valve"],
+		"{x2}.tank.level":["{x1}.controller.level"]
+	},
+	"parameters":{
+		"{x1}.controller.maxLevel":4,
+		"{x1}.controller.minLevel":3
+	},
+	"algorithm":{
+		"type":"fixed-step",
+		"size":0.1
+	}
+}

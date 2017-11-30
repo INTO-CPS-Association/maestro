@@ -1,0 +1,46 @@
+{
+  "algorithm": {
+    "constraints": null,
+    "size": [
+      5e-06,
+      10
+    ],
+    "initsize": 1e-05,
+    "type": "var-step"
+  },
+  "livestream": null,
+  "parameters": {},
+  "connections": {
+    "{vdm}.vdmInstance.SigOut3": [
+      "{dymola}.dymolaInstance.SigIn3"
+    ],
+    "{vdm}.vdmInstance.SigOut2": [
+      "{dymola}.dymolaInstance.SigIn2"
+    ],
+    "{vdm}.vdmInstance.SigOut1": [
+      "{dymola}.dymolaInstance.SigIn1"
+    ],
+    "{dymola}.dymolaInstance.SigOut6": [
+      "{vdm}.vdmInstance.SigIn6"
+    ],
+    "{dymola}.dymolaInstance.SigOut5": [
+      "{vdm}.vdmInstance.SigIn5"
+    ],
+    "{dymola}.dymolaInstance.SigOut4": [
+      "{vdm}.vdmInstance.SigIn4"
+    ],
+    "{dymola}.dymolaInstance.SigOut3": [
+      "{vdm}.vdmInstance.SigIn3"
+    ],
+    "{dymola}.dymolaInstance.SigOut2": [
+      "{vdm}.vdmInstance.SigIn2"
+    ],
+    "{dymola}.dymolaInstance.SigOut1": [
+      "{vdm}.vdmInstance.SigIn1"
+    ]
+  },
+  "fmus": {
+    "{vdm}": "target/online-cache/VarTestCtrl.fmu",
+    "{dymola}": "target/online-cache/VarTest.fmu"
+  }
+}

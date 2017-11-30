@@ -1,0 +1,30 @@
+{
+  "algorithm": {
+    "size": 0.1,
+    "type": "fixed-step"
+  },
+  "overrideLogLevel": "TRACE",
+  "livestream": null,
+  "parameters": null,
+  "connections": {
+    "{controller}.c.out2": [
+      "{boiler}.b.in2"
+    ],
+    "{controller}.c.out1": [
+      "{boiler}.b.in1"
+    ],
+    "{boiler}.b.out3": [
+      "{controller}.c.in3"
+    ],
+    "{boiler}.b.out1": [
+      "{controller}.c.in1"
+    ],
+    "{boiler}.b.out2": [
+      "{controller}.c.in2"
+    ]
+  },
+  "fmus": {
+    "{controller}": "src/resources/cyclic-dependency/controller.fmu",
+    "{boiler}": "src/resources/cyclic-dependency/boiler.fmu"
+  }
+}

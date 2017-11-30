@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	
+	</head>
+	<body>
+
+<script type="text/javascript">
+function OnSubmitForm()
+{
+	console.log("test");
+	var sessionId = document.getElementsByName('sessionId');
+	console.log(sessionId[0].value);
+	sessionId[0].disabled="disabled";
+	document.myform.action =  "upload/"+sessionId[0].value;
+	//		document.myform.action ="upload";
+}
+</script>
+
+		<form  enctype="multipart/form-data" method="post" name="myform" onsubmit="return OnSubmitForm();">
+			<p>
+				Please specify a file, or a set of files:<br>
+				<input type="file" name="datafile" size="40" multiple="">
+			</p>
+			<p>
+				<input type="text" name="sessionId" id="sessionId" size="30">
+			</p>
+			<div>
+				<input type="submit" value="Send">
+			</div>
+		</form>
+
+	</body>
+</html>

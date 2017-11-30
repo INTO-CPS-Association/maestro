@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<fmiModelDescription fmiVersion="2.0" modelName="externalStub"
+                     guid="{8c4e810f-3df3-4a00-8276-000000000000}"
+                     numberOfEventIndicators="0" generationTool="COE"
+                     generationDateAndTime="2017-09-18T23:12:21"
+                     variableNamingConvention="flat">
+
+
+    <CoSimulation modelIdentifier="externalStub"
+                  canHandleVariableCommunicationStepSize="true"
+                  needsExecutionTool="true"
+                  canInterpolateInputs="false"
+                  maxOutputDerivativeOrder="0"
+                  canRunAsynchronuously="false"
+                  canBeInstantiatedOnlyOncePerProcess="true"
+                  canNotUseMemoryManagementFunctions="true"
+                  canGetAndSetFMUstate="false"
+                  canSerializeFMUstate="false"
+                  providesDirectionalDerivative="false"
+
+    />
+
+    <VendorAnnotations>
+        <Tool name="COE">
+        </Tool>
+    </VendorAnnotations>
+
+    <ModelVariables>
+
+        <ScalarVariable name="valve" valueReference="4"
+                        description="the tank valve state" causality="output"
+                        variability="discrete">
+            <Boolean/>
+        </ScalarVariable>
+
+
+    </ModelVariables>
+
+    <ModelStructure>
+        <Outputs>
+            <Unknown index="1" dependencies=""/>
+        </Outputs>
+    </ModelStructure>
+
+</fmiModelDescription>

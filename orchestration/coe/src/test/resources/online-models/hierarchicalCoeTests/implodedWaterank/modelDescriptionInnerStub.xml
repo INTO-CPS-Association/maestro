@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="coePackage" guid="{10000000-0000-0000-0000-000000000000}" numberOfEventIndicators="0" generationTool="COE" generationDateAndTime="2017-09-18T23:12:21" variableNamingConvention="flat">
+
+
+	<CoSimulation modelIdentifier="coePackage" canHandleVariableCommunicationStepSize="true" needsExecutionTool="true" canInterpolateInputs="false" maxOutputDerivativeOrder="0" canRunAsynchronuously="false" canBeInstantiatedOnlyOncePerProcess="true" canNotUseMemoryManagementFunctions="true" canGetAndSetFMUstate="false" canSerializeFMUstate="false" providesDirectionalDerivative="false"/>
+
+	<LogCategories>
+		<Category name="logAll"/>
+		<Category name="logError"/>
+		<Category name="logFmiCall"/>
+		<Category name="logEvent"/>
+	</LogCategories>
+
+
+	<VendorAnnotations>
+		<Tool name="COE">
+			<Mappings>
+			</Mappings>
+		</Tool>
+	</VendorAnnotations>
+
+	<ModelVariables>
+		<ScalarVariable name="{tank}.tank.valvecontrol" valueReference="1" causality="output" variability="continuous" initial="approx">
+			<Real start="0.0"/>
+		</ScalarVariable>
+	</ModelVariables>
+
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="1" dependencies=""/>
+		</Outputs>
+	</ModelStructure>
+
+</fmiModelDescription>
