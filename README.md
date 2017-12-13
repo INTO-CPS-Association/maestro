@@ -1,7 +1,7 @@
 # Checkout
 
 ```
-git clone git@github.com:twt-gmbh/INTO-CPS-COE.git
+git clone git@github.com:INTO-CPS-Association/maestro.git
 ```
 
 # Development Environment
