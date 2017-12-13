@@ -28,12 +28,12 @@ node {
 
 			if (env.BRANCH_NAME == 'development') {
 			
-				def server = Artifactory.server "-225816141@1439286524510"
+				def server = Artifactory.server "-844406945@1404457436085"
 				def buildInfo = Artifactory.newBuildInfo()
 				buildInfo.env.capture = true
 				//buildInfo.env.filter.addExclude("org/destecs/ide/**")
 				def rtMaven = Artifactory.newMavenBuild()
-				rtMaven.tool = "Maven 3.3.3" // Tool name from Jenkins configuration
+				rtMaven.tool = "Maven 3.1.1" // Tool name from Jenkins configuration
 				rtMaven.opts = "-Xmx1024m -XX:MaxPermSize=256M"
 				rtMaven.deployer releaseRepo:'into-cps', snapshotRepo:'into-cps', server: server
 				
