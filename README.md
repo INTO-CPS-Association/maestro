@@ -19,7 +19,7 @@ If the Discover connector doesnt discover the apropiate connectors during maven 
 
 # Development
 
-The coe uses scala and there for it is recomented to use Eclipse Standard with the Scala IDE installed (remember to run the `Scala->Run Setup Diagnistics` otherwise it mostlikely will crash)
+The coe uses scala and there for it is recomented to use Eclipse Standard with the Scala IDE installed (remember to run the `Scala->Run Setup Diagnistics` otherwise it mostlikely will crash).
 
 Bafore import use a terminal to execute this command in the root of the repository:
 
