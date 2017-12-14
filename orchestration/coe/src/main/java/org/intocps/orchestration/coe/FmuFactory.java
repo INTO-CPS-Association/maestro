@@ -43,12 +43,14 @@ import org.apache.commons.io.FileUtils;
 import org.intocps.fmi.FmuInvocationException;
 import org.intocps.fmi.IFmu;
 import org.intocps.fmi.jnifmuapi.Factory;
+import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FmuFactory
 {
 	final static Logger logger = LoggerFactory.getLogger(FmuFactory.class);
+	final static HierarchicalCoeFactory hierarchicalCoeFactory = new HierarchicalCoeFactory();
 
 	private static class LocalFmuFactory implements IFmuFactory
 	{
@@ -67,6 +69,11 @@ public class FmuFactory
 			{
 				uri = new URI(
 						"file://" + sessionRoot.toURI() + "/" + uri.getPath());
+			}
+
+			if(hierarchicalCoeFactory.accept(uri))
+			{
+				return hierarchicalCoeFactory.instantiate(sessionRoot,uri);
 			}
 
 			if (uri.getScheme() == null || uri.getScheme().equals("file"))
