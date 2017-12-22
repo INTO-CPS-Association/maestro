@@ -398,9 +398,9 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	</build>
 
 	<scm>
-    <url>git@github.com:twt-gmbh/INTO-CPS-COE</url>
-    <connection>scm:git:git//github.com/twt-gmbh/INTO-CPS-COE</connection>
-    <developerConnection>scm:git:git@github.com:twt-gmbh/INTO-CPS-COE</developerConnection>
+    <url>git@github.com:INTO-CPS-Association/maestro</url>
+    <connection>scm:git:git//github.com/INTO-CPS-Association/maestro</connection>
+    <developerConnection>scm:git:git@github.com:INTO-CPS-Association/maestro</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
