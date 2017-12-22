@@ -52,7 +52,7 @@ def writeIssue(file,state,number, title,url):
     write(state + " - " + title)
     file.write("* [#" +str(number)+" "+ state + " - "+title+"]("+url+")\n")
 
-r = requests.get("https://api.github.com/repos/twt-gmbh/INTO-CPS-COE/milestones?state=closed", headers=header)
+r = requests.get("https://api.github.com/repos/INTO-CPS-Association/maestro/milestones?state=closed", headers=header)
 
 #file = open("output.txt", "w")
 
@@ -87,7 +87,7 @@ for milestone in r.json():
 #    writeMilestone(file,version,milestone['url'],milestone['due_on'],None)
 
 
-    ri = requests.get("http://api.github.com/repos/twt-gmbh/INTO-CPS-COE/issues?state=all&milestone="+str(milestone['number']), headers=header)
+    ri = requests.get("http://api.github.com/repos/INTO-CPS-Association/maestro/issues?state=all&milestone="+str(milestone['number']), headers=header)
     if not ri.status_code == 200:
         raise Exception(ri.status_code)
     for issue in ri.json():
