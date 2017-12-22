@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.intocps</groupId>
 		<artifactId>root</artifactId>
-		<version>0.2.21-SNAPSHOT</version>
+		<version>0.2.22</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
