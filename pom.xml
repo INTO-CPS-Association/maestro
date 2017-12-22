@@ -13,7 +13,7 @@
 	<groupId>org.intocps</groupId>
 	<artifactId>root</artifactId>
 
-	<version>0.2.21-SNAPSHOT</version>
+	<version>0.2.22</version>
 
 	<name>The INTO CPS Tool Platform root</name>
 	<description>
@@ -398,10 +398,10 @@ http://mojo.codehaus.org/versions-maven-plugin/
 	</build>
 
 	<scm>
-    <url>git@github.com:twt-gmbh/INTO-CPS-COE</url>
-    <connection>scm:git:git//github.com/twt-gmbh/INTO-CPS-COE</connection>
-    <developerConnection>scm:git:git@github.com:twt-gmbh/INTO-CPS-COE</developerConnection>
-		<tag>HEAD</tag>
+    <url>git@github.com:INTO-CPS-Association/maestro</url>
+    <connection>scm:git:git//github.com/INTO-CPS-Association/maestro</connection>
+    <developerConnection>scm:git:git@github.com:INTO-CPS-Association/maestro</developerConnection>
+		<tag>Release/0.2.22</tag>
 	</scm>
 
 	<developers>
