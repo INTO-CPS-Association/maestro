@@ -14,7 +14,7 @@
         <jackson-2-version>2.5.3</jackson-2-version>
     </properties>
 
-    <groupId>org.intocps.orchestration</groupId>
+    <groupId>org.into-cps.orchestration</groupId>
     <artifactId>coe</artifactId>
     <name>The orchestration engine</name>
 
