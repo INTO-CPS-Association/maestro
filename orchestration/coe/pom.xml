@@ -1,306 +1,287 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.intocps</groupId>
-		<artifactId>orchestration</artifactId>
-		<version>0.2.23-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>org.into-cps</groupId>
+        <artifactId>orchestration</artifactId>
+        <version>0.2.23-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<properties>
-		<jackson-2-version>2.5.3</jackson-2-version>
-	</properties>
+    <properties>
+        <jackson-2-version>2.5.3</jackson-2-version>
+    </properties>
 
-	<groupId>org.intocps.orchestration</groupId>
-	<artifactId>coe</artifactId>
-	<name>The orchestration engine</name>
+    <groupId>org.intocps.orchestration</groupId>
+    <artifactId>coe</artifactId>
+    <name>The orchestration engine</name>
 
-	<repositories>
-		<repository>
-			<id>scala-tools.org</id>
-			<name>Scala-tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-releases</url>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>scala-tools.org</id>
-			<name>Scala-tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-releases</url>
-		</pluginRepository>
-	</pluginRepositories>
+    <repositories>
+        <repository>
+            <id>scala-tools.org</id>
+            <name>Scala-tools Maven2 Repository</name>
+            <url>http://scala-tools.org/repo-releases</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>scala-tools.org</id>
+            <name>Scala-tools Maven2 Repository</name>
+            <url>http://scala-tools.org/repo-releases</url>
+        </pluginRepository>
+    </pluginRepositories>
 
-	<dependencies>
+    <dependencies>
 
-		<!--<dependency>-->
-		<!--<groupId>org.nanohttpd</groupId>-->
-		<!--<artifactId>nanohttpd-websocket</artifactId>-->
-		<!--<version>2.3.0</version>-->
-		<!--</dependency>-->
+        <dependency>
+            <groupId>io.argonaut</groupId>
+            <artifactId>argonaut_2.11</artifactId>
+            <version>6.1</version>
+        </dependency>
 
-		<dependency>
-			<groupId>io.argonaut</groupId>
-			<artifactId>argonaut_2.11</artifactId>
-			<version>6.1</version>
-		</dependency>
+        <dependency>
+            <groupId>jgraph</groupId>
+            <artifactId>jgraph</artifactId>
+            <version>5.13.0.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>jgraph</groupId>
-			<artifactId>jgraph</artifactId>
-			<version>5.13.0.0</version>
-		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.jgrapht/jgrapht-ext -->
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-ext</artifactId>
+            <version>0.9.1</version>
+        </dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.jgrapht/jgrapht-ext -->
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-ext</artifactId>
-			<version>0.9.1</version>
-		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.tinyjee.jgraphx/jgraphx -->
+        <dependency>
+            <groupId>org.tinyjee.jgraphx</groupId>
+            <artifactId>jgraphx</artifactId>
+            <version>3.4.1.3</version>
+        </dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.tinyjee.jgraphx/jgraphx -->
-		<dependency>
-			<groupId>org.tinyjee.jgraphx</groupId>
-			<artifactId>jgraphx</artifactId>
-			<version>3.4.1.3</version>
-		</dependency>
+        <dependency>
+            <groupId>org.intocps.fmi</groupId>
+            <artifactId>jnifmuapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.orchestration</groupId>
+            <artifactId>modeldefinitionchecker</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.intocps.fmi</groupId>
-			<artifactId>jnifmuapi</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.intocps.orchestration</groupId>
-			<artifactId>modeldefinitionchecker</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.into-cps</groupId>
+            <artifactId>nanohttpd</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
- <dependency>
-      <groupId>org.intocps</groupId>
-      <artifactId>nanohttpd</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
 
 
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-library</artifactId>
-			<version>2.11.7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.intocps.fmi</groupId>
-			<artifactId>fmi2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.intocps</groupId>
-			<artifactId>modeldefinition</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>2.11.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.intocps.fmi</groupId>
+            <artifactId>fmi2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.intocps</groupId>
+            <artifactId>modeldefinition</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
-		<!-- databinding; ObjectMapper, JsonNode and related classes are here -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson-2-version}</version>
-		</dependency>
-
-
-		<dependency>
-			<groupId>org.jgrapht</groupId>
-			<artifactId>jgrapht-core</artifactId>
-			<version>0.9.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>commons-cli</groupId>
-			<artifactId>commons-cli</artifactId>
-			<version>1.3</version>
-		</dependency>
+        <!-- databinding; ObjectMapper, JsonNode and related classes are here -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-2-version}</version>
+        </dependency>
 
 
-		<dependency>
-			<groupId>com.googlecode.java-diff-utils</groupId>
-			<artifactId>diffutils</artifactId>
-			<version>1.2.1</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>0.9.1</version>
+        </dependency>
 
-		<!-- https://mvnrepository.com/artifact/log4j/apache-log4j-extras -->
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>apache-log4j-extras</artifactId>
-			<version>1.2.17</version>
-		</dependency>
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>1.3</version>
+        </dependency>
 
 
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-csv</artifactId>
-			<version>1.4</version>
-		</dependency>
+        <dependency>
+            <groupId>com.googlecode.java-diff-utils</groupId>
+            <artifactId>diffutils</artifactId>
+            <version>1.2.1</version>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-			<version>3.6.1</version>
-		</dependency>
-
-	</dependencies>
+        <!-- https://mvnrepository.com/artifact/log4j/apache-log4j-extras -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>apache-log4j-extras</artifactId>
+            <version>1.2.17</version>
+        </dependency>
 
 
-	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>false</filtering>
-			</resource>
-			<resource>
-				<directory>src/main/resources/web</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
-		<!--sourceDirectory>src/main/java</sourceDirectory -->
-		<plugins>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.4</version>
+        </dependency>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<!-- the tests use std out a lot so we dont want that in the console -->
-					<redirectTestOutputToFile>true</redirectTestOutputToFile>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
 
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<mainClass>org.intocps.orchestration.coe.CoeMain</mainClass>
-						</manifest>
-					</archive>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-my-jar-with-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+    </dependencies>
 
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources/web</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- the tests use std out a lot so we dont want that in the console -->
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.intocps.orchestration.coe.CoeMain
+                            </mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-my-jar-with-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+
+                    <execution>
+                        <id>test-compile</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <phase>test-compile</phase>
+                    </execution>
+
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
 
 
-			<!--plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>build-helper-maven-plugin</artifactId> <version>1.7</version> <executions> <execution> <id>add-source</id> <phase>generate-sources</phase> <goals> <goal>add-source</goal> </goals> <configuration> <sources> <source>src/main/scala</source> 
-					</sources> </configuration> </execution> <execution> <id>add-test-source</id> <phase>generate-test-sources</phase> <goals> <goal>add-test-source</goal> </goals> <configuration> <sources> <source>src/test/scala</source> </sources> </configuration> </execution> </executions> </plugin -->
+    <profiles>
+        <profile>
+            <id>htlatex</id>
 
-					<plugin>
-						<groupId>org.scala-tools</groupId>
-						<artifactId>maven-scala-plugin</artifactId>
-						<!--configuration> <sourceDir>${project.build.sourceDirectory}/main/java</sourceDir> <sendJavaToScalac>false</sendJavaToScalac> </configuration -->
-						<version>2.15.2</version>
-						<executions>
-							<execution>
-								<id>compile</id>
-								<goals>
-									<goal>compile</goal>
-								</goals>
-								<phase>compile</phase>
-							</execution>
+            <build>
+                <plugins>
 
-							<execution>
-								<id>test-compile</id>
-								<goals>
-									<goal>testCompile</goal>
-								</goals>
-								<phase>test-compile</phase>
-							</execution>
-
-							<execution>
-								<id>scala-compile-first</id>
-								<phase>process-resources</phase>
-								<goals>
-									<goal>compile</goal>
-									<goal>testCompile</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<configuration>
-							<source>1.8</source>
-							<target>1.8</target>
-						</configuration>
-					</plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <exec dir="${project.basedir}/target/classes/coe-protocol/"
+                                              executable="htlatex"
+                                              failonerror="false">
+                                            <arg line="coe-protocol.tex"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 
-					<!--plugin> <groupId>org.scala-tools</groupId> <artifactId>maven-scala-plugin</artifactId> <version>2.15.2</version> <executions> <execution> <id>compile</id> <goals> <goal>compile</goal> </goals> <phase>compile</phase> </execution> <execution> <id>test-compile</id> <goals> <goal>testCompile</goal>
-              </goals> <phase>test-compile</phase> </execution> <execution> <phase>process-resources</phase> <goals> <goal>compile</goal> </goals> </execution> </executions> </plugin -->
-
-						</plugins>
-					</build>
-
-
-					<profiles>
-						<profile>
-							<id>htlatex</id>
-							<!--activation>
-									<activeByDefault>true</activeByDefault>
-								</activation-->
-
-
-<build>
-		<plugins>
-
-			<plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-							 <exec dir="${project.basedir}/target/classes/coe-protocol/" executable="htlatex" failonerror="false">
-                  <arg line="coe-protocol.tex" />
-                </exec>      
-              </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-		</plugins>
-	</build>
-
-								
-							</profile>
-						</profiles>
-
-
-					</project>
+</project>
 
