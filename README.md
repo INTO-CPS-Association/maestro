@@ -82,6 +82,8 @@ Now go to the master branch, merge with the newly created tag, and push. REMEMBE
 
 for more see https://github.com/overturetool/overture/wiki/Release-Process
 
+* Sonatype link: https://oss.sonatype.org/#stagingRepositories
+
 ## Upload the release
 
 remember to create github release from the released tag and upload: `target/checkout/orchestration/coe/target/coe-0.0.2-jar-with-dependencies.jar`.
