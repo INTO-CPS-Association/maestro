@@ -2,9 +2,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.intocps</groupId>
+		<groupId>org.into-cps</groupId>
 		<artifactId>root</artifactId>
-		<version>0.2.22</version>
+		<version>1.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -20,7 +20,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.intocps.fmi</groupId>
+			<groupId>org.into-cps.fmi</groupId>
 			<artifactId>fmi2</artifactId>
 		</dependency>
 
