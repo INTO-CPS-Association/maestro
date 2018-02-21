@@ -20,7 +20,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.intocps.fmi</groupId>
+			<groupId>org.into-cps.fmi</groupId>
 			<artifactId>fmi2</artifactId>
 		</dependency>
 

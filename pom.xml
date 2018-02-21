@@ -34,7 +34,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fmu.api.version>0.2.4</fmu.api.version>
+        <fmu.api.version>1.0.0</fmu.api.version>
     </properties>
 
     <repositories>
@@ -67,13 +67,13 @@
             </dependency>
 
             <dependency>
-                <groupId>org.intocps.fmi</groupId>
+                <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
                 <version>${fmu.api.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.intocps.fmi</groupId>
+                <groupId>org.into-cps.fmi</groupId>
                 <artifactId>jnifmuapi</artifactId>
                 <version>${fmu.api.version}</version>
             </dependency>
@@ -187,13 +187,13 @@ http://mojo.codehaus.org/versions-maven-plugin/
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-
-                <configuration>
-                    <attach>false</attach>
-                    <skipSource>true</skipSource>
-                </configuration>
+                <artifactId>maven-javadoc-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+
 
         </plugins>
 
@@ -220,18 +220,37 @@ http://mojo.codehaus.org/versions-maven-plugin/
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
                     <version>3.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                     <configuration>
-                        <attach>false</attach>
-                        <skipSource>true</skipSource>
+                        <attach>true</attach>
                     </configuration>
                 </plugin>
 
                 <!-- Enable JavaDoc but dont fail on error. This must be disabled for
-             the Eclipse project in the IDE -->
+                     the Eclipse project in the IDE -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>2.10.3</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <additionalparam>${javadoc.opts}
+                                </additionalparam>
+                            </configuration>
+                        </execution>
+                    </executions>
                     <configuration>
                         <failOnError>false</failOnError>
                         <quiet>true</quiet>
@@ -339,7 +358,8 @@ http://mojo.codehaus.org/versions-maven-plugin/
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5.3</version>
                     <configuration>
-                        <releaseProfiles>release,htlatex</releaseProfiles>
+                        <releaseProfiles>htlatex,release-sign-artifacts
+                        </releaseProfiles>
                         <tagNameFormat>Release/@{project.version}
                         </tagNameFormat>
                     </configuration>
@@ -402,6 +422,11 @@ http://mojo.codehaus.org/versions-maven-plugin/
                         </excludes>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -456,19 +481,44 @@ http://mojo.codehaus.org/versions-maven-plugin/
 
     <inceptionYear>2015</inceptionYear>
 
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-    <!--distributionManagement>
-      <repository>
-        <id>overture.au.dk</id>
-        <name>overture.au.dk-releases</name>
-        <url>http://overture.au.dk/artifactory/into-cps</url>
-      </repository>
-      <snapshotRepository>
-        <id>overture.au.dk</id>
-        <name>overture.au.dk-snapshots</name>
-        <url>http://overture.au.dk/artifactory/into-cps</url>
-      </snapshotRepository>
-    </distributionManagement-->
+        <profile>
+            <id>java8-doclint-disabled</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <javadoc.opts>-Xdoclint:none</javadoc.opts>
+            </properties>
+        </profile>
 
+    </profiles>
 
 </project>
