@@ -34,6 +34,8 @@
 */
 package org.intocps.orchestration.coe.cosim
 
+import java.lang
+
 import org.intocps.orchestration.coe.json.InitializationMsgJson
 
 import scala.collection.JavaConverters.mapAsJavaMapConverter
@@ -55,10 +57,11 @@ import org.intocps.orchestration.coe.cosim.varstep.StepsizeCalculator
 import InitializationMsgJson.Constraint
 import org.intocps.fmi.Fmi2Status
 
+import scala.collection.immutable
+
 class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
                                  val stepsizeInterval: StepsizeInterval,
-                                 initialStepsize: java.lang.Double) extends CoSimStepSizeCalculator
-{
+                                 initialStepsize: java.lang.Double) extends CoSimStepSizeCalculator {
 
   var calc: StepsizeCalculator = null
   var supportsRollback: Boolean = true
@@ -69,114 +72,118 @@ class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
 
   var lastStepsize: Double = -1
 
-  def initialize(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstance], outputs: CoeObject.Outputs, inputs: CoeObject.Inputs) =
-  {
+  def initialize(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstance], outputs: CoeObject.Outputs, inputs: CoeObject.Inputs) = {
     logger.trace("Initializing the variable step size calculator")
 
-    supportsRollback = instances.forall(x => x match
-    {
+    supportsRollback = instances.forall(x => x match {
       case (mi, instance) => instance.config.asInstanceOf[FmiInstanceConfigScalaWrapper].canGetSetState
     })
-     calc = new StepsizeCalculator(constraints, stepsizeInterval, initialStepsize, instances.asJava);
+    calc = new StepsizeCalculator(constraints, stepsizeInterval, initialStepsize, instances.asJava);
 
     this.instances = instances
   }
 
-  def getStepSize(currentTime: Double, state: CoeObject.GlobalState): Double =
-  {
+  def getStepSize(currentTime: Double, state: CoeObject.GlobalState): Double = {
 
     logger.trace("Calculating the stepsize for the variable step size calculator")
 
     val data = state.instanceStates.map(s => s._1 -> s._2.state.asJava)
-    val der = state.instanceStates.map(s => s._1 ->
-      {
-        if (s._2.derivatives != null)
-          {
-            s._2.derivatives.map(derMap => derMap._1 -> derMap._2.map(orderValMap => java.lang.Integer.valueOf(orderValMap._1) -> java.lang.Double.valueOf(orderValMap._2)).asJava).asJava
-          } else
-          {
-            null
-          }
-      })
+    val der = state.instanceStates.map(s => s._1 -> {
+      if (s._2.derivatives != null) {
+        s._2.derivatives.map(derMap => derMap._1 -> derMap._2.map(orderValMap => java.lang.Integer.valueOf(orderValMap._1) -> java.lang.Double.valueOf(orderValMap._2)).asJava).asJava
+      } else {
+        null
+      }
+    })
 
     val minStepsize = stepsizeInterval.getMinimalStepsize
     val maxStepsize = stepsizeInterval.getMaximalStepsize
 
-    val maxStepSizes = instances.map
-    { case (mi, x) =>
-      val result = x.instance.getMaxStepSize
-      if (result.status != Fmi2Status.OK)
-        {
-          logger.debug("GetMaxStepSize failed for the FMU: " + mi + ". The return was " + result.status)
-        } else
-        {
-          if (result.result < minStepsize)
-            {
-              val diff =new java.lang.Double(minStepsize-result.result)
-              logger.warn("'{}'.GetMaxStepSize = {} is smaller than minimum {} diff {}",Array( mi, result.result,minStepsize,diff):_*)
-            } else
-            {
-              logger.trace("'{}'.GetMaxStepSize = {}", mi, result.result: Any)
-            }
-        }
 
-      result;
-    }.filter(r => r.status == Fmi2Status.OK && r.result >= minStepsize && r.result <= maxStepsize).map(r=>r.result)
-
-    val maxStepSize: Double = if (maxStepSizes.isEmpty)
-      {
-        maxStepsize
-      } else
-      {
-        maxStepSizes.min
+    // Invoke GetMaxStepSize on all FMUs.
+    // Precondition: acc = maxStepSize.
+    // Invariant: minStepSize <= acc <= maxStepSize
+    // Postcondition: minStepSize <= acc <= maxStepSize
+    // Req. 1: If ANY are less than minStepsize, choose minStepsize.
+    // Req. 2: If ALL are larger than maxStepsize, choose maxStepsize
+    // Req. 3: If ANY are between minStepsize and maxStepsize AND rest are greater-than maxStepSize, then choose minimum of these.
+    // Req. 4: If NONE succeeds in getMaxStepSize, choose maxStepsize
+    def getMaxStepSize(acc: Double, instances: Map[ModelConnection.ModelInstance, FmiSimulationInstance]): Double = {
+      if (instances.isEmpty) {
+        // Req. 4 -> Due to precondition and invariant acc will be maxStepSize
+        return acc;
       }
+      else {
+        val (mi, simInst) = instances.head;
+        val result = simInst.instance.getMaxStepSize;
+        if (result.status != Fmi2Status.OK) {
+          logger.debug("GetMaxStepSize failed for the FMU: " + mi + ". The return was " + result.status);
+          getMaxStepSize(acc, instances.tail);
+        }
+        else {
+          if (result.result < minStepsize) {
+            // Req. 1 -> FMU returns step size such that step size < minStepSize, choose minStepsize
+            val diff = minStepsize - result.result;
+            logger.warn("'{}'.GetMaxStepSize = {} is smaller than minimum {} diff {}. Choosing minimum", Array(mi, result.result, minStepsize, new java.lang.Double(diff)): _*)
+            return minStepsize;
+          }
+          else {
+            logger.trace("'{}'.GetMaxStepSize = {}", mi, result.result: Any)
+            // FMU returns step size such that minStepSize < step size, choose step size or acc
+            if (result.result < acc) {
+              // FMU returns step size such that minStepSize < step size < maxStepSize, as acc <= maxStepSize, choose step size.
+              getMaxStepSize(result.result, instances.tail);
+            }
+            else {
+              // FMU returns step size such that minStepsize <= acc <= step size, choose acc.
+              getMaxStepSize(acc, instances.tail);
+            }
+          }
+        }
+      }
+    }
 
-    logger.trace("Max FMU step size used by step-size calculator: {}", maxStepSize)
 
-    lastStepsize = calc.getStepsize(currentTime, data.asJava, if (der != null)
-      {
-        der.asJava
-      } else
-      {
-        null
-      }, maxStepSize)
+    val calcMaxStepSize = getMaxStepSize(maxStepsize, instances);
+
+    logger.trace("Max FMU step size used by step-size calculator: {}", calcMaxStepSize)
+
+    lastStepsize = calc.getStepsize(currentTime, data.asJava, if (der != null) {
+      der.asJava
+    } else {
+      null
+    }, calcMaxStepSize)
 
 
     logger.trace("Calculated step size: {}", lastStepsize)
     return lastStepsize
   }
 
-  def getLastStepsize(): Double =
-  {
+  def getLastStepsize(): Double = {
     lastStepsize
   }
 
-  def getObservableOutputs(variableResolver: VariableResolver): CoeObject.Outputs =
-  {
+  def getObservableOutputs(variableResolver: VariableResolver): CoeObject.Outputs = {
 
     //TODO rewrite this into a function and reuse in the coe for get output and input
-    val tmp = constraints.toSet[Constraint].map
-    { x => x.getPorts.toSet[Variable].map
-    { v => variableResolver.resolve(v) }
+    val tmp = constraints.toSet[Constraint].map { x =>
+      x.getPorts.toSet[Variable].map { v => variableResolver.resolve(v) }
     }
     val t2 = tmp.flatten
     val t22 = t2.map(f => f._1)
-    val t222 = t22.map
-    { x => x -> t2.filter(p => p._1 == x).map(f => f._2) }
+    val t222 = t22.map { x => x -> t2.filter(p => p._1 == x).map(f => f._2) }
     val t = t222.toMap
 
     t
   }
 
-  def validateStep(nextTime: Double, newState: CoeObject.GlobalState): StepValidationResult =
-  {
+  def validateStep(nextTime: Double, newState: CoeObject.GlobalState): StepValidationResult = {
     val state = newState.instanceStates.map(s => s._1 -> s._2.state.asJava);
     val r = calc.validateStep(nextTime, state.asJava, supportsRollback)
     return new StepValidationResult(r.isValid(), r.hasReducedStepsize(), r.getStepsize)
   }
 
-  def setEndTime(endTime: Double) =
-  {
+  def setEndTime(endTime: Double) = {
     calc.setEndTime(endTime)
   }
 
