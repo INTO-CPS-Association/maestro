@@ -99,18 +99,17 @@ class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
     val minStepsize = stepsizeInterval.getMinimalStepsize
     val maxStepsize = stepsizeInterval.getMaximalStepsize
 
-
     // Invoke GetMaxStepSize on all FMUs.
     // Precondition: acc = maxStepSize.
     // Invariant: minStepSize <= acc <= maxStepSize
-    // Postcondition: minStepSize <= acc <= maxStepSize
+    // Postcondition: minStepSize <= result <= maxStepSize
     // Req. 1: If ANY are less than minStepsize, choose minStepsize.
-    // Req. 2: If ALL are larger than maxStepsize, choose maxStepsize
-    // Req. 3: If ANY are between minStepsize and maxStepsize AND rest are greater-than maxStepSize, then choose minimum of these.
+    // Req. 2: If ALL are greater than maxStepsize, choose maxStepsize
+    // Req. 3: If ANY are between minStepsize and maxStepsize AND none are less than minStepsize, then choose minimum of these.
     // Req. 4: If NONE succeeds in getMaxStepSize, choose maxStepsize
-    def getMaxStepSize(acc: Double, instances: Map[ModelConnection.ModelInstance, FmiSimulationInstance]): Double = {
+    def calcFMUsMaxStepSize(acc: Double, instances: Map[ModelConnection.ModelInstance, FmiSimulationInstance]): Double = {
       if (instances.isEmpty) {
-        // Req. 4 -> Due to precondition and invariant acc will be maxStepSize
+        // Due to precondition and invariant, minStepSize <= acc <= maxStepSize
         return acc;
       }
       else {
@@ -118,7 +117,7 @@ class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
         val result = simInst.instance.getMaxStepSize;
         if (result.status != Fmi2Status.OK) {
           logger.debug("GetMaxStepSize failed for the FMU: " + mi + ". The return was " + result.status);
-          getMaxStepSize(acc, instances.tail);
+          calcFMUsMaxStepSize(acc, instances.tail);
         }
         else {
           if (result.result < minStepsize) {
@@ -129,30 +128,29 @@ class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
           }
           else {
             logger.trace("'{}'.GetMaxStepSize = {}", mi, result.result: Any)
-            // FMU returns step size such that minStepSize < step size, choose step size or acc
+            // FMU returns step size such that minStepSize <= step size, choose step size or acc
             if (result.result < acc) {
-              // FMU returns step size such that minStepSize < step size < maxStepSize, as acc <= maxStepSize, choose step size.
-              getMaxStepSize(result.result, instances.tail);
+              // FMU returns step size such that minStepSize <= step size < acc <= maxStepSize. Choose step size.
+              calcFMUsMaxStepSize(result.result, instances.tail);
             }
             else {
               // FMU returns step size such that minStepsize <= acc <= step size, choose acc.
-              getMaxStepSize(acc, instances.tail);
+              calcFMUsMaxStepSize(acc, instances.tail);
             }
           }
         }
       }
     }
 
+    val FMUsMaxStepSize = calcFMUsMaxStepSize(maxStepsize, instances);
 
-    val calcMaxStepSize = getMaxStepSize(maxStepsize, instances);
-
-    logger.trace("Max FMU step size used by step-size calculator: {}", calcMaxStepSize)
+    logger.trace("Max FMU step size used by step-size calculator: {}", FMUsMaxStepSize)
 
     lastStepsize = calc.getStepsize(currentTime, data.asJava, if (der != null) {
       der.asJava
     } else {
       null
-    }, calcMaxStepSize)
+    }, FMUsMaxStepSize)
 
 
     logger.trace("Calculated step size: {}", lastStepsize)
