@@ -4,6 +4,9 @@
 git clone git@github.com:INTO-CPS-Association/maestro.git
 ```
 
+# Protocol
+https://github.com/INTO-CPS-Association/maestro/blob/development/orchestration/coe/src/main/resources/coe-protocol/coe-protocol.pdf
+
 # Development Environment
 
 ## General
@@ -81,6 +84,8 @@ mvn -Dmaven.repo.local=repository release:perform
 Now go to the master branch, merge with the newly created tag, and push. REMEMBER TO GO BACK TO DEVELOPMENT BRANCH!
 
 for more see https://github.com/overturetool/overture/wiki/Release-Process
+
+* Sonatype link: https://oss.sonatype.org/#stagingRepositories
 
 ## Upload the release
 
