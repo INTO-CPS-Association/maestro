@@ -1,5 +1,5 @@
 
-# [Maestro 1.0.2 - Release Notes - 30 April 2018](https://github.com/INTO-CPS-Association/maestro/milestone/3)
+# [Maestro 1.0.2 - Release Notes - 13 September 2018](https://github.com/INTO-CPS-Association/maestro/milestone/3)
 
 ## Bugfixes
 

@@ -399,6 +399,7 @@ object CoeSimulator
               rollback(instances, instanceStateMap)
               // roll back derivative estimation
               coe.derivativeEstimator.rollback()
+              // FIXME: This is wrong. It should not suggest the value of derivatives in the future.
               val newGlobalState = updateDerivatives(coe, initialStates, r._1.suggestedAlternativeNewTimeStepsize)
 
               //FIXME: re-set derivatives in the FMU's
@@ -418,9 +419,11 @@ object CoeSimulator
   {
     if (doStepRes.status == Fmi2Status.Discard)
       {
+        // The reduced step size is part of doStepRes
         Left(doStepRes, null)
       } else
       {
+        // The step was a success.
         getGlobalState(outputs, instances, currentCommunicationPoint + doStepRes.suggestedAlternativeNewTimeStepsize, doStepRes.suggestedAlternativeNewTimeStepsize, coe) match
         {
 
