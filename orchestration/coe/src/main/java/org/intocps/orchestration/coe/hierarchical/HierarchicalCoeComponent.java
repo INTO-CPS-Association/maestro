@@ -59,6 +59,7 @@ import scala.collection.Iterator;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -105,7 +106,7 @@ public class HierarchicalCoeComponent extends HierarchicalCoeStateComponent
 		String data = IOUtils.toString(requestProcessors.processCreateSession().getData());
 
 		JsonNode actualObj = mapper.readTree(data);
-		sessionId = actualObj.get("sessionId").asText();
+		this.sessionId = actualObj.get("sessionId").asText();
 		logger.debug("Created hierarchical coe session: {}", this.sessionId);
 		this.coeSession = sessionController.getCoe(sessionId);
 
@@ -337,6 +338,17 @@ public class HierarchicalCoeComponent extends HierarchicalCoeStateComponent
 
 	@Override public void freeInstance() throws FmuInvocationException
 	{
+		// Adds the result to the current COE
+		this.fmu.addAdditionalResource(this.coeSession.getResult());
+
+		try {
+			NanoHTTPD.Response resp = requestProcessors.processResult(sessionId, false);
+			//this.coeSession.addResource(); resp.getData()
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		try
 		{
 			requestProcessors.processDestroy(sessionId);

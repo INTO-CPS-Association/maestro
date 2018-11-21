@@ -49,6 +49,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -66,6 +67,7 @@ public class HierarchicalCoeFmu implements IFmu
 	private boolean unpacked = false;
 	private boolean loaded = false;
 	private final File path;
+	private final ArrayList<File> additionalResources = new ArrayList<>();
 
 	static String uriToPath(URI uri)
 	{
@@ -301,5 +303,15 @@ public class HierarchicalCoeFmu implements IFmu
 	@Override public boolean isValid()
 	{
 		return true;
+	}
+
+	@Override
+	public ArrayList<File> getAdditionalResources() {
+		return this.additionalResources;
+	}
+
+	public void addAdditionalResource(File f)
+	{
+		this.additionalResources.add(f);
 	}
 }

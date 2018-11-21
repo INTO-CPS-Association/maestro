@@ -38,6 +38,7 @@ import java.io.File
 import java.net.URI
 import java.util.List
 
+import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.intocps.orchestration.coe.BasicInitializer
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
@@ -52,7 +53,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.collection.mutable.LinkedList
+import scala.collection.mutable.{LinkedList, ListBuffer}
 
 class Coe(val resultRoot: File)
 {
@@ -63,7 +64,7 @@ class Coe(val resultRoot: File)
 
   val configuration: CoeConfiguration = new CoeConfiguration()
   var status: CoeStatus = CoeStatus.Unitialized
-
+  var additionalFmuResources : ListBuffer[File] = new ListBuffer[File];
   var result: File = new File(".")
   var parameters: List[ModelParameter] = new LinkedList[ModelParameter]()
   var lastExecTime: Long = 0
@@ -187,6 +188,25 @@ class Coe(val resultRoot: File)
     listeners.add(new ResultLogger(result, logVariables.getCsvResultLoggerVariables))
     status = CoeStatus.Initialized
     logs.asJava
+  }
+
+  def addResource(f: File) : Unit =
+  {
+    val fName = f.getName;
+    val fExt = FilenameUtils.getExtension(f.getName)
+    val fBaseName = FilenameUtils.removeExtension(f.getName);
+    def calcResultsFile(root: File, n: Integer) : File =
+    {
+      val fileName: String = if(n == 0) fName else fBaseName + "1." + fExt;
+      val result = new File(root, fileName);
+      if(result.exists())
+        calcResultsFile(root, n+1);
+      else
+        result
+    }
+    val newFile = calcResultsFile(resultRoot, 0);
+    FileUtils.copyFile(f, newFile);
+
   }
 
   def getResult(): File =
