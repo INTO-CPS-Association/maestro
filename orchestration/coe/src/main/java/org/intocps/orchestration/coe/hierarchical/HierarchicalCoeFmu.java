@@ -304,14 +304,4 @@ public class HierarchicalCoeFmu implements IFmu
 	{
 		return true;
 	}
-
-	@Override
-	public ArrayList<File> getAdditionalResources() {
-		return this.additionalResources;
-	}
-
-	public void addAdditionalResource(File f)
-	{
-		this.additionalResources.add(f);
-	}
 }

@@ -34,6 +34,7 @@
 */
 package org.intocps.orchestration.coe.scala
 
+import java.io.File
 import java.util
 
 import org.apache.commons.lang3.StringUtils
@@ -42,6 +43,7 @@ import org.intocps.orchestration.coe.AbortSimulationException
 import org.intocps.orchestration.coe.config.ModelConnection
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.cosim.base.FmiInstanceConfig
+import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeComponent
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.{ScalarVariable, Types}
 import org.intocps.orchestration.coe.util.{Numpy, Util}
@@ -126,7 +128,7 @@ object CoeSimulator
       }
     finally
       {
-        cleanupSimulation(instances, initialized)
+        cleanupSimulation(instances, initialized, Some(coe.addResource))
       }
     globalState
   }
@@ -696,7 +698,7 @@ object CoeSimulator
       }
   }
 
-  def cleanupSimulation(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstanceScalaWrapper], initialized: Boolean) =
+  def cleanupSimulation(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstanceScalaWrapper], initialized: Boolean, passResult : Option[(File) => Unit]) =
   {
     //Filter none existing instances. This occurs if called after a failing instantiate.
 
@@ -709,6 +711,18 @@ object CoeSimulator
           {
             fmiCallAll("Terminate", filteredInstances, (instance: ModelConnection.ModelInstance, i: IFmiComponent) =>
               {
+
+                if (i.isInstanceOf[HierarchicalCoeComponent])
+                {
+                  passResult match {
+                    case Some(f) => {
+                      logger.debug("Calling getResult for: {}", instance)
+                      f(i.asInstanceOf[HierarchicalCoeComponent].getResult());
+                    }
+                    case None => ()
+                  }
+
+                }
                 logger.debug("Calling terminate for: {}", instance)
                 i.terminate()
               })

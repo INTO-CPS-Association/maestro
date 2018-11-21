@@ -338,17 +338,6 @@ public class HierarchicalCoeComponent extends HierarchicalCoeStateComponent
 
 	@Override public void freeInstance() throws FmuInvocationException
 	{
-		// Adds the result to the current COE
-		this.fmu.addAdditionalResource(this.coeSession.getResult());
-
-		try {
-			NanoHTTPD.Response resp = requestProcessors.processResult(sessionId, false);
-			//this.coeSession.addResource(); resp.getData()
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		try
 		{
 			requestProcessors.processDestroy(sessionId);
@@ -397,5 +386,9 @@ public class HierarchicalCoeComponent extends HierarchicalCoeStateComponent
 			Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException
 	{
 		return new FmuResult<>(Fmi2Status.Error, null);
+	}
+
+	public File getResult(){
+		return this.coeSession.getResult();
 	}
 }

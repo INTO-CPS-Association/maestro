@@ -146,7 +146,7 @@ object CoeInitialize
       {
         case e: Exception =>
           {
-            CoeSimulator.cleanupSimulation(instances,false)
+            CoeSimulator.cleanupSimulation(instances,false, None)
             (outputs.keys ++ inputs.keys).map(mi => mi.key -> Try({
               logger.trace("Unloading library for {}", mi.key)
               fmuMap(mi.key)._1.unLoad()
