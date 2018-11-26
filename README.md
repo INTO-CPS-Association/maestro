@@ -34,6 +34,9 @@ this will download all dependencies and execute all the goals excluded in Eclips
 
 Import the projects unsing Maven Integeration into Eclipse (m2e): Import->Existing Maven Project, only import the tree leafs
 
+## Repository to download Jenkins builds
+http://overture.au.dk:8081/artifactory/into-cps/org/into-cps/orchestration/coe/
+
 
 # Release procedure
 

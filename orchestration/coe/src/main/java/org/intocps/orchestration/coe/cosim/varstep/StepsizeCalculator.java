@@ -130,7 +130,7 @@ public class StepsizeCalculator
 		currentSolutionPoint.advance(currentTime, currentValues, currentDerivatives, stepsize, wasStepsizeLimitedByDiscreteConstraint);
 		wasStepsizeLimitedByDiscreteConstraint = false;
 		final Double stepsizeToEnd = endTime - currentTime;
-		final Double maxStepsize = fmuMaxStepSizeHandler == null|| maxFmuStepsize == null ? Double.MAX_VALUE
+		final Double maxStepsize = fmuMaxStepSizeHandler == null && maxFmuStepsize == null ? Double.MAX_VALUE
 			: maxFmuStepsize;
 
 		if (isInitialStep())
