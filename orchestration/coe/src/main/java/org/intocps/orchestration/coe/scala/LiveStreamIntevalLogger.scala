@@ -57,7 +57,7 @@ object LiveStreamIntervalLogger
   }
 }
 
-class LiveStreamIntervalLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer, interval: Double) extends LiveStreamLogger(messageDelegate, logVariables)
+class LiveStreamIntervalLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer, interval: Double, namePrepend : Option[String]) extends LiveStreamLogger(messageDelegate, logVariables, namePrepend)
 {
   var nextReportTime: Double = 0
 

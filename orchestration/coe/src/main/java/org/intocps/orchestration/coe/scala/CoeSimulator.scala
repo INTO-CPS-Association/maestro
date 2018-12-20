@@ -101,8 +101,17 @@ object CoeSimulator
 
         fmiCallAll("Setup Experiment", instances, (instance: ModelConnection.ModelInstance, i: IFmiComponent) =>
           {
+            // If the component is a hierarchical coe component, then it must be able to send data through the websocket.
+            if(i.isInstanceOf[HierarchicalCoeComponent])
+            {
+              val hierCoeComp : HierarchicalCoeComponent = i.asInstanceOf[HierarchicalCoeComponent]
+              // Directly accessing Coe as the messageDelegate is a function and it is difficult to go through hierCoeComp, since it is a java, and not scala, class.
+              hierCoeComp.getCoe.setMessageDelegate(coe.messageDelegate)
+              hierCoeComp.getCoe.setPrepend(instance.toString ++ ".")
+            }
             logger.debug("Calling setupExperiment for {}", instance)
             i.setupExperiment(false, 0, startTime, true, endTime)
+
           })
 
         coe.initializer.initialize(CoeScalaUtil.asJava(inputs), JavaConversions.mapAsJavaMap(instances), coe.parameters)

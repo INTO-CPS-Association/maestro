@@ -43,21 +43,17 @@ import argonaut._
 /**
   * Created by kel on 18/07/16.
   */
-class LiveStreamLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer) extends IStateChangeListener
-{
-  override def notifyStateChange(newState: GlobalState): Unit =
-  {
+class LiveStreamLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer, namePrepend: Option[String]) extends IStateChangeListener {
+  override def notifyStateChange(newState: GlobalState): Unit = {
 
     //Report live streaming
-    if (messageDelegate != null && logVariables.livestreamVariablesCache.isDefined)
-    {
+    if (messageDelegate != null && logVariables.livestreamVariablesCache.isDefined) {
       liveStreamData(messageDelegate, logVariables.livestreamVariablesCache.get, newState)
     }
 
   }
 
-  override def stop(): Unit =
-  {}
+  override def stop(): Unit = {}
 
 
   /**
@@ -73,29 +69,30 @@ class LiveStreamLogger(messageDelegate: (String) => Unit, logVariables: LogVaria
     * @param liveStreaming
     * @param newState
     */
-  def liveStreamData(messageDelegate: (String) => Unit, liveStreaming: CoeObject.Outputs, newState: CoeObject.GlobalState) =
-  {
+  def liveStreamData(messageDelegate: (String) => Unit, liveStreaming: CoeObject.Outputs, newState: CoeObject.GlobalState) = {
     val liveStreamingData: Predef.Map[String, Predef.Map[String, Predef.Map[String, String]]] =
-      liveStreaming.groupBy
-      { case (key: ModelInstance, value: Set[ScalarVariable]) => key.key }
-        .map
-        { case (key: String, valueMiSc: Predef.Map[ModelInstance, Set[ScalarVariable]]) =>
+
+      liveStreaming.groupBy { case (key: ModelInstance, value: Set[ScalarVariable]) => namePrepend match {
+        case Some(np) => np ++ key.key
+        case None => key.key
+      }
+      } // Gives the structure: Map[prepend++FMUName,Map[ModelInstance, Set[ScalarVariable]]]
+        .map { case (key: String, valueMiSc: Predef.Map[ModelInstance, Set[ScalarVariable]]) =>
           key ->
-            valueMiSc.map
-            { case (keyMi: ModelInstance, valueSc: Set[ScalarVariable]) =>
+            valueMiSc.map { case (keyMi: ModelInstance, valueSc: Set[ScalarVariable]) =>
               keyMi.instanceName ->
-                valueSc.map
-                { scalarVariable =>
-                  scalarVariable.getName -> newState.instanceStates.get(keyMi).get.state.collectFirst
-                  { case (key, value) if (key.getName == scalarVariable.getName) => value }.get.toString
+                valueSc.map { scalarVariable =>
+                  scalarVariable.getName -> newState.instanceStates.get(keyMi).get.state.collectFirst { case (key, value) if (key.getName == scalarVariable.getName) => value }.get.toString
                 }.toMap
             }
         }
     messageDelegate(LivestreamMessage(newState.time, liveStreamingData).jencode.toString())
 
   }
-    case class LivestreamMessage(time: Double, values: Predef.Map[String, Predef.Map[String, Predef.Map[String, String]]])
-    implicit def livestreamMessageEncodeJson: EncodeJson[LivestreamMessage] =
-      EncodeJson((msg: LivestreamMessage) => ("time" := msg.time) ->: ("data" := msg.values) ->: jEmptyObject)
+
+  case class LivestreamMessage(time: Double, values: Predef.Map[String, Predef.Map[String, Predef.Map[String, String]]])
+
+  implicit def livestreamMessageEncodeJson: EncodeJson[LivestreamMessage] =
+    EncodeJson((msg: LivestreamMessage) => ("time" := msg.time) ->: ("data" := msg.values) ->: jEmptyObject)
 
 }

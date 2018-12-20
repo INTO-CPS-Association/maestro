@@ -50,6 +50,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.xml.NodeIterator;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.CoeObject;
+import org.intocps.orchestration.coe.scala.IStateChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -391,4 +392,10 @@ public class HierarchicalCoeComponent extends HierarchicalCoeStateComponent
 	public File getResult(){
 		return this.coeSession.getResult();
 	}
+
+	/**
+	 * Deprecated access to hierarchical coe
+	 * @return
+	 */
+	public Coe getCoe() { return this.coeSession;}
 }

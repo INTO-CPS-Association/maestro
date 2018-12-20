@@ -61,6 +61,7 @@ class Coe(val resultRoot: File)
 
   var messageDelegate: (String) => Unit = null
   val logger = LoggerFactory.getLogger(this.getClass)
+  var liveStreamPrepend : Option[String] = None;
 
   val configuration: CoeConfiguration = new CoeConfiguration()
   var status: CoeStatus = CoeStatus.Unitialized
@@ -128,10 +129,10 @@ class Coe(val resultRoot: File)
               {
                 LiveStreamIntervalLogger.getInterval()
               }
-            listeners.add(new LiveStreamIntervalLogger(messageDelegate, logVariables, interval))
+            listeners.add(new LiveStreamIntervalLogger(messageDelegate, logVariables, interval, liveStreamPrepend))
           } else
           {
-            listeners.add(new LiveStreamLogger(messageDelegate, logVariables))
+            listeners.add(new LiveStreamLogger(messageDelegate, logVariables, liveStreamPrepend))
           }
       } else if (reportProgress)
       {
@@ -159,6 +160,15 @@ class Coe(val resultRoot: File)
 
   }
 
+  def setMessageDelegate(f: String => Unit): Unit =
+  {
+    this.messageDelegate = f;
+  }
+
+  def setPrepend(p: String) : Unit =
+  {
+    this.liveStreamPrepend = Some(p)
+  }
 
   def initialize(files: java.util.Map[String, URI], connections: List[ModelConnection], parameters: List[ModelParameter], stepSizeCalculator: CoSimStepSizeCalculator, logVariables: LogVariablesContainer): java.util.Map[String, java.util.List[LogCategory]] =
   {

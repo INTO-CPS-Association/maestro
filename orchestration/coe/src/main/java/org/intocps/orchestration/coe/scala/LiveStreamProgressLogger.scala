@@ -43,7 +43,7 @@ import org.intocps.orchestration.coe.scala.CoeObject.GlobalState
 /**
   * Created by kel on 18/07/16.
   */
-class LiveStreamProgressLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer, endTime: Double) extends LiveStreamIntervalLogger(messageDelegate, logVariables,endTime / 10)
+class LiveStreamProgressLogger(messageDelegate: (String) => Unit, logVariables: LogVariablesContainer, endTime: Double) extends LiveStreamIntervalLogger(messageDelegate, logVariables,endTime / 10, None)
 {
 
 
