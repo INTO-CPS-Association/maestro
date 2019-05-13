@@ -7,7 +7,10 @@ git clone git@github.com:INTO-CPS-Association/maestro.git
 # Protocol
 https://github.com/INTO-CPS-Association/maestro/blob/development/orchestration/coe/src/main/resources/coe-protocol/coe-protocol.pdf
 
+
 # Development Environment
+
+**NOTE: Newer description of development environment available at https://github.com/INTO-CPS-Association/maestro/wiki/Development-Environment**
 
 ## General
 
