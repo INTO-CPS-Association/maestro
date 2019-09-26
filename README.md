@@ -65,7 +65,7 @@ cd releaseNotes
 ./github-fetch-milestone-issues.py 
 git add ReleaseNotes* && git commit -m "updated release notes"
 cd ..
-git push
+git push 
 ```
 
 and to update the public issue page https://twt-gmbh.github.io/INTO-CPS-COE/:
