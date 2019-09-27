@@ -58,7 +58,7 @@ Go through the issues and set them to a future milestone, if they have not been 
 
 Go to github and close the milestone which should be released.
 
-Then build the release notes:
+Then build the release notes (Note: Requires the environment-variable GITHUB_API_TOKEN):
 
 ```bash
 cd releaseNotes
