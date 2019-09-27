@@ -26,7 +26,7 @@ Please note that the interactive list is at <https://github.com/INTO-CPS-Associa
 * [#4 closed - Update the sources and build config to release to sonatype](https://github.com/INTO-CPS-Association/maestro/issues/4)
 * [#2 closed - Change distribution repo and release to central](https://github.com/INTO-CPS-Association/maestro/issues/2)
 
-# [Maestro 1.0.2 - Release Notes - 30 April 2018](https://github.com/INTO-CPS-Association/maestro/milestone/3)
+# [Maestro 1.0.2 - Release Notes - 13 September 2018](https://github.com/INTO-CPS-Association/maestro/milestone/3)
 
 Links require access to the private repository.
 
@@ -35,3 +35,13 @@ Links require access to the private repository.
 Please note that the interactive list is at <https://github.com/INTO-CPS-Association/maestro/milestone/3>
 
 * [#3 closed - Variable step: Too small GetMaxStepSize results in maximum used](https://github.com/INTO-CPS-Association/maestro/issues/3)
+
+# [Maestro 1.0.4 - Release Notes - 02 November 2018](https://github.com/INTO-CPS-Association/maestro/milestone/4)
+
+Links require access to the private repository.
+
+## Bugfixes
+
+Please note that the interactive list is at <https://github.com/INTO-CPS-Association/maestro/milestone/4>
+
+* [#19 closed - Update to org.intocps.fmi 1.0.4](https://github.com/INTO-CPS-Association/maestro/issues/19)
