@@ -15,6 +15,7 @@
 	<modules>
 		<module>modeldefinitionchecker</module>
 		<module>coe</module>
+		<module>webapi</module>
 	</modules>
 
 	<dependencies>

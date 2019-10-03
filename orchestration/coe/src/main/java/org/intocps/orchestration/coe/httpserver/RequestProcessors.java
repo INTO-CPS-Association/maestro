@@ -452,7 +452,7 @@ public class RequestProcessors
 
 	}
 
-	private List<ModelParameter> buildParameters(Map<String, Object> parameters)
+	public static List<ModelParameter> buildParameters(Map<String, Object> parameters)
 			throws Exception
 	{
 		List<ModelParameter> list = new Vector<>();
@@ -467,8 +467,7 @@ public class RequestProcessors
 		return list;
 	}
 
-	private Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> buildVariableMap(
-			Map<String, List<String>> rawVariableMap) throws Exception
+	public static Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> buildVariableMap(Map<String, List<String>> rawVariableMap) throws Exception
 	{
 		Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> map = null;
 		if (rawVariableMap != null)
@@ -490,7 +489,7 @@ public class RequestProcessors
 		return map;
 	}
 
-	private List<ModelConnection> buildConnections(
+	public static List<ModelConnection> buildConnections(
 			Map<String, List<String>> connections) throws Exception
 	{
 		List<ModelConnection> list = new Vector<>();
