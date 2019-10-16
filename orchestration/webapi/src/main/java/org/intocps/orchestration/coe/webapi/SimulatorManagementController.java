@@ -1,5 +1,7 @@
 package org.intocps.orchestration.coe.webapi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,37 +14,62 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/simulator")
+@RequestMapping("/api/v1/orchestrator")
 public class SimulatorManagementController {
     private final static Logger logger = LoggerFactory.getLogger(SimulatorManagementController.class);
-    static int simulatorId = 0;
 
+    static Map<String, Process> simulators = new HashMap<>();
 
-    static Map<Integer, Process> simulators = new HashMap<>();
+    @RequestMapping(value = "/ping")
+    public String ping() {
+        return "OK";
+    }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
     public CreateResponse create() throws Exception {
 
-        int id = simulatorId++;
-        logger.debug("Creating simulator: {}", id);
-        Pair<Integer, Process> integerProcessPair = launchNewClone();
+        String simulatorId = UUID.randomUUID().toString();
+        logger.debug("Creating simulator: {}", simulatorId);
+
+        File base = getSimulatorDirectory(simulatorId);
+
+        Pair<Integer, Process> integerProcessPair = launchNewClone(base);
         if (integerProcessPair == null || integerProcessPair.getValue() == null || !integerProcessPair.getValue().isAlive()) {
             throw new Exception("failed to launch simulator");
         }
-        simulators.put(id, integerProcessPair.getValue());
-        return new CreateResponse("" + id, getHostname() + ":" + integerProcessPair.getKey());
+        simulators.put(simulatorId, integerProcessPair.getValue());
+        return new CreateResponse(simulatorId, getHostname() + ":" + integerProcessPair.getKey());
+    }
+
+    private File getSimulatorDirectory(String simulatorId) {
+        return Paths.get("Simulators", simulatorId).toFile();
     }
 
     @RequestMapping(value = "/{simulatorId}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable String simulatorId) {
+    public void delete(@PathVariable String simulatorId) throws Exception {
         logger.debug("Deleting simulator: {}", simulatorId);
+
+        Process p = simulators.get(simulatorId);
+        if (p != null) {
+            p.destroy();
+            simulators.remove(simulatorId);
+            FileUtils.deleteDirectory(getSimulatorDirectory(simulatorId));
+            return;
+        }
+        throw new Exception("Unknown simulator id: " + simulatorId);
+    }
+
+    @RequestMapping(value = "/terminate", method = RequestMethod.POST)
+    public void terminate() throws Exception {
+        logger.info("System terminating. NOW");
+        System.exit(0);
     }
 
     private Integer getFreeport() throws IOException {
@@ -66,34 +93,21 @@ public class SimulatorManagementController {
         }
     }
 
-    public Pair<Integer, Process> launchNewClone() throws IOException, URISyntaxException {
-        final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-        final File currentJar = new File(SimulationController.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-
-        /* is it a jar file? */
-        if (!currentJar.getName().endsWith(".jar")) {
-            return null;
-        }
-
-        /* Build command: java -jar application.jar */
-        final ArrayList<String> command = new ArrayList<>();
-        command.add(javaBin);
-        command.add("-jar");
-        command.add(currentJar.getPath());
+    public Pair<Integer, Process> launchNewClone(File base) throws IOException {
         int port = getFreeport();
-        command.add("–server.port=" + port);
-
-        final ProcessBuilder builder = new ProcessBuilder(command);
-        return Pair.of(port, builder.start());
+        return Pair.of(port, SimulationLauncher.restartApplication(base, "-Dserver.port=" + port));
     }
 
     public class CreateResponse {
-        public final String id;
-        public final String url;
+        @JsonProperty("instance_id")
+        public final String instanceId;
+        @JsonProperty("instance_url")
+        public final String instanceUrl;
 
-        public CreateResponse(String id, String url) {
-            this.id = id;
-            this.url = url;
+        public CreateResponse(String instanceId, String instanceUrl) {
+            this.instanceId = instanceId;
+            this.instanceUrl = instanceUrl;
         }
+
     }
 }

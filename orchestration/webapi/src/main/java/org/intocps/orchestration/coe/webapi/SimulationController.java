@@ -1,7 +1,10 @@
 package org.intocps.orchestration.coe.webapi;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.FileAppender;
@@ -12,6 +15,7 @@ import org.intocps.orchestration.coe.cosim.VariableStepSizeCalculator;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.httpserver.Algorithm;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
+import org.intocps.orchestration.coe.json.InitializationMsgJson;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.LogVariablesContainer;
@@ -33,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 @RestController
@@ -44,8 +49,48 @@ public class SimulationController {
     private final static Logger logger = LoggerFactory.getLogger(SimulationController.class);
     private final Map<String, Coe> sessions = new HashMap<>();
 
+    public static InitializationMsgJson.Constraint convert(IVarStepConstraint constraint) {
+        if (constraint instanceof IninializationData.FmuMaxStepSizeConstraint) {
+            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
+            c.type = "fmumaxstepsize";
+            return c;
+
+        } else if (constraint instanceof IninializationData.BoundedDifferenceConstraint) {
+            IninializationData.BoundedDifferenceConstraint cIn = (IninializationData.BoundedDifferenceConstraint) constraint;
+            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
+            c.type = "boundeddifference";
+            c.abstol = cIn.abstol;
+            c.ports = cIn.ports;
+            c.reltol = cIn.reltol;
+            c.safety = cIn.safety;
+            c.skipDiscrete = cIn.skipDiscrete;
+            return c;
+
+        } else if (constraint instanceof IninializationData.SamplingConstraint) {
+            IninializationData.SamplingConstraint cIn = (IninializationData.SamplingConstraint) constraint;
+            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
+            c.type = "samplingrate";
+            c.base = cIn.base;
+            c.rate = cIn.rate;
+            c.startTime = cIn.startTime;
+            return c;
+
+        } else if (constraint instanceof IninializationData.ZeroCrossingConstraint) {
+            IninializationData.ZeroCrossingConstraint cIn = (IninializationData.ZeroCrossingConstraint) constraint;
+            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
+            c.type = "zerocrossing";
+            c.abstol = cIn.abstol;
+            c.ports = cIn.ports;
+            c.order = cIn.order;
+            c.safety = cIn.safety;
+            return c;
+        }
+        return null;
+    }
+
     @RequestMapping(value = "/upload/{sessionId}", method = RequestMethod.POST)
-    public void uploadFile(@PathVariable String sessionId, @RequestParam("fieldFile") MultipartFile file) throws IOException {
+    public void uploadFile(@PathVariable String sessionId,
+            @ApiParam(value = "File", required = true) @RequestParam("fieldFile") MultipartFile file) throws IOException {
 
         try (InputStream is = file.getInputStream()) {
             logger.debug("Uploaded file: {}", file.getOriginalFilename());
@@ -142,34 +187,15 @@ public class SimulationController {
                 throw new Exception("initsize must be a double");
             }
 
-            //FIXME implement constraints
-            //                Object constraintValues = body.algorithm.get("constraints");
-            //
-            //                final Set<InitializationMsgJson.Constraint> constraints = new HashSet<>();
-            //                if (constraintValues instanceof Map)
-            //                {
-            //                    for (Object entry : ((Map<String, Object>) constraintValues).values())
-            //                    {
-            //                        if (!(entry instanceof Map))
-            //                        {
-            //                            // TODO: error constraint is dont a map, cannot parse constraint
-            //                        }
-            //                    }
-            //
-            //                    Map<String, Map<String, Object>> namedConstraints = (Map<String, Map<String, Object>>) constraintValues;
-            //
-            //                    for (Map.Entry<String, Map<String, Object>> entry : namedConstraints.entrySet())
-            //                    {
-            //                        final InitializationMsgJson.Constraint constraint = InitializationMsgJson.Constraint.parse(entry.getValue());
-            //                        constraint.setId(entry.getKey());
-            //                        constraints.add(constraint);
-            //                    }
-            //                } else
-            //                {
-            //                    // TODO: error constraints does not contain map of named constraints
-            //                }
+            if (algorithm.constraints != null) {
+                for (IVarStepConstraint c : algorithm.constraints) {
+                    c.validate();
+                }
+            }
 
-            stepSizeCalculator = new VariableStepSizeCalculator(Collections.emptySet(), stepsizeInterval, algorithm.initsize);
+            Set<InitializationMsgJson.Constraint> constraints = algorithm.constraints == null ? null : algorithm.constraints.stream()
+                    .map(c -> convert(c)).collect(Collectors.toSet());
+            stepSizeCalculator = new VariableStepSizeCalculator(constraints, stepsizeInterval, algorithm.initsize);
             stepAlgorithm = Algorithm.VARSTEP;
 
             logger.info("Using Variable-step size calculator.");
@@ -336,13 +362,30 @@ public class SimulationController {
     //
     //    }
 
+    @ApiModel(subTypes = {FixedStepAlgorithmConfig.class, VariableStepAlgorithmConfig.class}, discriminator = "type",
+            description = "Simulation algorithm.")
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes({@JsonSubTypes.Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step"),
             @JsonSubTypes.Type(value = VariableStepAlgorithmConfig.class, name = "var-step")})
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-
     public interface IAlgorithmConfig {
+    }
+
+
+    @ApiModel(subTypes = {IninializationData.BoundedDifferenceConstraint.class, IninializationData.ZeroCrossingConstraint.class,
+            IninializationData.SamplingConstraint.class, IninializationData.FmuMaxStepSizeConstraint.class}, discriminator = "type",
+            description = "Simulation variable step algorithm constraint.", value = "VarStepConstraint")
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.PROPERTY, visible = true)
+    @JsonSubTypes({@JsonSubTypes.Type(value = IninializationData.BoundedDifferenceConstraint.class, name = "boundeddifference"),
+            @Type(value = IninializationData.ZeroCrossingConstraint.class, name = "zerocrossing"),
+            @Type(value = IninializationData.SamplingConstraint.class, name = "samplingrate"),
+            @Type(value = IninializationData.FmuMaxStepSizeConstraint.class, name = "fmumaxstepsize")})
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public interface IVarStepConstraint {
+
+        void validate() throws Exception;
     }
 
     public static class SimulateRequestBody {
@@ -409,6 +452,7 @@ public class SimulationController {
         }
     }
 
+    @ApiModel(parent = IAlgorithmConfig.class)
     public static class FixedStepAlgorithmConfig implements IAlgorithmConfig {
         @JsonProperty("size")
         public final Double size;
@@ -417,22 +461,42 @@ public class SimulationController {
         public FixedStepAlgorithmConfig(@JsonProperty("size") Double size) {
             this.size = size;
         }
+
+        public Double getSize() {
+            return size;
+        }
     }
 
+    @ApiModel(parent = IAlgorithmConfig.class)
     public static class VariableStepAlgorithmConfig implements IAlgorithmConfig {
 
         @JsonProperty("size")
         final Double[] size;
         @JsonProperty("initsize")
         final Double initsize;
+        @JsonProperty("constraints")
+        final List<IVarStepConstraint> constraints;
 
-        public VariableStepAlgorithmConfig(@JsonProperty("size") Double[] size, @JsonProperty("initsize") Double initsize) {
+        public VariableStepAlgorithmConfig(@JsonProperty("size") Double[] size, @JsonProperty("initsize") Double initsize,
+                @JsonProperty("constraints") final List<IVarStepConstraint> constraints) {
             this.size = size;
             this.initsize = initsize;
+            this.constraints = constraints;
+        }
+
+        public Double[] getSize() {
+            return size;
+        }
+
+        public Double getInitsize() {
+            return initsize;
+        }
+
+        public List<IVarStepConstraint> getConstraints() {
+            return constraints;
         }
 
     }
-
 
     public static class IninializationData {
         @JsonProperty("fmus")
@@ -461,10 +525,10 @@ public class SimulationController {
         final boolean simulationProgramDelay;
         @JsonProperty("hasExternalSignals")
         final boolean hasExternalSignals;
-
+        @JsonProperty("overrideLogLevel")
+        final InitializeLogLevel overrideLogLevel;
         @JsonProperty("algorithm")
         IAlgorithmConfig algorithm;
-
 
         @JsonCreator
         public IninializationData(@JsonProperty("fmus") Map<String, String> fmus, @JsonProperty("connections") Map<String, List<String>> connections,
@@ -474,7 +538,8 @@ public class SimulationController {
                 @JsonProperty("global_absolute_tolerance") double global_absolute_tolerance,
                 @JsonProperty("global_relative_tolerance") double global_relative_tolerance, @JsonProperty("loggingOn") boolean loggingOn,
                 @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
-                @JsonProperty("hasExternalSignals") boolean hasExternalSignals, @JsonProperty("algorithm") IAlgorithmConfig algorithm) {
+                @JsonProperty("hasExternalSignals") boolean hasExternalSignals, @JsonProperty("algorithm") IAlgorithmConfig algorithm,
+                @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;
@@ -489,6 +554,67 @@ public class SimulationController {
             this.global_absolute_tolerance = global_absolute_tolerance;
             this.global_relative_tolerance = global_relative_tolerance;
             this.algorithm = algorithm;
+            this.overrideLogLevel = overrideLogLevel;
+        }
+
+        public InitializeLogLevel getOverrideLogLevel() {
+            return overrideLogLevel;
+        }
+
+        public Map<String, String> getFmus() {
+            return fmus;
+        }
+
+        public Map<String, List<String>> getConnections() {
+            return connections;
+        }
+
+        public Map<String, Object> getParameters() {
+            return parameters;
+        }
+
+        public Map<String, List<String>> getLivestream() {
+            return livestream;
+        }
+
+        public Map<String, List<String>> getLogVariables() {
+            return logVariables;
+        }
+
+        public boolean isParallelSimulation() {
+            return parallelSimulation;
+        }
+
+        public boolean isStabalizationEnabled() {
+            return stabalizationEnabled;
+        }
+
+        public double getGlobal_absolute_tolerance() {
+            return global_absolute_tolerance;
+        }
+
+        public double getGlobal_relative_tolerance() {
+            return global_relative_tolerance;
+        }
+
+        public boolean isLoggingOn() {
+            return loggingOn;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public boolean isSimulationProgramDelay() {
+            return simulationProgramDelay;
+        }
+
+        public boolean isHasExternalSignals() {
+            return hasExternalSignals;
+        }
+
+        public IAlgorithmConfig getAlgorithm() {
+            return algorithm;
         }
 
         @JsonIgnore
@@ -507,14 +633,142 @@ public class SimulationController {
 
             return files;
         }
-    }
 
-    //    @RequestMapping(value = "", method = RequestMethod.POST)
-    //    public void createField(@RequestBody FieldRequest fieldRequest, Principal principal) throws Exception {
-    //        int tenantId = tenantDataService.getTenantId(principal.getName());
-    //        logger.debug("Creating field, user {}, tenant id {}", principal.getName(), tenantId);
-    //        com.agcocorp.logistics.resources.model.FieldConfiguration mapped = buildField(fieldRequest);
-    //        com.agcocorp.logistics.resources.model.Field created = service.create(tenantId, mapped);
-    //        return modelMapperService.getModelMapper().map(created);
-    //    }
+        enum InitializeLogLevel {
+            OFF,
+            FATAL,
+            ERROR,
+            WARN,
+            INFO,
+            DEBUG,
+            TRACE,
+            ALL
+        }
+
+        @ApiModel(parent = IVarStepConstraint.class)
+        public static class SamplingConstraint implements IVarStepConstraint {
+            final Integer base;
+            final Integer rate;
+            final Integer startTime;
+
+            public SamplingConstraint(Integer base, Integer rate, Integer startTime) {
+                this.base = base;
+                this.rate = rate;
+                this.startTime = startTime;
+            }
+
+            public Integer getBase() {
+                return base;
+            }
+
+            public Integer getRate() {
+                return rate;
+            }
+
+            public Integer getStartTime() {
+                return startTime;
+            }
+
+            @Override
+            public void validate() throws Exception {
+
+            }
+        }
+
+        @ApiModel(parent = IVarStepConstraint.class)
+        public static class FmuMaxStepSizeConstraint implements IVarStepConstraint {
+
+            @Override
+            public void validate() throws Exception {
+
+            }
+        }
+
+        @ApiModel(parent = IVarStepConstraint.class)
+        public static class BoundedDifferenceConstraint implements IVarStepConstraint {
+            final List<String> ports;
+            final Double reltol;
+            final Double abstol;
+            final Double safety;
+            final Boolean skipDiscrete;
+
+            public BoundedDifferenceConstraint(List<String> ports, Double reltol, Double abstol, Double safety, Boolean skipDiscrete) {
+                this.ports = ports;
+                this.reltol = reltol;
+                this.abstol = abstol;
+                this.safety = safety;
+                this.skipDiscrete = skipDiscrete;
+            }
+
+            public List<String> getPorts() {
+                return ports;
+            }
+
+            public Double getReltol() {
+                return reltol;
+            }
+
+            public Double getAbstol() {
+                return abstol;
+            }
+
+            public Double getSafety() {
+                return safety;
+            }
+
+            public Boolean getSkipDiscrete() {
+                return skipDiscrete;
+            }
+
+            @Override
+            public void validate() throws Exception {
+
+            }
+        }
+
+        @ApiModel(parent = IVarStepConstraint.class)
+        public static class ZeroCrossingConstraint implements IVarStepConstraint {
+            final List<String> ports;
+            final Integer order;
+            final Double abstol;
+            final Double safety;
+
+            public ZeroCrossingConstraint(List<String> ports, Integer order, Double abstol, Double safety) {
+                this.ports = ports;
+                this.order = order;
+                this.abstol = abstol;
+                this.safety = safety;
+            }
+
+            public List<String> getPorts() {
+                return ports;
+            }
+
+            public Integer getOrder() {
+                return order;
+            }
+
+            public Double getAbstol() {
+                return abstol;
+            }
+
+            public Double getSafety() {
+                return safety;
+            }
+
+            @Override
+            public void validate() throws Exception {
+
+            }
+        }
+
+        //    @RequestMapping(value = "", method = RequestMethod.POST)
+        //    public void createField(@RequestBody FieldRequest fieldRequest, Principal principal) throws Exception {
+        //        int tenantId = tenantDataService.getTenantId(principal.getName());
+        //        logger.debug("Creating field, user {}, tenant id {}", principal.getName(), tenantId);
+        //        com.agcocorp.logistics.resources.model.FieldConfiguration mapped = buildField(fieldRequest);
+        //        com.agcocorp.logistics.resources.model.Field created = service.create(tenantId, mapped);
+        //        return modelMapperService.getModelMapper().map(created);
+        //    }
+    }
 }
