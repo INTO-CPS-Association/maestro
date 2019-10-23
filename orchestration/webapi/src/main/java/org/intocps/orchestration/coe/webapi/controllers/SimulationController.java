@@ -1,4 +1,4 @@
-package org.intocps.orchestration.coe.webapi;
+package org.intocps.orchestration.coe.webapi.controllers;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;

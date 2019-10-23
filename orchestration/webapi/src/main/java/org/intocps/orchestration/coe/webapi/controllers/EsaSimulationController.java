@@ -1,4 +1,4 @@
-package org.intocps.orchestration.coe.webapi;
+package org.intocps.orchestration.coe.webapi.controllers;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,8 +12,10 @@ import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.util.ZipDirectory;
+import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -37,8 +39,13 @@ public class EsaSimulationController {
 
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(EsaSimulationController.class);
-
+    final CoeService coeService;
     Coe coe = null;
+
+    @Autowired
+    public EsaSimulationController(CoeService coeService) {
+        this.coeService = coeService;
+    }
 
 
     @RequestMapping(value = "/ping")
@@ -48,12 +55,14 @@ public class EsaSimulationController {
 
 
     @RequestMapping(value = "/initialize", method = RequestMethod.POST)
-    public void initializeSession(@RequestBody EsaIninializationData body) throws Exception {
+    public void initializeSession(@RequestBody EsaIninializationData body) throws Exception, InitilizationException {
+
+        validate(body);
 
         String session = UUID.randomUUID().toString();
         File root = new File(session);
         root.mkdirs();
-        coe = new Coe(root);
+        coe = coeService.create(root);
 
         logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body));
 
@@ -155,10 +164,48 @@ public class EsaSimulationController {
         //            logger.error("Internal error in initialization", e);
         //            //            return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, e.getMessage());
         //        }
+        return;
 
-
-        throw new Exception("internal error");
+        //        throw new Exception("internal error");
     }
+
+    private void validate(EsaIninializationData body) throws InitilizationException {
+
+        if (body == null) {
+            throw new InitilizationException("Missing body");
+        }
+
+        if (body.fmus == null || body.fmus.isEmpty()) {
+            throw new InitilizationException("Missing fmus");
+        }
+
+        if (body.requestedOutputs == null || body.requestedOutputs.isEmpty()) {
+            throw new InitilizationException("Missing requested outputs");
+        }
+
+        if (body.stepSize == null) {
+            throw new InitilizationException("Missing step size");
+        }
+
+        if (body.stepSize < 0) {
+            throw new InitilizationException("Invalid step size " + body.stepSize + " must be > 0");
+        }
+
+        if (body.endTime == null) {
+            throw new InitilizationException("Missing end time");
+        }
+
+        if (body.endTime < 0) {
+            throw new InitilizationException("Invalid end time " + body.endTime + " must be > 0");
+        }
+
+        if (body.endTime < body.stepSize) {
+            throw new InitilizationException(
+                    "End time must be equal or larger than step size. End time: " + body.endTime + ", Step size: " + body.stepSize);
+        }
+
+    }
+
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
     public void simulate(@RequestBody SimulateRequestBody body) throws Exception {
@@ -309,32 +356,38 @@ public class EsaSimulationController {
         private final Map<String, List<String>> connections;
         @JsonProperty("parameters")
         private final Map<String, Object> parameters;
+        @JsonProperty("inputs")
+        private final Map<String, Object> inputs;
         @JsonProperty("requested_outputs")
         private final Map<String, List<String>> requestedOutputs;
         @JsonProperty("step_size")
-        private final double stepSize;
+        private final Double stepSize;
         @JsonProperty("end_time")
-        private final double endTime;
+        private final Double endTime;
         @JsonProperty("log_levels")
         private final Map<String, List<String>> logLevels;
         @JsonProperty("simulator_log_level")
         private final InitializeLogLevel simulatorLogLevel;
 
-
         @JsonCreator
         public EsaIninializationData(@JsonProperty("fmus") Map<String, String> fmus,
                 @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
-                @JsonProperty("requested_outputs") Map<String, List<String>> outputs, @JsonProperty("step_size") double stepSize,
-                @JsonProperty("log_levels") final Map<String, List<String>> logLevels, @JsonProperty("end_time") final double endTime,
-                @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
+                @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
+                @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
+                @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;
+            this.inputs = inputs;
             this.requestedOutputs = outputs;
             this.stepSize = stepSize;
             this.endTime = endTime;
             this.logLevels = logLevels;
             this.simulatorLogLevel = simulatorLogLevel;
+        }
+
+        public Map<String, Object> getInputs() {
+            return inputs;
         }
 
         public Map<String, List<String>> getConnections() {
@@ -349,11 +402,11 @@ public class EsaSimulationController {
             return requestedOutputs;
         }
 
-        public double getStepSize() {
+        public Double getStepSize() {
             return stepSize;
         }
 
-        public double getEndTime() {
+        public Double getEndTime() {
             return endTime;
         }
 
