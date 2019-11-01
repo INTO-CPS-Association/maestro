@@ -1,5 +1,6 @@
 package org.intocps.orchestration.coe.webapi;
 
+import org.apache.commons.io.IOUtils;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.junit.Before;
@@ -15,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,7 +39,7 @@ public class EsaApiTest {
         Mockito.reset(service);
         Mockito.reset(coe);
 
-        when(service.create(any())).thenReturn(coe);
+        when(service.get()).thenReturn(coe);
 
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
@@ -53,7 +53,7 @@ public class EsaApiTest {
     @Test
     public void initialize() throws Exception {
 
-        String body = "{\n" + " \"fmus\":{\n" + " \"{controllerFmu}\":\"file://controller.fmu\",\n" + " \"{tankFmu}\":\"file ://tank.fmu\"\n" + " " + "},\n" + " \"connections\":{\n" + " \"{controllerFmu}.crtlIns.valve\":[\"{tankFmu}.tankIns.valve\"],\n" + " \"{tankFmu}.tankIns" + ".level\":[\"{controllerFmu}.crtlIns.level\"]\n" + " },\n" + " \"parameters\":{\n" + " \"{controllerFmu}.crtlIns.maxLevel\":8,\n" + " \"{controllerFmu}.crtlIns.minLevel\":2\n" + " },\n" + "\"inputs\":{\n" + " \"{tankFmu}.tankIns.valve\":true\n" + " },\n" + " \"requested_outputs\":{\n" + " \"{controllerFmu}.crtlIns\":[\"valve\"],\n" + " \"{controllerFmu}.tankIns\":[\"level\"]\n" + " },\n" + " \"log_levels\":{\n" + " \"{controllerFmu}.crtlIns\":[\"logAll\", \"logError\",\"VdmErr\"],\n" + " \"{tankFmu}.tankIns\":[]\n" + " },\n" + " \"step_size\":0.2,\n" + " \"end_time\":10,\n" + " \"simulator_log_level\":\"TRACE\"\n" + "}";
+        String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
     }
 
@@ -61,18 +61,18 @@ public class EsaApiTest {
     @Test
     public void initializeFailure() throws Exception {
 
-        when(service.create(any())).thenThrow(new RuntimeException());
+        when(service.get()).thenThrow(new RuntimeException());
 
-        String body = "{\n" + " \"fmus\":{\n" + " \"{controllerFmu}\":\"file://controller.fmu\",\n" + " \"{tankFmu}\":\"file ://tank.fmu\"\n" + " " + "},\n" + " \"connections\":{\n" + " \"{controllerFmu}.crtlIns.valve\":[\"{tankFmu}.tankIns.valve\"],\n" + " \"{tankFmu}.tankIns" + ".level\":[\"{controllerFmu}.crtlIns.level\"]\n" + " },\n" + " \"parameters\":{\n" + " \"{controllerFmu}.crtlIns.maxLevel\":8,\n" + " \"{controllerFmu}.crtlIns.minLevel\":2\n" + " },\n" + "\"inputs\":{\n" + " \"{tankFmu}.tankIns.valve\":true\n" + " },\n" + " \"requested_outputs\":{\n" + " \"{controllerFmu}.crtlIns\":[\"valve\"],\n" + " \"{controllerFmu}.tankIns\":[\"level\"]\n" + " },\n" + " \"log_levels\":{\n" + " \"{controllerFmu}.crtlIns\":[\"logAll\", \"logError\",\"VdmErr\"],\n" + " \"{tankFmu}.tankIns\":[]\n" + " },\n" + " \"step_size\":0.2,\n" + " \"end_time\":10,\n" + " \"simulator_log_level\":\"TRACE\"\n" + "}";
+        String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body))
                 .andExpect(status().is(HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
 
-    //    @Test
-    //    public void simulate() throws Exception {
-    //
-    //        String body = "{\n" + " \"time_step\":0.2,\n" + "\"inputs\":{\n" + " \"{tankFmu}.tankIns.valve\":true\n" + " }\n" + "}";
-    //        mockMvc.perform(post(baseUrl + "/simulate").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
-    //    }
+    @Test
+    public void simulate() throws Exception {
+
+        String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/simulate.json"));
+        mockMvc.perform(post(baseUrl + "/simulate").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
+    }
 }

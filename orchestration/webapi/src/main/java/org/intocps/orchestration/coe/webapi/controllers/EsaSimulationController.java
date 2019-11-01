@@ -9,8 +9,13 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.intocps.orchestration.coe.config.ModelConnection;
+import org.intocps.orchestration.coe.config.ModelParameter;
+import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
+import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
+import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
+import org.intocps.orchestration.coe.scala.LogVariablesContainer;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.slf4j.Logger;
@@ -36,11 +41,10 @@ import java.util.zip.ZipOutputStream;
 @RequestMapping("/api/esav1/simulator")
 public class EsaSimulationController {
 
-
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(EsaSimulationController.class);
     final CoeService coeService;
-    Coe coe = null;
+
 
     @Autowired
     public EsaSimulationController(CoeService coeService) {
@@ -55,152 +59,66 @@ public class EsaSimulationController {
 
 
     @RequestMapping(value = "/initialize", method = RequestMethod.POST)
-    public void initializeSession(@RequestBody EsaIninializationData body) throws Exception, InitilizationException {
+    public void initializeSession(@RequestBody EsaIninializationData body) throws Exception, InitializationException {
 
         validate(body);
 
-        String session = UUID.randomUUID().toString();
-        File root = new File(session);
-        root.mkdirs();
-        coe = coeService.create(root);
-
         logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body));
+        mapper.writeValue(new File(coeService.get().getResultRoot(), "initialize.json"), body);
 
-        if (coe == null) {
-            throw new Exception("bad session");
-        }
-
-        if (body == null) {
-            throw new Exception("Could not parse configuration: ");
-        }
 
         if (body.simulatorLogLevel != null) {
             LogManager.getRootLogger().setLevel(Level.toLevel(body.simulatorLogLevel.name()));
         }
 
-        if (body.fmus == null) {
-            throw new Exception("FMUs must not be null");
-        }
+        CoSimStepSizeCalculator stepSizeCalculator = new BasicFixedStepSizeCalculator(body.stepSize);
 
-        if (body.connections == null) {
-            throw new Exception("Connections must not be null");
-        }
+        List<ModelConnection> connections = RequestProcessors.buildConnections(body.connections);
 
-        //        CoSimStepSizeCalculator stepSizeCalculator = null;
-        //        Algorithm stepAlgorithm = Algorithm.NONE;
-        //        if (body.algorithm == null) {
-        //
-        //            stepAlgorithm = Algorithm.FIXED;
-        //            stepSizeCalculator = new BasicFixedStepSizeCalculator(0.1);
-        //            logger.info("No step size algorithm given. Defaulting to fixed-step with size 0.1");
-        //
-        //        } else if (body.algorithm instanceof FixedStepAlgorithmConfig) {
-        //            FixedStepAlgorithmConfig algorithm = (FixedStepAlgorithmConfig) body.algorithm;
-        //
-        //            if (algorithm.size == null) {
-        //                throw new Exception("fixed-step size must be an integer or double");
-        //            }
-        //
-        //            logger.info("Using Fixed-step size calculator with size = {}", algorithm.size);
-        //            stepSizeCalculator = new BasicFixedStepSizeCalculator(algorithm.size);
-        //            stepAlgorithm = Algorithm.FIXED;
-        //        } else if (body.algorithm instanceof VariableStepAlgorithmConfig) {
-        //            VariableStepAlgorithmConfig algorithm = (VariableStepAlgorithmConfig) body.algorithm;
-        //
-        //            if (algorithm.size.length != 2) {
-        //                logger.error("Unable to obtain the two size intervals");
-        //                throw new Exception("size must be a 2-dimensional array of doubles: [minsize,maxsize]");
-        //
-        //            }
-        //
-        //            final StepsizeInterval stepsizeInterval = new StepsizeInterval(algorithm.size[0], algorithm.size[1]);
-        //
-        //            if (algorithm.initsize == null) {
-        //                throw new Exception("initsize must be a double");
-        //            }
-        //
-        //            if (algorithm.constraints != null) {
-        //                for (IVarStepConstraint c : algorithm.constraints) {
-        //                    c.validate();
-        //                }
-        //            }
-        //
-        //            Set<InitializationMsgJson.Constraint> constraints = algorithm.constraints == null ? null : algorithm.constraints.stream()
-        //                    .map(c -> convert(c)).collect(Collectors.toSet());
-        //            stepSizeCalculator = new VariableStepSizeCalculator(constraints, stepsizeInterval, algorithm.initsize);
-        //            stepAlgorithm = Algorithm.VARSTEP;
+        LogVariablesContainer logVariables = new LogVariablesContainer(new HashMap<>(), RequestProcessors.buildVariableMap(body.getLogLevels()));
 
-        logger.info("Using Variable-step size calculator.");
-        //        }
+        List<ModelParameter> parameters = RequestProcessors.buildParameters(body.parameters);
 
+        Map<String, URI> fmus = body.getFmuFiles();
 
-        Map<String, List<ModelDescription.LogCategory>> logs = null;
+        List<ModelParameter> inputs = RequestProcessors.buildParameters(body.inputs);
+        Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs = RequestProcessors.buildVariableMap(body.requestedOutputs);
 
-        //        mapper.writeValue(new File(coe.getResultRoot(), "initialize.json"), body);
-        //        try {
-        //            coe.getConfiguration().isStabalizationEnabled = body.stabalizationEnabled;
-        //            coe.getConfiguration().global_absolute_tolerance = body.global_absolute_tolerance;
-        //            coe.getConfiguration().global_relative_tolerance = body.global_relative_tolerance;
-        //            coe.getConfiguration().loggingOn = body.loggingOn;
-        //            coe.getConfiguration().visible = body.visible;
-        //            coe.getConfiguration().parallelSimulation = body.parallelSimulation;
-        //            coe.getConfiguration().simulationProgramDelay = body.simulationProgramDelay;
-        //            coe.getConfiguration().hasExternalSignals = body.hasExternalSignals;
-        //            logs = coe.initialize(body.getFmuFiles(), RequestProcessors.buildConnections(body.connections),
-        //                    RequestProcessors.buildParameters(body.parameters), stepSizeCalculator,
-        //                    new LogVariablesContainer(RequestProcessors.buildVariableMap(body.livestream),
-        //                            RequestProcessors.buildVariableMap(body.logVariables)));
-        //
-        //
-        //            if (stepAlgorithm == Algorithm.VARSTEP && !coe.canDoVariableStep()) {
-        //                logger.error("Initialization failed: One or more FMUs cannot perform variable step size");
-        //                //                return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.BAD_REQUEST, "One or more FMUs does not support variable step size.");
-        //            }
-        //            logger.trace("Initialization completed obtained the following logging categories: {}", logs);
-        //
-        //            return new InitializeStatusModel(coe.getState() + "", sessionId, null, coe.lastExecTime());
-        //
-        //        } catch (Exception e) {
-        //            logger.error("Internal error in initialization", e);
-        //            //            return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, e.getMessage());
-        //        }
-        return;
-
-        //        throw new Exception("internal error");
+        coeService.initialize(fmus, stepSizeCalculator, body.endTime, parameters, connections, logVariables, inputs, outputs);
     }
 
-    private void validate(EsaIninializationData body) throws InitilizationException {
+    private void validate(EsaIninializationData body) throws InitializationException {
 
         if (body == null) {
-            throw new InitilizationException("Missing body");
+            throw new InitializationException("Missing body");
         }
 
         if (body.fmus == null || body.fmus.isEmpty()) {
-            throw new InitilizationException("Missing fmus");
+            throw new InitializationException("Missing fmus");
         }
 
         if (body.requestedOutputs == null || body.requestedOutputs.isEmpty()) {
-            throw new InitilizationException("Missing requested outputs");
+            throw new InitializationException("Missing requested outputs");
         }
 
         if (body.stepSize == null) {
-            throw new InitilizationException("Missing step size");
+            throw new InitializationException("Missing step size");
         }
 
         if (body.stepSize < 0) {
-            throw new InitilizationException("Invalid step size " + body.stepSize + " must be > 0");
+            throw new InitializationException("Invalid step size " + body.stepSize + " must be > 0");
         }
 
         if (body.endTime == null) {
-            throw new InitilizationException("Missing end time");
+            throw new InitializationException("Missing end time");
         }
 
         if (body.endTime < 0) {
-            throw new InitilizationException("Invalid end time " + body.endTime + " must be > 0");
+            throw new InitializationException("Invalid end time " + body.endTime + " must be > 0");
         }
 
         if (body.endTime < body.stepSize) {
-            throw new InitilizationException(
+            throw new InitializationException(
                     "End time must be equal or larger than step size. End time: " + body.endTime + ", Step size: " + body.stepSize);
         }
 
@@ -208,51 +126,27 @@ public class EsaSimulationController {
 
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
-    public void simulate(@RequestBody SimulateRequestBody body) throws Exception {
+    public void simulate(@RequestBody EsaSimulateRequestBody body) throws Exception {
 
+        Coe coe = coeService.get();
 
         mapper.writeValue(new File(coe.getResultRoot(), "simulate.json"), body);
 
+        List<ModelParameter> inputs = RequestProcessors.buildParameters(body.inputs);
 
-        Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
 
-        if (body.logLevels != null) {
-            for (Map.Entry<String, List<String>> entry : body.logLevels.entrySet()) {
-                try {
-                    logLevels.put(ModelConnection.ModelInstance.parse(entry.getKey()), entry.getValue());
-                } catch (Exception e) {
-                    throw new Exception("Error in logging " + "levels");
-                }
-            }
-        }
-        boolean async = false;
-        if (!async) {
-            try {
-                coe.simulate(body.startTime, body.endTime, logLevels, body.reportProgress, body.liveLogInterval);
-                //                return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.OK, Response.MIME_JSON,
-                //                        mapper.writeValueAsString(sessionController.getStatus(sessionId)));
-                return;
-            } catch (Exception e) {
-                logger.error("Error in simulation", e);
-                throw e;
-                //                return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.BAD_REQUEST, e.getMessage());
-            }
-        } else {
-            (new Thread(() -> {
-                try {
-                    coe.simulate(body.startTime, body.endTime, logLevels, body.reportProgress, body.liveLogInterval);
-                } catch (Exception e) {
-                    coe.setLastError(e);
-                }
-            })).start();
-            //            return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.OK, Response.MIME_JSON,
-            //                    mapper.writeValueAsString(sessionController.getStatus(sessionId)));
-            return;
+        try {
+            coeService.simulate(body.timeStep, inputs);
+        } catch (Exception e) {
+            logger.error("Error in simulation", e);
+            throw e;
         }
     }
 
+
     @RequestMapping(value = "/stops", method = RequestMethod.POST)
     public void stop() {
+        Coe coe = coeService.get();
         if (coe != null) {
             coe.stopSimulation();
         }
@@ -260,6 +154,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/result/plain", method = RequestMethod.GET)
     public ResponseEntity<Resource> getResultPlain() throws Exception {
+        Coe coe = coeService.get();
         if (coe == null) {
             throw new Exception("bad session");
         }
@@ -271,6 +166,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/result/zip", method = RequestMethod.GET, produces = "application/zip")
     public void getResultZip(HttpServletResponse response) throws Exception {
+        Coe coe = coeService.get();
         if (coe == null) {
             throw new Exception("bad session");
         }
@@ -287,6 +183,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/destroy", method = RequestMethod.GET)
     public void destroy() throws Exception {
+        Coe coe = coeService.get();
         if (coe == null) {
             throw new Exception("bad session");
         }
@@ -324,27 +221,18 @@ public class EsaSimulationController {
     }
 
 
-    public static class SimulateRequestBody {
-        @JsonProperty("startTime")
-        final double startTime;
-        @JsonProperty("endTime")
-        final double endTime;
-        @JsonProperty("logLevels")
-        final Map<String, List<String>> logLevels;
-        @JsonProperty("reportProgress")
-        final Boolean reportProgress;
-        @JsonProperty("liveLogInterval")
-        final Integer liveLogInterval;
+    public static class EsaSimulateRequestBody {
+        @JsonProperty("time_step")
+        final double timeStep;
+
+        @JsonProperty("inputs")
+        final Map<String, Object> inputs;
+
 
         @JsonCreator
-        public SimulateRequestBody(@JsonProperty("startTime") double startTime, @JsonProperty("endTime") double endTime,
-                @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("reportProgress") Boolean reportProgress,
-                @JsonProperty("liveLogInterval") Integer liveLogInterval) {
-            this.startTime = startTime;
-            this.endTime = endTime;
-            this.logLevels = logLevels;
-            this.reportProgress = reportProgress;
-            this.liveLogInterval = liveLogInterval;
+        public EsaSimulateRequestBody(@JsonProperty("time_step") final double timeStep, @JsonProperty("inputs") final Map<String, Object> inputs) {
+            this.timeStep = timeStep;
+            this.inputs = inputs;
         }
     }
 
