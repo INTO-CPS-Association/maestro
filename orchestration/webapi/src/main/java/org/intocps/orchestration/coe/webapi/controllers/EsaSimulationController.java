@@ -144,7 +144,7 @@ public class EsaSimulationController {
     }
 
 
-    @RequestMapping(value = "/stops", method = RequestMethod.POST)
+    @RequestMapping(value = "/stop", method = RequestMethod.POST)
     public void stop() {
         Coe coe = coeService.get();
         if (coe != null) {
