@@ -73,7 +73,7 @@ public class EsaSimulationController {
 
         CoSimStepSizeCalculator stepSizeCalculator = new BasicFixedStepSizeCalculator(body.stepSize);
 
-        List<ModelConnection> connections = RequestProcessors.buildConnections(body.connections);
+        List<ModelConnection> connections = body.connections != null ? RequestProcessors.buildConnections(body.connections) : null;
 
         LogVariablesContainer logVariables = new LogVariablesContainer(new HashMap<>(), RequestProcessors.buildVariableMap(body.getLogLevels()));
 
