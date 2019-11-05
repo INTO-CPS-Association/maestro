@@ -1,6 +1,6 @@
 {
   "fmus": {
-    "{controllerFmu}": "file:///Users/casperthule/source/into-cps-association/maestro/orchestration/webapi/src/test/resources/esa/singleFmuTest1/watertankController.fmu"
+    "{controllerFmu}": "src/test/resources/esa/singleFmuTest1/watertankController.fmu"
   },
   "parameters": {
     "{controllerFmu}.crtlIns.maxLevel": 8,
