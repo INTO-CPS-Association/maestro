@@ -30,6 +30,8 @@ public class EsaApiAndCoeServiceTest2 {
     @Autowired
     private CoeService service;
     @Autowired
+    private Coe coe;
+    @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
