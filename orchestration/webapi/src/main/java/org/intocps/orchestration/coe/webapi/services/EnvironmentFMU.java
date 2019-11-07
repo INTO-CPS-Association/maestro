@@ -1,27 +1,44 @@
 package org.intocps.orchestration.coe.webapi.services;
 
-import org.intocps.orchestration.coe.config.ModelConnection;
+import org.intocps.fmi.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipException;
 
-public class EnvironmentFMU {
+public class EnvironmentFMU implements IFmu {
+    private static EnvironmentFMU environmentFMU;
     final String key;
-    private List<ModelDescription.ScalarVariable> inputs;
-    private Set<ModelDescription.ScalarVariable> outputs;
     final String fmuName;
     final String instanceName;
+    private String modelDescriptionXML;
+    private List<ModelDescription.ScalarVariable> inputs;
+    private List<ModelDescription.ScalarVariable> outputs;
 
     public EnvironmentFMU(String fmuName, String instanceName) {
-        this.key = fmuName;
+        this.key = "{" + fmuName + "}";
         this.fmuName = fmuName;
         this.instanceName = instanceName;
+    }
+
+    public static EnvironmentFMU getInstance() {
+
+        return environmentFMU;
+    }
+
+    public static EnvironmentFMU CreateEnvironmentFMU(String fmuName, String instanceName) {
+        environmentFMU = new EnvironmentFMU(fmuName, instanceName);
+        return getInstance();
+    }
+
+    public void createModelDescriptionXML() {
+        modelDescriptionXML = EnvironmentFMUModelDescription.CreateEnvironmentFMUModelDescription(inputs, outputs, fmuName);
     }
 
     private Object start(ModelDescription.Type type) {
@@ -48,9 +65,10 @@ public class EnvironmentFMU {
      * Calculates the inputs to the environment based on the outputs of the Single FMU.
      * Invariant:
      * The name and value reference of a calculated input variable shall be identical to its related output variable.
+     *
      * @param outputs
      */
-    public void calculateInputs(Set<ModelDescription.ScalarVariable> outputs) {
+    public void calculateInputs(List<ModelDescription.ScalarVariable> outputs) {
         this.inputs = outputs.stream().map(sv -> {
             ModelDescription.ScalarVariable inpSv = new ModelDescription.ScalarVariable();
             inpSv.causality = ModelDescription.Causality.Input;
@@ -80,14 +98,49 @@ public class EnvironmentFMU {
             outputScalarVariable.valueReference = scalarVariable.valueReference;
             outputScalarVariable.name = scalarVariable.name;
             return outputScalarVariable;
-        }).collect(Collectors.toSet());
+        }).collect(Collectors.toList());
     }
 
     public List<ModelDescription.ScalarVariable> getInputs() {
         return inputs;
     }
 
-    public Set<ModelDescription.ScalarVariable> getOutputs() {
+    public List<ModelDescription.ScalarVariable> getOutputs() {
         return outputs;
+    }
+
+    @Override
+    public void load() throws FmuInvocationException, FmuMissingLibraryException {
+
+    }
+
+    @Override
+    public IFmiComponent instantiate(String s, String s1, boolean b, boolean b1, IFmuCallback iFmuCallback) throws XPathExpressionException, FmiInvalidNativeStateException {
+        return null;
+    }
+
+    @Override
+    public void unLoad() throws FmiInvalidNativeStateException {
+
+    }
+
+    @Override
+    public String getVersion() throws FmiInvalidNativeStateException {
+        return null;
+    }
+
+    @Override
+    public String getTypesPlatform() throws FmiInvalidNativeStateException {
+        return null;
+    }
+
+    @Override
+    public InputStream getModelDescription() throws ZipException, IOException {
+        return null;
+    }
+
+    @Override
+    public boolean isValid() {
+        return false;
     }
 }

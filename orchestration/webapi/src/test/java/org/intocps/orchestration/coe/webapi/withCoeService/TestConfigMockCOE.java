@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 @Profile("test2")
 @Configuration
-public class TestConfiguration2 {
+public class TestConfigMockCOE {
 
     @Bean
     @Primary
