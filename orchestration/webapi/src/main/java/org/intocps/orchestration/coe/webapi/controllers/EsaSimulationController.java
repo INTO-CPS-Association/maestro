@@ -15,7 +15,6 @@ import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
-import org.intocps.orchestration.coe.scala.LogVariablesContainer;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.slf4j.Logger;
@@ -66,7 +65,6 @@ public class EsaSimulationController {
         logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body));
         mapper.writeValue(new File(coeService.get().getResultRoot(), "initialize.json"), body);
 
-
         if (body.simulatorLogLevel != null) {
             LogManager.getRootLogger().setLevel(Level.toLevel(body.simulatorLogLevel.name()));
         }
@@ -75,7 +73,7 @@ public class EsaSimulationController {
 
         List<ModelConnection> connections = body.connections != null ? RequestProcessors.buildConnections(body.connections) : null;
 
-        LogVariablesContainer logVariables = new LogVariablesContainer(new HashMap<>(), RequestProcessors.buildVariableMap(body.getLogLevels()));
+        //Map<ModelConnection.ModelInstance, List<String>> logLevels = RequestProcessors.buildLogLevelsMap(body.getLogLevels());
 
         List<ModelParameter> parameters = RequestProcessors.buildParameters(body.parameters);
 
@@ -84,7 +82,7 @@ public class EsaSimulationController {
         List<ModelParameter> inputs = RequestProcessors.buildParameters(body.inputs);
         Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs = RequestProcessors.buildVariableMap(body.requestedOutputs);
 
-        coeService.initialize(fmus, stepSizeCalculator, body.endTime, parameters, connections, logVariables, inputs, outputs);
+        coeService.initialize(fmus, stepSizeCalculator, body.endTime, parameters, connections, body.getLogLevels(), inputs, outputs);
     }
 
     private void validate(EsaIninializationData body) throws InitializationException {
@@ -259,10 +257,10 @@ public class EsaSimulationController {
 
         @JsonCreator
         public EsaIninializationData(@JsonProperty("fmus") Map<String, String> fmus,
-                @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
-                @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
-                @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
-                @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
+                                     @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
+                                     @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
+                                     @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
+                                     @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;

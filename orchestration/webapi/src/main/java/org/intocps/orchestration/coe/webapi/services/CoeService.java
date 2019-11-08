@@ -22,8 +22,8 @@ public class CoeService {
     private boolean simulating = false;
     private double startTime = 0d;
     private double endTime = 0d;
-    private Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs;
     private Map<String, List<ModelDescription.LogCategory>> availableDebugLoggingCategories;
+    private Map<String, List<String>> requestedDebugLoggingCategories;
     private Coe coe;
     private Coe.CoeSimulationHandle simulationHandle = null;
 
@@ -68,7 +68,7 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-                           List<ModelConnection> connections, LogVariablesContainer logVariables, List<ModelParameter> inputs,
+                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
                            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
@@ -108,6 +108,8 @@ public class CoeService {
                 List<ModelConnection> singleFmuOutputsToEnvFmuInputs = createEnvConnection(singleFmuCorrelatedOutputs, singleFmuInstanceOutputs.
                         getKey(), environmentFMUInstance);
                 connections.addAll(singleFmuOutputsToEnvFmuInputs);
+                FmuFactory.customFactory = new EnvironmentFMUFactory();
+                environmentFMU.createModelDescriptionXML();
             } else {
                 throw new InitializationException("Only 1 instance is allowed for single FMU simulation");
             }
@@ -116,7 +118,6 @@ public class CoeService {
 
         this.startTime = 0d;
         this.endTime = endTime;
-        this.outputs = outputs;
 
         if (connections == null || connections.isEmpty()) {
             throw new Exception("No connections provided");
@@ -126,14 +127,24 @@ public class CoeService {
             coe.getConfiguration().isStabalizationEnabled = false;
             coe.getConfiguration().global_absolute_tolerance = 0d;
             coe.getConfiguration().global_relative_tolerance = 0d;
-            coe.getConfiguration().loggingOn = logVariables != null && logVariables.getLogVariables().values().stream().mapToLong(Set::size)
-                    .sum() > 0;
+            coe.getConfiguration().loggingOn = requestedDebugLoggingCategories != null && !requestedDebugLoggingCategories.isEmpty();
             coe.getConfiguration().visible = false;
             coe.getConfiguration().parallelSimulation = false;
             coe.getConfiguration().simulationProgramDelay = false;
-            coe.getConfiguration().hasExternalSignals = true;//TODO maybe?
+            coe.getConfiguration().hasExternalSignals = false;//TODO maybe?
 
-            this.availableDebugLoggingCategories = coe.initialize(fmus, connections, parameters, stepSizeCalculator, logVariables);
+            this.availableDebugLoggingCategories = coe.initialize(fmus, connections, parameters, stepSizeCalculator, new LogVariablesContainer(new HashMap<>(), outputs));
+
+            // Assert that the logVariables are within the availableDebugLoggingCategories
+            boolean logVariablesOK = requestedDebugLoggingCategories.entrySet().stream().allMatch(entry -> {
+                String key = entry.getKey();
+                List<String> value = entry.getValue();
+                return availableDebugLoggingCategories.containsKey(key) &&
+                        availableDebugLoggingCategories.get(key).stream().map(logCategory -> logCategory.name).collect(Collectors.toList()).containsAll(value);
+            });
+            this.requestedDebugLoggingCategories = requestedDebugLoggingCategories;
+            if (logVariablesOK == false)
+                throw new IllegalArgumentException("Log categories do not align with the log categories within the FMUs");
 
             logger.trace("Initialization completed obtained the following logging categories: {}", availableDebugLoggingCategories.entrySet().stream()
                     .map(map -> map.getKey() + "=" + map.getValue().stream().map(c -> c.name).collect(Collectors.joining(",", "[", "]")))
@@ -150,10 +161,15 @@ public class CoeService {
         get().simulate(startTime, endTime, debugLoggingCategories, reportProgress, liveLogInterval);
     }
 
-    public void configureSimulationDeltaStepping(Map<ModelConnection.ModelInstance, List<String>> debugLoggingCategories, boolean reportProgress,
-                                                 double liveLogInterval) {
+    public void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
+                                                 double liveLogInterval) throws Exception {
         if (simulationHandle == null) {
-            this.simulationHandle = get().getSimulateControlHandle(startTime, endTime, debugLoggingCategories, reportProgress, liveLogInterval);
+
+            Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
+            for (Map.Entry<String, List<String>> entry : requestedDebugLoggingCategories.entrySet()) {
+                reqDebugLoggingCategories.put(ModelConnection.ModelInstance.parse(entry.getKey()), entry.getValue());
+            }
+            this.simulationHandle = get().getSimulateControlHandle(startTime, endTime, reqDebugLoggingCategories, reportProgress, liveLogInterval);
         }
     }
 

@@ -63,7 +63,7 @@ public class EnvironmentFMUModelDescription {
     public static String createEmptyDependencies(int size, int startIndex) {
         ArrayList<String> emptyDependencies = new ArrayList<>();
         for (int i = startIndex; i < startIndex + size; i++) {
-            emptyDependencies.add(String.format("<Unknown index=\"%i\" dependencies=\"\"/>", i));
+            emptyDependencies.add(String.format("<Unknown index=\"%d\" dependencies=\"\"/>", i));
         }
         return String.join("\n\n", emptyDependencies);
     }

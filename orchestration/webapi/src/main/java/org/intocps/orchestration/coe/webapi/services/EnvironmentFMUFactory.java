@@ -11,7 +11,7 @@ public class EnvironmentFMUFactory implements IFmuFactory {
 
     @Override
     public boolean accept(URI uri) {
-        return uri.getScheme() != null && (uri.getScheme().equals("external"));
+        return uri.getScheme() != null && (uri.getScheme().equals("environment"));
     }
 
     @Override
