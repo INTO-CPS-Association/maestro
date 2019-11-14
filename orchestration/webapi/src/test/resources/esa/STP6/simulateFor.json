@@ -1,5 +1,5 @@
 {
-  "time_step": 5,
+  "time_step": 10,
   "inputs": {
     "{tankFmu}.tankIns.valve": true
   }

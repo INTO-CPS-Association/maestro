@@ -18,5 +18,13 @@
   "algorithm": {
     "type": "fixed-step",
     "size": 0.1
+  },
+  "livestream": {
+    "{crtl}.crtlInstance": [
+      "valve"
+    ],
+    "{wt}.wtInstance": [
+      "level"
+    ]
   }
 }
