@@ -94,10 +94,10 @@ public class CoeService {
         }
     }
 
-    public void simulate(double delta) throws Exception {
+    public void simulate(double delta) throws SimulatorNotConfigured {
 
         if (simulationHandle == null) {
-            throw new Exception("Simulation handle not configured");
+            throw new SimulatorNotConfigured("Simulation handle not configured");
         }
         if (!this.simulating) {
             this.simulationHandle.preSimulation();
@@ -114,12 +114,24 @@ public class CoeService {
         get().stopSimulation();
     }
 
-    public void simulate(double delta, List<ModelParameter> inputs) throws Exception {
+    public void simulate(double delta, List<ModelParameter> inputs) throws SimulatorNotConfigured, SimulatorInputNotRegonized {
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
         }
 
         simulate(delta);
+    }
+
+    public class SimulatorNotConfigured extends Exception {
+        public SimulatorNotConfigured(String message) {
+            super(message);
+        }
+    }
+
+    public class SimulatorInputNotRegonized extends Exception {
+        public SimulatorInputNotRegonized(String message) {
+            super(message);
+        }
     }
 }

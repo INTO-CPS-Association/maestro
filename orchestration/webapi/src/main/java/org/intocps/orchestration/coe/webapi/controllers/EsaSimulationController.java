@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.zip.ZipOutputStream;
@@ -126,14 +127,14 @@ public class EsaSimulationController {
 
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
-    public void simulate(@RequestBody EsaSimulateRequestBody body) throws Exception {
+    public void simulate(@RequestBody
+            EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, CoeService.SimulatorInputNotRegonized, IOException, ModelConnection.InvalidConnectionException {
 
         Coe coe = coeService.get();
 
         mapper.writeValue(new File(coe.getResultRoot(), "simulate.json"), body);
 
         List<ModelParameter> inputs = RequestProcessors.buildParameters(body.inputs);
-
 
         try {
             coeService.simulate(body.timeStep, inputs);
