@@ -1,0 +1,16 @@
+{
+  "fmus": {
+    "{tankFmu}": "file://../fmus/tank.fmu"
+  },
+  "inputs": {
+    "{tankFmu}.tankIns.valve": true
+  },
+  "requested_outputs": {
+    "{tankFmu}.tankIns": [
+      "level"
+    ]
+  },
+  "step_size": 0.1,
+  "end_time": 10,
+  "simulator_log_level": "TRACE"
+}

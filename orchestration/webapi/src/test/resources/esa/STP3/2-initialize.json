@@ -1,0 +1,40 @@
+{
+  "fmus": {
+    "{controllerFmu}": "file://../fmus/controller.fmu",
+    "{tankFmu}": "file://../fmus/tank.fmu"
+  },
+  "connections": {
+    "{controllerFmu}.crtlIns.valve": [
+      "{tankFmu}.tankIns.valve"
+    ],
+    "{tankFmu}.tankIns.level": [
+      "{controllerFmu}.crtlIns.level"
+    ]
+  },
+  "parameters": {
+    "{controllerFmu}.crtlIns.maxLevel": 8,
+    "{controllerFmu}.crtlIns.minLevel": 2
+  },
+  "inputs": {
+    "{tankFmu}.tankIns.valve": true
+  },
+  "requested_outputs": {
+    "{controllerFmu}.crtlIns": [
+      "valve"
+    ],
+    "{tankFmu}.tankIns": [
+      "level"
+    ]
+  },
+  "log_levels": {
+    "{controllerFmu}.crtlIns": [
+      "logAll",
+      "logError",
+      "VdmErr"
+    ],
+    "{tankFmu}.tankIns": []
+  },
+  "step_size": 1,
+  "end_time": 5,
+  "simulator_log_level": "TRACE"
+}
