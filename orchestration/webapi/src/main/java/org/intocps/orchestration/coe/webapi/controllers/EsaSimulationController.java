@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
@@ -128,7 +129,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
     public void simulate(@RequestBody
-            EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, CoeService.SimulatorInputNotRegonized, IOException, ModelConnection.InvalidConnectionException {
+            EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, CoeService.SimulatorInputNotRegonized, IOException, InvalidVariableStringException {
 
         Coe coe = coeService.get();
 

@@ -41,6 +41,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
@@ -76,7 +77,7 @@ public class RequestProcessors {
         this.sessionController = sessionController;
     }
 
-    public static List<ModelParameter> buildParameters(Map<String, Object> parameters) throws ModelConnection.InvalidConnectionException {
+    public static List<ModelParameter> buildParameters(Map<String, Object> parameters) throws InvalidVariableStringException {
         List<ModelParameter> list = new Vector<>();
 
         if (parameters != null) {

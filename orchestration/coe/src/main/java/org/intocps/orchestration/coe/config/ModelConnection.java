@@ -130,7 +130,7 @@ public class ModelConnection {
             this.variable = variable;
         }
 
-        public static Variable parse(String data) throws Exception {
+        public static Variable parse(String data) throws InvalidVariableStringException {
             String string = new String(data);
             // String[] parts = string.split("\\.");
 
@@ -152,7 +152,7 @@ public class ModelConnection {
                 }
             }
 
-            throw new Exception("Invalid connection: " + data + " must be of the form key.instance.variableName");
+            throw new InvalidVariableStringException("Invalid connection: " + data + " must be of the form key.instance.variableName");
         }
 
         @Override
