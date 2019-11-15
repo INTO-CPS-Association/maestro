@@ -3,6 +3,7 @@ package org.intocps.orchestration.coe.webapi.esav1;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.orchestration.coe.config.CoeConfiguration;
+import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
@@ -22,12 +23,15 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 public class ApiAndServiceInitializeTestMockCOE {
     final static String baseUrl = "/api/esav1/simulator";
+    HashMap<String, List<ModelDescription.LogCategory>> debugLoggingLevels = new HashMap<>();
     @Autowired
     private CoeService service;
     private Coe mockedCoe;
@@ -44,7 +49,6 @@ public class ApiAndServiceInitializeTestMockCOE {
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
     private File root;
-
 
     @Before
     public void before() {
@@ -61,7 +65,7 @@ public class ApiAndServiceInitializeTestMockCOE {
         logCategories.add(new ModelDescription.LogCategory("logAll", ""));
         logCategories.add(new ModelDescription.LogCategory("logError", ""));
         logCategories.add(new ModelDescription.LogCategory("VdmErr", ""));
-        HashMap<String, List<ModelDescription.LogCategory>> debugLoggingLevels = new HashMap<>();
+
         debugLoggingLevels.put("{controllerFmu}.crtlIns", logCategories);
         when(mockedCoe.initialize(any(), any(), any(), any(), any())).thenReturn(debugLoggingLevels);
 
@@ -78,10 +82,29 @@ public class ApiAndServiceInitializeTestMockCOE {
 
     @Test
     public void initializeSingleFMU() throws Exception {
-        ArgumentCaptor<Map<String, URI>> captor = ArgumentCaptor.forClass(Map.class);
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
+    }
+
+    @Test
+    public void initializeTwoFmus() throws Exception {
+
+        String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));
+        mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
+
+        ArgumentCaptor<List<ModelConnection>> captorConnections = ArgumentCaptor.forClass(List.class);
+
+        verify(mockedCoe, times(1)).initialize(any(), captorConnections.capture(), any(), any(), any());
+
+        ModelConnection.ModelInstance environmentFMUInstance = new ModelConnection.ModelInstance("{environmentFMU}", "environmentInstance");
+
+        List<ModelConnection> actual = captorConnections.getValue();
+        assertTrue(actual.stream().anyMatch(x -> x.from.instance.toString().equals(environmentFMUInstance.toString()) && x.from.variable.startsWith("valvecontrol")));
+        //FIXME Extend with checking the following connections
+        // - modelConnection.to of the existing test
+        // - inputs to environment FMU
+
     }
 
 }

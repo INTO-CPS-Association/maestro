@@ -47,23 +47,30 @@ public class EnvironmentFMUModelDescription {
                 "    </ModelVariables>\n" +
                 "\n" +
                 "\t<ModelStructure>\n" +
-                "\t<Outputs>\n" +
-                (outputs != null ? createEmptyDependencies(outputs.size(), 1) : "") +
-//                "\t\t\t<Unknown index=\"6\"  dependencies=\"\"/>\n" +
-//                "            \n" +
-//                "\t\t\t<Unknown index=\"7\"  dependencies=\"\"/>\n" +
-                "            \n" +
-                "\t</Outputs>\n" +
+                createOutputs(outputs, 1) +
                 "\n" +
                 "\t</ModelStructure>\n" +
                 "</fmiModelDescription>\n";
 
     }
 
+    public static String createOutputs(List<ModelDescription.ScalarVariable> outputs, int startIndex) {
+        String returnString = "";
+
+        if (outputs != null && outputs.size() > 0) {
+            returnString = "\t<Outputs>\n" +
+                    createEmptyDependencies(outputs.size(), 1) +
+                    "            \n" +
+                    "\t</Outputs>\n";
+        }
+
+        return returnString;
+    }
+
     public static String createEmptyDependencies(int size, int startIndex) {
         ArrayList<String> emptyDependencies = new ArrayList<>();
         for (int i = startIndex; i < startIndex + size; i++) {
-            emptyDependencies.add(String.format("<Unknown index=\"%d\" dependencies=\"\"/>", i));
+            emptyDependencies.add(String.format("\t\t<Unknown index=\"%d\" dependencies=\"\"/>", i));
         }
         return String.join("\n\n", emptyDependencies);
     }
@@ -85,16 +92,37 @@ public class EnvironmentFMUModelDescription {
                         "name=\"%s\" " +
                         "valueReference=\"%s\" " +
                         "causality=\"%s\" " +
-                        "variability=\"%s\">" +
+                        "variability=\"%s\"" +
+                        "%s>" +
                         "%s" +
                         "</ScalarVariable>",
                 sv.name,
                 sv.valueReference,
                 causalityToString(sv.causality),
                 variabilityToString(sv.variability),
+                initialToString(sv.initial),
                 typeDefinitionToString(sv.type));
 
 
+    }
+
+    private static String initialToString(ModelDescription.Initial initial) {
+        String initialString = "";
+
+        if (initial != null) {
+            switch (initial) {
+                case Exact:
+                    initialString = " initial=\"exact\"";
+                    break;
+                case Approx:
+                    initialString = " initial=\"approx\"";
+                    break;
+                case Calculated:
+                    initialString = " initial=\"calculated\"";
+                    break;
+            }
+        }
+        return initialString;
     }
 
     public static String typeDefinitionToString(ModelDescription.Type type) {

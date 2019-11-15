@@ -35,7 +35,12 @@ public class ApiAndServiceInitializeTest {
     public void initializeSingleFMU() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
+    }
 
+    @Test
+    public void initializeMultipleFMUs() throws Exception {
+        String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));
+        mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
     }
 
 }
