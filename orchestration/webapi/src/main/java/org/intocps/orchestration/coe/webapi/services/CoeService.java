@@ -33,15 +33,17 @@ public class CoeService {
     public CoeService() {
         String session = UUID.randomUUID().toString();
         File root = new File(session);
-        if (root.mkdirs()) {
-            logger.error("Could not create session directory for COE: {}", root.getAbsolutePath());
+        if (!root.mkdirs()) {
+            if (!root.exists()) {
+                logger.error("Could not create session directory for COE: {}", root.getAbsolutePath());
+            }
         }
 
         this.coe = new Coe(root);
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-                                                             ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
+            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
 
         return fromVariables.stream().map(scalarVariable -> {
             ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
@@ -68,8 +70,8 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
         // - DONE Construct an FMU for external environment representation. This will be called environment FMU:
@@ -92,7 +94,9 @@ public class CoeService {
             // Load the model descriptions for all of the FMUs IFmu fmu = FmuFactory.create(get().getResultRoot(), fmus.entrySet().iterator().next().getValue());
             HashMap<String, List<ModelDescription.ScalarVariable>> modelDescriptions = new HashMap<>();
             for (Map.Entry<String, URI> fmuEntry : fmus.entrySet()) {
-                modelDescriptions.put(fmuEntry.getKey(), (new ModelDescription(FmuFactory.create(get().getResultRoot(), fmuEntry.getValue()).getModelDescription())).getScalarVariables());
+                modelDescriptions.put(fmuEntry.getKey(),
+                        (new ModelDescription(FmuFactory.create(get().getResultRoot(), fmuEntry.getValue()).getModelDescription()))
+                                .getScalarVariables());
             }
             //ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
@@ -103,17 +107,22 @@ public class CoeService {
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
             if (inputs != null && inputs.size() > 0) {
                 // Outputs for the environment FMU with full scalar variable information
-                Map<ModelConnection.ModelInstance, List<ModelParameter>> inputsGroupedByInstance = inputs.stream().collect(Collectors.groupingBy(x -> x.variable.instance));
-                Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envOutputs = inputsGroupedByInstance.entrySet().stream().map(inputEntry -> {
-                    List<ModelDescription.ScalarVariable> correspondingScalars = modelDescriptions.get(inputEntry.getKey().key);
-                    List<ModelDescription.ScalarVariable> correlatedScalar = inputEntry.getValue().stream().map(inputVar -> correspondingScalars.stream().filter(svMd -> svMd.name.equals(inputVar.variable.variable)).findFirst().get()).collect(Collectors.toList());
-                    return new AbstractMap.SimpleEntry<>(inputEntry.getKey(), correlatedScalar);
-                }).collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+                Map<ModelConnection.ModelInstance, List<ModelParameter>> inputsGroupedByInstance = inputs.stream()
+                        .collect(Collectors.groupingBy(x -> x.variable.instance));
+                Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envOutputs = inputsGroupedByInstance.entrySet().stream()
+                        .map(inputEntry -> {
+                            List<ModelDescription.ScalarVariable> correspondingScalars = modelDescriptions.get(inputEntry.getKey().key);
+                            List<ModelDescription.ScalarVariable> correlatedScalar = inputEntry.getValue().stream()
+                                    .map(inputVar -> correspondingScalars.stream().filter(svMd -> svMd.name.equals(inputVar.variable.variable))
+                                            .findFirst().get()).collect(Collectors.toList());
+                            return new AbstractMap.SimpleEntry<>(inputEntry.getKey(), correlatedScalar);
+                        }).collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
                 environmentFMU.calculateOutputs(envOutputs);
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
-                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable().entrySet()) {
+                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable()
+                            .entrySet()) {
                         if (entry.getKey().toString().equals(input.variable.toString())) {
                             entry.getValue().type.start = input.value;
                             entry.getValue().initial = ModelDescription.Initial.Exact;
@@ -131,8 +140,8 @@ public class CoeService {
                 // Correlate the outputs with the corresponding model description such that we get the full scalar variable information
                 for (Map.Entry<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputEntry : outputs.entrySet()) {
                     List<ModelDescription.ScalarVariable> correlatedOutputs = outputEntry.getValue().stream().map(sv -> {
-                        Optional<ModelDescription.ScalarVariable> correlatedScalars = modelDescriptions.get(outputEntry.getKey().key).stream().filter(svMd -> svMd.name.equals(sv.name))
-                                .findFirst();
+                        Optional<ModelDescription.ScalarVariable> correlatedScalars = modelDescriptions.get(outputEntry.getKey().key).stream()
+                                .filter(svMd -> svMd.name.equals(sv.name)).findFirst();
                         return correlatedScalars.get();
                     }).collect(Collectors.toList());
                     envInputs.put(outputEntry.getKey(), correlatedOutputs);
@@ -143,7 +152,8 @@ public class CoeService {
 
 
             // Create the connections to and from the environment FMU based on the map from environment FMU
-            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable().entrySet()) {
+            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable()
+                    .entrySet()) {
                 ModelConnection.Variable from = null;
                 ModelConnection.Variable to = null;
                 switch (entry.getValue().causality) {
@@ -219,7 +229,7 @@ public class CoeService {
     }
 
     public void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-                                                 double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
