@@ -1,7 +1,7 @@
 {
   "fmus": {
     "{controllerFmu}": "watertankController.fmu",
-    "{tankFmu}": "singlewatertank-20sim.fmu"
+    "{tankFmu}": "singlewatertank-20sim.fmu´"
   },
   "connections": {
     "{controllerFmu}.crtlIns.valve": [
