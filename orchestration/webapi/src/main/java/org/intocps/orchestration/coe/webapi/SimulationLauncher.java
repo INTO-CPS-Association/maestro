@@ -32,8 +32,13 @@ public class SimulationLauncher {
             ProcessBuilder pb = new ProcessBuilder(java);
             Stream.of(additionalArguments).forEach(c -> pb.command().add(c));
             if (workingDirectory != null) {
-                workingDirectory.mkdirs();
-                pb.directory(workingDirectory);
+                if (!workingDirectory.mkdirs()) {
+                    if (!workingDirectory.exists()) {
+                        logger.warn("Working directory does not exist {}", workingDirectory);
+                    }
+                }
+                logger.debug("Setting working directory to: '{}'", workingDirectory.getAbsoluteFile());
+                pb.directory(workingDirectory.getAbsoluteFile());
             }
 
             // vm arguments
@@ -42,7 +47,7 @@ public class SimulationLauncher {
             for (String arg : vmArguments) {
                 // if it's the agent argument : we ignore it otherwise the
                 // address of the old application and the new one will be in conflict
-                if (!arg.contains("-agentlib") && !arg.contains("-javaagent")) {
+                if (!arg.contains("-agentlib") && !arg.contains("-javaagent") && !arg.contains("-Dserver.port=")) {
                     pb.command().add(arg);
                 }
             }
@@ -53,7 +58,8 @@ public class SimulationLauncher {
             // program main is a jar
             if (mainCommand[0].endsWith(".jar")) {
                 // if it's a jar, add -jar mainJar
-                pb.command().add("-jar " + new File(mainCommand[0]).getPath());
+                pb.command().add("-jar");
+                pb.command().add(new File(mainCommand[0]).getPath());
             } else {
                 // else it's a .class, add the classpath and mainClass
                 pb.environment().put("CLASSPATH", System.getProperty("java.class.path"));
@@ -65,9 +71,8 @@ public class SimulationLauncher {
             }
 
             logger.debug(String.join(" ", pb.command()));
-            pb.inheritIO();
 
-            return pb.start();
+            return pb.inheritIO().start();
         } catch (Exception e) {
             // something went wrong
             throw new IOException("Error while trying to restart the application", e);
