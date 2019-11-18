@@ -15,6 +15,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CoeService {
     private final static Logger logger = LoggerFactory.getLogger(CoeService.class);
@@ -25,6 +26,7 @@ public class CoeService {
     private Map<String, List<String>> requestedDebugLoggingCategories;
     private Coe coe;
     private Coe.CoeSimulationHandle simulationHandle = null;
+    private EnvironmentFMU environmentFMU;
 
     public CoeService(Coe coe) {
         this.coe = coe;
@@ -113,7 +115,7 @@ public class CoeService {
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
-                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable().entrySet()) {
+                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet()) {
                         if (entry.getKey().toString().equals(input.variable.toString())) {
                             entry.getValue().type.start = input.value;
                             entry.getValue().initial = ModelDescription.Initial.Exact;
@@ -143,7 +145,11 @@ public class CoeService {
 
 
             // Create the connections to and from the environment FMU based on the map from environment FMU
-            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariable().entrySet()) {
+            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry :
+                    Stream.concat(
+                            environmentFMU.getSourceToEnvironmentVariableInputs().entrySet().stream(),
+                            environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet().stream())
+                            .collect(Collectors.toSet())) {
                 ModelConnection.Variable from = null;
                 ModelConnection.Variable to = null;
                 switch (entry.getValue().causality) {
@@ -256,7 +262,20 @@ public class CoeService {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
         }
 
+        // TODO: The inputs to the non-virtual FMUs correspond to the outputs of the environment FMU.
+        //  - MISSING TEST
+        this.environmentFMU.setOutputValues(inputs);
+
+        //TODO: Insert into state of COE.
+        // - MISSING IMPLEMENTATION
+
+
         simulate(delta);
+
+        //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
+        // - MISSING TEST
+        // - MISSING PROPER RETURN
+        environmentFMU.getRequestedOutputValues();
     }
 
     public class SimulatorNotConfigured extends Exception {
