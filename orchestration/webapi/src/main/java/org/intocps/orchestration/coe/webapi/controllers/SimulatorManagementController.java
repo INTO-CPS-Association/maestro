@@ -38,7 +38,7 @@ public class SimulatorManagementController {
 
         String url = simulatorManagementService.create(simulatorId);
 
-        return new CreateResponse(simulatorId, url);
+        return new CreateResponse(simulatorId, url, simulatorManagementService.getSimulatorDirectory(simulatorId).getAbsolutePath());
     }
 
 
@@ -64,10 +64,13 @@ public class SimulatorManagementController {
         public final String instanceId;
         @JsonProperty("instance_url")
         public final String instanceUrl;
+        @JsonProperty("working_directory")
+        public final String workingDirectory;
 
-        public CreateResponse(String instanceId, String instanceUrl) {
+        public CreateResponse(String instanceId, String instanceUrl, String workingDirectory) {
             this.instanceId = instanceId;
             this.instanceUrl = instanceUrl;
+            this.workingDirectory = workingDirectory;
         }
 
     }

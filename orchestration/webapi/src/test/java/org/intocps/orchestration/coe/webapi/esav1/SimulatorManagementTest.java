@@ -19,10 +19,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.File;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -50,6 +50,7 @@ public class SimulatorManagementTest {
     public void before() throws Exception {
         Mockito.reset(service);
         when(service.create(any())).thenReturn("localhost:8000");
+        when(service.getSimulatorDirectory(anyString())).thenReturn(new File("."));
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 

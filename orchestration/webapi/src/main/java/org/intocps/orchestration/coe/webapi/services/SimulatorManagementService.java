@@ -42,7 +42,7 @@ public class SimulatorManagementService {
         return Pair.of(port, SimulationLauncher.restartApplication(base, "-Dserver.port=" + port));
     }
 
-    private File getSimulatorDirectory(String simulatorId) {
+    public File getSimulatorDirectory(String simulatorId) {
         return Paths.get("Simulators", simulatorId).toFile();
     }
 
