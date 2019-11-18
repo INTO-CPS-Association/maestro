@@ -1,6 +1,6 @@
 {
   "fmus": {
-    "{tankFmu}": "file://../fmus/tank.fmu"
+    "{tankFmu}": "singlewatertank-20sim.fmu"
   },
   "inputs": {
     "{tankFmu}.tankIns.valve": true
