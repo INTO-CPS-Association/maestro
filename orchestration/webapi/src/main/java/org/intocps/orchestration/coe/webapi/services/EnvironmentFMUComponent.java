@@ -1,19 +1,21 @@
 package org.intocps.orchestration.coe.webapi.services;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.intocps.fmi.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class EnvironmentFMUComponent implements IFmiComponent {
     private final IFmu fmu;
-    private final HashMap<ModelDescription.ScalarVariable, Object> inputs = new HashMap<>();
-    private final HashMap<ModelDescription.ScalarVariable, Object> outputs = new HashMap<>();
+    private final HashMap<Long, ModelDescription.ScalarVariable> inputs = new HashMap<>();
+    private final HashMap<Long, ModelDescription.ScalarVariable> outputs = new HashMap<>();
 
     public EnvironmentFMUComponent(IFmu fmu, List<ModelDescription.ScalarVariable> inputs, List<ModelDescription.ScalarVariable> outputs) {
-        inputs.forEach(sv -> this.inputs.put(sv, null));
-        outputs.forEach(sv -> this.outputs.put(sv, null));
+        inputs.forEach(sv -> this.inputs.put(sv.valueReference, sv));
+        outputs.forEach(sv -> this.outputs.put(sv.valueReference, sv));
         this.fmu = fmu;
     }
 
@@ -49,17 +51,20 @@ public class EnvironmentFMUComponent implements IFmiComponent {
 
     @Override
     public Fmi2Status setRealInputDerivatives(long[] longs, int[] ints, double[] doubles) throws FmuInvocationException {
-        return Fmi2Status.OK;
+        // Not supported
+        return Fmi2Status.Error;
     }
 
     @Override
     public FmuResult<double[]> getRealOutputDerivatives(long[] longs, int[] ints) throws FmuInvocationException {
-        return null;
+        // Not supported
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
     public FmuResult<double[]> getDirectionalDerivative(long[] longs, long[] longs1, double[] doubles) throws FmuInvocationException {
-        return null;
+        // Not supported
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
@@ -69,7 +74,22 @@ public class EnvironmentFMUComponent implements IFmiComponent {
 
     @Override
     public FmuResult<double[]> getReal(long[] longs) throws FmuInvocationException {
-        return null;
+        Fmi2Status status = Fmi2Status.OK;
+        List<Double> results = new ArrayList<>();
+        for (int i = 0; i < longs.length; i++) {
+            Double value = (Double) this.outputs.get(longs[i]).type.start;
+            if (value == null)
+                status = Fmi2Status.Error;
+            else
+                results.add((Double) this.outputs.get(longs[i]).type.start);
+        }
+        if (status == Fmi2Status.OK) {
+            Double[] results_ = new Double[longs.length];
+            results.toArray(results_);
+            return new FmuResult<>(status, ArrayUtils.toPrimitive(results_));
+        } else {
+            return new FmuResult<>(status, null);
+        }
     }
 
     @Override
