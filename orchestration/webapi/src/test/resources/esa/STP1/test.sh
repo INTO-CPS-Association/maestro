@@ -10,9 +10,6 @@ fi
 
 mkdir -p test-run
 
-
-
-
 cp $1 test-run
 cp $2/*.fmu test-run
 
