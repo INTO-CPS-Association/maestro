@@ -14,6 +14,7 @@ from pathlib import Path
 from EsaSimulationManager import EsaSimulationManager
 from EsaSimulator import EsaSimulator
 import threading
+from checkresults import check_results
 
 
 def stdoutprocess(o):
@@ -71,15 +72,23 @@ def create_simulator(manager):
     return simulator, id
 
 
+def check_result_from_simulator(init_file_path, result_path):
+    config = json.load(open(init_file_path, encoding='utf8'))
+    outputs = config["outputs"]
+    startTime = 0
+    endTime = config["end_time"]
+    step_size = config["step_size"]
+    return check_results(outputs, result_path, startTime, endTime, step_size)
+
+
 failed = False
 liveOutput = args.live
+connectionRetries = 30
 
 with tempfile.TemporaryDirectory() as directory:
     jarName = Path(args.jar).name
     jarDest = directory / Path(jarName)
     jarDest.resolve()
-    # print(jarDest)
-    # shutil.copy(args.jar, jarDest)
 
     jar = Path(args.jar)
     jar = jar.resolve()
@@ -100,20 +109,20 @@ with tempfile.TemporaryDirectory() as directory:
     for i in range(0, 1):
 
         manager = EsaSimulationManager("localhost:" + str(port))
-        if not manager.connect(10):
+        if not manager.connect(connectionRetries):
             print("Connection timeout")
             failed = True
             break
         sim1, sim1Id = create_simulator(manager)
 
-        if not sim1.connect(20):
+        if not sim1.connect(connectionRetries):
             print("Could not connect to simulator 1")
             failed = True
             break
 
         sim2, sim2Id = create_simulator(manager)
 
-        if not sim2.connect(20):
+        if not sim2.connect(connectionRetries):
             print("Could not connect to simulator 2")
             failed = True
             break
@@ -161,6 +170,15 @@ with tempfile.TemporaryDirectory() as directory:
 
         manager.delete(sim1Id)
         manager.delete(sim2Id)
+
+        if not check_result_from_simulator("1-initialize.json", "1.csv"):
+            print("Output of simulator 1 wrong")
+            failed = True
+
+        if not check_result_from_simulator("2-initialize.json", "2.csv"):
+            print("Output of simulator 2 wrong")
+            failed = True
+
         break
     print("Terminating")
     api_process.terminate()
