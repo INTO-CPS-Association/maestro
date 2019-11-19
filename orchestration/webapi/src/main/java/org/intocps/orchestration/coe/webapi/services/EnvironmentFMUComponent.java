@@ -1,19 +1,24 @@
 package org.intocps.orchestration.coe.webapi.services;
 
 import org.intocps.fmi.*;
+import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeStateComponent;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.HashMap;
 import java.util.List;
 
-public class EnvironmentFMUComponent implements IFmiComponent {
+public class EnvironmentFMUComponent extends HierarchicalCoeStateComponent {
     private final IFmu fmu;
-    private final HashMap<ModelDescription.ScalarVariable, Object> inputs = new HashMap<>();
-    private final HashMap<ModelDescription.ScalarVariable, Object> outputs = new HashMap<>();
 
     public EnvironmentFMUComponent(IFmu fmu, List<ModelDescription.ScalarVariable> inputs, List<ModelDescription.ScalarVariable> outputs) {
-        inputs.forEach(sv -> this.inputs.put(sv, null));
-        outputs.forEach(sv -> this.outputs.put(sv, null));
+        inputs.forEach(sv -> {
+            inputsSvToValue.put(sv, null);
+            refToSv.put(sv.valueReference, sv);
+        });
+        outputs.forEach(sv -> {
+            outputsSvToValue.put(sv, null);
+            refToSv.put(sv.valueReference, sv);
+        });
+
         this.fmu = fmu;
     }
 
@@ -44,22 +49,7 @@ public class EnvironmentFMUComponent implements IFmiComponent {
 
     @Override
     public Fmi2Status reset() throws FmuInvocationException {
-        return Fmi2Status.OK;
-    }
-
-    @Override
-    public Fmi2Status setRealInputDerivatives(long[] longs, int[] ints, double[] doubles) throws FmuInvocationException {
-        return Fmi2Status.OK;
-    }
-
-    @Override
-    public FmuResult<double[]> getRealOutputDerivatives(long[] longs, int[] ints) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<double[]> getDirectionalDerivative(long[] longs, long[] longs1, double[] doubles) throws FmuInvocationException {
-        return null;
+        return Fmi2Status.Error;
     }
 
     @Override
@@ -68,93 +58,43 @@ public class EnvironmentFMUComponent implements IFmiComponent {
     }
 
     @Override
-    public FmuResult<double[]> getReal(long[] longs) throws FmuInvocationException {
-        return null;
+    public FmuResult<Boolean> getBooleanStatus(
+            Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
-    public FmuResult<int[]> getInteger(long[] longs) throws FmuInvocationException {
-        return null;
+    public FmuResult<Fmi2Status> getStatus(
+            Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
-    public FmuResult<boolean[]> getBooleans(long[] longs) throws FmuInvocationException {
-        return null;
+    public FmuResult<Integer> getIntegerStatus(
+            Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
-    public FmuResult<String[]> getStrings(long[] longs) throws FmuInvocationException {
-        return null;
+    public FmuResult<Double> getRealStatus(
+            Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
-    public Fmi2Status setBooleans(long[] longs, boolean[] booleans) throws InvalidParameterException, FmiInvalidNativeStateException {
-        return null;
-    }
-
-    @Override
-    public Fmi2Status setReals(long[] longs, double[] doubles) throws InvalidParameterException, FmiInvalidNativeStateException {
-        return null;
-    }
-
-    @Override
-    public Fmi2Status setIntegers(long[] longs, int[] ints) throws InvalidParameterException, FmiInvalidNativeStateException {
-        return null;
-    }
-
-    @Override
-    public Fmi2Status setStrings(long[] longs, String[] strings) throws InvalidParameterException, FmiInvalidNativeStateException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<Boolean> getBooleanStatus(Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<Fmi2Status> getStatus(Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<Integer> getIntegerStatus(Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<Double> getRealStatus(Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public FmuResult<String> getStringStatus(Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
-        return null;
+    public FmuResult<String> getStringStatus(
+            Fmi2StatusKind fmi2StatusKind) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
     }
 
     @Override
     public Fmi2Status terminate() throws FmuInvocationException {
-        return null;
+        return Fmi2Status.OK;
     }
 
     @Override
     public void freeInstance() throws FmuInvocationException {
 
-    }
-
-    @Override
-    public FmuResult<IFmiComponentState> getState() throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public Fmi2Status setState(IFmiComponentState iFmiComponentState) throws FmuInvocationException {
-        return null;
-    }
-
-    @Override
-    public Fmi2Status freeState(IFmiComponentState iFmiComponentState) throws FmuInvocationException {
-        return null;
     }
 
     @Override
@@ -165,5 +105,13 @@ public class EnvironmentFMUComponent implements IFmiComponent {
     @Override
     public FmuResult<Double> getMaxStepSize() throws FmiInvalidNativeStateException {
         return null;
+    }
+
+    public Object getValue(ModelDescription.ScalarVariable value) {
+        return this.inputsSvToValue.get(value);
+    }
+
+    public void setOutput(ModelDescription.ScalarVariable scalarVariable, Object value) {
+        this.outputsSvToValue.replace(scalarVariable, value);
     }
 }
