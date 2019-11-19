@@ -30,13 +30,13 @@ class EsaSimulator:
 
     def stop(self):
         conn = http.client.HTTPConnection(self.url)
-        conn.request('POST', "/api/esav1/simulator/simulate", "", self.headers)
+        conn.request('POST', "/api/esav1/simulator/stop", "", self.headers)
         res = conn.getresponse()
         return res
 
     def get_plain_result(self):
         conn = http.client.HTTPConnection(self.url)
-        conn.request('GET', "/api/esav1/simulator/result/plain", "", self.headers)
+        conn.request('GET', "/api/esav1/simulator/result/plain")
         res = conn.getresponse()
         return res
 
@@ -46,6 +46,8 @@ class EsaSimulator:
             with open(result_csv_path, "w") as f:
                 csv = response.read().decode()
                 f.write(csv)
+        else:
+            print("Faild to get results code: %d, content: %s" % (response.status, response))
 
     def destroy(self):
         conn = http.client.HTTPConnection(self.url)
