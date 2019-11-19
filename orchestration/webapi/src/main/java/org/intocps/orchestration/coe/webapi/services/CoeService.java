@@ -94,12 +94,23 @@ public class CoeService {
 
 
             // Load the model descriptions for all of the FMUs IFmu fmu = FmuFactory.create(get().getResultRoot(), fmus.entrySet().iterator().next().getValue());
-            HashMap<String, List<ModelDescription.ScalarVariable>> modelDescriptions = new HashMap<>();
-            for (Map.Entry<String, URI> fmuEntry : fmus.entrySet()) {
-                modelDescriptions.put(fmuEntry.getKey(),
-                        (new ModelDescription(FmuFactory.create(get().getResultRoot(), fmuEntry.getValue()).getModelDescription()))
-                                .getScalarVariables());
-            }
+            Map<String, List<ModelDescription.ScalarVariable>> modelDescriptions = fmus.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, map -> {
+                        Optional<List<ModelDescription.ScalarVariable>> res;
+                        try {
+                            res = Optional.of(new ModelDescription(FmuFactory.create(get().getResultRoot(), map.getValue()).getModelDescription())
+                                    .getScalarVariables());
+                        } catch (Exception e) {
+                            res = Optional.empty();
+                        }
+                        return res;
+                    })).entrySet().stream().filter(map -> map.getValue().isPresent())
+                    .collect(Collectors.toMap(Map.Entry::getKey, map -> map.getValue().get()));
+
+
+            modelDescriptions.forEach(
+                    (fmu, md) -> logger.debug("{}: {}", fmu, md.stream().map(sv -> sv.name).collect(Collectors.joining(",\n\t", "[\n\t", "]"))));
+
             //ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
             EnvironmentFMU environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("environmentFMU", "environmentInstance");
@@ -112,18 +123,18 @@ public class CoeService {
                 Map<ModelConnection.ModelInstance, List<ModelParameter>> inputsGroupedByInstance = inputs.stream()
                         .collect(Collectors.groupingBy(x -> x.variable.instance));
                 Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envOutputs = inputsGroupedByInstance.entrySet().stream()
-                        .map(inputEntry -> {
-                            List<ModelDescription.ScalarVariable> correspondingScalars = modelDescriptions.get(inputEntry.getKey().key);
-                            List<ModelDescription.ScalarVariable> correlatedScalar = inputEntry.getValue().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, map -> {
+                            List<ModelDescription.ScalarVariable> correspondingScalars = modelDescriptions.get(map.getKey().key);
+                            return map.getValue().stream()
                                     .map(inputVar -> correspondingScalars.stream().filter(svMd -> svMd.name.equals(inputVar.variable.variable))
-                                            .findFirst().get()).collect(Collectors.toList());
-                            return new AbstractMap.SimpleEntry<>(inputEntry.getKey(), correlatedScalar);
-                        }).collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+                                            .findFirst()).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+                        }));
                 environmentFMU.calculateOutputs(envOutputs);
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
-                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet()) {
+                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU
+                            .getSourceToEnvironmentVariableOutputs().entrySet()) {
                         if (entry.getKey().toString().equals(input.variable.toString())) {
                             entry.getValue().type.start = input.value;
                             entry.getValue().initial = ModelDescription.Initial.Exact;
@@ -153,11 +164,9 @@ public class CoeService {
 
 
             // Create the connections to and from the environment FMU based on the map from environment FMU
-            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry :
-                    Stream.concat(
-                            environmentFMU.getSourceToEnvironmentVariableInputs().entrySet().stream(),
-                            environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet().stream())
-                            .collect(Collectors.toSet())) {
+            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : Stream
+                    .concat(environmentFMU.getSourceToEnvironmentVariableInputs().entrySet().stream(),
+                            environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet().stream()).collect(Collectors.toSet())) {
                 ModelConnection.Variable from = null;
                 ModelConnection.Variable to = null;
                 switch (entry.getValue().causality) {
