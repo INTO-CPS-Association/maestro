@@ -34,6 +34,8 @@ def find_free_port():
 
 parser = argparse.ArgumentParser(prog='PROG', usage='%(prog)s [options]')
 parser.add_argument('--jar', help='jar', required=True)
+parser.add_argument('--live', help='live output from API', action='store_true')
+parser.set_defaults(live=False)
 
 args = parser.parse_args()
 
@@ -70,6 +72,7 @@ def create_simulator(manager):
 
 
 failed = False
+liveOutput = args.live
 
 with tempfile.TemporaryDirectory() as directory:
     jarName = Path(args.jar).name
@@ -81,12 +84,19 @@ with tempfile.TemporaryDirectory() as directory:
     jar = Path(args.jar)
     jar = jar.resolve()
 
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jar],
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=directory)
-    t = threading.Thread(target=stdoutprocess, args=(api_process,))
-    t.daemon = True
-    t.start()
+    stream = None
+    if liveOutput:
+        stream = subprocess.PIPE
+    else:
+        stream = open('api.log', 'w')
 
+    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jar],
+                                   stdout=stream, stderr=stream, cwd=directory)
+
+    if liveOutput:
+        t = threading.Thread(target=stdoutprocess, args=(api_process,))
+        t.daemon = True
+        t.start()
     for i in range(0, 1):
 
         manager = EsaSimulationManager("localhost:" + str(port))
