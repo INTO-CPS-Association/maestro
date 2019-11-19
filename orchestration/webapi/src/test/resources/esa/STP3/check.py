@@ -156,6 +156,12 @@ with tempfile.TemporaryDirectory() as directory:
                 break
 
             print("------------------------------------------")
+            print("Testing Simulation: Stopping")
+            print("------------------------------------------")
+            sim1.stop()
+            sim2.stop()
+
+            print("------------------------------------------")
             print("Testing Simulation: Obtain results")
             print("------------------------------------------")
 

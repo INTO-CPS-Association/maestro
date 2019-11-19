@@ -21,7 +21,7 @@ import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
@@ -146,10 +147,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/stop", method = RequestMethod.POST)
     public void stop() {
-        Coe coe = coeService.get();
-        if (coe != null) {
-            coe.stopSimulation();
-        }
+        coeService.stop();
     }
 
     @RequestMapping(value = "/result/plain", method = RequestMethod.GET)
@@ -159,9 +157,13 @@ public class EsaSimulationController {
             throw new Exception("bad session");
         }
 
-        ByteArrayResource resource = new ByteArrayResource(FileUtils.readFileToByteArray(coe.getResult()));
+        File result = coe.getResult();
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(result));
+
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + coe.getResult().getName() + "\"").body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.getName() + "\"").contentLength(result.length())
+                .body(resource);
     }
 
     @RequestMapping(value = "/result/zip", method = RequestMethod.GET, produces = "application/zip")

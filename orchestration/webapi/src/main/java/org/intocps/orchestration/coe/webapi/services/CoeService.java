@@ -46,7 +46,7 @@ public class CoeService {
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-                                                             ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
+            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
 
         return fromVariables.stream().map(scalarVariable -> {
             ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
@@ -73,8 +73,8 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
         // - Report error if inputs are part of connection.
@@ -129,8 +129,8 @@ public class CoeService {
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
-                    for (Map.Entry<String, ModelDescription.ScalarVariable> entry : environmentFMU
-                            .getSourceToEnvironmentVariableOutputs().entrySet()) {
+                    for (Map.Entry<String, ModelDescription.ScalarVariable> entry : environmentFMU.getSourceToEnvironmentVariableOutputs()
+                            .entrySet()) {
                         if (entry.getKey().equals(input.variable.toString())) {
                             entry.getValue().type.start = input.value;
                             entry.getValue().initial = ModelDescription.Initial.Exact;
@@ -240,7 +240,7 @@ public class CoeService {
     }
 
     private void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-                                                  double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
@@ -265,13 +265,14 @@ public class CoeService {
     }
 
     public void stop() {
-        if (simulating) {
+        if (this.simulationHandle != null && simulating) {
             this.simulationHandle.postSimulation();
         }
         get().stopSimulation();
     }
 
-    public void simulate(double delta, List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+    public void simulate(double delta,
+            List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
@@ -293,12 +294,12 @@ public class CoeService {
 
         //TODO: Insert into state of COE.
         // - MISSING IMPLEMENTATION
-//        inputs.forEach(inp -> {
-//            scala.collection.immutable.Stream<Tuple2<ModelConnection.ModelInstance, InstanceState>> stateValue = this.simulationHandle.state().instanceStates().toStream().filter(state -> state._1.toString().equals(inp.variable.instance.toString()));
-//            stateValue
-//
-//        })
-//        this.simulationHandle.state().instanceStates().toStream().filter(x ->)
+        //        inputs.forEach(inp -> {
+        //            scala.collection.immutable.Stream<Tuple2<ModelConnection.ModelInstance, InstanceState>> stateValue = this.simulationHandle.state().instanceStates().toStream().filter(state -> state._1.toString().equals(inp.variable.instance.toString()));
+        //            stateValue
+        //
+        //        })
+        //        this.simulationHandle.state().instanceStates().toStream().filter(x ->)
 
 
         this.simulationHandle.simulate(delta);
