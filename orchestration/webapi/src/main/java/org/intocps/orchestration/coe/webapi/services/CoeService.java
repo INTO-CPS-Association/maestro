@@ -47,7 +47,7 @@ public class CoeService {
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
+                                                             ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
 
         return fromVariables.stream().map(scalarVariable -> {
             ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
@@ -74,8 +74,8 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
         // - Report error if inputs are part of connection.
@@ -241,7 +241,7 @@ public class CoeService {
     }
 
     private void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+                                                  double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
@@ -273,7 +273,7 @@ public class CoeService {
     }
 
     public void simulate(double delta,
-            List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+                         List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
@@ -303,7 +303,7 @@ public class CoeService {
         //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
         // - MISSING TEST
         // - MISSING PROPER RETURN
-        return environmentFMU.getRequestedOutputValues();
+        environmentFMU.getRequestedOutputValues();
     }
 
     public class SimulatorNotConfigured extends Exception {
