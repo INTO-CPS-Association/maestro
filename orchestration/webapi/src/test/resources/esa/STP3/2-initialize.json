@@ -5,7 +5,7 @@
   },
   "connections": {
     "{controllerFmu}.crtlIns.valve": [
-      "{tankFmu}.tankIns.valve"
+      "{tankFmu}.tankIns.valvecontrol"
     ],
     "{tankFmu}.tankIns.level": [
       "{controllerFmu}.crtlIns.level"
