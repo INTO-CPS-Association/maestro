@@ -177,11 +177,11 @@ with tempfile.TemporaryDirectory() as directory:
         manager.delete(sim1Id)
         manager.delete(sim2Id)
 
-        if not check_result_from_simulator("1-initialize.json", "1.csv"):
+        if check_result_from_simulator("1-initialize.json", "1.csv"):
             print("Output of simulator 1 wrong")
             failed = True
 
-        if not check_result_from_simulator("2-initialize.json", "2.csv"):
+        if check_result_from_simulator("2-initialize.json", "2.csv"):
             print("Output of simulator 2 wrong")
             failed = True
 
