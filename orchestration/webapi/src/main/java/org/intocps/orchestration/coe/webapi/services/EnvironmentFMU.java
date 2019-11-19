@@ -22,8 +22,8 @@ public class EnvironmentFMU implements IFmu {
     final String fmuName;
     final String instanceName;
     // A map from the non-virtual variable to the corresponding virtual scalar variable in the environment FMU.
-    private final Map<ModelConnection.Variable, ModelDescription.ScalarVariable> sourceToEnvironmentVariableInputs = new HashMap<>();
-    private final Map<ModelConnection.Variable, ModelDescription.ScalarVariable> sourceToEnvironmentVariableOutputs = new HashMap<>();
+    private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableInputs = new HashMap<>();
+    private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableOutputs = new HashMap<>();
     // The inputs of the environment FMU
     private final List<ModelDescription.ScalarVariable> inputs = new ArrayList<>();
     // The outputs of the environment FMU
@@ -56,14 +56,14 @@ public class EnvironmentFMU implements IFmu {
      */
     // All the requested outputs are outputs from the non-virtual FMUs and inputs to the virtual environment FMU.
     // Therefore, all the inputs of environment FMU originates from requested outputs.
-    public HashMap<ModelConnection.Variable, Object> getRequestedOutputValues() {
-        HashMap<ModelConnection.Variable, Object> requestedOutputValues = new HashMap<>();
-        for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry :
+    public Map<ModelConnection.Variable, Object> getRequestedOutputValues() throws InvalidVariableStringException {
+        Map<ModelConnection.Variable, Object> requestedOutputValues = new HashMap<>();
+        for (Map.Entry<String, ModelDescription.ScalarVariable> entry :
                 sourceToEnvironmentVariableInputs.entrySet()) {
-            requestedOutputValues.put(entry.getKey(), this.environmentFMUComponent.getValue(entry.getValue()));
+            requestedOutputValues.put(ModelConnection.Variable.parse(entry.getKey()), this.environmentFMUComponent.getValue(entry.getValue()));
         }
 
-        return this.getRequestedOutputValues();
+        return requestedOutputValues;
     }
 
     /**
@@ -72,15 +72,15 @@ public class EnvironmentFMU implements IFmu {
      * @param outputValues
      */
     public void setOutputValues(List<ModelParameter> outputValues) {
-        outputValues.forEach(output -> environmentFMUComponent.setOutput(sourceToEnvironmentVariableOutputs.get(output), output.value));
+        outputValues.forEach(output -> environmentFMUComponent.setOutput(sourceToEnvironmentVariableOutputs.get(output.variable.toString()), output.value));
 
     }
 
-    public Map<ModelConnection.Variable, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableInputs() {
+    public Map<String, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableInputs() {
         return sourceToEnvironmentVariableInputs;
     }
 
-    public Map<ModelConnection.Variable, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableOutputs() {
+    public Map<String, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableOutputs() {
         return sourceToEnvironmentVariableOutputs;
     }
 
@@ -119,8 +119,12 @@ public class EnvironmentFMU implements IFmu {
         outputScalarVariable.variability = ModelDescription.Variability.Discrete;
         outputScalarVariable.type = new ModelDescription.Type();
         outputScalarVariable.type.type = sourceScalarVariable.type.type;
+        if (sourceScalarVariable.type.start != null) {
+            outputScalarVariable.type.start = sourceScalarVariable.type.start;
+            outputScalarVariable.initial = ModelDescription.Initial.Exact;
+        }
         outputScalarVariable.valueReference = valueReference;
-        outputScalarVariable.initial = sourceScalarVariable.initial;
+
         // valueReference added to name to ensure uniqueness
         outputScalarVariable.name = sourceScalarVariable.name + valueReference;
         return outputScalarVariable;
@@ -202,12 +206,12 @@ public class EnvironmentFMU implements IFmu {
                     case INPUT:
                         newEnvSv = createInputScalarVariable(sv, nextValueReference);
                         this.inputs.add(newEnvSv);
-                        this.sourceToEnvironmentVariableInputs.put(new ModelConnection.Variable(entry.getKey(), sv.name), newEnvSv);
+                        this.sourceToEnvironmentVariableInputs.put(new ModelConnection.Variable(entry.getKey(), sv.name).toString(), newEnvSv);
                         break;
                     case OUTPUT:
                         newEnvSv = createOutputScalarVariable(sv, nextValueReference);
                         this.outputs.add(newEnvSv);
-                        this.sourceToEnvironmentVariableOutputs.put(new ModelConnection.Variable(entry.getKey(), sv.name), newEnvSv);
+                        this.sourceToEnvironmentVariableOutputs.put(new ModelConnection.Variable(entry.getKey(), sv.name).toString(), newEnvSv);
                         break;
                 }
                 nextValueReference++;

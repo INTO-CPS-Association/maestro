@@ -1,6 +1,7 @@
 package org.intocps.orchestration.coe.webapi.services;
 
 import org.intocps.orchestration.coe.FmuFactory;
+import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
@@ -45,7 +46,7 @@ public class CoeService {
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
+                                                             ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
 
         return fromVariables.stream().map(scalarVariable -> {
             ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
@@ -72,18 +73,11 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
-        // - DONE Construct an FMU for external environment representation. This will be called environment FMU:
-        // - DONE Update fmus with the environment FMU
-        // - DONE The outputs of the environment fmu are the inputs of the single FMU.
-        // - DONE The inputs of the environment FMU are the outputs of the single FMU.
-        // - DONE update connections with this connection
-        // - DONE Create test with fake coe
-        // - DONE Create custom FMU factory
-        // - Do below stuff if there are any outputs or any inputs
+        // - Report error if inputs are part of connection.
 
 
         if (fmus.size() == 1 || (inputs != null && inputs.size() > 0) || (outputs != null && outputs.size() > 0)) {
@@ -113,10 +107,11 @@ public class CoeService {
 
             //ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
-            EnvironmentFMU environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("environmentFMU", "environmentInstance");
+            this.environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("environmentFMU", "environmentInstance");
 
             fmus.put(environmentFMU.key, new URI("environment://".concat(environmentFMU.fmuName)));
 
+            // TODO: Abort if input is part of an existing connection
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
             if (inputs != null && inputs.size() > 0) {
                 // Outputs for the environment FMU with full scalar variable information
@@ -129,19 +124,22 @@ public class CoeService {
                                     .map(inputVar -> correspondingScalars.stream().filter(svMd -> svMd.name.equals(inputVar.variable.variable))
                                             .findFirst()).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
                         }));
+
                 environmentFMU.calculateOutputs(envOutputs);
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
-                    for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : environmentFMU
+                    for (Map.Entry<String, ModelDescription.ScalarVariable> entry : environmentFMU
                             .getSourceToEnvironmentVariableOutputs().entrySet()) {
-                        if (entry.getKey().toString().equals(input.variable.toString())) {
+                        if (entry.getKey().equals(input.variable.toString())) {
                             entry.getValue().type.start = input.value;
                             entry.getValue().initial = ModelDescription.Initial.Exact;
                         }
 
                     }
                 }
+
+
             }
 
             // Outputs of non-virtual FMUs occur as inputs of the virtual environment FMU
@@ -164,7 +162,7 @@ public class CoeService {
 
 
             // Create the connections to and from the environment FMU based on the map from environment FMU
-            for (Map.Entry<ModelConnection.Variable, ModelDescription.ScalarVariable> entry : Stream
+            for (Map.Entry<String, ModelDescription.ScalarVariable> entry : Stream
                     .concat(environmentFMU.getSourceToEnvironmentVariableInputs().entrySet().stream(),
                             environmentFMU.getSourceToEnvironmentVariableOutputs().entrySet().stream()).collect(Collectors.toSet())) {
                 ModelConnection.Variable from = null;
@@ -177,12 +175,12 @@ public class CoeService {
                         throw new InitializationException("Environment FMU Scalars are only for inputs and outputs.");
                     case Input:
                         // Env variable is an input
-                        from = ModelConnection.Variable.parse(entry.getKey().toString());
+                        from = ModelConnection.Variable.parse(entry.getKey());
                         to = environmentFMU.createVariable(entry.getValue());
                         break;
                     case Output:
                         from = environmentFMU.createVariable(entry.getValue());
-                        to = ModelConnection.Variable.parse(entry.getKey().toString());
+                        to = ModelConnection.Variable.parse(entry.getKey());
                         break;
                 }
                 connections.add(new ModelConnection(from, to));
@@ -222,7 +220,7 @@ public class CoeService {
                                 .map(logCategory -> logCategory.name).collect(Collectors.toList()).containsAll(value);
                     });
             this.requestedDebugLoggingCategories = requestedDebugLoggingCategories;
-            if (logVariablesOK == false) {
+            if (!logVariablesOK) {
                 throw new IllegalArgumentException("Log categories do not align with the log categories within the FMUs");
             }
 
@@ -241,8 +239,8 @@ public class CoeService {
         get().simulate(startTime, endTime, debugLoggingCategories, reportProgress, liveLogInterval);
     }
 
-    public void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+    private void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
+                                                  double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
@@ -253,7 +251,7 @@ public class CoeService {
         }
     }
 
-    public void simulate(double delta) throws SimulatorNotConfigured {
+    private void simulate(double delta) throws SimulatorNotConfigured {
 
         if (simulationHandle == null) {
             throw new SimulatorNotConfigured("Simulation handle not configured");
@@ -273,21 +271,37 @@ public class CoeService {
         get().stopSimulation();
     }
 
-    public void simulate(double delta, List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException {
+    public void simulate(double delta, List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
         }
 
+        if (simulationHandle == null) {
+            throw new SimulatorNotConfigured("Simulation handle not configured");
+        }
+        if (!this.simulating) {
+            this.simulationHandle.preSimulation();
+            this.simulating = true;
+        }
+
+
         // TODO: The inputs to the non-virtual FMUs correspond to the outputs of the environment FMU.
         //  - MISSING TEST
+        //  - Abort simulation if is invalid.
         this.environmentFMU.setOutputValues(inputs);
 
         //TODO: Insert into state of COE.
         // - MISSING IMPLEMENTATION
+//        inputs.forEach(inp -> {
+//            scala.collection.immutable.Stream<Tuple2<ModelConnection.ModelInstance, InstanceState>> stateValue = this.simulationHandle.state().instanceStates().toStream().filter(state -> state._1.toString().equals(inp.variable.instance.toString()));
+//            stateValue
+//
+//        })
+//        this.simulationHandle.state().instanceStates().toStream().filter(x ->)
 
 
-        simulate(delta);
+        this.simulationHandle.simulate(delta);
 
         //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
         // - MISSING TEST

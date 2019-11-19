@@ -11,11 +11,11 @@ public class EnvironmentFMUComponent extends HierarchicalCoeStateComponent {
 
     public EnvironmentFMUComponent(IFmu fmu, List<ModelDescription.ScalarVariable> inputs, List<ModelDescription.ScalarVariable> outputs) {
         inputs.forEach(sv -> {
-            inputsSvToValue.put(sv, null);
+            inputsSvToValue.put(sv, sv.type.start != null ? sv.type.start : null);
             refToSv.put(sv.valueReference, sv);
         });
         outputs.forEach(sv -> {
-            outputsSvToValue.put(sv, null);
+            outputsSvToValue.put(sv, sv.type.start != null ? sv.type.start : null);
             refToSv.put(sv.valueReference, sv);
         });
 

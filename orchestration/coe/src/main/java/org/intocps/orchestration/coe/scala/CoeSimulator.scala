@@ -350,7 +350,7 @@ object CoeSimulator {
 
     val nextTime = currentCommunicationPoint + newState.stepSize
 
-    if ((nextTime + communicationStepSize < endTime) && !coe.stopSimulationFlag)
+    if ((nextTime + communicationStepSize <= endTime) && !coe.stopSimulationFlag)
     //Recursive
     {
       return doSimulationStep(instances, outputs, inputs, newState, nextTime, endTime, coe)

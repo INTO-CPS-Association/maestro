@@ -118,7 +118,7 @@ with tempfile.TemporaryDirectory() as directory:
             failed = True
             break
 
-        for ni in range(0, 2):
+        for ni in range(0, 1):
             print("------------------------------------------")
             print("Testing Simulation: Initializing")
             print("------------------------------------------")
