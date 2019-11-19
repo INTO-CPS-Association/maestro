@@ -48,7 +48,7 @@ def check_results(outputs, result_csv_path, start_time, end_time, step_size):
             plt.plot(timeColumn, y, label=column)
         plt.legend(loc='upper left')
         # plt.show()
-        fig.savefig(Path(result_csv_path).parent.joinpath(Path("results.pdf")))
+        fig.savefig(Path(result_csv_path).parent.joinpath(Path(result_csv_path).name[:-4] + "-results.pdf"))
 
         expectedStart = start_time  # float(cli['start_time'])
         expectedEnd = end_time  # float(cli['end_time'])
