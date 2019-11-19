@@ -38,6 +38,10 @@ def check_results(outputs, result_csv_path, start_time, end_time, step_size):
 
         timeColumn = [float(line['time']) for line in data]
 
+        if len(timeColumn) == 0:
+            print("no simulation results present")
+            return 1
+
         fig = plt.figure()
         for column in outputColumns:
             y = [convertToValue(line[column]) for line in data]

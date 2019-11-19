@@ -14,7 +14,7 @@ from pathlib import Path
 from EsaSimulationManager import EsaSimulationManager
 from EsaSimulator import EsaSimulator
 import threading
-from checkresults import check_results
+from resultcheck import check_results
 
 
 def stdoutprocess(o):
@@ -74,7 +74,7 @@ def create_simulator(manager):
 
 def check_result_from_simulator(init_file_path, result_path):
     config = json.load(open(init_file_path, encoding='utf8'))
-    outputs = config["outputs"]
+    outputs = config["connections"]
     startTime = 0
     endTime = config["end_time"]
     step_size = config["step_size"]
@@ -185,4 +185,5 @@ with tempfile.TemporaryDirectory() as directory:
     api_process.wait()
 
 if failed:
+    print("FAIL!")
     exit(1)
