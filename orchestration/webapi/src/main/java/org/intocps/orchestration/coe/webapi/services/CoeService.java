@@ -29,6 +29,7 @@ public class CoeService {
     private Coe.CoeSimulationHandle simulationHandle = null;
     private EnvironmentFMU environmentFMU;
 
+
     public CoeService(Coe coe) {
         this.coe = coe;
     }
@@ -109,7 +110,7 @@ public class CoeService {
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
             this.environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("environmentFMU", "environmentInstance");
 
-            fmus.put(environmentFMU.key, new URI("environment://".concat(environmentFMU.fmuName)));
+            fmus.put(environmentFMU.environmentFmuModelInstance.key, new URI("environment://".concat(environmentFMU.fmuName)));
 
             // TODO: Abort if input is part of an existing connection
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
@@ -287,18 +288,13 @@ public class CoeService {
 
 
         // TODO: The inputs to the non-virtual FMUs correspond to the outputs of the environment FMU.
-        //  - MISSING TEST
         //  - Abort simulation if is invalid.
         this.environmentFMU.setOutputValues(inputs);
 
-        //TODO: Insert into state of COE.
-        // - MISSING IMPLEMENTATION
-//        inputs.forEach(inp -> {
-//            scala.collection.immutable.Stream<Tuple2<ModelConnection.ModelInstance, InstanceState>> stateValue = this.simulationHandle.state().instanceStates().toStream().filter(state -> state._1.toString().equals(inp.variable.instance.toString()));
-//            stateValue
-//
-//        })
-//        this.simulationHandle.state().instanceStates().toStream().filter(x ->)
+
+        inputs.forEach(inp -> {
+            this.simulationHandle.updateState(inp, this.environmentFMU.environmentFmuModelInstance, this.environmentFMU.getSourceToEnvironmentVariableOutputs().get(inp.variable.toString()).valueReference);
+        });
 
 
         this.simulationHandle.simulate(delta);
@@ -306,7 +302,7 @@ public class CoeService {
         //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
         // - MISSING TEST
         // - MISSING PROPER RETURN
-        environmentFMU.getRequestedOutputValues();
+        return environmentFMU.getRequestedOutputValues();
     }
 
     public class SimulatorNotConfigured extends Exception {

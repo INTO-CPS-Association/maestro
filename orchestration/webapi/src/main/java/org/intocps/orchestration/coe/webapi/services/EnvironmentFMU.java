@@ -18,9 +18,8 @@ import java.util.zip.ZipException;
 
 public class EnvironmentFMU implements IFmu {
     private static EnvironmentFMU environmentFMU;
-    final String key;
+    final ModelConnection.ModelInstance environmentFmuModelInstance;
     final String fmuName;
-    final String instanceName;
     // A map from the non-virtual variable to the corresponding virtual scalar variable in the environment FMU.
     private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableInputs = new HashMap<>();
     private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableOutputs = new HashMap<>();
@@ -33,9 +32,8 @@ public class EnvironmentFMU implements IFmu {
     private EnvironmentFMUComponent environmentFMUComponent;
 
     public EnvironmentFMU(String fmuName, String instanceName) {
-        this.key = "{" + fmuName + "}";
         this.fmuName = fmuName;
-        this.instanceName = instanceName;
+        this.environmentFmuModelInstance = new ModelConnection.ModelInstance("{" + fmuName + "}", instanceName);
     }
 
     public static EnvironmentFMU getInstance() {
@@ -85,7 +83,7 @@ public class EnvironmentFMU implements IFmu {
     }
 
     public ModelConnection.Variable createVariable(ModelDescription.ScalarVariable sv) throws InvalidVariableStringException {
-        return ModelConnection.Variable.parse(this.key + "." + this.instanceName + "." + sv.name);
+        return ModelConnection.Variable.parse(this.environmentFmuModelInstance.toString() + "." + sv.name);
     }
 
 

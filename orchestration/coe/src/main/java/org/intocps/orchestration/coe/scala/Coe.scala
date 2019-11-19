@@ -40,15 +40,16 @@ import java.util.List
 
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.apache.commons.lang3.time.DurationFormatUtils
-import org.intocps.orchestration.coe.BasicInitializer
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.config.{CoeConfiguration, ModelConnection, ModelParameter}
 import org.intocps.orchestration.coe.cosim.base.CoSimInitializer
 import org.intocps.orchestration.coe.cosim.varstep.derivatives.DerivativeEstimator
 import org.intocps.orchestration.coe.cosim.{CoSimStepSizeCalculator, ExternalSignalsStepSizeCalculator}
 import org.intocps.orchestration.coe.hierarchical.IExternalSignalHandler
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.LogCategory
 import org.intocps.orchestration.coe.scala.CoeObject.{FmiSimulationInstanceScalaWrapper, GlobalState}
+import org.intocps.orchestration.coe.{AbortSimulationException, BasicInitializer}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -227,6 +228,18 @@ class Coe(val resultRoot: File) {
     var state: GlobalState = _
     var currentTime: Double = startTime;
 
+
+    def updateState(modelParameter: ModelParameter, modelInstanceToUpdate: ModelInstance, valueReferenceForSvToUpdate: Long): Unit = {
+      val instanceStateUpdated: Option[(ModelInstance, InstanceState)] = state.instanceStates.find(x => x._1.toString.equals(modelInstanceToUpdate.toString)).flatMap { case (x: ModelInstance, y: InstanceState) =>
+        val state_ : Option[(ModelDescription.ScalarVariable, AnyRef)] = y.state.find { case (sv, _) => sv.valueReference == valueReferenceForSvToUpdate }.map { case (sv, _) => (sv, modelParameter.value) }
+        val ret: Option[(ModelInstance, InstanceState)] = state_.map(st => (x, new InstanceState(y.time, y.state + st, y.derivatives)))
+        ret
+      }
+
+      val newGlobalState: Option[GlobalState] = instanceStateUpdated.map(instanceStateUpdated => new GlobalState(state.instanceStates + instanceStateUpdated, state.time, state.stepSize))
+      state = newGlobalState.getOrElse(throw new AbortSimulationException("Failed to set input for: " + modelParameter.variable.toString))
+
+    }
 
     def preSimulation() {
       configureLivestreamListeners(endTime, reportProgress, liveLogInterval)
