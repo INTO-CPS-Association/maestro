@@ -230,15 +230,13 @@ class Coe(val resultRoot: File) {
 
 
     def updateState(modelParameter: ModelParameter, modelInstanceToUpdate: ModelInstance, valueReferenceForSvToUpdate: Long): Unit = {
-      val instanceStateUpdated: Option[(ModelInstance, InstanceState)] = state.instanceStates.find(x => x._1.toString.equals(modelInstanceToUpdate.toString)).flatMap { case (x: ModelInstance, y: InstanceState) =>
-        val state_ : Option[(ModelDescription.ScalarVariable, AnyRef)] = y.state.find { case (sv, _) => sv.valueReference == valueReferenceForSvToUpdate }.map { case (sv, _) => (sv, modelParameter.value) }
-        val ret: Option[(ModelInstance, InstanceState)] = state_.map(st => (x, new InstanceState(y.time, y.state + st, y.derivatives)))
-        ret
-      }
+      val newGlobalState = for {
+        (x: ModelInstance, y: InstanceState) <- state.instanceStates.find(x => x._1.toString.equals(modelInstanceToUpdate.toString))
+        newInstanceStateState: (ModelDescription.ScalarVariable, AnyRef) <- y.state.find { case (sv, _) => sv.valueReference == valueReferenceForSvToUpdate }.map { case (sv, _) => (sv, modelParameter.value) }
+        updatedInstanceState = (x, new InstanceState(y.time, y.state + newInstanceStateState, y.derivatives))
+      } yield new GlobalState(state.instanceStates + updatedInstanceState, state.time, state.stepSize)
 
-      val newGlobalState: Option[GlobalState] = instanceStateUpdated.map(instanceStateUpdated => new GlobalState(state.instanceStates + instanceStateUpdated, state.time, state.stepSize))
       state = newGlobalState.getOrElse(throw new AbortSimulationException("Failed to set input for: " + modelParameter.variable.toString))
-
     }
 
     def preSimulation() {
