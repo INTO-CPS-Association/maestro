@@ -27,7 +27,7 @@ public class SimulationLauncher {
     public static Process restartApplication(File workingDirectory, String... additionalArguments) throws IOException {
         try {
             // java binary
-            String java = System.getProperty("java.home") + "/bin/java";
+            String java = "java";//System.getProperty("java.home") + "/bin/java";
 
             ProcessBuilder pb = new ProcessBuilder(java);
             Stream.of(additionalArguments).forEach(c -> pb.command().add(c));
