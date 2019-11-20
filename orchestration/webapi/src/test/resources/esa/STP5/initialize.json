@@ -5,7 +5,7 @@
   },
   "connections": {
     "{controllerFmu}.crtlIns.valve": [
-      "{tankFmu}.tankIns.valve"
+      "{tankFmu}.tankIns.valvecontrol"
     ],
     "{tankFmu}.tankIns.level": [
       "{controllerFmu}.crtlIns.level"
@@ -16,7 +16,7 @@
     "{controllerFmu}.crtlIns.minLevel": 2
   },
   "inputs": {
-    "{tankFmu}.tankIns.valve": true
+    "{tankFmu}.tankIns.valvecontrol": 1.0
   },
   "requested_outputs": {
     "{controllerFmu}.crtlIns": [
