@@ -36,19 +36,11 @@ public class CoeService {
     }
 
     public CoeService() {
-        String session = UUID.randomUUID().toString();
-        File root = new File(session);
-        if (!root.mkdirs()) {
-            if (!root.exists()) {
-                logger.error("Could not create session directory for COE: {}", root.getAbsolutePath());
-            }
-        }
 
-        this.coe = new Coe(root);
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-                                                             ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
+            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
 
         return fromVariables.stream().map(scalarVariable -> {
             ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
@@ -75,8 +67,8 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
 
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
         // - Report error if inputs are part of connection.
@@ -244,7 +236,7 @@ public class CoeService {
     }
 
     private void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-                                                  double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
@@ -297,7 +289,8 @@ public class CoeService {
 
 
         inputs.forEach(inp -> {
-            this.simulationHandle.updateState(inp, this.environmentFMU.environmentFmuModelInstance, this.environmentFMU.getSourceToEnvironmentVariableOutputs().get(inp.variable.toString()).valueReference);
+            this.simulationHandle.updateState(inp, this.environmentFMU.environmentFmuModelInstance,
+                    this.environmentFMU.getSourceToEnvironmentVariableOutputs().get(inp.variable.toString()).valueReference);
         });
 
 
