@@ -36,6 +36,7 @@ package org.intocps.orchestration.coe.scala
 
 import java.io.File
 import java.net.URI
+import java.util
 import java.util.List
 
 import org.apache.commons.io.{FileUtils, FilenameUtils}
@@ -228,6 +229,21 @@ class Coe(val resultRoot: File) {
     var state: GlobalState = _
     var currentTime: Double = startTime;
 
+
+    def getOutputs(requestedOutputs: util.Map[ModelConnection.ModelInstance, util.Set[ModelDescription.ScalarVariable]]): util.Map[ModelInstance, util.Map[ModelDescription.ScalarVariable, Object]] = {
+      val outputs: util.Map[ModelInstance, util.Map[ModelDescription.ScalarVariable, Object]] = requestedOutputs.map { case (mi, svs) => {
+        val output: Option[(ModelInstance, util.Map[ModelDescription.ScalarVariable, Object])] = for {
+          (stateMi_ : ModelInstance, stateSvs: InstanceState) <- state.instanceStates.find { case (stateMi_, _) => stateMi_.toString.equals(mi.toString) }
+          filteredStateSvs: Map[ModelDescription.ScalarVariable, Object] = stateSvs.state.filter { case (stateSvs, _) => svs.exists(sv => sv.name.equals(stateSvs.name)) }
+        } yield (stateMi_, filteredStateSvs.asJava)
+        output match {
+          case Some(x) => x
+          case None => throw new AbortSimulationException("Failed to retrieve an output from: " + mi.toString)
+        }
+      }
+      }.asJava
+      outputs
+    }
 
     def updateState(modelParameter: ModelParameter, modelInstanceToUpdate: ModelInstance, valueReferenceForSvToUpdate: Long): Unit = {
       val newGlobalState = for {

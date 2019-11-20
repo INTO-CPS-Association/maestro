@@ -28,6 +28,7 @@ public class CoeService {
     private Coe coe;
     private Coe.CoeSimulationHandle simulationHandle = null;
     private EnvironmentFMU environmentFMU;
+    private Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> requestedOutputs;
 
 
     public CoeService(Coe coe) {
@@ -86,6 +87,8 @@ public class CoeService {
             if (connections == null) {
                 connections = new ArrayList<>();
             }
+
+            this.requestedOutputs = outputs;
 
 
             // Load the model descriptions for all of the FMUs IFmu fmu = FmuFactory.create(get().getResultRoot(), fmus.entrySet().iterator().next().getValue());
@@ -272,8 +275,8 @@ public class CoeService {
         get().stopSimulation();
     }
 
-    public void simulate(double delta,
-                         List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+    public Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> simulate(double delta,
+                                                                                                     List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
@@ -300,10 +303,12 @@ public class CoeService {
 
         this.simulationHandle.simulate(delta);
 
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = this.simulationHandle.getOutputs(this.requestedOutputs);
+
         //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
         // - MISSING TEST
         // - MISSING PROPER RETURN
-        environmentFMU.getRequestedOutputValues();
+        return outputs;
     }
 
     public class SimulatorNotConfigured extends Exception {

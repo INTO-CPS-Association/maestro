@@ -37,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 @RestController
@@ -127,8 +128,8 @@ public class EsaSimulationController {
 
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
-    public void simulate(@RequestBody
-            EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, IOException, InvalidVariableStringException, ModelConnection.InvalidConnectionException {
+    public Map<String, Map<String, Object>> simulate(@RequestBody
+                                                             EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, IOException, InvalidVariableStringException, ModelConnection.InvalidConnectionException {
 
         Coe coe = coeService.get();
 
@@ -137,13 +138,13 @@ public class EsaSimulationController {
         List<ModelParameter> inputs = RequestProcessors.buildParameters(body.inputs);
 
         try {
-            coeService.simulate(body.timeStep, inputs);
+            Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = coeService.simulate(body.timeStep, inputs);
+            return outputs.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().toString(), x -> x.getValue().entrySet().stream().collect(Collectors.toMap(y -> y.getKey().name, Map.Entry::getValue))));
         } catch (Exception e) {
             logger.error("Error in simulation", e);
             throw e;
         }
     }
-
 
     @RequestMapping(value = "/stop", method = RequestMethod.POST)
     public void stop() {
@@ -222,6 +223,15 @@ public class EsaSimulationController {
         FileUtils.deleteDirectory(coe.getResultRoot());
     }
 
+    public static class SimulateResponse {
+        @JsonProperty("requested_outputs")
+        final Map<String, Map<String, Object>> requestedOutputs;
+
+        @JsonCreator
+        public SimulateResponse(@JsonProperty("requested_outputs") Map<String, Map<String, Object>> outputs) {
+            this.requestedOutputs = outputs;
+        }
+    }
 
     public static class EsaSimulateRequestBody {
         @JsonProperty("time_step")
@@ -261,10 +271,10 @@ public class EsaSimulationController {
 
         @JsonCreator
         public EsaIninializationData(@JsonProperty("fmus") Map<String, String> fmus,
-                @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
-                @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
-                @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
-                @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
+                                     @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
+                                     @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
+                                     @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
+                                     @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;

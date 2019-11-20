@@ -1,5 +1,7 @@
 package org.intocps.orchestration.coe.webapi.esav1;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,12 +12,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.client.match.ContentRequestMatchers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,6 +55,8 @@ public class Stp3Instance1Test {
         data = data.replace("singlewatertank-20sim.fmu",
                 "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString());
 
+
+        ContentRequestMatchers x;
         mockMvc.perform(post(baseUrl + "/initialize").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
     }
 
@@ -60,7 +66,14 @@ public class Stp3Instance1Test {
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateFor.json").toFile(), StandardCharsets.UTF_8);
 
-        mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
+        TypeReference<Map<String, Map<String, Object>>> valueTypeRef = new TypeReference<Map<String, Map<String, Object>>>() {
+        };
+
+        Map<String, Map<String, Object>> expectedOutput = new ObjectMapper().readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
+
+        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
+        Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
+        Assert.assertEquals(expectedOutput, actualOutput);
     }
 
 

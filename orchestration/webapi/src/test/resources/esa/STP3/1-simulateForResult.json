@@ -1,0 +1,8 @@
+{
+  "{controllerFmu}.crtlIns": {
+    "valve": false
+  },
+  "{tankFmu}.tankIns": {
+    "level": 0.38546625378223964
+  }
+}
