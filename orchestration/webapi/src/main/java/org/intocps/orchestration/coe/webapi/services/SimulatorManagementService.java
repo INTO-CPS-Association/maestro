@@ -43,7 +43,7 @@ public class SimulatorManagementService {
     }
 
     public File getSimulatorDirectory(String simulatorId) {
-        return Paths.get("Simulators", simulatorId).toFile();
+        return Paths.get("simulators", simulatorId).toFile();
     }
 
     public boolean delete(String simulatorId) throws IOException {
