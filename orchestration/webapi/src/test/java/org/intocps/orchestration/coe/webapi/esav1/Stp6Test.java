@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("main")
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class Stp3Instance1Test {
+public class Stp6Test {
     final static String baseUrl = "/api/esav1/simulator";
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -49,7 +49,7 @@ public class Stp3Instance1Test {
     @Test
     public void initializeTest() throws Exception {
 
-        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
+        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "initialize.json").toFile(), StandardCharsets.UTF_8);
         data = data.replace("watertankController.fmu",
                 "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController.fmu").toAbsolutePath().toString());
         data = data.replace("singlewatertank-20sim.fmu",
@@ -64,7 +64,7 @@ public class Stp3Instance1Test {
     public void simulateTest() throws Exception {
         initializeTest();
 
-        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateFor.json").toFile(), StandardCharsets.UTF_8);
+        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "simulateFor.json").toFile(), StandardCharsets.UTF_8);
 
         TypeReference<Map<String, Map<String, Object>>> valueTypeRef = new TypeReference<Map<String, Map<String, Object>>>() {
         };
@@ -73,27 +73,11 @@ public class Stp3Instance1Test {
         String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON))
                 .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
         Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
+
         Map<String, Map<String, Object>> expectedOutput = new ObjectMapper()
-                .readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
+                .readValue(Paths.get("src", "test", "resources", "esa", "STP6", "simulateForResult.json").toFile(), valueTypeRef);
+
         Assert.assertEquals(expectedOutput, actualOutput);
-    }
-
-    @Test
-    public void simulate2Test() throws Exception {
-        initializeTest();
-
-        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateFor.json").toFile(), StandardCharsets.UTF_8);
-
-        TypeReference<Map<String, Map<String, Object>>> valueTypeRef = new TypeReference<Map<String, Map<String, Object>>>() {
-        };
-
-        //Map<String, Map<String, Object>> expectedOutput = new ObjectMapper().readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
-
-        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
-        //Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
-        //Assert.assertEquals(expectedOutput, actualOutput);
-
-        System.out.println();
     }
 
 

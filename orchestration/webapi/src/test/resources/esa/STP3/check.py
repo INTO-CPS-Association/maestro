@@ -6,7 +6,7 @@ import subprocess
 import sys
 from contextlib import closing
 
-sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + os.path.sep + '..')
 
 import tempfile
 import shutil
@@ -99,8 +99,8 @@ with tempfile.TemporaryDirectory() as directory:
     else:
         stream = open('api.log', 'w')
 
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jar],
-                                   stdout=stream, stderr=stream, cwd=directory)
+    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', str(jar)],
+                                   stdout=stream, stderr=stream, cwd=str(directory))
 
     if liveOutput:
         t = threading.Thread(target=stdoutprocess, args=(api_process,))

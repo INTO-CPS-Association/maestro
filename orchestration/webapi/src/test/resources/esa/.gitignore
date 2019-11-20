@@ -1,0 +1,10 @@
+STP1/test-run
+STP2/result*
+STP3/1.csv
+STP3/2.csv
+STP3/1-result*
+STP3/2-result*
+STP4/result*
+STP5/1-result*
+STP5/1.csv
+__pycache__

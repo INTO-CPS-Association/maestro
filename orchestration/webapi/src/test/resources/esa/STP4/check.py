@@ -6,7 +6,7 @@ import subprocess
 import sys
 from contextlib import closing
 
-sys.path.append(os.getcwd() + '/..')
+sys.path.append(os.getcwd() + os.path.sep + '..')
 
 import tempfile
 import shutil
@@ -67,7 +67,7 @@ def create_simulator(manager):
     print("Simulator url is: %s" % url)
 
     simulator = EsaSimulator(url)
-    copy_fmus_to_dir("1-initialize.json", config['working_directory'])
+    copy_fmus_to_dir("initialize.json", config['working_directory'])
     id = config['instance_id']
     return simulator, id
 
@@ -99,8 +99,8 @@ with tempfile.TemporaryDirectory() as directory:
     else:
         stream = open('api.log', 'w')
 
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jar],
-                                   stdout=stream, stderr=stream, cwd=directory)
+    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', str(jar)],
+                                   stdout=stream, stderr=stream, cwd=str(directory))
 
     if liveOutput:
         t = threading.Thread(target=stdoutprocess, args=(api_process,))
@@ -157,7 +157,7 @@ with tempfile.TemporaryDirectory() as directory:
 
         manager.delete(sim1Id)
 
-        if check_result_from_simulator("1-initialize.json", "1.csv"):
+        if check_result_from_simulator("initialize.json", "1.csv"):
             print("Output of simulator 1 wrong")
             failed = True
 
