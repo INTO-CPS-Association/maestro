@@ -59,7 +59,13 @@ public class SimulationLauncher {
             if (mainCommand[0].endsWith(".jar")) {
                 // if it's a jar, add -jar mainJar
                 pb.command().add("-jar");
-                pb.command().add(new File(mainCommand[0]).getPath());
+                File jarFile = new File(mainCommand[0]);
+
+                if (!jarFile.isAbsolute()) {
+                    jarFile = jarFile.getAbsoluteFile();
+
+                }
+                pb.command().add(jarFile.getCanonicalPath());
             } else {
                 // else it's a .class, add the classpath and mainClass
                 pb.environment().put("CLASSPATH", System.getProperty("java.class.path"));
