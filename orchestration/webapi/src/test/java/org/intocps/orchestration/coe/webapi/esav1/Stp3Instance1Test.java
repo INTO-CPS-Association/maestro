@@ -76,6 +76,24 @@ public class Stp3Instance1Test {
         Assert.assertEquals(expectedOutput, actualOutput);
     }
 
+    @Test
+    public void simulate2Test() throws Exception {
+        initializeTest();
+
+        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateFor.json").toFile(), StandardCharsets.UTF_8);
+
+        TypeReference<Map<String, Map<String, Object>>> valueTypeRef = new TypeReference<Map<String, Map<String, Object>>>() {
+        };
+
+        //Map<String, Map<String, Object>> expectedOutput = new ObjectMapper().readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
+
+        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
+        //Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
+        //Assert.assertEquals(expectedOutput, actualOutput);
+
+        System.out.println();
+    }
+
 
     @Test
     public void simulateAndGetResultTest() throws Exception {
