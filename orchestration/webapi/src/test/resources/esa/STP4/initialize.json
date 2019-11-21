@@ -3,7 +3,7 @@
     "{tankFmu}": "singlewatertank-20sim.fmu"
   },
   "inputs": {
-    "{tankFmu}.tankIns.valve": true
+    "{tankFmu}.tankIns.valvecontrol": 1.0
   },
   "requested_outputs": {
     "{tankFmu}.tankIns": [
