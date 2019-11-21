@@ -14,7 +14,7 @@ from pathlib import Path
 from EsaSimulationManager import EsaSimulationManager
 from EsaSimulator import EsaSimulator
 import threading
-from resultcheck import check_results
+from resultcheck import check_result_from_simulator
 
 
 def stdoutprocess(o):
@@ -72,13 +72,25 @@ def create_simulator(manager):
     return simulator, id
 
 
-def check_result_from_simulator(init_file_path, result_path):
-    config = json.load(open(init_file_path, encoding='utf8'))
-    outputs = config["connections"]
-    startTime = 0
-    endTime = config["end_time"]
-    step_size = config["step_size"]
-    return check_results(outputs, result_path, startTime, endTime, step_size)
+def simulate_and_check(simulator, input_file_path, expected_result_file_path):
+    resp = simulator.simulate(json.dumps(json.load(open(input_file_path, encoding='utf8'))))
+    if resp.status != 200:
+        return False
+
+    if Path(expected_result_file_path).is_file():
+        actualResult = json.loads(resp.read().decode())
+        expectedResult = json.load(open(expected_result_file_path, encoding='utf8'))
+        print(actualResult)
+        print(expectedResult)
+        for key in expectedResult:
+            if key not in actualResult:
+                return False
+
+            for name in expectedResult[key]:
+                # print("Checking %s.%s" % (key, name))
+                if name not in actualResult[key] or expectedResult[key][name] != actualResult[key][name]:
+                    return False
+    return True
 
 
 failed = False
@@ -134,7 +146,7 @@ with tempfile.TemporaryDirectory() as directory:
             print("Testing Simulation: Simulating")
             print("------------------------------------------")
 
-            if sim1.simulate(json.dumps(json.load(open("simulateFor.json", encoding='utf8')))).status != 200:
+            if not simulate_and_check(sim1, "simulateFor.json", "simulateForResult.json"):
                 print("Simulate simulator 1 failed")
                 failed = True
                 break
