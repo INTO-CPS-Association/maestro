@@ -37,6 +37,7 @@ public class ControllerAdvisor {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<VndErrors> assertionException(final IllegalArgumentException e) {
+        logger.debug("API Exception: {}", e.getMessage());
         return error(e, HttpStatus.NOT_FOUND, e.getLocalizedMessage());
     }
 
