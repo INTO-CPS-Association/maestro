@@ -7,6 +7,7 @@ import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
+import org.intocps.orchestration.coe.webapi.services.EnvironmentFMUFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,10 +98,12 @@ public class ApiAndServiceInitializeTestMockCOE {
 
         verify(mockedCoe, times(1)).initialize(any(), captorConnections.capture(), any(), any(), any());
 
-        ModelConnection.ModelInstance environmentFMUInstance = new ModelConnection.ModelInstance("{environmentFMU}", "environmentInstance");
+        ModelConnection.ModelInstance environmentFMUInstance = new ModelConnection.ModelInstance("{" + EnvironmentFMUFactory.EnvironmentFmuName + "}",
+                EnvironmentFMUFactory.EnvironmentComponentIdentificationId);
 
         List<ModelConnection> actual = captorConnections.getValue();
-        assertTrue(actual.stream().anyMatch(x -> x.from.instance.toString().equals(environmentFMUInstance.toString()) && x.from.variable.startsWith("valvecontrol")));
+        assertTrue(actual.stream()
+                .anyMatch(x -> x.from.instance.toString().equals(environmentFMUInstance.toString()) && x.from.variable.startsWith("valvecontrol")));
         //FIXME Extend with checking the following connections
         // - modelConnection.to of the existing test
         // - inputs to environment FMU

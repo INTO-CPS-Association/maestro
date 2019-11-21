@@ -106,7 +106,8 @@ public class CoeService {
 
             //ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
-            this.environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("~env~", "global");
+            this.environmentFMU = EnvironmentFMU
+                    .CreateEnvironmentFMU(EnvironmentFMUFactory.EnvironmentFmuName, EnvironmentFMUFactory.EnvironmentComponentIdentificationId);
 
             fmus.put(environmentFMU.environmentFmuModelInstance.key,
                     new URI(EnvironmentFMUFactory.EnvironmentSchemeIdentificationId + "://".concat(environmentFMU.fmuName)));

@@ -10,6 +10,8 @@ import java.net.URI;
 public class EnvironmentFMUFactory implements IFmuFactory {
 
     public final static String EnvironmentSchemeIdentificationId = "environment";
+    public final static String EnvironmentComponentIdentificationId = "global";
+    public final static String EnvironmentFmuName = "~env~";
 
     @Override
     public boolean accept(URI uri) {
