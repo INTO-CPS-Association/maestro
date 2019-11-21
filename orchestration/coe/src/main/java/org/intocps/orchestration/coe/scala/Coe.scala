@@ -227,7 +227,7 @@ class Coe(val resultRoot: File) {
     var execStartTime: Long = 0
     var initialized: Boolean = false
     var state: GlobalState = _
-    var currentTime: Double = startTime;
+    //    var currentTime: Double = startTime;
 
 
     def getOutputs(requestedOutputs: util.Map[ModelConnection.ModelInstance, util.Set[ModelDescription.ScalarVariable]]): util.Map[ModelInstance, util.Map[ModelDescription.ScalarVariable, Object]] = {
@@ -238,7 +238,7 @@ class Coe(val resultRoot: File) {
         } yield (stateMi_, filteredStateSvs.asJava)
         output match {
           case Some(x) => x
-          case None => throw new AbortSimulationException("Failed to retrieve an output from: " + mi.toString)
+          case None    => throw new AbortSimulationException("Failed to retrieve an output from: " + mi.toString)
         }
       }
       }.asJava
@@ -264,6 +264,7 @@ class Coe(val resultRoot: File) {
       val (initialized, initialStates) = CoeSimulator.prepareSimulation(init._1, init._2, init._3, startTime, endTime, debugLoggingCategories.asScala.toMap, coe)
       this.initialized = initialized
       this.state = initialStates
+      //      this.currentTime = state.time;
 
     }
 
@@ -280,11 +281,11 @@ class Coe(val resultRoot: File) {
      * @param delta
      */
     def simulate(delta: Double) {
-      val nextTime = currentTime + delta
+      val nextTime = this.state.time + delta
       if (nextTime <= endTime) {
-        state = CoeSimulator.doSimulationStep(init._1, init._2, init._3, state, startTime, nextTime, coe)
+        state = CoeSimulator.doSimulationStep(init._1, init._2, init._3, state, state.time, nextTime, coe)
       }
-      currentTime = nextTime
+      //      currentTime = nextTime
     }
 
     def postSimulation() {
