@@ -15,12 +15,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CoeService {
     private final static Logger logger = LoggerFactory.getLogger(CoeService.class);
     private boolean simulating = false;
+    private boolean initialized = false;
     private double startTime = 0d;
     private double endTime = 0d;
     private Map<String, List<ModelDescription.LogCategory>> availableDebugLoggingCategories;
@@ -29,6 +31,7 @@ public class CoeService {
     private Coe.CoeSimulationHandle simulationHandle = null;
     private EnvironmentFMU environmentFMU;
     private Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> requestedOutputs;
+    private List<String> acceptedInputs;
 
 
     public CoeService(Coe coe) {
@@ -69,7 +72,7 @@ public class CoeService {
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
             List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
             Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
-
+        this.initialized = false;
         //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
         // - Report error if inputs are part of connection.
 
@@ -99,13 +102,14 @@ public class CoeService {
 
 
             modelDescriptions.forEach(
-                    (fmu, md) -> logger.debug("{}: {}", fmu, md.stream().map(sv -> sv.name).collect(Collectors.joining(",\n\t", "[\n\t", "]"))));
+                    (fmu, md) -> logger.trace("{}: {}", fmu, md.stream().map(sv -> sv.name).collect(Collectors.joining(",\n\t", "[\n\t", "]"))));
 
             //ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
             //List<ModelDescription.ScalarVariable> modelDescScalars = modelDescription.getScalarVariables();
-            this.environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("environmentFMU", "environmentInstance");
+            this.environmentFMU = EnvironmentFMU.CreateEnvironmentFMU("~env~", "global");
 
-            fmus.put(environmentFMU.environmentFmuModelInstance.key, new URI("environment://".concat(environmentFMU.fmuName)));
+            fmus.put(environmentFMU.environmentFmuModelInstance.key,
+                    new URI(EnvironmentFMUFactory.EnvironmentSchemeIdentificationId + "://".concat(environmentFMU.fmuName)));
 
             // TODO: Abort if input is part of an existing connection
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
@@ -113,6 +117,23 @@ public class CoeService {
                 // Outputs for the environment FMU with full scalar variable information
                 Map<ModelConnection.ModelInstance, List<ModelParameter>> inputsGroupedByInstance = inputs.stream()
                         .collect(Collectors.groupingBy(x -> x.variable.instance));
+
+                Map<ModelParameter, Boolean> inputsValidation = inputs.stream().collect(Collectors.toMap(Function.identity(), p -> {
+                    List<ModelDescription.ScalarVariable> md = modelDescriptions.get(p.variable.instance.key);
+
+                    return md.stream().anyMatch(sv -> sv.causality == ModelDescription.Causality.Input && sv.name.equals(p.variable.variable));
+
+                }));
+
+                List<ModelParameter> invalidInputs = inputsValidation.entrySet().stream().filter(map -> !map.getValue()).map(Map.Entry::getKey)
+                        .collect(Collectors.toList());
+
+                if (!invalidInputs.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "The following inputs are not present as input in the respective FMUs: " + invalidInputs.stream()
+                                    .map(p -> p.variable.toString()).collect(Collectors.joining(",")));
+                }
+
                 Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envOutputs = inputsGroupedByInstance.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, map -> {
                             List<ModelDescription.ScalarVariable> correspondingScalars = modelDescriptions.get(map.getKey().key);
@@ -122,6 +143,8 @@ public class CoeService {
                         }));
 
                 environmentFMU.calculateOutputs(envOutputs);
+                this.acceptedInputs = inputsValidation.entrySet().stream().filter(Map.Entry::getValue).map(p -> p.getKey().variable.toString())
+                        .collect(Collectors.toList());
 
                 // Start values for inputs shall be set as values on environment FMU outputs.
                 for (ModelParameter input : inputs) {
@@ -195,6 +218,7 @@ public class CoeService {
         }
 
         try {
+            Coe coe = get();
             coe.getConfiguration().isStabalizationEnabled = false;
             coe.getConfiguration().global_absolute_tolerance = 0d;
             coe.getConfiguration().global_relative_tolerance = 0d;
@@ -207,6 +231,16 @@ public class CoeService {
             this.availableDebugLoggingCategories = coe
                     .initialize(fmus, connections, parameters, stepSizeCalculator, new LogVariablesContainer(new HashMap<>(), outputs));
 
+            this.initialized = true;
+
+        } catch (Exception e) {
+            logger.error("Internal error in initialization", e);
+            throw new InitializationException(e.getMessage(), e);
+        }
+
+        this.requestedDebugLoggingCategories = new HashMap<>();
+
+        if (requestedDebugLoggingCategories != null) {
             // Assert that the logVariables are within the availableDebugLoggingCategories
             boolean logVariablesOK = requestedDebugLoggingCategories.entrySet().stream().filter(x -> x.getValue() != null && x.getValue().size() > 0).
                     allMatch(entry -> {
@@ -219,15 +253,12 @@ public class CoeService {
             if (!logVariablesOK) {
                 throw new IllegalArgumentException("Log categories do not align with the log categories within the FMUs");
             }
-
-            logger.trace("Initialization completed obtained the following logging categories: {}", availableDebugLoggingCategories.entrySet().stream()
-                    .map(map -> map.getKey() + "=" + map.getValue().stream().map(c -> c.name).collect(Collectors.joining(",", "[", "]")))
-                    .collect(Collectors.joining(",")));
-
-        } catch (Exception e) {
-            logger.error("Internal error in initialization", e);
-            throw new InitializationException(e.getMessage(), e);
         }
+
+        logger.trace("Initialization completed obtained the following logging categories: {}", availableDebugLoggingCategories.entrySet().stream()
+                .map(map -> map.getKey() + "=" + map.getValue().stream().map(c -> c.name).collect(Collectors.joining(",", "[", "]")))
+                .collect(Collectors.joining(",")));
+
 
     }
 
@@ -268,7 +299,16 @@ public class CoeService {
     }
 
     public Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> simulate(double delta,
-                                                                                                     List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+            List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+
+        if (!this.initialized) {
+            throw new IllegalStateException("Simulator is not initialized");
+        }
+
+        if (!inputs.stream().map(p -> p.variable.toString()).allMatch(v -> this.acceptedInputs.contains(v))) {
+            throw new IllegalStateException("Simulator called with undeclared input: " + inputs.stream().map(p -> p.variable.toString())
+                    .filter(v -> !this.acceptedInputs.contains(v)).collect(Collectors.joining(",")));
+        }
 
         if (simulationHandle == null) {
             configureSimulationDeltaStepping(new HashMap<>(), false, 0d);
@@ -289,6 +329,8 @@ public class CoeService {
 
 
         inputs.forEach(inp -> {
+            //FIXME this definition is incorrect the model parameter cannot be send in alone it must be send if using the SV because the
+            // ValueConverter.convertValue method must be called to set the value and this the source and target sv.type's must be present
             this.simulationHandle.updateState(inp, this.environmentFMU.environmentFmuModelInstance,
                     this.environmentFMU.getSourceToEnvironmentVariableOutputs().get(inp.variable.toString()).valueReference);
         });
@@ -296,7 +338,8 @@ public class CoeService {
 
         this.simulationHandle.simulate(delta);
 
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = this.simulationHandle.getOutputs(this.requestedOutputs);
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = this.simulationHandle
+                .getOutputs(this.requestedOutputs);
 
         //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
         // - MISSING TEST
