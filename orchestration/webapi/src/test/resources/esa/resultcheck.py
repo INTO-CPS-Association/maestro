@@ -1,6 +1,8 @@
 import csv
+import json
 import matplotlib.pyplot as plt
 from io import open
+from itertools import chain
 from pathlib import Path
 
 
@@ -70,3 +72,19 @@ def check_results(outputs, result_csv_path, start_time, end_time, step_size):
             print("step count does not match expected: %d should be %d" % (entryCount, expectedSteps))
             return 1
     return 0
+
+
+def check_result_from_simulator(init_file_path, result_path):
+    config = json.load(open(init_file_path, encoding='utf8'))
+    if "connections" in config:
+        outputs = [str(k) for k in config["connections"]]
+    else:
+        outputs = []
+
+    if "requested_outputs" in config:
+        additionalOutputs = [[v + "." + k for k in config["requested_outputs"][v]] for v in config["requested_outputs"]]
+        outputs = outputs + (list(chain.from_iterable(additionalOutputs)))
+    startTime = 0
+    endTime = config["end_time"]
+    step_size = config["step_size"]
+    return check_results(outputs, result_path, startTime, endTime, step_size)

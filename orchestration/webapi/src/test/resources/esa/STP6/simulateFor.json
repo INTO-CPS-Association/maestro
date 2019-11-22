@@ -1,6 +1,6 @@
 {
   "time_step": 10,
   "inputs": {
-    "{tankFmu}.tankIns.valve": true
+    "{tankFmu}.tankIns.valvecontrol": 1.0
   }
 }
