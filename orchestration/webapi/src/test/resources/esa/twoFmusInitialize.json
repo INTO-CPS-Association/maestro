@@ -4,9 +4,6 @@
     "{tankFmu}": "src/test/resources/esa/fmus/singlewatertank-20sim.fmu"
   },
   "connections": {
-    "{controllerFmu}.crtlIns.valve": [
-      "{tankFmu}.tankIns.valvecontrol"
-    ],
     "{tankFmu}.tankIns.level": [
       "{controllerFmu}.crtlIns.level"
     ]
