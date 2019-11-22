@@ -115,6 +115,18 @@ public class CoeService {
             // TODO: Abort if input is part of an existing connection
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
             if (inputs != null && inputs.size() > 0) {
+
+                //check that inputs are not already connected in connections
+                Set<ModelConnection.Variable> connectedInputs = connections.stream().map(con -> con.to).collect(Collectors.toSet());
+                if (inputs.stream().map(in -> in.variable).anyMatch(connectedInputs::contains)) {
+
+                    connectedInputs.removeAll(inputs.stream().map(in -> in.variable).collect(Collectors.toSet()));
+
+                    throw new InitializationException("Invalid input. The following inputs are already connected: " + connectedInputs.stream()
+                            .map(ModelConnection.Variable::toString).collect(Collectors.joining(",")));
+                }
+
+
                 // Outputs for the environment FMU with full scalar variable information
                 Map<ModelConnection.ModelInstance, List<ModelParameter>> inputsGroupedByInstance = inputs.stream()
                         .collect(Collectors.groupingBy(x -> x.variable.instance));
