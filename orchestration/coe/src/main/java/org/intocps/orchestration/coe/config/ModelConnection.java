@@ -34,6 +34,8 @@
  */
 package org.intocps.orchestration.coe.config;
 
+import java.util.Objects;
+
 public class ModelConnection {
     public final Variable from;
     public final Variable to;
@@ -158,6 +160,23 @@ public class ModelConnection {
         @Override
         public String toString() {
             return instance + "." + variable;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Variable variable1 = (Variable) o;
+            return Objects.equals(instance, variable1.instance) && Objects.equals(variable, variable1.variable);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(instance, variable);
         }
     }
 }
