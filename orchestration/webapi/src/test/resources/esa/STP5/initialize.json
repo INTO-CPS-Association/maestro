@@ -15,9 +15,6 @@
     "{controllerFmu}.crtlIns.maxLevel": 8,
     "{controllerFmu}.crtlIns.minLevel": 2
   },
-  "inputs": {
-    "{tankFmu}.tankIns.valvecontrol": 1.0
-  },
   "requested_outputs": {
     "{controllerFmu}.crtlIns": [
       "valve"

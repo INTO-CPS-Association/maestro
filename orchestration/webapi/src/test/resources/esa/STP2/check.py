@@ -45,7 +45,7 @@ with tempfile.TemporaryDirectory() as directory:
     jarDest = directory / Path(jarName)
     print(jarDest)
     shutil.copy(args.jar, jarDest)
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jarName, '-p', str(port)],
+    api_process = subprocess.Popen(['java', '-cp', jarName, "org.intocps.orchestration.coe.CoeMain" ,'-p', str(port)],
                                    stdout=subprocess.PIPE, cwd=directory)
 
 
