@@ -61,7 +61,7 @@ public class CoeService {
 
         String session = UUID.randomUUID().toString();
         File root = new File(session);
-        if (root.mkdirs()) {
+        if (!root.mkdirs()) {
             logger.error("Could not create session directory for COE: {}", root.getAbsolutePath());
         }
 
