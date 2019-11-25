@@ -3,6 +3,7 @@ package org.intocps.orchestration.coe.webapi.esav1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
+import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,11 +33,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class Stp4Test {
     final static String baseUrl = "/api/esav1/simulator";
     @Autowired
+    CoeService service;
+    @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
     @Before
-    public void before() {
+    public void before() throws NoSuchFieldException, IllegalAccessException {
+
+        service.reset();
 
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }

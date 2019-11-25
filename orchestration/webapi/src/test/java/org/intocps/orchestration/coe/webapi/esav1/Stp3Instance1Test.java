@@ -3,6 +3,7 @@ package org.intocps.orchestration.coe.webapi.esav1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
+import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,12 +33,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class Stp3Instance1Test {
     final static String baseUrl = "/api/esav1/simulator";
     @Autowired
+    CoeService service;
+    @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
     @Before
     public void before() {
 
+        service.reset();
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
@@ -89,7 +93,8 @@ public class Stp3Instance1Test {
 
         //Map<String, Map<String, Object>> expectedOutput = new ObjectMapper().readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
 
-        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
+        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON))
+                .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
         //Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
         //Assert.assertEquals(expectedOutput, actualOutput);
 

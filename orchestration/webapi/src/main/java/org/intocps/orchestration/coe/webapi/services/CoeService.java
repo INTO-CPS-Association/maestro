@@ -39,7 +39,7 @@ public class CoeService {
     }
 
     public CoeService() {
-
+        reset();
     }
 
     private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
@@ -51,6 +51,20 @@ public class CoeService {
             ModelConnection connection = new ModelConnection(from, to);
             return connection;
         }).collect(Collectors.toList());
+    }
+
+    public void reset() {
+        simulating = false;
+        initialized = false;
+        startTime = 0d;
+        endTime = 0d;
+        availableDebugLoggingCategories = null;
+        requestedDebugLoggingCategories = null;
+        coe = null;
+        simulationHandle = null;
+        environmentFMU = null;
+        requestedOutputs = null;
+        acceptedInputs = null;
     }
 
     public Coe get() {
