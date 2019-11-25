@@ -149,8 +149,8 @@ class Coe(val resultRoot: File) {
       return null
     }
 
+    resultRoot.mkdirs();
     result = new File(resultRoot, "outputs.csv")
-    result.mkdirs()
 
     listeners.add(new ResultLogger(result, logVariables.getCsvResultLoggerVariables))
     status = CoeStatus.Initialized
