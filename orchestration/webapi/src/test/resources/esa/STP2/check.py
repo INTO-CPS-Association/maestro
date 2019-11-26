@@ -1,11 +1,14 @@
 import argparse
+import csv
 import http.client
 import json
 import os
 import socket
 import subprocess
 import sys
+import threading
 import time
+import websocket
 from contextlib import closing
 
 sys.path.append(os.getcwd() + '/..')
@@ -45,7 +48,17 @@ with tempfile.TemporaryDirectory() as directory:
     jarDest = directory / Path(jarName)
     print(jarDest)
     shutil.copy(args.jar, jarDest)
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jarName, '-p', str(port)], stdout=subprocess.PIPE, cwd=directory)
+    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jarName, '-p', str(port)],
+                                   stdout=subprocess.PIPE, cwd=directory)
+
+    a = [["time", "step-size", "{crtl}.crtlInstance.valve", "{wt}.wtInstance.level"]]
+
+
+    def on_message(ws, message):
+        print("WS MESSAGE RECEIVED:" + message)
+        jdata = json.loads(message)
+        a.append([jdata["time"], 0.1, jdata["data"]["{crtl}"]["crtlInstance"]["valve"],
+                  jdata["data"]["{wt}"]["wtInstance"]["level"]])
 
 
     def post(c, location, data_path):
@@ -96,6 +109,13 @@ with tempfile.TemporaryDirectory() as directory:
 
             print ("Initialize response code '%d, data='%s'" % (response.status, response.read().decode()))
 
+            wsConn = "ws://localhost:" + str(port) + "/attachSession/" + status["sessionId"]
+            websocket.enableTrace(True)
+            ws = websocket.WebSocketApp(wsConn, on_message=on_message)
+            wst = threading.Thread(target=ws.run_forever)
+            wst.daemon = True
+            wst.start()
+
             response = post(conn, '/simulate/' + status["sessionId"], "simulate.json")
             if not response.status == 200:
                 print("Could not simulate")
@@ -103,6 +123,10 @@ with tempfile.TemporaryDirectory() as directory:
                 break
 
             print ("Simulate response code '%d, data='%s'" % (response.status, response.read().decode()))
+
+            with open("livestream.csv", "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerows(a)
 
             conn.request('GET', '/result/' + status["sessionId"] + "/plain")
             response = conn.getresponse()
@@ -125,6 +149,7 @@ with tempfile.TemporaryDirectory() as directory:
             start_time = float(simulate['startTime'])
             end_time = float(simulate['endTime'])
             check_results(outputs, result_csv_path, start_time, end_time, step_size)
+            check_results(outputs, "livestream.csv", start_time, end_time, step_size)
 
             break
         except ConnectionRefusedError:
