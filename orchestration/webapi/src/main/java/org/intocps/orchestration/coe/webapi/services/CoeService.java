@@ -90,12 +90,9 @@ public class CoeService {
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
-            List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
-            Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
+                           List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories, List<ModelParameter> inputs,
+                           Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) throws Exception {
         this.initialized = false;
-        //FIXME insert what ever is needed to connect the FMU to handle single FMU simulations.
-        // - Report error if inputs are part of connection.
-
 
         if (fmus.size() == 1 || (inputs != null && inputs.size() > 0) || (outputs != null && outputs.size() > 0)) {
             // Connections are needed
@@ -132,7 +129,6 @@ public class CoeService {
             fmus.put(environmentFMU.environmentFmuModelInstance.key,
                     new URI(EnvironmentFMUFactory.EnvironmentSchemeIdentificationId + "://".concat(environmentFMU.fmuName)));
 
-            // TODO: Abort if input is part of an existing connection
             // Inputs of non-virtual FMUs occur as output of the virtual environment FMU
             if (inputs != null && inputs.size() > 0) {
 
@@ -259,7 +255,7 @@ public class CoeService {
             coe.getConfiguration().visible = false;
             coe.getConfiguration().parallelSimulation = false;
             coe.getConfiguration().simulationProgramDelay = false;
-            coe.getConfiguration().hasExternalSignals = false;//TODO maybe?
+            coe.getConfiguration().hasExternalSignals = false;
 
             this.availableDebugLoggingCategories = coe
                     .initialize(fmus, connections, parameters, stepSizeCalculator, new LogVariablesContainer(new HashMap<>(), outputs));
@@ -302,7 +298,7 @@ public class CoeService {
     }
 
     private void configureSimulationDeltaStepping(Map<String, List<String>> requestedDebugLoggingCategories, boolean reportProgress,
-            double liveLogInterval) throws ModelConnection.InvalidConnectionException {
+                                                  double liveLogInterval) throws ModelConnection.InvalidConnectionException {
         if (simulationHandle == null) {
 
             Map<ModelConnection.ModelInstance, List<String>> reqDebugLoggingCategories = new HashMap<>();
@@ -335,7 +331,7 @@ public class CoeService {
     }
 
     public Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> simulate(double delta,
-            List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
+                                                                                                     List<ModelParameter> inputs) throws SimulatorNotConfigured, ModelConnection.InvalidConnectionException, InvalidVariableStringException {
 
         if (!this.initialized) {
             throw new IllegalStateException("Simulator is not initialized");
@@ -377,9 +373,6 @@ public class CoeService {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = this.simulationHandle
                 .getOutputs(this.requestedOutputs);
 
-        //TODO: Get the inputs from the environment FMU. These correspond to the outputs from the non-virtual FMUs, i.e. the requested outputs.
-        // - MISSING TEST
-        // - MISSING PROPER RETURN
         return outputs;
     }
 
@@ -394,8 +387,8 @@ public class CoeService {
         final Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs;
 
         public CachedInitializeArguments(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime,
-                List<ModelParameter> parameters, List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories,
-                List<ModelParameter> inputs, Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) {
+                                         List<ModelParameter> parameters, List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories,
+                                         List<ModelParameter> inputs, Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) {
             this.fmus = fmus;
             this.stepSizeCalculator = stepSizeCalculator;
             this.endTime = endTime;
