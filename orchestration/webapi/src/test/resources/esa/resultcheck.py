@@ -45,7 +45,7 @@ def check_results(outputs, result_csv_path, start_time, end_time, step_size):
             return 1
 
         fig = plt.figure()
-        for column in outputColumns:
+        for column in set(outputColumns):
             y = [convertToValue(line[column]) for line in data]
             plt.plot(timeColumn, y, label=column)
         plt.legend(loc='upper left')
