@@ -1,0 +1,37 @@
+{
+  "fmus": {
+    "{controllerFmu}": "watertankController.fmu",
+    "{tankFmu}": "singlewatertank-20sim.fmu"
+  },
+  "connections": {
+    "{controllerFmu}.crtlIns.valve": [
+      "{tankFmu}.tankIns.valvecontrol"
+    ],
+    "{tankFmu}.tankIns.level": [
+      "{controllerFmu}.crtlIns.level"
+    ]
+  },
+  "parameters": {
+    "{controllerFmu}.crtlIns.maxLevel": 8,
+    "{controllerFmu}.crtlIns.minLevel": 2
+  },
+  "requested_outputs": {
+    "{controllerFmu}.crtlIns": [
+      "valve"
+    ],
+    "{tankFmu}.tankIns": [
+      "level"
+    ]
+  },
+  "log_levels": {
+    "{controllerFmu}.crtlIns": [
+      "logAll",
+      "logError",
+      "VdmErr"
+    ],
+    "{tankFmu}.tankIns": []
+  },
+  "step_size": 1,
+  "end_time": 5,
+  "simulator_log_level": "TRACE"
+}

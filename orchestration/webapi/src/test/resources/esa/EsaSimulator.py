@@ -34,6 +34,12 @@ class EsaSimulator:
         res = conn.getresponse()
         return res
 
+    def reset(self):
+        conn = http.client.HTTPConnection(self.url)
+        conn.request('POST', "/api/esav1/simulator/reset", "", self.headers)
+        res = conn.getresponse()
+        return res
+
     def get_plain_result(self):
         conn = http.client.HTTPConnection(self.url)
         conn.request('GET', "/api/esav1/simulator/result/plain")

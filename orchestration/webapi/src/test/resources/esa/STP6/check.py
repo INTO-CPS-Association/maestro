@@ -163,6 +163,31 @@ with tempfile.TemporaryDirectory() as directory:
             sim1.store_plain_result("1.csv")
 
             print("------------------------------------------")
+            print("Testing Simulation: Resetting")
+            print("------------------------------------------")
+            sim1.reset()
+
+            print("------------------------------------------")
+            print("Testing Simulation: After reset Simulating")
+            print("------------------------------------------")
+
+            if not simulate_and_check(sim1, "2-simulateFor.json", "2-simulateForResult.json"):
+                print("Simulate simulator 1 failed")
+                failed = True
+                break
+
+            print("------------------------------------------")
+            print("Testing Simulation: Stopping")
+            print("------------------------------------------")
+            sim1.stop()
+
+            print("------------------------------------------")
+            print("Testing Simulation: Obtain results")
+            print("------------------------------------------")
+
+            sim1.store_plain_result("2.csv")
+
+            print("------------------------------------------")
             print("Testing Simulation: Deleting")
             print("------------------------------------------")
             sim1.destroy()
@@ -170,6 +195,10 @@ with tempfile.TemporaryDirectory() as directory:
         manager.delete(sim1Id)
 
         if check_result_from_simulator("initialize.json", "1.csv"):
+            print("Output of simulator 1 wrong")
+            failed = True
+
+        if check_result_from_simulator("2-initialize.json", "2.csv"):
             print("Output of simulator 1 wrong")
             failed = True
 
