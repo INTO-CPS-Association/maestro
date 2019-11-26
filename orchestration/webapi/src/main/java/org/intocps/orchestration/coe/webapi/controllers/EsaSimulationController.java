@@ -129,7 +129,7 @@ public class EsaSimulationController {
 
     @RequestMapping(value = "/simulate", method = RequestMethod.POST)
     public Map<String, Map<String, Object>> simulate(@RequestBody
-                                                             EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, IOException, InvalidVariableStringException, ModelConnection.InvalidConnectionException {
+            EsaSimulateRequestBody body) throws CoeService.SimulatorNotConfigured, IOException, InvalidVariableStringException, ModelConnection.InvalidConnectionException {
 
         Coe coe = coeService.get();
 
@@ -139,7 +139,8 @@ public class EsaSimulationController {
 
         try {
             Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> outputs = coeService.simulate(body.timeStep, inputs);
-            return outputs.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().toString(), x -> x.getValue().entrySet().stream().collect(Collectors.toMap(y -> y.getKey().name, Map.Entry::getValue))));
+            return outputs.entrySet().stream().collect(Collectors.toMap(x -> x.getKey().toString(),
+                    x -> x.getValue().entrySet().stream().collect(Collectors.toMap(y -> y.getKey().name, Map.Entry::getValue))));
         } catch (Exception e) {
             logger.error("Error in simulation", e);
             throw e;
@@ -149,6 +150,12 @@ public class EsaSimulationController {
     @RequestMapping(value = "/stop", method = RequestMethod.POST)
     public void stop() {
         coeService.stop();
+    }
+
+    @RequestMapping(value = "/reset", method = RequestMethod.POST)
+    public void reset() throws Exception {
+        coeService.reset();
+        coeService.reinitialize();
     }
 
     @RequestMapping(value = "/result/plain", method = RequestMethod.GET)
@@ -271,10 +278,10 @@ public class EsaSimulationController {
 
         @JsonCreator
         public EsaIninializationData(@JsonProperty("fmus") Map<String, String> fmus,
-                                     @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
-                                     @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
-                                     @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
-                                     @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
+                @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
+                @JsonProperty("inputs") final Map<String, Object> inputs, @JsonProperty("requested_outputs") Map<String, List<String>> outputs,
+                @JsonProperty("step_size") Double stepSize, @JsonProperty("log_levels") final Map<String, List<String>> logLevels,
+                @JsonProperty("end_time") final Double endTime, @JsonProperty("simulator_log_level") final InitializeLogLevel simulatorLogLevel) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;

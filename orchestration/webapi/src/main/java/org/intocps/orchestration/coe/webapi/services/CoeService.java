@@ -33,6 +33,8 @@ public class CoeService {
     private Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> requestedOutputs;
     private List<String> acceptedInputs;
 
+    private CachedInitializeArguments cachedInitializeArguments = null;
+
 
     public CoeService(Coe coe) {
         this.coe = coe;
@@ -42,18 +44,15 @@ public class CoeService {
         reset();
     }
 
-    private static List<ModelConnection> createEnvConnection(List<ModelDescription.ScalarVariable> fromVariables,
-            ModelConnection.ModelInstance fromInstance, ModelConnection.ModelInstance toInstance) {
-
-        return fromVariables.stream().map(scalarVariable -> {
-            ModelConnection.Variable from = new ModelConnection.Variable(fromInstance, scalarVariable.name);
-            ModelConnection.Variable to = new ModelConnection.Variable(toInstance, scalarVariable.name);
-            ModelConnection connection = new ModelConnection(from, to);
-            return connection;
-        }).collect(Collectors.toList());
-    }
-
     public void reset() {
+
+        if (coe != null) {
+            if (this.simulating) {
+                stop();
+            }
+        }
+
+
         simulating = false;
         initialized = false;
         startTime = 0d;
@@ -81,6 +80,13 @@ public class CoeService {
 
         this.coe = new Coe(root);
         return coe;
+    }
+
+    public void reinitialize() throws Exception {
+        if (this.cachedInitializeArguments != null) {
+            CachedInitializeArguments c = this.cachedInitializeArguments;
+            initialize(c.fmus, c.stepSizeCalculator, c.endTime, c.parameters, c.connections, c.requestedDebugLoggingCategories, c.inputs, c.outputs);
+        }
     }
 
     public void initialize(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime, List<ModelParameter> parameters,
@@ -287,6 +293,8 @@ public class CoeService {
                 .collect(Collectors.joining(",")));
 
 
+        this.cachedInitializeArguments = new CachedInitializeArguments(fmus, stepSizeCalculator, endTime, parameters, connections,
+                requestedDebugLoggingCategories, inputs, outputs);
     }
 
     public void simulate(Map<ModelConnection.ModelInstance, List<String>> debugLoggingCategories, boolean reportProgress, double liveLogInterval) {
@@ -321,6 +329,7 @@ public class CoeService {
     public void stop() {
         if (this.simulationHandle != null && simulating) {
             this.simulationHandle.postSimulation();
+            this.simulationHandle = null;
         }
         get().stopSimulation();
     }
@@ -372,6 +381,30 @@ public class CoeService {
         // - MISSING TEST
         // - MISSING PROPER RETURN
         return outputs;
+    }
+
+    private static class CachedInitializeArguments {
+        final Map<String, URI> fmus;
+        final CoSimStepSizeCalculator stepSizeCalculator;
+        final Double endTime;
+        final List<ModelParameter> parameters;
+        final List<ModelConnection> connections;
+        final Map<String, List<String>> requestedDebugLoggingCategories;
+        final List<ModelParameter> inputs;
+        final Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs;
+
+        public CachedInitializeArguments(Map<String, URI> fmus, CoSimStepSizeCalculator stepSizeCalculator, Double endTime,
+                List<ModelParameter> parameters, List<ModelConnection> connections, Map<String, List<String>> requestedDebugLoggingCategories,
+                List<ModelParameter> inputs, Map<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs) {
+            this.fmus = fmus;
+            this.stepSizeCalculator = stepSizeCalculator;
+            this.endTime = endTime;
+            this.parameters = parameters;
+            this.connections = connections;
+            this.requestedDebugLoggingCategories = requestedDebugLoggingCategories;
+            this.inputs = inputs;
+            this.outputs = outputs;
+        }
     }
 
     public class SimulatorNotConfigured extends Exception {
