@@ -1,5 +1,5 @@
-STP1/test-run
-STP2/result*
+STP1/tmp
+STP2/tmp
 STP3/1.csv
 STP3/2.csv
 STP3/1-result*

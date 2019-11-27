@@ -18,6 +18,8 @@ import tempfile
 import shutil
 from pathlib import Path
 
+from jarunpacker import jar_unpacker
+
 
 def find_free_port():
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
@@ -28,14 +30,22 @@ def find_free_port():
 
 parser = argparse.ArgumentParser(prog='PROG', usage='%(prog)s [options]')
 parser.add_argument('--jar', help='jar', required=True)
+parser.add_argument('--live', help='live output from API', action='store_true')
+parser.set_defaults(live=False)
 
 args = parser.parse_args()
 
 port = find_free_port()
+liveOutput = args.live
 
 print("Starting api on port %d" % port)
 
 with tempfile.TemporaryDirectory() as directory:
+    directory = Path("tmp")
+    directory = directory.resolve()
+    if not directory.exists():
+        directory.mkdir(parents=True)
+
     config = json.load(open("initialize.json"))
     for fmu in config["fmus"]:
         print (fmu)
@@ -44,14 +54,33 @@ with tempfile.TemporaryDirectory() as directory:
         dest = directory / name
         shutil.copy(src, dest)
 
-    jarName = Path(args.jar).name
-    jarDest = directory / Path(jarName)
-    print(jarDest)
-    shutil.copy(args.jar, jarDest)
-    api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jarName, '-p', str(port)],
-                                   stdout=subprocess.PIPE, cwd=directory)
+    classpathDir = jar_unpacker(args.jar)
 
-    a = [["time", "step-size", "{crtl}.crtlInstance.valve", "{wt}.wtInstance.level"]]
+    if classpathDir is None:
+        print ("Failed to extract jar")
+        exit(1)
+
+    stream = None
+    if liveOutput:
+        stream = subprocess.PIPE
+    else:
+        stream = open('api.log', 'w')
+
+    classpath = ".:" + str(Path(classpathDir) / Path(
+        "BOOT-INF") / Path("lib")) + "/*"
+    api_process = subprocess.Popen(
+        ['java', '-cp', str(classpath), "org.intocps.orchestration.coe.CoeMain", '-p',
+         str(port)],
+        stdout=stream, stderr=stream, cwd=str(directory))
+
+
+    def post(c, location, data_path):
+        headers = {'Content-type': 'application/json'}
+        foo = json.load(open(data_path))
+        json_data = json.dumps(foo)
+        c.request('POST', location, json_data, headers)
+        res = c.getresponse()
+        return res
 
 
     def on_message(ws, message):
@@ -71,12 +100,19 @@ with tempfile.TemporaryDirectory() as directory:
 
 
     ok = True
-    for i in range(0, 5):
+    for i in range(0, 25):
         try:
             print("Trying to connect: %d" % i)
             conn = http.client.HTTPConnection('localhost:' + str(port))
 
             headers = {'Content-type': 'application/json'}
+            # jarDest = directory / Path(jarName)
+            # print(jarDest)
+            # shutil.copy(args.jar, jarDest)
+            # api_process = subprocess.Popen(['java', "-Dserver.port=" + str(port), '-jar', jarName, '-p', str(port)],
+            #                                stdout=subprocess.PIPE, cwd=directory)
+
+            a = [["time", "step-size", "{crtl}.crtlInstance.valve", "{wt}.wtInstance.level"]]
 
             conn.request('GET', '/version')
             #
