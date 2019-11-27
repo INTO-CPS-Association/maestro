@@ -72,7 +72,7 @@ public class CoeMain {
         Option resultOpt = Option.builder("r").longOpt("result").desc("Path where the csv data should be writting to").hasArg().numberOfArgs(1).argName("path").build();
         Option startTimeOpt = Option.builder("s").longOpt("starttime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
         Option endTimeOpt = Option.builder("e").longOpt("endtime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
-        Option loadSingleFMUOpt = Option.builder("l").longOpt("load").desc("Loads a single FMU").hasArg().numberOfArgs(1).argName("path").build();
+        Option loadSingleFMUOpt = Option.builder("l").longOpt("load").desc("Attempt to load a single FMU").hasArg().numberOfArgs(1).argName("path").build();
 
         Options options = new Options();
         options.addOption(helpOpt);
