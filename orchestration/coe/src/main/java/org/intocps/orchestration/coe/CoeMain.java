@@ -1,43 +1,44 @@
 /*
-* This file is part of the INTO-CPS toolchain.
-*
-* Copyright (c) 2017-CurrentYear, INTO-CPS Association,
-* c/o Professor Peter Gorm Larsen, Department of Engineering
-* Finlandsgade 22, 8200 Aarhus N.
-*
-* All rights reserved.
-*
-* THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
-* THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
-* ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
-* RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
-* VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
-*
-* The INTO-CPS toolchain  and the INTO-CPS Association Public License 
-* are obtained from the INTO-CPS Association, either from the above address,
-* from the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
-* GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
-*
-* This program is distributed WITHOUT ANY WARRANTY; without
-* even the implied warranty of  MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
-* BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
-* THE INTO-CPS ASSOCIATION.
-*
-* See the full INTO-CPS Association Public License conditions for more details.
-*/
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-CurrentYear, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License
+ * are obtained from the INTO-CPS Association, either from the above address,
+ * from the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
 
 /*
-* Author:
-*		Kenneth Lausdahl
-*		Casper Thule
-*/
+ * Author:
+ *		Kenneth Lausdahl
+ *		Casper Thule
+ */
 package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.intocps.fmi.FmuInvocationException;
 import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.orchestration.coe.httpserver.NanoWSDImpl;
 import org.intocps.orchestration.coe.httpserver.RequestHandler;
@@ -50,236 +51,211 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.Properties;
 
-public class CoeMain
-{
-	final static Logger logger = LoggerFactory.getLogger(CoeMain.class);
+public class CoeMain {
+    final static Logger logger = LoggerFactory.getLogger(CoeMain.class);
 
-	private static void showHelp(Options options)
-	{
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("coe", options);
-	}
+    private static void showHelp(Options options) {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp("coe", options);
+    }
 
-	public static void main(String[] args)
-			throws InterruptedException, IOException, NanoHTTPD.ResponseException
-	{
+    public static void main(String[] args)
+            throws InterruptedException, IOException, NanoHTTPD.ResponseException {
 
-		Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
-		Option verboseOpt = Option.builder("v").desc("Verbose").build();
-		Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
-		Option extractOpt = Option.builder("x").longOpt("extract").hasArg().numberOfArgs(1).argName("type").desc("Extract values: 'script'").build();
-		Option portOpt = Option.builder("p").longOpt("port").desc("The port where the REST interface will be served").hasArg().numberOfArgs(1).argName("port").build();
-		Option oneShotOpt = Option.builder("o").longOpt("oneshot").desc("Run a single simulation and shutdown").build();
-		Option configOpt = Option.builder("c").longOpt("configuration").desc("Path to configuration file").hasArg().numberOfArgs(1).argName("path").build();
-		Option resultOpt = Option.builder("r").longOpt("result").desc("Path where the csv data should be writting to").hasArg().numberOfArgs(1).argName("path").build();
-		Option startTimeOpt = Option.builder("s").longOpt("starttime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
-		Option endTimeOpt = Option.builder("e").longOpt("endtime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
+        Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
+        Option verboseOpt = Option.builder("v").desc("Verbose").build();
+        Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
+        Option extractOpt = Option.builder("x").longOpt("extract").hasArg().numberOfArgs(1).argName("type").desc("Extract values: 'script'").build();
+        Option portOpt = Option.builder("p").longOpt("port").desc("The port where the REST interface will be served").hasArg().numberOfArgs(1).argName("port").build();
+        Option oneShotOpt = Option.builder("o").longOpt("oneshot").desc("Run a single simulation and shutdown").build();
+        Option configOpt = Option.builder("c").longOpt("configuration").desc("Path to configuration file").hasArg().numberOfArgs(1).argName("path").build();
+        Option resultOpt = Option.builder("r").longOpt("result").desc("Path where the csv data should be writting to").hasArg().numberOfArgs(1).argName("path").build();
+        Option startTimeOpt = Option.builder("s").longOpt("starttime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
+        Option endTimeOpt = Option.builder("e").longOpt("endtime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
+        Option loadSingleFMUOpt = Option.builder("l").longOpt("load").desc("Loads a single FMU").hasArg().numberOfArgs(1).argName("path").build();
 
-		Options options = new Options();
-		options.addOption(helpOpt);
-		options.addOption(portOpt);
-		options.addOption(oneShotOpt);
-		options.addOption(configOpt);
-		options.addOption(startTimeOpt);
-		options.addOption(endTimeOpt);
-		options.addOption(verboseOpt);
-		options.addOption(resultOpt);
-		options.addOption(extractOpt);
-		options.addOption(versionOpt);
+        Options options = new Options();
+        options.addOption(helpOpt);
+        options.addOption(portOpt);
+        options.addOption(oneShotOpt);
+        options.addOption(configOpt);
+        options.addOption(startTimeOpt);
+        options.addOption(endTimeOpt);
+        options.addOption(verboseOpt);
+        options.addOption(resultOpt);
+        options.addOption(extractOpt);
+        options.addOption(versionOpt);
+        options.addOption(loadSingleFMUOpt);
 
-		CommandLineParser parser = new DefaultParser();
-		CommandLine cmd;
-		try
-		{
-			cmd = parser.parse(options, args);
-		} catch (ParseException e1)
-		{
-			System.err.println("Parsing failed. Reason: " + e1.getMessage());
-			showHelp(options);
-			return;
-		}
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd;
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e1) {
+            System.err.println("Parsing failed. Reason: " + e1.getMessage());
+            showHelp(options);
+            return;
+        }
 
-		if(cmd.hasOption(helpOpt.getOpt()))
-		{
-			showHelp(options);
-			return;
-		}
+        if (cmd.hasOption(loadSingleFMUOpt.getOpt())) {
+            File fmuFile = getFile(loadSingleFMUOpt, cmd);
+            try {
+                Factory.create(fmuFile);
+                System.out.println("Successfully loaded FMU");
+            } catch (FmuInvocationException e) {
+                System.out.println("Failed to load FMU:\n");
+                e.printStackTrace();
+            }
+            return;
+        }
 
-		if(cmd.hasOption(versionOpt.getOpt()))
-		{
-			System.out.println(getVersion());
-			return;
-		}
+        if (cmd.hasOption(helpOpt.getOpt())) {
+            showHelp(options);
+            return;
+        }
 
-		boolean verbose = cmd.hasOption(verboseOpt.getOpt());
+        if (cmd.hasOption(versionOpt.getOpt())) {
+            System.out.println(getVersion());
+            return;
+        }
 
-		if(cmd.hasOption(extractOpt.getOpt()))
-		{
-			processExtract(cmd.getOptionValue(extractOpt.getOpt()));
-			return;
-		}
+        boolean verbose = cmd.hasOption(verboseOpt.getOpt());
 
-		if (!checkNativeFmi())
-		{
-			return;
-		}
+        if (cmd.hasOption(extractOpt.getOpt())) {
+            processExtract(cmd.getOptionValue(extractOpt.getOpt()));
+            return;
+        }
 
-		printVersion();
+        if (!checkNativeFmi()) {
+            return;
+        }
 
-		if (cmd.hasOption(oneShotOpt.getOpt()))
-		{
-			Double startTime;
-			Double endTime;
-			File configFile;
-			File outputFile = new File("output.csv");
+        printVersion();
 
-			configFile = getFile(configOpt, cmd);
+        if (cmd.hasOption(oneShotOpt.getOpt())) {
+            Double startTime;
+            Double endTime;
+            File configFile;
+            File outputFile = new File("output.csv");
 
-			startTime = getDouble(startTimeOpt, cmd);
+            configFile = getFile(configOpt, cmd);
 
-			endTime = getDouble(endTimeOpt, cmd);
+            startTime = getDouble(startTimeOpt, cmd);
 
-			if(cmd.hasOption(resultOpt.getOpt()))
-			{
-				outputFile = getFile(resultOpt, cmd);
-			}
+            endTime = getDouble(endTimeOpt, cmd);
 
-			if(startTime==null || endTime==null || configFile ==null ||outputFile ==null)
-			{
-				return;
-			}
+            if (cmd.hasOption(resultOpt.getOpt())) {
+                outputFile = getFile(resultOpt, cmd);
+            }
 
-			runOneShotSimulation(verbose,configFile,startTime,endTime, outputFile);
+            if (startTime == null || endTime == null || configFile == null || outputFile == null) {
+                return;
+            }
 
-		} else
-		{
+            runOneShotSimulation(verbose, configFile, startTime, endTime, outputFile);
 
-			// Change port if requested
-			int port = 8082;
-			if (cmd.hasOption(portOpt.getOpt()))
-			{
-				port = Integer.parseInt(cmd.getOptionValue(portOpt.getOpt()));
-			}
+        } else {
 
-			runHttpSerivce(port);
-		}
-	}
+            // Change port if requested
+            int port = 8082;
+            if (cmd.hasOption(portOpt.getOpt())) {
+                port = Integer.parseInt(cmd.getOptionValue(portOpt.getOpt()));
+            }
 
-	private static void processExtract(String optionValue) throws IOException
-	{
-		if("script".equals(optionValue))
-		{
-			File file = new File("client.py");
-			System.out.println("Extracting script to: "+file.getName());
-			InputStream in = CoeMain.class.getResourceAsStream("/client.py");
-			OutputStream out = new FileOutputStream(file);
-			IOUtils.copy(in,out);
-			IOUtils.closeQuietly(in);
-			IOUtils.closeQuietly(out);
-		}
-	}
+            runHttpSerivce(port);
+        }
+    }
 
-	private static Double getDouble(Option opt, CommandLine cmd)
-	{
-		if (cmd.hasOption(opt.getOpt()))
-		{
-			try
-			{
-				return Double.parseDouble(cmd.getOptionValue(opt.getOpt()));
-			} catch (NumberFormatException e)
-			{
-				System.err.println(
-						"Option " + opt.getLongOpt()+" must be a double");
-				return null;
-			}
-		} else
-		{
-			System.err.println(
-					"Missing option --" + opt.getLongOpt());
-			return null;
-		}
-	}
+    private static void processExtract(String optionValue) throws IOException {
+        if ("script".equals(optionValue)) {
+            File file = new File("client.py");
+            System.out.println("Extracting script to: " + file.getName());
+            InputStream in = CoeMain.class.getResourceAsStream("/client.py");
+            OutputStream out = new FileOutputStream(file);
+            IOUtils.copy(in, out);
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
+        }
+    }
 
-	private static File getFile(Option opt, CommandLine cmd)
-	{
-		if (cmd.hasOption(opt.getOpt()))
-		{
-			return new File(cmd.getOptionValue(opt.getOpt()));
-		} else
-		{
-			System.err.println("Missing option --" + opt.getLongOpt());
-			return null;
-		}
-	}
+    private static Double getDouble(Option opt, CommandLine cmd) {
+        if (cmd.hasOption(opt.getOpt())) {
+            try {
+                return Double.parseDouble(cmd.getOptionValue(opt.getOpt()));
+            } catch (NumberFormatException e) {
+                System.err.println(
+                        "Option " + opt.getLongOpt() + " must be a double");
+                return null;
+            }
+        } else {
+            System.err.println(
+                    "Missing option --" + opt.getLongOpt());
+            return null;
+        }
+    }
 
-	private static void runOneShotSimulation(boolean verbose ,File configFile, double startTime,
-			double endTime, File outputFile) throws IOException, NanoHTTPD.ResponseException
-	{
-		String config = FileUtils.readFileToString(configFile,"UTF-8");
-		new SingleSimMain.SimulationExecutionUtilStatusWriter(verbose).run(configFile.getPath(), config, startTime, endTime, outputFile);
-	}
+    private static File getFile(Option opt, CommandLine cmd) {
+        if (cmd.hasOption(opt.getOpt())) {
+            return new File(cmd.getOptionValue(opt.getOpt()));
+        } else {
+            System.err.println("Missing option --" + opt.getLongOpt());
+            return null;
+        }
+    }
 
-	private static void runHttpSerivce(int port) throws InterruptedException
-	{
-		SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
-		org.intocps.orchestration.coe.httpserver.RequestProcessors requestProcessors = new org.intocps.orchestration.coe.httpserver.RequestProcessors(sessionController);
-		NanoHTTPD server = new NanoWSDImpl(port, new RequestHandler(sessionController, requestProcessors));
-		System.out.println("Now running on port " + port);
+    private static void runOneShotSimulation(boolean verbose, File configFile, double startTime,
+                                             double endTime, File outputFile) throws IOException, NanoHTTPD.ResponseException {
+        String config = FileUtils.readFileToString(configFile, "UTF-8");
+        new SingleSimMain.SimulationExecutionUtilStatusWriter(verbose).run(configFile.getPath(), config, startTime, endTime, outputFile);
+    }
 
-		try
-		{
-			server.start(0, false);
-			while (server.isAlive())
-			{
-				Thread.sleep(1000);
-			}
-		} catch (IOException ioe)
-		{
-			System.err.println("Couldn't start server:\n" + ioe);
-			System.exit(-1);
-		} finally
-		{
-			server.stop();
-		}
-	}
+    private static void runHttpSerivce(int port) throws InterruptedException {
+        SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
+        org.intocps.orchestration.coe.httpserver.RequestProcessors requestProcessors = new org.intocps.orchestration.coe.httpserver.RequestProcessors(sessionController);
+        NanoHTTPD server = new NanoWSDImpl(port, new RequestHandler(sessionController, requestProcessors));
+        System.out.println("Now running on port " + port);
 
-	private static String getVersion()
-	{
-		try
-		{
-			Properties prop = new Properties();
-			InputStream coeProp = CoeMain.class.getResourceAsStream("/coe.properties");
-			prop.load(coeProp);
-			return prop.getProperty("version");
-		} catch (Exception e)
-		{
-			return "";
-		}
-	}
+        try {
+            server.start(0, false);
+            while (server.isAlive()) {
+                Thread.sleep(1000);
+            }
+        } catch (IOException ioe) {
+            System.err.println("Couldn't start server:\n" + ioe);
+            System.exit(-1);
+        } finally {
+            server.stop();
+        }
+    }
 
-	private static void printVersion()
-	{
-		try
-		{
-			System.out.println("Version: " + getVersion());
-		} catch (Exception e)
-		{
-		}
-	}
+    private static String getVersion() {
+        try {
+            Properties prop = new Properties();
+            InputStream coeProp = CoeMain.class.getResourceAsStream("/coe.properties");
+            prop.load(coeProp);
+            return prop.getProperty("version");
+        } catch (Exception e) {
+            return "";
+        }
+    }
 
-	private static boolean checkNativeFmi()
-	{
-		logger.debug("Checking native FMI support");
-		try
-		{
-			Factory.checkApi();
-		} catch (Throwable e)
-		{
-			System.err.println("Failed to load FMI API");
-			logger.error("Failed to load FMI API", e);
-			return false;
-		}
-		return true;
-	}
+    private static void printVersion() {
+        try {
+            System.out.println("Version: " + getVersion());
+        } catch (Exception e) {
+        }
+    }
+
+    private static boolean checkNativeFmi() {
+        logger.debug("Checking native FMI support");
+        try {
+            Factory.checkApi();
+        } catch (Throwable e) {
+            System.err.println("Failed to load FMI API");
+            logger.error("Failed to load FMI API", e);
+            return false;
+        }
+        return true;
+    }
 
 }
