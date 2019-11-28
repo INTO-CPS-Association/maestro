@@ -157,10 +157,16 @@ with tempfile.TemporaryDirectory() as directory:
             sim1.stop()
 
             print("------------------------------------------")
-            print("Testing Simulation: Obtain results")
+            print("Testing Simulation: Obtain results plain")
             print("------------------------------------------")
 
             sim1.store_plain_result("1.csv")
+
+            print("------------------------------------------")
+            print("Testing Simulation: Obtain results zip")
+            print("------------------------------------------")
+
+            sim1.store_zip_result("1.zip")
 
             print("------------------------------------------")
             print("Testing Simulation: Deleting")

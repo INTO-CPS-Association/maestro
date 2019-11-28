@@ -55,6 +55,21 @@ class EsaSimulator:
         else:
             print("Faild to get results code: %d, content: %s" % (response.status, response))
 
+    def get_zip_result(self):
+        conn = http.client.HTTPConnection(self.url)
+        conn.request('GET', "/api/esav1/simulator/result/zip")
+        res = conn.getresponse()
+        return res
+
+    def store_zip_result(self, result_path):
+        response = self.get_zip_result()
+        if response.status == 200:
+            with open(result_path, "wb") as f:
+                zip = response.read()
+                f.write(zip)
+        else:
+            print("Faild to get zip results code: %d, content: %s" % (response.status, response))
+
     def destroy(self):
         conn = http.client.HTTPConnection(self.url)
         conn.request('GET', "/api/esav1/simulator/destroy", "", self.headers)
