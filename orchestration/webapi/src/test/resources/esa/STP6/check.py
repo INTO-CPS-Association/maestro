@@ -137,7 +137,7 @@ with tempfile.TemporaryDirectory() as directory:
             print("Testing Simulation: Initializing")
             print("------------------------------------------")
 
-            if sim1.initialize(json.dumps(json.load(open("initialize.json", encoding='utf8')))).status != 200:
+            if sim1.initialize(json.dumps(json.load(open("1-initialize.json", encoding='utf8')))).status != 200:
                 print("Initialize simulator 1 failed")
                 failed = True
                 break
@@ -146,8 +146,8 @@ with tempfile.TemporaryDirectory() as directory:
             print("Testing Simulation: Simulating")
             print("------------------------------------------")
 
-            if not simulate_and_check(sim1, "simulateFor.json", "simulateForResult.json"):
-                print("Simulate simulator 1 failed")
+            if not simulate_and_check(sim1, "1-simulateFor.json", "simulateForResult.json"):
+                print("Simulate simulator 1 run 1 failed")
                 failed = True
                 break
 
@@ -172,7 +172,7 @@ with tempfile.TemporaryDirectory() as directory:
             print("------------------------------------------")
 
             if not simulate_and_check(sim1, "2-simulateFor.json", "2-simulateForResult.json"):
-                print("Simulate simulator 1 failed")
+                print("Simulate simulator 1 run 2 failed")
                 failed = True
                 break
 
@@ -195,11 +195,11 @@ with tempfile.TemporaryDirectory() as directory:
         manager.delete(sim1Id)
 
         if check_result_from_simulator("initialize.json", "1.csv"):
-            print("Output of simulator 1 wrong")
+            print("Output of simulator 1 run 1 wrong")
             failed = True
 
-        if check_result_from_simulator("2-initialize.json", "2.csv"):
-            print("Output of simulator 1 wrong")
+        if check_result_from_simulator("1-initialize.json", "2.csv"):
+            print("Output of simulator 1 run 2 wrong")
             failed = True
 
         break

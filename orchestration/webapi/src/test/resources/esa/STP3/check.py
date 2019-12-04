@@ -76,11 +76,10 @@ def simulate_and_check(simulator, input_file_path, expected_result_file_path):
     resp = simulator.simulate(json.dumps(json.load(open(input_file_path, encoding='utf8'))))
     if resp.status != 200:
         return False
-
+    actualResult = json.loads(resp.read().decode())
+    print(actualResult)
     if Path(expected_result_file_path).is_file():
-        actualResult = json.loads(resp.read().decode())
         expectedResult = json.load(open(expected_result_file_path, encoding='utf8'))
-        print(actualResult)
         print(expectedResult)
         for key in expectedResult:
             if key not in actualResult:

@@ -12,8 +12,8 @@
     ]
   },
   "parameters": {
-    "{controllerFmu}.crtlIns.maxLevel": 8,
-    "{controllerFmu}.crtlIns.minLevel": 2
+    "{controllerFmu}.crtlIns.maxlevel": 2,
+    "{controllerFmu}.crtlIns.minlevel": 1
   },
   "requested_outputs": {
     "{controllerFmu}.crtlIns": [
