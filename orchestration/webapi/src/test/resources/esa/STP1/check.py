@@ -44,28 +44,22 @@ else:
 classpath = ".:" + str(Path(classpathDir) / Path(
     "BOOT-INF") / Path("lib")) + "/*"
 
+print("Classpath: " + classpath)
+
 subprocess.run(["java", "-cp", str(
-    classpath), "org.intocps.orchestration.coe.CoeMain", "--oneshot", "--configuration", "../config.json", "--result",
-                "result.csv", "--starttime", str(
+    classpath), "org.intocps.orchestration.coe.CoeMain", "--oneshot", "--configuration", "../config.json",
+                "--starttime", str(
         starttime), "--endtime", str(endtime), "--result", outputfile],
                stdout=stream, stderr=stream, cwd=classpathDir)
-
-# parser.add_argument('--config', help='configuration', required=True)
-# parser.add_argument('--csv', help='result csv file', required=True)
-# parser.add_argument('--args', help='cli args', required=True)
 
 args = parser.parse_args()
 
 config = json.load(open("config.json", encoding='utf8'))
-# cli = json.load(open("cli_arguments", encoding='utf8'))
 
 outputColumns = [c for c in config['connections']]
 stepSize = float(config['algorithm']['size'])
 
-# expectedStart = float(cli['start_time'])
-# expectedEnd = float(cli['end_time'])
-
-if check_results(outputColumns, classpathDir / Path("result.csv"), starttime, endtime, stepSize) == 1:
+if check_results(outputColumns, classpathDir / Path(outputfile), starttime, endtime, stepSize) == 1:
     print("Error")
     exit(1)
 

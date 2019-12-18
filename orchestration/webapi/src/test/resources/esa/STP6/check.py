@@ -67,7 +67,7 @@ def create_simulator(manager):
     print("Simulator url is: %s" % url)
 
     simulator = EsaSimulator(url)
-    copy_fmus_to_dir("initialize.json", config['working_directory'])
+    copy_fmus_to_dir("1-initialize.json", config['working_directory'])
     id = config['instance_id']
     return simulator, id
 
@@ -194,11 +194,11 @@ with tempfile.TemporaryDirectory() as directory:
 
         manager.delete(sim1Id)
 
-        if check_result_from_simulator("initialize.json", "1.csv"):
+        if check_result_from_simulator("1-initialize.json", "1.csv"):
             print("Output of simulator 1 run 1 wrong")
             failed = True
 
-        if check_result_from_simulator("1-initialize.json", "2.csv"):
+        if check_result_from_simulator("1-initialize.json", "2.csv", overrideEndTime=5.0):
             print("Output of simulator 1 run 2 wrong")
             failed = True
 

@@ -74,7 +74,7 @@ def check_results(outputs, result_csv_path, start_time, end_time, step_size):
     return 0
 
 
-def check_result_from_simulator(init_file_path, result_path):
+def check_result_from_simulator(init_file_path, result_path, **kwargs):
     config = json.load(open(init_file_path, encoding='utf8'))
     if "connections" in config:
         outputs = [str(k) for k in config["connections"]]
@@ -85,6 +85,9 @@ def check_result_from_simulator(init_file_path, result_path):
         additionalOutputs = [[v + "." + k for k in config["requested_outputs"][v]] for v in config["requested_outputs"]]
         outputs = outputs + (list(chain.from_iterable(additionalOutputs)))
     startTime = 0
+    overrideEndTime = kwargs.get('overrideEndTime', None)
     endTime = config["end_time"]
+    if overrideEndTime != None:
+        endTime = overrideEndTime
     step_size = config["step_size"]
     return check_results(outputs, result_path, startTime, endTime, step_size)
