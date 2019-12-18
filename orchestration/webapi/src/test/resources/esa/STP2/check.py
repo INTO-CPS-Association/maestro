@@ -60,16 +60,37 @@ with tempfile.TemporaryDirectory() as directory:
         print ("Failed to extract jar")
         exit(1)
 
+    classPathDirExtracted = Path(classpathDir) / Path("BOOT-INF") / Path("lib")
+    print("classPathDirExtracted: " + str(classPathDirExtracted))
+
+    coeJarPath = classPathDirExtracted / Path("coe-1.0.7-SNAPSHOT.jar")
+
+    pathExistsCounter = 0;
+    print("coeJarPath: " + str(coeJarPath))
+    while os.path.exists(coeJarPath) == False and pathExistsCounter < 10:
+        print(str(coeJarPath) + " not found. Waiting 1 second.")
+        time.sleep(1)
+
+    if not os.path.exists(coeJarPath):
+        print("Failed to find " + str(coeJarPath))
+        exit(1)
+
     stream = None
     if liveOutput:
         stream = subprocess.PIPE
     else:
         stream = open('api.log', 'w')
 
-    classpath = ".:" + str(Path(classpathDir) / Path(
-        "BOOT-INF") / Path("lib")) + "/*"
+    classPathInitial = ".:"
+
+    if os.name == 'nt':
+        classPathInitial = ".;"
+
+    classpathJar = classPathInitial + str(classPathDirExtracted / Path("*"))
+    print("classPathJar: " + classpathJar)
+
     api_process = subprocess.Popen(
-        ['java', '-cp', str(classpath), "org.intocps.orchestration.coe.CoeMain", '-p',
+        ['java', '-cp', str(classpathJar), "org.intocps.orchestration.coe.CoeMain", '-p',
          str(port)],
         stdout=stream, stderr=stream, cwd=str(directory))
 

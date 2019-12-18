@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from io import open
 
 sys.path.append(os.getcwd() + '/..')
@@ -20,6 +21,21 @@ parser.set_defaults(live=False)
 args = parser.parse_args()
 
 classpathDir = jar_unpacker(args.jar)
+
+classPathDirExtracted = Path(classpathDir) / Path("BOOT-INF") / Path("lib")
+print("classPathDirExtracted: " + str(classPathDirExtracted))
+
+coeJarPath = classPathDirExtracted / Path("coe-1.0.7-SNAPSHOT.jar")
+
+pathExistsCounter = 0;
+print("coeJarPath: " + str(coeJarPath))
+while os.path.exists(coeJarPath) == False and pathExistsCounter < 10:
+    print(str(coeJarPath) + " not found. Waiting 1 second.")
+    time.sleep(1)
+
+if not os.path.exists(coeJarPath):
+    print("Failed to find " + str(coeJarPath))
+    exit(1)
 
 cliArgs = json.load(open("cli_arguments.json"))
 
@@ -41,13 +57,16 @@ if args.live:
 else:
     stream = open('api.log', 'w')
 
-classpath = ".:" + str(Path(classpathDir) / Path(
-    "BOOT-INF") / Path("lib")) + "/*"
+classPathInitial = ".:"
 
-print("Classpath: " + classpath)
+if os.name == 'nt':
+    classPathInitial = ".;"
+
+classpathJar = classPathInitial + str(classPathDirExtracted / Path("*"))
+print("classPathJar: " + classpathJar)
 
 subprocess.run(["java", "-cp", str(
-    classpath), "org.intocps.orchestration.coe.CoeMain", "--oneshot", "--configuration", "../config.json",
+    classpathJar), "org.intocps.orchestration.coe.CoeMain", "--oneshot", "--configuration", "../config.json",
                 "--starttime", str(
         starttime), "--endtime", str(endtime), "--result", outputfile],
                stdout=stream, stderr=stream, cwd=classpathDir)
