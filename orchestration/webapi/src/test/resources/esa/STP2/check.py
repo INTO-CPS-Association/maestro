@@ -61,6 +61,7 @@ with tempfile.TemporaryDirectory() as directory:
         exit(1)
 
     classPathDirExtracted = Path(classpathDir) / Path("BOOT-INF") / Path("lib")
+    classPathDirExtracted = classPathDirExtracted.resolve()
     print("classPathDirExtracted: " + str(classPathDirExtracted))
 
     coeJarPath = classPathDirExtracted / Path("coe-1.0.7-SNAPSHOT.jar")
