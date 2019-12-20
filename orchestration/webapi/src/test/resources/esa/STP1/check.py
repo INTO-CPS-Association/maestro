@@ -24,11 +24,11 @@ classpathDir = jar_unpacker(args.jar)
 
 classPathDirExtracted = Path(classpathDir) / Path("BOOT-INF") / Path("lib")
 classPathDirExtracted = classPathDirExtracted.resolve()
-print("classPathDirExtracted: " + str(classPathDirExtracted))
+# print("classPathDirExtracted: " + str(classPathDirExtracted))
 
 coeJarPath = classPathDirExtracted / Path("coe-1.0.7-SNAPSHOT.jar")
 
-print("coeJarPath: " + str(coeJarPath))
+# print("coeJarPath: " + str(coeJarPath))
 
 cliArgs = json.load(open("cli_arguments.json"))
 
@@ -56,7 +56,7 @@ if os.name == 'nt':
     classPathInitial = ".;"
 
 classpathJar = classPathInitial + str(classPathDirExtracted / Path("*"))
-print("classPathJar: " + classpathJar)
+# print("classPathJar: " + classpathJar)
 
 subprocess.run(["java", "-cp", str(
     classpathJar), "org.intocps.orchestration.coe.CoeMain", "--oneshot", "--configuration", "../config.json",
