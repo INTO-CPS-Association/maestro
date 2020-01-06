@@ -28,7 +28,7 @@ node {
 
 			if (env.BRANCH_NAME == 'deploytest') {
 			
-				def server = Artifactory.server "-844406945@1404457436085"
+				def server = Artifactory.server "c94d2488-0e9c-49f2-a455-a283a94a3b5e-test"
 				def buildInfo = Artifactory.newBuildInfo()
 				buildInfo.env.capture = true
 				//buildInfo.env.filter.addExclude("org/destecs/ide/**")
