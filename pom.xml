@@ -39,7 +39,7 @@
         <repository>
             <id>overture.au.dk</id>
             <name>overture.au.dk-releases</name>
-            <url>http://overture.au.dk/artifactory/into-cps</url>
+            <url>http://10.29.1.203/artifactory/into-cps/</url>
         </repository>
 
 
