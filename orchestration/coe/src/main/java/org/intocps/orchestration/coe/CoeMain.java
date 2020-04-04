@@ -38,6 +38,9 @@ import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.intocps.fmi.FmuInvocationException;
+import org.intocps.fmi.FmuMissingLibraryException;
+import org.intocps.fmi.IFmu;
 import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.orchestration.coe.httpserver.NanoWSDImpl;
 import org.intocps.orchestration.coe.httpserver.RequestHandler;
@@ -74,6 +77,7 @@ public class CoeMain
 		Option resultOpt = Option.builder("r").longOpt("result").desc("Path where the csv data should be writting to").hasArg().numberOfArgs(1).argName("path").build();
 		Option startTimeOpt = Option.builder("s").longOpt("starttime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
 		Option endTimeOpt = Option.builder("e").longOpt("endtime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
+		Option loadSingleFMUOpt = Option.builder("l").longOpt("load").desc("Attempt to load a single FMU").hasArg().numberOfArgs(1).argName("path").build();
 
 		Options options = new Options();
 		options.addOption(helpOpt);
@@ -86,6 +90,8 @@ public class CoeMain
 		options.addOption(resultOpt);
 		options.addOption(extractOpt);
 		options.addOption(versionOpt);
+		options.addOption(loadSingleFMUOpt);
+
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd;
@@ -96,6 +102,21 @@ public class CoeMain
 		{
 			System.err.println("Parsing failed. Reason: " + e1.getMessage());
 			showHelp(options);
+			return;
+		}
+
+		if (cmd.hasOption(loadSingleFMUOpt.getOpt())) {
+			File fmuFile = getFile(loadSingleFMUOpt, cmd);
+			try {
+				Factory.create(fmuFile);
+				IFmu fmu = Factory.create(fmuFile);
+				fmu.load();
+				fmu.unLoad();
+				System.out.println("Successfully loaded FMU");
+			} catch (FmuInvocationException | FmuMissingLibraryException e) {
+				System.out.println("Failed to load FMU:\n");
+				e.printStackTrace();
+			}
 			return;
 		}
 
