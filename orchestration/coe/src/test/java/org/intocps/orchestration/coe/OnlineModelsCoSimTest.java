@@ -52,7 +52,7 @@ import fi.iki.elonen.NanoHTTPD;
 public abstract class OnlineModelsCoSimTest extends BasicTest
 {
 	final static String prefix = "/online-models";
-	public final static String baseDownloadUrl = "http://overture.au.dk/into-cps/examples/public-coe-test-fmus/latest/";
+	public final static String baseDownloadUrl = "https://overture.au.dk/into-cps/examples/public-coe-test-fmus/latest/";
 
 
 	public static void scanConfigsAndDownloadFmus(File rootPath) throws IOException
