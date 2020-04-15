@@ -53,7 +53,7 @@ public class Stp6Test {
     @Test
     public void initializeTest() throws Exception {
 
-        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "initialize.json").toFile(), StandardCharsets.UTF_8);
+        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
         data = data.replace("watertankController.fmu",
                 "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController.fmu").toAbsolutePath().toString());
         data = data.replace("singlewatertank-20sim.fmu",
@@ -68,7 +68,7 @@ public class Stp6Test {
     public void simulateTest() throws Exception {
         initializeTest();
 
-        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "simulateFor.json").toFile(), StandardCharsets.UTF_8);
+        String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "1-simulateFor.json").toFile(), StandardCharsets.UTF_8);
 
         TypeReference<Map<String, Map<String, Object>>> valueTypeRef = new TypeReference<Map<String, Map<String, Object>>>() {
         };
