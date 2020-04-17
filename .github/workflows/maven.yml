@@ -10,11 +10,11 @@ on:
     branches: [ citest ]
 
 
-strategy:
-  matrix:
-    os: [ubuntu-18.04, macos-10.15, windows-2019]
 
 jobs:
+  strategy:
+    matrix:
+      os: [ubuntu-18.04, macos-10.15, windows-2019]
   build:
     runs-on: ${{ matrix.os }}
 
