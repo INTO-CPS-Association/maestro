@@ -1,0 +1,47 @@
+Module FMI2 {
+ 	FMI2Component2 instantiate(String name, Bool logging)
+ 	Int setupExperiment(FMI2Component comp, Bool toleranceDefined, Real tolerance, Real startTime, Bool stopTimeDefined, Real stopTime)
+ 	Int enterInitializationMode(FMI2Component comp)
+ 	Int exitInitializationMode(FMI2Component comp)
+ 	Int setReal(FMI2Component comp, Array[UInt] vr, UInt nvr, Array[Real] values)
+ 	Int getReal(FMI2Component comp, Array[UInt] vr, UInt nvr, Array[Real] values)
+ 	Int doStep(FMI2Component comp, Real time, Real timestep)
+ 	Int terminate(FMI2Component comp)
+ 	Void freeInstance(FMI2Component comp)
+ }
+Module[FMI2] FMUA = Load("FMI2", "path/to/FMUA.fmu")
+Module[FMI2] FMUB = Load("FMI2", "path/to/FMUB.fmu")
+FMI2Component A = FMUA.instantiate("A", true)
+FMI2Component B = FMUB.instantiate("B", true)
+Array[Real] ay = [0.0]
+Array[Real] by = [0.0]
+Array[UInt] auref = [2]
+Array[UInt] ayref = [1]
+Array[UInt] buref = [2]
+Array[UInt] byref = [1]
+Real time = 0.0
+Real H = 0.01
+Int status
+status = FMUA.setupExperiment(A, false, 0.0, 0.0, true, 10.0)
+status = FMUB.setupExperiment(B, false, 0.0, 0.0, true, 10.0)
+status = FMUA.enterInitializationMode(A)
+status = FMUB.enterInitializationMode(B)
+status = FMUA.getReal(A, ayref, 1, ay)
+status = FMUB.setReal(B, buref, 1, ay)
+status = FMUB.getReal(B, byref, 1, by)
+status = FMUA.setReal(A, auref, 1, by)
+status = FMUA.exitInitializationMode(A)
+status = FMUB.exitInitializationMode(B)
+While (time < 10.0) {
+		status = FMUA.doStep(A, time, H)
+		status = FMUA.getReal(A, ayref, 1, ay)
+		status = FMUB.setReal(B, buref, 1, ay)
+		status = FMUB.doStep(B, time, H)
+		status = FMUB.getReal(B, byref, 1, by)
+		status = FMUA.setReal(A, auref, 1, by)
+		time = time + H
+}
+status = FMUA.terminate(A)
+status = FMUB.terminate(B)
+FMUA.freeInstance(A)
+FMUB.freeInstance(B)

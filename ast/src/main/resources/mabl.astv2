@@ -1,0 +1,125 @@
+Packages
+base org.intocps.maestro.ast;
+analysis org.intocps.maestro.ast.analysis;
+
+Tokens
+/* This section declared tokens as internal types or external classes
+ * internal definitions:
+ *  plus='+';
+ *
+ * external
+ *  location = 'java:org.overture.ast.lex.LexLocation';
+ */
+
+    java_String = 'java:java.lang.String';
+    java_Boolean = 'java:java.lang.Boolean';
+    java_Integer = 'java:java.lang.Integer';
+    java_Double = 'java:java.lang.Double';
+    java_Long = 'java:java.lang.Long';
+    lex_identifier='java:org.intocps.maestro.ast.LexIdentifier';
+
+
+
+Abstract Syntax Tree
+/* This section declares the AST by giving root nodes and their possible sub classes
+ *
+ * exp {-> package='org.overture.ast.expressions'}
+ *      = {subclass1} [field_name]:field_type_must_either_be_root_or_token ...
+ *      ;
+ *
+ */
+
+document
+    = {root} [content]:compilationUnit*
+    ;
+
+
+compilationUnit
+    =   {importedModule} [name]:lex_identifier [functions]:declaration.function*
+    |   {simulationSpecification} [body]:stm [imports]:lex_identifier*
+    ;
+
+
+declaration {
+        -> package='org.intocps.maestro.ast'
+         | [name]:lex_identifier}
+    = {function} [returnType]:type  [formals]:parameter.formal*
+    | {variable} [type]:type  [initializer]:initializer
+    ;
+
+initializer
+    = {exp} [exp]:exp
+    | {array} [exp]:exp*
+    ;
+
+parameter
+    =  {formal} [type]:type [name]:lex_identifier
+    ;
+
+
+
+
+exp
+    = {identifier} [name]:lex_identifier
+    | #literal
+    | {load} [args]:exp*
+    | {unload} [args]:exp*
+    | #binary
+    | {dot} [root]:exp [exp]:exp
+    | {call} [identifier]:exp [args]:exp*
+    ;
+
+#literal
+    = {string} [value]:java_String
+    | {bool} [value]:java_Boolean
+    | {int} [value]:java_Integer
+    | {uInt} [value]:java_Long
+    | {real} [value]:java_Double
+    ;
+
+#binary {-> package='org.intocps.maestro.ast'
+    |  [left]:exp
+    |  [right]:exp }
+    = {plus}
+    | {minus}
+    | {lessEqual}
+    | {greaterEqual}
+    | {less}
+    | {greater}
+    | {equal}
+    | {notEqual}
+    ;
+
+stm
+    = {block} [body]:stm*
+    | {assigment} [identifier]:identifier [exp]:exp
+    | {localVariable} [declaration]:declaration.variable
+    | {if} [test]:exp [then]:stm [else]:stm
+    | {while} [test]:exp [body]:stm
+    | {expression} [exp]:exp
+    | {observable} [identifier]:identifier
+    | {external} [call]:exp.call
+    ;
+
+type
+    =   #primitive
+    |   {name} [name]:lex_identifier
+//    |   {class} [name]:identifier [functions]:type.function*
+    |   {function} (result):type (parameters):type*
+    |   {array} [size]:java_Integer [type]:type
+    |   {unknown}
+    |   {void}
+    |   {module} [name]:identifier
+    ;
+
+#primitive
+    =   {boolean}
+    |   {string}
+    |   #numeric
+    ;
+
+#numeric
+    =   {real}
+    |   {int}
+    |   {uInt}
+    ;

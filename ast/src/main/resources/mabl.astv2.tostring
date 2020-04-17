@@ -1,0 +1,58 @@
+To String Extensions
+// import packages used by external $$ java code
+import org.intocps.maestro.ast.Utils;
+import java.util.stream.Collectors;
+
+
+
+%document->root = [content]
+
+
+%compilationUnit->importedModule = "imported "+ $ $[name]$+" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
+%compilationUnit->simulationSpecification = "simulation "+ [body]
+
+%declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%declaration->variable = [type]+ " "+ [name]+ " = " [initializer]
+
+%initializer->exp = [exp]
+%initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
+%parameter->formal = [type] +" "+[name]
+
+%exp->identifier = [name]
+%exp->#literal->string = "\"" + [value] +"\""
+%exp->#literal->bool =  [value]
+%exp->#literal->numeric =  [value]
+%exp->load = "load("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->unload = "unload("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->dot = [root]+ "." +[exp]
+%exp->#binary->plus = [left]+ " + " + [right]
+%exp->#binary->minus = [left]+ " - " + [right]
+%exp->#binary->lessEqual = [left]+ " <= " + [right]
+%exp->#binary->greaterEqual = [left]+ " > " + [right]
+%exp->#binary->less = [left]+ " < " + [right]
+%exp->#binary->greater = [left]+ " > " + [right]
+%exp->#binary->equal = [left]+ " == " + [right]
+%exp->#binary->notEqual = [left]+ " != " + [right]
+%exp->#binary = [left]+ "" + [right]
+%exp->#binary = [left]+ "" + [right]
+%exp->call = ""+ $ $[identifier]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+");"
+
+%stm->block = "{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining("\n","\n","\n"))$+"}"
+%stm->assigment = [identifier] + " = " [exp] +";"
+%stm->localVariable = [declaration] +";"
+%stm->if = "if( " +$ $[test]$ +" ) " + $[then]$+    ($[else]$!=null ? $[else]$:"")$
+%stm->while = "while( "+[test]+" ) " + [body] + ""
+%stm->observable = "observable;"
+%stm->expression = [exp]
+%stm->external = "external " +[call]
+
+%type->name = [name]
+%type->array = [type] + "[]" //[size]
+%type->void = "void"
+%type->module = [name]
+
+%type->#primitive->boolean="bool"
+%type->#primitive->string="string"
+%type->#primitive->#numeric->real="real"
+%type->#primitive->#numeric->int="int"
+%type->#primitive->#numeric->uInt="uInt"
