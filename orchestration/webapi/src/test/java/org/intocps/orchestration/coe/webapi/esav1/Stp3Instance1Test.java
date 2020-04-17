@@ -3,9 +3,12 @@ package org.intocps.orchestration.coe.webapi.esav1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
+import org.intocps.orchestration.coe.webapi.BaseTest;
+import org.intocps.orchestration.coe.webapi.ConditionalIgnoreRule;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ public class Stp3Instance1Test {
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
+    @Rule
+    public final ConditionalIgnoreRule mConditionalIgnore = new ConditionalIgnoreRule();
+
     @Before
     public void before() {
 
@@ -50,7 +56,10 @@ public class Stp3Instance1Test {
         mockMvc.perform(post(baseUrl + "/ping").contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
     }
 
+    //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
+    //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeTest() throws Exception {
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
@@ -64,7 +73,10 @@ public class Stp3Instance1Test {
         mockMvc.perform(post(baseUrl + "/initialize").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
     }
 
+    //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
+    //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateTest() throws Exception {
         initializeTest();
 
@@ -82,7 +94,10 @@ public class Stp3Instance1Test {
         Assert.assertEquals(expectedOutput, actualOutput);
     }
 
+    //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
+    //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulate2Test() throws Exception {
         initializeTest();
 
@@ -102,7 +117,10 @@ public class Stp3Instance1Test {
     }
 
 
+    //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
+    //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateAndGetResultTest() throws Exception {
         simulateTest();
 
