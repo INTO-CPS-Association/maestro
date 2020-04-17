@@ -49,6 +49,10 @@ public class CoeBaseTest
 		}
 	}
 
+	public static class NonMac extends RunOnlyOn{
+		public NonMac(){super(Platform.Win32, Platform.Win64, Platform.Linux32, Platform.Linux64);}
+	}
+
 	public static class MacOnly extends RunOnlyOn
 	{
 		public MacOnly()
