@@ -9,10 +9,14 @@ on:
   pull_request:
     branches: [ citest ]
 
+
+strategy:
+  matrix:
+    os: [ubuntu-18.04, macos-10.15, windows-2019]
+
 jobs:
   build:
-
-    runs-on: [ubuntu-18.04, macos-10.15, windows-2019]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
