@@ -59,7 +59,7 @@ public class Stp6Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
+    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeTest() throws Exception {
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
@@ -76,7 +76,7 @@ public class Stp6Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
+    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateTest() throws Exception {
         initializeTest();
 
@@ -100,7 +100,7 @@ public class Stp6Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
+    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateAndGetResultTest() throws Exception {
         simulateTest();
 
