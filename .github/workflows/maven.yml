@@ -4,7 +4,9 @@
 name: Java CI with Maven
 
 on:
-  [push, pull-request]
+  push:
+    branches: [ citest, development ]
+  pull_request:
     branches: [ development ]
 
 
