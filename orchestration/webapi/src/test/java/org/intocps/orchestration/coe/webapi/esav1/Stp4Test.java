@@ -70,9 +70,9 @@ public class Stp4Test {
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP4", "initialize.json").toFile(), StandardCharsets.UTF_8);
         data = data.replace("watertankController-Standalone.fmu",
-                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString().replace('/','/'));
+                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString().replace('\\','/'));
         data = data.replace("singlewatertank-20sim.fmu",
-                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString().replace('/','/'));
+                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString().replace('\\','/'));
 
 
         ContentRequestMatchers x;
