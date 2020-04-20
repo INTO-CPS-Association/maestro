@@ -2,6 +2,7 @@ package org.intocps.orchestration.coe.webapi.esav1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.log4j.Logger;
 import org.assertj.core.util.Files;
 import org.intocps.orchestration.coe.webapi.BaseTest;
 import org.intocps.orchestration.coe.webapi.ConditionalIgnoreRule;
@@ -70,6 +71,8 @@ public class Stp3Instance1Test {
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP3", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
         data = data.replace("watertankController-Standalone.fmu",
                 uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController.fmu").toAbsolutePath().toString());
+        Logger log = Logger.getLogger(Stp3Instance1Test.class);
+        log.info("Stp3Instance1Test uri: " + data);
         System.out.println("Stp3Instance1Test uri: " + data);
         data = data.replace("singlewatertank-20sim.fmu",
                 uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString());
