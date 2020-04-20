@@ -1,6 +1,6 @@
 {
   "fmus": {
-    "{crtl}": "watertankController.fmu",
+    "{crtl}": "watertankController-Standalone.fmu",
     "{wt}": "singlewatertank-20sim.fmu"
   },
   "connections": {

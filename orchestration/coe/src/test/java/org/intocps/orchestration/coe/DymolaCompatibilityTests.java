@@ -35,14 +35,21 @@
 package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import org.intocps.orchestration.coe.ConditionalIgnoreRule.ConditionalIgnore;
 
 public class DymolaCompatibilityTests extends OnlineModelsCoSimTest
 {
+	@Rule
+	public final ConditionalIgnoreRule mConditionalIgnore = new ConditionalIgnoreRule();
 
+	//TODO: Overture toolwrapping FMUs has to be updated for mac catalina
+	//See: https://github.com/overturetool/overture-fmu/issues/87
 	@Test
+	@ConditionalIgnore(condition = NonMac.class)
 	public void testDymolaVarStepWithVdm()	throws IOException, NanoHTTPD.ResponseException
 	{
 		test("/dymola_varTest/config.json", 0, 30);
