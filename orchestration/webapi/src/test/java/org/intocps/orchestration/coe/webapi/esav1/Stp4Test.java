@@ -64,8 +64,8 @@ public class Stp4Test {
     public void initializeTest() throws Exception {
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP4", "initialize.json").toFile(), StandardCharsets.UTF_8);
-        data = data.replace("watertankController.fmu",
-                "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController.fmu").toAbsolutePath().toString());
+        data = data.replace("watertankController-Standalone.fmu",
+                "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString());
         data = data.replace("singlewatertank-20sim.fmu",
                 "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString());
 
