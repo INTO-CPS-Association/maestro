@@ -40,7 +40,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
+    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeSingleFMU() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));
@@ -49,7 +49,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
+    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeMultipleFMUs() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));

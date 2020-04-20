@@ -20,6 +20,7 @@ import org.springframework.test.web.client.match.ContentRequestMatchers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import sun.awt.OSInfo;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -62,11 +63,15 @@ public class Stp6Test {
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeTest() throws Exception {
 
+        String uriScheme = "file:";
+        if(OSInfo.getOSType().equals(OSInfo.OSType.WINDOWS))
+            uriScheme = "file:/";
+
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP6", "1-initialize.json").toFile(), StandardCharsets.UTF_8);
         data = data.replace("watertankController-Standalone.fmu",
-                "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString());
+                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString().replace('/','/'));
         data = data.replace("singlewatertank-20sim.fmu",
-                "file:" + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString());
+                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString().replace('/','/'));
 
 
         ContentRequestMatchers x;
