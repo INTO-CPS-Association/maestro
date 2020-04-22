@@ -26,4 +26,8 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Maven
-      run: mvn -B package --file pom.xml "-Dmaven.javadoc.skip=true"
+      run: mvn -B package --file pom.xml -DskipTests
+    - uses: actions/upload-artifact@v1
+      with:
+        name: maestro.jar
+        path: orchestration/coe/target/coe-1.0.7-SNAPSHOT-jar-with-dependencies.jar
