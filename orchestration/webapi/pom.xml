@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.into-cps</groupId>
         <artifactId>orchestration</artifactId>
-        <version>1.0.7-SNAPSHOT</version>
+        <version>1.0.10</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.into-cps.orchestration</groupId>
             <artifactId>coe</artifactId>
-            <version>1.0.7-SNAPSHOT</version>
+            <version>1.0.10</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
