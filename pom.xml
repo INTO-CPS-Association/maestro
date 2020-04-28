@@ -25,6 +25,9 @@
         <module>interpreter</module>
         <module>plugin-api</module>
         <module>plugin-demo</module>
+        <module>plugins/multimodelparser</module>
+        <module>plugins/topologicalsorting</module>
+        <module>plugins/initializer</module>
     </modules>
 
     <build>

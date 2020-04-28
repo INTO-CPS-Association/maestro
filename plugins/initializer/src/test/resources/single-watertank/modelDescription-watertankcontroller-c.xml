@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="tankcontroller"
+	guid="{8c4e810f-3df3-4a00-8276-176fa3c9f000}" numberOfEventIndicators="0">
+
+	<CoSimulation modelIdentifier="tankcontroller"
+		canHandleVariableCommunicationStepSize="true" />
+
+	<LogCategories>
+		<Category name="logAll" />
+		<Category name="logError" />
+		<Category name="logFmiCall" />
+		<Category name="logEvent" />
+	</LogCategories>
+
+	<ModelVariables>
+		<!--ScalarVariable name="x" valueReference="0" description="the only state" 
+			causality="local" variability="continuous" initial="exact"> <Real start="1"/> 
+			</ScalarVariable> <ScalarVariable name="der(x)" valueReference="1" causality="local" 
+			variability="continuous" initial="calculated"> <Real derivative="1"/> </ScalarVariable> 
+			<ScalarVariable name="k" valueReference="2" causality="parameter" variability="fixed" 
+			initial="exact"> <Real start="1"/> </ScalarVariable -->
+
+	<ScalarVariable name="maxlevel" valueReference="0"
+			description="the max tank level" causality="parameter"
+			  variability="fixed" initial="exact"><Real start="2.0" />
+		</ScalarVariable>
+
+		<ScalarVariable name="minlevel" valueReference="1"
+			description="the min tank level" causality="parameter"
+			 variability="fixed" initial="exact"><Real start="1.0" />
+		</ScalarVariable>
+
+		<ScalarVariable name="level" valueReference="3"
+			description="the tank level" causality="input" variability="continuous">
+			<Real start="1" />
+		</ScalarVariable>
+
+		<ScalarVariable name="valve" valueReference="4"
+			description="the tank valve state" causality="output" variability="discrete"
+			initial="calculated">
+			<Boolean />
+		</ScalarVariable>
+
+
+	</ModelVariables>
+
+	<ModelStructure>
+		<Outputs>
+			<Unknown index="4" dependencies="" />
+		</Outputs>
+
+	</ModelStructure>
+
+</fmiModelDescription>
