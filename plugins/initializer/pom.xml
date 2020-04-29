@@ -1,13 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>initializer</artifactId>
-  <name>${project.artifactId}</name>
+
     <parent>
         <groupId>org.intocps</groupId>
         <artifactId>root</artifactId>
         <version>1.0.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
     </parent>
+
+  <groupId>org.intocps.plugins</groupId>
+  <artifactId>initializer</artifactId>
+  <name>${project.artifactId}</name>
 
   <properties>
     <encoding>UTF-8</encoding>
@@ -24,17 +27,17 @@
     </dependency>
 
     <dependency>
-      <groupId>org.intocps.multimodelparser</groupId>
+      <groupId>org.intocps.plugins.multimodelparser</groupId>
       <artifactId>data</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.intocps.multimodelparser</groupId>
+      <groupId>org.intocps.plugins.multimodelparser</groupId>
       <artifactId>parser</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>org.intocps</groupId>
+      <groupId>org.intocps.plugins</groupId>
       <artifactId>topologicalsorting</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
@@ -45,8 +48,8 @@
       </dependency>
 
     <dependency>
-      <groupId>org.intocps</groupId>
-      <artifactId>plugin-api</artifactId>
+      <groupId>org.intocps.plugins</groupId>
+      <artifactId>api</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
 

@@ -23,11 +23,7 @@
         <module>typechecker</module>
         <module>maestro</module>
         <module>interpreter</module>
-        <module>plugin-api</module>
-        <module>plugin-demo</module>
-        <module>plugins/multimodelparser</module>
-        <module>plugins/topologicalsorting</module>
-        <module>plugins/initializer</module>
+        <module>plugins</module>
     </modules>
 
     <build>
