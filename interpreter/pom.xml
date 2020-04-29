@@ -12,9 +12,7 @@
 
     <artifactId>interpreter</artifactId>
 
-    <properties>
-        <fmu.api.version>1.0.8</fmu.api.version>
-    </properties>
+
 
     <dependencies>
         <dependency>
