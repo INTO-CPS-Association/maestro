@@ -15,6 +15,8 @@ class Initializer extends IMaestroPlugin {
 
   override def getVersion: String = "0.0.1"
 
+  // TODO: Create initialize token
+
   override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
 
   override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
