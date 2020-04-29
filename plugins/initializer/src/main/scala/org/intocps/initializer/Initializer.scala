@@ -1,12 +1,13 @@
-import java.io.File
+import java.io.{File, InputStream}
 import java.util
 
 import org.intocps.initializer.FMIASTFactory
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
 import org.intocps.maestro.plugin.{IContext, IMaestroPlugin}
-import org.intocps.multimodelparser.data.{Connection, ConnectionScalarVariable, IODependencyAcyclic, IODependencyCyclic, Instance}
+import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
 import org.intocps.topologicalsorting.{Edge, TarjanGraph}
+
 import scala.jdk.CollectionConverters._
 
 class Initializer extends IMaestroPlugin {
@@ -21,7 +22,7 @@ class Initializer extends IMaestroPlugin {
 
   override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
     calculateInitialize(new File("FIXME")) match {
-      case Left(value) =>  throw new Exception("Could not create initialize: " + value)
+      case Left(value)  => throw new Exception("Could not create initialize: " + value)
       case Right(value) => value
     }
   }
@@ -37,13 +38,13 @@ class Initializer extends IMaestroPlugin {
       // Perform topological sorting
       val tg = new TarjanGraph[ConnectionScalarVariable](edgeConvertedConnections);
       tg.topologicalSort match {
-        case IODependencyCyclic(cycle) => Left(cycle)
+        case IODependencyCyclic(cycle)       => Left(cycle)
         case IODependencyAcyclic(totalOrder) => Right(totalOrder)
       }
     })
 
     println(topSortResult match {
-      case Left(cycle: String) => "Topological sorting failed with the cycle: " + cycle;
+      case Left(cycle: String)                              => "Topological sorting failed with the cycle: " + cycle;
       case Right(totalOrder: Seq[ConnectionScalarVariable]) => "Topological sorting succeeded with the order: " +
         totalOrder.map(x => x.toString).mkString(" -> ");
     })
@@ -75,4 +76,9 @@ class Initializer extends IMaestroPlugin {
   //      // Get the graph
   //      // Create the code
   //    }
+  override def getContextKey: String = ???
+
+  override def requireContext(): Boolean = false
+
+  override def parseContext(is: InputStream): IContext = ???
 }
