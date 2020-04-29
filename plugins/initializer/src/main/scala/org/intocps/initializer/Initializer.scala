@@ -3,7 +3,7 @@ import java.util
 
 import org.intocps.initializer.FMIASTFactory
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
-import org.intocps.maestro.plugin.{IContext, IMaestroPlugin}
+import org.intocps.maestro.plugin.{IMaestroPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
 import org.intocps.topologicalsorting.{Edge, TarjanGraph}
@@ -20,7 +20,7 @@ class Initializer extends IMaestroPlugin {
 
   override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
 
-  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration): PStm = {
     calculateInitialize(new File("FIXME")) match {
       case Left(value)  => throw new Exception("Could not create initialize: " + value)
       case Right(value) => value
@@ -76,9 +76,9 @@ class Initializer extends IMaestroPlugin {
   //      // Get the graph
   //      // Create the code
   //    }
-  override def getContextKey: String = ???
 
-  override def requireContext(): Boolean = false
 
-  override def parseContext(is: InputStream): IContext = ???
+  override def requireConfig(): Boolean = false
+
+  override def parseConfig(is: InputStream): IPluginConfiguration = ???
 }
