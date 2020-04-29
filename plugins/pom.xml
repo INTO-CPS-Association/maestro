@@ -20,8 +20,8 @@
     <modules>
         <module>api</module>
         <module>demo</module>
-      <!--module>multimodelparser</module>
+      <module>multimodelparser</module>
         <module>topologicalsorting</module>
-        <module>initializer</module-->
+        <module>initializer</module>
     </modules>
 </project>
