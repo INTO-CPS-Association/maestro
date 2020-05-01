@@ -66,7 +66,8 @@ exp
     | {unload} [args]:exp*
     | #binary
     | {dot} [root]:exp [exp]:exp
-    | {call} [identifier]:exp [args]:exp*
+    | {call} [root]:exp [args]:exp*
+    | {arrayIndex} [array]:exp [indices]:exp*
     ;
 
 #literal
@@ -90,9 +91,15 @@ exp
     | {notEqual}
     ;
 
+
+stateDesignator
+    = {identifier} [name]:lex_identifier
+    | {array} [target]:stateDesignator [exp]:exp.#literal
+    ;
+
 stm
     = {block} [body]:stm*
-    | {assigment} [identifier]:identifier [exp]:exp
+    | {assigment} [target]:stateDesignator [exp]:exp
     | {localVariable} [declaration]:declaration.variable
     | {if} [test]:exp [then]:stm [else]:stm
     | {while} [test]:exp [body]:stm

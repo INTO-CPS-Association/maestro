@@ -1,12 +1,15 @@
  module FMI2 {
 	FMI2Component instantiate(string name, bool logging);
-
- 	int setupExperiment(FMI2Component comp, bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
- 	int enterInitializationMode(FMI2Component comp);
- 	int exitInitializationMode(FMI2Component comp);
- 	int setReal(FMI2Component comp, UInt[] vr, UInt nvr,real[] values);
- 	int getReal(FMI2Component comp, UInt[] vr, UInt nvr, real[] values);
- 	int doStep(FMI2Component comp, real time, real timestep);
- 	int terminate(FMI2Component comp);
  	void freeInstance(FMI2Component comp);
+}
+
+
+ module FMI2Component {
+ 	int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
+ 	int enterInitializationMode();
+ 	int exitInitializationMode();
+ 	int setReal(UInt[] vr, UInt nvr,real[] values);
+ 	int getReal(UInt[] vr, UInt nvr, real[] values);
+ 	int doStep(real time, real timestep);
+ 	int terminate();
 }

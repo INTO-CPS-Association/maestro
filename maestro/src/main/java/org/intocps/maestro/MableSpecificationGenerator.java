@@ -128,7 +128,7 @@ public class MableSpecificationGenerator {
         }));
 
         externalTypeMap.entrySet().stream().filter(map -> !map.getValue().isPresent())
-                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s'", map.getKey().getCall().getIdentifier().toString()), null));
+                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s'", map.getKey().getCall().getRoot().toString()), null));
 
         if (externalTypeMap.entrySet().stream().anyMatch(map -> !map.getValue().isPresent())) {
             throw new RuntimeException("Unknown externals present cannot proceed");
@@ -142,8 +142,9 @@ public class MableSpecificationGenerator {
         }
 
 
-        logger.info("\tExternals {}", NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>()).stream()
-                .map(m -> m.getCall().getIdentifier().toString()).collect(Collectors.joining(" , ", "[ ", " ]")));
+        logger.info("\tExternals {}",
+                NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>()).stream().map(m -> m.getCall().getRoot().toString())
+                        .collect(Collectors.joining(" , ", "[ ", " ]")));
 
         externalTypeMap.forEach((node, type) -> {
 
@@ -151,7 +152,7 @@ public class MableSpecificationGenerator {
                 logger.debug("Unfolding node: {}", node);
 
                 Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible = (fmap) -> fmap.getKey().getName().getText()
-                        .equals(node.getCall().getIdentifier().toString()) && comparator.compatible(fmap.getValue(), type.get());
+                        .equals(node.getCall().getRoot().toString()) && comparator.compatible(fmap.getValue(), type.get());
 
                 Optional<Map.Entry<IMaestroPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch = plugins.entrySet().stream()
                         .filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
@@ -159,7 +160,7 @@ public class MableSpecificationGenerator {
                 if (pluginMatch.isPresent()) {
                     pluginMatch.ifPresent(map -> {
                         map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
-                            logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getIdentifier().toString());
+                            logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getRoot().toString());
 
                             PStm unfoled = null;
                             IMaestroPlugin plugin = map.getKey();
@@ -170,7 +171,7 @@ public class MableSpecificationGenerator {
                                         unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config);
                                     } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
-                                                node.getCall().getIdentifier().toString(), e.getMessage());
+                                                node.getCall().getRoot().toString(), e.getMessage());
                                     }
 
                                 } else {
@@ -178,12 +179,11 @@ public class MableSpecificationGenerator {
                                 }
                             } catch (UnfoldException e) {
                                 logger.error("Internal error in pluginn '{}' at {}. Message: {}", plugin.getName(),
-                                        node.getCall().getIdentifier().toString(), e.getMessage());
+                                        node.getCall().getRoot().toString(), e.getMessage());
                             }
                             if (unfoled == null) {
                                 reporter.report(999,
-                                        String.format("Unfold failure in plugin %s for %s", plugin.getName(), node.getCall().getIdentifier() + ""),
-                                        null);
+                                        String.format("Unfold failure in plugin %s for %s", plugin.getName(), node.getCall().getRoot() + ""), null);
                             } else {
 
                                 node.parent().replaceChild(node, unfoled);

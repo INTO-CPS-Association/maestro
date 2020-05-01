@@ -40,6 +40,19 @@ public class MaestroTest {
         new MableInterpreter().execute(doc);
     }
 
+    @Test
+    public void fullWt() throws IOException, AnalysisException {
+
+        InputStream contextFile = this.getClass().getResourceAsStream("configs/singleExternal.json");
+        ARootDocument doc = new MableSpecificationGenerator(true).generate(
+                Stream.of(Paths.get("src", "test", "resources", "FMI2.mabl").toAbsolutePath().toString(),
+                        Paths.get("src", "test", "resources", "full_example_wt.mabl").toAbsolutePath().toString()).map(File::new)
+                        .collect(Collectors.toList()), contextFile);
+
+
+        new MableInterpreter().execute(doc);
+    }
+
 
     @Test
     public void jsonParseTest() throws IOException {

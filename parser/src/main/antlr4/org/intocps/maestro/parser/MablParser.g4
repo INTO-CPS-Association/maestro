@@ -45,21 +45,26 @@ block
 //    ;
 
 statement
-    : blockLabel=block                              #blockStm
-    | assignment                                    #assignmentStm
-    | type=typeType var=variableDeclarator ';'      #localVariable
-    | IF parExpression then=statement (ELSE el=statement)?  #if
+    : blockLabel=block                                          #blockStm
+    | assignment                                                #assignmentStm
+    |  var=variableDeclarator ';'                               #localVariable
+    | IF parExpression then=statement (ELSE el=statement)?      #if
  //   | FOR '(' forControl ')' statement
-    | WHILE parExpression statement                 #while
-    | statementExpression=expression  ';'           #expressionStatement
-    | EXTERNAL methodCall  ';'                      #methodExternalCallStm
-    | SEMI                                          #semi
-    | OBSERVABLE                                    #observable
+    | WHILE parExpression statement                             #while
+    | statementExpression=expression  ';'                       #expressionStatement
+    | EXTERNAL methodCall  ';'                                  #methodExternalCallStm
+    | SEMI                                                      #semi
+    | OBSERVABLE                                                #observable
     ;
 
 
 assignment
-    : IDENTIFIER ASSIGN expression ';'
+    : stateDesignator ASSIGN expression ';'
+    ;
+
+stateDesignator
+    : IDENTIFIER                                    #identifierStateDesignator
+    | stateDesignator LBRACK literal RBRACK         #arrayStateDesignator
     ;
 
 
@@ -79,6 +84,7 @@ expression
     | <assoc=right> expression
           bop=('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=' | '^=' | '>>=' | '>>>=' | '<<=' | '%=')
           expression                                        # updateExp
+    | array=expression LBRACK expression (',' expression )* RBRACK    #arrayIndexExp
     ;
 
 parExpression
@@ -100,7 +106,7 @@ methodCall
 //    ;
 
 variableDeclarator
-    : varid=variableDeclaratorId ('=' initializer=variableInitializer)?
+    : type=typeType varid=variableDeclaratorId ('=' initializer=variableInitializer)?
     ;
 
 variableDeclaratorId
