@@ -1,7 +1,7 @@
 import java.net.URI
 
 import org.intocps.initializer.FMIASTFactory.ValueArrayVariables
-import org.intocps.initializer.{ArrayVariable, FMIASTFactory, rawSingleValue}
+import org.intocps.initializer.{ArrayVariable, Conversions, FMIASTFactory, rawSingleValue}
 import org.intocps.multimodelparser.data.{Connection, ConnectionScalarVariable, FMUWithMD, Instance}
 import org.intocps.multimodelparser.parser.MultiModelConfiguration
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription
@@ -50,10 +50,42 @@ object MaBLSpec {
 
         // Set the initial scalar variables.
         // The value for initial scalar variables is always the start value from the modelDescription file
-        val setInitialScalarVariableNodes: Seq[PStm] = initialScalarVariables.flatMap(sv => {
+        val setInitialScalarVariableNodes: Seq[Seq[AAssigmentStm]] = initialScalarVariables.map(sv => {
           val valueToSet = sv.`type`.start
-          FMIASTFactory.setScalarVariable(instance.name, sv, rawSingleValue(valueToSet, sv.`type`), valueReferenceTarget, valueArrayVariables, statusVariableTarget)
+          val result: Seq[AAssigmentStm] = FMIASTFactory.setScalarVariable(instance.name,
+            sv,
+            rawSingleValue(valueToSet, sv.`type`),
+            valueReferenceTarget,
+            valueArrayVariables,
+            statusVariableTarget)
+          result
         })
+
+
+        def rec(xs: Seq[ModelDescription.ScalarVariable]): Seq[Seq[AAssigmentStm]] = {
+          def loop(xs: Seq[ModelDescription.ScalarVariable], acc: Seq[Seq[AAssigmentStm]]): Seq[Seq[AAssigmentStm]] = {
+            xs match {
+              case Seq() => acc
+              case Seq(sv, tail@_*) => {
+                val valueToSet = sv.`type`.start
+                val result: Seq[AAssigmentStm] = FMIASTFactory.setScalarVariable(instance.name,
+                  sv,
+                  rawSingleValue(valueToSet, sv.`type`),
+                  valueReferenceTarget,
+                  valueArrayVariables,
+                  statusVariableTarget)
+                val mergeResult: Seq[Seq[AAssigmentStm]] = result +: acc
+                loop(tail, mergeResult)
+              }
+            }
+          }
+          loop(xs, Seq.empty)
+        }
+
+        val t = rec(initialScalarVariables)
+        println(setInitialScalarVariableNodes)
+        println(t)
+
 
         // Setup experiment
         val setupExperimentStm: AAssigmentStm = FMIASTFactory.setupExperiment(instance.name, statusVariableTarget)
@@ -74,28 +106,13 @@ object MaBLSpec {
           FMIASTFactory.setScalarVariable(instance.name, sv, rawSingleValue(valueToSet, sv.`type`), valueReferenceTarget, valueArrayVariables, statusVariableTarget)
         })
 
-        FMIASTFactory.variableDeclaration2Statement(instantiateInstance) +: setupExperimentStm +: setInitialScalarVariableNodes ++: enterInitializationModeStm +: setIndependentScalarVariableStatements
+        FMIASTFactory.variableDeclaration2Statement(instantiateInstance) +: setupExperimentStm +: /*setInitialScalarVariableNodes ++: */ enterInitializationModeStm +: setIndependentScalarVariableStatements
       }
       )
       val fmuRelatedStatements: Seq[PStm] =
         FMIASTFactory.variableDeclaration2Statement(fmuLoadStatement) +: instanceStatements
       acc ++ fmuRelatedStatements
     }
-    }
-
-    //     At this stage all the independent FMU and instance statements have been created.
-    //     The next step is getting and setting inputs and outputs according to the topological sorting
-
-    def sequence[A](a: Seq[Option[A]]) : Option[Seq[A]] = {
-      @tailrec
-      def iterate(seq: Seq[Option[A]], acc: Seq[A]) : Option[Seq[A]] = seq match {
-        case Nil => Some(acc.reverse)
-        case x :: xs => x match {
-          case None => None
-          case Some(value: A) => iterate(xs, value +: acc)
-        }
-      }
-      iterate(a, Seq.empty)
     }
 
     val stmDependentVariables: Seq[Option[Seq[PStm]]] = topSortedSvs.map(connSv => {
@@ -113,12 +130,13 @@ object MaBLSpec {
             valueReferenceTarget,
             valueArrayVariables,
             statusVariableTarget)
-        } })
+        }
+      })
     })
-    sequence(stmDependentVariables)
+    Conversions.sequence(stmDependentVariables)
 
     val statementsWithoutDependants: Seq[PStm] = (stmStatusVariable +: stmValueArrayInt +: stmValueArrayBool +: stmValueArrayReal +: stmValueArrayString +: initializerStatements)
-    val finalStatements = sequence(stmDependentVariables) match {
+    val finalStatements = Conversions.sequence(stmDependentVariables) match {
       case None => statementsWithoutDependants
       case Some(value) => statementsWithoutDependants ++: value.flatten
     }
