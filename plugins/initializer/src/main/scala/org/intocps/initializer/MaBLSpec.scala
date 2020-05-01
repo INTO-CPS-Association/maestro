@@ -75,12 +75,21 @@ object MaBLSpec {
 
         //If the variable is an output, then it is necessary to store the result in a variable and build up a map as we go.
         if(enrichedConnSV.scalarVariable.causality == Causality.Output) {
-          // Create variable to hold result
-          FMIASTFactory.
+          FMIASTFactory.getScalarVariable(enrichedConnSV.instance, enrichedConnSV.scalarVariable, statusVariable.getDeclaration)
+        }
+          // The variable is an input.
+        else {
+          //Find the corresponding output to locate the variable name.
+          val relatedOutput: Option[Connection] = extConnections.find(x => x.to.exists(conn => conn.vName == enrichedConnSV.scalarVariable.name && conn.vInstance.name == enrichedConnSV.instance))
+          relatedOutput.map(output => {
+            val variableName = output.from.vInstance.name+output.from.vName
+            FMIASTFactory.setScalarVariable(enrichedConnSV.instance, enrichedConnSV.scalarVariable, variableName, statusVariable)
+          }
+
+          )
 
         }
 
-        //if the variable is an input, then it depends on
       }
       )
     })

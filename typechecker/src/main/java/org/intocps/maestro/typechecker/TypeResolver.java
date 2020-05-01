@@ -64,12 +64,12 @@ public class TypeResolver {
 
         @Override
         public PType caseInteger(Integer node, Environment question) throws AnalysisException {
-            return factory.newAIntPrimitiveType();
+            return MableAstFactory.newAIntNumericPrimitiveType();
         }
 
         @Override
         public PType caseDouble(Double node, Environment question) throws AnalysisException {
-            return factory.newARealPrimitiveType();
+            return MableAstFactory.newARealNumericPrimitiveType();
         }
 
         @Override
