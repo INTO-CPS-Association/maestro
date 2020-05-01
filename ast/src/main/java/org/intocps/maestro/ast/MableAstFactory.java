@@ -14,16 +14,17 @@ public class MableAstFactory {
         return newAFunctionType();
     }
 
-    public AIntNumericPrimitiveType newAIntPrimitiveType() {
+    public static AIntNumericPrimitiveType newAIntNumericPrimitiveType() {
         return new AIntNumericPrimitiveType();
     }
 
-    public ARealNumericPrimitiveType newARealPrimitiveType() {
+    public static ARealNumericPrimitiveType newARealNumericPrimitiveType() {
         return new ARealNumericPrimitiveType();
     }
 
 
-    public AStringPrimitiveType newAStringPrimitiveType() {
+
+    public static AStringPrimitiveType newAStringPrimitiveType() {
         return new AStringPrimitiveType();
     }
 
@@ -62,13 +63,6 @@ public class MableAstFactory {
         ANameType nameType = new ANameType();
         nameType.setName(name);
         return nameType;
-    }
-
-    public static AStringLiteralExp newAStringLiteralExp(String s)
-    {
-        AStringLiteralExp exp = new AStringLiteralExp();
-        exp.setValue(s);
-        return exp;
     }
 
     public static ALoadExp newALoadExp(URI uri){
@@ -119,5 +113,64 @@ public class MableAstFactory {
         AFunctionDeclaration funcDecl = new AFunctionDeclaration();
         funcDecl.setName(name);
         return funcDecl;
+    }
+
+    public static AUIntLiteralExp newAUIntLiteralExp(Long value)
+    {
+        AUIntLiteralExp exp = new AUIntLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
+
+    public static AArrayInitializer newAArrayInitializer(List<? extends PExp> args){
+        AArrayInitializer initializer = new AArrayInitializer();
+        initializer.setExp(args);
+        return initializer;
+    }
+
+    public static ABoolLiteralExp newABoolLiteralExp(Boolean value){
+        ABoolLiteralExp exp = new ABoolLiteralExp();
+                exp.setValue(value);
+        return exp;
+    }
+
+    public static ARealLiteralExp newARealLiteralExp(Double value)
+    {
+        ARealLiteralExp exp = new ARealLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
+
+    public static AIntLiteralExp newAIntLiteralExp(Integer value)
+    {
+        AIntLiteralExp exp = new AIntLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
+
+    public static AStringLiteralExp newAStringLiteralExp(String value)
+    {
+        AStringLiteralExp exp = new AStringLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
+
+    public static AAssigmentStm newAAssignmentStm(AIdentifierExp identifier, PExp exp){
+        AAssigmentStm stm = new AAssigmentStm();
+        stm.setIdentifier(identifier);
+        stm.setExp(exp);
+        return stm;
+    }
+
+    public static ABooleanPrimitiveType newABoleanPrimitiveType(){
+        ABooleanPrimitiveType type = new ABooleanPrimitiveType();
+        return type;
+    }
+
+    public static AArrayType newAArrayType(PType arrayType, Integer size){
+        AArrayType type = new AArrayType();
+                type.setType(arrayType);
+                type.setSize(size);
+                return type;
     }
 }

@@ -1,8 +1,14 @@
 package org.intocps.multimodelparser.data
 
-sealed trait ParameterValue
+sealed trait ParameterValue {
+  def getValue() : Any
+}
 
-case class BooleanVal(v: Boolean) extends ParameterValue
-case class RealVal(v: Double) extends ParameterValue
-case class StringVal(v: String) extends ParameterValue
-case class IntegerVal(v: Int) extends ParameterValue
+case class BooleanVal(v: Boolean) extends ParameterValue {
+  override def getValue(): Any = v
+}
+case class RealVal(v: Double) extends ParameterValue {
+  override def getValue(): Any = v
+}
+case class StringVal(v: String) extends ParameterValue{ override def getValue(): Any = v}
+case class IntegerVal(v: Int) extends ParameterValue{ override def getValue(): Any = v}

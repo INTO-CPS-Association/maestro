@@ -1,7 +1,8 @@
 import java.io.{File, InputStream}
 import java.util
 
-import org.intocps.initializer.FMIASTFactory
+import argonaut.Parse
+import org.intocps.initializer.{FMIASTFactory, InitializerContext}
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
 import org.intocps.maestro.plugin.{IContext, IMaestroPlugin}
 import org.intocps.multimodelparser.data._
@@ -10,23 +11,7 @@ import org.intocps.topologicalsorting.{Edge, TarjanGraph}
 
 import scala.jdk.CollectionConverters._
 
-class Initializer extends IMaestroPlugin {
-
-  override def getName: String = "Initializer"
-
-  override def getVersion: String = "0.0.1"
-
-  // TODO: Create initialize token
-
-  override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
-
-  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
-    calculateInitialize(new File("FIXME")) match {
-      case Left(value)  => throw new Exception("Could not create initialize: " + value)
-      case Right(value) => value
-    }
-  }
-
+object Initializer {
   def calculateInitialize(f: File): Either[String, PStm] = {
     val rmmcE: Either[String, RichMultiModelConfiguration] = ConfigurationHandler.loadMMCFromFile(f)
 
@@ -43,11 +28,11 @@ class Initializer extends IMaestroPlugin {
       }
     })
 
-    println(topSortResult match {
-      case Left(cycle: String)                              => "Topological sorting failed with the cycle: " + cycle;
-      case Right(totalOrder: Seq[ConnectionScalarVariable]) => "Topological sorting succeeded with the order: " +
-        totalOrder.map(x => x.toString).mkString(" -> ");
-    })
+//    println(topSortResult match {
+//      case Left(cycle: String)                              => "Topological sorting failed with the cycle: " + cycle;
+//      case Right(totalOrder: Seq[ConnectionScalarVariable]) => "Topological sorting succeeded with the order: " +
+//        totalOrder.map(x => x.toString).mkString(" -> ");
+//    })
 
     val program: Either[String, PStm] = for {
       rmmc <- rmmcE
@@ -64,6 +49,36 @@ class Initializer extends IMaestroPlugin {
       toInstances.+(fromInstance)
     }
   }
+  private val uniqueInitializeFunction = FMIASTFactory.functionDeclaration("initialize")
+  private val uniqueFunctionDeclaration: util.Set[AFunctionDeclaration] = Set(uniqueInitializeFunction).asJava
+
+}
+
+class Initializer extends IMaestroPlugin {
+
+
+
+  override def getName: String = "Initializer"
+
+  override def getVersion: String = "0.0.1"
+
+  // TODO: Create initialize token
+
+  override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Initializer.uniqueFunctionDeclaration
+
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
+    val localFunctionDeclaration = Initializer.uniqueInitializeFunction
+    assert(declaredFunction.eq(localFunctionDeclaration), "The declared function passed to unfolding does not match the declared function of the plugin.")
+
+    val context : InitializerContext = ctxt.asInstanceOf[InitializerContext]
+
+    Initializer.calculateInitialize(new File(context.getContext)) match {
+      case Left(value)  => throw new Exception("Could not create initialize: " + value)
+      case Right(value) => value
+    }
+  }
+
+
 
   //  def main(args: Array[String]) : Unit =
   //    {
@@ -76,9 +91,16 @@ class Initializer extends IMaestroPlugin {
   //      // Get the graph
   //      // Create the code
   //    }
-  override def getContextKey: String = ???
+  override def getContextKey: String = getName + getVersion
 
-  override def requireContext(): Boolean = false
+  override def requireContext(): Boolean = true
 
-  override def parseContext(is: InputStream): IContext = ???
+  override def parseContext(is: InputStream): IContext = {
+    // The input stream is expected to contain a link to the multimodel file
+    val parsed = Parse.decodeEither[InitializerContext](scala.io.Source.fromInputStream(is).mkString)
+    parsed match {
+      case Left(value) => throw new Exception("Failed to parse plugin data: " + value)
+      case Right(value) => value
+    }
+  }
 }
