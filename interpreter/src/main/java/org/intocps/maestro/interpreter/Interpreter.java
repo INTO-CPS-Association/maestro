@@ -122,8 +122,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAAssigmentStm(AAssigmentStm node, Context question) throws AnalysisException {
-
-        question.put(node.getIdentifier(), node.getExp().apply(this, question));
+        //FIXME
+        // question.put(node.getIdentifier(), node.getExp().apply(this, question));
 
         return new VoidValue();
     }
@@ -131,7 +131,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
-        question.put(node.getName(), node.getInitializer().apply(this, question));
+        question.put(node.getName(), node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question));
 
         return new VoidValue();
     }
@@ -155,6 +155,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAExpressionStm(AExpressionStm node, Context question) throws AnalysisException {
+        return node.getExp().apply(this, question);
+    }
+
+
+    @Override
     public Value caseAIdentifierExp(AIdentifierExp node, Context question) throws AnalysisException {
         return question.lookup(node.getName());
     }
@@ -162,7 +168,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseACallExp(ACallExp node, Context question) throws AnalysisException {
 
-        Value function = node.getIdentifier().apply(this, question);
+        Value function = node.getRoot().apply(this, question);
 
         if (function instanceof FunctionValue) {
 
@@ -170,6 +176,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         return null;
+    }
+
+    @Override
+    public Value caseARealLiteralExp(ARealLiteralExp node, Context question) throws AnalysisException {
+        return new RealValue(node.getValue());
     }
 
     @Override

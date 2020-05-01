@@ -5,8 +5,9 @@ import java.util
 
 import org.antlr.v4.runtime.TokenFactory
 import org.intocps.fmi.IFmiComponent
+import org.intocps.initializer.FMIASTFactory.ValueArrayVariables
 import org.intocps.initializer.SetOrGet.SetOrGet
-import org.intocps.maestro.ast.{AArrayInitializer, AAssigmentStm, ABoolLiteralExp, ACallExp, ADotExp, AExpInitializer, AFunctionDeclaration, AIdentifierExp, ALoadExp, ALocalVariableStm, AStringLiteralExp, AUIntLiteralExp, AVariableDeclaration, LexIdentifier, MableAstFactory, PExp, PInitializer, PStm, PType, SLiteralExpBase}
+import org.intocps.maestro.ast.{AArrayExp, AArrayInitializer, AArrayType, AAssigmentStm, ABoolLiteralExp, ACallExp, ADotExp, AExpInitializer, AFunctionDeclaration, AIdentifierExp, AIdentifierStateDesignator, ALoadExp, ALocalVariableStm, AStringLiteralExp, AUIntLiteralExp, AVariableDeclaration, LexIdentifier, MableAstFactory, Node, PExp, PInitializer, PStm, PType, SLiteralExpBase}
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
 
@@ -25,6 +26,7 @@ object SetOrGet extends Enumeration {
 
 object FMIASTFactory {
 
+
   def fmi2FunctionPrefix = "fmi2"
   def FMIVersionStr = "FMI2"
   def FMIComponentStr = FMIVersionStr + "Component"
@@ -33,12 +35,15 @@ object FMIASTFactory {
   def fmi2EnterInitializationMode = "EnterInitializationMode"
 
 
-
-  implicit def singleValueToArray(AUIntLiteralExp: AUIntLiteralExp) : AArrayInitializer = MableAstFactory.newAArrayInitializer(Vector(AUIntLiteralExp).asJava)
+  implicit def CONVAIdentifierStateDesignator2LexIdentifier(aIdentifierStateDesignator: AIdentifierStateDesignator) : LexIdentifier = aIdentifierStateDesignator.getName
+  def CONVAIdentifierStateDesignator2AIdentifierExp(aIdentifierStateDesignator: AIdentifierStateDesignator) : AIdentifierExp = MableAstFactory.newAIdentifierExp(aIdentifierStateDesignator.getName)
+  implicit def CONVSingleValueToArray(AUIntLiteralExp: AUIntLiteralExp) : AArrayInitializer = MableAstFactory.newAArrayInitializer(Vector(AUIntLiteralExp).asJava)
+  def CONVALocalVariableStm2AIdentifierStateDesignator(stm : ALocalVariableStm) : AIdentifierStateDesignator = MableAstFactory.newAIdentifierStateDesignator(stm.getName)
+  implicit def CONVLexIdentifier2AIdentifierStateDesignator(id : LexIdentifier) : AIdentifierStateDesignator = MableAstFactory.newAIdentifierStateDesignator(id)
   implicit def str2LexIdentifier(x: String) = new LexIdentifier(x, null)
   implicit def exp2ExpInitializer(x: PExp) : AExpInitializer = MableAstFactory.newAExpInitializer(x)
   implicit def str2IdentifierExp(x: String): AIdentifierExp = MableAstFactory.newAIdentifierExp(x)
-  implicit def lexIdentifier2IdentifierExp(x:LexIdentifier) : AIdentifierExp = x.getText
+  implicit def lexIdentifier2IdentifierExp(x:LexIdentifier) : AIdentifierExp = MableAstFactory.newAIdentifierExp(x)
   implicit def scalaList2JavaList[A](x: List[A]): util.List[A] = x.asJava
   implicit def variableDeclaration2Statement(x: AVariableDeclaration): ALocalVariableStm = MableAstFactory.newALocalVariableStm(x)
   implicit def aLocalVariableStmToAIdentifierExp(x: ALocalVariableStm) : AIdentifierExp = x.getDeclaration.getName
@@ -51,6 +56,10 @@ object FMIASTFactory {
     }
     case stringType: ModelDescription.StringType => MableAstFactory.newAStringPrimitiveType()
     case unknown => throw new Exception("Unknown scalar: " + unknown.toString)
+  }
+
+  def createVariable(name: String, varType: PType, initializer: Option[PInitializer]=None): ALocalVariableStm = {
+    MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(name, varType, initializer.getOrElse(null)))
   }
 
 
@@ -100,16 +109,16 @@ object FMIASTFactory {
 
 
 
-  def setupExperiment(name: String, statusVariableAsExp: AIdentifierExp): AAssigmentStm = {
+  def setupExperiment(name: String, statusVariable: AIdentifierStateDesignator): AAssigmentStm = {
     val functionIdentifier = findFmiFunction(name, fmi2SetupExperimentFunctionName)
     val callExp = MableAstFactory.newACallExp(functionIdentifier, null)
-    MableAstFactory.newAAssignmentStm(statusVariableAsExp, callExp)
+    MableAstFactory.newAAssignmentStm(statusVariable, callExp)
   }
 
-  def enterInitializationMode(name: String, statusVariableAsExp: AIdentifierExp): AAssigmentStm = {
+  def enterInitializationMode(name: String, statusVariable: AIdentifierStateDesignator): AAssigmentStm = {
     val functionIdentifier = findFmiFunction(name, fmi2EnterInitializationMode)
     val callExp = MableAstFactory.newACallExp(functionIdentifier, null)
-    MableAstFactory.newAAssignmentStm(statusVariableAsExp, callExp)
+    MableAstFactory.newAAssignmentStm(statusVariable, callExp)
   }
 
   def LoadFMU(name: String, uri: URI) : AVariableDeclaration = {
@@ -130,58 +139,126 @@ object FMIASTFactory {
 
   def functionDeclaration(name: String) : AFunctionDeclaration = MableAstFactory.newAFunctionDeclaration(name)
 
-  def setScalarVariable(fmiComponent: String, scalarVariable: ModelDescription.ScalarVariable, value: FMIASTValueArgument, identifier: AIdentifierExp) = {
-    val functionIdentifier = findGetSetFMIFunction(fmiComponent, scalarVariable, SetOrGet.Set)
+
+
+  def setScalarVariable(fmiComponent: String,
+                        scalarVariable: ModelDescription.ScalarVariable,
+                        value: ValuesToSet,
+                        valueReferenceArrayVariable : AIdentifierStateDesignator,
+                        valueArrayVariables: ValueArrayVariables,
+                        statusVariable: AIdentifierStateDesignator) = {
+
+case class ValueStatementAndArgument(stm: Option[PStm], value: PExp)
+    // Update the valueReferenceArrayVariable  with the correct valueReference and create the relevant arguments
+    val stmValueReferenceAssignment = MableAstFactory.newAAssignmentStm(MableAstFactory.newAArayStateDesignator(valueReferenceArrayVariable, 0L),scalarVariable.valueReference)
+    val valueReferenceArgument : AIdentifierExp = CONVAIdentifierStateDesignator2LexIdentifier(valueReferenceArrayVariable)
     val sizeArgument : AUIntLiteralExp = (1 : Long)
-    // TODO: Fix this with correct arrayExp
-    val valueReferenceArgument : AArrayInitializer  = long2AUIntLiteralExp(scalarVariable.valueReference)
-    // TODO: Fix this with correct arrayExp
-    val valueArgument : PExp = value match {
-      case r@rawSingleValue(value, valueType) => r.computeASTLiteralExp
-      case variable(variableName) => variableName
+
+    // Update the valueArrayVariable with the correct value and create the relevant arguments IF not already carried out!
+    val valueIdentifier = valueArrayVariables.getCorrectIdentifier(scalarVariable.`type`)
+    val stmValueAssignment = value match {
+      case a@rawSingleValue(value, valueType) =>
+        val stmValueAssignment = MableAstFactory.newAAssignmentStm(MableAstFactory.newAArayStateDesignator(valueIdentifier,0L), a.getExp())
+        Some(stmValueAssignment)
+      case ArrayVariable(variables, valueType) => None
     }
-    val callArguments: java.util.List[PExp] = Vector(valueReferenceArgument, sizeArgument, valueArgument).asJava
-    //val valueArgument : SLiteralExpBase = getValueArgument(scalarVariable, value)
+
+    val valueArgument : AIdentifierExp = CONVAIdentifierStateDesignator2LexIdentifier(valueIdentifier)
+
+    // Create the arguments to the call
+    val callArguments = Vector(valueReferenceArgument, sizeArgument, valueArgument).asJava
+
+    // Find the function to call
+    val functionIdentifier = findGetSetFMIFunction(fmiComponent, scalarVariable, SetOrGet.Set)
+
+    // Call the function
     val callExp = MableAstFactory.newACallExp(functionIdentifier, callArguments)
-    MableAstFactory.newAAssignmentStm(identifier, callExp)
+
+    // Assign to status variable
+    val stmFmiCallAssignment = MableAstFactory.newAAssignmentStm(statusVariable, callExp)
+
+    val statements = (stmValueAssignment match {
+      case None => Vector(stmValueReferenceAssignment)
+      case Some(value) => Vector(stmValueReferenceAssignment) :+ value
+    }) :+ stmFmiCallAssignment
+    statements
   }
 
-  def getScalarVariable(instance: String, scalarVariableToGet: ModelDescription.ScalarVariable, fmi2ResultVariable: AVariableDeclaration) : Seq[PStm] = {
-    // Create variable to contain ouput value
-    val arrayType = MableAstFactory.newAArrayType(scalarVariableToGet.`type`, 1)
-    val outputVariable = MableAstFactory.newAVariableDeclaration(instance+scalarVariableToGet.name, arrayType, null)
+  def getScalarVariable(fmiComponent: String,
+                        scalarVariable: ModelDescription.ScalarVariable,
+                        valueReferenceArrayVariable : AIdentifierStateDesignator,
+                        valueArrayVariables: ValueArrayVariables,
+                        statusVariable: AIdentifierStateDesignator) : Seq[PStm] = {
+    // Update the valueReferenceArrayVariable  with the correct valueReference and create the relevant arguments
+    val stmValueReferenceAssignment = MableAstFactory.newAAssignmentStm(MableAstFactory.newAArayStateDesignator(valueReferenceArrayVariable, 0L),scalarVariable.valueReference)
+    val valueReferenceArgument : AIdentifierExp = CONVAIdentifierStateDesignator2LexIdentifier(valueReferenceArrayVariable)
+    val sizeArgument : AUIntLiteralExp = (1 : Long)
 
-    // TODO: Fix this with correct arrayExp for valueReference
-    val functionIdentifier = findGetSetFMIFunction(instance, scalarVariableToGet, SetOrGet.Set)
-    val valueReferenceArgument : AArrayInitializer  = long2AUIntLiteralExp(scalarVariableToGet.valueReference)
-    val functionCall = MableAstFactory.newACallExp(functionIdentifier, Vector(Vector(valueReferenceArgument).asJava, 1, outputVariable.getName : AIdentifierExp).asJava)
-    val statement = MableAstFactory.newAAssignmentStm(fmi2ResultVariable.getName, functionCall)
-    Vector(outputVariable, statement)
+    // Find the correct valueArrayVariable to store the result in
+    val valueArgument : AIdentifierExp = CONVAIdentifierStateDesignator2LexIdentifier(valueArrayVariables.getCorrectIdentifier(scalarVariable.`type`))
+
+    // Create the arguments to the call
+    val callArguments= Vector(valueReferenceArgument, sizeArgument, valueArgument).asJava
+
+    // Find the function to call
+    val functionIdentifier = findGetSetFMIFunction(fmiComponent, scalarVariable, SetOrGet.Get)
+
+    // Create the Call expression
+    val callExp = MableAstFactory.newACallExp(functionIdentifier, callArguments)
+
+    // Assign to status variable
+    val stmFmiCallAssignment = MableAstFactory.newAAssignmentStm(statusVariable, callExp)
+
+    Vector(stmValueReferenceAssignment, stmFmiCallAssignment)
   }
+
+  case class ValueArrayVariables(real: AIdentifierStateDesignator, int: AIdentifierStateDesignator, string: AIdentifierStateDesignator, bool : AIdentifierStateDesignator) {
+    def getCorrectIdentifier(fmiType: ModelDescription.Type) = fmiType match {
+      case booleanType: ModelDescription.BooleanType => bool
+      case integerType: ModelDescription.IntegerType => integerType match {
+        case enumerationType: ModelDescription.EnumerationType => throw new Exception("Enum type not supported.")
+        case realType: ModelDescription.RealType => real
+        case _ => int
+      }
+      case stringType: ModelDescription.StringType => string
+      case _ => throw new Exception("Unknown type not supported.")
+    }
+  }
+
 }
 
-sealed trait FMIASTValueArgument
-case class rawSingleValue(value: Any, scalarVariable: ModelDescription.ScalarVariable ) extends FMIASTValueArgument {
+sealed trait ValuesToSet {
+  def getExp(): PExp
+}
+
+case class rawSingleValue(value: Any, valueType: ModelDescription.Type )  extends ValuesToSet {
   def computeASTType = {
-    scalarVariable.`type` match {
+    valueType match {
       case booleanType: ModelDescription.BooleanType =>  MableAstFactory.newABoleanPrimitiveType()
       case integerType: ModelDescription.IntegerType => integerType match {
         case realType: ModelDescription.RealType => MableAstFactory.newARealNumericPrimitiveType()
         case x => MableAstFactory.newAIntNumericPrimitiveType()
       }
       case stringType: ModelDescription.StringType => MableAstFactory.newAStringPrimitiveType()
-      case unknown => throw new Exception("Unknown type for variable: " + unknown.toString)
+      case unknown => throw new Exception("Unknown type for variable: " + valueType)
   }}
-    def computeASTLiteralExp = {
-      scalarVariable.`type` match {
+    def getExp = {
+      valueType match {
         case booleanType: ModelDescription.BooleanType =>   MableAstFactory.newABoolLiteralExp(value.asInstanceOf[Boolean])
         case integerType: ModelDescription.IntegerType => integerType match {
           case realType: ModelDescription.RealType => MableAstFactory.newARealLiteralExp(value.asInstanceOf[Double])
           case x => MableAstFactory.newAIntLiteralExp(value.asInstanceOf[Int])
         }
         case stringType: ModelDescription.StringType => MableAstFactory.newAStringLiteralExp(value.asInstanceOf[String])
-        case unknown => throw new Exception("Unknown type for variable: " + scalarVariable.toString)
+        case unknown => throw new Exception("Unknown type for variable: " + valueType)
       }
   }
 }
-case class variable(variableName: String) extends FMIASTValueArgument
+
+case class ArrayVariable(variables : ValueArrayVariables, valueType: ModelDescription.Type) extends ValuesToSet {
+  def getExp() : PExp =
+  {
+    FMIASTFactory.CONVAIdentifierStateDesignator2AIdentifierExp(variables.getCorrectIdentifier(valueType))
+  }
+}
+

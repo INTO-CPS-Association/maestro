@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ public class Main {
         Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
         Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose").build();
         Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
+        Option contextOpt = Option.builder("c").longOpt("config").desc("path to a plugin config JSON file").build();
         Option mablOpt = Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().numberOfArgs(1000).valueSeparator(' ')
                 .argName("path").build();
 
@@ -44,6 +46,7 @@ public class Main {
         options.addOption(mablOpt);
         options.addOption(verboseOpt);
         options.addOption(versionOpt);
+        options.addOption(contextOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -68,6 +71,15 @@ public class Main {
         boolean verbose = cmd.hasOption(verboseOpt.getOpt());
 
         List<File> sourceFiles = Arrays.stream(cmd.getOptionValues(mablOpt.getOpt())).map(File::new).collect(Collectors.toList());
-        new MableSpecificationGenerator(verbose).generate(sourceFiles);
+
+        File configFile = null;
+        if (cmd.hasOption(contextOpt.getOpt())) {
+            configFile = new File(cmd.getOptionValue(contextOpt.getOpt()));
+        }
+
+        try (InputStream configIs = configFile == null ? null : new FileInputStream(configFile)) {
+
+            new MableSpecificationGenerator(verbose).generate(sourceFiles, configIs);
+        }
     }
 }

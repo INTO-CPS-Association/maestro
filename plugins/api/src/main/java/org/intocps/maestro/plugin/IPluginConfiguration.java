@@ -1,5 +1,5 @@
 package org.intocps.maestro.plugin;
 
-public interface IContext {
+public interface IPluginConfiguration {
 
 }

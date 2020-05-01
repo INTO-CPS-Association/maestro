@@ -46,9 +46,10 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         fun.setName(convert(ctx.IDENTIFIER()));
         fun.setReturnType((PType) this.visit(ctx.ret));
-
-        fun.setFormals(ctx.formalParameters().formalParameterList().formalParameter().stream().map(this::visit).map(AFormalParameter.class::cast)
-                .collect(Collectors.toList()));
+        if (ctx.formalParameters().formalParameterList() != null) {
+            fun.setFormals(ctx.formalParameters().formalParameterList().formalParameter().stream().map(this::visit).map(AFormalParameter.class::cast)
+                    .collect(Collectors.toList()));
+        }
         return fun;
     }
 
@@ -82,25 +83,66 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitBlock(MablParser.BlockContext ctx) {
         ABlockStm block = new ABlockStm();
 
-        block.setBody(ctx.statement().stream().filter(p -> !(p instanceof MablParser.SemiContext)).map(this::visit).map(PStm.class::cast)
-                .collect(Collectors.toList()));
+        List<INode> processedBody = ctx.statement().stream().filter(p -> !(p instanceof MablParser.SemiContext)).map(this::visit)
+                .collect(Collectors.toList());
+
+        processedBody.stream().filter(p -> !(p instanceof PStm)).forEach(s -> System.out.println("Wrong node type in body: " + s));
+
+        List<PStm> statements = processedBody.stream().map(PStm.class::cast).collect(Collectors.toList());
+
+        if (statements.stream().anyMatch(p -> p == null)) {
+            System.out.println("found null");
+        }
+
+        block.setBody(statements);
+
 
         return block;
 
     }
 
     @Override
-    public INode visitAssignmentStm(MablParser.AssignmentStmContext ctx) {
+    public INode visitAssignment(MablParser.AssignmentContext ctx) {
+
         AAssigmentStm assign = new AAssigmentStm();
 
-        AIdentifierExp identifierExp = new AIdentifierExp();
-        identifierExp.setName(convert(ctx.assignment().IDENTIFIER()));
-
-        assign.setIdentifier(identifierExp);
-        assign.setExp((PExp) this.visit(ctx.assignment().expression()));
+        assign.setTarget((PStateDesignator) this.visit(ctx.stateDesignator()));
+        assign.setExp((PExp) this.visit(ctx.expression()));
 
         return assign;
     }
+
+    @Override
+    public INode visitArrayStateDesignator(MablParser.ArrayStateDesignatorContext ctx) {
+        AArrayStateDesignator designator = new AArrayStateDesignator();
+        designator.setTarget((PStateDesignator) this.visit(ctx.stateDesignator()));
+        designator.setExp((SLiteralExp) this.visit(ctx.literal()));
+        return designator;
+    }
+
+    @Override
+    public INode visitIdentifierStateDesignator(MablParser.IdentifierStateDesignatorContext ctx) {
+        AIdentifierStateDesignator identifierExp = new AIdentifierStateDesignator();
+        identifierExp.setName(this.convert(ctx.IDENTIFIER()));
+        return identifierExp;
+    }
+
+    //    @Override
+    //    public INode visitAssignmentStm(MablParser.AssignmentStmContext ctx) {
+    //
+    //        ctx.assignment()
+    //
+    //        AAssigmentStm assign = new AAssigmentStm();
+    //
+    //        AIdentifierExp identifierExp = new AIdentifierExp();
+    //        identifierExp.setName(convert(ctx.assignment().IDENTIFIER()));
+    //
+    //        assign.setIdentifier(identifierExp.g);
+    //        assign.setExp((PExp) this.visit(ctx.assignment().expression()));
+    //
+    //        return assign;
+    //    }
+
 
     @Override
     public INode visitWhile(MablParser.WhileContext ctx) {
@@ -110,6 +152,20 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         stm.setBody((PStm) this.visit(ctx.statement()));
         return stm;
 
+    }
+
+
+    @Override
+    public INode visitArrayIndexExp(MablParser.ArrayIndexExpContext ctx) {
+
+        AArrayIndexExp apply = new AArrayIndexExp();
+
+        apply.setArray((PExp) this.visit(ctx.array));
+
+        if (ctx.expression() != null) {
+            apply.setIndices(ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        }
+        return apply;
     }
 
     @Override
@@ -140,16 +196,34 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return this.visit(ctx.expression());
     }
 
+
+    void checkList(List source, List processed) {
+        if (!source.stream().anyMatch(p -> p == null)) {
+            return;
+        }
+
+        for (int i = 0; i < source.size(); i++) {
+            if (processed.get(i) == null) {
+                System.out.println("Problem translating: " + source.get(i).getClass().getSimpleName());
+            }
+        }
+    }
+
     @Override
     public INode visitMethodCall(MablParser.MethodCallContext ctx) {
 
         ACallExp call = new ACallExp();
-        call.setArgs(ctx.expressionList().expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+
+        if (ctx.expressionList() != null && ctx.expressionList().expression() != null) {
+            List<PExp> args = ctx.expressionList().expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+            checkList(ctx.expressionList().expression(), args);
+            call.setArgs(args);
+        }
 
         AIdentifierExp ident = new AIdentifierExp();
         ident.setName(convert(ctx.IDENTIFIER()));
 
-        call.setIdentifier(ident);
+        call.setRoot(ident);
         return call;
     }
 
@@ -201,13 +275,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitLocalVariable(MablParser.LocalVariableContext ctx) {
-
+    public INode visitVariableDeclarator(MablParser.VariableDeclaratorContext ctx) {
         AVariableDeclaration def = new AVariableDeclaration();
 
-        def.setType((PType) this.visit(ctx.type));
-        def.setName(convert(ctx.var.varid.IDENTIFIER()));
-        MablParser.VariableInitializerContext initializer = ctx.var.initializer;
+        def.setType((PType) this.visit(ctx.typeType()));
+        def.setName(convert(ctx.variableDeclaratorId().IDENTIFIER()));
+        MablParser.VariableInitializerContext initializer = ctx.variableInitializer();
         if (initializer != null) {
             def.setInitializer((PInitializer) this.visit(initializer));
         }
@@ -216,6 +289,26 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         var.setDeclaration(def);
         return var;
     }
+
+
+    @Override
+    public INode visitLocalVariable(MablParser.LocalVariableContext ctx) {
+        return this.visit(ctx.variableDeclarator());
+    }
+    //
+    //        AVariableDeclaration def = new AVariableDeclaration();
+    //
+    //        def.setType((PType) this.visit(ctx.type));
+    //        def.setName(convert(ctx.var.varid.IDENTIFIER()));
+    //        MablParser.VariableInitializerContext initializer = ctx.var.initializer;
+    //        if (initializer != null) {
+    //            def.setInitializer((PInitializer) this.visit(initializer));
+    //        }
+    //
+    //        ALocalVariableStm var = new ALocalVariableStm();
+    //        var.setDeclaration(def);
+    //        return var;
+    //    }
 
     @Override
     public INode visitArrayInit(MablParser.ArrayInitContext ctx) {

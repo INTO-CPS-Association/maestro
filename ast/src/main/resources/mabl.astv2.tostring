@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+ [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ " "+ [name]+ " = " [initializer]
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 %initializer->exp = [exp]
 %initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
@@ -35,16 +35,20 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
-%exp->call = ""+ $ $[identifier]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+");"
+%exp->call = ""+ $ $[root]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+");"
+%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"];"
 
 %stm->block = "{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining("\n","\n","\n"))$+"}"
-%stm->assigment = [identifier] + " = " [exp] +";"
+%stm->assigment = [target] + " = " [exp] +";"
 %stm->localVariable = [declaration] +";"
 %stm->if = "if( " +$ $[test]$ +" ) " + $[then]$+    ($[else]$!=null ? $[else]$:"")$
 %stm->while = "while( "+[test]+" ) " + [body] + ""
 %stm->observable = "observable;"
 %stm->expression = [exp]
 %stm->external = "external " +[call]
+
+%stateDesignator->identifier = [name]
+%stateDesignator->array = [target] + "[" + [exp] + "]"
 
 %type->name = [name]
 %type->array = [type] + "[]" //[size]

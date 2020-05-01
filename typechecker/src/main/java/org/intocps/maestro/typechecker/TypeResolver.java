@@ -12,17 +12,14 @@ import java.util.stream.Collectors;
 public class TypeResolver {
 
     final AstTypeResolver resolver = new AstTypeResolver();
-
-    Map<INode, PType> resolvedTypes = new HashMap<>();
-
     final MableAstFactory factory;
+    final TypeCheckerErrors reporter;
+    Map<INode, PType> resolvedTypes = new HashMap<>();
 
     public TypeResolver(MableAstFactory factory, TypeCheckerErrors reporter) {
         this.factory = factory;
         this.reporter = reporter;
     }
-
-    final TypeCheckerErrors reporter;
 
     //    public AFunctionType resolve(AFunctionDeclaration def, Environment env) {
     //
@@ -38,7 +35,6 @@ public class TypeResolver {
     //        type.setResult(call..getReturnType().clone());
     //        return type;
     //    }
-
 
     public PType resolve(INode node, Environment env) throws AnalysisException {
         PType type = resolvedTypes.getOrDefault(node, null);
@@ -185,7 +181,7 @@ public class TypeResolver {
 
         @Override
         public PType caseACallExp(ACallExp node, Environment question) throws AnalysisException {
-            return node.getIdentifier().apply(this, question);
+            return node.getRoot().apply(this, question);
         }
 
         @Override

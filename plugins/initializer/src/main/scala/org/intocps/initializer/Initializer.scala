@@ -4,7 +4,7 @@ import java.util
 import argonaut.Parse
 import org.intocps.initializer.{FMIASTFactory, InitializerContext}
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
-import org.intocps.maestro.plugin.{IContext, IMaestroPlugin}
+import org.intocps.maestro.plugin.{IMaestroPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
 import org.intocps.topologicalsorting.{Edge, TarjanGraph}
@@ -56,8 +56,6 @@ object Initializer {
 
 class Initializer extends IMaestroPlugin {
 
-
-
   override def getName: String = "Initializer"
 
   override def getVersion: String = "0.0.1"
@@ -66,7 +64,7 @@ class Initializer extends IMaestroPlugin {
 
   override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Initializer.uniqueFunctionDeclaration
 
-  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IContext): PStm = {
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration): PStm = {
     val localFunctionDeclaration = Initializer.uniqueInitializeFunction
     assert(declaredFunction.eq(localFunctionDeclaration), "The declared function passed to unfolding does not match the declared function of the plugin.")
 
@@ -78,29 +76,13 @@ class Initializer extends IMaestroPlugin {
     }
   }
 
+  override def requireConfig(): Boolean = true
 
-
-  //  def main(args: Array[String]) : Unit =
-  //    {
-  //      // Load the multi model configuration file
-  //      val string = args[0]
-  //      val f = new File(string).getAbsolutePath
-  ////
-  ////      ConfigurationHandler.loadMMCFromFile(Source.fromFile(args[0]))
-  //      // Parse it
-  //      // Get the graph
-  //      // Create the code
-  //    }
-  override def getContextKey: String = getName + getVersion
-
-  override def requireContext(): Boolean = true
-
-  override def parseContext(is: InputStream): IContext = {
+  override def parseConfig(is: InputStream): IPluginConfiguration = {
     // The input stream is expected to contain a link to the multimodel file
     val parsed = Parse.decodeEither[InitializerContext](scala.io.Source.fromInputStream(is).mkString)
     parsed match {
       case Left(value) => throw new Exception("Failed to parse plugin data: " + value)
       case Right(value) => value
     }
-  }
-}
+}}

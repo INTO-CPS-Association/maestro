@@ -6,43 +6,8 @@ import java.util.List;
 
 public class MableAstFactory {
 
-    public ABooleanPrimitiveType newABooleanPrimitiveType() {
-        return new ABooleanPrimitiveType();
-    }
-
-    public AFunctionType newAFunctionType() {
-        return newAFunctionType();
-    }
-
-    public static AIntNumericPrimitiveType newAIntNumericPrimitiveType() {
-        return new AIntNumericPrimitiveType();
-    }
-
-    public static ARealNumericPrimitiveType newARealNumericPrimitiveType() {
-        return new ARealNumericPrimitiveType();
-    }
-
-
-
-    public static AStringPrimitiveType newAStringPrimitiveType() {
-        return new AStringPrimitiveType();
-    }
-
-    public AUIntNumericPrimitiveType newAUIntPrimitiveType() {
+    public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
         return new AUIntNumericPrimitiveType();
-    }
-
-    public AUnknownType newAUnknownType() {
-        return new AUnknownType();
-    }
-
-
-    public PType newAVoidType() {
-        return new AVoidType();
-    }
-
-    public PType newAModuleType(LexIdentifier name) {
-        return new AModuleType();
     }
 
     public static AIdentifierExp newAIdentifierExp(LexIdentifier name) {
@@ -51,7 +16,7 @@ public class MableAstFactory {
         return identifier;
     }
 
-    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_){
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_) {
         AVariableDeclaration vardecl = new AVariableDeclaration();
         vardecl.setName(name);
         vardecl.setType(type);
@@ -59,57 +24,54 @@ public class MableAstFactory {
         return vardecl;
     }
 
-    public static ANameType newANameType(LexIdentifier name){
+    public static ANameType newANameType(LexIdentifier name) {
         ANameType nameType = new ANameType();
         nameType.setName(name);
         return nameType;
     }
 
-    public static ALoadExp newALoadExp(URI uri){
+
+    public static ALoadExp newALoadExp(URI uri) {
         ALoadExp exp = new ALoadExp();
-        List<PExp> args = new ArrayList<PExp>();
+        List<PExp> args = new ArrayList<>();
         args.add(newAStringLiteralExp(uri.toString()));
         exp.setArgs(args);
         return exp;
     }
 
-    public static ACallExp newACallExp(PExp identifier, List<? extends PExp> args_)
-    {
+    public static ACallExp newACallExp(PExp identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
-        exp.setIdentifier(identifier);
+        exp.setRoot(identifier);
         exp.setArgs(args_);
         return exp;
     }
 
-    public static AExpInitializer newAExpInitializer(PExp exp)
-    {
+    public static AExpInitializer newAExpInitializer(PExp exp) {
         AExpInitializer expInit = new AExpInitializer();
         expInit.setExp(exp);
         return expInit;
     }
 
-    public static ADotExp newADotExp(PExp root, PExp exp)
-    {
+    public static ADotExp newADotExp(PExp root, PExp exp) {
         ADotExp exp_ = new ADotExp();
         exp_.setRoot(root);
         exp_.setExp(exp);
         return exp_;
     }
-    public static ALocalVariableStm newALocalVariableStm(AVariableDeclaration aVariableDeclaration){
+
+    public static ALocalVariableStm newALocalVariableStm(AVariableDeclaration aVariableDeclaration) {
         ALocalVariableStm stm = new ALocalVariableStm();
         stm.setDeclaration(aVariableDeclaration);
         return stm;
     }
 
-    public static ABlockStm newABlockStm(List<? extends PStm> statements )
-    {
+    public static ABlockStm newABlockStm(List<? extends PStm> statements) {
         ABlockStm stm = new ABlockStm();
         stm.setBody(statements);
         return stm;
     }
 
-    public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name)
-    {
+    public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name) {
         AFunctionDeclaration funcDecl = new AFunctionDeclaration();
         funcDecl.setName(name);
         return funcDecl;
@@ -155,9 +117,10 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static AAssigmentStm newAAssignmentStm(AIdentifierExp identifier, PExp exp){
+    // TODO: FIX
+    public static AAssigmentStm newAAssignmentStm(PStateDesignator target, PExp exp){
         AAssigmentStm stm = new AAssigmentStm();
-        stm.setIdentifier(identifier);
+        stm.setTarget(target);
         stm.setExp(exp);
         return stm;
     }
@@ -167,10 +130,41 @@ public class MableAstFactory {
         return type;
     }
 
+    public static ARealNumericPrimitiveType newARealNumericPrimitiveType() {
+        ARealNumericPrimitiveType type = new ARealNumericPrimitiveType();
+        return type;
+    }
+
+    public static AStringPrimitiveType newAStringPrimitiveType() {
+        AStringPrimitiveType type = new AStringPrimitiveType();
+        return type;
+    }
+
+    public static AIntNumericPrimitiveType newAIntNumericPrimitiveType(){
+        AIntNumericPrimitiveType type = new AIntNumericPrimitiveType();
+        return type;
+    }
+
     public static AArrayType newAArrayType(PType arrayType, Integer size){
         AArrayType type = new AArrayType();
                 type.setType(arrayType);
                 type.setSize(size);
                 return type;
     }
+
+    public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, SLiteralExp exp){
+        AArrayStateDesignator arrayStateDesignator = new AArrayStateDesignator();
+        arrayStateDesignator.setExp(exp);
+        arrayStateDesignator.setTarget(target);
+        return arrayStateDesignator;
+    }
+
+    public static AIdentifierStateDesignator newAIdentifierStateDesignator(LexIdentifier name){
+        AIdentifierStateDesignator identifierStateDesignator = new AIdentifierStateDesignator();
+        identifierStateDesignator.setName(name);
+        return identifierStateDesignator;
+    }
+
+
+
 }

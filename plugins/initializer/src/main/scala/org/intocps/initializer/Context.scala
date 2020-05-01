@@ -3,7 +3,7 @@ package org.intocps.initializer
 import java.net.URI
 
 import argonaut.DecodeJson
-import org.intocps.maestro.plugin.IContext
+import org.intocps.maestro.plugin.{IContext, IPluginConfiguration}
 
 object InitializerContext{
   implicit val dec: DecodeJson[InitializerContext] = DecodeJson(r => for {
@@ -11,6 +11,6 @@ object InitializerContext{
   } yield new InitializerContext(new URI(multiModelFilePath)))
 }
 
-class InitializerContext(initializerContext: URI) extends IContext {
+class InitializerContext(initializerContext: URI) extends IPluginConfiguration {
   def getContext : URI = initializerContext
 }

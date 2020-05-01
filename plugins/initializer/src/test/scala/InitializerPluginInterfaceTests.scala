@@ -21,7 +21,7 @@ class InitializerPluginInterfaceSpec extends AnyFlatSpec {
 
   def parseJsonContext(ctxt: String) = {
     val initializer = new Initializer()
-    initializer.parseContext(IOUtils.toInputStream(ctxt, "UTF-8"))
+    initializer.parseConfig(IOUtils.toInputStream(ctxt, "UTF-8"))
   }
 
   def createValidContext(f: File) = parseJsonContext(createJsonContext(f))
@@ -35,7 +35,7 @@ class InitializerPluginInterfaceSpec extends AnyFlatSpec {
     println("Trying context: " + context)
 
     val initializer = new Initializer()
-    initializer.parseContext(IOUtils.toInputStream(context, "UTF-8"))
+    initializer.parseConfig(IOUtils.toInputStream(context, "UTF-8"))
 
   }
 
