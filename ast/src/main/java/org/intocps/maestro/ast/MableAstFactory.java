@@ -6,6 +6,8 @@ import java.util.List;
 
 public class MableAstFactory {
 
+
+
     public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
         return new AUIntNumericPrimitiveType();
     }
@@ -165,6 +167,17 @@ public class MableAstFactory {
         return identifierStateDesignator;
     }
 
+    public PType newAModuleType(LexIdentifier name) {
+        return new AModuleType();
+    }
+
+    public PType newAVoidType() {
+        return new AVoidType();
+    }
+
+    public AUnknownType newAUnknownType() {
+        return new AUnknownType();
+    }
 
 
 }

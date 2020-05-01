@@ -3,7 +3,7 @@ package org.intocps.initializer
 import java.net.URI
 
 import argonaut.DecodeJson
-import org.intocps.maestro.plugin.{IContext, IPluginConfiguration}
+import org.intocps.maestro.plugin.{IPluginConfiguration}
 
 object InitializerContext{
   implicit val dec: DecodeJson[InitializerContext] = DecodeJson(r => for {
