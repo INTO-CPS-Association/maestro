@@ -5,11 +5,11 @@ simulation
 import  FMI2;
 {
 
-FMI2 fmuA = load("FMI2","fmuname","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
-FMI2 fmuB = load("FMI2","fmuname","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+FMI2 fmuB = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
 
-FMI2Component a = fmuA.instantiate("A", true);
-FMI2Component b = fmuB.instantiate("B", true);
+FMI2Component a = fmuA.instantiate("A", true,true);
+FMI2Component b = fmuB.instantiate("B", true,true);
 
 real END_TIME = 10.0;
 
@@ -53,22 +53,22 @@ while(time < END_TIME)
     level = data[0];
     vref[0]=17;
 
-    if( level < 1)
+    if( level < 1.0)
      {
         data[0]=0.0;
         a.setReal( vref, 1, data);
         b.setReal( vref, 1, data);
     }
 
-    if( level > 2)
+    if( level > 2.0)
     {
         data[0]=1.0;
         a.setReal( vref, 1, data);
         b.setReal( vref, 1, data);
     }
 
-    a.doStep( time, STEP_SIZE);
-    b.doStep( time, STEP_SIZE);
+    a.doStep( time, STEP_SIZE,false);
+    b.doStep( time, STEP_SIZE,false);
 
     time = time + STEP_SIZE;
 }
@@ -81,6 +81,9 @@ b.terminate();
 
 fmuA.freeInstance(a);
 fmuB.freeInstance(b);
+
+unload(fmuA);
+unload(fmuB);
 
 }
 

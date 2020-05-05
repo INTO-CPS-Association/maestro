@@ -8,17 +8,33 @@ public class ModuleContext extends Context {
 
     final ModuleValue module;
 
-    public ModuleContext(ModuleValue module) {
+    public ModuleContext(ModuleValue module, Context outer) {
+        super(outer);
         this.module = module;
     }
 
     @Override
     public Value lookup(LexIdentifier identifier) {
-        return module.lookup(identifier.getText());
+
+
+        Value val = module.lookup(identifier.getText());
+
+        if (val != null) {
+            return val;
+        }
+
+        return super.lookup(identifier);
     }
 
     @Override
     public Value lookup(String name) {
-        return module.lookup(name);
+
+        Value val = module.lookup(name);
+
+        if (val != null) {
+            return val;
+        }
+
+        return super.lookup(name);
     }
 }

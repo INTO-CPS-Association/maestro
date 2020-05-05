@@ -1,0 +1,7 @@
+ simulation
+  import FMI2;
+
+ {
+         a[1] =  1;
+
+ }

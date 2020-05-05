@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+ [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 %initializer->exp = [exp]
 %initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
@@ -54,6 +54,8 @@ import java.util.stream.Collectors;
 %type->array = [type] + "[]" //[size]
 %type->void = "void"
 %type->module = [name]
+%type->unknown = "?"
+%type->reference = "ref " + [type]
 
 %type->#primitive->boolean="bool"
 %type->#primitive->string="string"

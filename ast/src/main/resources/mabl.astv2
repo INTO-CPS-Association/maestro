@@ -44,7 +44,7 @@ declaration {
         -> package='org.intocps.maestro.ast'
          | [name]:lex_identifier}
     = {function} [returnType]:type  [formals]:parameter.formal*
-    | {variable} [type]:type  [initializer]:initializer
+    | {variable} [type]:type [size]:exp* [isArray]:java_Boolean  [initializer]:initializer
     ;
 
 initializer
@@ -117,6 +117,7 @@ type
     |   {unknown}
     |   {void}
     |   {module} [name]:identifier
+    |   {reference} [type]:type
     ;
 
 #primitive

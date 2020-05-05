@@ -154,6 +154,17 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     }
 
+    @Override
+    public INode visitPlusMinusExp(MablParser.PlusMinusExpContext ctx) {
+        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+        if (ctx.ADD() != null) {
+            return new APlusBinaryExp(exps.get(0), exps.get(1));
+        } else if (ctx.SUB() != null) {
+            return new AMinusBinaryExp(exps.get(0), exps.get(1));
+        }
+
+        return null;
+    }
 
     @Override
     public INode visitArrayIndexExp(MablParser.ArrayIndexExpContext ctx) {
@@ -162,8 +173,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         apply.setArray((PExp) this.visit(ctx.array));
 
-        if (ctx.expression() != null) {
-            apply.setIndices(ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        if (ctx.indecies != null) {
+            apply.setIndices(ctx.indecies.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
         }
         return apply;
     }
@@ -279,7 +290,15 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AVariableDeclaration def = new AVariableDeclaration();
 
         def.setType((PType) this.visit(ctx.typeType()));
-        def.setName(convert(ctx.variableDeclaratorId().IDENTIFIER()));
+        def.setName(convert(ctx.IDENTIFIER()));
+
+        if (ctx.size != null && !ctx.size.isEmpty()) {
+            def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        }
+
+        def.setIsArray(ctx.LBRACK() != null);
+
+
         MablParser.VariableInitializerContext initializer = ctx.variableInitializer();
         if (initializer != null) {
             def.setInitializer((PInitializer) this.visit(initializer));
@@ -290,6 +309,29 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return var;
     }
 
+    @Override
+    public INode visitNumberComparizonExp(MablParser.NumberComparizonExpContext ctx) {
+        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+
+        PExp left = exps.get(0);
+        PExp right = exps.get(1);
+
+        if (ctx.GE() != null) {
+            return new AGreaterEqualBinaryExp(left, right);
+        }
+        if (ctx.GT() != null) {
+            return new AGreaterBinaryExp(left, right);
+        }
+        if (ctx.LE() != null) {
+            return new ALessEqualBinaryExp(left, right);
+        }
+        if (ctx.LT() != null) {
+            return new ALessBinaryExp(left, right);
+        }
+
+        return null;
+
+    }
 
     @Override
     public INode visitLocalVariable(MablParser.LocalVariableContext ctx) {
@@ -334,8 +376,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             literal.setValue(Boolean.parseBoolean(ctx.BOOL_LITERAL().getText()));
             return literal;
         } else if (ctx.DECIMAL_LITERAL() != null) {
-            ARealLiteralExp literal = new ARealLiteralExp();
-            literal.setValue(Double.parseDouble(ctx.DECIMAL_LITERAL().getText()));
+            AIntLiteralExp literal = new AIntLiteralExp();
+            literal.setValue(Integer.parseInt(ctx.DECIMAL_LITERAL().getText()));
             return literal;
         } else if (ctx.FLOAT_LITERAL() != null) {
             //            AUIntLiteralExp literal = new AUIntLiteralExp();
@@ -354,6 +396,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         }
         throw new RuntimeException("unsupported literal");
     }
+
 
     @Override
     public INode visitBoolType(MablParser.BoolTypeContext ctx) {
@@ -407,14 +450,17 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         }
 
-        if (ctx.arrays.isEmpty()) {
-            return type;
-        } else {
+        if (!ctx.arrays.isEmpty()) {
             AArrayType t = new AArrayType();
             t.setType(type);
-            return t;
+            type = t;
         }
 
+        if (ctx.REF() == null) {
+            return type;
+        } else {
+            return new AReferenceType(type);
+        }
 
     }
 }

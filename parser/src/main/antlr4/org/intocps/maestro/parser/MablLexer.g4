@@ -4,8 +4,11 @@ lexer grammar MablLexer;
   //  package org.intocps.maestro.ast;
 }
 
+REF:           'ref';
+
 REAL:           'real';
 UINT:           'uint';
+BOOL:           'bool';
 INT:            'int';
 STRING:         'string';
 WHILE:          'while';
