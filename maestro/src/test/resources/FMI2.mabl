@@ -10,6 +10,9 @@
  	int exitInitializationMode();
  	int setReal(UInt[] vr, UInt nvr,real[] values);
  	int getReal(UInt[] vr, UInt nvr, real[] values);
- 	int doStep(real time, real timestep);
+ 	int doStep(real time, real timestep, bool noSetFMUStatePriorToCurrentPoint);
  	int terminate();
 }
+
+
+

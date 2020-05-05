@@ -154,6 +154,17 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     }
 
+    @Override
+    public INode visitPlusMinusExp(MablParser.PlusMinusExpContext ctx) {
+        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+        if (ctx.ADD() != null) {
+            return new APlusBinaryExp(exps.get(0), exps.get(1));
+        } else if (ctx.SUB() != null) {
+            return new AMinusBinaryExp(exps.get(0), exps.get(1));
+        }
+
+        return null;
+    }
 
     @Override
     public INode visitArrayIndexExp(MablParser.ArrayIndexExpContext ctx) {
@@ -162,8 +173,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         apply.setArray((PExp) this.visit(ctx.array));
 
-        if (ctx.expression() != null) {
-            apply.setIndices(ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        if (ctx.indecies != null) {
+            apply.setIndices(ctx.indecies.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
         }
         return apply;
     }
@@ -298,6 +309,29 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return var;
     }
 
+    @Override
+    public INode visitNumberComparizonExp(MablParser.NumberComparizonExpContext ctx) {
+        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+
+        PExp left = exps.get(0);
+        PExp right = exps.get(1);
+
+        if (ctx.GE() != null) {
+            return new AGreaterEqualBinaryExp(left, right);
+        }
+        if (ctx.GT() != null) {
+            return new AGreaterBinaryExp(left, right);
+        }
+        if (ctx.LE() != null) {
+            return new ALessEqualBinaryExp(left, right);
+        }
+        if (ctx.LT() != null) {
+            return new ALessBinaryExp(left, right);
+        }
+
+        return null;
+
+    }
 
     @Override
     public INode visitLocalVariable(MablParser.LocalVariableContext ctx) {

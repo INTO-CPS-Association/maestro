@@ -84,7 +84,7 @@ expression
     | <assoc=right> expression
           bop=('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=' | '^=' | '>>=' | '>>>=' | '<<=' | '%=')
           expression                                        # updateExp
-    | array=expression LBRACK expression (',' expression )* RBRACK    #arrayIndexExp
+    | array=expression LBRACK indecies+=expression (',' indecies+=expression )* RBRACK    #arrayIndexExp
     ;
 
 parExpression

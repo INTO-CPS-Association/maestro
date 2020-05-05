@@ -4,9 +4,11 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -75,6 +77,18 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         throw new AnalysisException("Load of unknown type");
     }
 
+    @Override
+    public Value caseAUnloadExp(AUnloadExp node, Context question) throws AnalysisException {
+
+        List<Value> args = evaluate(node.getArgs(), question);
+
+        if (args.get(0) instanceof FmuValue) {
+            FmuValue fmuVal = (FmuValue) args.get(0);
+            FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
+            return unloadFunction.evaluate(Collections.emptyList());
+        }
+        throw new AnalysisException("UnLoad of unknown type");
+    }
 
     @Override
     public Value caseAAssigmentStm(AAssigmentStm node, Context question) throws AnalysisException {
@@ -97,11 +111,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
                 Value indexValue = arrayStateDesignator.getExp().apply(this, question);
 
-                if (!(indexValue instanceof IntegerValue)) {
+                if (!(indexValue instanceof NumericValue)) {
                     throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
                 }
 
-                int index = ((IntegerValue) indexValue).getValue();
+                int index = ((NumericValue) indexValue).intValue();
 
 
                 if (arrayTarget.deref() instanceof ArrayValue) {
@@ -131,8 +145,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         if (node.getIsArray()) {
 
-
-            Value val = null;
+            Value val;
             if (node.getInitializer() != null) {
                 val = node.getInitializer().apply(this, question);
             } else {
@@ -142,8 +155,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 }
 
                 //array deceleration
-                IntegerValue size = (IntegerValue) node.getSize().get(0).apply(this, question);
-                val = new ArrayValue<>(IntStream.range(0, size.getValue()).mapToObj(i -> new UndefinedValue()).collect(Collectors.toList()));
+                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
+                val = new ArrayValue<>(IntStream.range(0, size.intValue()).mapToObj(i -> new UndefinedValue()).collect(Collectors.toList()));
             }
 
             question.put(node.getName(), new ReferenceValue(val));
@@ -190,6 +203,19 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAPlusBinaryExp(APlusBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+
+        if (left instanceof IntegerValue && right instanceof IntegerValue) {
+            return new IntegerValue(left.intValue() + right.intValue());
+        }
+
+        return new RealValue(left.realValue() + right.realValue());
+    }
+
+    @Override
     public Value caseACallExp(ACallExp node, Context question) throws AnalysisException {
 
         Value function = node.getRoot().apply(this, question);
@@ -200,6 +226,58 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         throw new InterpreterException("Unhandled node: " + node);
+    }
+
+    @Override
+    public Value caseAWhileStm(AWhileStm node, Context question) throws AnalysisException {
+
+        while (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
+            node.getBody().apply(this, question);
+        }
+        return new VoidValue();
+
+    }
+
+    @Override
+    public Value caseAIfStm(AIfStm node, Context question) throws AnalysisException {
+        if (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
+            node.getThen().apply(this, question);
+        } else if (node.getElse() != null) {
+            node.getElse().apply(this, question);
+        }
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseALessBinaryExp(ALessBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+        return new BooleanValue(left.compareTo(right) < 0);
+    }
+
+    @Override
+    public Value caseALessEqualBinaryExp(ALessEqualBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+        return new BooleanValue(left.compareTo(right) <= 0);
+    }
+
+    @Override
+    public Value caseAGreaterBinaryExp(AGreaterBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+        return new BooleanValue(left.compareTo(right) > 0);
+    }
+
+    @Override
+    public Value caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+        return new BooleanValue(left.compareTo(right) >= 0);
     }
 
     @Override
@@ -220,6 +298,21 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAIntLiteralExp(AIntLiteralExp node, Context question) throws AnalysisException {
         return new IntegerValue(node.getValue());
+    }
+
+    @Override
+    public Value caseAArrayIndexExp(AArrayIndexExp node, Context question) throws AnalysisException {
+        Value value = node.getArray().apply(this, question).deref();
+
+        if (value instanceof ArrayValue) {
+            ArrayValue<Value> array = (ArrayValue<Value>) value;
+
+            List<NumericValue> indies = evaluate(node.getIndices(), question).stream().map(NumericValue.class::cast).collect(Collectors.toList());
+
+
+            return array.getValues().get(indies.get(0).intValue());
+        }
+        throw new AnalysisException("No array or index for: " + node);
     }
 
     @Override

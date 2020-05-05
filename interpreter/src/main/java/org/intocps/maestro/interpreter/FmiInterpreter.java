@@ -163,7 +163,7 @@ public class FmiInterpreter {
                     componentMembers.put("setReal", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
                         double[] values = getArrayValue(fcargs.get(2), RealValue.class).stream().mapToDouble(RealValue::getValue).toArray();
 
@@ -183,7 +183,7 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
 
 
@@ -210,7 +210,7 @@ public class FmiInterpreter {
                     }));
                     componentMembers.put("setInteger", new FunctionValue.ExternalFunctionValue(fcargs -> {
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
                         int[] values = getArrayValue(fcargs.get(2), IntegerValue.class).stream().mapToInt(IntegerValue::getValue).toArray();
 
@@ -229,7 +229,7 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
 
 
@@ -258,7 +258,7 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
                         boolean[] values = ArrayUtils.toPrimitive(
                                 getArrayValue(fcargs.get(2), BooleanValue.class).stream().map(BooleanValue::getValue).collect(Collectors.toList())
@@ -279,7 +279,7 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
 
 
@@ -306,7 +306,7 @@ public class FmiInterpreter {
                     componentMembers.put("setString", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
                         String[] values = getArrayValue(fcargs.get(2), StringValue.class).stream().map(StringValue::getValue)
                                 .collect(Collectors.toList()).toArray(new String[]{});
@@ -327,7 +327,7 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), UIntValue.class).stream().mapToLong(IntegerValue::getValue)
+                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                                 .toArray();
 
 
@@ -390,6 +390,8 @@ public class FmiInterpreter {
 
             functions.put("freeInstance", new FunctionValue.ExternalFunctionValue(fargs -> {
 
+                logger.debug("freeInstance");
+
                 if (fargs.size() != 1) {
                     throw new InterpreterException("Too few arguments");
                 }
@@ -410,6 +412,8 @@ public class FmiInterpreter {
             }));
 
             functions.put("unload", new FunctionValue.ExternalFunctionValue(fargs -> {
+
+                logger.debug("unload");
 
                 if (fargs.size() != 0) {
                     throw new InterpreterException("Too many arguments");

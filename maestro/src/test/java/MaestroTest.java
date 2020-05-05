@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,6 +29,7 @@ public class MaestroTest {
     }
 
     @Test
+    @Ignore
     public void singleExternal() throws IOException, AnalysisException {
 
         InputStream contextFile = this.getClass().getResourceAsStream("configs/singleExternal.json");
