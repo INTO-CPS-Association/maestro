@@ -1,7 +1,7 @@
 {
   "fmus":{
-    "{x1}":"target/watertankcontroller-c.fmu",
-    "{x2}":"target/watertank-c.fmu"
+    "{x1}":"target/test-classes/watertankcontroller-c.fmu",
+    "{x2}":"target/test-classes/watertank-c.fmu"
   },
   "connections":{
     "{x1}.controller.valve":["{x2}.tank.valve"],

@@ -22,12 +22,5 @@ public class test {
         SpecGen sg = new SpecGen();
         sg.run(configurationData, startMsg);
         List<PStm> statements = StatementContainer.getInstance().getStatements();
-        System.out.println(statements);
-
-
-
-
-
-
     }
 }

@@ -1,6 +1,8 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe;
 
 import fi.iki.elonen.NanoHTTPD;
+import org.intocps.maestro.ast.ABlockStm;
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface.StatementFactory;
 import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
 import org.intocps.orchestration.coe.FmuFactory;
@@ -53,9 +55,9 @@ public SpecGen() {
         Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
         Coe.CoeSimulationHandle handle = coe.getSimulateControlHandle(0.0, 5.0, logLevels, false, 0);
         handle.preSimulation();
-        System.out.println(StatementContainer.getInstance().getStatements());
-
-
+        ABlockStm initializationStm = MableAstFactory.newABlockStm(StatementContainer.getInstance()
+                .getStatements());
+        System.out.println(initializationStm);
     }
 
 
