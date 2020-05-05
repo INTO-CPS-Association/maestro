@@ -279,7 +279,15 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AVariableDeclaration def = new AVariableDeclaration();
 
         def.setType((PType) this.visit(ctx.typeType()));
-        def.setName(convert(ctx.variableDeclaratorId().IDENTIFIER()));
+        def.setName(convert(ctx.IDENTIFIER()));
+
+        if (ctx.size != null && !ctx.size.isEmpty()) {
+            def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        }
+
+        def.setIsArray(ctx.LBRACK() != null);
+
+
         MablParser.VariableInitializerContext initializer = ctx.variableInitializer();
         if (initializer != null) {
             def.setInitializer((PInitializer) this.visit(initializer));
@@ -334,8 +342,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             literal.setValue(Boolean.parseBoolean(ctx.BOOL_LITERAL().getText()));
             return literal;
         } else if (ctx.DECIMAL_LITERAL() != null) {
-            ARealLiteralExp literal = new ARealLiteralExp();
-            literal.setValue(Double.parseDouble(ctx.DECIMAL_LITERAL().getText()));
+            AIntLiteralExp literal = new AIntLiteralExp();
+            literal.setValue(Integer.parseInt(ctx.DECIMAL_LITERAL().getText()));
             return literal;
         } else if (ctx.FLOAT_LITERAL() != null) {
             //            AUIntLiteralExp literal = new AUIntLiteralExp();
@@ -354,6 +362,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         }
         throw new RuntimeException("unsupported literal");
     }
+
 
     @Override
     public INode visitBoolType(MablParser.BoolTypeContext ctx) {
@@ -407,14 +416,17 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         }
 
-        if (ctx.arrays.isEmpty()) {
-            return type;
-        } else {
+        if (!ctx.arrays.isEmpty()) {
             AArrayType t = new AArrayType();
             t.setType(type);
-            return t;
+            type = t;
         }
 
+        if (ctx.REF() == null) {
+            return type;
+        } else {
+            return new AReferenceType(type);
+        }
 
     }
 }

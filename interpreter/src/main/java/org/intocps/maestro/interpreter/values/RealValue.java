@@ -10,4 +10,9 @@ public class RealValue extends Value {
     public double getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "RealValue{" + "value=" + value + '}';
+    }
 }

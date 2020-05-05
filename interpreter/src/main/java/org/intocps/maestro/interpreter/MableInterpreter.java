@@ -12,7 +12,7 @@ public class MableInterpreter {
     public void execute(ARootDocument document) throws AnalysisException {
         logger.info("Starting Mable Interpreter...");
 
-        document.apply(new Interpreter(), new Context());
+        document.apply(new Interpreter(), new Context(null));
 
     }
 }

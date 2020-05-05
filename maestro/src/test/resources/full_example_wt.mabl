@@ -5,11 +5,11 @@ simulation
 import  FMI2;
 {
 
-FMI2 fmuA = load("FMI2","fmuname","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
-FMI2 fmuB = load("FMI2","fmuname","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+FMI2 fmuB = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
 
-FMI2Component a = fmuA.instantiate("A", true);
-FMI2Component b = fmuB.instantiate("B", true);
+FMI2Component a = fmuA.instantiate("A", true,true);
+FMI2Component b = fmuB.instantiate("B", true,true);
 
 real END_TIME = 10.0;
 

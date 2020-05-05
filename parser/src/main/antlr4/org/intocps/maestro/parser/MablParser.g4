@@ -106,13 +106,13 @@ methodCall
 //    ;
 
 variableDeclarator
-    : type=typeType varid=variableDeclaratorId ('=' initializer=variableInitializer)?
+    : type=typeType varid=IDENTIFIER (LBRACK size+=expression (',' size+=expression )* RBRACK )? ('=' initializer=variableInitializer)?
     ;
 
-variableDeclaratorId
-    : IDENTIFIER ('[' DECIMAL_LITERAL ']')*
-
-    ;
+//variableDeclaratorId
+//    : IDENTIFIER ('[' DECIMAL_LITERAL ']')*
+//
+//    ;
 
 variableInitializer
     : arrayInitializer  #arrayInit
@@ -124,15 +124,15 @@ arrayInitializer
     ;
 
 typeType
-    : (primitiveType | IDENTIFIER) (arrays+='[' ']')*
+    : REF? (primitiveType | IDENTIFIER) (arrays+='[' ']')*
     ;
 
 primitiveType
-    : REAL      #realType
-    | UINT      #unitType
-    | INT       #intType
-    | STRING    #stringType
-    | BOOL      #boolType
+    : REAL              #realType
+    | UINT              #unitType
+    | INT               #intType
+    | STRING            #stringType
+    | BOOL              #boolType
     ;
 
 literal
