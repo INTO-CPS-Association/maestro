@@ -1,5 +1,6 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe.Spec;
 
+import jdk.nashorn.internal.ir.LexicalContext;
 import org.intocps.maestro.ast.*;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -14,8 +15,9 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 public class StatementContainer {
+    private static Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
+    private LexIdentifier statusVariable = createLexIdentifier.apply("status");
 
-    private LexIdentifier statusVariable = new LexIdentifier("status", null);
     private List<PStm> statements = new ArrayList<>();
     // FMU Name to AST Variable
     private Map<String, AVariableDeclaration> fmuVariables = new HashMap<>();
@@ -35,6 +37,7 @@ public class StatementContainer {
     private IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
 
+
     private StatementContainer() {
         AVariableDeclaration status = MableAstFactory.newAVariableDeclaration(statusVariable,
                 MableAstFactory.newAIntNumericPrimitiveType(),
@@ -53,12 +56,12 @@ public class StatementContainer {
 
     public void createLoadStatement(String fmuName, URI uri) {
         AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(
-                new LexIdentifier(fmuName, null),
-                MableAstFactory.newANameType(new LexIdentifier("FMI2", null)),
+                createLexIdentifier.apply(fmuName),
+                MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
                 MableAstFactory.newAExpInitializer(
                         MableAstFactory.newACallExp(
                                 MableAstFactory.newAIdentifierExp(
-                                        new LexIdentifier("load", null)),
+                                        createLexIdentifier.apply("load")),
                                 new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"),
                                         MableAstFactory.newAStringLiteralExp(uri.getPath()))))));
         // Create variable
@@ -74,14 +77,14 @@ public class StatementContainer {
 
     public void createInstantiateStatement(String fmuName, String instanceName, boolean logging) {
         AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(
-                new LexIdentifier(instanceName, null),
-                MableAstFactory.newANameType(new LexIdentifier("FMI2Component", null)),
+                createLexIdentifier.apply(instanceName),
+                MableAstFactory.newANameType(createLexIdentifier.apply("FMI2Component")),
                 MableAstFactory.newAExpInitializer(
                         MableAstFactory.newACallExp(
                                 MableAstFactory.newADotExp(
-                                        MableAstFactory.newAIdentifierExp(new LexIdentifier(fmuName, null)),
+                                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(fmuName)),
                                         MableAstFactory.newAIdentifierExp(
-                                                new LexIdentifier("instantiate", null))),
+                                                createLexIdentifier.apply("instantiate"))),
                                 new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName),
                                         MableAstFactory.newABoolLiteralExp(logging))))));
 
@@ -99,9 +102,9 @@ public class StatementContainer {
                                                double stopTime) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                 MableAstFactory.newADotExp(
-                        MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(new LexIdentifier("setupExperiment", null)),
+                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setupExperiment")),
                                 new ArrayList<PExp>(Arrays.asList(
                                         MableAstFactory.newABoolLiteralExp(toleranceDefined),
                                         MableAstFactory.newARealLiteralExp(tolerance),
@@ -118,9 +121,9 @@ public class StatementContainer {
     public void enterInitializationMode(String instanceName) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                 MableAstFactory.newADotExp(
-                        MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(new LexIdentifier("enterInitializationMode", null)),
+                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("enterInitializationMode")),
                                 null)));
         statements.add(statement);
     }
@@ -156,9 +159,9 @@ public class StatementContainer {
 
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                 MableAstFactory.newADotExp(
-                        MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(new LexIdentifier("setReal", null)),
+                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setReal")),
                                 new ArrayList<PExp>(Arrays.asList(
                                         MableAstFactory.newAIdentifierExp(valRefs),
                                         MableAstFactory.newAUIntLiteralExp((long) longs.length),
@@ -205,7 +208,7 @@ public class StatementContainer {
                                                     Map<Integer, LexIdentifier> array,
                                                     AArrayType arType,
                                                     PInitializer initializer) {
-        LexIdentifier lexID = new LexIdentifier(name, null);
+        LexIdentifier lexID = createLexIdentifier.apply(name);
         PStm stm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(
                 lexID,
                 arType,
@@ -273,9 +276,9 @@ public class StatementContainer {
         return MableAstFactory.newAAssignmentStm(
                     MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                     MableAstFactory.newADotExp(
-                            MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                            MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                             MableAstFactory.newACallExp(
-                                    MableAstFactory.newAIdentifierExp(new LexIdentifier(functionName, null)),
+                                    MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(functionName)),
                                     new ArrayList<PExp>(Arrays.asList(
                                             MableAstFactory.newAIdentifierExp(valRefArray),
                                             MableAstFactory.newAUIntLiteralExp((long) longs.length),
@@ -302,7 +305,7 @@ public class StatementContainer {
                 String id = instanceName + "SvValRef" + longs[i];
                 PStm stm = MableAstFactory.newALocalVariableStm(
                         MableAstFactory.newAVariableDeclaration(
-                                new LexIdentifier(id, null),
+                                createLexIdentifier.apply(id),
                                 MableAstFactory.newABoleanPrimitiveType(),
                                 MableAstFactory.newAExpInitializer(assignmentExpression)));
                 statements.add(stm);
@@ -314,7 +317,7 @@ public class StatementContainer {
             else {
                 PStm stm = MableAstFactory.newAAssignmentStm(
                         MableAstFactory.newAIdentifierStateDesignator(
-                                new LexIdentifier(svVar.variableId, null)),
+                                createLexIdentifier.apply(svVar.variableId)),
                         assignmentExpression);
                 statements.add(stm);
             }
@@ -367,9 +370,9 @@ public class StatementContainer {
                                 .get(svInputVarToOutput.get());
                         VariableLocation variable = this.instanceVariables.get(output._1.instanceName)
                                 .get(output._2.valueReference);
-                        return MableAstFactory.newAIdentifierExp(new LexIdentifier(variable.variableId, null));
+                        return MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(variable.variableId));
                     } else {
-                        return MableAstFactory.newAIdentifierExp(new LexIdentifier("FAILED TO FIND VARIABLE", null));
+                        return MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("FAILED TO FIND VARIABLE"));
                     }
                 };
             }
@@ -416,9 +419,9 @@ public class StatementContainer {
 
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                 MableAstFactory.newADotExp(
-                        MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(new LexIdentifier("setBoolean", null)),
+                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setBoolean")),
                                 new ArrayList<PExp>(Arrays.asList(
                                         MableAstFactory.newAIdentifierExp(valRefs),
                                         MableAstFactory.newAUIntLiteralExp((long) longs.length),
@@ -434,9 +437,9 @@ public class StatementContainer {
     public void exitInitializationMode(String instanceName) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
                 MableAstFactory.newADotExp(
-                        MableAstFactory.newAIdentifierExp(new LexIdentifier(instanceName, null)),
+                        MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(new LexIdentifier("exitInitializationMode", null)),
+                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("exitInitializationMode")),
                                 null)));
         statements.add(statement);
     }

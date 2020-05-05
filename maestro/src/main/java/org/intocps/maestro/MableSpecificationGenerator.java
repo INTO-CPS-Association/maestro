@@ -243,40 +243,46 @@ public class MableSpecificationGenerator {
                     simulationModule.getImports().stream().map(LexIdentifier::toString).collect(Collectors.joining(" , ", "[ ", " ]")));
 
             //load plugins
-            PluginEnvironment pluginEnvironment = loadPlugins(typeResolver, rootEnv, contextFile);
+            PluginEnvironment pluginEnvironment = null;
+            if(contextFile != null) {
+                pluginEnvironment = loadPlugins(typeResolver, rootEnv, contextFile);
 
-            try {
 
-                ASimulationSpecificationCompilationUnit unfoldedSimulationModule = expandExternals(simulationModule, reporter, typeResolver,
-                        comparator, pluginEnvironment);
+                try {
 
-                //expansion complete
-                if (reporter.getErrorCount() > 0) {
-                    //we should probably stop now
-                    throw new InternalException("errors after expansion");
-                }
+                    ASimulationSpecificationCompilationUnit unfoldedSimulationModule = expandExternals(simulationModule, reporter, typeResolver,
+                            comparator, pluginEnvironment);
 
-                //TODO type check
-
-                // TODO verification
-
-                logger.info(unfoldedSimulationModule.toString());
-
-                return new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
-
-            } finally {
-                if (verbose) {
-                    PrintWriter writer = new PrintWriter(System.err);
+                    //expansion complete
                     if (reporter.getErrorCount() > 0) {
-                        reporter.printErrors(writer);
+                        //we should probably stop now
+                        throw new InternalException("errors after expansion");
                     }
-                    if (reporter.getWarningCount() > 0) {
-                        reporter.printWarnings(writer);
+
+                    //TODO type check
+
+                    // TODO verification
+
+                    logger.info(unfoldedSimulationModule.toString());
+
+                    return new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+
+                } finally {
+                    if (verbose) {
+                        PrintWriter writer = new PrintWriter(System.err);
+                        if (reporter.getErrorCount() > 0) {
+                            reporter.printErrors(writer);
+                        }
+                        if (reporter.getWarningCount() > 0) {
+                            reporter.printWarnings(writer);
+                        }
+                        writer.flush();
                     }
-                    writer.flush();
                 }
             }
-
+            else {
+                return new ARootDocument(new ArrayList<>(Arrays.asList(simulationModule)));
+            }
         } else {
             throw new InternalException("No Specification module found");
         }
