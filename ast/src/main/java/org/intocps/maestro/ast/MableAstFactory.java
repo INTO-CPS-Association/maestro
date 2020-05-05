@@ -12,6 +12,7 @@ public class MableAstFactory {
         return new AUIntNumericPrimitiveType();
     }
 
+
     public static AIdentifierExp newAIdentifierExp(LexIdentifier name) {
         AIdentifierExp identifier = new AIdentifierExp();
         identifier.setName(name);
@@ -165,6 +166,13 @@ public class MableAstFactory {
         AIdentifierStateDesignator identifierStateDesignator = new AIdentifierStateDesignator();
         identifierStateDesignator.setName(name);
         return identifierStateDesignator;
+    }
+
+    public static AArrayIndexExp newAArrayIndexExp(PExp array, List<? extends PExp> values){
+        AArrayIndexExp exp = new AArrayIndexExp();
+        exp.setArray(array);
+        exp.setIndices(values);
+        return exp;
     }
 
     public PType newAModuleType(LexIdentifier name) {

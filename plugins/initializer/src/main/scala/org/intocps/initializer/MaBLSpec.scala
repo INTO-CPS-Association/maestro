@@ -13,7 +13,34 @@ import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.jdk.CollectionConverters._
 
 
-object MaBLSpec {
+class MaBLSpec(fmus: Map[FMUWithMD, Set[Instance]], topSortedSvs: List[ConnectionScalarVariable], mmc: MultiModelConfiguration, extConnections: Set[Connection]) {
+
+  case class ReturnType(stms: Vector[PStm], variables: Seq[String])
+
+  def setInitialScalarVariables(instance: String, scalarVariables: Seq[ModelDescription.ScalarVariable], variables: Seq[String], statusVariable: String): ReturnType = {
+    scalarVariables.foldLeft(ReturnType(Vector(), variables)){case (ReturnType(statements,variables),sv) =>
+
+      val valueVariableName = instance + sv.name;
+      val valueRefName = instance + sv.name + sv.valueReference;
+
+      //Define function to call
+      val f = (vRefName : String,valueVarName: String) =>  FMIASTFactory.setScalarVariable(instance, vRefName, 1L,valueVarName,  statusVariable, sv.`type`)
+
+      // If the given variable does not exist, then create it.
+      Vector((valueVariableName, sv.`type`), (valueRefName)).map(x => variables.find(p => p == x) match {
+        case None =>
+          val initializer = ???
+          /// Create variable
+
+        case Some(value) => ???
+          // Pass variable
+      }
+      )
+      ???
+    }
+
+  }
+
 
   def createMaBLSpec(fmus: Map[FMUWithMD, Set[Instance]], topSortedSvs: List[ConnectionScalarVariable], mmc: MultiModelConfiguration, extConnections: Set[Connection]): ABlockStm = {
     val stmStatusVariable: ALocalVariableStm = FMIASTFactory.createFmi2StatusVariable("status")
@@ -41,7 +68,7 @@ object MaBLSpec {
 
       // The scalar variables are calculated on FMU level instead of instance level as it applies to all instances of the given FMU.
       val scalarVariablesForFMU: Seq[ModelDescription.ScalarVariable] = fmumd.modelDescription.getScalarVariables.asScala.toSeq;
-      val initialScalarVariables = getInitialScalarVariables(scalarVariablesForFMU)
+      val initialScalarVariables: Seq[ModelDescription.ScalarVariable] = getInitialScalarVariables(scalarVariablesForFMU)
       val independentScalarVariables = getIndependentScalarVariables(scalarVariablesForFMU.diff(initialScalarVariables))
 
       val instanceStatements: Seq[PStm] = insts.toVector.flatMap(instance => {
@@ -57,7 +84,8 @@ object MaBLSpec {
             rawSingleValue(valueToSet, sv.`type`),
             valueReferenceTarget,
             valueArrayVariables,
-            statusVariableTarget)
+            MableAstFactory.newAIdentifierStateDesignator(new LexIdentifier("status", null))
+            )
           result
         })
 

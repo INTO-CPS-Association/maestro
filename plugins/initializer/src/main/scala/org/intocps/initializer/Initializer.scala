@@ -13,6 +13,7 @@ import scala.jdk.CollectionConverters._
 
 object Initializer {
   def calculateInitialize(f: File): Either[String, PStm] = {
+
     val rmmcE: Either[String, RichMultiModelConfiguration] = ConfigurationHandler.loadMMCFromFile(f)
 
     val topSortResult = rmmcE.flatMap(data => {
@@ -37,7 +38,7 @@ object Initializer {
     val program: Either[String, PStm] = for {
       rmmc <- rmmcE
       topSorted <- topSortResult
-    } yield MaBLSpec.createMaBLSpec(rmmc.fmus, topSorted, rmmc.multiModelConfiguration, rmmc.externalConnections)
+    } yield (new MaBLSpec(rmmc.fmus, topSorted, rmmc.multiModelConfiguration, rmmc.externalConnections)).createMaBLSpec(rmmc.fmus, topSorted, rmmc.multiModelConfiguration, rmmc.externalConnections)
     program
   }
 

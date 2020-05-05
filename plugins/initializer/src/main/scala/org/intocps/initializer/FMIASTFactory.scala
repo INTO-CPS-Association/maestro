@@ -83,6 +83,24 @@ object FMIASTFactory {
     findFmiFunction(parent, preTypeName + typeName)
   }
 
+  def findGetSetFMIFunction(parent: String, scalarVariableType: ModelDescription.Type,setOrGet: SetOrGet) : ADotExp = {
+    val typeName = getFMIType(scalarVariableType)
+    val preTypeName = setOrGet.toString
+    findFmiFunction(parent, preTypeName + typeName)
+  }
+
+  def getFMIType(scalarVariableType: ModelDescription.Type): String = {
+    scalarVariableType match {
+      case booleanType: ModelDescription.BooleanType =>  "Boolean"
+      case integerType: ModelDescription.IntegerType => integerType match {
+        case realType: ModelDescription.RealType => "Real"
+        case x => "Integer"
+      }
+      case stringType: ModelDescription.StringType => ("String")
+      case unknown => throw new Exception("Unknown scalar: " + unknown.toString)
+    }
+  }
+
   def getFMIType(scalarVariable: ModelDescription.ScalarVariable): String = {
     scalarVariable.`type` match {
       case booleanType: ModelDescription.BooleanType =>  "Boolean"
@@ -184,6 +202,24 @@ case class ValueStatementAndArgument(stm: Option[PStm], value: PExp)
     statements
   }
 
+  private def getSetScalarVariable(fmiComponent: String, valueReference: String, size: Long, valueVariable: String, statusVariable: String, scalarVariableType: ModelDescription.Type, setOrGet: SetOrGet) : PStm = {
+    val functionIdentifier = findGetSetFMIFunction(fmiComponent, scalarVariableType, setOrGet)
+    val valueReferenceArgument = MableAstFactory.newAIdentifierExp(valueReference)
+    val sizeArgument = MableAstFactory.newAUIntLiteralExp(size)
+    val valueArgument = MableAstFactory.newAIdentifierExp(valueVariable)
+    val callExp = MableAstFactory.newACallExp(functionIdentifier, Vector(valueReferenceArgument, sizeArgument, valueArgument).asJava)
+    MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), callExp)
+  }
+
+  def getScalarVariable(fmiComponent: String, valueReference: String, size: Long, valueVariable: String, statusVariable: String, scalarVariableType: ModelDescription.Type): PStm =
+  {
+    return getSetScalarVariable(fmiComponent, valueReference, size, valueVariable, statusVariable, scalarVariableType, SetOrGet.Get)
+  }
+
+  def setScalarVariable(fmiComponent: String, valueReference: String, size: Long, valueVariable: String, statusVariable: String, scalarVariableType: ModelDescription.Type): PStm = {
+    return getSetScalarVariable(fmiComponent, valueReference, size, valueVariable, statusVariable, scalarVariableType, SetOrGet.Set)
+  }
+
   def getScalarVariable(fmiComponent: String,
                         scalarVariable: ModelDescription.ScalarVariable,
                         valueReferenceArrayVariable : AIdentifierStateDesignator,
@@ -224,6 +260,7 @@ case class ValueStatementAndArgument(stm: Option[PStm], value: PExp)
       case _ => throw new Exception("Unknown type not supported.")
     }
   }
+
 
 }
 
