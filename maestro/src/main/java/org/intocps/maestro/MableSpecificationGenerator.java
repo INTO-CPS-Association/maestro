@@ -244,6 +244,7 @@ public class MableSpecificationGenerator {
 
             //load plugins
             PluginEnvironment pluginEnvironment = null;
+            // If the contextFile is null, it does not make sense to attempt to load plugins.
             if(contextFile != null) {
                 pluginEnvironment = loadPlugins(typeResolver, rootEnv, contextFile);
 
