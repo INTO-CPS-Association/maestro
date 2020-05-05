@@ -21,4 +21,3 @@ class InitializerLogicSpec extends AnyFlatSpec {
     }
   }
 }
-

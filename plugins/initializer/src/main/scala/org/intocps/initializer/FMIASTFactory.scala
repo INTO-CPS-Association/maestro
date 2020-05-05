@@ -155,7 +155,7 @@ object FMIASTFactory {
     MableAstFactory.newAVariableDeclaration(instanceName, FMUComponentType(), initializer);
   }
 
-  def functionDeclaration(name: String) : AFunctionDeclaration = MableAstFactory.newAFunctionDeclaration(name)
+  def functionDeclaration(name: String) : AFunctionDeclaration = MableAstFactory.newAFunctionDeclaration(name, null, null)
 
 
 

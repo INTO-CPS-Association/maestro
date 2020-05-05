@@ -1,8 +1,11 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.iki.elonen.NanoHTTPD;
 import org.intocps.maestro.ast.ABlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.PStm;
 import org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface.StatementFactory;
 import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
 import org.intocps.orchestration.coe.FmuFactory;
@@ -11,6 +14,7 @@ import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.intocps.orchestration.coe.json.ProdSessionLogicFactory;
 import org.intocps.orchestration.coe.json.SessionLogicFactory;
+import org.intocps.orchestration.coe.json.StartMsgJson;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.single.StubFactory;
@@ -24,12 +28,13 @@ import java.util.List;
 import java.util.Map;
 
 public class SpecGen {
-// Need to call initialize and presimulation on coe.
-public SpecGen() {
-
+    public SpecGen() {
     }
 
-    public void run(String json, String startMsg){
+
+
+    public PStm run(String json, String startMsg) throws JsonProcessingException {
+
 
         System.setProperty(FmuFactory.customFmuFactoryProperty, StatementFactory.class.getName());
 
@@ -52,12 +57,15 @@ public SpecGen() {
                 inputOutputMapping = coe.init()._3();
         StatementContainer.getInstance().setInputOutputMapping(inputOutputMapping);
 
+        StartMsgJson startMessage = new ObjectMapper().readValue(startMsg, StartMsgJson.class);
         Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
-        Coe.CoeSimulationHandle handle = coe.getSimulateControlHandle(0.0, 5.0, logLevels, false, 0);
+        // Overridding loglevels. Will be removed in future.
+        Coe.CoeSimulationHandle handle = coe.getSimulateControlHandle(startMessage.startTime, startMessage.endTime, logLevels, startMessage.reportProgress, startMessage.liveLogInterval);
+
         handle.preSimulation();
         ABlockStm initializationStm = MableAstFactory.newABlockStm(StatementContainer.getInstance()
                 .getStatements());
-        System.out.println(initializationStm);
+        return initializationStm;
     }
 
 

@@ -74,9 +74,13 @@ public class MableAstFactory {
         return stm;
     }
 
-    public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name) {
+    public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name,
+                                                               List<? extends AFormalParameter> arguments,
+                                                               PType returnType) {
         AFunctionDeclaration funcDecl = new AFunctionDeclaration();
         funcDecl.setName(name);
+        funcDecl.setFormals(arguments);
+        funcDecl.setReturnType(returnType);
         return funcDecl;
     }
 
@@ -133,6 +137,12 @@ public class MableAstFactory {
         return type;
     }
 
+    public static AVoidType newAVoidType() {
+        AVoidType type = new AVoidType();
+        return type;
+
+    }
+
     public static ARealNumericPrimitiveType newARealNumericPrimitiveType() {
         ARealNumericPrimitiveType type = new ARealNumericPrimitiveType();
         return type;
@@ -177,10 +187,6 @@ public class MableAstFactory {
 
     public PType newAModuleType(LexIdentifier name) {
         return new AModuleType();
-    }
-
-    public PType newAVoidType() {
-        return new AVoidType();
     }
 
     public AUnknownType newAUnknownType() {
