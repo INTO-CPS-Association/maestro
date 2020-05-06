@@ -225,6 +225,20 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return new RealValue(left.realValue() + right.realValue());
     }
 
+
+    @Override
+    public Value caseAMinusBinaryExp(AMinusBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+
+        if (left instanceof IntegerValue && right instanceof IntegerValue) {
+            return new IntegerValue(left.intValue() + right.intValue());
+        }
+
+        return new RealValue(left.realValue() - right.realValue());
+    }
+
     @Override
     public Value caseACallExp(ACallExp node, Context question) throws AnalysisException {
 
