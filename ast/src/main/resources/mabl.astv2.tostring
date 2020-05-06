@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+ [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 %initializer->exp = [exp]
 %initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
@@ -35,12 +35,12 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
-%exp->call = ""+ $ $[root]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+");"
-%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"];"
+%exp->call = ""+ $ $[root]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
 
-%stm->block = "{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining("\n","\n","\n"))$+"}"
-%stm->assigment = [target] + " = " [exp] +";"
-%stm->localVariable = [declaration] +";"
+%stm->block = "{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}"
+%stm->assigment = [target] + " = " [exp]
+%stm->localVariable = [declaration]
 %stm->if = "if( " +$ $[test]$ +" ) " + $[then]$+    ($[else]$!=null ? $[else]$:"")$
 %stm->while = "while( "+[test]+" ) " + [body] + ""
 %stm->observable = "observable;"
