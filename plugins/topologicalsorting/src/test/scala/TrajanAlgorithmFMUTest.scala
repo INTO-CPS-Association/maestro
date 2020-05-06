@@ -68,7 +68,7 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     assert(actual == expected)
   }
 
-  "Tarjan topologicalSort on nodes that have np dependencies" should "find the correct init ordering" in {
+  "Tarjan topologicalSort on nodes that have no dependencies" should "find the correct init ordering" in {
     val connections = Set(ext1_1, ext2, ext4)
     val edges = GraphBuilder.buildGraph(connections)
     val g = new TarjanGraph[ConnectionScalarVariable](edges)
