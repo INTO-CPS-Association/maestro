@@ -110,8 +110,13 @@ class Coe(val resultRoot: File) {
 
     val handle: CoeSimulationHandle = getSimulateControlHandle(startTime, endTime, debugLoggingCategories, reportProgress, liveLogInterval);
     try {
+      val startTime01 = System.nanoTime
       handle.preSimulation();
+      val startTimeSimulate = System.nanoTime;
       handle.simulate();
+      val endTime01 = System.nanoTime
+      System.out.println("COE.Scala 119: Total execution time around presimulatino and simulate: " + (endTime01 - startTime01) + " nano seconds");
+      System.out.println("COE.Scala 119: Total execution time around simualte: " + (endTime01 - startTimeSimulate) + " nano seconds");
     } finally {
       handle.postSimulation();
     }

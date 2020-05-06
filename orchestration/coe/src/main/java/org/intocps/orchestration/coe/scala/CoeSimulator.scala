@@ -87,15 +87,20 @@ object CoeSimulator {
   def simulate(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstanceScalaWrapper],
                outputs: Outputs,
                inputs: Inputs, startTime: Double, endTime: Double, logLevels: Map[ModelInstance, java.util.List[String]], coe: Coe) = {
+
     var globalState: GlobalState = null
     var initialized = false
 
+    val startTime01 = System.currentTimeMillis
     try {
 
       val (preInitialized, initialStates) = prepareSimulation(instances, outputs, inputs, startTime, endTime, logLevels, coe)
       initialized = preInitialized;
 
       globalState = doSimulationStep(instances, outputs, inputs, initialStates, startTime, endTime, coe)
+      val endTime01 = System.currentTimeMillis
+
+      System.out.println("Total execution time from within: " + (endTime01 - startTime01) + " ms")
     }
     finally {
       cleanupSimulation(instances, initialized, Some(coe.addResource))
@@ -119,7 +124,6 @@ object CoeSimulator {
   def prepareSimulation(instances: Map[ModelConnection.ModelInstance, FmiSimulationInstanceScalaWrapper],
                         outputs: Outputs,
                         inputs: Inputs, startTime: Double, endTime: Double, logLevels: Map[ModelInstance, java.util.List[String]], coe: Coe) = {
-
     val initialized = setupExperimentAndInitializeFmus(instances, outputs, inputs, startTime, endTime, logLevels, coe)
 
     var initialStates: GlobalState = getInitialState(instances, outputs)
@@ -185,7 +189,7 @@ object CoeSimulator {
    * Generates a new global state with new derivatives
    */
   def updateDerivatives(coe: Coe, state: GlobalState, stepsize: Double): GlobalState = {
-
+    return state;
     //only consider instances with real scalar variables and filter all scalar variable of those to only be reals
     val readValuesReal: Map[ModelInstance, util.Map[ScalarVariable, Object]] = state.instanceStates.filter { case (mi, s) => s.state.exists { case (sv, o) => sv.`type`.`type` == Types.Real }
     }.map { case (mi, instanceState) => mi -> instanceState.state.filter { case (sv, v) => sv.`type`.`type` == Types.Real }.asJava
@@ -295,6 +299,7 @@ object CoeSimulator {
                        outputs: Outputs,
                        inputs: Inputs,
                        initialStates: GlobalState, startTime: Double, endTime: Double, coe: Coe): GlobalState = {
+
     val execStartTime = System.currentTimeMillis()
 
     logger.trace("Estimate derivatives to min order 2")
@@ -306,7 +311,7 @@ object CoeSimulator {
     logger.trace("Setting inputs")
     timedCall(setAllInputs(instances, resolvedInputs, coe), "setallinputs")
 
-    val instanceStateMap: Map[ModelInstance, IFmiComponentState] = timedCall(getRollbackStates(instances), "serilizeStates")
+    val instanceStateMap: Map[ModelInstance, IFmiComponentState] = null;//timedCall(getRollbackStates(instances), "serilizeStates")
 
     logger.trace("Calculating step-size")
     val currentCommunicationPoint = startTime
@@ -319,20 +324,20 @@ object CoeSimulator {
     }
 
     // complete step we do not get here if an error occurred and a throw is executed
-    logger.trace("Freeing serialized states from: " + newState.time)
-    val freeStateStatuses = instanceStateMap.map { case (mi, state) => mi -> {
-      if (state != null) {
-        val status = state.freeState()
-        if (status != Fmi2Status.OK) {
-          logger.warn("Problem freeing state from '{}' returned: {}", mi: Any, status: Any)
-
-        }
-        mi -> status
-      }
-    }
-    }
-
-    freeStateStatuses.filter { case (_, s) => s == Fmi2Status.Fatal || s == Fmi2Status.Error }.foreach { case (mi, status) => throw new AbortSimulationException("Error freeing state for " + mi + " status: " + status) }
+//    logger.trace("Freeing serialized states from: " + newState.time)
+//    val freeStateStatuses = instanceStateMap.map { case (mi, state) => mi -> {
+//      if (state != null) {
+//        val status = state.freeState()
+//        if (status != Fmi2Status.OK) {
+//          logger.warn("Problem freeing state from '{}' returned: {}", mi: Any, status: Any)
+//
+//        }
+//        mi -> status
+//      }
+//    }
+//    }
+//
+//    freeStateStatuses.filter { case (_, s) => s == Fmi2Status.Fatal || s == Fmi2Status.Error }.foreach { case (mi, status) => throw new AbortSimulationException("Error freeing state for " + mi + " status: " + status) }
 
     timedCall(coe.notifyStateChange(newState), "notifier")
 

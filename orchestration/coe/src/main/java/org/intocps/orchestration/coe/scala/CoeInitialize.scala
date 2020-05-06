@@ -84,7 +84,7 @@ object CoeInitialize
     //http://danielwestheide.com/blog/2012/12/26/the-neophytes-guide-to-scala-part-6-error-handling-with-try.html
     val fmuMap: Map[String, (IFmu, (ModelDescription, List[ScalarVariable]))] = loadFmusFromFiles(coe.getResultRoot(), fmuFiles, instancesCount)
 
-    val (tmpOutputs, inputs) = constructOuputInputMaps(connections, fmuMap, coe.logVariables)
+    val (tmpOutputs: Outputs, inputs: Inputs) = constructOuputInputMaps(connections, fmuMap, coe.logVariables)
 
     val variableResolver = new VariableResolver(fmuMap)
 
