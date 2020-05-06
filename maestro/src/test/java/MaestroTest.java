@@ -48,8 +48,9 @@ public class MaestroTest {
         InputStream contextFile = this.getClass().getResourceAsStream("configs/singleExternal.json");
         ARootDocument doc = new MableSpecificationGenerator(true).generate(
                 Stream.of(Paths.get("src", "test", "resources", "FMI2.mabl").toAbsolutePath().toString(),
-                        Paths.get("src", "test", "resources", "full_example_wt.mabl").toAbsolutePath().toString()).map(File::new)
-                        .collect(Collectors.toList()), contextFile);
+                        Paths.get("src", "test", "resources", "full_example_wt.mabl").toAbsolutePath().toString(),
+                        Paths.get("src", "test", "resources", "CSV.mabl").toAbsolutePath().toString()).map(File::new).collect(Collectors.toList()),
+                contextFile);
 
 
         new MableInterpreter().execute(doc);

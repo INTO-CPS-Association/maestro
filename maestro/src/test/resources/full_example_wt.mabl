@@ -7,6 +7,12 @@ import  FMI2;
 
 FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
 FMI2 fmuB = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+CSV csv = load("CSV");
+
+CSVFile csvfile  = csv.open("result.csv");
+
+string headers[2] = {"level"};
+csvfile.writeHeader(headers);
 
 FMI2Component a = fmuA.instantiate("A", true,true);
 FMI2Component b = fmuB.instantiate("B", true,true);
@@ -46,6 +52,11 @@ real STEP_SIZE = 0.01;
 while(time < END_TIME)
 {
 
+
+
+? values[2]={level,level};
+csvfile.writeRow(time,values);
+
     //how do we handle out?
     vref[0]=16;
 
@@ -84,6 +95,8 @@ fmuB.freeInstance(b);
 
 unload(fmuA);
 unload(fmuB);
+
+csv.close(csvfile);
 
 }
 

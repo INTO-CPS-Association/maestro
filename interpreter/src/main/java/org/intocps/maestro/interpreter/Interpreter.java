@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.csv.CSVValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,15 +65,21 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseALoadExp(ALoadExp node, Context question) throws AnalysisException {
 
+        if (node.getArgs().size() < 1) {
+            throw new AnalysisException("load contains too few arguments. At least a type is required");
+        }
+
         List<Value> args = evaluate(node.getArgs(), question);
 
-        String type = ((StringValue) args.get(0)).getValue();
-        String guid = ((StringValue) args.get(1)).getValue();
-        String path = ((StringValue) args.get(2)).getValue();
 
+        String type = ((StringValue) args.get(0)).getValue();
         if (type.equals("FMI2")) {
 
+            String guid = ((StringValue) args.get(1)).getValue();
+            String path = ((StringValue) args.get(2)).getValue();
             return new FmiInterpreter().createFmiValue(path, guid);
+        } else if (type.equals("CSV")) {
+            return new CSVValue();
         }
         throw new AnalysisException("Load of unknown type");
     }
@@ -175,7 +182,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAArrayInitializer(AArrayInitializer node, Context question) throws AnalysisException {
-        return super.caseAArrayInitializer(node, question);
+
+
+        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question));
+        return array;
     }
 
     @Override

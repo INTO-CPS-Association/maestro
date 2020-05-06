@@ -133,6 +133,7 @@ primitiveType
     | INT               #intType
     | STRING            #stringType
     | BOOL              #boolType
+    | QUESTION          #unknownType
     ;
 
 literal
