@@ -48,6 +48,10 @@ public class PluginFactory {
     }
 
     public static Map<String, String> parsePluginConfiguration(InputStream io) throws IOException {
+        if (io == null) {
+            return new HashMap<>();
+        }
+
         List<PluginConfiguration> configs = mapper.readValue(io, new TypeReference<List<PluginConfiguration>>() {
         });
         if (configs != null) {
