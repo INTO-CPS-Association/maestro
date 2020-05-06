@@ -2,6 +2,7 @@ package org.intocps.maestro.ast;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MableAstFactory {
@@ -21,9 +22,31 @@ public class MableAstFactory {
 
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_) {
         AVariableDeclaration vardecl = new AVariableDeclaration();
+
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
+        if(type instanceof AArrayType)
+        {
+            vardecl.setIsArray(true);
+            AArrayType type_ = (AArrayType)type;
+            vardecl.setSize(new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAIntLiteralExp(type_.getSize()))));
+        }
+        else {
+            vardecl.setIsArray(false);
+        }
+        return vardecl;
+    }
+
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, Boolean isArray, List<PExp> size) {
+        AVariableDeclaration vardecl = new AVariableDeclaration();
+
+        vardecl.setName(name);
+        vardecl.setType(type);
+        vardecl.setInitializer(initializer_);
+        vardecl.setIsArray(isArray);
+        if(isArray)
+            vardecl.setSize(size);
         return vardecl;
     }
 
