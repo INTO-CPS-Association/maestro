@@ -59,11 +59,10 @@ public class StatementContainer {
                 createLexIdentifier.apply(fmuName),
                 MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
                 MableAstFactory.newAExpInitializer(
-                        MableAstFactory.newACallExp(
-                                MableAstFactory.newAIdentifierExp(
-                                        createLexIdentifier.apply("load")),
-                                new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"),
-                                        MableAstFactory.newAStringLiteralExp(uri.getPath()))))));
+                        MableAstFactory.newALoadExp(new ArrayList<PExp>(
+                                Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"),
+                                        MableAstFactory.newAStringLiteralExp(uri.toString()))))));
+
         // Create variable
         PStm statement = MableAstFactory.newALocalVariableStm(variable);
         statements.add(statement);

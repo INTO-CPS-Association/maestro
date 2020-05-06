@@ -1,5 +1,7 @@
 package org.intocps.maestro.ast;
 
+import com.sun.org.apache.bcel.internal.generic.ALOAD;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +63,12 @@ public class MableAstFactory {
         ALoadExp exp = new ALoadExp();
         List<PExp> args = new ArrayList<>();
         args.add(newAStringLiteralExp(uri.toString()));
+        exp.setArgs(args);
+        return exp;
+    }
+
+    public static ALoadExp newALoadExp(List<? extends PExp> args ) {
+        ALoadExp exp = new ALoadExp();
         exp.setArgs(args);
         return exp;
     }
