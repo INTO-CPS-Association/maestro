@@ -25,6 +25,7 @@
         <module>maestro</module>
         <module>interpreter</module>
         <module>plugins</module>
+        <module>multimodelparser</module>
     </modules>
 
     <build>

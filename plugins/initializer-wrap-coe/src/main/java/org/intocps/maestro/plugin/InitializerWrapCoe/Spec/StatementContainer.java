@@ -54,13 +54,14 @@ public class StatementContainer {
         return container;
     }
 
-    public void createLoadStatement(String fmuName, URI uri) {
+    public void createLoadStatement(String fmuName, String guid, URI uri) {
         AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(
                 createLexIdentifier.apply(fmuName),
                 MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
                 MableAstFactory.newAExpInitializer(
                         MableAstFactory.newALoadExp(new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"),
+                                        MableAstFactory.newAStringLiteralExp(guid),
                                         MableAstFactory.newAStringLiteralExp(uri.toString()))))));
 
         // Create variable
@@ -74,7 +75,7 @@ public class StatementContainer {
         return statements;
     }
 
-    public void createInstantiateStatement(String fmuName, String instanceName, boolean logging) {
+    public void createInstantiateStatement(String fmuName, String instanceName, boolean visible, boolean logging) {
         AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(
                 createLexIdentifier.apply(instanceName),
                 MableAstFactory.newANameType(createLexIdentifier.apply("FMI2Component")),
@@ -85,6 +86,7 @@ public class StatementContainer {
                                         MableAstFactory.newAIdentifierExp(
                                                 createLexIdentifier.apply("instantiate"))),
                                 new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName),
+                                        MableAstFactory.newABoolLiteralExp(visible),
                                         MableAstFactory.newABoolLiteralExp(logging))))));
 
         PStm statement = MableAstFactory.newALocalVariableStm(variable);

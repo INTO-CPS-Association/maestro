@@ -35,7 +35,11 @@ public class StatementFMU implements IFmu {
 
     @Override
     public void load() throws FmuInvocationException, FmuMissingLibraryException {
-        container.createLoadStatement(fmuName, uri);
+        try {
+            container.createLoadStatement(fmuName, md.getGuid(), uri);
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+        }
         // Create load statement
     }
 
@@ -43,7 +47,7 @@ public class StatementFMU implements IFmu {
     public IFmiComponent instantiate(String guid, String instanceName, boolean visible, boolean loggingOn, IFmuCallback iFmuCallback) throws XPathExpressionException, FmiInvalidNativeStateException {
         StatementFMIComponent comp = new StatementFMIComponent(instanceName);
         instances.put(instanceName, comp);
-        container.createInstantiateStatement(fmuName, instanceName, loggingOn);
+        container.createInstantiateStatement(fmuName, instanceName, visible, loggingOn);
         return comp;
     }
 
