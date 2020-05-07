@@ -40,7 +40,7 @@ val sort = g.topologicalSort
 sort match {
   //A cycle exist in the graph
   case IODependencyCyclic(cycle) => println(cycle); 
-  //
+  //No cycle exists - topological order can be used
   case IODependencyAcyclic(topOrder) => doSomething();
 }
 ```

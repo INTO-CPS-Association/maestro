@@ -1,6 +1,7 @@
 
-import org.intocps.multimodelparser.data.{Connection, ConnectionScalarVariable, ConnectionType, IODependencyAcyclic, IODependencyCyclic, Instance}
-import org.intocps.topologicalsorting.{Edge, TarjanGraph}
+import org.intocps.multimodelparser.data.{Connection, ConnectionScalarVariable, ConnectionType, Instance}
+import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, Edge}
+import org.intocps.topologicalsorting.TarjanGraph
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,8 +42,8 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     g.hasCycle
     val actual = g.topologicalSort
     actual match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(true)
-      case IODependencyAcyclic(totalOrder) => println(totalOrder); assert(false)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(true)
+      case AcyclicDependencyResult(totalOrder) => println(totalOrder); assert(false)
     }
   }
 
@@ -60,10 +61,10 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     val edges = GraphBuilder.buildGraph(connections)
     val g = new TarjanGraph[ConnectionScalarVariable](edges)
     val actual = g.topologicalSort
-    val expected = new IODependencyAcyclic(List(interCon2Input, interCon2Output1, interCon1Input, interCon1Output))
+    val expected = new AcyclicDependencyResult(List(interCon2Input, interCon2Output1, interCon1Input, interCon1Output))
     actual match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(false)
-      case IODependencyAcyclic(totalOrder) => println(totalOrder); assert(true)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(false)
+      case AcyclicDependencyResult(totalOrder) => println(totalOrder); assert(true)
     }
     assert(actual == expected)
   }
@@ -73,10 +74,10 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     val edges = GraphBuilder.buildGraph(connections)
     val g = new TarjanGraph[ConnectionScalarVariable](edges)
     val actual = g.topologicalSort
-    val expected = new IODependencyAcyclic(List(interCon2Output2, interCon3Input2, interCon2Output1, interCon1Input, interCon1Output, interCon3Input1, interCon2Input))
+    val expected = new AcyclicDependencyResult(List(interCon2Output2, interCon3Input2, interCon2Output1, interCon1Input, interCon1Output, interCon3Input1, interCon2Input))
     actual match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(false)
-      case IODependencyAcyclic(totalOrder) => println(totalOrder); assert(true)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(false)
+      case AcyclicDependencyResult(totalOrder) => println(totalOrder); assert(true)
     }
     assert(actual == expected)
   }
@@ -86,10 +87,10 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     val edges = GraphBuilder.buildGraph(connections)
     val g = new TarjanGraph[ConnectionScalarVariable](edges)
     val actual = g.topologicalSort
-    val expected = new IODependencyAcyclic(List(interCon1Input, interCon1Output, interCon2Input, interCon2Output2, interCon2Output1))
+    val expected = new AcyclicDependencyResult(List(interCon1Input, interCon1Output, interCon2Input, interCon2Output2, interCon2Output1))
     actual match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(false)
-      case IODependencyAcyclic(totalOrder) => println(totalOrder); assert(true)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(false)
+      case AcyclicDependencyResult(totalOrder) => println(totalOrder); assert(true)
     }
     println(g.topologicalSortedEdges)
     assert(actual == expected)
@@ -126,10 +127,10 @@ class TarjanAlgorithmFMUTest extends AnyFlatSpec with Matchers {
     val edges = GraphBuilder.buildGraph(connections)
     val g = new TarjanGraph[ConnectionScalarVariable](edges)
     val actual = g.topologicalSort
-    val expected = new IODependencyAcyclic(List(fmu2_Output, fmu3_Input2, fmu3_Output2, fmu4_Input2, fmu1_Output, fmu3_Input1, fmu3_Output1, fmu4_Input1, fmu4_Output1, fmu5_Input))
+    val expected = new AcyclicDependencyResult(List(fmu2_Output, fmu3_Input2, fmu3_Output2, fmu4_Input2, fmu1_Output, fmu3_Input1, fmu3_Output1, fmu4_Input1, fmu4_Output1, fmu5_Input))
     actual match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(false)
-      case IODependencyAcyclic(totalOrder) => println(totalOrder); assert(true)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(false)
+      case AcyclicDependencyResult(totalOrder) => println(totalOrder); assert(true)
     }
     println(g.topologicalSortedEdges)
     // This exact assert may fail since, there is some non-determinism in finding the topological order when converting from an unordered collection (Set)
