@@ -75,14 +75,19 @@ object CoeInitialize
         }.flatten.toSet.size
       ).toMap
     }
+
+
     logger.info("loading fmus")
 
     // Get the instances for each guid.
     // This is used to verify that FMUs with CanOnlyInstanteOncePerProcess are for used once.
     val instancesCount = getCountOfInstances(fmuFiles.keys, connections)
 
+    val loadStart = System.nanoTime();
     //http://danielwestheide.com/blog/2012/12/26/the-neophytes-guide-to-scala-part-6-error-handling-with-try.html
     val fmuMap: Map[String, (IFmu, (ModelDescription, List[ScalarVariable]))] = loadFmusFromFiles(coe.getResultRoot(), fmuFiles, instancesCount)
+    val loadEnd = System.nanoTime();
+    System.out.println("EXECUTION TEST: Total execution time around load EXT: " + (loadEnd - loadStart) + "nanoseconds");
 
     val (tmpOutputs: Outputs, inputs: Inputs) = constructOuputInputMaps(connections, fmuMap, coe.logVariables)
 
@@ -111,8 +116,11 @@ object CoeInitialize
       }
     //TODO check canBeInstantiatedOnlyOncePerProcess
 
+    val instantiateStart = System.nanoTime();
     //instantiate
     val instances = instantiateSimulationInstances(outputs, inputs, root, fmuMap, coe)
+    val instantiateEnd = System.nanoTime();
+    System.out.println("EXECUTION TEST: Total execution time around instantiate EXT: " + (instantiateEnd - instantiateStart) + "nanoseconds");
 
     if(coe.getConfiguration.hasExternalSignals){
       coe.configureExternalSignalHandler(instances)

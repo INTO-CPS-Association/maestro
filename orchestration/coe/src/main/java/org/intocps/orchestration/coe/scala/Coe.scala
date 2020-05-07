@@ -112,11 +112,13 @@ class Coe(val resultRoot: File) {
     try {
       val startTime01 = System.nanoTime
       handle.preSimulation();
+      val presimulateEnd = System.nanoTime();
+      System.out.println("EXECUTION TEST: Total execution time around presimulate EXT: " + (presimulateEnd - startTime01) + "nanoseconds");
       val startTimeSimulate = System.nanoTime;
       handle.simulate();
       val endTime01 = System.nanoTime
-      System.out.println("COE.Scala 119: Total execution time around presimulatino and simulate: " + (endTime01 - startTime01) + " nano seconds");
-      System.out.println("COE.Scala 119: Total execution time around simualte: " + (endTime01 - startTimeSimulate) + " nano seconds");
+      System.out.println("EXECUTION TEST: Total execution time around simulate EXT: " + (endTime01 - startTimeSimulate) + "nanoseconds");
+
     } finally {
       handle.postSimulation();
     }

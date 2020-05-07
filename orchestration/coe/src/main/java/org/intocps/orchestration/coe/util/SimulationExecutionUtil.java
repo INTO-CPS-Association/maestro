@@ -196,10 +196,11 @@ public class SimulationExecutionUtil
 		String sessionId = extractSessionId(IOUtils.toString(response.getData()));
 		try
 		{
+			long initilizeStart = System.nanoTime();
 			//Initialize
 			response = callHttpAny(RequestHandler,
 					"/initialize/" + sessionId, configurationData);
-
+			long initializeEnd = System.nanoTime();
 			String initializeResponseData = IOUtils.toString(response.getData());
 			if (Response.MIME_PLAINTEXT.equals(response.getMimeType()))
 			{
@@ -220,14 +221,15 @@ public class SimulationExecutionUtil
 			simulateMsg.logLevels = new HashMap<>();
 			String simulateMsgJson = mapper.writeValueAsString(simulateMsg);
 
-			final long startTime01 = System.currentTimeMillis();
+			final long simulateStart = System.nanoTime();
 			response = callHttpAny(RequestHandler,
 					"/simulate/" + sessionId, simulateMsgJson);
-			final long endTime01 = System.currentTimeMillis();
+			final long simulateEnd = System.nanoTime();
 
+			final long fullExecution = (simulateEnd - simulateStart) + (initializeEnd - initilizeStart);
 			System.out.println(
-					"Total execution time: " + (endTime01 - startTime01)
-							+ " ms");
+					"EXECUTION TEST: Total execution time EXT: " + fullExecution
+							+ "nanoseconds");
 
 			String simulateResponseData = IOUtils.toString(response.getData());
 
