@@ -1,7 +1,0 @@
- module CSV {
-
-    void start( string path);
- 	void header( string[] columnTitles);
- 	void addRow( real[] values);
- 	void close();
-}

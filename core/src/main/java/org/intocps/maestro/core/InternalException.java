@@ -1,4 +1,4 @@
-package org.intocps.maestro;
+package org.intocps.maestro.core;
 
 public class InternalException extends RuntimeException {
     public InternalException() {

@@ -1,4 +1,4 @@
-package org.intocps.maestro.typechecker.messages;
+package org.intocps.maestro.core.messages;
 
 import org.antlr.v4.runtime.Token;
 
@@ -11,7 +11,7 @@ public class MableMessage {
     public final String message;
     public final Token location;
 
-    protected List<String> details = new Vector<String>();
+    protected List<String> details = new Vector<>();
 
     public MableMessage(int number) {
         this(number, "", null);

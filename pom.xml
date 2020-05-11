@@ -19,6 +19,7 @@
     </properties>
 
     <modules>
+ 	<module>core</module>
         <module>ast</module>
         <module>parser</module>
         <module>typechecker</module>

@@ -1,4 +1,4 @@
-package org.intocps.maestro.typechecker.messages;
+package org.intocps.maestro.core.messages;
 
 import org.antlr.v4.runtime.Token;
 

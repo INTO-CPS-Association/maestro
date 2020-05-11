@@ -397,6 +397,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         throw new RuntimeException("unsupported literal");
     }
 
+    @Override
+    public INode visitUnknownType(MablParser.UnknownTypeContext ctx) {
+        return new AUnknownType();
+    }
+
 
     @Override
     public INode visitBoolType(MablParser.BoolTypeContext ctx) {
@@ -441,7 +446,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     @Override
     public INode visitTypeType(MablParser.TypeTypeContext ctx) {
-        PType type = ctx.primitiveType() == null ? null : (SPrimitiveType) super.visit(ctx.primitiveType());
+        PType type = ctx.primitiveType() == null ? null : (PType) super.visit(ctx.primitiveType());
 
         if (ctx.IDENTIFIER() != null) {
             ANameType nt = new ANameType();

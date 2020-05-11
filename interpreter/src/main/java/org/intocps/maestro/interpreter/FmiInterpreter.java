@@ -92,7 +92,7 @@ public class FmiInterpreter {
     public ModuleValue createFmiValue(String path, String guid) throws InterpreterException {
 
         try {
-
+            long startExecTime = System.nanoTime();
             final IFmu fmu = Factory.create(new File(path));
 
             fmu.load();
@@ -109,6 +109,8 @@ public class FmiInterpreter {
                 boolean logginOn = getBool(fargs.get(2));
 
                 try {
+
+                    long startInstantiateTime = System.nanoTime();
                     IFmiComponent component = fmu.instantiate(guid, name, visible, logginOn, new IFmuCallback() {
                         @Override
                         public void log(String instanceName, Fmi2Status status, String category, String message) {
@@ -377,6 +379,9 @@ public class FmiInterpreter {
                         }
                     }));
 
+
+                    long stopInstantiateTime = System.nanoTime();
+                    System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
                     return new FmuComponentValue(componentMembers, component);
 
 
@@ -428,7 +433,9 @@ public class FmiInterpreter {
                 return new VoidValue();
             }));
 
+            long stopTime = System.nanoTime();
 
+            System.out.println("Interpretation load took: " + (stopTime - startExecTime));
             return new FmuValue(functions, fmu);
 
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {

@@ -3,6 +3,7 @@ package org.intocps.maestro.typechecker;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
+import org.intocps.maestro.core.messages.IErrorReporter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,10 +14,10 @@ public class TypeResolver {
 
     final AstTypeResolver resolver = new AstTypeResolver();
     final MableAstFactory factory;
-    final TypeCheckerErrors reporter;
+    final IErrorReporter reporter;
     Map<INode, PType> resolvedTypes = new HashMap<>();
 
-    public TypeResolver(MableAstFactory factory, TypeCheckerErrors reporter) {
+    public TypeResolver(MableAstFactory factory, IErrorReporter reporter) {
         this.factory = factory;
         this.reporter = reporter;
     }

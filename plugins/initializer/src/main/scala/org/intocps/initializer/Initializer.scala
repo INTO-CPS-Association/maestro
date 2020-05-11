@@ -4,7 +4,8 @@ import java.util
 import argonaut.Parse
 import org.intocps.initializer.{FMIASTFactory, InitializerContext}
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
-import org.intocps.maestro.plugin.{IMaestroPlugin, IPluginConfiguration}
+import org.intocps.maestro.core.messages.IErrorReporter
+import org.intocps.maestro.plugin.{IMaestroUnfoldPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
 import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, Edge}
@@ -12,7 +13,23 @@ import org.intocps.topologicalsorting.{TarjanGraph}
 
 import scala.jdk.CollectionConverters._
 
-object Initializer {
+class Initializer extends IMaestroUnfoldPlugin {
+
+  override def getName: String = "Initializer"
+
+  override def getVersion: String = "0.0.1"
+
+  // TODO: Create initialize token
+
+  override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
+
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration, reporter: IErrorReporter): PStm = {
+    calculateInitialize(new File("FIXME")) match {
+      case Left(value)  => throw new Exception("Could not create initialize: " + value)
+      case Right(value) => value
+    }
+  }
+
   def calculateInitialize(f: File): Either[String, PStm] = {
 
     val rmmcE: Either[String, RichMultiModelConfiguration] = ConfigurationHandler.loadMMCFromFile(f)

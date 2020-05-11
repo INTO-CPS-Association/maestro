@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.csv.CSVValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,15 +65,21 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseALoadExp(ALoadExp node, Context question) throws AnalysisException {
 
+        if (node.getArgs().size() < 1) {
+            throw new AnalysisException("load contains too few arguments. At least a type is required");
+        }
+
         List<Value> args = evaluate(node.getArgs(), question);
 
-        String type = ((StringValue) args.get(0)).getValue();
-        String guid = ((StringValue) args.get(1)).getValue();
-        String path = ((StringValue) args.get(2)).getValue();
 
+        String type = ((StringValue) args.get(0)).getValue();
         if (type.equals("FMI2")) {
 
+            String guid = ((StringValue) args.get(1)).getValue();
+            String path = ((StringValue) args.get(2)).getValue();
             return new FmiInterpreter().createFmiValue(path, guid);
+        } else if (type.equals("CSV")) {
+            return new CSVValue();
         }
         throw new AnalysisException("Load of unknown type");
     }
@@ -82,12 +89,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         List<Value> args = evaluate(node.getArgs(), question);
 
-        if (args.get(0) instanceof FmuValue) {
-            FmuValue fmuVal = (FmuValue) args.get(0);
+        Value nameVal = args.get(0);
+        if (nameVal instanceof FmuValue) {
+            FmuValue fmuVal = (FmuValue) nameVal;
             FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
             return unloadFunction.evaluate(Collections.emptyList());
+        } else if (nameVal instanceof CSVValue) {
+            return new VoidValue();
         }
-        throw new AnalysisException("UnLoad of unknown type");
+        throw new AnalysisException("UnLoad of unknown type: " + nameVal);
     }
 
     @Override
@@ -175,7 +185,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAArrayInitializer(AArrayInitializer node, Context question) throws AnalysisException {
-        return super.caseAArrayInitializer(node, question);
+
+
+        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question));
+        return array;
     }
 
     @Override
@@ -213,6 +226,20 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         return new RealValue(left.realValue() + right.realValue());
+    }
+
+
+    @Override
+    public Value caseAMinusBinaryExp(AMinusBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+
+        if (left instanceof IntegerValue && right instanceof IntegerValue) {
+            return new IntegerValue(left.intValue() + right.intValue());
+        }
+
+        return new RealValue(left.realValue() - right.realValue());
     }
 
     @Override
