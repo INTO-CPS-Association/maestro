@@ -17,7 +17,7 @@ csvfile.writeHeader(headers);
 FMI2Component a = fmuA.instantiate("A", true,true);
 FMI2Component b = fmuB.instantiate("B", true,true);
 
-real END_TIME = 10.0;
+real END_TIME = 1000.0;
 
 a.setupExperiment( false, 0.0, 0.0, true, END_TIME);
 b.setupExperiment( false, 0.0, 0.0, true, END_TIME);
@@ -97,7 +97,7 @@ unload(fmuA);
 unload(fmuB);
 
 csv.close(csvfile);
-
+unload(csv);
 }
 
 

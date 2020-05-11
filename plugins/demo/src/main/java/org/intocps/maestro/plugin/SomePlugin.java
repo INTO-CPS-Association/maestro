@@ -2,6 +2,8 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +13,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SomePlugin implements IMaestroPlugin {
+@SimulationFramework(framework = Framework.FMI2)
+public class SomePlugin implements IMaestroUnfoldPlugin {
     final AFunctionDeclaration f1 = new AFunctionDeclaration(new LexIdentifier("initialize", null), new AVoidType(),
             Arrays.asList(new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("a", null)),
                     new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("b", null))));
@@ -32,7 +35,8 @@ public class SomePlugin implements IMaestroPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config) throws UnfoldException {
+    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            IErrorReporter reporter) throws UnfoldException {
 
         if (config instanceof DemoConfig) {
             return new AWhileStm(

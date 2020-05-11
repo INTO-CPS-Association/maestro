@@ -3,14 +3,15 @@ import java.util
 
 import org.intocps.initializer.FMIASTFactory
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
-import org.intocps.maestro.plugin.{IMaestroPlugin, IPluginConfiguration}
+import org.intocps.maestro.core.messages.IErrorReporter
+import org.intocps.maestro.plugin.{IMaestroUnfoldPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
 import org.intocps.topologicalsorting.{Edge, TarjanGraph}
 
 import scala.jdk.CollectionConverters._
 
-class Initializer extends IMaestroPlugin {
+class Initializer extends IMaestroUnfoldPlugin {
 
   override def getName: String = "Initializer"
 
@@ -20,7 +21,7 @@ class Initializer extends IMaestroPlugin {
 
   override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
 
-  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration): PStm = {
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration, reporter: IErrorReporter): PStm = {
     calculateInitialize(new File("FIXME")) match {
       case Left(value)  => throw new Exception("Could not create initialize: " + value)
       case Right(value) => value

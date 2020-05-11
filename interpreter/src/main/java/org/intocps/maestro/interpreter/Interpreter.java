@@ -89,12 +89,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         List<Value> args = evaluate(node.getArgs(), question);
 
-        if (args.get(0) instanceof FmuValue) {
-            FmuValue fmuVal = (FmuValue) args.get(0);
+        Value nameVal = args.get(0);
+        if (nameVal instanceof FmuValue) {
+            FmuValue fmuVal = (FmuValue) nameVal;
             FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
             return unloadFunction.evaluate(Collections.emptyList());
+        } else if (nameVal instanceof CSVValue) {
+            return new VoidValue();
         }
-        throw new AnalysisException("UnLoad of unknown type");
+        throw new AnalysisException("UnLoad of unknown type: " + nameVal);
     }
 
     @Override

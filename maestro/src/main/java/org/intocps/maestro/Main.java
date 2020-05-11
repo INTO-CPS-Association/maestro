@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import org.apache.commons.cli.*;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,9 @@ public class Main {
         Option contextOpt = Option.builder("c").longOpt("config").desc("path to a plugin config JSON file").build();
         Option mablOpt = Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required()
                 .build();
+        Option frameworkOpt = Option.builder("f").longOpt("framework")
+                .desc("Specify simulation framework: " + Arrays.stream(Framework.values()).map(Object::toString).collect(Collectors.joining(", ")))
+                .hasArg().type(Framework.class).required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
 
         Options options = new Options();
@@ -52,6 +56,7 @@ public class Main {
         options.addOption(versionOpt);
         options.addOption(contextOpt);
         options.addOption(interpretOpt);
+        options.addOption(frameworkOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -73,6 +78,8 @@ public class Main {
             return;
         }
 
+        Framework framework = Framework.valueOf(cmd.getOptionValue(frameworkOpt.getOpt()));
+
         boolean verbose = cmd.hasOption(verboseOpt.getOpt());
 
         List<File> sourceFiles = Arrays.stream(cmd.getOptionValues(mablOpt.getOpt())).map(File::new).collect(Collectors.toList());
@@ -84,7 +91,7 @@ public class Main {
 
         try (InputStream configIs = configFile == null ? null : new FileInputStream(configFile)) {
 
-            ARootDocument spec = new MableSpecificationGenerator(verbose).generate(sourceFiles, configIs);
+            ARootDocument spec = new MableSpecificationGenerator(framework, verbose).generate(sourceFiles, configIs);
 
             if (cmd.hasOption(interpretOpt.getOpt())) {
                 new MableInterpreter().execute(spec);

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.intocps.maestro.core.Framework;
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
@@ -18,20 +19,29 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PluginFactory {
 
     final static ObjectMapper mapper = new ObjectMapper();
 
-    public static Collection<IMaestroPlugin> getPlugins() {
-        Reflections reflections = new Reflections(IMaestroPlugin.class.getPackage().getName(), new SubTypesScanner());
+    public static <T extends IMaestroPlugin> Collection<T> getPlugins(Class<T> type) {
+        return getPlugins(type, null);
+    }
+
+    public static <T extends IMaestroPlugin> Collection<T> getPlugins(Class<T> type, Framework framework) {
+        Reflections reflections = new Reflections("org.intocps.maestro", new SubTypesScanner());
 
         try {
 
-            Set<Class<? extends IMaestroPlugin>> subTypes = reflections.getSubTypesOf(IMaestroPlugin.class);
+            Set<Class<? extends T>> subTypes = reflections.getSubTypesOf(type);
 
-            return subTypes.stream().map(c -> {
+            Predicate<? super Class<? extends T>> frameworkFilter = (Predicate<Class<? extends T>>) aClass -> framework == null || aClass
+                    .isAnnotationPresent(SimulationFramework.class) && (aClass.getAnnotation(SimulationFramework.class)
+                    .framework() == framework || aClass.getAnnotation(SimulationFramework.class).framework() == Framework.Any);
+
+            return subTypes.stream().filter(frameworkFilter).map(c -> {
                 try {
                     return c.newInstance();
                 } catch (InstantiationException | IllegalAccessException e) {

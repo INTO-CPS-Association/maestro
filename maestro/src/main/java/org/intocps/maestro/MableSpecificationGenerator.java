@@ -3,14 +3,17 @@ package org.intocps.maestro;
 import org.antlr.v4.runtime.*;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.InternalException;
+import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParser;
 import org.intocps.maestro.parser.ParseTree2AstConverter;
-import org.intocps.maestro.plugin.IMaestroPlugin;
-import org.intocps.maestro.plugin.IPluginConfiguration;
-import org.intocps.maestro.plugin.PluginFactory;
-import org.intocps.maestro.plugin.UnfoldException;
-import org.intocps.maestro.typechecker.*;
+import org.intocps.maestro.plugin.*;
+import org.intocps.maestro.typechecker.PluginEnvironment;
+import org.intocps.maestro.typechecker.RootEnvironment;
+import org.intocps.maestro.typechecker.TypeComparator;
+import org.intocps.maestro.typechecker.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,23 +32,27 @@ public class MableSpecificationGenerator {
 
     final static Logger logger = LoggerFactory.getLogger(MableSpecificationGenerator.class);
     final boolean verbose;
+    private final Framework framework;
 
-    public MableSpecificationGenerator(boolean verbose) {
+    public MableSpecificationGenerator(Framework framework, boolean verbose) {
+        this.framework = framework;
         this.verbose = verbose;
     }
 
-    private static PluginEnvironment loadPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile) throws IOException {
-        return loadPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile));
+    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile,
+            Framework framework) throws IOException {
+        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
     }
 
-    private static PluginEnvironment loadPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile) throws IOException {
-        return loadPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile));
+    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
+            Framework framework) throws IOException {
+        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
     }
 
 
-    private static PluginEnvironment loadPlugins(TypeResolver typeResolver, RootEnvironment rootEnv,
-            Map<String, String> rawPluginJsonContext) throws IOException {
-        Collection<IMaestroPlugin> plugins = PluginFactory.getPlugins();
+    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, Map<String, String> rawPluginJsonContext,
+            Framework framework) {
+        Collection<IMaestroUnfoldPlugin> plugins = PluginFactory.getPlugins(IMaestroUnfoldPlugin.class, framework);
 
         plugins.forEach(p -> logger.info("Loaded plugin: {} - {}", p.getName(), p.getVersion()));
 
@@ -97,7 +104,7 @@ public class MableSpecificationGenerator {
     }
 
     private static ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit inputSimulationModule,
-            TypeCheckerErrors reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env) {
+            IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env) {
 
         ASimulationSpecificationCompilationUnit simulationModule = inputSimulationModule.clone();
 
@@ -105,9 +112,9 @@ public class MableSpecificationGenerator {
     }
 
     private static ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit simulationModule,
-            TypeCheckerErrors reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env, int depth) {
+            IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env, int depth) {
 
-        Map<IMaestroPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
+        Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 
 
         List<AExternalStm> aExternalStms = NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>());
@@ -154,7 +161,7 @@ public class MableSpecificationGenerator {
                 Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible = (fmap) -> fmap.getKey().getName().getText()
                         .equals(node.getCall().getRoot().toString()) && comparator.compatible(fmap.getValue(), type.get());
 
-                Optional<Map.Entry<IMaestroPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch = plugins.entrySet().stream()
+                Optional<Map.Entry<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch = plugins.entrySet().stream()
                         .filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
 
                 if (pluginMatch.isPresent()) {
@@ -163,19 +170,19 @@ public class MableSpecificationGenerator {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getRoot().toString());
 
                             PStm unfoled = null;
-                            IMaestroPlugin plugin = map.getKey();
+                            IMaestroUnfoldPlugin plugin = map.getKey();
                             try {
                                 if (plugin.requireConfig()) {
                                     try {
                                         IPluginConfiguration config = env.getConfiguration(plugin);
-                                        unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config);
+                                        unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config, reporter);
                                     } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
                                                 node.getCall().getRoot().toString(), e.getMessage());
                                     }
 
                                 } else {
-                                    unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), null);
+                                    unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), null, reporter);
                                 }
                             } catch (UnfoldException e) {
                                 logger.error("Internal error in pluginn '{}' at {}. Message: {}", plugin.getName(),
@@ -198,8 +205,7 @@ public class MableSpecificationGenerator {
     }
 
     public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
-        TypeCheckerErrors reporter = new TypeCheckerErrors();
-
+        IErrorReporter reporter = new ErrorReporter();
 
         List<ARootDocument> documentList = parse(sourceFiles);
 
@@ -243,7 +249,7 @@ public class MableSpecificationGenerator {
                     simulationModule.getImports().stream().map(LexIdentifier::toString).collect(Collectors.joining(" , ", "[ ", " ]")));
 
             //load plugins
-            PluginEnvironment pluginEnvironment = loadPlugins(typeResolver, rootEnv, contextFile);
+            PluginEnvironment pluginEnvironment = loadUnfoldPlugins(typeResolver, rootEnv, contextFile, framework);
 
             try {
 
@@ -256,13 +262,19 @@ public class MableSpecificationGenerator {
                     throw new InternalException("errors after expansion");
                 }
 
-                //TODO type check
-
-                // TODO verification
-
                 logger.info(unfoldedSimulationModule.toString());
 
-                return new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+                ARootDocument processedDoc = new ARootDocument(
+                        Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+
+                if (typeCheck(processedDoc, reporter)) {
+                    if (verify(processedDoc, reporter)) {
+                        return processedDoc;
+                    }
+                }
+
+
+                throw new RuntimeException("No valid spec produced");
 
             } finally {
                 if (verbose) {
@@ -280,5 +292,23 @@ public class MableSpecificationGenerator {
         } else {
             throw new InternalException("No Specification module found");
         }
+    }
+
+    private boolean verify(final ARootDocument doc, final IErrorReporter reporter) {
+
+        Collection<IMaestroVerifier> verifiers = PluginFactory.getPlugins(IMaestroVerifier.class, framework);
+
+        verifiers.forEach(p -> logger.info("Loaded verifiers: {} - {}", p.getName(), p.getVersion()));
+
+        return verifiers.stream().allMatch(verifier -> {
+            logger.info("Verifying with {} - {}", verifier.getName(), verifier.getVersion());
+            return verifier.verify(doc, reporter);
+        });
+    }
+
+    private boolean typeCheck(final ARootDocument doc, final IErrorReporter reporter) {
+        //TODO: implement type check
+        logger.warn("Type checker not yet implemented");
+        return true;
     }
 }
