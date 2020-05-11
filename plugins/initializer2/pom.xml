@@ -5,15 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.intocps</groupId>
-        <artifactId>root</artifactId>
+        <artifactId>plugins</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <properties>
-        <jackson-2-version>2.11.0</jackson-2-version>
-        <mockito-version>3.3.3</mockito-version>
-    </properties>
-    <groupId>org.intocps</groupId>
-    <artifactId>multimodelparser</artifactId>
+
+    <groupId>org.intocps.plugins</groupId>
+    <artifactId>initializer2</artifactId>
 
     <dependencies>
         <dependency>
@@ -23,28 +20,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.intocps.plugins</groupId>
-            <artifactId>topologicalsorting</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson-2-version}</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson-2-version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito-version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.orchestration</groupId>
@@ -70,6 +48,8 @@
             <version>1.0.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+
+
     </dependencies>
 
 

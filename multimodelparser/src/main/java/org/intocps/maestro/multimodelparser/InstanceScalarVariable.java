@@ -4,8 +4,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 public class InstanceScalarVariable {
-    private ModelConnection.ModelInstance modelInstance;
-    private ModelDescription.ScalarVariable scalarVariable;
+    public final  ModelConnection.ModelInstance modelInstance;
+    public final  ModelDescription.ScalarVariable scalarVariable;
     public InstanceScalarVariable(ModelConnection.ModelInstance modelInstance, ModelDescription.ScalarVariable scalarVariable) {
         this.modelInstance = modelInstance;
         this.scalarVariable = scalarVariable;

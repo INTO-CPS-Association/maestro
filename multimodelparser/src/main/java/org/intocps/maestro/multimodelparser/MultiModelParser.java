@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.topologicalsorting.TarjanGraph;
+import org.intocps.topologicalsorting.data.DependencyResult;
+import org.intocps.topologicalsorting.data.Edge11;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -13,6 +16,11 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.alg.CycleDetector;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import scala.jdk.javaapi.CollectionConverters;
 
 public class MultiModelParser {
     final ObjectMapper mapper = new ObjectMapper();
@@ -31,6 +39,14 @@ public class MultiModelParser {
                     outputsAndInputToOutputs.inputToOutputs.keySet().stream(), outputsAndInputToOutputs.outputs.keySet().stream())
                     .collect(Collectors.toSet());
 
+            DependencyResult<Port> topologicalSorting = performTopologicalSorting(outputsAndInputToOutputs.inputToOutputs, allInstances, fmuKeyToModelDescription);
+            DirectedGraph<Port, LabelledEdge> topologicalSorting2 = performLegacyTopologicalSorting(outputsAndInputToOutputs.inputToOutputs, allInstances, fmuKeyToModelDescription);
+            CycleDetector<Port, LabelledEdge> cycleDetector = new CycleDetector<>(topologicalSorting2);
+            if(cycleDetector.detectCycles())
+            {
+                System.out.println("Detected cycle: " + cycleDetector.findCycles());
+            }
+            System.out.println("FInished parsing");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,15 +114,93 @@ public class MultiModelParser {
         return fmuKeyToFmuWithMD;
     }
 
-    private static void performTopologicalSorting(
+    private static DependencyResult<Port> performTopologicalSorting(
             HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputToOutputs,
             Set<ModelConnection.ModelInstance> allInstances,
-            HashMap<String, ModelDescription> fmuKeyToModelDescription){
-        
-        // In order to calculate the dependencies it is necessary to represent each simulation instance
+            HashMap<String, ModelDescription> fmuKeyToModelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
 
+        List<Edge11<Port, EdgeType>> edges = new ArrayList<>();
 
+        // Create all internal edges
+        for(ModelConnection.ModelInstance instance : allInstances )
+        {
+            List<ModelDescription.ScalarVariable> allOutputPorts = fmuKeyToModelDescription.get(instance.key).
+                    getScalarVariables().stream().filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
+
+            for(ModelDescription.ScalarVariable outputScalarVariable : allOutputPorts)
+            {
+                Port outputPort = new Port(instance, outputScalarVariable);
+                for(ModelDescription.ScalarVariable internalInputDependencyForOutput : outputScalarVariable.outputDependencies.keySet()) {
+                    Port inputPort = new Port(instance, internalInputDependencyForOutput);
+                    EdgeType type = EdgeType.InternalDependency;
+                    edges.add(new Edge11<>(inputPort, outputPort, type));
+                }
+            }
+        }
+
+        // Create all external edges
+        for (Map.Entry<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputEntryToOutputs : inputToOutputs.entrySet())
+        {
+            for(Map.Entry<ModelDescription.ScalarVariable, InstanceScalarVariable> inputScalarVariableToOutput : inputEntryToOutputs.getValue().entrySet()) {
+                Port inputPort = new Port(inputEntryToOutputs.getKey(), inputScalarVariableToOutput.getKey());
+                Port outputPort = new Port(inputScalarVariableToOutput.getValue().modelInstance, inputScalarVariableToOutput.getValue().scalarVariable);
+                edges.add(new Edge11<>(outputPort, inputPort, EdgeType.ExternalLink));
+            }
+        }
+
+        TarjanGraph<Port, EdgeType> graph = new TarjanGraph<Port, EdgeType>(CollectionConverters.asScala(edges));
+        DependencyResult<Port> result = graph.topologicalSort();
+        return result;
     }
+
+    private static DirectedGraph<Port, LabelledEdge> performLegacyTopologicalSorting(
+            HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputToOutputs,
+            Set<ModelConnection.ModelInstance> allInstances,
+            HashMap<String, ModelDescription> fmuKeyToModelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+
+        DirectedGraph<Port, LabelledEdge> g = new DefaultDirectedGraph<Port, LabelledEdge>(LabelledEdge.class);
+
+
+
+        List<Edge11<Port, EdgeType>> edges = new ArrayList<>();
+
+        // Create all internal edges
+        for(ModelConnection.ModelInstance instance : allInstances )
+        {
+            List<ModelDescription.ScalarVariable> allOutputPorts = fmuKeyToModelDescription.get(instance.key).
+                    getScalarVariables().stream().filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
+
+            for(ModelDescription.ScalarVariable outputScalarVariable : allOutputPorts)
+            {
+
+                Port outputPort = new Port(instance, outputScalarVariable);
+                g.addVertex(outputPort);
+                for(ModelDescription.ScalarVariable internalInputDependencyForOutput : outputScalarVariable.outputDependencies.keySet()) {
+                    Port inputPort = new Port(instance, internalInputDependencyForOutput);
+                    EdgeType type = EdgeType.InternalDependency;
+                    g.addVertex(inputPort);
+                    g.addEdge(outputPort, inputPort, new LabelledEdge(type));
+                }
+            }
+        }
+
+        // Create all external edges
+        for (Map.Entry<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputEntryToOutputs : inputToOutputs.entrySet())
+        {
+            for(Map.Entry<ModelDescription.ScalarVariable, InstanceScalarVariable> inputScalarVariableToOutput : inputEntryToOutputs.getValue().entrySet()) {
+                Port inputPort = new Port(inputEntryToOutputs.getKey(), inputScalarVariableToOutput.getKey());
+                Port outputPort = new Port(inputScalarVariableToOutput.getValue().modelInstance, inputScalarVariableToOutput.getValue().scalarVariable);
+                g.addVertex(inputPort);
+                g.addVertex(outputPort);
+                g.addEdge(outputPort, inputPort, new LabelledEdge(EdgeType.ExternalLink));
+            }
+        }
+
+
+        return g;
+    }
+
+
 
     /**
      * Constructs a Map from FMI Input ModelInstance to Map from Input Scalar Variable to related Output InstanceScalarVariable.

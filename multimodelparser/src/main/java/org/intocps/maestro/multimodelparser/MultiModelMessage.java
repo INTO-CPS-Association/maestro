@@ -3,6 +3,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -13,8 +15,11 @@ import java.util.Map;
 public class MultiModelMessage
 {
 
+    //@JsonProperty
     public Map<String, String> fmus;
+    //@JsonProperty
     public Map<String, List<String>> connections;
+    //@JsonProperty
     public Map<String, Object> parameters;
 
 

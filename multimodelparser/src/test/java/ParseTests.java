@@ -7,8 +7,8 @@ import java.io.InputStream;
 
 public class ParseTests {
     @Test
-    public void ParsesMultiModelMessage(){
-        InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel-proposal.json");
+    public void ParsesMultiModelMessage() throws Exception {
+        InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel.json");
         MultiModelParser mmp = new MultiModelParser();
         MultiModelMessage msg = mmp.ParseMultiModel(multimodelJson);
         Assert.assertTrue(msg.fmus.size() == 2);
