@@ -3,19 +3,22 @@ package org.intocps.maestro.multimodelparser;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-public class InstanceScalarVariable {
-    private ModelConnection.ModelInstance modelInstance;
-    private ModelDescription.ScalarVariable scalarVariable;
-    public InstanceScalarVariable(ModelConnection.ModelInstance modelInstance, ModelDescription.ScalarVariable scalarVariable) {
+public class Port
+{
+    public final ModelConnection.ModelInstance modelInstance;
+    public final ModelDescription.ScalarVariable sv;
+
+    public Port(ModelConnection.ModelInstance modelInstance, ModelDescription.ScalarVariable sv)
+    {
         this.modelInstance = modelInstance;
-        this.scalarVariable = scalarVariable;
+        this.sv = sv;
     }
 
     @Override public boolean equals(Object obj)
     {
         if (obj instanceof org.intocps.orchestration.coe.initializing.Port)
             return this.modelInstance.equals(((org.intocps.orchestration.coe.initializing.Port) obj).modelInstance)
-                    && scalarVariable.equals(((org.intocps.orchestration.coe.initializing.Port) obj).sv);
+                    && sv.equals(((org.intocps.orchestration.coe.initializing.Port) obj).sv);
         return false;
     }
 
@@ -23,13 +26,13 @@ public class InstanceScalarVariable {
     {
         HashCodeBuilder builder = new HashCodeBuilder();
         builder.append(modelInstance);
-        builder.append(scalarVariable);
+        builder.append(sv);
         return builder.hashCode();
     }
 
     @Override public String toString()
     {
-        return modelInstance.toString() + "." + scalarVariable.name + ": "
-                + scalarVariable.causality;
+        return modelInstance.toString() + "." + sv.name + ": "
+                + sv.causality;
     }
 }

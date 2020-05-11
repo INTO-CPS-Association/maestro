@@ -3,9 +3,6 @@ package org.intocps.maestro.multimodelparser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.config.InvalidVariableStringException;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -15,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MultiModelParser {
     final ObjectMapper mapper = new ObjectMapper();
@@ -25,11 +23,13 @@ public class MultiModelParser {
             msg = mapper.readValue(is, MultiModelMessage.class);
             Map<String, URI> fmuToURI = msg.getFmuFiles();
             List<ModelConnection> connections = buildConnections(msg.connections);
-            List<ModelParameter> parameters = buildParameters(msg.parameters);
-            HashMap<String, ModelDescription> fmuKeyToFmuWithMD = buildFmuKeyToFmuMD(fmuToURI);
+            //List<ModelParameter> parameters = buildParameters(msg.parameters);
+            HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
             HashMap<String, Integer> fmusToInstancesCount = fmusToInstancesCount(msg.fmus.keySet(), connections);
-            HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>>
-                    inputToOutputs = constructInputToOutputMap(connections, fmuKeyToFmuWithMD);
+            OutputsAndInputsToOutputs outputsAndInputToOutputs = constructOutputsAndInputToOutputMap(connections, fmuKeyToModelDescription);
+            Set<ModelConnection.ModelInstance> allInstances = Stream.concat(
+                    outputsAndInputToOutputs.inputToOutputs.keySet().stream(), outputsAndInputToOutputs.outputs.keySet().stream())
+                    .collect(Collectors.toSet());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -57,7 +57,7 @@ public class MultiModelParser {
                 }
                 return instances;
             }).collect(Collectors.toSet()).size();
-        fmusToInstancesCount.put(key, instancesCountForKey);
+            fmusToInstancesCount.put(key, instancesCountForKey);
         }
         return fmusToInstancesCount;
     }
@@ -90,12 +90,22 @@ public class MultiModelParser {
         for(Map.Entry<String, URI> entry : fmus.entrySet()) {
             String key = entry.getKey();
             URI value = entry.getValue();
-                IFmu fmu = FmuFactory.create(null,value);
-                ModelDescription md = new ModelDescription(fmu.getModelDescription());
-                fmuKeyToFmuWithMD.put(key, md);
+            IFmu fmu = FmuFactory.create(null,value);
+            ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            fmuKeyToFmuWithMD.put(key, md);
         }
 
         return fmuKeyToFmuWithMD;
+    }
+
+    private static void performTopologicalSorting(
+            HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputToOutputs,
+            Set<ModelConnection.ModelInstance> allInstances,
+            HashMap<String, ModelDescription> fmuKeyToModelDescription){
+        
+        // In order to calculate the dependencies it is necessary to represent each simulation instance
+
+
     }
 
     /**
@@ -108,9 +118,11 @@ public class MultiModelParser {
      * @throws InvocationTargetException
      * @return
      */
-    public static HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>>
-    constructInputToOutputMap(List<ModelConnection> connections, HashMap<String, ModelDescription> fmuKeyToFmuWithMD)
+    public static OutputsAndInputsToOutputs
+    constructOutputsAndInputToOutputMap(List<ModelConnection> connections, HashMap<String, ModelDescription> fmuKeyToFmuWithMD)
             throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+
+        HashMap<ModelConnection.ModelInstance, Set<ModelDescription.ScalarVariable>> outputs = new HashMap<>();
         HashMap<ModelConnection.ModelInstance, HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable>> inputToOutputMap = new HashMap<>();
         for(ModelConnection conn : connections){
             // TODO: Validate only one instead of findFirst?
@@ -126,6 +138,7 @@ public class MultiModelParser {
             {
                 ModelDescription.ScalarVariable toVar = toVariable.get();
                 ModelDescription.ScalarVariable fromVar = fromVariable.get();
+                // Adding to inputToOutputMap
                 HashMap<ModelDescription.ScalarVariable, InstanceScalarVariable> inputSvToOutputInstanceScalarVariable = null;
                 if(inputToOutputMap.containsKey(conn.to.instance))
                 {
@@ -137,9 +150,23 @@ public class MultiModelParser {
                     inputToOutputMap.put(conn.to.instance, inputSvToOutputInstanceScalarVariable);
                 }
                 inputSvToOutputInstanceScalarVariable.put(toVar, new InstanceScalarVariable(conn.from.instance, fromVar));
+
+                Set<ModelDescription.ScalarVariable> outputScalarVariablesForInstance;
+                // Adding to outputs
+                if(outputs.containsKey(conn.from.instance))
+                {
+                    outputScalarVariablesForInstance = outputs.get(conn.from.instance);
+                }
+                else {
+                    outputScalarVariablesForInstance = new HashSet<>();
+                    outputs.put(conn.from.instance, outputScalarVariablesForInstance);
+                }
+                outputScalarVariablesForInstance.add(fromVar);
             }
         }
 
-        return inputToOutputMap;
+        OutputsAndInputsToOutputs outputsAndInputsToOutputs = new OutputsAndInputsToOutputs(inputToOutputMap, outputs);
+        return outputsAndInputsToOutputs;
     }
+
 }
