@@ -1,7 +1,12 @@
 package org.intocps.maestro.plugin.env.fmi2;
 
 import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 public class ComponentInfo implements UnitRelationship.FrameworkUnitInfo {
-    final Object modelDescription = null;
+    public final ModelDescription modelDescription;
+
+    public ComponentInfo(ModelDescription modelDescription) {
+        this.modelDescription = modelDescription;
+    }
 }
