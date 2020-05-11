@@ -1,11 +1,8 @@
 package org.intocps.topologicalsorting
 
-import org.intocps.multimodelparser.data.{ConnectionScalarVariable, IODependencyAcyclic, IODependencyCyclic, IODependencyResult}
+import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, DependencyResult, Edge}
 
 import scala.collection.mutable
-
-case class Edge[A](from: A, to: Set[A])
-
 class TarjanGraph[A](src: Iterable[Edge[A]]) {
   lazy val tarjan: mutable.Buffer[mutable.Buffer[A]] = {
     var s = mutable.Buffer.empty[A] //Stack to keep track of nodes reachable from current node
@@ -55,7 +52,7 @@ class TarjanGraph[A](src: Iterable[Edge[A]]) {
     if (hasCycle) Seq[Edge[A]]()
     else tarjan.flatten.reverse.flatMap(x => src.find(_.from == x)).toSeq
 
-  lazy val topologicalSort: IODependencyResult =
-    if (hasCycle) IODependencyCyclic(tarjanCycle.map(o => o.reverse.mkString("Cycle: ", " -> ", " -> " + o.reverse.head.toString)).mkString("\n"))
-    else IODependencyAcyclic(tarjan.flatten.reverse.map(_.asInstanceOf[ConnectionScalarVariable]).toList)
+  lazy val topologicalSort: DependencyResult[A] =
+    if (hasCycle) CyclicDependencyResult[A](tarjanCycle.map(o => o.reverse.mkString("Cycle: ", " -> ", " -> " + o.reverse.head.toString)).mkString("\n"))
+    else AcyclicDependencyResult[A](tarjan.flatten.reverse.toList)
 }

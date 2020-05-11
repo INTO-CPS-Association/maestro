@@ -7,7 +7,8 @@ import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
 import org.intocps.maestro.plugin.{IMaestroPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
-import org.intocps.topologicalsorting.{Edge, TarjanGraph}
+import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, Edge}
+import org.intocps.topologicalsorting.{TarjanGraph}
 
 import scala.jdk.CollectionConverters._
 
@@ -24,8 +25,8 @@ object Initializer {
       // Perform topological sorting
       val tg = new TarjanGraph[ConnectionScalarVariable](edgeConvertedConnections);
       tg.topologicalSort match {
-        case IODependencyCyclic(cycle)       => Left(cycle)
-        case IODependencyAcyclic(totalOrder) => Right(totalOrder)
+        case CyclicDependencyResult(cycle)       => Left(cycle)
+        case AcyclicDependencyResult(totalOrder) => Right(totalOrder)
       }
     })
 

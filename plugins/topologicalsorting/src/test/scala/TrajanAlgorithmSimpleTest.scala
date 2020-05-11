@@ -1,6 +1,5 @@
-
-import org.intocps.multimodelparser.data.{IODependencyAcyclic, IODependencyCyclic}
-import org.intocps.topologicalsorting.{Edge, TarjanGraph}
+import org.intocps.topologicalsorting.TarjanGraph
+import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, Edge}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -26,8 +25,8 @@ class TarjanAlgorithmSimpleTest extends AnyFlatSpec with Matchers {
       assert(g.hasCycle)
       val sort = g.topologicalSort
       sort match {
-        case IODependencyCyclic(cycle) => println(cycle); assert(true)
-        case IODependencyAcyclic(totalOrder) => assert(false)
+        case CyclicDependencyResult(cycle) => println(cycle); assert(true)
+        case AcyclicDependencyResult(totalOrder) => assert(false)
       }
     })
   }
@@ -44,8 +43,8 @@ class TarjanAlgorithmSimpleTest extends AnyFlatSpec with Matchers {
     assert(g.tarjanCycle.size == 2)
     val sort = g.topologicalSort
     sort match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(true)
-      case IODependencyAcyclic(totalOrder) => assert(false)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(true)
+      case AcyclicDependencyResult(totalOrder) => assert(false)
     }
   }
 
@@ -63,8 +62,8 @@ class TarjanAlgorithmSimpleTest extends AnyFlatSpec with Matchers {
     assert(g.tarjanCycle.size == 3)
     val sort = g.topologicalSort
     sort match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(true)
-      case IODependencyAcyclic(totalOrder) => assert(false)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(true)
+      case AcyclicDependencyResult(totalOrder) => assert(false)
     }
   }
 
@@ -74,8 +73,8 @@ class TarjanAlgorithmSimpleTest extends AnyFlatSpec with Matchers {
     assert(g.hasCycle)
     val sort = g.topologicalSort
     sort match {
-      case IODependencyCyclic(cycle) => println(cycle); assert(true)
-      case IODependencyAcyclic(totalOrder) => assert(false)
+      case CyclicDependencyResult(cycle) => println(cycle); assert(true)
+      case AcyclicDependencyResult(totalOrder) => assert(false)
     }
   }
 
