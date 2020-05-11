@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 public class UnitRelationship implements ISimulationEnvironment {
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
+
+    //TODO: Provide constructor that takes json inputstream.
     public UnitRelationship(List<ModelConnection> connections, HashMap<String, ModelDescription> fmuKeyToModelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException, EnvironmentException {
 
         Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
