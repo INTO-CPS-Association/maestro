@@ -10,6 +10,9 @@ import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
@@ -116,6 +119,12 @@ public class UnitRelationship implements ISimulationEnvironment {
             e.printStackTrace();
         }
 
+    }
+
+    public static UnitRelationship of(File file) throws IOException {
+        try (InputStream is = new FileInputStream(file)) {
+            return new UnitRelationship(is);
+        }
     }
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
