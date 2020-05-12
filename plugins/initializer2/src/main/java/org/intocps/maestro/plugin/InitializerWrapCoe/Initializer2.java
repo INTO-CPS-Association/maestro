@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroPlugin;
+import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.UnfoldException;
 
@@ -15,7 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Initializer2 implements IMaestroPlugin {
+public class Initializer2 implements IMaestroUnfoldPlugin {
     final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null), null, MableAstFactory.newAVoidType());
     SpecGen specGen;
     Config config;
@@ -44,7 +46,7 @@ public class Initializer2 implements IMaestroPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config) throws UnfoldException {
+    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, IErrorReporter errorReporter) throws UnfoldException {
         if( declaredFunction == this.f1 && config instanceof Config)
         {
             this.config = (Config)config;
@@ -55,8 +57,8 @@ public class Initializer2 implements IMaestroPlugin {
                 throw new UnfoldException("Failed to unfold:", e);
             }
         }
-else {
-        throw new UnfoldException("Bad config type");}
+        else {
+            throw new UnfoldException("Bad config type");}
     }
 
 

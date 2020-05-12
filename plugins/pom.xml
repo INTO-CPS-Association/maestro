@@ -20,7 +20,6 @@
     <modules>
         <module>api</module>
         <module>demo</module>
-      <module>multimodelparser</module>
         <module>topologicalsorting</module>
         <module>initializer-wrap-coe</module>
         <module>initializer2</module>

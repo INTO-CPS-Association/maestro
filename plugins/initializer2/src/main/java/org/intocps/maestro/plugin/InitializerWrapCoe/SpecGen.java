@@ -57,10 +57,10 @@ public class SpecGen {
         HashMap<String, HashMap<ModelDescription.ScalarVariable, InstanceVariable>> instanceInputsToOutput = null;
         HashMap<String, InstanceConfiguration> instanceToInstanceConfiguration = null;
 
-        GiveMeInstanceData(lexName)
+
 
         // Load all FMUs --> REQUIRES FMU NAMES AND URIs
-        List<PStm> fmuNames = createLoadStatements(fmus);
+        //List<PStm> fmuNames = createLoadStatements(fmus);
 
         // Create and initialize all instances:
         // REQUIRES FMU -> INSTANCE MAPPING

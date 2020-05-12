@@ -1,6 +1,7 @@
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.PStm;
 import org.intocps.maestro.plugin.IMaestroPlugin;
+import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerWrapCoe.Initializer2;
 import org.intocps.maestro.plugin.InitializerWrapCoe.SpecGen;
@@ -20,7 +21,7 @@ public class PluginInterfaceTests {
     @Test
     public void ParseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
-        IMaestroPlugin plugin = new Initializer2();
+        IMaestroUnfoldPlugin plugin = new Initializer2();
         plugin.parseConfig(minimalConfiguration);
     }
 
@@ -28,10 +29,10 @@ public class PluginInterfaceTests {
     public void UnfoldCallsSpecGen() throws IOException, UnfoldException {
         SpecGen specGenMock = Mockito.mock(SpecGen.class);
         InputStream pluginConfiguration = minimalConfiguration;
-        IMaestroPlugin plugin = new Initializer2(specGenMock);
+        IMaestroUnfoldPlugin plugin = new Initializer2(specGenMock);
         AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
-        PStm stm = plugin.unfold(funcDecl, null, parsedPluginConfiguration);
+        PStm stm = plugin.unfold(funcDecl, null, parsedPluginConfiguration, null);
         // matchers is just to ensure strings are not empy.
         verify(specGenMock).run(contains("test"), contains("startTime"));
 
