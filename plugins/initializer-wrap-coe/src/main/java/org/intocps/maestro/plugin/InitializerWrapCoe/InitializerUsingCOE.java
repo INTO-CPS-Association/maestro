@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.UnfoldException;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,15 +18,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
-    final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null), null, MableAstFactory.newAVoidType());
+    final AFunctionDeclaration f1 = MableAstFactory
+            .newAFunctionDeclaration(new LexIdentifier("initialize", null), null, MableAstFactory.newAVoidType());
     SpecGen specGen;
     Config config;
-    public InitializerUsingCOE()
-    {
+
+    public InitializerUsingCOE() {
         this.specGen = new SpecGen();
     }
 
-    public InitializerUsingCOE(SpecGen specGen){
+    public InitializerUsingCOE(SpecGen specGen) {
         this.specGen = specGen;
     }
 
@@ -46,19 +47,19 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, IErrorReporter errorReporter) throws UnfoldException {
-        if( declaredFunction == this.f1 && config instanceof Config)
-        {
-            this.config = (Config)config;
+    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
+            IErrorReporter errorReporter) throws UnfoldException {
+        if (declaredFunction == this.f1 && config instanceof Config) {
+            this.config = (Config) config;
             try {
                 PStm statement = specGen.run(this.config.configuration.toString(), this.config.start_message.toString());
                 return statement;
             } catch (JsonProcessingException e) {
                 throw new UnfoldException("Failed to unfold:", e);
             }
+        } else {
+            throw new UnfoldException("Bad config type");
         }
-        else {
-            throw new UnfoldException("Bad config type");}
     }
 
     @Override
@@ -77,14 +78,13 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
 
     public static class Config implements IPluginConfiguration {
 
-        public Config(JsonNode configuration, JsonNode start_message)
-        {
+        private final JsonNode configuration;
+        private final JsonNode start_message;
+
+        public Config(JsonNode configuration, JsonNode start_message) {
             this.configuration = configuration;
             this.start_message = start_message;
         }
-        private JsonNode configuration;
-
-        private JsonNode start_message;
 
         public JsonNode getConfiguration() {
             return configuration;

@@ -28,12 +28,7 @@
             <version>${scala.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.intocps.plugins.multimodelparser</groupId>
-            <artifactId>data</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
 
-        </dependency>
 
         <!-- Test -->
         <dependency>

@@ -10,13 +10,9 @@ import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -25,8 +21,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
 
-    public UnitRelationship(InputStream is)
-    {
+    public UnitRelationship(InputStream is) {
         ObjectMapper mapper = new ObjectMapper();
         EnvironmentMessage msg = null;
         try {
@@ -36,36 +31,38 @@ public class UnitRelationship implements ISimulationEnvironment {
             HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
 
             Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
-            for(ModelConnection instance : connections){
+            for (ModelConnection instance : connections) {
                 instancesFromConnections.add(instance.from.instance);
                 instancesFromConnections.add(instance.to.instance);
-                if(!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName))
-                    instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key)));
-                if(!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName))
-                    instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key)));
+                if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
+                    instanceNameToInstanceComponentInfo
+                            .put(instance.from.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key)));
+                }
+                if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
+                    instanceNameToInstanceComponentInfo
+                            .put(instance.to.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key)));
+                }
             }
 
-            for(ModelConnection.ModelInstance instance : instancesFromConnections )
-            {
+            for (ModelConnection.ModelInstance instance : instancesFromConnections) {
                 LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
                 Set<Relation> instanceRelations = getOrCrateRelationsForLexIdentifier(instanceLexIdentifier);
 
-                List<ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
-                        instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
-                                .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
+                List<ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts = instanceNameToInstanceComponentInfo
+                        .get(instance.instanceName).modelDescription.getScalarVariables().stream()
+                        .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
 
-                for(ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts)
-                {
+                for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                     Variable outputVariable = new Variable(new RelationVariable(outputScalarVariable, instanceLexIdentifier));
 
                     // dependantInputs are the inputs on which the current output depends on internally
                     Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
-                    for(ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()){
+                    for (ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
                         Variable inputVariable = new Variable(new RelationVariable(inputScalarVariable, instanceLexIdentifier));
                         dependantInputs.put(instanceLexIdentifier, inputVariable);
                         // TODO: Add relation from each input to the given output?
                     }
-                    if(dependantInputs.size() != 0){
+                    if (dependantInputs.size() != 0) {
                         Relation r = new Relation();
                         r.source = outputVariable;
                         r.targets = dependantInputs;
@@ -75,17 +72,17 @@ public class UnitRelationship implements ISimulationEnvironment {
                     }
 
                     // externalInputTargets are the inputs that depends on the current output based on the provided connections.
-                    List<ModelConnection.Variable> externalInputTargets = connections.stream().filter(conn -> conn.from.instance.equals(instance) && conn.from.variable.equals(outputScalarVariable.name)).map(conn -> conn.to).collect(Collectors.toList());
-                    if(externalInputTargets.size() != 0)
-                    {
+                    List<ModelConnection.Variable> externalInputTargets = connections.stream()
+                            .filter(conn -> conn.from.instance.equals(instance) && conn.from.variable.equals(outputScalarVariable.name))
+                            .map(conn -> conn.to).collect(Collectors.toList());
+                    if (externalInputTargets.size() != 0) {
                         // externalInputs are all the external Inputs that depends on the current output
                         Map<LexIdentifier, Variable> externalInputs = new HashMap<>();
-                        for(ModelConnection.Variable modelConnToVar : externalInputTargets)
-                        {
+                        for (ModelConnection.Variable modelConnToVar : externalInputTargets) {
                             ModelDescription md = instanceNameToInstanceComponentInfo.get(modelConnToVar.instance.instanceName).modelDescription;
-                            Optional<ModelDescription.ScalarVariable> toScalarVariable = md.getScalarVariables().stream().filter(sv -> sv.name.equals(modelConnToVar.variable)).findFirst();
-                            if(toScalarVariable.isPresent())
-                            {
+                            Optional<ModelDescription.ScalarVariable> toScalarVariable = md.getScalarVariables().stream()
+                                    .filter(sv -> sv.name.equals(modelConnToVar.variable)).findFirst();
+                            if (toScalarVariable.isPresent()) {
                                 LexIdentifier inputInstanceLexIdentifier = new LexIdentifier(modelConnToVar.instance.instanceName, null);
                                 Variable inputVariable = new Variable(new RelationVariable(toScalarVariable.get(), inputInstanceLexIdentifier));
                                 externalInputs.put(inputInstanceLexIdentifier, inputVariable);
@@ -94,15 +91,15 @@ public class UnitRelationship implements ISimulationEnvironment {
                                 Set<Relation> inputInstanceRelations = getOrCrateRelationsForLexIdentifier(inputInstanceLexIdentifier);
                                 Relation r = new Relation();
                                 r.source = inputVariable;
-                                r.targets = new HashMap<LexIdentifier, Variable>(){{
+                                r.targets = new HashMap<LexIdentifier, Variable>() {{
                                     put(instanceLexIdentifier, outputVariable);
                                 }};
                                 r.internalOrExternal = Relation.InternalOrExternal.External;
                                 r.direction = Relation.Direction.InputToOutput;
                                 inputInstanceRelations.add(r);
-                            }
-                            else {
-                                throw new EnvironmentException("Failed to find the scalar variable " + modelConnToVar.variable + " at " + modelConnToVar.instance + " when building the dependencies tree");
+                            } else {
+                                throw new EnvironmentException(
+                                        "Failed to find the scalar variable " + modelConnToVar.variable + " at " + modelConnToVar.instance + " when building the dependencies tree");
                             }
                         }
 
@@ -135,10 +132,10 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     private HashMap<String, ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus) throws Exception {
         HashMap<String, ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
-        for(Map.Entry<String, URI> entry : fmus.entrySet()) {
+        for (Map.Entry<String, URI> entry : fmus.entrySet()) {
             String key = entry.getKey();
             URI value = entry.getValue();
-            IFmu fmu = FmuFactory.create(null,value);
+            IFmu fmu = FmuFactory.create(null, value);
             ModelDescription md = new ModelDescription(fmu.getModelDescription());
             fmuKeyToFmuWithMD.put(key, md);
         }
@@ -146,12 +143,10 @@ public class UnitRelationship implements ISimulationEnvironment {
         return fmuKeyToFmuWithMD;
     }
 
-    Set<Relation> getOrCrateRelationsForLexIdentifier(LexIdentifier instanceLexIdentifier){
-        if(variableToRelations.containsKey(instanceLexIdentifier))
-        {
+    Set<Relation> getOrCrateRelationsForLexIdentifier(LexIdentifier instanceLexIdentifier) {
+        if (variableToRelations.containsKey(instanceLexIdentifier)) {
             return variableToRelations.get(instanceLexIdentifier);
-        }
-        else {
+        } else {
             Set<Relation> relations = new HashSet<>();
             variableToRelations.put(instanceLexIdentifier, relations);
             return relations;
@@ -160,6 +155,7 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     /**
      * Finds all the relations for the given FMU Component LexIdentifiers
+     *
      * @param identifiers FMU Component LexIdentifiers
      * @return
      */
@@ -168,12 +164,12 @@ public class UnitRelationship implements ISimulationEnvironment {
 
         // a, b
 
-//        Map<LexIdentifier, Object> internalMapping = identifiers.stream().collect(Collectors.toMap(Function.identity(), id -> {
+        //        Map<LexIdentifier, Object> internalMapping = identifiers.stream().collect(Collectors.toMap(Function.identity(), id -> {
 
-            //check context to find which FMU in the internal map that id points to in terms of FMU.modelinstance
-//            return null;
+        //check context to find which FMU in the internal map that id points to in terms of FMU.modelinstance
+        //            return null;
 
-//        }));
+        //        }));
 
         //a -> FMUA, b-> FMUB
 
@@ -192,12 +188,14 @@ public class UnitRelationship implements ISimulationEnvironment {
         /*
          * user of this for stepping will first look for all outputs from here and collect these or directly set or use these outputs + others and
          * then use the relation to set these*/
-        Set<Relation> returnValues = identifiers.stream().map(lexId -> variableToRelations.get(lexId)).flatMap(x -> x.stream()).collect(Collectors.toSet());
+        Set<Relation> returnValues = identifiers.stream().map(lexId -> variableToRelations.get(lexId)).flatMap(x -> x.stream())
+                .collect(Collectors.toSet());
         return returnValues;
     }
 
     /**
      * Finds all the relations for the given FMU Component LexIdentifiers
+     *
      * @param identifiers FMU Component LexIdentifiers
      * @return
      */
@@ -230,11 +228,6 @@ public class UnitRelationship implements ISimulationEnvironment {
 
         Map<LexIdentifier, Variable> targets;
 
-        enum InternalOrExternal{
-            Internal,
-            External
-        }
-
         public Variable getSource() {
             return source;
         }
@@ -243,8 +236,13 @@ public class UnitRelationship implements ISimulationEnvironment {
             return direction;
         }
 
-        public Set<Map<LexIdentifier, Variable>> getTargets() {
+        public Map<LexIdentifier, Variable> getTargets() {
             return targets;
+        }
+
+        enum InternalOrExternal {
+            Internal,
+            External
         }
 
         enum Direction {
