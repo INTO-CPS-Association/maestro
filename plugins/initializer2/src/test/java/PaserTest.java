@@ -34,7 +34,7 @@ public class PaserTest {
         wrtier.close();
 
         // Parse the spec
-        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, simulationEnvironment);
+        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, null);
         InputStream contextFile = null;
         ARootDocument doc = g.generate(Stream.of(f.getAbsolutePath()).map(File::new).collect(Collectors.toList()), contextFile);
         String parsedInitializationSpec = doc.getContent().getFirst().toString();
@@ -65,7 +65,7 @@ public class PaserTest {
         wrtier.close();
 
         // Parse the spec
-        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, simulationEnvironment);
+        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, null);
         InputStream contextFile = null;
         ARootDocument doc = g.generate(Stream.of(f.getAbsolutePath()).map(File::new).collect(Collectors.toList()), contextFile);
         String parsedInitializationSpec = doc.getContent().getFirst().toString();

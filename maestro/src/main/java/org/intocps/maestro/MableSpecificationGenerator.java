@@ -43,28 +43,29 @@ public class MableSpecificationGenerator {
     }
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile,
-            Framework framework) throws IOException {
-        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
+            Framework framework, List<String> importModules) throws IOException {
+        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
-            Framework framework) throws IOException {
-        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
+            Framework framework, List<String> importModules) throws IOException {
+        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
 
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, Map<String, String> rawPluginJsonContext,
-            Framework framework) {
+            Framework framework, List<String> importModules) {
         Collection<IMaestroUnfoldPlugin> plugins = PluginFactory.getPlugins(IMaestroUnfoldPlugin.class, framework);
 
-        plugins.forEach(p -> logger.info("Loaded plugin: {} - {}", p.getName(), p.getVersion()));
+        plugins.forEach(p -> logger.info("Located plugins: {} - {}", p.getName(), p.getVersion()));
 
+        Collection<IMaestroUnfoldPlugin> pluginsToUnfold = plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
 
         logger.debug("The following plugins will be used for unfolding: {}",
-                plugins.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
+                pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
 
 
-        return new PluginEnvironment(rootEnv, plugins.stream()
+        return new PluginEnvironment(rootEnv, pluginsToUnfold.stream()
                 .collect(Collectors.toMap(p -> p, p -> p.getDeclaredUnfoldFunctions().stream().collect(Collectors.toMap(Function.identity(), f -> {
                     try {
                         return (AFunctionType) typeResolver.resolve(f, rootEnv);
@@ -248,11 +249,14 @@ public class MableSpecificationGenerator {
 
             ASimulationSpecificationCompilationUnit simulationModule = simulationModuleOpt.get();
 
-            logger.info("\tImports {}",
-                    simulationModule.getImports().stream().map(LexIdentifier::toString).collect(Collectors.joining(" , ", "[ ", " ]")));
+            List<String> importedModuleNames = simulationModule.getImports().stream().map(LexIdentifier::toString).collect(Collectors.toList());
+
+            logger.info("\tImports {}", ("[ " + String.join(" , ", importedModuleNames) + " ]"));
+
+
 
             //load plugins
-            PluginEnvironment pluginEnvironment = loadUnfoldPlugins(typeResolver, rootEnv, contextFile, framework);
+            PluginEnvironment pluginEnvironment = loadUnfoldPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);
 
             try {
 

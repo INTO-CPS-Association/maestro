@@ -35,8 +35,6 @@ public class SpecGen {
 
 
     public PStm run(String json, String startMsg) throws JsonProcessingException {
-
-
         System.setProperty(FmuFactory.customFmuFactoryProperty, StatementFactory.class.getName());
 
         SessionController sc = new SessionController(new ProdSessionLogicFactory());

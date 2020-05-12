@@ -3,6 +3,7 @@
 
 simulation
 import  FMI2;
+import InitializerUsingCOE
 {
 
 FMI2 fmuA = load("FMI2", "path/to/FMUA.fmu");
