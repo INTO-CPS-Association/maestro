@@ -4,6 +4,7 @@ import java.util
 import org.intocps.initializer.FMIASTFactory
 import org.intocps.maestro.ast.{AFunctionDeclaration, PExp, PStm}
 import org.intocps.maestro.core.messages.IErrorReporter
+import org.intocps.maestro.plugin.env.ISimulationEnvironment
 import org.intocps.maestro.plugin.{IMaestroUnfoldPlugin, IPluginConfiguration}
 import org.intocps.multimodelparser.data._
 import org.intocps.multimodelparser.parser.{ConfigurationHandler, RichMultiModelConfiguration}
@@ -21,7 +22,7 @@ class Initializer extends IMaestroUnfoldPlugin {
 
   override def getDeclaredUnfoldFunctions: util.Set[AFunctionDeclaration] = Set(FMIASTFactory.functionDeclaration("initialize")).asJava
 
-  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration, reporter: IErrorReporter): PStm = {
+  override def unfold(declaredFunction: AFunctionDeclaration, formalArguments: util.List[PExp], ctxt: IPluginConfiguration, env: ISimulationEnvironment, reporter: IErrorReporter): PStm = {
     calculateInitialize(new File("FIXME")) match {
       case Left(value)  => throw new Exception("Could not create initialize: " + value)
       case Right(value) => value

@@ -10,6 +10,7 @@ import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParser;
 import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.plugin.*;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.typechecker.PluginEnvironment;
 import org.intocps.maestro.typechecker.RootEnvironment;
 import org.intocps.maestro.typechecker.TypeComparator;
@@ -116,6 +117,8 @@ public class MableSpecificationGenerator {
 
         Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 
+        ISimulationEnvironment simulationEnvironment = null;
+
 
         List<AExternalStm> aExternalStms = NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>());
 
@@ -175,14 +178,14 @@ public class MableSpecificationGenerator {
                                 if (plugin.requireConfig()) {
                                     try {
                                         IPluginConfiguration config = env.getConfiguration(plugin);
-                                        unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config, reporter);
+                                        unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config, simulationEnvironment, reporter);
                                     } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
                                                 node.getCall().getRoot().toString(), e.getMessage());
                                     }
 
                                 } else {
-                                    unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), null, reporter);
+                                    unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), null, simulationEnvironment, reporter);
                                 }
                             } catch (UnfoldException e) {
                                 logger.error("Internal error in pluginn '{}' at {}. Message: {}", plugin.getName(),

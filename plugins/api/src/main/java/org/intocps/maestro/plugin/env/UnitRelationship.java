@@ -51,6 +51,7 @@ public class UnitRelationship implements ISimulationEnvironment {
         return this.getRelations(Arrays.asList(identifiers));
     }
 
+    @Override
     public <T extends FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework) {
         return null;
     }
@@ -63,10 +64,21 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     public static class Relation {
         Variable source;
-
         Direction direction;
         //TODO: other info about the relation that may be relevant
         Set<Map<LexIdentifier, Variable>> targets;
+
+        public Variable getSource() {
+            return source;
+        }
+
+        public Direction getDirection() {
+            return direction;
+        }
+
+        public Set<Map<LexIdentifier, Variable>> getTargets() {
+            return targets;
+        }
 
         enum Direction {
             Output,
