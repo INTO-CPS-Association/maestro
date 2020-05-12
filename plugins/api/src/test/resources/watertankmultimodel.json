@@ -6,9 +6,5 @@
   "connections":{
     "{x1}.controller.valve":["{x2}.tank.valvecontrol"],
     "{x2}.tank.level":["{x1}.controller.level"]
-  },
-  "parameters":{
-    "{x1}.controller.maxLevel":8,
-    "{x1}.controller.minLevel":2
   }
 }
