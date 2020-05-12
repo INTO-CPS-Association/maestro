@@ -1,9 +1,10 @@
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.MableSpecificationGenerator;
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.ARootDocument;
+import org.intocps.maestro.ast.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.PStm;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.plugin.InitializerWrapCoe.SpecGen;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public class PaserTest {
         wrtier.close();
 
         // Parse the spec
-        MableSpecificationGenerator g= new MableSpecificationGenerator(Framework.FMI2, false);
+        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, simulationEnvironment);
         InputStream contextFile = null;
         ARootDocument doc = g.generate(Stream.of(f.getAbsolutePath()).map(File::new).collect(Collectors.toList()), contextFile);
         String parsedInitializationSpec = doc.getContent().getFirst().toString();
@@ -64,7 +65,7 @@ public class PaserTest {
         wrtier.close();
 
         // Parse the spec
-        MableSpecificationGenerator g= new MableSpecificationGenerator(Framework.FMI2, false);
+        MableSpecificationGenerator g = new MableSpecificationGenerator(Framework.FMI2, false, simulationEnvironment);
         InputStream contextFile = null;
         ARootDocument doc = g.generate(Stream.of(f.getAbsolutePath()).map(File::new).collect(Collectors.toList()), contextFile);
         String parsedInitializationSpec = doc.getContent().getFirst().toString();

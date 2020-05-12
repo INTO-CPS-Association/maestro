@@ -5,6 +5,8 @@ import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,8 @@ public class Main {
                 .desc("Specify simulation framework: " + Arrays.stream(Framework.values()).map(Object::toString).collect(Collectors.joining(", ")))
                 .hasArg().type(Framework.class).required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
+        Option simulationEnvOpt = Option.builder("e").longOpt("env").desc("Path to an env file for the selected framework").hasArg().argName("path")
+                .build();
 
         Options options = new Options();
         options.addOption(helpOpt);
@@ -57,6 +61,7 @@ public class Main {
         options.addOption(contextOpt);
         options.addOption(interpretOpt);
         options.addOption(frameworkOpt);
+        options.addOption(simulationEnvOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -89,9 +94,23 @@ public class Main {
             configFile = new File(cmd.getOptionValue(contextOpt.getOpt()));
         }
 
+        ISimulationEnvironment simulationEnvironment = null;
+
+        switch (framework) {
+            case FMI2:
+                if (!cmd.hasOption(simulationEnvOpt.getOpt())) {
+                    System.err.println("Missing required argument " + simulationEnvOpt.getLongOpt() + " for framework: " + framework);
+                    return;
+                }
+                simulationEnvironment = UnitRelationship.of(new File(cmd.getOptionValue(simulationEnvOpt.getOpt())));
+                break;
+            case Any:
+                break;
+        }
+
         try (InputStream configIs = configFile == null ? null : new FileInputStream(configFile)) {
 
-            ARootDocument spec = new MableSpecificationGenerator(framework, verbose).generate(sourceFiles, configIs);
+            ARootDocument spec = new MableSpecificationGenerator(framework, verbose, simulationEnvironment).generate(sourceFiles, configIs);
 
             if (cmd.hasOption(interpretOpt.getOpt())) {
                 new MableInterpreter().execute(spec);
@@ -100,4 +119,6 @@ public class Main {
             e.printStackTrace();
         }
     }
+
+   
 }
