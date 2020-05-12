@@ -41,18 +41,18 @@ public class MableSpecificationGenerator {
     }
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile,
-            Framework framework) throws IOException {
+                                                       Framework framework) throws IOException {
         return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
     }
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
-            Framework framework) throws IOException {
+                                                       Framework framework) throws IOException {
         return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework);
     }
 
 
     private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, Map<String, String> rawPluginJsonContext,
-            Framework framework) {
+                                                       Framework framework) {
         Collection<IMaestroUnfoldPlugin> plugins = PluginFactory.getPlugins(IMaestroUnfoldPlugin.class, framework);
 
         plugins.forEach(p -> logger.info("Loaded plugin: {} - {}", p.getName(), p.getVersion()));
@@ -90,7 +90,7 @@ public class MableSpecificationGenerator {
             p.addErrorListener(new BaseErrorListener() {
                 @Override
                 public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-                        RecognitionException e) {
+                                        RecognitionException e) {
                     throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
                 }
             });
@@ -105,7 +105,7 @@ public class MableSpecificationGenerator {
     }
 
     private static ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit inputSimulationModule,
-            IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env) {
+                                                                           IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env) {
 
         ASimulationSpecificationCompilationUnit simulationModule = inputSimulationModule.clone();
 
@@ -113,7 +113,7 @@ public class MableSpecificationGenerator {
     }
 
     private static ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit simulationModule,
-            IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env, int depth) {
+                                                                           IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env, int depth) {
 
         Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 

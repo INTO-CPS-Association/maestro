@@ -56,22 +56,22 @@ public class TypeResolver {
 
         @Override
         public PType caseBoolean(Boolean node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseInteger(Integer node, Environment question) throws AnalysisException {
-            return factory.newAIntPrimitiveType();
+            return MableAstFactory.newAIntNumericPrimitiveType();
         }
 
         @Override
         public PType caseDouble(Double node, Environment question) throws AnalysisException {
-            return factory.newARealPrimitiveType();
+            return MableAstFactory.newARealNumericPrimitiveType();
         }
 
         @Override
         public PType caseLong(Long node, Environment question) throws AnalysisException {
-            return factory.newAUIntPrimitiveType();
+            return MableAstFactory.newAUIntNumericPrimitiveType();
         }
 
         @Override
@@ -192,7 +192,7 @@ public class TypeResolver {
 
         @Override
         public PType caseABoolLiteralExp(ABoolLiteralExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
 
@@ -213,32 +213,32 @@ public class TypeResolver {
 
         @Override
         public PType caseALessEqualBinaryExp(ALessEqualBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseALessBinaryExp(ALessBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseAGreaterBinaryExp(AGreaterBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseAEqualBinaryExp(AEqualBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
         @Override
         public PType caseANotEqualBinaryExp(ANotEqualBinaryExp node, Environment question) throws AnalysisException {
-            return factory.newABooleanPrimitiveType();
+            return MableAstFactory.newABoleanPrimitiveType();
         }
 
 
