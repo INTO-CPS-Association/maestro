@@ -34,19 +34,13 @@ public class SpecGen {
 
 
 
-    public PStm run(String json, String startMsg) throws JsonProcessingException {
+    public PStm run(String json, String startMsg) throws IOException, NanoHTTPD.ResponseException {
         System.setProperty(FmuFactory.customFmuFactoryProperty, StatementFactory.class.getName());
 
         SessionController sc = new SessionController(new ProdSessionLogicFactory());
         String s = sc.createNewSession();
         RequestProcessors rp = new RequestProcessors(sc);
-        try {
-            rp.processInitialize(s, json);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NanoHTTPD.ResponseException e) {
-            e.printStackTrace();
-        }
+        rp.processInitialize(s, json);
 
         Coe coe = sc.getCoe(s);
         // Extract the mapping: Input -> Corresponding output

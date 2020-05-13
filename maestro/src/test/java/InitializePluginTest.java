@@ -24,8 +24,6 @@ public class InitializePluginTest {
                 Stream.of(Paths.get("src", "test", "resources", "FMI2.mabl").toAbsolutePath().toString(),
                         Paths.get("src", "test", "resources", "InitializePluginTest","foldedspec.mabl").toAbsolutePath().toString())
                         .map(File::new).collect(Collectors.toList()), contextFile);
-
-        //new MableInterpreter().execute(doc);
     }
 
     public InputStream createConfigJson(){
