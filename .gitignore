@@ -64,7 +64,6 @@ target/
 .metadata/
 .classpath
 .settings/
-.metadata/
 .project
 .cproject
 bin
@@ -92,3 +91,4 @@ repository
 
 
 **/gen
+*.tokens
