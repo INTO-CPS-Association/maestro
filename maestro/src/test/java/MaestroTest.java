@@ -79,6 +79,21 @@ public class MaestroTest {
         new MableInterpreter().execute(doc);
     }
 
+    @Test
+    public void fixedStepSingleWt() throws IOException, AnalysisException {
+
+        InputStream contextFile = this.getClass().getResourceAsStream("configs/singleExternal.json");
+        ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true,
+                UnitRelationship.of(Paths.get("src", "test", "resources", "watertank_env.json").toAbsolutePath().toFile())).generate(
+                Stream.of(Paths.get("src", "test", "resources", "FMI2.mabl").toAbsolutePath().toString(),
+                        Paths.get("src", "test", "resources", "fixedstep_single_wt.mabl").toAbsolutePath().toString(),
+                        Paths.get("src", "test", "resources", "CSV.mabl").toAbsolutePath().toString()).map(File::new).collect(Collectors.toList()),
+                contextFile);
+
+
+        new MableInterpreter().execute(doc);
+    }
+
 
     @Test
     public void jsonParseTest() throws IOException {
