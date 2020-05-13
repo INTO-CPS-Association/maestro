@@ -9,6 +9,7 @@ import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.UnfoldException;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +47,7 @@ public class Initializer2 implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, IErrorReporter errorReporter) throws UnfoldException {
+    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws UnfoldException {
         if( declaredFunction == this.f1 && config instanceof Config)
         {
             this.config = (Config)config;
@@ -60,7 +61,6 @@ public class Initializer2 implements IMaestroUnfoldPlugin {
         else {
             throw new UnfoldException("Bad config type");}
     }
-
 
     @Override
     public boolean requireConfig() {

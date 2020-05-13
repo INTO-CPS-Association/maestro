@@ -1,4 +1,8 @@
-simulation {
+simulation
+import FixedStep;
+import TypeConverter;
+
+{
 
 CSV csv = load("CSV");
 CSVFile csvfile  = csv.open("result.csv");

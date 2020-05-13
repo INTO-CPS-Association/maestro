@@ -3,10 +3,13 @@ package org.intocps.maestro.plugin.InitializerWrapCoe;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.iki.elonen.NanoHTTPD;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
+import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 
@@ -17,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@SimulationFramework(framework = Framework.FMI2)
 public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
     final AFunctionDeclaration f1 = MableAstFactory
             .newAFunctionDeclaration(new LexIdentifier("initialize", null), null, MableAstFactory.newAVoidType());
@@ -54,7 +58,7 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
             try {
                 PStm statement = specGen.run(this.config.configuration.toString(), this.config.start_message.toString());
                 return statement;
-            } catch (JsonProcessingException e) {
+            } catch (IOException | NanoHTTPD.ResponseException e) {
                 throw new UnfoldException("Failed to unfold:", e);
             }
         } else {

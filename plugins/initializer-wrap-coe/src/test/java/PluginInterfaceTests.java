@@ -1,3 +1,4 @@
+import fi.iki.elonen.NanoHTTPD;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.PStm;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
@@ -26,7 +27,7 @@ public class PluginInterfaceTests {
     }
 
     @Test
-    public void UnfoldCallsSpecGen() throws IOException, UnfoldException {
+    public void UnfoldCallsSpecGen() throws IOException, UnfoldException, NanoHTTPD.ResponseException {
         SpecGen specGenMock = Mockito.mock(SpecGen.class);
         InputStream pluginConfiguration = minimalConfiguration;
         IMaestroUnfoldPlugin plugin = new InitializerUsingCOE(specGenMock);

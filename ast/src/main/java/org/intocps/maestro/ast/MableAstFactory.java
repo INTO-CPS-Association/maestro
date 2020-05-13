@@ -6,9 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MableAstFactory {
-
-
-    public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
+        public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
         return new AUIntNumericPrimitiveType();
     }
 

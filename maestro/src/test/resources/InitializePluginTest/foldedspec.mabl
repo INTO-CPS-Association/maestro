@@ -1,0 +1,8 @@
+simulation
+import FMI2;
+import InitializerUsingCOE;
+{
+    external initialize();
+    unload(tankcontroller);
+    unload(SingleWatertank);
+}

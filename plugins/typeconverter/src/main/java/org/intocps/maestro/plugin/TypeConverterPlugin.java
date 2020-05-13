@@ -1,11 +1,9 @@
 package org.intocps.maestro.plugin;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,77 +72,6 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
     }
 
 
-    private String getFmiGetName(ModelDescription.Types type, UsageType usage) {
-
-        String fun = usage == UsageType.In ? "set" : "get";
-        switch (type) {
-            case Boolean:
-                return fun + "Boolean";
-            case Real:
-                return fun + "Real";
-            case Integer:
-                return fun + "Integer";
-            case String:
-                return fun + "String";
-            case Enumeration:
-            default:
-                return null;
-        }
-    }
-
-    LexIdentifier getStateName(LexIdentifier comp) {
-        return newAIdentifier(comp.getText() + "State");
-    }
-
-    SPrimitiveType convert(ModelDescription.Types type) {
-        switch (type) {
-
-            case Boolean:
-                return newABoleanPrimitiveType();
-            case Real:
-                return newARealNumericPrimitiveType();
-            case Integer:
-                return newAIntNumericPrimitiveType();
-            case String:
-                return newAStringPrimitiveType();
-            case Enumeration:
-            default:
-                return null;
-        }
-    }
-
-    LexIdentifier getBufferName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
-        return getBufferName(comp, convert(type), usage);
-    }
-
-
-    LexIdentifier getBufferName(LexIdentifier comp, SPrimitiveType type, UsageType usage) {
-
-        String t = getTypeId(type);
-
-        return newAIdentifier(comp.getText() + t + usage);
-    }
-
-    private String getTypeId(SPrimitiveType type) {
-        String t = type.getClass().getSimpleName();
-
-        if (type instanceof ARealNumericPrimitiveType) {
-            t = "R";
-        } else if (type instanceof AIntNumericPrimitiveType) {
-            t = "I";
-        } else if (type instanceof AStringPrimitiveType) {
-            t = "S";
-        } else if (type instanceof ABooleanPrimitiveType) {
-            t = "B";
-        }
-        return t;
-    }
-
-    LexIdentifier getVrefName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
-
-        return newAIdentifier(comp.getText() + "Vref" + getTypeId(convert(type)) + usage);
-    }
-
     @Override
     public boolean requireConfig() {
         return false;
@@ -152,12 +79,12 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
 
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return new FixedstepConfig(new ObjectMapper().readValue(is, Integer.class));
+        return null;
     }
 
     @Override
     public String getName() {
-        return getClass().getSimpleName();
+        return getClass().getSimpleName().substring(0, getClass().getSimpleName().indexOf("Plugin"));
     }
 
     @Override
@@ -165,16 +92,5 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
         return "0.0.1";
     }
 
-    enum UsageType {
-        In,
-        Out
-    }
 
-    class FixedstepConfig implements IPluginConfiguration {
-        final int endTime;
-
-        public FixedstepConfig(int endTime) {
-            this.endTime = endTime;
-        }
-    }
 }
