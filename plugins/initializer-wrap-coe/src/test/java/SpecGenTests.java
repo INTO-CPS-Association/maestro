@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SpecGenTests {
     @Test
-    @Ignore("Ignored because of set nondeterminism. Maven creates 1 result, intellij another")
+    //@Ignore("Ignored because of set nondeterminism. Maven creates 1 result, intellij another")
     public void testWatertankExample() throws IOException, NanoHTTPD.ResponseException {
         InputStream configurationDataStream = this.getClass().getResourceAsStream("watertankexample/mm.json");
         String configurationData = IOUtils.toString(configurationDataStream);
@@ -23,7 +23,8 @@ public class SpecGenTests {
 
         SpecGen sg = new SpecGen();
         PStm stm = sg.run(configurationData, startMsg);
-        Assert.assertEquals(stm.toString(), correctWatertank2results);
+        // Cannot check the whole spec due to nondeterministic sets
+        Assert.assertTrue(stm.toString().contains("real[] realValueSize7[7] = {9.0, 1.0, 1.0, 9.81, 1.0, 0.0, 0.0};"));
     }
 
     String correctWatertank2results = "{\n" +
