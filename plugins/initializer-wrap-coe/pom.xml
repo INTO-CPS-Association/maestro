@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.into-cps.orchestration</groupId>
             <artifactId>coe</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.10</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
         <dependency>

@@ -1,7 +1,6 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe.Spec;
 
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import scalaz.Alpha;
 
 public class VariableLocation {
     String variableId;
