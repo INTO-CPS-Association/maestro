@@ -1,0 +1,24 @@
+simulation
+import FixedStep;
+import TypeConverter;
+import InitializerUsingCOE;
+
+{
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+external initialize();
+
+IFmuComponent components[2]={wtInstance,crtlInstance};
+external fixedStep(components,STEP_SIZE,0.0,END_TIME);
+
+crtlInstance.terminate();
+wtInstance.terminate();
+
+tankcontroller.freeInstance(crtlInstance);
+SingleWatertank.freeInstance(wtInstance);
+
+unload(tankcontroller);
+unload(SingleWatertank);
+
+}
