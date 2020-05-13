@@ -1,6 +1,5 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface;
 
-import jdk.nashorn.internal.runtime.regexp.JoniRegExp;
 import org.intocps.fmi.IFmu;
 import org.intocps.orchestration.coe.IFmuFactory;
 
