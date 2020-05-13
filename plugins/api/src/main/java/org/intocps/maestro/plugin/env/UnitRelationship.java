@@ -70,7 +70,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                         r.source = outputVariable;
                         r.targets = dependantInputs;
                         r.direction = Relation.Direction.OutputToInput;
-                        r.internalOrExternal = Relation.InternalOrExternal.Internal;
+                        r.origin = Relation.InternalOrExternal.Internal;
                         instanceRelations.add(r);
                     }
 
@@ -97,7 +97,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                                 r.targets = new HashMap<LexIdentifier, Variable>() {{
                                     put(instanceLexIdentifier, outputVariable);
                                 }};
-                                r.internalOrExternal = Relation.InternalOrExternal.External;
+                                r.origin = Relation.InternalOrExternal.External;
                                 r.direction = Relation.Direction.InputToOutput;
                                 inputInstanceRelations.add(r);
                             } else {
@@ -110,7 +110,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                         r.source = outputVariable;
                         r.targets = externalInputs;
                         r.direction = Relation.Direction.OutputToInput;
-                        r.internalOrExternal = Relation.InternalOrExternal.External;
+                        r.origin = Relation.InternalOrExternal.External;
                         instanceRelations.add(r);
                     }
                 }
@@ -197,9 +197,8 @@ public class UnitRelationship implements ISimulationEnvironment {
         /*
          * user of this for stepping will first look for all outputs from here and collect these or directly set or use these outputs + others and
          * then use the relation to set these*/
-        Set<Relation> returnValues = identifiers.stream().map(lexId -> variableToRelations.get(lexId)).flatMap(x -> x.stream())
-                .collect(Collectors.toSet());
-        return returnValues;
+        return identifiers.stream().filter(id -> variableToRelations.containsKey(id)).map(lexId -> variableToRelations.get(lexId))
+                .flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
     /**
@@ -230,12 +229,13 @@ public class UnitRelationship implements ISimulationEnvironment {
     public static class Relation {
 
         Variable source;
-
-        InternalOrExternal internalOrExternal;
-
+        InternalOrExternal origin;
         Direction direction;
-
         Map<LexIdentifier, Variable> targets;
+
+        public InternalOrExternal getOrigin() {
+            return origin;
+        }
 
         public Variable getSource() {
             return source;
@@ -249,12 +249,18 @@ public class UnitRelationship implements ISimulationEnvironment {
             return targets;
         }
 
-        enum InternalOrExternal {
+        @Override
+        public String toString() {
+            return (origin == InternalOrExternal.Internal ? "I" : "E") + " " + source + " " + (direction == Direction.OutputToInput ? "->" : "<-") + " " + targets
+                    .entrySet().stream().map(map -> map.getValue().toString()).collect(Collectors.joining(",", "[", "]"));
+        }
+
+        public enum InternalOrExternal {
             Internal,
             External
         }
 
-        enum Direction {
+        public enum Direction {
             OutputToInput,
             InputToOutput
         }
@@ -269,6 +275,11 @@ public class UnitRelationship implements ISimulationEnvironment {
 
         <T extends FrameworkVariableInfo> T getFrameworkInfo(Framework framework) {
             return (T) scalarVariable;
+        }
+
+        @Override
+        public String toString() {
+            return scalarVariable.toString();
         }
     }
 

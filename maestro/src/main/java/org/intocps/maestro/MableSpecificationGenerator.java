@@ -139,7 +139,7 @@ public class MableSpecificationGenerator {
         }));
 
         externalTypeMap.entrySet().stream().filter(map -> !map.getValue().isPresent())
-                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s'", map.getKey().getCall().getRoot().toString()), null));
+                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s' at:", map.getKey().getCall().getRoot().toString()), null));
 
         if (externalTypeMap.entrySet().stream().anyMatch(map -> !map.getValue().isPresent())) {
             throw new RuntimeException("Unknown externals present cannot proceed");

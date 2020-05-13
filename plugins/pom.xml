@@ -19,6 +19,7 @@
 
     <modules>
         <module>api</module>
+<module>typeconverter</module>
 <module>fixedstep</module>
         <module>demo</module>
         <module>topologicalsorting</module>

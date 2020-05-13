@@ -78,7 +78,9 @@ public class FmiInterpreter {
             }
 
             if (!clz.isAssignableFrom(array.getValues().get(0).getClass())) {
-                throw new InterpreterException("Array not containing the right type");
+                throw new InterpreterException(
+                        "Array not containing the right type. Expected: " + clz.getSimpleName() + " Actual: " + array.getValues().get(0).getClass()
+                                .getSimpleName());
             }
 
             return array.getValues();
