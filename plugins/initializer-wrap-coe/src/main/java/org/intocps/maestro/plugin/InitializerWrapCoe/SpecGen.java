@@ -37,19 +37,20 @@ public class SpecGen {
 
         Coe coe = sc.getCoe(s);
         // Extract the mapping: Input -> Corresponding output
-        scala.collection.immutable.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
-                inputOutputMapping = coe.init()._3();
+        scala.collection.immutable.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputOutputMapping = coe
+                .init()._3();
         StatementContainer.getInstance().setInputOutputMapping(inputOutputMapping);
 
         StartMsgJson startMessage = new ObjectMapper().readValue(startMsg, StartMsgJson.class);
         Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
         // Overridding loglevels. Will be removed in future.
-        Coe.CoeSimulationHandle handle =
-                coe.getSimulateControlHandle(startMessage.startTime, startMessage.endTime, logLevels,
-                        startMessage.reportProgress, startMessage.liveLogInterval);
+        Coe.CoeSimulationHandle handle = coe
+                .getSimulateControlHandle(startMessage.startTime, startMessage.endTime, logLevels, startMessage.reportProgress,
+                        startMessage.liveLogInterval);
 
         handle.preSimulation();
         ABlockStm initializationStm = MableAstFactory.newABlockStm(StatementContainer.getInstance().getStatements());
+        rp.processDestroy(s);
         return initializationStm;
     }
 

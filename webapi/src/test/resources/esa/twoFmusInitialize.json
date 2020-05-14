@@ -1,0 +1,37 @@
+{
+  "fmus": {
+    "{controllerFmu}": "src/test/resources/esa/fmus/watertankController-Standalone.fmu",
+    "{tankFmu}": "src/test/resources/esa/fmus/singlewatertank-20sim.fmu"
+  },
+  "connections": {
+    "{tankFmu}.tankIns.level": [
+      "{controllerFmu}.crtlIns.level"
+    ]
+  },
+  "parameters": {
+    "{controllerFmu}.crtlIns.maxLevel": 8,
+    "{controllerFmu}.crtlIns.minLevel": 2
+  },
+  "inputs": {
+    "{tankFmu}.tankIns.valvecontrol": 1.0
+  },
+  "requested_outputs": {
+    "{controllerFmu}.crtlIns": [
+      "valve"
+    ],
+    "{tankFmu}.tankIns": [
+      "level"
+    ]
+  },
+  "log_levels": {
+    "{controllerFmu}.crtlIns": [
+      "logAll",
+      "logError",
+      "VdmErr"
+    ],
+    "{tankFmu}.tankIns": []
+  },
+  "step_size": 0.1,
+  "end_time": 0.5,
+  "simulator_log_level": "TRACE"
+}
