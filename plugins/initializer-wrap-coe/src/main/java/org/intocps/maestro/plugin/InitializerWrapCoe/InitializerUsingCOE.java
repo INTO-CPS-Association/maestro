@@ -1,6 +1,5 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.iki.elonen.NanoHTTPD;
@@ -15,15 +14,20 @@ import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.intocps.maestro.ast.MableAstFactory.*;
+
 @SimulationFramework(framework = Framework.FMI2)
 public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
-    final AFunctionDeclaration f1 = MableAstFactory
-            .newAFunctionDeclaration(new LexIdentifier("initialize", null), null, MableAstFactory.newAVoidType());
+    final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), MableAstFactory.newAVoidType());
     SpecGen specGen;
     Config config;
 
