@@ -1,5 +1,6 @@
 simulation
 import FMI2;
+import TypeConverter;
 import InitializerUsingCOE;
 {
 

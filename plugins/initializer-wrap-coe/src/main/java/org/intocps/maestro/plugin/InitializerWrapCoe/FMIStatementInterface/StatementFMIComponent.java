@@ -6,9 +6,6 @@ import org.intocps.maestro.plugin.InitializerWrapCoe.ConversionUtilities.Boolean
 import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 public class StatementFMIComponent implements IFmiComponent {
     private final String name;
@@ -29,11 +26,7 @@ public class StatementFMIComponent implements IFmiComponent {
     }
 
     @Override
-    public Fmi2Status setupExperiment(boolean b,
-                                      double v,
-                                      double v1,
-                                      boolean b1,
-                                      double v2) throws FmuInvocationException {
+    public Fmi2Status setupExperiment(boolean b, double v, double v1, boolean b1, double v2) throws FmuInvocationException {
         stmContainer.createSetupExperimentStatement(name, b, v, v1, b1, v2);
 
         return Fmi2Status.OK;
@@ -57,9 +50,7 @@ public class StatementFMIComponent implements IFmiComponent {
     }
 
     @Override
-    public Fmi2Status setRealInputDerivatives(long[] longs,
-                                              int[] ints,
-                                              double[] doubles) throws FmuInvocationException {
+    public Fmi2Status setRealInputDerivatives(long[] longs, int[] ints, double[] doubles) throws FmuInvocationException {
         throw new FmuInvocationException("notImplemented");
     }
 
@@ -69,9 +60,7 @@ public class StatementFMIComponent implements IFmiComponent {
     }
 
     @Override
-    public FmuResult<double[]> getDirectionalDerivative(long[] longs,
-                                                        long[] longs1,
-                                                        double[] doubles) throws FmuInvocationException {
+    public FmuResult<double[]> getDirectionalDerivative(long[] longs, long[] longs1, double[] doubles) throws FmuInvocationException {
         throw new FmuInvocationException("notImplemented");
     }
 
@@ -83,8 +72,7 @@ public class StatementFMIComponent implements IFmiComponent {
     @Override
     public FmuResult<double[]> getReal(long[] longs) throws FmuInvocationException {
         stmContainer.getReals(name, longs);
-        FmuResult<double[]> result = new FmuResult<double[]>(Fmi2Status.OK,
-                Arrays.stream(longs).mapToDouble(v -> 0.0).toArray());
+        FmuResult<double[]> result = new FmuResult<>(Fmi2Status.OK, Arrays.stream(longs).mapToDouble(v -> 0.0).toArray());
         return result;
     }
 
@@ -107,28 +95,24 @@ public class StatementFMIComponent implements IFmiComponent {
     }
 
     @Override
-    public Fmi2Status setBooleans(long[] longs,
-                                  boolean[] booleans) throws InvalidParameterException, FmiInvalidNativeStateException {
+    public Fmi2Status setBooleans(long[] longs, boolean[] booleans) throws InvalidParameterException, FmiInvalidNativeStateException {
         stmContainer.setBooleans(name, longs, booleans);
         return Fmi2Status.OK;
     }
 
     @Override
-    public Fmi2Status setReals(long[] longs,
-                               double[] doubles) throws InvalidParameterException, FmiInvalidNativeStateException {
-        stmContainer.setReals(name, longs, doubles);
+    public Fmi2Status setReals(long[] longs, double[] doubles) throws InvalidParameterException, FmiInvalidNativeStateException {
+        stmContainer.setReals2(name, longs, doubles);
         return Fmi2Status.OK;
     }
 
     @Override
-    public Fmi2Status setIntegers(long[] longs,
-                                  int[] ints) throws InvalidParameterException, FmiInvalidNativeStateException {
+    public Fmi2Status setIntegers(long[] longs, int[] ints) throws InvalidParameterException, FmiInvalidNativeStateException {
         throw new FmiInvalidNativeStateException("notImplemented");
     }
 
     @Override
-    public Fmi2Status setStrings(long[] longs,
-                                 String[] strings) throws InvalidParameterException, FmiInvalidNativeStateException {
+    public Fmi2Status setStrings(long[] longs, String[] strings) throws InvalidParameterException, FmiInvalidNativeStateException {
         throw new FmiInvalidNativeStateException("notImplemented");
     }
 

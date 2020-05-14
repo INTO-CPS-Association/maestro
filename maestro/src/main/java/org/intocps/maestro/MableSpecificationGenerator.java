@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 public class MableSpecificationGenerator {
 
+    final static int MAXRECURSIVEEXTERNALEXPANSIONDEPTH = 4;
     final static Logger logger = LoggerFactory.getLogger(MableSpecificationGenerator.class);
     final boolean verbose;
     final ISimulationEnvironment simulationEnvironment;
@@ -42,8 +43,8 @@ public class MableSpecificationGenerator {
         this.simulationEnvironment = simulationEnvironment;
     }
 
-    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile,
-            Framework framework, List<String> importModules) throws IOException {
+    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile, Framework framework,
+            List<String> importModules) throws IOException {
         return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
 
@@ -59,7 +60,8 @@ public class MableSpecificationGenerator {
 
         plugins.forEach(p -> logger.info("Located plugins: {} - {}", p.getName(), p.getVersion()));
 
-        Collection<IMaestroUnfoldPlugin> pluginsToUnfold = plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
+        Collection<IMaestroUnfoldPlugin> pluginsToUnfold = plugins.stream().filter(plugin -> importModules.contains(plugin.getName()))
+                .collect(Collectors.toList());
 
         logger.debug("The following plugins will be used for unfolding: {}",
                 pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
@@ -148,8 +150,8 @@ public class MableSpecificationGenerator {
 
         if (aExternalStms.isEmpty()) {
             return simulationModule;
-        } else if (depth > 3) {
-            throw new RuntimeException("Recursive external expansion larger than " + depth);
+        } else if (depth > MAXRECURSIVEEXTERNALEXPANSIONDEPTH) {
+            throw new RuntimeException("Recursive external expansion larger than " + MAXRECURSIVEEXTERNALEXPANSIONDEPTH);
         }
 
 
@@ -252,7 +254,6 @@ public class MableSpecificationGenerator {
             List<String> importedModuleNames = simulationModule.getImports().stream().map(LexIdentifier::toString).collect(Collectors.toList());
 
             logger.info("\tImports {}", ("[ " + String.join(" , ", importedModuleNames) + " ]"));
-
 
 
             //load plugins

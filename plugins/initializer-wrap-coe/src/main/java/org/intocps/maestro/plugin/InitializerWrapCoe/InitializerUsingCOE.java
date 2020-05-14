@@ -8,6 +8,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
+import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
 import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
@@ -58,6 +59,9 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
     @Override
     public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws UnfoldException {
+
+        // Reset statement container
+        StatementContainer.reset();
 
         if (declaredFunction != this.fun) {
             throw new UnfoldException("Invalid function");

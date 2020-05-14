@@ -76,6 +76,7 @@ public class SpecGen {
 
         handle.preSimulation();
         ABlockStm initializationStm = MableAstFactory.newABlockStm(StatementContainer.getInstance().getStatements());
+        handle.postSimulation();
         rp.processDestroy(s);
         return initializationStm;
     }
