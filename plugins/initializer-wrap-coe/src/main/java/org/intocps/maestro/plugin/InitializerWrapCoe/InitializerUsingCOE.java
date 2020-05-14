@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +25,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
-    final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null),
+    final AFunctionDeclaration fun = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), MableAstFactory.newAVoidType());
@@ -51,16 +52,53 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(f1).collect(Collectors.toSet());
+        return Stream.of(fun).collect(Collectors.toSet());
     }
 
     @Override
     public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws UnfoldException {
-        if (declaredFunction == this.f1 && config instanceof Config) {
+
+        if (declaredFunction != this.fun) {
+            throw new UnfoldException("Invalid function");
+        }
+
+        if (formalArguments == null || formalArguments.size() != fun.getFormals().size()) {
+            throw new UnfoldException("Invalid args");
+        }
+
+        if (env == null) {
+            throw new UnfoldException("Simulation environment must not be null");
+        }
+
+        List<LexIdentifier> knownComponentNames = null;
+
+        if (formalArguments.get(0) instanceof AIdentifierExp) {
+            LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
+            ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
+
+            Optional<AVariableDeclaration> compDecl = containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance)
+                    .map(ALocalVariableStm.class::cast).map(ALocalVariableStm::getDeclaration)
+                    .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+
+            if (!compDecl.isPresent()) {
+                throw new UnfoldException("Could not find names for comps");
+            }
+
+            AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
+
+            knownComponentNames = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
+                    .map(AIdentifierExp::getName).collect(Collectors.toList());
+        }
+
+        PExp startTime = formalArguments.get(1).clone();
+        PExp endTime = formalArguments.get(2).clone();
+
+        if (config instanceof Config) {
             this.config = (Config) config;
             try {
-                PStm statement = specGen.run(this.config.configuration.toString(), this.config.start_message.toString());
+                PStm statement = specGen
+                        .run(knownComponentNames, this.config.configuration.toString(), this.config.start_message.toString(), startTime, endTime);
                 return statement;
             } catch (IOException | NanoHTTPD.ResponseException e) {
                 throw new UnfoldException("Failed to unfold:", e);

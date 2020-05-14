@@ -94,7 +94,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                                 Set<Relation> inputInstanceRelations = getOrCrateRelationsForLexIdentifier(inputInstanceLexIdentifier);
                                 Relation r = new Relation();
                                 r.source = inputVariable;
-                                r.targets = new HashMap<LexIdentifier, Variable>() {{
+                                r.targets = new HashMap<>() {{
                                     put(instanceLexIdentifier, outputVariable);
                                 }};
                                 r.origin = Relation.InternalOrExternal.External;
@@ -146,6 +146,7 @@ public class UnitRelationship implements ISimulationEnvironment {
             URI value = entry.getValue();
             IFmu fmu = FmuFactory.create(null, value);
             ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            fmu.unLoad();
             fmuKeyToFmuWithMD.put(key, md);
         }
 

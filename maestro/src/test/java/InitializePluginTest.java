@@ -2,7 +2,7 @@ import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
-import org.junit.Ignore;
+import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -14,13 +14,18 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Ignore
 public class InitializePluginTest {
 
     @Test
     public void UnfoldInitialize() throws IOException, AnalysisException {
-        InputStream contextFile = createConfigJson();//this.getClass().getResourceAsStream("InitializePluginTest/config.json");
-        ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, null).generate(
+        File directory = new File(Paths.get("src", "test", "resources", "InitializePluginTest").toAbsolutePath().toString());
+
+        InputStream contextFile = createConfigJson();
+
+        UnitRelationship env = UnitRelationship.of(new File(directory, "env.json"));
+        //        UnitRelationship env = null;
+
+        ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, env).generate(
                 Stream.of(Paths.get("src", "test", "resources", "libraries/FMI2.mabl").toAbsolutePath().toString(),
                         Paths.get("src", "test", "resources", "InitializePluginTest", "foldedspec.mabl").toAbsolutePath().toString()).map(File::new)
                         .collect(Collectors.toList()), contextFile);

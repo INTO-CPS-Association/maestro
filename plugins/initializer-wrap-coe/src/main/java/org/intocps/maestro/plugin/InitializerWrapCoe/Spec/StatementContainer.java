@@ -20,20 +20,21 @@ public class StatementContainer {
     private final List<PStm> statements = new ArrayList<>();
     // FMU Name to AST Variable
     private final Map<String, AVariableDeclaration> fmuVariables = new HashMap<>();
-    private final Map<String, AVariableDeclaration> fmuInstances = new HashMap<>();
+    private final Map<String, LexIdentifier> fmuInstances = new HashMap<>();
     private final Map<Integer, LexIdentifier> realArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> boolArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<String, Map<Long, VariableLocation>> instanceVariables = new HashMap<>();
     private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputToOutputMapping = new HashMap<>();
+    private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
+    private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
+    public PExp endTime;
+    public PExp startTime;
     /**
      * <code>instancesLookupDependencies</code> is set to true the co-simulatino enters the stage where
      * dependencies are to be looked up. It is detected by the first "get".
      */
     private boolean instancesLookupDependencies = false;
-
-    private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
-    private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
 
 
     private StatementContainer() {
@@ -58,17 +59,23 @@ public class StatementContainer {
                                         MableAstFactory.newAIdentifierExp(valueArray))))));
     }
 
-    public void createLoadStatement(String fmuName, String guid, URI uri) {
-        AVariableDeclaration variable = MableAstFactory
-                .newAVariableDeclaration(createLexIdentifier.apply(fmuName), MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
-                        MableAstFactory.newAExpInitializer(MableAstFactory.newALoadExp(new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"), MableAstFactory.newAStringLiteralExp(guid),
-                                        MableAstFactory.newAStringLiteralExp(uri.toString()))))));
+    public void setInstances(List<LexIdentifier> knownComponentNames) {
+        knownComponentNames.forEach(l -> this.fmuInstances.put(l.getText(), l));
+    }
 
-        // Create variable
-        PStm statement = MableAstFactory.newALocalVariableStm(variable);
-        // statements.add(statement);
-        fmuVariables.put(fmuName, variable);
+    public void createLoadStatement(String fmuName, String guid, URI uri) {
+
+        //throw new UnsupportedOperationException("Loading FMUs no longer part of the initialize");
+        //        AVariableDeclaration variable = MableAstFactory
+        //                .newAVariableDeclaration(createLexIdentifier.apply(fmuName), MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
+        //                        MableAstFactory.newAExpInitializer(MableAstFactory.newALoadExp(new ArrayList<PExp>(
+        //                                Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"), MableAstFactory.newAStringLiteralExp(guid),
+        //                                        MableAstFactory.newAStringLiteralExp(uri.toString()))))));
+        //
+        //        // Create variable
+        //        PStm statement = MableAstFactory.newALocalVariableStm(variable);
+        //        // statements.add(statement);
+        //        fmuVariables.put(fmuName, variable);
 
     }
 
@@ -77,16 +84,17 @@ public class StatementContainer {
     }
 
     public void createInstantiateStatement(String fmuName, String instanceName, boolean visible, boolean logging) {
-        AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(createLexIdentifier.apply(instanceName),
-                MableAstFactory.newANameType(createLexIdentifier.apply("FMI2Component")), MableAstFactory.newAExpInitializer(MableAstFactory
-                        .newACallExp(MableAstFactory.newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(fmuName)),
-                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("instantiate"))), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName), MableAstFactory.newABoolLiteralExp(visible),
-                                        MableAstFactory.newABoolLiteralExp(logging))))));
-
-        PStm statement = MableAstFactory.newALocalVariableStm(variable);
-        //statements.add(statement);
-        fmuInstances.put(instanceName, variable);
+        //throw new UnsupportedOperationException("Creating instances is no longer part of Initialize");
+        //        AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(createLexIdentifier.apply(instanceName),
+        //                MableAstFactory.newANameType(createLexIdentifier.apply("FMI2Component")), MableAstFactory.newAExpInitializer(MableAstFactory
+        //                        .newACallExp(MableAstFactory.newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(fmuName)),
+        //                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("instantiate"))), new ArrayList<PExp>(
+        //                                Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName), MableAstFactory.newABoolLiteralExp(visible),
+        //                                        MableAstFactory.newABoolLiteralExp(logging))))));
+        //
+        //        PStm statement = MableAstFactory.newALocalVariableStm(variable);
+        //        //statements.add(statement);
+        //        fmuInstances.put(instanceName, variable);
 
     }
 
@@ -94,10 +102,9 @@ public class StatementContainer {
             boolean stopTimeDefined, double stopTime) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
                 .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
+                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<>(
                                 Arrays.asList(MableAstFactory.newABoolLiteralExp(toleranceDefined), MableAstFactory.newARealLiteralExp(tolerance),
-                                        MableAstFactory.newARealLiteralExp(startTime), MableAstFactory.newABoolLiteralExp(stopTimeDefined),
-                                        MableAstFactory.newARealLiteralExp(stopTime))))
+                                        this.startTime.clone(), MableAstFactory.newABoolLiteralExp(stopTimeDefined), this.endTime.clone())))
 
                 ));
         statements.add(statement);
