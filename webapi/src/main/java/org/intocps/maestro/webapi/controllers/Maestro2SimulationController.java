@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.NotImplementedException;
-import org.intocps.maestro.webapi.maestrobrokering.MaestroController;
+import org.intocps.maestro.webapi.maestrobrokering.Maestro2Broker;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
@@ -30,10 +30,10 @@ import java.util.Map;
 
 
 @RestController
-public class MaestroSimulationController {
+public class Maestro2SimulationController {
 
     final static ObjectMapper mapper = new ObjectMapper();
-    private final static Logger logger = LoggerFactory.getLogger(MaestroSimulationController.class);
+    private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
     private final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
 
     public static InitializationMsgJson.Constraint convert(IVarStepConstraint constraint) {
@@ -223,7 +223,7 @@ public class MaestroSimulationController {
         }
 
         logic.setSimulateRequestBody(body);
-        MaestroController mc = new MaestroController();
+        Maestro2Broker mc = new Maestro2Broker();
         String spec = mc.CreateMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody());
         mc.ExecuteInterpreter();
 

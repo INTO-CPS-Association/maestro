@@ -3,7 +3,7 @@ package org.intocps.maestro.webapi.maestrobrokering;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.maestro.webapi.controllers.MaestroSimulationController;
+import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
 
 import java.util.List;
 import java.util.Map;
@@ -11,8 +11,8 @@ import java.util.Map;
 public class InitializerUsingCoeConfigCreator {
 
     public static ParserConfiguration.ParserPluginConfiguration createInitializationJsonNode(
-            MaestroSimulationController.InitializationData legacyInitializationData,
-            MaestroSimulationController.SimulateRequestBody simulateRequestBody) {
+            Maestro2SimulationController.InitializationData legacyInitializationData,
+            Maestro2SimulationController.SimulateRequestBody simulateRequestBody) {
         InitializerUsingCoeConfiguration initializerUsingCoeConfiguration = new InitializerUsingCoeConfiguration();
 
         ObjectMapper mapper = new ObjectMapper();

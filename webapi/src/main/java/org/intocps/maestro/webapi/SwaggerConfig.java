@@ -1,7 +1,7 @@
 package org.intocps.maestro.webapi;
 
 import com.fasterxml.classmate.TypeResolver;
-import org.intocps.maestro.webapi.controllers.MaestroSimulationController;
+import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,7 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2).select().apis(RequestHandlerSelectors.basePackage(SwaggerConfig.class.getPackage().getName()))
                 .paths(PathSelectors.any()).build()
-                .additionalModels(typeResolver.resolve(MaestroSimulationController.InitializationData.ZeroCrossingConstraint.class));
+                .additionalModels(typeResolver.resolve(Maestro2SimulationController.InitializationData.ZeroCrossingConstraint.class));
     }
 
 

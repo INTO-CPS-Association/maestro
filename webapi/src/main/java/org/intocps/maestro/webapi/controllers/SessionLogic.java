@@ -4,27 +4,27 @@ import java.io.File;
 
 public class SessionLogic {
     public final File rootDirectory;
-    private MaestroSimulationController.InitializationData initializationData;
-    private MaestroSimulationController.SimulateRequestBody simulateRequestBody;
+    private Maestro2SimulationController.InitializationData initializationData;
+    private Maestro2SimulationController.SimulateRequestBody simulateRequestBody;
 
     public SessionLogic(File rootDirectory) {
         this.rootDirectory = rootDirectory;
 
     }
 
-    public MaestroSimulationController.InitializationData getInitializationData() {
+    public Maestro2SimulationController.InitializationData getInitializationData() {
         return initializationData;
     }
 
-    public void setInitializationData(MaestroSimulationController.InitializationData initializationData) {
+    public void setInitializationData(Maestro2SimulationController.InitializationData initializationData) {
         this.initializationData = initializationData;
     }
 
-    public MaestroSimulationController.SimulateRequestBody getSimulateRequestBody() {
+    public Maestro2SimulationController.SimulateRequestBody getSimulateRequestBody() {
         return simulateRequestBody;
     }
 
-    public void setSimulateRequestBody(MaestroSimulationController.SimulateRequestBody simulateRequestBody) {
+    public void setSimulateRequestBody(Maestro2SimulationController.SimulateRequestBody simulateRequestBody) {
         this.simulateRequestBody = simulateRequestBody;
     }
 }
