@@ -43,13 +43,13 @@
     int getStringStatus(Fmi2StatusKind kind, ref string status);
 
     //state
-    int getState(ref FmiComponentState state);
-    int setState(FmiComponentState state);
-    int freeState(ref FmiComponentState state);
+    int getState(ref FmuState state);
+    int setState(FmuState state);
+    int freeState(ref FmuState state);
 
 }
 
-module FmiComponentState {}
+module FmuState {}
 
 
 

@@ -84,8 +84,7 @@ csvfile.writeRow(time,values);
     time = time + STEP_SIZE;
 }
 
-a.enterInitializationMode();
-b.exitInitializationMode();
+
 
 a.terminate();
 b.terminate();

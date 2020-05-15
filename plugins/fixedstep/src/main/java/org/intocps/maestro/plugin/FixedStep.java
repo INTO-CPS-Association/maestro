@@ -6,41 +6,301 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
+import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class FixedStep implements IMaestroUnfoldPlugin {
+
+    final AFunctionDeclaration fun = newAFunctionDeclaration(newAIdentifier("fixedStep"),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+
+
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return null;
+        return Stream.of(fun).collect(Collectors.toSet());
     }
 
     @Override
     public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws UnfoldException {
 
-        if (formalArguments == null || formalArguments.isEmpty()) {
+        if (formalArguments == null || formalArguments.size() != fun.getFormals().size()) {
             throw new UnfoldException("Invalid args");
         }
 
-        List<LexIdentifier> componentNames = formalArguments.stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
-                .map(AIdentifierExp::getName).collect(Collectors.toList());
+        if (env == null) {
+            throw new UnfoldException("Simulation environment must not be null");
+        }
 
-        Set<UnitRelationship.Relation> relations = env.getRelations(componentNames);
+        List<LexIdentifier> knownComponentNames = null;
+
+        if (formalArguments.get(0) instanceof AIdentifierExp) {
+            LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
+            ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
+
+            Optional<AVariableDeclaration> compDecl = containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance)
+                    .map(ALocalVariableStm.class::cast).map(ALocalVariableStm::getDeclaration)
+                    .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+
+            if (!compDecl.isPresent()) {
+                throw new UnfoldException("Could not find names for comps");
+            }
+
+            AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
+
+            knownComponentNames = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
+                    .map(AIdentifierExp::getName).collect(Collectors.toList());
+        }
+
+        if (knownComponentNames == null || knownComponentNames.isEmpty()) {
+            throw new UnfoldException("No components found cannot fixed step with 0 components");
+        }
+
+        final List<LexIdentifier> componentNames = knownComponentNames;
+
+        Set<UnitRelationship.Relation> relations = env.getRelations(componentNames).stream()
+                .filter(r -> r.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toSet());
+
+        PExp stepSize = formalArguments.get(1).clone();
+        PExp startTime = formalArguments.get(2).clone();
+        PExp endTime = formalArguments.get(3).clone();
 
         //relations.stream().filter(r -> r.getDirection() == In)
+        List<PStm> statements = new Vector<>();
 
-        return null;
+
+        LexIdentifier end = newAIdentifier("end");
+        statements.add(newALocalVariableStm(
+                newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newMinusExp(endTime, stepSize)))));
+
+        LexIdentifier time = newAIdentifier("time");
+        statements.add(newALocalVariableStm(
+                newAVariableDeclaration((LexIdentifier) time.clone(), newARealNumericPrimitiveType(), newAExpInitializer(startTime))));
+
+
+        Set<UnitRelationship.Relation> outputRelations = relations.stream()
+                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toSet());
+
+
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs = outputRelations.stream()
+                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+                        s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
+                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
+
+
+        Set<UnitRelationship.Relation> inputRelations = relations.stream()
+                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.InputToOutput).collect(Collectors.toSet());
+
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs = inputRelations.stream()
+                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+                        s -> inputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
+                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
+
+
+        try {
+
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("status"), newAIntNumericPrimitiveType())));
+
+            for (LexIdentifier comp : componentNames) {
+                ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
+                if (info.modelDescription.getCanGetAndSetFmustate()) {
+                    statements.add(newALocalVariableStm(newAVariableDeclaration(getStateName(comp), newANameType("FmuState"))));
+                }
+            }
+
+            //create output buffers
+            outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
+                    newAVariableDeclaration(getBufferName(comp, type, UsageType.Out), newAArrayType(convert(type), vars.size()))))));
+
+            outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
+                    newAVariableDeclaration(getVrefName(comp, type, UsageType.Out), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                            newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
+
+            //create input buffers
+            inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
+                    newAVariableDeclaration(getBufferName(comp, type, UsageType.In), newAArrayType(convert(type), vars.size()))))));
+
+            inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
+                    newAVariableDeclaration(getVrefName(comp, type, UsageType.In), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                            newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        Consumer<List<PStm>> setAll = (list) ->
+                //set inputs
+                inputs.forEach((comp, map) -> map.forEach((type, vars) -> list
+                        .add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")), newACallExp(
+                                newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.In))),
+                                Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
+                                        newAIdentifierExp(getBufferName(comp, type, UsageType.In))))))));
+
+        //get outputs
+        Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> list
+                .add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")), newACallExp(
+                        newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
+                        Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
+                                newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))))));
+
+        Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
+
+            int toIndex = inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type)
+                    .stream().map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                    .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
+
+            AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(
+                    getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
+                            UsageType.In)), newAIntLiteralExp(toIndex));
+
+            //the relation should be a one to one relation so just take the first one
+            RelationVariable fromVar = r.getTargets().values().iterator().next().scalarVariable;
+            PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)),
+                    Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
+                            .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.scalarVariable.getName()))));
+
+            if (r.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type) {
+                //ok the types are not matching, lets use a converter
+
+                AArrayIndexExp toAsExp = newAArrayIndexExp(newAIdentifierExp(
+                        getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
+                                UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
+
+                list.add(newExternalStm(newACallExp(newAIdentifierExp(newAIdentifier(
+                        "convert" + fromVar.getScalarVariable().getType().type + "2" + r.getSource().scalarVariable.getScalarVariable()
+                                .getType().type)), Arrays.asList(from, toAsExp))));
+
+
+            } else {
+                list.add(newAAssignmentStm(to, from));
+            }
+
+        });
+
+
+        Consumer<List<PStm>> doStep = (list) -> componentNames.forEach(comp -> {
+            //int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")),
+                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp("doStep")),
+                            Arrays.asList(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone(), newABoolLiteralExp(true)))));
+        });
+
+        Consumer<List<PStm>> progressTime = list -> list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) time.clone()),
+                newPlusExp(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone())));
+
+        List<PStm> loopStmts = new Vector<>();
+
+        // get prior to entering loop
+        getAll.accept(statements);
+        //exchange according to mapping
+        exchangeData.accept(loopStmts);
+        //set inputs
+        setAll.accept(loopStmts);
+        //do step
+        doStep.accept(loopStmts);
+        //get data
+        getAll.accept(loopStmts);
+        // time = time + STEP_SIZE;
+        progressTime.accept(loopStmts);
+
+        statements.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)), newABlockStm(loopStmts)));
+
+
+        return newABlockStm(statements);
+    }
+
+
+    private String getFmiGetName(ModelDescription.Types type, UsageType usage) {
+
+        String fun = usage == UsageType.In ? "set" : "get";
+        switch (type) {
+            case Boolean:
+                return fun + "Boolean";
+            case Real:
+                return fun + "Real";
+            case Integer:
+                return fun + "Integer";
+            case String:
+                return fun + "String";
+            case Enumeration:
+            default:
+                return null;
+        }
+    }
+
+    LexIdentifier getStateName(LexIdentifier comp) {
+        return newAIdentifier(comp.getText() + "State");
+    }
+
+    SPrimitiveType convert(ModelDescription.Types type) {
+        switch (type) {
+
+            case Boolean:
+                return newABoleanPrimitiveType();
+            case Real:
+                return newARealNumericPrimitiveType();
+            case Integer:
+                return newAIntNumericPrimitiveType();
+            case String:
+                return newAStringPrimitiveType();
+            case Enumeration:
+            default:
+                return null;
+        }
+    }
+
+    LexIdentifier getBufferName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
+        return getBufferName(comp, convert(type), usage);
+    }
+
+
+    LexIdentifier getBufferName(LexIdentifier comp, SPrimitiveType type, UsageType usage) {
+
+        String t = getTypeId(type);
+
+        return newAIdentifier(comp.getText() + t + usage);
+    }
+
+    private String getTypeId(SPrimitiveType type) {
+        String t = type.getClass().getSimpleName();
+
+        if (type instanceof ARealNumericPrimitiveType) {
+            t = "R";
+        } else if (type instanceof AIntNumericPrimitiveType) {
+            t = "I";
+        } else if (type instanceof AStringPrimitiveType) {
+            t = "S";
+        } else if (type instanceof ABooleanPrimitiveType) {
+            t = "B";
+        }
+        return t;
+    }
+
+    LexIdentifier getVrefName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
+
+        return newAIdentifier(comp.getText() + "Vref" + getTypeId(convert(type)) + usage);
     }
 
     @Override
     public boolean requireConfig() {
-        return true;
+        return false;
     }
 
     @Override
@@ -56,6 +316,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
     @Override
     public String getVersion() {
         return "0.0.1";
+    }
+
+    enum UsageType {
+        In,
+        Out
     }
 
     class FixedstepConfig implements IPluginConfiguration {

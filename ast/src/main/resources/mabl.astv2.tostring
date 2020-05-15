@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 %stm->block = "{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}"
 %stm->assigment = [target] + " = " [exp]
 %stm->localVariable = [declaration]
-%stm->if = "if( " +$ $[test]$ +" ) " + $[then]$+    ($[else]$!=null ? $[else]$:"")$
+%stm->if = "if( " +$ $[test]$ +" ) {" + $[then]$+ "}"+   ($[else]$!=null ?"else {" +$[else]$ +"}":"")$
 %stm->while = "while( "+[test]+" ) " + [body] + ""
 %stm->observable = "observable;"
 %stm->expression = [exp]

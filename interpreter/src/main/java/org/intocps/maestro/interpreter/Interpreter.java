@@ -328,6 +328,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAUIntLiteralExp(AUIntLiteralExp node, Context question) throws AnalysisException {
+        //TODO
+        return new IntegerValue(node.getValue().intValue());
+    }
+
+    @Override
     public Value caseAArrayIndexExp(AArrayIndexExp node, Context question) throws AnalysisException {
         Value value = node.getArray().apply(this, question).deref();
 

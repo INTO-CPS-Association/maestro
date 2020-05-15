@@ -6,16 +6,15 @@ import java.util.Objects;
 
 public class LexIdentifier implements ExternalNode {
     private final String text;
-
-    public Token getSymbol() {
-        return symbol;
-    }
-
     private final Token symbol;
 
     public LexIdentifier(String text, org.antlr.v4.runtime.Token symbol) {
         this.text = text;
         this.symbol = symbol;
+    }
+
+    public Token getSymbol() {
+        return symbol;
     }
 
     public String getText() {
@@ -29,7 +28,7 @@ public class LexIdentifier implements ExternalNode {
 
     @Override
     public Object clone() {
-        return null;
+        return new LexIdentifier(text, symbol);
     }
 
     @Override
