@@ -8,6 +8,7 @@ public class SessionLogic {
     private Maestro2SimulationController.SimulateRequestBody simulateRequestBody;
 
     public SessionLogic(File rootDirectory) {
+        rootDirectory.mkdir();
         this.rootDirectory = rootDirectory;
 
     }

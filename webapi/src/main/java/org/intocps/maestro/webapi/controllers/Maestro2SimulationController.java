@@ -370,12 +370,15 @@ public class Maestro2SimulationController {
 
     public static class StatusModel {
         @JsonProperty("status")
-        final String status;
+        public String status;
         @JsonProperty("sessionid")
-        final String sessionId;
+        public String sessionId;
 
         @JsonProperty("lastExecTime")
-        final long lastExecTime;
+        public long lastExecTime;
+
+        public StatusModel() {
+        }
 
         public StatusModel(String status, String sessionId, long lastExecTime) {
             this.status = status;

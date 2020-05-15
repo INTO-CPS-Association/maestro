@@ -20,12 +20,18 @@ public class Maestro2Broker {
     public String CreateMablSpecFromLegacyMM(Maestro2SimulationController.InitializationData initializationData,
             Maestro2SimulationController.SimulateRequestBody simulateRequestBody) throws IOException, URISyntaxException {
         ObjectMapper mapper = new ObjectMapper();
-        //Create the parser configuration
+
+        // Create the configuration for the initializer plugin
+        ParserConfiguration.ParserPluginConfiguration initializerConfig =
+                InitializerUsingCoeConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
+
+        // Create the configuration for the MaBL parser
         ParserConfiguration parserConfiguration = new ParserConfiguration();
-        ParserConfiguration.ParserPluginConfiguration initializerConfig = InitializerUsingCoeConfigCreator
-                .createInitializationJsonNode(initializationData, simulateRequestBody);
         parserConfiguration.addParserPluginConfiguration(initializerConfig);
         InputStream context = new ByteArrayInputStream(mapper.writeValueAsBytes(parserConfiguration));
+
+        // Create the context for the MaBL parser
+
 
         // TODO: Create correct spec.
         String spec = new File(Resources.getResource("fixedstepspec.mabl").toURI()).getAbsolutePath();
