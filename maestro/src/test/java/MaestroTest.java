@@ -1,6 +1,5 @@
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
@@ -21,7 +20,7 @@ public class MaestroTest {
 
 
     @Test(expected = RuntimeException.class)
-    public void simpleParseTest() throws IOException {
+    public void simpleParseTest() throws Exception {
 
 
         InputStream contextFile = null;
@@ -35,7 +34,7 @@ public class MaestroTest {
 
     @Test
     @Ignore
-    public void singleExternal() throws IOException, AnalysisException {
+    public void singleExternal() throws Exception {
 
         InputStream contextFile = this.getClass().getResourceAsStream("configs/singleExternal.json");
         ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true,

@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -37,9 +38,10 @@ public class PluginFactory {
 
             Set<Class<? extends T>> subTypes = reflections.getSubTypesOf(type);
 
-            Predicate<? super Class<? extends T>> frameworkFilter = (Predicate<Class<? extends T>>) aClass -> framework == null || aClass
-                    .isAnnotationPresent(SimulationFramework.class) && (aClass.getAnnotation(SimulationFramework.class)
-                    .framework() == framework || aClass.getAnnotation(SimulationFramework.class).framework() == Framework.Any);
+            Predicate<? super Class<? extends T>> frameworkFilter = (Predicate<Class<? extends T>>) aClass -> framework == null ||
+                    aClass.isAnnotationPresent(SimulationFramework.class) &&
+                            (aClass.getAnnotation(SimulationFramework.class).framework() == framework ||
+                                    aClass.getAnnotation(SimulationFramework.class).framework() == Framework.Any);
 
             return subTypes.stream().filter(frameworkFilter).map(c -> {
                 try {
@@ -62,7 +64,7 @@ public class PluginFactory {
             return new HashMap<>();
         }
 
-        List<PluginConfiguration> configs = mapper.readValue(io, new TypeReference<List<PluginConfiguration>>() {
+        List<PluginConfiguration> configs = mapper.readValue(io, new TypeReference<>() {
         });
         if (configs != null) {
             return configs.stream().collect(Collectors.toMap(c -> c.identification.name + "-" + c.identification.version, c -> c.config));
@@ -80,11 +82,12 @@ public class PluginFactory {
         }
     }
 
-    private static class PluginConfiguration {
+    public static class PluginConfiguration {
         @JsonDeserialize(using = RawJsonDeserializer.class)
-        private String config;
+        @JsonRawValue
+        public String config;
         @JsonProperty("identification")
-        private PluginIdentification identification;
+        public PluginIdentification identification;
     }
 
     public static class RawJsonDeserializer extends JsonDeserializer<String> {

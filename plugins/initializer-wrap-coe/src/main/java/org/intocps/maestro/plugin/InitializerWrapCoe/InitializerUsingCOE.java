@@ -81,9 +81,10 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
             LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
             ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
 
-            Optional<AVariableDeclaration> compDecl = containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance)
-                    .map(ALocalVariableStm.class::cast).map(ALocalVariableStm::getDeclaration)
-                    .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+            Optional<AVariableDeclaration> compDecl =
+                    containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
+                            .map(ALocalVariableStm::getDeclaration)
+                            .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
 
             if (!compDecl.isPresent()) {
                 throw new UnfoldException("Could not find names for comps");
@@ -101,8 +102,9 @@ public class InitializerUsingCOE implements IMaestroUnfoldPlugin {
         if (config instanceof Config) {
             this.config = (Config) config;
             try {
-                PStm statement = specGen
-                        .run(knownComponentNames, this.config.configuration.toString(), this.config.start_message.toString(), startTime, endTime);
+                PStm statement =
+                        specGen.run(knownComponentNames, this.config.configuration.toString(), this.config.start_message.toString(), startTime,
+                                endTime);
                 return statement;
             } catch (IOException | NanoHTTPD.ResponseException e) {
                 throw new UnfoldException("Failed to unfold:", e);

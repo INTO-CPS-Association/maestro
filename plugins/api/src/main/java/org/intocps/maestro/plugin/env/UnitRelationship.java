@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 public class UnitRelationship implements ISimulationEnvironment {
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
+    HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
+    Map<String, URI> fmuToUri = null;
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -57,22 +59,38 @@ public class UnitRelationship implements ISimulationEnvironment {
         return list;
     }
 
+    public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
+        return this.fmuKeyToModelDescription.entrySet();
+    }
+
+    public Set<Map.Entry<String, ComponentInfo>> getInstances() {
+        return this.instanceNameToInstanceComponentInfo.entrySet();
+    }
+
+    public Set<Map.Entry<String, URI>> getFmuToUri() {
+        return this.fmuToUri.entrySet();
+    }
+
     private void initialize(EnvironmentMessage msg) throws Exception {
+        // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
+
+        this.fmuToUri = fmuToURI;
         List<ModelConnection> connections = buildConnections(msg.connections);
         HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
+        this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
         Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
         for (ModelConnection instance : connections) {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo
-                        .put(instance.from.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key)));
+                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName,
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key));
             }
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo
-                        .put(instance.to.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key)));
+                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName,
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key));
             }
         }
 

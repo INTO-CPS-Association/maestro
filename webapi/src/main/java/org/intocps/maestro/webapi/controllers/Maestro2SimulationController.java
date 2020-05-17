@@ -2,10 +2,12 @@ package org.intocps.maestro.webapi.controllers;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.NotImplementedException;
+import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.webapi.maestrobrokering.Maestro2Broker;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
@@ -16,6 +18,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +35,7 @@ import java.util.Map;
 @RestController
 public class Maestro2SimulationController {
 
+    public static final MediaType x = MediaType.TEXT_PLAIN;
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
     private final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
@@ -112,11 +116,14 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST)
-    public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody InitializationData body) throws Exception {
+    public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody String body1) throws Exception {
         // Store this data to be used for the interpretor later on.
         // It is not possible to create the spec at this point in time as data for setup experiment is missing (i.e. endtime)
-        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body));
+        //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
+        logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        InitializationData body = mapper.readValue(body1, InitializationData.class);
 
         if (logic == null) {
             throw new Exception("Session has not been created.");
@@ -203,7 +210,10 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST)
-    public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
+    public StatusModel simulate(@PathVariable String sessionId, @RequestBody String body1) throws Exception {
+
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        SimulateRequestBody body = mapper.readValue(body1, SimulateRequestBody.class);
 
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
 
@@ -224,8 +234,8 @@ public class Maestro2SimulationController {
 
         logic.setSimulateRequestBody(body);
         Maestro2Broker mc = new Maestro2Broker();
-        String spec = mc.CreateMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody());
-        mc.ExecuteInterpreter();
+        ARootDocument spec = mc.CreateMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody());
+        mc.ExecuteInterpreter(spec);
 
 
         return getStatus(sessionId);
@@ -313,6 +323,11 @@ public class Maestro2SimulationController {
         //        FileUtils.deleteDirectory(coe.getResultRoot());
     }
 
+    @RequestMapping(value = "/version", method = RequestMethod.GET)
+    public String version() {
+        final String message = "{\"version\":\"2.0.0-alpha\"}";
+        return message;
+    }
 
     @ApiModel(subTypes = {FixedStepAlgorithmConfig.class, VariableStepAlgorithmConfig.class}, discriminator = "type",
             description = "Simulation algorithm.")
@@ -323,11 +338,6 @@ public class Maestro2SimulationController {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public interface IAlgorithmConfig {
     }
-
-    //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)
-    //    public void reset(@PathVariable String sessionId) {
-    //
-    //    }
 
     @ApiModel(subTypes = {InitializationData.BoundedDifferenceConstraint.class, InitializationData.ZeroCrossingConstraint.class,
             InitializationData.SamplingConstraint.class, InitializationData.FmuMaxStepSizeConstraint.class}, discriminator = "type",
@@ -343,6 +353,12 @@ public class Maestro2SimulationController {
 
         void validate() throws Exception;
     }
+
+    //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)
+    //    public void reset(@PathVariable String sessionId) {
+    //
+    //    }
+
 
     public static class SimulateRequestBody {
         @JsonProperty("startTime")
@@ -371,7 +387,7 @@ public class Maestro2SimulationController {
     public static class StatusModel {
         @JsonProperty("status")
         public String status;
-        @JsonProperty("sessionid")
+        @JsonProperty("sessionId")
         public String sessionId;
 
         @JsonProperty("lastExecTime")

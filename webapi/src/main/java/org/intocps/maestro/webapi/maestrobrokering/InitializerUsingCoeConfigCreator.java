@@ -1,8 +1,11 @@
 package org.intocps.maestro.webapi.maestrobrokering;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.intocps.maestro.plugin.PluginFactory;
+import org.intocps.maestro.plugin.PluginIdentification;
 import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
 
 import java.util.List;
@@ -10,23 +13,24 @@ import java.util.Map;
 
 public class InitializerUsingCoeConfigCreator {
 
-    public static ParserConfiguration.ParserPluginConfiguration createInitializationJsonNode(
+    public static PluginFactory.PluginConfiguration createInitializationJsonNode(
             Maestro2SimulationController.InitializationData legacyInitializationData,
-            Maestro2SimulationController.SimulateRequestBody simulateRequestBody) {
+            Maestro2SimulationController.SimulateRequestBody simulateRequestBody) throws JsonProcessingException {
         InitializerUsingCoeConfiguration initializerUsingCoeConfiguration = new InitializerUsingCoeConfiguration();
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode configuration = mapper.valueToTree(legacyInitializationData);
         initializerUsingCoeConfiguration.configuration = configuration;
+        System.out.println(configuration.toString());
         JsonNode start_message = mapper.valueToTree(simulateRequestBody);
         initializerUsingCoeConfiguration.start_message = start_message;
 
-        ParserConfiguration.ParserPluginConfiguration initPluginConfig = new ParserConfiguration.ParserPluginConfiguration();
-        ParserConfiguration.ParserPluginIdentification initPluginID = new ParserConfiguration.ParserPluginIdentification();
+        PluginFactory.PluginConfiguration initPluginConfig = new PluginFactory.PluginConfiguration();
+        PluginIdentification initPluginID = new PluginIdentification();
         initPluginID.name = "InitializerUsingCOE";
         initPluginID.version = "0.0.0";
         initPluginConfig.identification = initPluginID;
-        initPluginConfig.config = mapper.valueToTree(initializerUsingCoeConfiguration);
+        initPluginConfig.config = mapper.valueToTree(initializerUsingCoeConfiguration).toString();
         return initPluginConfig;
     }
 

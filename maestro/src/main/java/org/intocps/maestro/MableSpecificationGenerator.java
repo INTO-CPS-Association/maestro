@@ -60,8 +60,8 @@ public class MableSpecificationGenerator {
 
         plugins.forEach(p -> logger.info("Located plugins: {} - {}", p.getName(), p.getVersion()));
 
-        Collection<IMaestroUnfoldPlugin> pluginsToUnfold = plugins.stream().filter(plugin -> importModules.contains(plugin.getName()))
-                .collect(Collectors.toList());
+        Collection<IMaestroUnfoldPlugin> pluginsToUnfold =
+                plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
 
         logger.debug("The following plugins will be used for unfolding: {}",
                 pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
@@ -78,8 +78,31 @@ public class MableSpecificationGenerator {
                 })))), rawPluginJsonContext);
     }
 
-    private static List<ARootDocument> parse(List<File> sourceFiles) throws IOException {
+    private static List<ARootDocument> parseStreams(List<CharStream> specStreams) {
+        List<ARootDocument> documentList = new Vector<>();
+        for (CharStream specStream : specStreams) {
+            documentList.add(parse(specStream));
+        }
+        return documentList;
+    }
 
+    private static ARootDocument parse(CharStream specStreams) {
+        MablLexer l = new MablLexer(specStreams);
+        MablParser p = new MablParser(new CommonTokenStream(l));
+        p.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
+                    RecognitionException e) {
+                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
+            }
+        });
+        MablParser.CompilationUnitContext unit = p.compilationUnit();
+
+        ARootDocument root = (ARootDocument) new ParseTree2AstConverter().visit(unit);
+        return root;
+    }
+
+    private static List<ARootDocument> parse(List<File> sourceFiles) throws IOException {
         List<ARootDocument> documentList = new Vector<>();
 
         for (File file : sourceFiles) {
@@ -89,22 +112,7 @@ public class MableSpecificationGenerator {
             }
             logger.info("Parting file: {}", file);
 
-
-            MablLexer l = new MablLexer(CharStreams.fromPath(Paths.get(file.toURI())));
-            MablParser p = new MablParser(new CommonTokenStream(l));
-            p.addErrorListener(new BaseErrorListener() {
-                @Override
-                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-                        RecognitionException e) {
-                    throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
-                }
-            });
-            MablParser.CompilationUnitContext unit = p.compilationUnit();
-
-            ARootDocument root = (ARootDocument) new ParseTree2AstConverter().visit(unit);
-            documentList.add(root);
-
-
+            documentList.add(parse(CharStreams.fromPath(Paths.get(file.toURI()))));
         }
         return documentList;
     }
@@ -164,11 +172,12 @@ public class MableSpecificationGenerator {
             if (type.isPresent()) {
                 logger.debug("Unfolding node: {}", node);
 
-                Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible = (fmap) -> fmap.getKey().getName().getText()
-                        .equals(node.getCall().getRoot().toString()) && comparator.compatible(fmap.getValue(), type.get());
+                Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible =
+                        (fmap) -> fmap.getKey().getName().getText().equals(node.getCall().getRoot().toString()) &&
+                                comparator.compatible(fmap.getValue(), type.get());
 
-                Optional<Map.Entry<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch = plugins.entrySet().stream()
-                        .filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
+                Optional<Map.Entry<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch =
+                        plugins.entrySet().stream().filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
 
                 if (pluginMatch.isPresent()) {
                     pluginMatch.ifPresent(map -> {
@@ -210,22 +219,26 @@ public class MableSpecificationGenerator {
         return expandExternals(simulationModule, reporter, typeResolver, comparator, env, depth + 1);
     }
 
-    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
+    public ARootDocument generateFromStreams(List<CharStream> sourceStreams, InputStream contextFile) throws IOException {
+        List<ARootDocument> documentList = parseStreams(sourceStreams);
+        return generateFromDocuments(documentList, contextFile);
+    }
+
+    private ARootDocument generateFromDocuments(List<ARootDocument> documentList, InputStream contextFile) throws IOException {
         IErrorReporter reporter = new ErrorReporter();
 
-        List<ARootDocument> documentList = parse(sourceFiles);
-
-        List<AImportedModuleCompilationUnit> importedModules = documentList.stream()
-                .map(d -> NodeCollector.collect(d, AImportedModuleCompilationUnit.class)).filter(Optional::isPresent).map(Optional::get)
-                .flatMap(List::stream).filter(l -> !l.getFunctions().isEmpty()).collect(Collectors.toList());
+        List<AImportedModuleCompilationUnit> importedModules =
+                documentList.stream().map(d -> NodeCollector.collect(d, AImportedModuleCompilationUnit.class)).filter(Optional::isPresent)
+                        .map(Optional::get).flatMap(List::stream).filter(l -> !l.getFunctions().isEmpty()).collect(Collectors.toList());
 
         if (verbose) {
             logger.info("Module definitions: {}",
                     importedModules.stream().map(l -> l.getName().toString()).collect(Collectors.joining(" , ", "[ ", " ]")));
         }
 
-        long simCount = documentList.stream().map(d -> NodeCollector.collect(d, ASimulationSpecificationCompilationUnit.class))
-                .filter(Optional::isPresent).map(Optional::get).mapToLong(List::size).sum();
+        long simCount =
+                documentList.stream().map(d -> NodeCollector.collect(d, ASimulationSpecificationCompilationUnit.class)).filter(Optional::isPresent)
+                        .map(Optional::get).mapToLong(List::size).sum();
         if (verbose) {
             logger.info("Contains simulation modules: {}", simCount);
         }
@@ -235,9 +248,9 @@ public class MableSpecificationGenerator {
             return null;
         }
 
-        Optional<ASimulationSpecificationCompilationUnit> simulationModuleOpt = documentList.stream()
-                .map(d -> NodeCollector.collect(d, ASimulationSpecificationCompilationUnit.class)).filter(Optional::isPresent).map(Optional::get)
-                .flatMap(List::stream).findFirst();
+        Optional<ASimulationSpecificationCompilationUnit> simulationModuleOpt =
+                documentList.stream().map(d -> NodeCollector.collect(d, ASimulationSpecificationCompilationUnit.class)).filter(Optional::isPresent)
+                        .map(Optional::get).flatMap(List::stream).findFirst();
 
         if (simulationModuleOpt.isPresent()) {
 
@@ -261,8 +274,8 @@ public class MableSpecificationGenerator {
 
             try {
 
-                ASimulationSpecificationCompilationUnit unfoldedSimulationModule = expandExternals(simulationModule, reporter, typeResolver,
-                        comparator, pluginEnvironment);
+                ASimulationSpecificationCompilationUnit unfoldedSimulationModule =
+                        expandExternals(simulationModule, reporter, typeResolver, comparator, pluginEnvironment);
 
                 //expansion complete
                 if (reporter.getErrorCount() > 0) {
@@ -272,8 +285,8 @@ public class MableSpecificationGenerator {
 
                 logger.info(unfoldedSimulationModule.toString());
 
-                ARootDocument processedDoc = new ARootDocument(
-                        Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+                ARootDocument processedDoc =
+                        new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
                 if (typeCheck(processedDoc, reporter)) {
                     if (verify(processedDoc, reporter)) {
@@ -300,6 +313,13 @@ public class MableSpecificationGenerator {
         } else {
             throw new InternalException("No Specification module found");
         }
+    }
+
+    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
+        IErrorReporter reporter = new ErrorReporter();
+
+        List<ARootDocument> documentList = parse(sourceFiles);
+        return generateFromDocuments(documentList, contextFile);
     }
 
     private boolean verify(final ARootDocument doc, final IErrorReporter reporter) {
