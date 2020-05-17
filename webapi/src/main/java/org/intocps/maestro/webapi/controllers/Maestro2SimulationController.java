@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.webapi.maestrobrokering.Maestro2Broker;
@@ -15,6 +16,7 @@ import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.Algorithm;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -27,9 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
 
 @RestController
@@ -122,8 +126,10 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
+        mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body1);
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
+
 
         if (logic == null) {
             throw new Exception("Session has not been created.");
@@ -165,8 +171,6 @@ public class Maestro2SimulationController {
         }
         Map<String, List<ModelDescription.LogCategory>> logs = null;
 
-        //
-        mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
         try {
             if (body.stabalizationEnabled) {
                 throw new NotImplementedException("Stabilisation is not implemented");
@@ -211,17 +215,11 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody String body1) throws Exception {
-
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
         SimulateRequestBody body = mapper.readValue(body1, SimulateRequestBody.class);
-
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
-
-
         Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
-
         if (body.logLevels != null) {
             for (Map.Entry<String, List<String>> entry : body.logLevels.entrySet()) {
                 try {
@@ -235,8 +233,8 @@ public class Maestro2SimulationController {
         logic.setSimulateRequestBody(body);
         Maestro2Broker mc = new Maestro2Broker();
         ARootDocument spec = mc.CreateMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody());
+        FileUtils.writeStringToFile(new File(logic.rootDirectory, "spec.mabl"), spec.getContent().get(0).toString(), StandardCharsets.UTF_8);
         mc.ExecuteInterpreter(spec);
-
 
         return getStatus(sessionId);
     }
@@ -244,6 +242,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
+        throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
         //        if (sessions.containsKey(sessionId)) {
         //            sessions.get(sessionId).stopSimulation();
         //        }
@@ -264,21 +263,19 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/zip", method = RequestMethod.GET, produces = "application/zip")
     public void getResultZip(@PathVariable String sessionId, HttpServletResponse response) throws Exception {
-        //        Coe coe = sessions.get(sessionId);
-        //        if (coe == null) {
-        //            throw new Exception("bad session");
-        //        }
-        //
-        //        //setting headers
-        //        response.setStatus(HttpServletResponse.SC_OK);
-        //        response.addHeader("Content-Disposition", "attachment; filename=\"results.zip\"");
-        //
-        //        ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
-        //        ZipDirectory.addDir(coe.getResultRoot(), coe.getResultRoot(), zipOutputStream);
-        //        zipOutputStream.close();
+        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
 
-        throw new NotImplementedException("/result/{sessionId}/zip is not implemented");
+        if (sessionLogic == null) {
+            throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
+        }
 
+        //setting headers
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.addHeader("Content-Disposition", "attachment; filename=\"results.zip\"");
+        //
+        ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
+        ZipDirectory.addDir(sessionLogic.rootDirectory, sessionLogic.rootDirectory, zipOutputStream);
+        zipOutputStream.close();
     }
 
     @RequestMapping(value = "/destroy/{sessionId}", method = RequestMethod.GET)
