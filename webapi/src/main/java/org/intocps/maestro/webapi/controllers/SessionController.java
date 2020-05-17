@@ -35,12 +35,14 @@
 package org.intocps.maestro.webapi.controllers;
 
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.webapi.exceptions.LegacyException;
 import org.intocps.orchestration.coe.json.StatusMsgJson;
 import org.intocps.orchestration.coe.scala.Coe;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +88,11 @@ public class SessionController {
 
     public StatusMsgJson getStatus(String sessionId) {
         throw new NotImplementedException("SessionController.getStatus has not been implemented yet");
+    }
+
+    public void deleteSession(String sessionId) throws IOException {
+        FileUtils.deleteDirectory(maestroInstanceMap.get(sessionId).rootDirectory);
+        this.removeSession(sessionId);
     }
 
     public File getSessionRootDir(String session) {

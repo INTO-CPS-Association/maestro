@@ -283,44 +283,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/destroy/{sessionId}", method = RequestMethod.GET)
     public void destroy(@PathVariable String sessionId) throws Exception {
-        throw new NotImplementedException("/destroy/{sessionId} is not implemented");
-
-
-        //        Coe coe = sessions.get(sessionId);
-        //        if (coe == null) {
-        //            throw new Exception("bad session");
-        //        }
-        //
-        //        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        //        ArrayList<FileAppender> appendersToRemove = new ArrayList<>();
-        //        Enumeration appenders = rootLogger.getAllAppenders();
-        //
-        //        if (appenders != null) {
-        //            while (appenders.hasMoreElements()) {
-        //                try {
-        //                    Object element = appenders.nextElement();
-        //                    if (element != null && element instanceof FileAppender) {
-        //                        FileAppender fileAppender = (FileAppender) element;
-        //                        if (fileAppender.getFile() != null && fileAppender.getFile()
-        //                                .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
-        //                            // Log files for fmu instances.
-        //                            // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
-        //                            fileAppender.close();
-        //                            appendersToRemove.add(fileAppender);
-        //                        }
-        //                    }
-        //                } catch (NoSuchElementException e) {
-        //                    //this is not synchronized so this can happen
-        //                }
-        //            }
-        //            appendersToRemove.forEach(fa -> {
-        //                rootLogger.removeAppender(fa);
-        //            });
-        //
-        //        }
-        //
-        //
-        //        FileUtils.deleteDirectory(coe.getResultRoot());
+        this.sessionController.deleteSession(sessionId);
     }
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)

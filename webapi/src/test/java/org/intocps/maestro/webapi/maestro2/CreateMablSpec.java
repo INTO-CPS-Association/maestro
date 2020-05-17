@@ -57,6 +57,9 @@ public class CreateMablSpec {
                         .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
                 Maestro2SimulationController.InitializeStatusModel.class);
 
+        mockMvc.perform(get("/destroy/" + statusModel.sessionId)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse()
+                .getContentAsString();
+
 
     }
 
