@@ -39,7 +39,7 @@ public class CreateMablSpec {
 
     @Test
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
-    public void initializeSingleFMU() throws Exception {
+    public void fixedStepSimulation() throws Exception {
         ObjectMapper om = new ObjectMapper();
         Maestro2SimulationController.StatusModel statusModel = om.readValue(
                 mockMvc.perform(get("/createSession")).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
@@ -64,9 +64,9 @@ public class CreateMablSpec {
     }
 
     public String getWaterTankMMJson() {
-        String singlewatertank_20simfmu =
+        String singlewatertank_20simfmu = "file:///" +
                 Paths.get("src", "test", "resources", "maestro2", "watertankexample", "singlewatertank-20sim.fmu").toAbsolutePath().toString();
-        String watertankcontroller_cfmu =
+        String watertankcontroller_cfmu = "file:///" +
                 Paths.get("src", "test", "resources", "maestro2", "watertankexample", "watertankcontroller-c.fmu").toAbsolutePath().toString();
 
         String json = "{\n" + "  \"fmus\": {\n" + "    \"{crtl}\": \"" + watertankcontroller_cfmu + "\",\n" + "    \"{wt}\": \"" +
