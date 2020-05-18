@@ -1,4 +1,4 @@
-package org.intocps.maestro.webapi.maestrobrokering;
+package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.PluginIdentification;
-import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
 
 import java.util.List;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package org.intocps.maestro.webapi.controllers;
+package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -9,7 +9,9 @@ import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.webapi.maestrobrokering.Maestro2Broker;
+import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
+import org.intocps.maestro.webapi.controllers.SessionController;
+import org.intocps.maestro.webapi.controllers.SessionLogic;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
@@ -20,8 +22,8 @@ import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,12 +39,12 @@ import java.util.zip.ZipOutputStream;
 
 
 @RestController
+@Component
 public class Maestro2SimulationController {
 
-    public static final MediaType x = MediaType.TEXT_PLAIN;
+    public static final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
-    private final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
 
     public static InitializationMsgJson.Constraint convert(IVarStepConstraint constraint) {
         if (constraint instanceof InitializationData.FmuMaxStepSizeConstraint) {

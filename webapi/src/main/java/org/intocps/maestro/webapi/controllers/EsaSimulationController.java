@@ -338,7 +338,6 @@ public class EsaSimulationController {
                     }
                 }
             }
-
             return files;
         }
 

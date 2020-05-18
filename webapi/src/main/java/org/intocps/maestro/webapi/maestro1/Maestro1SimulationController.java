@@ -1,4 +1,4 @@
-package org.intocps.maestro.webapi.legacy;
+package org.intocps.maestro.webapi.maestro1;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 @RestController
-@RequestMapping("/api/legacy/")
-public class SimulationController {
+@RequestMapping("/api/maestro1/")
+public class Maestro1SimulationController {
     final static ObjectMapper mapper = new ObjectMapper();
-    private final static Logger logger = LoggerFactory.getLogger(SimulationController.class);
+    private final static Logger logger = LoggerFactory.getLogger(Maestro1SimulationController.class);
     private final Map<String, Coe> sessions = new HashMap<>();
 
     public static InitializationMsgJson.Constraint convert(IVarStepConstraint constraint) {
@@ -191,8 +191,8 @@ public class SimulationController {
                 }
             }
 
-            Set<InitializationMsgJson.Constraint> constraints = algorithm.constraints == null ? null : algorithm.constraints.stream()
-                    .map(c -> convert(c)).collect(Collectors.toSet());
+            Set<InitializationMsgJson.Constraint> constraints =
+                    algorithm.constraints == null ? null : algorithm.constraints.stream().map(c -> convert(c)).collect(Collectors.toSet());
             stepSizeCalculator = new VariableStepSizeCalculator(constraints, stepsizeInterval, algorithm.initsize);
             stepAlgorithm = Algorithm.VARSTEP;
 
@@ -333,8 +333,8 @@ public class SimulationController {
                     Object element = appenders.nextElement();
                     if (element != null && element instanceof FileAppender) {
                         FileAppender fileAppender = (FileAppender) element;
-                        if (fileAppender.getFile() != null && fileAppender.getFile()
-                                .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
+                        if (fileAppender.getFile() != null &&
+                                fileAppender.getFile().matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
                             // Log files for fmu instances.
                             // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
                             fileAppender.close();

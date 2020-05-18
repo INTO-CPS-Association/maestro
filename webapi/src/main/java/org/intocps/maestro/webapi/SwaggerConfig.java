@@ -1,7 +1,7 @@
 package org.intocps.maestro.webapi;
 
 import com.fasterxml.classmate.TypeResolver;
-import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
+import org.intocps.maestro.webapi.maestro2.Maestro2SimulationController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

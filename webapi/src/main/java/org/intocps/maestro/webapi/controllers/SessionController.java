@@ -40,6 +40,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.webapi.exceptions.LegacyException;
 import org.intocps.orchestration.coe.json.StatusMsgJson;
 import org.intocps.orchestration.coe.scala.Coe;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +53,8 @@ import java.util.UUID;
  * Created by ctha on 17-03-2016.
  */
 public class SessionController {
+
+
     public static boolean test = false;
     private final Map<String, SessionLogic> maestroInstanceMap = new HashMap<>();
     private final SessionLogicFactory sessionLogicFactory;
@@ -103,16 +106,15 @@ public class SessionController {
         }
     }
 
-    public void removeSocket(String session) {
-
-        throw new NotImplementedException("SessionController.removeSocket has not been implemented yet");
+    public void removeSocket(String sessionId) {
+        this.getSessionLogic(sessionId).removeSocket();
     }
 
     public boolean containsSocket(String sessionId) {
-        throw new NotImplementedException("SessionController.containsSocket has not been implemented yet");
+        return this.getSessionLogic(sessionId).containsSocket();
     }
 
-    public void addSocket(String sessionId, Object socket) {
-        throw new NotImplementedException("SessionController.containsSocket has not been implemented yet");
+    public void addSocket(String sessionId, WebSocketSession socket) {
+        this.getSessionLogic(sessionId).setWebsocketSession(socket);
     }
 }

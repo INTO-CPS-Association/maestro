@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.client.match.ContentRequestMatchers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("main")
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@WebAppConfiguration
 public class Stp4Test {
     final static String baseUrl = "/api/esav1/simulator";
     @Rule
@@ -68,12 +70,11 @@ public class Stp4Test {
         }
 
         String data = Files.contentOf(Paths.get("src", "test", "resources", "esa", "STP4", "initialize.json").toFile(), StandardCharsets.UTF_8);
-        data = data.replace("watertankController-Standalone.fmu",
-                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString()
+        data = data.replace("watertankController-Standalone.fmu", uriScheme +
+                Paths.get("src", "test", "resources", "esa", "fmus", "watertankController-Standalone.fmu").toAbsolutePath().toString()
                         .replace('\\', '/'));
-        data = data.replace("singlewatertank-20sim.fmu",
-                uriScheme + Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString()
-                        .replace('\\', '/'));
+        data = data.replace("singlewatertank-20sim.fmu", uriScheme +
+                Paths.get("src", "test", "resources", "esa", "fmus", "singlewatertank-20sim.fmu").toAbsolutePath().toString().replace('\\', '/'));
 
 
         ContentRequestMatchers x;
@@ -93,8 +94,9 @@ public class Stp4Test {
         };
 
 
-        String response = mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON))
-                .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString();
+        String response =
+                mockMvc.perform(post(baseUrl + "/simulate").content(data).contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()))
+                        .andReturn().getResponse().getContentAsString();
         Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
 
         //        Map<String, Map<String, Object>> expectedOutput = new ObjectMapper()

@@ -27,6 +27,7 @@
         <module>interpreter</module>
         <module>plugins</module>
         <module>webapi</module>
+        <module>websocketsupport</module>
     </modules>
 
     <build>

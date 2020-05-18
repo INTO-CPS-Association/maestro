@@ -3,7 +3,6 @@ package org.intocps.maestro.webapi.maestro2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.intocps.maestro.webapi.controllers.Maestro2SimulationController;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -97,6 +97,7 @@
         <dependency>
             <groupId>org.into-cps</groupId>
             <artifactId>modeldefinition</artifactId>
+            <version>${fmu.api.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
