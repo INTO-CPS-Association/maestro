@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class MableSpecificationGenerator {
@@ -65,6 +66,10 @@ public class MableSpecificationGenerator {
 
         logger.debug("The following plugins will be used for unfolding: {}",
                 pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
+
+        logger.debug("Plugins declared functions: {}", pluginsToUnfold.stream()
+                .map(p -> p.getName() + "-" + p.getVersion() + p.getDeclaredUnfoldFunctions().stream().map(AFunctionDeclaration::toString)
+                        .collect(Collectors.joining(",\n\t", "\n\t", ""))).collect(Collectors.joining(",\n", "\n[\n", "\n]")));
 
 
         return new PluginEnvironment(rootEnv, pluginsToUnfold.stream()
@@ -159,18 +164,21 @@ public class MableSpecificationGenerator {
                 NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>()).stream().map(m -> m.getCall().getRoot().toString())
                         .collect(Collectors.joining(" , ", "[ ", " ]")));
 
+
         externalTypeMap.forEach((node, type) -> {
 
             if (type.isPresent()) {
                 logger.debug("Unfolding node: {}", node);
 
                 Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible = (fmap) -> fmap.getKey().getName().getText()
-                        .equals(node.getCall().getRoot().toString()) && comparator.compatible(fmap.getValue(), type.get());
+                        .equals(node.getCall().getRoot().toString()) && fmap.getKey().getFormals().size() == node.getCall().getArgs()
+                        .size() && comparator.compatible(fmap.getValue(), type.get());
 
                 Optional<Map.Entry<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch = plugins.entrySet().stream()
                         .filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
 
                 if (pluginMatch.isPresent()) {
+                    logger.info("matched with {}- {}", pluginMatch.get().getKey().getName(), pluginMatch.get().getValue().keySet().iterator().next());
                     pluginMatch.ifPresent(map -> {
                         map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getRoot().toString());
@@ -203,6 +211,8 @@ public class MableSpecificationGenerator {
                             }
                         });
                     });
+                } else {
+                    logger.error("No plugin found for: {}", node);
                 }
             }
         });
@@ -270,8 +280,8 @@ public class MableSpecificationGenerator {
                     throw new InternalException("errors after expansion");
                 }
 
-                logger.info(unfoldedSimulationModule.toString());
 
+                logger.info(ppPrint(unfoldedSimulationModule.toString()));
                 ARootDocument processedDoc = new ARootDocument(
                         Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
@@ -300,6 +310,29 @@ public class MableSpecificationGenerator {
         } else {
             throw new InternalException("No Specification module found");
         }
+    }
+
+    private String ppPrint(String string) {
+
+        StringBuilder sb = new StringBuilder();
+
+
+        int indentation = 0;
+        for (char c : string.toCharArray()) {
+            if (c == '{') {
+                indentation++;
+            } else if (c == '}') {
+                indentation--;
+            }
+
+            sb.append(c);
+            if (c == '\n') {
+                sb.append(IntStream.range(0, indentation).mapToObj(t -> "").collect(Collectors.joining("\t")));
+            }
+        }
+
+
+        return sb.toString();
     }
 
     private boolean verify(final ARootDocument doc, final IErrorReporter reporter) {

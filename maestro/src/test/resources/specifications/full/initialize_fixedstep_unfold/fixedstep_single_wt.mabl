@@ -20,10 +20,10 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 
 external initialize(components,START_TIME, END_TIME);
 
-external fixedStep(components,STEP_SIZE,0.0,END_TIME);
+external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv");
 
-crtlInstance.terminate();
-wtInstance.terminate();
+//crtlInstance.terminate();
+//wtInstance.terminate();
 
 tankcontroller.freeInstance(crtlInstance);
 SingleWatertank.freeInstance(wtInstance);

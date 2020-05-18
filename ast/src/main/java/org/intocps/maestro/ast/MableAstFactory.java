@@ -96,6 +96,19 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AUnloadExp newUnloadExp(List<? extends PExp> args) {
+        AUnloadExp exp = new AUnloadExp();
+        exp.setArgs(args);
+        return exp;
+    }
+
+
+    public static AExpressionStm newExpressionStm(PExp exp) {
+        AExpressionStm stm = new AExpressionStm();
+        stm.setExp(exp);
+        return stm;
+    }
+
     public static ALoadExp newALoadExp(List<? extends PExp> args) {
         ALoadExp exp = new ALoadExp();
         exp.setArgs(args);
