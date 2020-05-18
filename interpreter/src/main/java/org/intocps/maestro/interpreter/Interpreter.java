@@ -300,6 +300,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAEqualBinaryExp(AEqualBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
+        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+
+        return new BooleanValue(left.compareTo(right) == 0);
+    }
+
+    @Override
     public Value caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Context question) throws AnalysisException {
         NumericValue left = (NumericValue) node.getLeft().apply(this, question);
         NumericValue right = (NumericValue) node.getRight().apply(this, question);

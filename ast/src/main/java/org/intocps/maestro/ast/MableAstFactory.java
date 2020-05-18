@@ -63,6 +63,13 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AEqualBinaryExp newEqual(PExp left, PExp right) {
+        AEqualBinaryExp exp = new AEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, Boolean isArray,
             List<PExp> size) {
         AVariableDeclaration vardecl = new AVariableDeclaration();

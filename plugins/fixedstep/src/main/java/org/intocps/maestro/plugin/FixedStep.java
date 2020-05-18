@@ -186,10 +186,17 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                     Arrays.asList(newAIdentifierExp("csv_headers")))));
         }
 
+        Consumer<List<PStm>> checkStatus = list -> {
+
+            list.add(newIf(newEqual(newAIdentifierExp("status"), newAIntLiteralExp(0)), newABlockStm(Collections.emptyList()), null));
+
+        };
+
         try {
 
 
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("status"), newAIntNumericPrimitiveType())));
+
 
             for (LexIdentifier comp : componentNames) {
                 ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
@@ -228,18 +235,22 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         Consumer<List<PStm>> setAll = (list) ->
                 //set inputs
-                inputs.forEach((comp, map) -> map.forEach((type, vars) -> list
-                        .add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")), newACallExp(
-                                newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.In))),
-                                Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
-                                        newAIdentifierExp(getBufferName(comp, type, UsageType.In))))))));
+                inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
+                    list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")), newACallExp(
+                            newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.In))),
+                            Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
+                                    newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
+                    checkStatus.accept(list);
+                }));
 
         //get outputs
-        Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> list
-                .add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")), newACallExp(
-                        newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
-                        Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
-                                newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))))));
+        Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
+                            Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
+                                    newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
+            checkStatus.accept(list);
+        }));
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
 
@@ -278,9 +289,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         Consumer<List<PStm>> doStep = (list) -> componentNames.forEach(comp -> {
             //int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
-            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("ret")),
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
                     newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp("doStep")),
                             Arrays.asList(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone(), newABoolLiteralExp(true)))));
+
+            checkStatus.accept(list);
         });
 
         Consumer<List<PStm>> progressTime = list -> list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) time.clone()),
