@@ -9,6 +9,8 @@ import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
@@ -77,6 +79,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
             String guid = ((StringValue) args.get(1)).getValue();
             String path = ((StringValue) args.get(2)).getValue();
+            try {
+                path = (new URI(path)).getRawPath();
+            } catch (URISyntaxException e) {
+                throw new AnalysisException("The path passed to load is not a URI", e);
+            }
+
             return new FmiInterpreter().createFmiValue(path, guid);
         } else if (type.equals("CSV")) {
             return new CSVValue();

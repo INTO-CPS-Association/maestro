@@ -78,9 +78,8 @@ public class FmiInterpreter {
             }
 
             if (!clz.isAssignableFrom(array.getValues().get(0).getClass())) {
-                throw new InterpreterException(
-                        "Array not containing the right type. Expected: " + clz.getSimpleName() + " Actual: " + array.getValues().get(0).getClass()
-                                .getSimpleName());
+                throw new InterpreterException("Array not containing the right type. Expected: " + clz.getSimpleName() + " Actual: " +
+                        array.getValues().get(0).getClass().getSimpleName());
             }
 
             return array.getValues();
@@ -167,8 +166,8 @@ public class FmiInterpreter {
                     componentMembers.put("setReal", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
                         double[] values = getArrayValue(fcargs.get(2), RealValue.class).stream().mapToDouble(RealValue::getValue).toArray();
 
                         try {
@@ -187,8 +186,8 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
 
 
                         try {
@@ -197,8 +196,8 @@ public class FmiInterpreter {
                             if (res.status == Fmi2Status.OK) {
                                 ReferenceValue ref = (ReferenceValue) fcargs.get(2);
 
-                                List<RealValue> values = Arrays.stream(ArrayUtils.toObject(res.result)).map(d -> new RealValue(d))
-                                        .collect(Collectors.toList());
+                                List<RealValue> values =
+                                        Arrays.stream(ArrayUtils.toObject(res.result)).map(d -> new RealValue(d)).collect(Collectors.toList());
 
                                 ref.setValue(new ArrayValue<>(values));
                             }
@@ -214,8 +213,8 @@ public class FmiInterpreter {
                     }));
                     componentMembers.put("setInteger", new FunctionValue.ExternalFunctionValue(fcargs -> {
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
                         int[] values = getArrayValue(fcargs.get(2), IntegerValue.class).stream().mapToInt(IntegerValue::getValue).toArray();
 
                         try {
@@ -233,8 +232,8 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
 
 
                         try {
@@ -243,8 +242,8 @@ public class FmiInterpreter {
                             if (res.status == Fmi2Status.OK) {
                                 ReferenceValue ref = (ReferenceValue) fcargs.get(2);
 
-                                List<IntegerValue> values = Arrays.stream(ArrayUtils.toObject(res.result)).map(i -> new IntegerValue(i))
-                                        .collect(Collectors.toList());
+                                List<IntegerValue> values =
+                                        Arrays.stream(ArrayUtils.toObject(res.result)).map(i -> new IntegerValue(i)).collect(Collectors.toList());
 
                                 ref.setValue(new ArrayValue<>(values));
                             }
@@ -262,8 +261,8 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
                         boolean[] values = ArrayUtils.toPrimitive(
                                 getArrayValue(fcargs.get(2), BooleanValue.class).stream().map(BooleanValue::getValue).collect(Collectors.toList())
                                         .toArray(new Boolean[]{}));
@@ -283,8 +282,8 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
 
 
                         try {
@@ -293,8 +292,8 @@ public class FmiInterpreter {
                             if (res.status == Fmi2Status.OK) {
                                 ReferenceValue ref = (ReferenceValue) fcargs.get(2);
 
-                                List<BooleanValue> values = Arrays.stream(ArrayUtils.toObject(res.result)).map(BooleanValue::new)
-                                        .collect(Collectors.toList());
+                                List<BooleanValue> values =
+                                        Arrays.stream(ArrayUtils.toObject(res.result)).map(BooleanValue::new).collect(Collectors.toList());
 
                                 ref.setValue(new ArrayValue<>(values));
                             }
@@ -310,10 +309,11 @@ public class FmiInterpreter {
                     componentMembers.put("setString", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 3);
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
-                        String[] values = getArrayValue(fcargs.get(2), StringValue.class).stream().map(StringValue::getValue)
-                                .collect(Collectors.toList()).toArray(new String[]{});
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
+                        String[] values =
+                                getArrayValue(fcargs.get(2), StringValue.class).stream().map(StringValue::getValue).collect(Collectors.toList())
+                                        .toArray(new String[]{});
 
                         try {
                             Fmi2Status res = component.setStrings(scalarValueIndices, values);
@@ -331,8 +331,8 @@ public class FmiInterpreter {
                             throw new InterpreterException("value not a reference value");
                         }
 
-                        long[] scalarValueIndices = getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue)
-                                .toArray();
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
 
 
                         try {

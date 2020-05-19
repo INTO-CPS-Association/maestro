@@ -57,7 +57,6 @@
             <groupId>org.intocps.plugins</groupId>
             <artifactId>fixedstep</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -65,11 +64,10 @@
             <artifactId>typeconverter</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>initializer-wrap-coe</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

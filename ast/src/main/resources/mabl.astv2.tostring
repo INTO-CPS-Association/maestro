@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 
 %compilationUnit->importedModule = "imported "+ $ $[name]$+" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
-%compilationUnit->simulationSpecification = "simulation "+ [body]
+%compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$

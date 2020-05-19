@@ -1,0 +1,6 @@
+simulation
+import FMI2;
+import InitializerUsingCOE;
+{
+    external initialize();
+}

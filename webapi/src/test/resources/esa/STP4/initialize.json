@@ -1,0 +1,16 @@
+{
+  "fmus": {
+    "{tankFmu}": "singlewatertank-20sim.fmu"
+  },
+  "inputs": {
+    "{tankFmu}.tankIns.valvecontrol": 1.0
+  },
+  "requested_outputs": {
+    "{tankFmu}.tankIns": [
+      "level"
+    ]
+  },
+  "step_size": 0.1,
+  "end_time": 10,
+  "simulator_log_level": "TRACE"
+}

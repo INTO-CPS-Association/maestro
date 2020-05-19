@@ -1,6 +1,5 @@
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -10,7 +9,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -41,7 +39,7 @@ public class FullSpecTest {
 
 
     @Test
-    public void test() throws IOException, AnalysisException {
+    public void test() throws Exception {
 
         File config = new File(directory, "config.json");
 

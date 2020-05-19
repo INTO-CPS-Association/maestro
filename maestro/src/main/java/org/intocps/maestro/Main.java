@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
@@ -39,19 +38,19 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
         Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose").build();
         Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
         Option contextOpt = Option.builder("c").longOpt("config").desc("path to a plugin config JSON file").build();
-        Option mablOpt = Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required()
-                .build();
+        Option mablOpt =
+                Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required().build();
         Option frameworkOpt = Option.builder("f").longOpt("framework")
                 .desc("Specify simulation framework: " + Arrays.stream(Framework.values()).map(Object::toString).collect(Collectors.joining(", ")))
                 .hasArg().type(Framework.class).required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
-        Option simulationEnvOpt = Option.builder("e").longOpt("env").desc("Path to an env file for the selected framework").hasArg().argName("path")
-                .build();
+        Option simulationEnvOpt =
+                Option.builder("e").longOpt("env").desc("Path to an env file for the selected framework").hasArg().argName("path").build();
 
         Options options = new Options();
         options.addOption(helpOpt);
@@ -120,5 +119,5 @@ public class Main {
         }
     }
 
-   
+
 }

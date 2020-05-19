@@ -2,9 +2,9 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-class PluginIdentification {
+public class PluginIdentification {
     @JsonProperty("name")
-    String name;
+    public String name;
     @JsonProperty("version")
-    String version;
+    public String version;
 }
