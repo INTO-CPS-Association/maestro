@@ -12,13 +12,14 @@ import java.util.stream.Collectors;
 
 public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
+
     @Override
     public INode visitCompilationUnit(MablParser.CompilationUnitContext ctx) {
 
         ARootDocument doc = new ARootDocument();
 
-        List<PCompilationUnit> list = ctx.moduleDeclaration().stream().map(this::visit).map(PCompilationUnit.class::cast)
-                .collect(Collectors.toCollection(Vector::new));
+        List<PCompilationUnit> list =
+                ctx.moduleDeclaration().stream().map(this::visit).map(PCompilationUnit.class::cast).collect(Collectors.toCollection(Vector::new));
 
         if (ctx.simulationSpecification() != null) {
             list.add((PCompilationUnit) this.visit(ctx.simulationSpecification()));
@@ -78,13 +79,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     }
 
-
     @Override
     public INode visitBlock(MablParser.BlockContext ctx) {
         ABlockStm block = new ABlockStm();
 
-        List<INode> processedBody = ctx.statement().stream().filter(p -> !(p instanceof MablParser.SemiContext)).map(this::visit)
-                .collect(Collectors.toList());
+        List<INode> processedBody =
+                ctx.statement().stream().filter(p -> !(p instanceof MablParser.SemiContext)).map(this::visit).collect(Collectors.toList());
 
         processedBody.stream().filter(p -> !(p instanceof PStm)).forEach(s -> System.out.println("Wrong node type in body: " + s));
 
@@ -120,13 +120,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return designator;
     }
 
-    @Override
-    public INode visitIdentifierStateDesignator(MablParser.IdentifierStateDesignatorContext ctx) {
-        AIdentifierStateDesignator identifierExp = new AIdentifierStateDesignator();
-        identifierExp.setName(this.convert(ctx.IDENTIFIER()));
-        return identifierExp;
-    }
-
     //    @Override
     //    public INode visitAssignmentStm(MablParser.AssignmentStmContext ctx) {
     //
@@ -143,6 +136,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     //        return assign;
     //    }
 
+    @Override
+    public INode visitIdentifierStateDesignator(MablParser.IdentifierStateDesignatorContext ctx) {
+        AIdentifierStateDesignator identifierExp = new AIdentifierStateDesignator();
+        identifierExp.setName(this.convert(ctx.IDENTIFIER()));
+        return identifierExp;
+    }
 
     @Override
     public INode visitWhile(MablParser.WhileContext ctx) {
@@ -206,7 +205,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitParExpression(MablParser.ParExpressionContext ctx) {
         return this.visit(ctx.expression());
     }
-
 
     void checkList(List source, List processed) {
         if (!source.stream().anyMatch(p -> p == null)) {
@@ -331,6 +329,14 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         return null;
 
+    }
+
+    @Override
+    public INode visitEqualityExp(MablParser.EqualityExpContext ctx) {
+        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
+        PExp left = exps.get(0);
+        PExp right = exps.get(1);
+        return new AEqualBinaryExp(left, right);
     }
 
     @Override
