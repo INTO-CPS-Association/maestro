@@ -1,5 +1,10 @@
-Maestro 2.0.0-Alpha documentation
-=================================
+.. INTO-CPS Maestro documentation master file, created by
+   sphinx-quickstart on Tue May 26 14:23:21 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to INTO-CPS Maestro's documentation!
+============================================
 Maestro2 is for specifying and executing co-simulations based on the Functional Mock-up Interface. 
 It features a domain specific language called Mastro Base Language (MaBL) along with a parser and an interpreter. 
 Furthermore, it makes it possible to write plugins that can either expand to MaBL code or execute in the interpreter.
@@ -9,12 +14,10 @@ Introduction
 
 * **Overview**: :doc:`Overview <vision>`
 
-
 .. toctree::
    :maxdepth: 2
-   :hidden:
-   :caption: Introduction
-
+   :caption: Introduction:
+    
    overview
 
 
@@ -26,3 +29,9 @@ The following plugins are to be described:
 * **Fixed Step**
 * **CSV**
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

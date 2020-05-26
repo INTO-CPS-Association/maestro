@@ -17,11 +17,13 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'maestro'
+project = 'INTO-CPS Maestro'
 copyright = '2020, INTO-CPS Association'
 author = 'INTO-CPS Association'
 
-master_doc = 'index'
+# The full version, including alpha/beta/rc tags
+release = '2.0.0 Alpha'
+
 
 # -- General configuration ---------------------------------------------------
 
@@ -31,8 +33,17 @@ master_doc = 'index'
 extensions = [
     "recommonmark",
     "sphinx_rtd_theme",
-    "sphinxcontrib.plantuml"
+    "sphinxcontrib.plantuml",
+    "sphinx-needs"
 ]
+
+# Add any paths that contain templates here, relative to this directory.
+templates_path = ['_templates']
+
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+# This pattern also affects html_static_path and html_extra_path.
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -40,24 +51,14 @@ extensions = [
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
-if on_rtd:
+if os.environ.get("READTHEDOCS") != None:
     plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
 else:
-    cwd = os.getcwd()
-    plantuml = 'java -jar %s' % os.path.join(cwd, "utils/plantuml_beta.jar")
-
-# If we are running on windows, we need to manipulate the path,
-# otherwise plantuml will have problems.
-if os.name == "nt":
-    plantuml = plantuml.replace("/", "\\")
-    plantuml = plantuml.replace("\\", "\\\\")
-
-plantuml_output_format = 'png'
+    plantuml = 'java -jar plantuml.jar'
