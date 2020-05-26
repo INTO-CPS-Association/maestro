@@ -31,6 +31,7 @@ master_doc = 'index'
 extensions = [
     "recommonmark",
     "sphinx_rtd_theme",
+    "sphinxcontrib.plantuml"
 ]
 
 
