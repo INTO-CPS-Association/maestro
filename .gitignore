@@ -94,7 +94,7 @@ repository
 *.tokens
 
 # docs build files
-docs/_*
+docs/_build
 
 .factorypath
 .vscode
