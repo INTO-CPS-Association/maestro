@@ -12,7 +12,7 @@ Furthermore, it makes it possible to write plugins that can either expand to MaB
 Introduction
 ------------
 
-* **Overview**: :doc:`Overview <vision>`
+* **Overview**: :doc:`Overview <overview>`
 
 .. toctree::
    :maxdepth: 2
