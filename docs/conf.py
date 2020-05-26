@@ -33,8 +33,7 @@ release = '2.0.0 Alpha'
 extensions = [
     "recommonmark",
     "sphinx_rtd_theme",
-    "sphinxcontrib.plantuml",
-    "sphinx-needs"
+    "sphinxcontrib.plantuml"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
