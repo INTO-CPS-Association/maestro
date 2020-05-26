@@ -9,7 +9,7 @@ The introduction begins with an example of how a co-simulation is conducted usin
 The various elements in the example are briefly described herein and extended upon elsewhere.
 
 .. uml:: 
-    @startuml
+    
     actor User #red
     participant Maestro
     participant "MablSpecification\nGenerator" as MablSpecGen
@@ -28,7 +28,7 @@ The various elements in the example are briefly described herein and extended up
     Interpreter -> "CSVPlugin : \n(TBD)\nIMaestroInterpreterPlugin": Log 
     Interpreter -> User: results
 
-    @enduml
+    
 
 
 
