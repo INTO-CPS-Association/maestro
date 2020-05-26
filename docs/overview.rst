@@ -28,8 +28,3 @@ The various elements in the example are briefly described herein and extended up
     Interpreter -> "CSVPlugin : \n(TBD)\nIMaestroInterpreterPlugin": Log 
     Interpreter -> User: results
 
-    
-
-
-
-.. image:: images/test.svg
