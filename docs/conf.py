@@ -46,3 +46,18 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if on_rtd:
+    plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
+else:
+    cwd = os.getcwd()
+    plantuml = 'java -jar %s' % os.path.join(cwd, "utils/plantuml_beta.jar")
+
+# If we are running on windows, we need to manipulate the path,
+# otherwise plantuml will have problems.
+if os.name == "nt":
+    plantuml = plantuml.replace("/", "\\")
+    plantuml = plantuml.replace("\\", "\\\\")
+
+plantuml_output_format = 'png'
