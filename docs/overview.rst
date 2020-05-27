@@ -6,7 +6,7 @@ This page presents an overview of the Maestro 2 approach and the different compo
 Example
 -------
 The introduction begins with an example of how a co-simulation is conducted using Maestro2.
-The various elements in the example are briefly described herein and extended upon elsewhere.
+The various elements in the example are briefly described afterwards and extended upon elsewhere.
 
 .. uml:: 
     
@@ -28,3 +28,8 @@ The various elements in the example are briefly described herein and extended up
     Interpreter -> "CSVPlugin : \n(TBD)\nIMaestroInterpreterPlugin": Log 
     Interpreter -> User: results
 
+
+:environment.json: FMUs to use and the connections between instances of FMUs
+:configuration.json: Configuration for the plugins.
+:spec.mabl: Specification written in Maestro Base Language (MaBL)
+:MablSpecificationGenerator: Controls the process of creating a MaBL Specification from MaBL specifications and plugins.
