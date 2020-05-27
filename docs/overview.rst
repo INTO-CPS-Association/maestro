@@ -31,7 +31,7 @@ Maestro2 has an interpreter capable of executing a MaBL specification.
 It is possible to define interpreter plugins that offer functions to be used in a MaBL specification. The interpreter will then invoke these functions during execution of the specification.
 One such example is the CSV plugin, which writes values to a CSV file.
 
-The Co-simulation process with Maestro2
+Outline of the Co-simulation Process with Maestro2
 ------------------------------------------------------
 The sections outlines the process of how Maestro2 generates a MaBL specification and executes it.
 The elements in the diagram are briefly described afterwards and extended upon elsewhere (TBD).

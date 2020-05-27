@@ -9,13 +9,12 @@ Maestro2 is for specifying and executing co-simulations based on the Functional 
 It features a domain specific language called Mastro Base Language (MaBL) along with a parser and an interpreter. 
 Furthermore, it makes it possible to write plugins that can either expand to MaBL code or execute in the interpreter.
 
-Introduction
-------------
 .. toctree::
-   :maxdepth: 2
-   :caption: Introduction:
-    
+   :maxdepth: 3
+   :caption: Table of Contents:
+
    overview
+   plugins
 
 
 Plugins
