@@ -1,14 +1,45 @@
 Overview
 =========
-This page presents an overview of the Maestro 2 approach and the different components.
+This page presents an overview of the Maestro 2 approach to co-simulation and the different components.
+
+The Maestro2 approach is to generate a specification expressed in the DSL Maestro Base Language (MaBL) and then execute it in order to conduct a co-simulation.
+This specification is a recipe of what is going to be executed in order to conduct a co-simulation. 
+By seperating the specification and execution it is possible to verify the specification prior to executing it.
 
 
-Example
--------
-The introduction begins with an example of how a co-simulation is conducted using Maestro2.
-The various elements in the example are briefly described afterwards and extended upon elsewhere.
+
+Creating a specification
+------------------------
+A specification can be written completely by hand if so desired, but Maestro2 also features a plugin system of `unfolding plugins` that can assist in creating a specification.
+An unfolding plugin offer a function that can be called in the specification. If a specifiation makes use of unfolding plugins, 
+then Maestro2 `unfolds` function calls to plugins with the behaviour of the function call, which is provided by the unfolding plugin.
+As an example, consider a specification where a type conversion function from the TypeConverterPlugin is used in the initial specification passed to Maestro2:
+:code:`convertBoolean2Real(booleanVariable, realVariable)`.
+Maestro2 will then invoke the TypeConverterPlugin to get the unfolded MaBL code and replace the function call with the unfolded MaBL code provided by the TypeConverterPlugin::
+    if( booleanVariable )
+        {
+            realVariable = 1.0;
+        }
+    else
+        {
+            realVariable = 0.0;
+        }
+
+Executing a specification
+--------------------------
+Maestro2 has an interpreter capable of executing a MaBL specification.
+It is possible to define interpreter plugins that offer functions to be used in a MaBL specification. The interpreter will then invoke these functions during execution of the specification.
+One such example is the CSV plugin, which writes values to a CSV file.
+
+The Co-simulation process with Maestro2
+------------------------------------------------------
+The sections outlines the process of how Maestro2 generates a MaBL specification and executes it.
+The elements in the diagram are briefly described afterwards and extended upon elsewhere (TBD).
 
 .. uml:: 
+    
+    title Co-Simulation with Maestro 2.
+    hide footbox
     
     actor User #red
     participant Maestro
