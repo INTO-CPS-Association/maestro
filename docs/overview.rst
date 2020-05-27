@@ -33,3 +33,13 @@ The various elements in the example are briefly described afterwards and extende
 :configuration.json: Configuration for the plugins.
 :spec.mabl: Specification written in Maestro Base Language (MaBL)
 :MablSpecificationGenerator: Controls the process of creating a MaBL Specification from MaBL specifications and plugins.
+:Unfold: Unfold refers to the process of unfolding where a single statement is converted to multiple statements.
+:IMaestroUnfoldPlugin: A plugin that is executed by the MablSpecificationGenerator during generation of a MaBL Specification. 
+    A plugin that inherits from IMaestroUnfoldPlugin is capable of unfolding one or more MaBL statements.
+:InitializePlugin \: IMaestroUnfoldPlugin: The initialize plugins unfolds the statementment "initialize(arguments)" into MaBL statements that initializes the FMI2 instances passed via arguments
+:FixedStepPlugin \: IMaestroUnfoldPlugin: The FixedStep plugins unfolds the statementment "fixedStep(arguments)" into MaBL statements that creates the simulation statements required to execute a fixed step size algorithm based on the arguments. Note, it does not contain initialization. Initialization is taken care of by the InitializePlugin.
+:UnfoldedSpec: A MaBL Specification that has been fully unfolded. 
+:Interpreter: Can execute a MaBL Specification.
+:IMaestroInterpreterPlugin: A plugin that is executed by the interpreter during the interpretation of a MaBL Specification.
+:CSVPlugin \: IMaestroInterpreterPlugin: An interpreter plugin that logs values to a CSV file.
+:results: A fully unfolded MaBL Specification and a CSV results file of the simulation.
