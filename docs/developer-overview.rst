@@ -1,11 +1,14 @@
 Developer Overview
 ===================
 This page presents an extended overview of the Maestro 2 approach to co-simulation and the different components.
-The figures presented on this page does not match one-to-one with the implementation.
+The figures presented on this page is to outline the implementation and not does not correspond one-to-one.
+Furthermore, the figures mainly presents sunny-day scenarios.
 
 An initial MaBL specification is passed to Maestro.
-A MaBL specification can be folded in the sense that it relies on unfolding plugins to unfold statements until it has been fully unfolded.
-The example below shows a folded MaBL specification and will be explained below.
+A MaBL specification can be non-expanded in the sense that it relies on expansion plugins to expand statements until
+the specification has been fully expanded, in which case it should be executable. This is similar in nature to `macro expansion`.
+
+The example below shows a non-expanded MaBL specification, as it contains statements marked with :code:`external`, which means they have to be expanded.
 
 .. code-block:: none
 
@@ -38,10 +41,10 @@ The example below shows a folded MaBL specification and will be explained below.
         unload(SingleWatertank);
     }
 
-The imports :code:`FixedStep`, :code:`TypeConverter` and :code:`InitializerUsingCOE` refer to unfolding plugins.
-Unfolding plugins export functions as Function Declarations, from which the types can be derived.
+The imports :code:`FixedStep`, :code:`TypeConverter` and :code:`InitializerUsingCOE` refer to expansion plugins.
+Expansion plugins export functions as Function Declarations, from which the types can be derived.
 
-The imports :code:`FMI2` refer and :code:`CSV` refer to interpreter plugins.
+The imports :code:`FMI2` and :code:`CSV` refer to interpreter plugins.
 Interpreter plugins come with a companion MaBL specification with type definitions.
 Example:
 
@@ -58,17 +61,17 @@ Example:
         ...
     }
 
-In this case, there are two folded statements: :code:`xternal initialize(components,START_TIME, END_TIME)` and :code:`external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv")`.
+In this example, there are two statements to expand: :code:`external initialize(components,START_TIME, END_TIME)` and :code:`external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv")`.
 :code:`... initialize(...)` is implemented in the plugin :code:`InitializerUsingCOE`, and :code:`.. fixedStepCsv(...)` is implemented in :code:`FixedStep`.
-Upon unfolding these statements, where unfolding refers to replacing the function call with one or more MaBL statements, new folded statements can appear, and the process repeats.
-For example, the :code:`initialize` and :code:`fixedStepCsv` possibly makes use of the :code:`TypeConverter` unfolding plugin to convert types.
+Upon expanding these statements new :code:`external` statements can appear, and the process repeats.
+For example, the :code:`initialize` and :code:`fixedStepCsv` possibly makes use of the :code:`TypeConverter` expansion plugin to convert types.
 
 It is also necessary to supply an environment configuration (:code:`environment.json`) containing the FMUs to use in the given co-simulation and the connections between instances of the FMUs.
-Furthermore, if the unfolding plugins used in a MaBL specification require configuration in order to perform unfolding, then it is supplied within a plugin configuration file (:code:`configuration.json`).
+Furthermore, if the expansion plugins used in a MaBL specification require configuration in order to perform expansion, then it is supplied within a plugin configuration file (:code:`configuration.json`).
 
-Parsing and Unfolding
-----------------------
-The process of parsing and unfolding is presented below.
+Parsing and Expanding a Specification
+-------------------------------------
+The process of parsing and expanding is presented below.
 
 .. uml::
 
@@ -77,48 +80,79 @@ The process of parsing and unfolding is presented below.
 
     actor User #red
     participant Maestro
+    participant FMI2FrameworkEnvParser
     participant "MablSpecification\nGenerator" as MablSpecGen
 
     User -> Maestro: PerformCosimulation(environment.json, \nconfiguration.json, spec.mabl)
-    Maestro -> UnitRelationShip: parse(environment.json)
-    Maestro <-- UnitRelationShip: environment
+    Maestro -> FMI2FrameworkEnvParser: parse(environment.json)
+    Maestro <-- FMI2FrameworkEnvParser: environment
     Maestro -> MablSpecGen: parse(spec.mabl)
     MablSpecGen -> ANTLR4 : LexAndParse(spec.mabl)
     MablSpecGen <-- ANTLR4 : parsedNodes
     MablSpecGen -> ParseTree2AstConverter : visit(parsedNodes)
     MablSpecGen <-- ParseTree2AstConverter : AST
 
-Once the MaBL specification has been parsed into an AST it is time to perform the unfolding.
-The unfolding plugins are located via classes that implement the interface :code:`IMaestroUnfoldPlugin` and support a certain Framework (currently only FMI2 is supported) via an annotation :code:`@SimulationFramework(framework = Framework.FMI2)`.
-The plugins are then matched with the imports of the MaBL specification and the function calls are matched with functions exported by the plugins.
+Once the MaBL specification has been parsed into an AST it is time to perform the expansion.
+The expansion plugins are located via (1) classes that implement the interface :code:`IMaestroExpansionPlugin`,
+(2) support a certain Framework (currently only FMI2 is supported) via an annotation :code:`@SimulationFramework(framework = Framework.FMI2)`, and
+(3) are imported in the MaBL specification.
+The :code:`external` function calls are then matched with the functions exported by the expansion plugins located as described above.
 
 .. uml::
 
-    title Utilizing plugins to unfold statements
+    title Utilizing plugins to expand statements
     hide footbox
 
     actor User #red
     participant Maestro
     participant "MablSpecification\nGenerator" as MablSpecGen
 
-    MablSpecGen -> PluginFactory: GetPlugins(IMaestroUnfoldPlugin.class, framework)
-    MablSpecGen <-- PluginFactory: unfoldingPlugins
-    MablSpecGen -> TypeChecker: BuildExportedFunctionsMap(unfoldingPlugins.exportedFunctions)
-    MablSpecGen <-- TypeChecker: exportedFunctions
+    MablSpecGen -> PluginFactory: GetPlugins(IMaestroExpansionPlugin.class, framework, imports)
+    MablSpecGen <-- PluginFactory: expansionPlugins
+    MablSpecGen -> TypeChecker: BuildExportedFunctionsMap(expansionPlugins.exportedFunctions)
+    MablSpecGen <-- TypeChecker: exportedExpansionFunctions
         loop externalFunctions in AST.externalFunctionCalls
             loop externalFunc in externalFunctions
-                MablSpecGen -> MablSpecGen: unfoldingPlugin = getCorrespondingUnfoldingPlugin(exportedFunctions, externalFunc)
-                MablSpecGen -> unfoldingPlugin: requireConfig()
+                MablSpecGen -> MablSpecGen: expansionPlugin = getCorrespondingExpansionPlugin(exportedExpansionFunctions, externalFunc)
+                MablSpecGen -> expansionPlugin: requireConfig()
                 alt plugin requires configuration
-                    MablSpecGen <-- unfoldingPlugin: true
-                    MablSpecGen -> unfoldingPlugin: parseConfig(pluginSpecificPartOfConfiguration)
-                    MablSpecGen <-- unfoldingPlugin: parsedConfig
+                    MablSpecGen <-- expansionPlugin: true
+                    MablSpecGen -> expansionPlugin: parseConfig(pluginSpecificPartOfConfiguration)
+                    MablSpecGen <-- expansionPlugin: parsedConfig
                 else plugin does not require configuration
-                    MablSpecGen <-- unfoldingPlugin: false
+                    MablSpecGen <-- expansionPlugin: false
                 end
-                MablSpecGen -> unfoldingPlugin: unfold(function, arguments, parsedConfig || null)
-                MablSpecGen <-- unfoldingPlugin: unfoldedStatements
-                MablSpecGen -> MablSpecGen: AST = UpdateAST(Replace externalFunc with unfoldedStatements)
+                MablSpecGen -> expansionPlugin: expand(function, arguments, parsedConfig || null)
+                MablSpecGen <-- expansionPlugin: expandedStatements
+                MablSpecGen -> MablSpecGen: AST = UpdateAST(Replace externalFunc with expandedStatements)
             end
         end
+
+Verifying a Specification
+--------------------------
+The verification a specification consists of two concepts: Type checking and verification plugins.
+The diagram below continues from where the diagram above ended, where AST represents a fully-expanded AST.
+
+.. uml::
+
+    title Verifying a MaBL Specificatino
+    hide footbox
+
+    participant "MablSpecification\nGenerator" as MablSpecGen
+
     MablSpecGen -> TypeChecker: TypeCheck(AST)
+    MablSpecGen <-- TypeChecker: OK
+    MablSpecGen -> PluginFactory: GetPlugins(IMaestroVerifier, framework)
+    MablSpecGen <-- PluginFactory: verificationPlugins
+        loop verificationPlugin in verificationPlugins
+            MablSpecGen -> verificationPlugin: verify(AST)
+            MablSpecGen <-- verificationPlugin: OK
+        end
+    MablSpecGen -> MablSpecGen: verifiedSpecification = true
+
+
+Executing a Specification
+--------------------------
+The execution is carried out via interpretation of the AST and by utilising the interpretation plugins.
+TBD...
+
