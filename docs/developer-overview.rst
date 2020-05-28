@@ -45,21 +45,8 @@ The imports :code:`FixedStep`, :code:`TypeConverter` and :code:`InitializerUsing
 Expansion plugins export functions as Function Declarations, from which the types can be derived.
 
 The imports :code:`FMI2` and :code:`CSV` refer to interpreter plugins.
-Interpreter plugins come with a companion MaBL specification with type definitions.
-Example:
+Interpreter plugins come with a companion MaBL modules that gives the type definitions. This is elaborated on below in :ref:`Executing a Specification`.
 
-.. code-block:: none
-
-    module FMI2 {
-        FMI2Component instantiate(string name, bool logging);
-        void freeInstance(FMI2Component comp);
-    }
-
-    module FMI2Component {
-        int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
-        int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
-        ...
-    }
 
 In this example, there are two statements to expand: :code:`external initialize(components,START_TIME, END_TIME)` and :code:`external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv")`.
 :code:`... initialize(...)` is implemented in the plugin :code:`InitializerUsingCOE`, and :code:`.. fixedStepCsv(...)` is implemented in :code:`FixedStep`.
@@ -154,5 +141,38 @@ The diagram below continues from where the diagram above ended, where AST repres
 Executing a Specification
 --------------------------
 The execution is carried out via interpretation of the AST and by utilising the interpretation plugins.
-TBD...
 
+As mentioned, an interpreter plugin has a companion MaBL module that defines the available functions of the module.
+
+As an example, consider the :code:`FMI2` and :code:`FMI2Component` interpreter plugins below:
+
+.. code-block:: none
+
+    module FMI2 {
+        FMI2Component instantiate(string name, bool logging);
+        void freeInstance(FMI2Component comp);
+    }
+
+    module FMI2Component {
+        int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
+        int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
+        ...
+    }
+
+Currently, an interpreter plugin has to be loaded with the :code:`load` expression, which returns a value of the given module type. For example, :code:`FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");` returns a value of type :code:`FMI2`. This is also how the interpreter maps the MaBL :code:`load` expression to the :code:`FMI2` interpreter plugin. It is now possible to call the function :code:`instantiate` on :code:`tankcontroller`, which then returns a value of type :code:`FMI2Component`.
+
+Another example of an interpreter plugin is the :code:`CSV` plugin:
+
+.. code-block:: none
+
+   module CSV {
+        CSVFile open( string path);
+        CSVFile close(CSVFile file);
+    }
+
+    module CSVFile {
+        void writeHeader( string[] columnTitles);
+        void writeRow(real time,  ?[] values);
+    }
+
+The :code:`FMI2` and :code:`CSV` interpreter plugins are currently hardcoded within the interpreter evaluation of the :code:`load` expression, but it is envisioned that the approach will be similar to the approach used for expansion plugins.
