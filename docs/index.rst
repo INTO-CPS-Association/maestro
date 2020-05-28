@@ -15,6 +15,7 @@ Furthermore, it makes it possible to write plugins that can either expand to MaB
 
    overview
    plugins
+   developer-overview
 
 
 Plugins

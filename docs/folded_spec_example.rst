@@ -1,0 +1,34 @@
+Example of a folded MaBL Specification
+=======================================
+The imports FixedStep, TypeConverter and InitializerUsingCOE refer to unfolding plugins.
+The imports FMI2 refer and CSV refer to interpreter plugins.
+
+.. code-block::
+    simulation
+    import FixedStep;
+    import TypeConverter;
+    import InitializerUsingCOE;
+    import FMI2;
+    import CSV;
+    {
+        real START_TIME = 10.0;
+        real END_TIME = 10.0;
+        real STEP_SIZE = 0.1;
+
+        FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+        FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
+        FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, false);;
+        FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);;
+
+        IFmuComponent components[2]={wtInstance,crtlInstance};
+
+        external initialize(components,START_TIME, END_TIME);
+
+        external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv");
+
+        tankcontroller.freeInstance(crtlInstance);
+        SingleWatertank.freeInstance(wtInstance);
+
+        unload(tankcontroller);
+        unload(SingleWatertank);
+    }
