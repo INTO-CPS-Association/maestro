@@ -175,4 +175,4 @@ Another example of an interpreter plugin is the :code:`CSV` plugin:
         void writeRow(real time,  ?[] values);
     }
 
-The :code:`FMI2` and :code:`CSV` interpreter plugins are currently hardcoded within the interpreter evaluation of the :code:`load` expression, but it is envisioned that the approach will be similar to the approach used for expansion plugins.
+The :code:`FMI2` and :code:`CSV` interpreter plugins are currently hardcoded within the interpreter evaluation of the :code:`load` expression, but it is envisioned that the approach will be similar to the approach used for expansion plugins - see https://github.com/INTO-CPS-Association/maestro/issues/48.
