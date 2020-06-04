@@ -6,6 +6,7 @@ import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.LoadFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.env.EnvironmentMessage;
@@ -48,6 +49,6 @@ public class Maestro2Broker {
     }
 
     public void ExecuteInterpreter(ARootDocument doc) throws AnalysisException {
-        new MableInterpreter().execute(doc);
+        new MableInterpreter(new LoadFactory()).execute(doc);
     }
 }

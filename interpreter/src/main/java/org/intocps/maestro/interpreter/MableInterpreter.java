@@ -12,17 +12,19 @@ import java.util.HashMap;
 public class MableInterpreter {
 
     final static Logger logger = LoggerFactory.getLogger(MableInterpreter.class);
-    private Environment environment = null;
+    private final LoadFactory loadFactory;
 
-    public void setEnvironment(Environment env){
-        this.environment = env;
-    };
+    public MableInterpreter(LoadFactory loadFactory) {
+        this.loadFactory = loadFactory;
+
+    }
+
     public void execute(ARootDocument document) throws AnalysisException {
         logger.info("Starting Mable Interpreter...");
 
         long startTime = System.nanoTime();
         Instant start = Instant.now();
-        document.apply(new Interpreter(environment), new Context(null));
+        document.apply(new Interpreter(this.loadFactory), new Context(null));
         long stopTime = System.nanoTime();
         Instant end = Instant.now();
         System.out.println("Interpretation time: " + (stopTime - startTime) + " " + Duration.between(start, end));
