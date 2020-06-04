@@ -5,7 +5,6 @@ import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
-import scala.collection.convert.Decorators;
 
 import java.net.URI;
 import java.util.*;
@@ -232,10 +231,9 @@ public class StatementContainer {
 
     public void setInputOutputMapping(
             scala.collection.immutable.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, scala.Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputOutputMapping) {
-        Decorators.AsJava<java.util.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>> t = JavaConverters
-                .mapAsJavaMapConverter(inputOutputMapping);
-        java.util.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> t2 = t
-                .asJava();
+        java.util.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable,
+                Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> t2 = JavaConverters
+                .mapAsJavaMapConverter(inputOutputMapping).asJava();
         t2.forEach((k, v) -> this.inputToOutputMapping.put(k, JavaConverters.mapAsJavaMapConverter(v).asJava()));
     }
 

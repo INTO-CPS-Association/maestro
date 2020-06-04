@@ -8,25 +8,29 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
+import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.ImmutableMapper;
 import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
-import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+
+import org.intocps.topologicalsorting.TarjanGraph;
+import org.intocps.topologicalsorting.data.CyclicDependencyResult;
+import org.intocps.topologicalsorting.data.DependencyResult;
+import org.intocps.topologicalsorting.data.Edge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.JavaConverters;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
+
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
@@ -79,7 +83,6 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
         //Setup experiment for all components
         knownComponentNames.forEach(comp -> {
-            //Tolerance - what to do - I mean I don't think it should be hard-coded?
             sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true);
         });
 
@@ -102,12 +105,32 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             sc.exitInitializationMode(comp.getText());
         });
 
-/*
-        //All external connections/relations
-        Set<UnitRelationship.Relation> externalRelations =
-                env.getRelations(knownComponentNames).stream().filter(r -> r.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
+
+        //All connection - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicate of this
+        Set<UnitRelationship.Relation> relations =
+                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
                         .collect(Collectors.toSet());
 
+
+        //How to instantiate a generic class from scala
+        var edges = relations.stream().map(o -> new Edge<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>(o.getSource(),
+                ImmutableMapper.convertSet(new HashSet<UnitRelationship.Variable>(o.getTargets().values())), o.getOrigin()))
+                .collect(Collectors.toList());
+
+        Iterable<Edge<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>> iterable = edges;
+
+        var graphSolver = new TarjanGraph(JavaConverters.iterableAsScalaIterableConverter(iterable).asScala());
+
+        var topologicalOrderToInstantiate = graphSolver.topologicalSort();
+        if(topologicalOrderToInstantiate instanceof CyclicDependencyResult){
+            CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
+            throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
+        }
+
+        DependencyResult dependencyResult = (DependencyResult) topologicalOrderToInstantiate;
+
+        
+        /*
         Set<UnitRelationship.Relation> outputRelations =
                 externalRelations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
                         .collect(Collectors.toSet());
@@ -128,7 +151,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
 
         Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
+*/
 
+        /*
         Map<RelationVariable, PExp> csvFields =
                 inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
                         .map(h -> h.scalarVariable).sorted(Comparator.comparing(getLogName::apply)).collect(Collectors.toMap(l -> l, r -> {
@@ -149,35 +174,12 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         List<String> variableNames = csvFields.keySet().stream().map(getLogName).collect(Collectors.toList());
         try {
 
-            //Create a new statement for each component
-            for (LexIdentifier comp : knownComponentNames) {
-                ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
-                if (info.modelDescription.getCanGetAndSetFmustate()) {
-                    statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(comp.getText() + "State"), newANameType("FmuState"))));
-                }
-            }
-
-            //create output buffers
-            outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getBufferName(comp, type, UsageType.Out), newAArrayType(convert(type), vars.size()))))));
-
-            outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getVrefName(comp, type, UsageType.Out), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
-                            newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
-
-            //create input buffers
-            inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getBufferName(comp, type, UsageType.In), newAArrayType(convert(type), vars.size()))))));
-
-            inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getVrefName(comp, type, UsageType.In), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
-                            newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
 
 
         } catch (XPathExpressionException e) {
             e.printStackTrace();
-        }
-*/
+        }*/
+
         var statements = sc.getStatements();
         return newABlockStm(statements);
     }
@@ -206,13 +208,12 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                             }
                         } else {
                             switch (t) {
-                                case Boolean:{
-                                    boolean[] values = l.stream()
-                                            .map(o -> o.getType().start)
-                                            .map(Boolean.class::cast)
-                                            .collect(BooleanUtils.TO_BOOLEAN_ARRAY);
-                                    sc.setBooleans(comp.getText(), scalarValueIndices, values);}
-                                    break;
+                                case Boolean: {
+                                    boolean[] values =
+                                            l.stream().map(o -> o.getType().start).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY);
+                                    sc.setBooleans(comp.getText(), scalarValueIndices, values);
+                                }
+                                break;
                                 case Real:
                                     double[] values = l.stream().mapToDouble(o -> Double.parseDouble(o.getType().start.toString())).toArray();
                                     sc.setReals(comp.getText(), scalarValueIndices, values);
@@ -303,6 +304,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     }
 
 
-
 }
+
+
 

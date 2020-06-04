@@ -3,7 +3,7 @@ package org.intocps.topologicalsorting
 import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, DependencyResult, Edge, Edge11}
 
 import scala.collection.mutable
-class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
+class TarjanGraph[A,B](src: Iterable[Edge[A,B]]) {
   lazy val tarjan: mutable.Buffer[mutable.Buffer[A]] = {
     var s = mutable.Buffer.empty[A] //Stack to keep track of nodes reachable from current node
     val index = mutable.Map.empty[A, Int] //index of each node
@@ -17,7 +17,7 @@ class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
       //Add to stack
       s += v
 
-      src.filter(_.from == v).map(_.to).foreach(w => {
+      src.filter(_.from == v).flatMap(_.to).foreach(w => {
         if (!index.contains(w)) {
           //Perform DFS from node W, if node w is not explored yet
           visit(w)
@@ -48,8 +48,8 @@ class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
   // A cycle exist if there is a SCC with at least two components
   lazy val hasCycle: Boolean = tarjan.exists(_.size >= 2)
   lazy val tarjanCycle: Iterable[Seq[A]] = tarjan.filter(_.size >= 2).distinct.map(_.toSeq).toSeq
-  lazy val topologicalSortedEdges: Seq[Edge11[A,B]] =
-    if (hasCycle) Seq[Edge11[A,B]]()
+  lazy val topologicalSortedEdges: Seq[Edge[A,B]] =
+    if (hasCycle) Seq[Edge[A,B]]()
     else tarjan.flatten.reverse.flatMap(x => src.find(_.from == x)).toSeq
 
   lazy val topologicalSort: DependencyResult[A] =
