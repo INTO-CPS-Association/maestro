@@ -148,6 +148,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Either type -->
+        <dependency>
+            <groupId>com.spencerwi</groupId>
+            <artifactId>Either.java</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

@@ -1,5 +1,6 @@
 package org.intocps.maestro.interpreter;
 
+import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
@@ -19,6 +20,12 @@ import java.util.stream.IntStream;
 
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
+    private final ILoadFactory loadFactory;
+
+    public Interpreter(ILoadFactory loadFactory)
+    {
+        this.loadFactory = loadFactory;
+    }
 
     List<Value> evaluate(List<? extends PExp> list, Context ctxt) throws AnalysisException {
         List<Value> values = new Vector<>();
@@ -73,21 +80,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         List<Value> args = evaluate(node.getArgs(), question);
 
-
         String type = ((StringValue) args.get(0)).getValue();
-        if (type.equals("FMI2")) {
-
-            String guid = ((StringValue) args.get(1)).getValue();
-            String path = ((StringValue) args.get(2)).getValue();
-            try {
-                path = (new URI(path)).getRawPath();
-            } catch (URISyntaxException e) {
-                throw new AnalysisException("The path passed to load is not a URI", e);
-            }
-
-            return new FmiInterpreter().createFmiValue(path, guid);
-        } else if (type.equals("CSV")) {
-            return new CSVValue();
+        if (this.loadFactory.canInstantiate(type))
+        {
+            Either<Exception, Value> valueE = this.loadFactory.instantiate(type, args.subList(1, args.size()));
+            if(valueE.isLeft())
+                throw new AnalysisException(valueE.getLeft());
+            else
+                return valueE.getRight();
         }
         throw new AnalysisException("Load of unknown type");
     }
