@@ -19,6 +19,12 @@ import java.util.stream.IntStream;
 
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
+    private final Environment environment;
+
+    public Interpreter(Environment env)
+    {
+        this.environment = env;
+    }
 
     List<Value> evaluate(List<? extends PExp> list, Context ctxt) throws AnalysisException {
         List<Value> values = new Vector<>();
