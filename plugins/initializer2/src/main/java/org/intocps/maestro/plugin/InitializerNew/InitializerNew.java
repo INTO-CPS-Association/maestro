@@ -77,21 +77,28 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
         StatementContainer.reset();
 
-        PExp startTime = formalArguments.get(1).clone();
-        PExp endTime = formalArguments.get(2).clone();
         var sc = StatementContainer.getInstance();
-        sc.startTime = startTime;
-        sc.endTime = endTime;
+        sc.startTime = formalArguments.get(1).clone();;
+        sc.endTime = formalArguments.get(2).clone();;
 
         //Setup experiment for all components
+        logger.debug("Setup experiment for all components");
         knownComponentNames.forEach(comp -> {
             sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true);
         });
+
+        //All connection - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicated of this
+        Set<UnitRelationship.Relation> relations =
+                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
+                        .collect(Collectors.toSet());
+
+        List<UnitRelationship.Variable> instantiationOrder = findInstantiationOrder(relations);
 
         //Set variables for all components in IniPhase
         ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase(), false);
 
         //Enter initialization Mode
+        logger.debug("Enter initialization Mode");
         knownComponentNames.forEach(comp -> {
             sc.enterInitializationMode(comp.getText());
         });
@@ -107,12 +114,6 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             sc.exitInitializationMode(comp.getText());
         });
 
-        //All connection - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicated of this
-        Set<UnitRelationship.Relation> relations =
-                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
-                        .collect(Collectors.toSet());
-
-        List<UnitRelationship.Variable> instantiationOrder = findInstantiationOrder(relations);
 
         /*
         Set<UnitRelationship.Relation> outputRelations =
@@ -137,32 +138,6 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
 */
 
-        /*
-        Map<RelationVariable, PExp> csvFields =
-                inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
-                        .map(h -> h.scalarVariable).sorted(Comparator.comparing(getLogName::apply)).collect(Collectors.toMap(l -> l, r -> {
-
-                    //the relation should be a one to one relation so just take the first one
-                    RelationVariable fromVar = r;
-                    PExp from = newAArrayIndexExp(
-                            newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)), Collections
-                                    .singletonList(newAIntLiteralExp(
-                                            outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                                                    .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                                                    .indexOf(fromVar.scalarVariable.getName()))));
-                    return from;
-
-                }, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-
-
-        List<String> variableNames = csvFields.keySet().stream().map(getLogName).collect(Collectors.toList());
-        try {
-
-
-
-        } catch (XPathExpressionException e) {
-            e.printStackTrace();
-        }*/
 
         var statements = sc.getStatements();
         return newABlockStm(statements);
