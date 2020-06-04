@@ -17,12 +17,14 @@ import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import org.intocps.topologicalsorting.TarjanGraph;
+import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
 import org.intocps.topologicalsorting.data.CyclicDependencyResult;
-import org.intocps.topologicalsorting.data.DependencyResult;
+
 import org.intocps.topologicalsorting.data.Edge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
+import scala.jdk.CollectionConverters;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -105,31 +107,13 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             sc.exitInitializationMode(comp.getText());
         });
 
-
-        //All connection - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicate of this
+        //All connection - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicated of this
         Set<UnitRelationship.Relation> relations =
                 env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
                         .collect(Collectors.toSet());
 
+        List<UnitRelationship.Variable> instantiationOrder = findInstantiationOrder(relations);
 
-        //How to instantiate a generic class from scala
-        var edges = relations.stream().map(o -> new Edge<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>(o.getSource(),
-                ImmutableMapper.convertSet(new HashSet<UnitRelationship.Variable>(o.getTargets().values())), o.getOrigin()))
-                .collect(Collectors.toList());
-
-        Iterable<Edge<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>> iterable = edges;
-
-        var graphSolver = new TarjanGraph(JavaConverters.iterableAsScalaIterableConverter(iterable).asScala());
-
-        var topologicalOrderToInstantiate = graphSolver.topologicalSort();
-        if(topologicalOrderToInstantiate instanceof CyclicDependencyResult){
-            CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
-            throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
-        }
-
-        DependencyResult dependencyResult = (DependencyResult) topologicalOrderToInstantiate;
-
-        
         /*
         Set<UnitRelationship.Relation> outputRelations =
                 externalRelations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
@@ -182,6 +166,22 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
         var statements = sc.getStatements();
         return newABlockStm(statements);
+    }
+
+    private List<UnitRelationship.Variable> findInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
+        var edges = relations.stream().map(o -> new Edge<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>(o.getSource(),
+                ImmutableMapper.convertSet(new HashSet<UnitRelationship.Variable>(o.getTargets().values())), o.getOrigin()))
+                .collect(Collectors.toList());
+
+        var graphSolver = new TarjanGraph(CollectionConverters.IterableHasAsScala(edges).asScala());
+
+        var topologicalOrderToInstantiate = graphSolver.topologicalSort();
+        if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
+            CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
+            throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
+        }
+
+        return scala.jdk.javaapi.CollectionConverters.asJava(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder());
     }
 
     private void ManipulateComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementContainer sc,
