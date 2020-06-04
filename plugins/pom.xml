@@ -24,6 +24,7 @@
         <module>demo</module>
         <module>topologicalsorting</module>
         <module>initializer-wrap-coe</module>
+        <module>initializer-new</module>
         <module>initializer2</module>
     </modules>
 </project>
