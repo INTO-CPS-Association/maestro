@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.InitializerWrapCoe.Spec;
+package org.intocps.maestro.plugin.InitializerNew.Spec;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.*;

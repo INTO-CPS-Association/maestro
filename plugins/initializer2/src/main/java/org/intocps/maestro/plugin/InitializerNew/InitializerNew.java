@@ -8,6 +8,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
+import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -60,24 +61,6 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         return Stream.of(f1).collect(Collectors.toSet());
     }
 
-    public Predicate<ModelDescription.ScalarVariable> IniPhase() {
-        return o -> (o.initial == ModelDescription.Initial.Exact || o.initial == ModelDescription.Initial.Approx) &&
-                o.variability != ModelDescription.Variability.Constant;
-    }
-
-    public Predicate<ModelDescription.ScalarVariable> IniePhase() {
-        return o -> o.initial == ModelDescription.Initial.Exact && o.variability != ModelDescription.Variability.Constant;
-    }
-
-    public Predicate<ModelDescription.ScalarVariable> InPhase() {
-        return o -> o.causality == ModelDescription.Causality.Input ||
-                o.causality == ModelDescription.Causality.Parameter && o.variability == ModelDescription.Variability.Tunable;
-    }
-
-    public Predicate<ModelDescription.ScalarVariable> InitPhase() {
-        return o -> o.causality == ModelDescription.Causality.Output;
-    }
-
     @Override
     public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws UnfoldException {
@@ -101,21 +84,18 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         });
 
         //Set variables for all components in IniPhase
-        ManipulateComponentsVariables(env, knownComponentNames, sc, IniPhase(), false);
+        ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase(), false);
 
         //Enter initialization Mode
         knownComponentNames.forEach(comp -> {
             sc.enterInitializationMode(comp.getText());
         });
 
-        //Set Variables INIEPhase
-        ManipulateComponentsVariables(env, knownComponentNames, sc, IniePhase(), false);
+        //Set variables INPhase and IniePhase
+        ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.InPhase().or(PhasePredicates.IniePhase()), false);
 
-        //Set variables INPhase
-        ManipulateComponentsVariables(env, knownComponentNames, sc, InPhase(), false);
-
-        //Get variables INPhase
-        ManipulateComponentsVariables(env, knownComponentNames, sc, InPhase(), true);
+        //Get variables INIThase
+        ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.InitPhase(), true);
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
@@ -209,12 +189,12 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
                 var variablesToInitialize =
-                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(Collectors.groupingBy(o -> o.getType()));
+                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(Collectors.groupingBy(o -> o.getType().type));
                 if (!variablesToInitialize.isEmpty()) {
                     variablesToInitialize.forEach((t, l) -> {
                         long[] scalarValueIndices = LongStream.range(0, l.size()).toArray();
                         if (isGet) {
-                            switch (t.type) {
+                            switch (t) {
                                 case Boolean:
                                     sc.getBooleans(comp.getText(), scalarValueIndices);
                                     break;
@@ -225,17 +205,17 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                                     break;
                             }
                         } else {
-                            switch (t.type) {
-                                case Boolean:
-                                    Boolean[] values = l.stream()
+                            switch (t) {
+                                case Boolean:{
+                                    boolean[] values = l.stream()
                                             .map(o -> o.getType().start)
-                                            .map(Boolean::booleanValue)
+                                            .map(Boolean.class::cast)
                                             .collect(BooleanUtils.TO_BOOLEAN_ARRAY);
-                                    sc.setBooleans(comp.getText(), scalarValueIndices, values);*/
+                                    sc.setBooleans(comp.getText(), scalarValueIndices, values);}
                                     break;
                                 case Real:
                                     double[] values = l.stream().mapToDouble(o -> Double.parseDouble(o.getType().start.toString())).toArray();
-                                    sc.setReals2(comp.getText(), scalarValueIndices, values);
+                                    sc.setReals(comp.getText(), scalarValueIndices, values);
                                     break;
                                 default:
                                     break;
@@ -322,4 +302,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
     }
 
+
+
 }
+

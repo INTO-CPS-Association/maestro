@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.InitializerWrapCoe.Spec;
+package org.intocps.maestro.plugin.InitializerNew.Spec;
 
 import org.intocps.maestro.ast.*;
 import org.intocps.orchestration.coe.config.ModelConnection;
@@ -28,6 +28,8 @@ public class StatementContainer {
     private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputToOutputMapping = new HashMap<>();
     private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
+    public PExp startTime;
+    public PExp endTime;
     /**
      * <code>instancesLookupDependencies</code> is set to true the co-simulatino enters the stage where
      * dependencies are to be looked up. It is detected by the first "get".
@@ -57,46 +59,22 @@ public class StatementContainer {
                                         MableAstFactory.newAIdentifierExp(valueArray))))));
     }
 
-    public void createLoadStatement(String fmuName, String guid, URI uri) {
-        AVariableDeclaration variable = MableAstFactory
-                .newAVariableDeclaration(createLexIdentifier.apply(fmuName), MableAstFactory.newANameType(createLexIdentifier.apply("FMI2")),
-                        MableAstFactory.newAExpInitializer(MableAstFactory.newALoadExp(new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"), MableAstFactory.newAStringLiteralExp(guid),
-                                        MableAstFactory.newAStringLiteralExp(uri.toString()))))));
-
-        // Create variable
-        PStm statement = MableAstFactory.newALocalVariableStm(variable);
-        statements.add(statement);
-        fmuVariables.put(fmuName, variable);
-
+    public static void reset() {
     }
+
 
     public List<PStm> getStatements() {
         return statements;
     }
 
-    public void createInstantiateStatement(String fmuName, String instanceName, boolean visible, boolean logging) {
-        AVariableDeclaration variable = MableAstFactory.newAVariableDeclaration(createLexIdentifier.apply(instanceName),
-                MableAstFactory.newANameType(createLexIdentifier.apply("FMI2Component")), MableAstFactory.newAExpInitializer(MableAstFactory
-                        .newACallExp(MableAstFactory.newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(fmuName)),
-                                MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("instantiate"))), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName), MableAstFactory.newABoolLiteralExp(visible),
-                                        MableAstFactory.newABoolLiteralExp(logging))))));
-
-        PStm statement = MableAstFactory.newALocalVariableStm(variable);
-        statements.add(statement);
-        fmuInstances.put(instanceName, variable);
-
-    }
-
-    public void createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance, double startTime,
-            boolean stopTimeDefined, double stopTime) {
+    public void createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance,
+            boolean stopTimeDefined) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
                 .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
                         .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newABoolLiteralExp(toleranceDefined), MableAstFactory.newARealLiteralExp(tolerance),
-                                        MableAstFactory.newARealLiteralExp(startTime), MableAstFactory.newABoolLiteralExp(stopTimeDefined),
-                                        MableAstFactory.newARealLiteralExp(stopTime))))
+                                        this.startTime.clone(), MableAstFactory.newABoolLiteralExp(stopTimeDefined),
+                                        this.endTime.clone())))
 
                 ));
         statements.add(statement);
@@ -110,7 +88,6 @@ public class StatementContainer {
     }
 
     public void setReals(String instanceName, long[] longs, double[] doubles) {
-
         // Create the array to contain the values
         LexIdentifier realArray = findArrayOfSize(realArrays, doubles.length);
         // The array does not exist. Create it and initialize it.
@@ -163,11 +140,7 @@ public class StatementContainer {
     }
 
     private LexIdentifier findArrayOfSize(Map<Integer, LexIdentifier> arrays, int i) {
-        if (arrays.containsKey(i)) {
-            return arrays.get(i);
-        } else {
-            return null;
-        }
+        return arrays.getOrDefault(i, null);
     }
 
     private LexIdentifier createNewArrayAndAddToStm(String name, Map<Integer, LexIdentifier> array, AArrayType arType, PInitializer initializer) {
@@ -227,17 +200,14 @@ public class StatementContainer {
     }
 
     private void updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray) {
-        Map<Long, VariableLocation> instanceVariables = this.instanceVariables.get(instanceName);
-        if (instanceVariables == null) {
-            instanceVariables = new HashMap<>();
-            this.instanceVariables.put(instanceName, instanceVariables);
-        }
+        Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
         // Move the retrieved values to the respective instance variables
         for (int i = 0; i < longs.length; i++) {
             VariableLocation svVar = instanceVariables.get(longs[i]);
             AArrayIndexExp assignmentExpression = MableAstFactory
-                    .newAArrayIndexExp(MableAstFactory.newAIdentifierExp(valueArray), Arrays.asList(MableAstFactory.newAUIntLiteralExp((long) i)));
+                    .newAArrayIndexExp(MableAstFactory.newAIdentifierExp(valueArray),
+                            Collections.singletonList(MableAstFactory.newAUIntLiteralExp((long) i)));
 
             // Create the variable, initialize it, and add it to instanceVariables
             if (svVar == null) {
@@ -307,7 +277,7 @@ public class StatementContainer {
                 };
             }
         } else {
-            valueLocator = i -> literalExp.apply(i);
+            valueLocator = literalExp::apply;
         }
         return valueLocator;
     }

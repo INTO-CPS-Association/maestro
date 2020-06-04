@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.iki.elonen.NanoHTTPD;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface.StatementFactory;
-import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
+import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;

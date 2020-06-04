@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface;
 
 import org.intocps.fmi.*;
-import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
+import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.xml.sax.SAXException;
 

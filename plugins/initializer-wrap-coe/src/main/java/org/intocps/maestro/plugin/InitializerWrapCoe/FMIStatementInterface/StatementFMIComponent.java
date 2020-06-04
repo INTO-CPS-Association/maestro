@@ -2,8 +2,8 @@ package org.intocps.maestro.plugin.InitializerWrapCoe.FMIStatementInterface;
 
 
 import org.intocps.fmi.*;
-import org.intocps.maestro.plugin.InitializerWrapCoe.ConversionUtilities.BooleanUtils;
-import org.intocps.maestro.plugin.InitializerWrapCoe.Spec.StatementContainer;
+import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
+import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 
 import java.util.Arrays;
 
