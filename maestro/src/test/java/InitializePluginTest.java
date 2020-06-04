@@ -29,8 +29,8 @@ public class InitializePluginTest {
     }
 
     public InputStream createConfigJson() {
-        String singlewatertank_20simfmu = Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toAbsolutePath().toString();
-        String watertankcontroller_cfmu = Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toAbsolutePath().toString();
+        String singlewatertank_20simfmu = Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toFile().toURI().toString();
+        String watertankcontroller_cfmu = Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toFile().toURI().toString();
 
         String config =
                 "[\n" + "  {\n" + "    \"identification\": {\n" + "      \"name\": \"InitializerUsingCOE\",\n" + "      \"version\": \"0.0.0\"\n" +

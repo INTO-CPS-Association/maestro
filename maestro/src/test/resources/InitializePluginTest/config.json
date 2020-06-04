@@ -7,8 +7,8 @@
     "config": {
       "configuration": {
         "fmus": {
-          "{crtl}": "target/test-classes/watertankexample/watertankcontroller-c.fmu",
-          "{wt}": "target/test-classes/watertankexample/singlewatertank-20sim.fmu"
+          "{crtl}": "ISREPLACED",
+          "{wt}": "ISREPLACED"
         },
         "connections": {
           "{crtl}.crtlInstance.valve": [

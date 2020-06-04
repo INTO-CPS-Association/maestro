@@ -16,7 +16,7 @@ public class StatementFactory implements IFmuFactory {
     public IFmu instantiate(File file, URI uri) throws Exception {
         String rawPath = uri.getRawPath();
         System.out.println("Path: " + rawPath);
-        File fmuZipFile = new File(rawPath);
+        File fmuZipFile = new File(uri);
 
         return new StatementFMU(fmuZipFile, uri);
     }
