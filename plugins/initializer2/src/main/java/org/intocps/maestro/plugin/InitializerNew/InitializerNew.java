@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -114,7 +115,29 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             sc.exitInitializationMode(comp.getText());
         });
 
+        //sc.setInputOutputMapping();
 
+/*
+        Consumer<List<PStm>> setAll = (list) ->
+                //set inputs
+                inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
+                    list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")), newACallExp(
+                            newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.In))),
+                            Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
+                                    newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
+                    checkStatus.accept(list);
+                }));
+
+        //get outputs
+        Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
+                            Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
+                                    newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
+            checkStatus.accept(list);
+        }));
+
+*/
         /*
         Set<UnitRelationship.Relation> outputRelations =
                 externalRelations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)

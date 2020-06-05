@@ -6,11 +6,12 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 
-import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+
+import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class StatementContainer {
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
@@ -24,7 +25,8 @@ public class StatementContainer {
     private final Map<Integer, LexIdentifier> boolArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<String, Map<Long, VariableLocation>> instanceVariables = new HashMap<>();
-    private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputToOutputMapping = new HashMap<>();
+    private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance,
+                ModelDescription.ScalarVariable>>> inputToOutputMapping = new HashMap<>();
     private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
     public PExp startTime;
@@ -37,9 +39,9 @@ public class StatementContainer {
 
 
     private StatementContainer() {
-        AVariableDeclaration status = MableAstFactory.newAVariableDeclaration(statusVariable, MableAstFactory.newAIntNumericPrimitiveType(),
-                MableAstFactory.newAExpInitializer(MableAstFactory.newAIntLiteralExp(0)));
-        statements.add(MableAstFactory.newALocalVariableStm(status));
+        AVariableDeclaration status = newAVariableDeclaration(statusVariable, newAIntNumericPrimitiveType(),
+                newAExpInitializer(newAIntLiteralExp(0)));
+        statements.add(newALocalVariableStm(status));
     }
 
     public static StatementContainer getInstance() {
@@ -51,16 +53,15 @@ public class StatementContainer {
 
     private static PStm createGetSVsStatement(String instanceName, String functionName, long[] longs, LexIdentifier valueArray,
             LexIdentifier valRefArray, LexIdentifier statusVariable) {
-        return MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(functionName)), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAIdentifierExp(valRefArray), MableAstFactory.newAUIntLiteralExp((long) longs.length),
-                                        MableAstFactory.newAIdentifierExp(valueArray))))));
+        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)), newACallExp(
+                newAIdentifierExp(createLexIdentifier.apply(functionName)), new ArrayList<PExp>(
+                                Arrays.asList(newAIdentifierExp(valRefArray), newAUIntLiteralExp((long) longs.length),
+                                        newAIdentifierExp(valueArray))))));
     }
 
     public static void reset() {
+        container = null;
     }
-
 
     public List<PStm> getStatements() {
         return statements;
@@ -68,11 +69,10 @@ public class StatementContainer {
 
     public void createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance,
             boolean stopTimeDefined) {
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newABoolLiteralExp(toleranceDefined), MableAstFactory.newARealLiteralExp(tolerance),
-                                        this.startTime.clone(), MableAstFactory.newABoolLiteralExp(stopTimeDefined),
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)), newACallExp(
+                newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
+                                Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance),
+                                        this.startTime.clone(), newABoolLiteralExp(stopTimeDefined),
                                         this.endTime.clone())))
 
                 ));
@@ -80,9 +80,8 @@ public class StatementContainer {
     }
 
     public void enterInitializationMode(String instanceName) {
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("enterInitializationMode")), null)));
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("enterInitializationMode")), null)));
         statements.add(statement);
     }
 
@@ -91,16 +90,15 @@ public class StatementContainer {
         LexIdentifier realArray = findArrayOfSize(realArrays, doubles.length);
         // The array does not exist. Create it and initialize it.
         if (realArray == null) {
-            List<PExp> args = Arrays.stream(doubles).mapToObj(x -> MableAstFactory.newARealLiteralExp(x)).collect(Collectors.toList());
-            PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
+            List<PExp> args = Arrays.stream(doubles).mapToObj(x -> newARealLiteralExp(x)).collect(Collectors.toList());
+            PInitializer initializer = newAArrayInitializer(args);
             realArray = createNewArrayAndAddToStm(realArrayVariableName.apply(longs.length), realArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType(), doubles.length), initializer);
+                    newAArrayType(newARealNumericPrimitiveType(), doubles.length), initializer);
         } else {
             // The array exists. Assign its values.
             for (int i = 0; i < doubles.length; i++) {
-                PStm stm = MableAstFactory.newAAssignmentStm(MableAstFactory
-                                .newAArayStateDesignator(MableAstFactory.newAIdentifierStateDesignator(realArray), MableAstFactory.newAIntLiteralExp(i)),
-                        MableAstFactory.newARealLiteralExp(doubles[i]));
+                PStm stm = newAAssignmentStm(newAArayStateDesignator(newAIdentifierStateDesignator(realArray), newAIntLiteralExp(i)),
+                        newARealLiteralExp(doubles[i]));
                 statements.add(stm);
             }
         }
@@ -109,14 +107,18 @@ public class StatementContainer {
         // LexIdentifier valRefs = genericFindOrCreateArrayAndAssign(longs, valRefsFunctionMapper)
         LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
 
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setReal")), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
-                                        MableAstFactory.newAIdentifierExp(realArray))))
-
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)), newACallExp(
+                newAIdentifierExp(createLexIdentifier.apply("setReal")), new ArrayList<PExp>(
+                                Arrays.asList(newAIdentifierExp(valRefs), newAUIntLiteralExp((long) longs.length),
+                                        newAIdentifierExp(realArray))))
                 ));
         statements.add(statement);
+    }
+
+    public void setInputOutputMapping(
+            Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance,
+                    ModelDescription.ScalarVariable>>> inputOutputMapping) {
+        inputOutputMapping.forEach(this.inputToOutputMapping::put);
     }
 
     private LexIdentifier findOrCreateValueReferenceArrayAndAssign(long[] valRefs) {
@@ -124,16 +126,14 @@ public class StatementContainer {
         if (arrayName != null) {
 
             for (int i = 0; i < valRefs.length; i++) {
-                PStm stm = MableAstFactory.newAAssignmentStm(MableAstFactory
-                                .newAArayStateDesignator(MableAstFactory.newAIdentifierStateDesignator(arrayName), MableAstFactory.newAIntLiteralExp(i)),
-                        MableAstFactory.newAUIntLiteralExp(valRefs[i]));
+                PStm stm = newAAssignmentStm(newAArayStateDesignator(newAIdentifierStateDesignator(arrayName), newAIntLiteralExp(i)),
+                        newAUIntLiteralExp(valRefs[i]));
                 statements.add(stm);
             }
             return arrayName;
         } else {
             return createNewArrayAndAddToStm("valRefsSize" + valRefs.length, longArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newAUIntNumericPrimitiveType(), valRefs.length), MableAstFactory
-                            .newAArrayInitializer(Arrays.stream(valRefs).mapToObj(valRef -> MableAstFactory.newAUIntLiteralExp(valRef))
+                    newAArrayType(newAUIntNumericPrimitiveType(), valRefs.length), newAArrayInitializer(Arrays.stream(valRefs).mapToObj(valRef -> newAUIntLiteralExp(valRef))
                                     .collect(Collectors.toList())));
         }
     }
@@ -144,7 +144,7 @@ public class StatementContainer {
 
     private LexIdentifier createNewArrayAndAddToStm(String name, Map<Integer, LexIdentifier> array, AArrayType arType, PInitializer initializer) {
         LexIdentifier lexID = createLexIdentifier.apply(name);
-        PStm stm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(lexID, arType, initializer));
+        PStm stm = newALocalVariableStm(newAVariableDeclaration(lexID, arType, initializer));
         statements.add(stm);
         array.put(arType.getSize(), lexID);
         return lexID;
@@ -160,7 +160,7 @@ public class StatementContainer {
         // The array does not exist. Create it
         if (valueArray == null) {
             valueArray = createNewArrayAndAddToStm(booleanArrayVariableName.apply(longs.length), boolArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType(), longs.length), null);
+                    newAArrayType(newABoleanPrimitiveType(), longs.length), null);
         }
 
         // Create the valRefArray
@@ -184,7 +184,7 @@ public class StatementContainer {
         // The array does not exist. Create it
         if (valueArray == null) {
             valueArray = createNewArrayAndAddToStm("realValueSize" + longs.length, realArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType(), longs.length), null);
+                    newAArrayType(newARealNumericPrimitiveType(), longs.length), null);
         }
 
         // Create the valRefArray
@@ -204,16 +204,14 @@ public class StatementContainer {
         // Move the retrieved values to the respective instance variables
         for (int i = 0; i < longs.length; i++) {
             VariableLocation svVar = instanceVariables.get(longs[i]);
-            AArrayIndexExp assignmentExpression = MableAstFactory
-                    .newAArrayIndexExp(MableAstFactory.newAIdentifierExp(valueArray),
-                            Collections.singletonList(MableAstFactory.newAUIntLiteralExp((long) i)));
+            AArrayIndexExp assignmentExpression = newAArrayIndexExp(newAIdentifierExp(valueArray),
+                            Collections.singletonList(newAUIntLiteralExp((long) i)));
 
             // Create the variable, initialize it, and add it to instanceVariables
             if (svVar == null) {
                 String id = instanceName + "SvValRef" + longs[i];
-                PStm stm = MableAstFactory.newALocalVariableStm(MableAstFactory
-                        .newAVariableDeclaration(createLexIdentifier.apply(id), MableAstFactory.newABoleanPrimitiveType(),
-                                MableAstFactory.newAExpInitializer(assignmentExpression)));
+                PStm stm = newALocalVariableStm(newAVariableDeclaration(createLexIdentifier.apply(id), newABoleanPrimitiveType(),
+                                newAExpInitializer(assignmentExpression)));
                 statements.add(stm);
 
                 VariableLocation varLoc = new VariableLocation(id, ModelDescription.Types.Boolean);
@@ -221,22 +219,12 @@ public class StatementContainer {
             }
             // Assign to the variable
             else {
-                PStm stm = MableAstFactory
-                        .newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(createLexIdentifier.apply(svVar.variableId)),
+                PStm stm = newAAssignmentStm(newAIdentifierStateDesignator(createLexIdentifier.apply(svVar.variableId)),
                                 assignmentExpression);
                 statements.add(stm);
             }
         }
     }
-
-    public void setInputOutputMapping(
-            scala.collection.immutable.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable, scala.Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputOutputMapping) {
-        java.util.Map<ModelConnection.ModelInstance, scala.collection.immutable.Map<ModelDescription.ScalarVariable,
-                Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> t2 = JavaConverters
-                .mapAsJavaMapConverter(inputOutputMapping).asJava();
-        t2.forEach((k, v) -> this.inputToOutputMapping.put(k, JavaConverters.mapAsJavaMapConverter(v).asJava()));
-    }
-
 
     /**
      * This creates a function (<code>valueLocator</code>) that is used to locate an output corresponding to the given input that is to be set.
@@ -258,19 +246,20 @@ public class StatementContainer {
                     .findFirst();
 
             if (key.isPresent()) {
-                Map<ModelDescription.ScalarVariable, Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>> svInputsToOutputs = this.inputToOutputMapping
+                Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>> svInputsToOutputs =
+                        this.inputToOutputMapping
                         .get(key.get());
                 valueLocator = i -> {
                     Optional<ModelDescription.ScalarVariable> svInputVarToOutput = svInputsToOutputs.keySet().stream()
                             .filter(x -> x.valueReference == valRefs[i]).findFirst();
 
                     if (svInputVarToOutput.isPresent()) {
-                        Tuple2<ModelConnection.ModelInstance, ModelDescription.ScalarVariable> output = svInputsToOutputs
+                        AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable> output = svInputsToOutputs
                                 .get(svInputVarToOutput.get());
-                        VariableLocation variable = this.instanceVariables.get(output._1.instanceName).get(output._2.valueReference);
-                        return MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(variable.variableId));
+                        VariableLocation variable = this.instanceVariables.get(output.getKey().instanceName).get(output.getValue().valueReference);
+                        return newAIdentifierExp(createLexIdentifier.apply(variable.variableId));
                     } else {
-                        return MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("FAILED TO FIND VARIABLE"));
+                        return newAIdentifierExp(createLexIdentifier.apply("FAILED TO FIND VARIABLE"));
                     }
                 };
             }
@@ -284,7 +273,7 @@ public class StatementContainer {
 
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<PExp> valueLocator = generateInstanceVariablesValueLocator(instanceName, longs,
-                i -> MableAstFactory.newABoolLiteralExp(booleans[i]));
+                i -> newABoolLiteralExp(booleans[i]));
 
         // Create the array to contain the values
         LexIdentifier valueArray = findArrayOfSize(boolArrays, booleans.length);
@@ -295,14 +284,13 @@ public class StatementContainer {
                 args.add(valueLocator.apply(i));
             }
 
-            PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
+            PInitializer initializer = newAArrayInitializer(args);
             valueArray = createNewArrayAndAddToStm(booleanArrayVariableName.apply(longs.length), realArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType(), booleans.length), initializer);
+                    newAArrayType(newABoleanPrimitiveType(), booleans.length), initializer);
         } else {
             // The array exists. Assign its values.
             for (int i = 0; i < booleans.length; i++) {
-                PStm stm = MableAstFactory.newAAssignmentStm(MableAstFactory
-                                .newAArayStateDesignator(MableAstFactory.newAIdentifierStateDesignator(valueArray), MableAstFactory.newAIntLiteralExp(i)),
+                PStm stm = newAAssignmentStm(newAArayStateDesignator(newAIdentifierStateDesignator(valueArray), newAIntLiteralExp(i)),
                         valueLocator.apply(i));
                 statements.add(stm);
             }
@@ -310,11 +298,10 @@ public class StatementContainer {
 
         LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
 
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setBoolean")), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
-                                        MableAstFactory.newAIdentifierExp(valueArray))))
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)), newACallExp(
+                newAIdentifierExp(createLexIdentifier.apply("setBoolean")), new ArrayList<PExp>(
+                                Arrays.asList(newAIdentifierExp(valRefs), newAUIntLiteralExp((long) longs.length),
+                                        newAIdentifierExp(valueArray))))
 
                 ));
         statements.add(statement);
@@ -322,9 +309,8 @@ public class StatementContainer {
 
 
     public void exitInitializationMode(String instanceName) {
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("exitInitializationMode")), null)));
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("exitInitializationMode")), null)));
         statements.add(statement);
     }
 }
