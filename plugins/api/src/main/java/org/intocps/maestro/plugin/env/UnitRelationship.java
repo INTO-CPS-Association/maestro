@@ -25,6 +25,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
+    private ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -87,11 +88,13 @@ public class UnitRelationship implements ISimulationEnvironment {
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
                 instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName,
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key));
+                        new ComponentInfo(modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.from.instance.key)),
+                                instance.from.instance.key));
             }
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
                 instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName,
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key));
+                        new ComponentInfo(modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.to.instance.key)),
+                                instance.to.instance.key));
             }
         }
 
@@ -102,6 +105,7 @@ public class UnitRelationship implements ISimulationEnvironment {
             List<ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
                             .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
+
 
             for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                 Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
@@ -179,6 +183,8 @@ public class UnitRelationship implements ISimulationEnvironment {
 
         return fmuKeyToFmuWithMD;
     }
+
+
 
 
     Variable getOrCreateVariable(ModelDescription.ScalarVariable inputScalarVariable, LexIdentifier instanceLexIdentifier) {

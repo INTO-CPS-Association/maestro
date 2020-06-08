@@ -9,21 +9,20 @@ import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.ImmutableMapper;
+import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
+import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-
 import org.intocps.topologicalsorting.TarjanGraph;
 import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
 import org.intocps.topologicalsorting.data.CyclicDependencyResult;
-
 import org.intocps.topologicalsorting.data.Edge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
 import scala.jdk.CollectionConverters;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -31,11 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -47,6 +43,8 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), MableAstFactory.newAVoidType());
+
+    private final HashSet<ModelDescription.ScalarVariable> portsAlreadySet = new HashSet<>();
     Config config;
 
 
@@ -79,8 +77,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         StatementContainer.reset();
 
         var sc = StatementContainer.getInstance();
-        sc.startTime = formalArguments.get(1).clone();;
-        sc.endTime = formalArguments.get(2).clone();;
+        sc.startTime = formalArguments.get(1).clone();
+        sc.endTime = formalArguments.get(2).clone();
+
 
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
@@ -93,7 +92,12 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                 env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
                         .collect(Collectors.toSet());
 
+        //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
         List<UnitRelationship.Variable> instantiationOrder = findInstantiationOrder(relations);
+
+        instantiationOrder.forEach(o -> {
+            var i = o.scalarVariable.scalarVariable.derivativesDependencies;
+        });
 
         //Set variables for all components in IniPhase
         ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase(), false);
@@ -110,14 +114,41 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         //Get variables INIThase
         ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.InitPhase(), true);
 
+        instantiationOrder.forEach(o -> {
+            var useConverter = false;
+            //This is safe because if the port is not present in a relation it would not have been included in the topological order
+            var rel = relations.stream().filter(v -> v.getSource() == o || v.getTargets().containsValue(o)).findFirst().get();
+            //the relation should be a one to one relation so just take the first one
+            RelationVariable fromVar = rel.getTargets().values().iterator().next().scalarVariable;
+            useConverter = (rel.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type);
+            setPort(o, sc, useConverter);
+        });
+
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
             sc.exitInitializationMode(comp.getText());
         });
-
         //sc.setInputOutputMapping();
 
-/*
+        /*
+        Set<UnitRelationship.Relation> outputRelations = relations.stream()
+                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toSet());
+
+
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs = outputRelations.stream()
+                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+                        s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
+                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
+
+
+        Set<UnitRelationship.Relation> inputRelations = relations.stream()
+                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.InputToOutput).collect(Collectors.toSet());
+
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs = inputRelations.stream()
+                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+                        s -> inputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
+                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
+
         Consumer<List<PStm>> setAll = (list) ->
                 //set inputs
                 inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
@@ -134,36 +165,59 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                     newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
                             Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
                                     newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
-            checkStatus.accept(list);
         }));
 
+        Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
+
+            int toIndex = inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type)
+                    .stream().map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                    .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
+
+            AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(
+                    getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
+                            UsageType.In)), newAIntLiteralExp(toIndex));
+
+            //the relation should be a one to one relation so just take the first one
+            RelationVariable fromVar = r.getTargets().values().iterator().next().scalarVariable;
+            PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)),
+                    Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
+                            .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.scalarVariable.getName()))));
+
+            if (r.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type) {
+                //ok the types are not matching, lets use a converter
+
+                AArrayIndexExp toAsExp = newAArrayIndexExp(newAIdentifierExp(
+                        getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
+                                UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
+
+                list.add(newExternalStm(newACallExp(newAIdentifierExp(newAIdentifier(
+                        "convert" + fromVar.getScalarVariable().getType().type + "2" + r.getSource().scalarVariable.getScalarVariable()
+                                .getType().type)), Arrays.asList(from, toAsExp))));
+
+
+            } else {
+                list.add(newAAssignmentStm(to, from));
+            }
+
+        });
 */
-        /*
-        Set<UnitRelationship.Relation> outputRelations =
-                externalRelations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
-                        .collect(Collectors.toSet());
-
-        Set<UnitRelationship.Relation> inputRelations =
-                externalRelations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.InputToOutput)
-                        .collect(Collectors.toSet());
-
-        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs =
-                outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
-                        s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
-                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
-
-        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs =
-                inputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
-                        s -> inputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
-                                .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
-
-
-        Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
-*/
-
 
         var statements = sc.getStatements();
         return newABlockStm(statements);
+    }
+
+    //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
+    private void setPort(UnitRelationship.Variable port, StatementContainer sc, boolean useConverter) {
+        long[] scalarValueIndices = new long[]{port.scalarVariable.scalarVariable.getValueReference()};
+        if (port.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
+            getValueFromPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type, scalarValueIndices);
+            /*if (useConverter) {
+                sc.
+            }*/
+            return;
+        }
+        setValueOnPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type,
+                Collections.singletonList(port.scalarVariable.scalarVariable), scalarValueIndices);
     }
 
     private List<UnitRelationship.Variable> findInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
@@ -189,36 +243,15 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
                 var variablesToInitialize =
-                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(Collectors.groupingBy(o -> o.getType().type));
+                        info.modelDescription.getScalarVariables().stream().filter(predicate.and(o -> !portsAlreadySet.contains(o))).collect(Collectors.groupingBy(o -> o.getType().type));
                 if (!variablesToInitialize.isEmpty()) {
                     variablesToInitialize.forEach((t, l) -> {
-                        long[] scalarValueIndices = LongStream.range(0, l.size()).toArray();
+                        long[] scalarValueIndices = l.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
+                        portsAlreadySet.addAll(l);
                         if (isGet) {
-                            switch (t) {
-                                case Boolean:
-                                    sc.getBooleans(comp.getText(), scalarValueIndices);
-                                    break;
-                                case Real:
-                                    sc.getReals(comp.getText(), scalarValueIndices);
-                                    break;
-                                default:
-                                    break;
-                            }
+                            getValueFromPort(sc, comp, t, scalarValueIndices);
                         } else {
-                            switch (t) {
-                                case Boolean: {
-                                    boolean[] values =
-                                            l.stream().map(o -> o.getType().start).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY);
-                                    sc.setBooleans(comp.getText(), scalarValueIndices, values);
-                                }
-                                break;
-                                case Real:
-                                    double[] values = l.stream().mapToDouble(o -> Double.parseDouble(o.getType().start.toString())).toArray();
-                                    sc.setReals(comp.getText(), scalarValueIndices, values);
-                                    break;
-                                default:
-                                    break;
-                            }
+                            setValueOnPort(sc, comp, t, l, scalarValueIndices);
                         }
                     });
                 }
@@ -226,6 +259,36 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                 logger.error(e.getMessage());
             }
         });
+    }
+
+    private void setValueOnPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types t, List<ModelDescription.ScalarVariable> l,
+            long[] scalarValueIndices) {
+        switch (t) {
+            case Boolean: {
+                boolean[] values = l.stream().map(o -> o.getType().start).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY);
+                sc.setBooleans(comp.getText(), scalarValueIndices, values);
+            }
+            break;
+            case Real:
+                double[] values = l.stream().mapToDouble(o -> Double.parseDouble(o.getType().start.toString())).toArray();
+                sc.setReals(comp.getText(), scalarValueIndices, values);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void getValueFromPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types t, long[] scalarValueIndices) {
+        switch (t) {
+            case Boolean:
+                sc.getBooleans(comp.getText(), scalarValueIndices);
+                break;
+            case Real:
+                sc.getReals(comp.getText(), scalarValueIndices);
+                break;
+            default:
+                break;
+        }
     }
 
     private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws UnfoldException {

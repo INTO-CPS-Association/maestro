@@ -29,6 +29,7 @@ public class StatementContainer {
                 ModelDescription.ScalarVariable>>> inputToOutputMapping = new HashMap<>();
     private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
+
     public PExp startTime;
     public PExp endTime;
     /**
@@ -103,8 +104,6 @@ public class StatementContainer {
             }
         }
 
-        // LongFunction valRefsFunctionMapper = l -> MableAstFactory.newAUIntLiteralExp(l);
-        // LexIdentifier valRefs = genericFindOrCreateArrayAndAssign(longs, valRefsFunctionMapper)
         LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
 
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)), newACallExp(
