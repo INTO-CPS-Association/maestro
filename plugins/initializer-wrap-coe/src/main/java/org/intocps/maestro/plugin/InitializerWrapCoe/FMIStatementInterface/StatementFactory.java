@@ -5,6 +5,7 @@ import org.intocps.orchestration.coe.IFmuFactory;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 
 public class StatementFactory implements IFmuFactory {
     @Override
@@ -14,9 +15,7 @@ public class StatementFactory implements IFmuFactory {
 
     @Override
     public IFmu instantiate(File file, URI uri) throws Exception {
-        String rawPath = uri.getRawPath();
-        System.out.println("Path: " + rawPath);
-        File fmuZipFile = new File(rawPath);
+        File fmuZipFile = new File(uri.getPath());
 
         return new StatementFMU(fmuZipFile, uri);
     }

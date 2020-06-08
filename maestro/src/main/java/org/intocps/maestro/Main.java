@@ -4,6 +4,7 @@ import org.apache.commons.cli.*;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.LoadFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -112,7 +113,7 @@ public class Main {
             ARootDocument spec = new MableSpecificationGenerator(framework, verbose, simulationEnvironment).generate(sourceFiles, configIs);
 
             if (cmd.hasOption(interpretOpt.getOpt())) {
-                new MableInterpreter().execute(spec);
+                new MableInterpreter(new LoadFactory()).execute(spec);
             }
         } catch (AnalysisException e) {
             e.printStackTrace();

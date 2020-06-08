@@ -92,3 +92,9 @@ repository
 
 **/gen
 *.tokens
+
+# docs build files
+docs/_build
+
+.factorypath
+.vscode
