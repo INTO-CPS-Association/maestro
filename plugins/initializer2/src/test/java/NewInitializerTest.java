@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import static org.intocps.maestro.ast.MableAstFactory.newAArrayType;
 import static org.intocps.maestro.ast.MableAstFactory.newANameType;
 
-public class PluginInterfaceTests {
+public class NewInitializerTest {
     InputStream minimalConfiguration = this.getClass().getResourceAsStream("InitializePluginTest/config.json");
     InputStream envJson = this.getClass().getResourceAsStream("InitializePluginTest/env.json");
 
