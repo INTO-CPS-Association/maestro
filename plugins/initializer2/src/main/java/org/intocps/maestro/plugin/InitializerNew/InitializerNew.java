@@ -12,6 +12,7 @@ import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
+import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
+@SimulationFramework(framework = Framework.FMI2)
 public class InitializerNew implements IMaestroUnfoldPlugin {
     final static Logger logger = LoggerFactory.getLogger(InitializerNew.class);
 
@@ -46,7 +48,12 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     private final HashSet<ModelDescription.ScalarVariable> portsAlreadySet = new HashSet<>();
     Config config;
     List<ModelParameter> modelParameters;
-    private TopologicalPlugin topologicalPlugin;
+    private final TopologicalPlugin topologicalPlugin;
+
+    public InitializerNew() {
+        this.topologicalPlugin = new TopologicalPlugin();
+    }
+
 
     public InitializerNew(TopologicalPlugin topologicalPlugin) {
         this.topologicalPlugin = topologicalPlugin;
@@ -291,7 +298,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         if (root instanceof ArrayNode) {
             root = root.get(0);
         }
-        root = root.get("config");
+        root = root.get("configuration");
         JsonNode parameters = root.get("parameters");
         Config conf = null;
         try {

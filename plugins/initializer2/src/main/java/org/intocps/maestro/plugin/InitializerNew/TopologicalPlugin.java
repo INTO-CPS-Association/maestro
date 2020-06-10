@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class TopologicalPlugin{
+public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
     public List<UnitRelationship.Variable> FindInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
@@ -27,7 +27,7 @@ public class TopologicalPlugin{
             edges.add(new Edge11(o.getSource(), e, o.getOrigin()));
         }));
         internalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
-            edges.add(new Edge11(o.getTargets().values().iterator().next(), e, o.getOrigin()));
+            edges.add(new Edge11(e, o.getSource(), o.getOrigin()));
         }));
 
         var graphSolver = new TarjanGraph(CollectionConverters.IterableHasAsScala(edges).asScala());
