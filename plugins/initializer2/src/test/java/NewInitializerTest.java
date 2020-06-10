@@ -2,6 +2,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.InitializerNew;
+import org.intocps.maestro.plugin.InitializerNew.TopologicalPlugin;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,14 +25,16 @@ public class NewInitializerTest {
     @Test
     public void ParseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
-        IMaestroUnfoldPlugin plugin = new InitializerNew();
+        var topologicalPlugin = new TopologicalPlugin();
+        IMaestroUnfoldPlugin plugin = new InitializerNew(topologicalPlugin);
         plugin.parseConfig(minimalConfiguration);
     }
 
     @Test
     public void UnfoldCallsSpecGen() throws Exception {
         InputStream pluginConfiguration = minimalConfiguration;
-        IMaestroUnfoldPlugin plugin = new InitializerNew();
+        var topologicalPlugin = new TopologicalPlugin();
+        IMaestroUnfoldPlugin plugin = new InitializerNew(topologicalPlugin);
         AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
@@ -43,12 +46,13 @@ public class NewInitializerTest {
 
         //Useful test to make
         //Make sure SetupExperiment is called for all components
-
         components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".setupExperiment")));
+
         //Make sure EnterInitial
+        components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".enterInitializationMode")));
 
         //Make sure ExitInitialazionMode is called on all components
-
+        components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".exitInitializationMode")));
     }
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {

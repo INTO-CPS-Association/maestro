@@ -1,7 +1,9 @@
 package org.intocps.maestro.plugin.InitializerNew;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -15,15 +17,12 @@ import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
 import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
+import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
+import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import org.intocps.topologicalsorting.TarjanGraph;
-import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
-import org.intocps.topologicalsorting.data.CyclicDependencyResult;
-import org.intocps.topologicalsorting.data.Edge11;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.jdk.CollectionConverters;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -46,9 +45,11 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
 
     private final HashSet<ModelDescription.ScalarVariable> portsAlreadySet = new HashSet<>();
     Config config;
+    List<ModelParameter> modelParameters;
+    private TopologicalPlugin topologicalPlugin;
 
-
-    public InitializerNew() {
+    public InitializerNew(TopologicalPlugin topologicalPlugin) {
+        this.topologicalPlugin = topologicalPlugin;
     }
 
     @Override
@@ -74,11 +75,13 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         verifyArguments(formalArguments, env);
         final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);
 
+        //Make sure the statement container doesn't container any statements
         StatementContainer.reset();
-
         var sc = StatementContainer.getInstance();
         sc.startTime = formalArguments.get(1).clone();
         sc.endTime = formalArguments.get(2).clone();
+        this.config = (Config) config;
+        this.modelParameters = this.config.getModelParameters();
 
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
@@ -92,12 +95,10 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                         .collect(Collectors.toSet());
 
         //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-        List<UnitRelationship.Variable> instantiationOrder = findInstantiationOrder(relations);
-
-        this.config = (Config) config;
+        List<UnitRelationship.Variable> instantiationOrder = topologicalPlugin.FindInstantiationOrder(relations);
 
         //Set variables for all components in IniPhase
-        ManipulateComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase(), false);
+        SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
 
         //Enter initialization Mode
         logger.debug("Enter initialization Mode");
@@ -113,7 +114,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         sc.setInputOutputMapping(inputOutMapping);
 
         //Initialize the ports in the correct order based on the topological sorting
-        instantiationOrder.forEach(o -> { initializePort(o, sc); });
+        instantiationOrder.forEach(o -> {
+            initializePort(o, sc, env);
+        });
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
@@ -135,9 +138,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
                     new HashMap<>();
             o.getTargets().values().forEach(v -> {
                 ComponentInfo infoTarget = env.getUnitInfo(v.scalarVariable.getInstance(), Framework.FMI2);
-                entryMap.put(o.getSource().scalarVariable.getScalarVariable(),
-                        new AbstractMap.SimpleEntry<>(new ModelConnection.ModelInstance(infoTarget.fmuIdentifier, v.scalarVariable.getInstance().getText()),
-                                v.scalarVariable.scalarVariable));
+                entryMap.put(o.getSource().scalarVariable.getScalarVariable(), new AbstractMap.SimpleEntry<>(
+                        new ModelConnection.ModelInstance(infoTarget.fmuIdentifier, v.scalarVariable.getInstance().getText()),
+                        v.scalarVariable.scalarVariable));
                 inputToOutputMapping
                         .put(new ModelConnection.ModelInstance(infoSource.fmuIdentifier, o.getSource().scalarVariable.getInstance().getText()),
                                 entryMap);
@@ -148,63 +151,31 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     }
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
-    private void initializePort(UnitRelationship.Variable port, StatementContainer sc) {
+    private void initializePort(Variable port, StatementContainer sc, ISimulationEnvironment env) {
         long[] scalarValueIndices =
-                Stream.of(port.scalarVariable.scalarVariable.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
+                GetValueRefIndices(Collections.singletonList(port.scalarVariable.getScalarVariable()));
 
         if (port.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
             getValueFromPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type, scalarValueIndices);
             return;
         }
         setValueOnPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type,
-                Collections.singletonList(port.scalarVariable.scalarVariable), scalarValueIndices);
+                Collections.singletonList(port.scalarVariable.scalarVariable), scalarValueIndices, env);
     }
 
-    //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
-    // scala is needed
-    private List<UnitRelationship.Variable> findInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
-        var externalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toList());
-        var internalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toList());
 
-        var edges = new Vector<Edge11<Variable, UnitRelationship.Relation.InternalOrExternal>>();
-        externalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
-            edges.add(new Edge11(o.getSource(), e, o.getOrigin()));
-        }));
-        internalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
-            edges.add(new Edge11(o.getTargets().values().iterator().next(), e, o.getOrigin()));
-        }));
-
-        var graphSolver = new TarjanGraph(CollectionConverters.IterableHasAsScala(edges).asScala());
-
-        var topologicalOrderToInstantiate = graphSolver.topologicalSort();
-        if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
-            CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
-            throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
-        }
-
-        return scala.jdk.javaapi.CollectionConverters.asJava(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder());
-    }
-
-    private void ManipulateComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementContainer sc,
-            Predicate<ModelDescription.ScalarVariable> predicate, Boolean isGet) {
+    private void SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementContainer sc,
+            Predicate<ModelDescription.ScalarVariable> predicate) {
         knownComponentNames.forEach(comp -> {
-            //Maybe start time and end Time could be passed to the class
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
                 var variablesToInitialize =
                         info.modelDescription.getScalarVariables().stream().filter(predicate.and(o -> !portsAlreadySet.contains(o)))
                                 .collect(Collectors.groupingBy(o -> o.getType().type));
                 if (!variablesToInitialize.isEmpty()) {
-                    variablesToInitialize.forEach((t, l) -> {
-                        long[] scalarValueIndices = l.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
-                        portsAlreadySet.addAll(l);
-                        if (isGet) {
-                            getValueFromPort(sc, comp, t, scalarValueIndices);
-                        } else {
-                            setValueOnPort(sc, comp, t, l, scalarValueIndices);
-                        }
+                    variablesToInitialize.forEach((type, variables) -> {
+                        portsAlreadySet.addAll(variables);
+                        setValueOnPort(sc, comp, type, variables, GetValueRefIndices(variables), env);
                     });
                 }
             } catch (XPathExpressionException | IllegalAccessException | InvocationTargetException e) {
@@ -213,33 +184,60 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         });
     }
 
-    private void setValueOnPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types t, List<ModelDescription.ScalarVariable> l,
-            long[] scalarValueIndices) {
-        switch (t) {
-            case Boolean: {
-                boolean[] values = l.stream().map(o -> o.getType().start).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY);
-                sc.setBooleans(comp.getText(), scalarValueIndices, values);
-            }
-            break;
-            case Real:
-                double[] values = l.stream().mapToDouble(o -> Double.parseDouble(o.getType().start.toString())).toArray();
-                sc.setReals(comp.getText(), scalarValueIndices, values);
-                break;
-            default:
-                break;
-        }
+    private long[] GetValueRefIndices(List<ModelDescription.ScalarVariable> variables) {
+        return variables.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
     }
 
-    private void getValueFromPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types t, long[] scalarValueIndices) {
-        switch (t) {
-            case Boolean:
-                sc.getBooleans(comp.getText(), scalarValueIndices);
-                break;
-            case Real:
-                sc.getReals(comp.getText(), scalarValueIndices);
-                break;
-            default:
-                break;
+    private void setValueOnPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types type,
+            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) {
+        ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
+        ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
+
+        if (type == ModelDescription.Types.Boolean) {
+            sc.setBooleans(comp.getText(), scalarValueIndices,
+                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
+        } else if (type == ModelDescription.Types.Real) {
+            sc.setReals(comp.getText(), scalarValueIndices,
+                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
+        }
+
+    }
+
+    private Object[] GetValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
+        Object[] values = new Object[variables.size()];
+        var i = 0;
+        for (ModelDescription.ScalarVariable v : variables) {
+            values[i++] = getNewValue(v, modelInstance);
+        }
+        return values;
+    }
+
+    private Object getNewValue(ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
+        Object newVal = null;
+        if (sv.type.start != null) {
+            newVal = sv.type.start;
+        }
+
+        for (ModelParameter par : modelParameters) {
+            if (par.variable.toString().equals(comp + "." + sv.name)) {
+                newVal = par.value;
+                par.isSet = true;
+            }
+        }
+        if (sv.type.type == ModelDescription.Types.Real) {
+            if (newVal instanceof Integer) {
+                newVal = (double) (int) newVal;
+            }
+        }
+
+        return newVal;
+    }
+
+    private void getValueFromPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types type, long[] scalarValueIndices) {
+        if (type == ModelDescription.Types.Boolean) {
+            sc.getBooleans(comp.getText(), scalarValueIndices);
+        } else if (type == ModelDescription.Types.Real) {
+            sc.getReals(comp.getText(), scalarValueIndices);
         }
     }
 
@@ -289,35 +287,52 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
         JsonNode root = new ObjectMapper().readTree(is);
-        JsonNode configuration = root.get("configuration");
-        JsonNode start_message = root.get("start_message");
-        Config conf = new Config(configuration, start_message);
+        //We are only interested in one configuration, so in case it is an array we take the first one.
+        if (root instanceof ArrayNode) {
+            root = root.get(0);
+        }
+        root = root.get("config");
+        JsonNode parameters = root.get("parameters");
+        Config conf = null;
+        try {
+            conf = new Config(parameters);
+        } catch (InvalidVariableStringException e) {
+            e.printStackTrace();
+        }
         return conf;
     }
 
     public static class Config implements IPluginConfiguration {
 
-        public Config(JsonNode configuration, JsonNode start_message) {
-            this.configuration = configuration;
-            this.start_message = start_message;
+        private List<ModelParameter> modelParameters;
+
+        public Config(JsonNode parameters) throws InvalidVariableStringException {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<Map<String, Object>>() {
+            });
+            modelParameters = buildParameters(result);
         }
 
-        private JsonNode configuration;
+        ;
 
-        private JsonNode start_message;
-
-        public JsonNode getConfiguration() {
-            return configuration;
+        public List<ModelParameter> getModelParameters() {
+            return modelParameters;
         }
 
-        public JsonNode getStart_message() {
-            return start_message;
-        }
+        private List<ModelParameter> buildParameters(Map<String, Object> parameters) throws InvalidVariableStringException {
+            List<ModelParameter> list = new Vector<>();
 
+            if (parameters != null) {
+                for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+                    list.add(new ModelParameter(ModelConnection.Variable.parse(entry.getKey()), entry.getValue()));
+                }
+            }
+            return list;
+        }
     }
-
-
 }
+
+
 
 
 
