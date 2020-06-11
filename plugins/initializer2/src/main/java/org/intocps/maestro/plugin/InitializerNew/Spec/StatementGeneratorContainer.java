@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class StatementContainer {
+public class StatementGeneratorContainer {
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
-    private static StatementContainer container = null;
+    private static StatementGeneratorContainer container = null;
     private final LexIdentifier statusVariable = createLexIdentifier.apply("status");
     private final List<PStm> statements = new ArrayList<>();
     private final Map<Integer, LexIdentifier> realArrays = new HashMap<>();
@@ -34,15 +34,15 @@ public class StatementContainer {
     private boolean instancesLookupDependencies = false;
 
 
-    private StatementContainer() {
+    private StatementGeneratorContainer() {
         AVariableDeclaration status =
                 newAVariableDeclaration(statusVariable, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)));
         statements.add(newALocalVariableStm(status));
     }
 
-    public static StatementContainer getInstance() {
+    public static StatementGeneratorContainer getInstance() {
         if (container == null) {
-            container = new StatementContainer();
+            container = new StatementGeneratorContainer();
         }
         return container;
     }

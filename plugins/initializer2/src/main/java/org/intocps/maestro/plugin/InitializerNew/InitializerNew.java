@@ -11,7 +11,7 @@ import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.InitializerNew.ConversionUtilities.LongUtils;
-import org.intocps.maestro.plugin.InitializerNew.Spec.StatementContainer;
+import org.intocps.maestro.plugin.InitializerNew.Spec.StatementGeneratorContainer;
 import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
@@ -83,8 +83,8 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);
 
         //Make sure the statement container doesn't container any statements
-        StatementContainer.reset();
-        var sc = StatementContainer.getInstance();
+        StatementGeneratorContainer.reset();
+        var sc = StatementGeneratorContainer.getInstance();
         sc.startTime = formalArguments.get(1).clone();
         sc.endTime = formalArguments.get(2).clone();
         this.config = (Config) config;
@@ -158,7 +158,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     }
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
-    private void initializePort(Variable port, StatementContainer sc, ISimulationEnvironment env) {
+    private void initializePort(Variable port, StatementGeneratorContainer sc, ISimulationEnvironment env) {
         long[] scalarValueIndices =
                 GetValueRefIndices(Collections.singletonList(port.scalarVariable.getScalarVariable()));
 
@@ -171,7 +171,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
     }
 
 
-    private void SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementContainer sc,
+    private void SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
             Predicate<ModelDescription.ScalarVariable> predicate) {
         knownComponentNames.forEach(comp -> {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
@@ -195,7 +195,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         return variables.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
     }
 
-    private void setValueOnPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types type,
+    private void setValueOnPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
             List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) {
         ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
         ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
@@ -240,7 +240,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         return newVal;
     }
 
-    private void getValueFromPort(StatementContainer sc, LexIdentifier comp, ModelDescription.Types type, long[] scalarValueIndices) {
+    private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type, long[] scalarValueIndices) {
         if (type == ModelDescription.Types.Boolean) {
             sc.getBooleans(comp.getText(), scalarValueIndices);
         } else if (type == ModelDescription.Types.Real) {
