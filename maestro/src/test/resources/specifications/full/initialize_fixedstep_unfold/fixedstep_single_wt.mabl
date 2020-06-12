@@ -4,7 +4,7 @@ import TypeConverter;
 import InitializerUsingCOE;
 
 {
-real START_TIME = 10.0;
+real START_TIME = 0.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.1;
 
@@ -20,7 +20,7 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 
 external initialize(components,START_TIME, END_TIME);
 
-external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv");
+external fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,"mm.csv");
 
 //crtlInstance.terminate();
 //wtInstance.terminate();
