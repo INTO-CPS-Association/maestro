@@ -2,20 +2,28 @@ package org.intocps.maestro.interpreter;
 
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.interpreter.values.FunctionValue;
 import org.intocps.maestro.interpreter.values.StringValue;
 import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.VoidValue;
 import org.intocps.maestro.interpreter.values.csv.CSVValue;
+import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
-public class LoadFactory implements IExternalValueFactory {
+/**
+ * Default interpreter factory with framework support and other basic features.
+ * This class provides run-time support only. It creates and destroys certain types based on load and unload
+ */
+public class DefaultExternalValueFactory implements IExternalValueFactory {
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
 
-    public LoadFactory() {
+    public DefaultExternalValueFactory() {
         instantiators = new HashMap<>() {{
             put("FMI2", args -> {
                 String guid = ((StringValue) args.get(0)).getValue();
@@ -39,5 +47,17 @@ public class LoadFactory implements IExternalValueFactory {
     @Override
     public Either<Exception, Value> create(String type, List<Value> args) {
         return this.instantiators.get(type).apply(args);
+    }
+
+    @Override
+    public Value destroy(Value value) {
+        if (value instanceof FmuValue) {
+            FmuValue fmuVal = (FmuValue) value;
+            FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
+            return unloadFunction.evaluate(Collections.emptyList());
+        } else if (value instanceof CSVValue) {
+            return new VoidValue();
+        }
+        throw new InterpreterException("UnLoad of unknown type: " + value);
     }
 }

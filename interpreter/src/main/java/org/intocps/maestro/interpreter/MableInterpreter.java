@@ -7,14 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 
 public class MableInterpreter {
 
     final static Logger logger = LoggerFactory.getLogger(MableInterpreter.class);
-    private final LoadFactory loadFactory;
+    private final DefaultExternalValueFactory loadFactory;
 
-    public MableInterpreter(LoadFactory loadFactory) {
+    public MableInterpreter(DefaultExternalValueFactory loadFactory) {
         this.loadFactory = loadFactory;
 
     }

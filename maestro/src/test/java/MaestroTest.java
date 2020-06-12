@@ -1,7 +1,7 @@
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.interpreter.LoadFactory;
+import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -45,7 +45,7 @@ public class MaestroTest {
                         .collect(Collectors.toList()), contextFile);
 
 
-        new MableInterpreter(new LoadFactory()).execute(doc);
+        new MableInterpreter(new DefaultExternalValueFactory()).execute(doc);
     }
 
     //    @Test
