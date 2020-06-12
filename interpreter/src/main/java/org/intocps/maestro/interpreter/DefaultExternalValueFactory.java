@@ -12,10 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
-public class LoadFactory implements ILoadFactory {
+public class LoadFactory implements IExternalValueFactory {
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
-    public LoadFactory(){
-        instantiators = new HashMap<String, Function<List<Value>, Either<Exception, Value>>>(){{
+
+    public LoadFactory() {
+        instantiators = new HashMap<>() {{
             put("FMI2", args -> {
                 String guid = ((StringValue) args.get(0)).getValue();
                 String path = ((StringValue) args.get(1)).getValue();
@@ -26,19 +27,17 @@ public class LoadFactory implements ILoadFactory {
                 }
                 return Either.right(new FmiInterpreter().createFmiValue(path, guid));
             });
-            put("CSV", args -> {
-                return Either.right(new CSVValue());
-            });
+            put("CSV", args -> Either.right(new CSVValue()));
         }};
-        }
+    }
 
     @Override
-    public boolean canInstantiate(String type) {
+    public boolean supports(String type) {
         return this.instantiators.containsKey(type);
     }
 
     @Override
-    public Either<Exception, Value> instantiate(String type, List<Value> args) {
+    public Either<Exception, Value> create(String type, List<Value> args) {
         return this.instantiators.get(type).apply(args);
     }
 }
