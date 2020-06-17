@@ -31,6 +31,12 @@ public class WebsocketValueConverter {
 
     }
 
+    /**
+     * Updates the variables to be send. It converts dottet string names into objects
+     *
+     * @param time
+     * @param updates
+     */
     public void update(double time, List<Object> updates) {
 
         this.data.time = time;
