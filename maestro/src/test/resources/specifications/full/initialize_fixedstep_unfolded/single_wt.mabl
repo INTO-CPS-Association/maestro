@@ -4,7 +4,7 @@ import TypeConverter;
 import InitializerUsingCOE;
 
 {
-real START_TIME = 10.0;
+real START_TIME = 0.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.1;
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");

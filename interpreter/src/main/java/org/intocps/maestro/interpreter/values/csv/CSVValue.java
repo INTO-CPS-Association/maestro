@@ -8,33 +8,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class CSVValue extends ExternalModuleValue {
     public CSVValue() {
         super(createCsvMembers(), null);
     }
 
-
-    static void checkArgLength(List<Value> values, int size) {
-        if (values == null) {
-            throw new InterpreterException("No values passed");
-        }
-
-        if (values.stream().anyMatch(Objects::isNull)) {
-            throw new InterpreterException("Argument list contains null values");
-        }
-
-        if (values.size() != size) {
-            if (values.size() < size) {
-                throw new InterpreterException("Too few arguments");
-            } else {
-                throw new InterpreterException("Too many arguments");
-            }
-        }
-    }
 
     static String getString(Value value) {
 

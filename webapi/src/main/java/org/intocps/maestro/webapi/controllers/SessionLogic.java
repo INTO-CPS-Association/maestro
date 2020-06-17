@@ -17,6 +17,10 @@ public class SessionLogic {
 
     }
 
+    public WebSocketSession getSocket() {
+        return socket;
+    }
+
     public Maestro2SimulationController.InitializationData getInitializationData() {
         return initializationData;
     }

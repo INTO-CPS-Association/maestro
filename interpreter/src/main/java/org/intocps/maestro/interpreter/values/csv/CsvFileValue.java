@@ -13,25 +13,8 @@ public class CsvFileValue extends ExternalModuleValue<PrintWriter> {
         super(createCsvMembers(writer), writer);
     }
 
-    static void checkArgLength(List<Value> values, int size) {
-        if (values == null) {
-            throw new InterpreterException("No values passed");
-        }
 
-        if (values.stream().anyMatch(Objects::isNull)) {
-            throw new InterpreterException("Argument list contains null values");
-        }
-
-        if (values.size() != size) {
-            if (values.size() < size) {
-                throw new InterpreterException("Too few arguments");
-            } else {
-                throw new InterpreterException("Too many arguments");
-            }
-        }
-    }
-
-    static <T extends Value> List<T> getArrayValue(Value value, Class<T> clz) {
+    public static <T extends Value> List<T> getArrayValue(Value value, Class<T> clz) {
 
         value = value.deref();
 
@@ -53,7 +36,7 @@ public class CsvFileValue extends ExternalModuleValue<PrintWriter> {
 
     }
 
-    static String getString(Value value) {
+    public static String getString(Value value) {
 
         value = value.deref();
 
@@ -63,7 +46,7 @@ public class CsvFileValue extends ExternalModuleValue<PrintWriter> {
         throw new InterpreterException("Value is not string");
     }
 
-    static double getDouble(Value value) {
+    public static double getDouble(Value value) {
 
         value = value.deref();
 
