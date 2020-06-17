@@ -7,10 +7,10 @@
     "config": {
       "configuration": {
         "fmus": {
-          "{controllerFMU}": "target/test-classes/LineFollowingRobot_fmus/LFRController_Standalone.fmu",
-          "{sensor1FMU}": "target/test-classes/LineFollowingRobot_fmus/Sensor_Block_01.fmu",
-          "{sensor2FMU}": "target/test-classes/LineFollowingRobot_fmus/Sensor_Block_02.fmu",
-          "{bodyFMU}": "target/test-classes/LineFollowingRobot_fmus/Body_Block.fmu"
+          "{controllerFMU}": "target/test-classes/LineFollowRobot_fmus/LFRController_Standalone.fmu",
+          "{sensor1FMU}": "target/test-classes/LineFollowRobot_fmus/Sensor_Block_01.fmu",
+          "{sensor2FMU}": "target/test-classes/LineFollowRobot_fmus/Sensor_Block_02.fmu",
+          "{bodyFMU}": "target/test-classes/LineFollowRobot_fmus/Body_Block.fmu"
         },
         "connections": {
           "{bodyFMU}.body.robot_x": [

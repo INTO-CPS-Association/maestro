@@ -84,8 +84,8 @@ public class StatementFMIComponent implements IFmiComponent {
     @Override
     public FmuResult<boolean[]> getBooleans(long[] longs) throws FmuInvocationException {
         stmContainer.getBooleans(name, longs);
-        FmuResult<boolean[]> result = new FmuResult<>(Fmi2Status.OK,
-                Arrays.stream(longs).mapToObj(v -> false).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
+        FmuResult<boolean[]> result =
+                new FmuResult<>(Fmi2Status.OK, Arrays.stream(longs).mapToObj(v -> false).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
         return result;
     }
 
@@ -108,7 +108,8 @@ public class StatementFMIComponent implements IFmiComponent {
 
     @Override
     public Fmi2Status setIntegers(long[] longs, int[] ints) throws InvalidParameterException, FmiInvalidNativeStateException {
-        throw new FmiInvalidNativeStateException("notImplemented");
+        stmContainer.setIntegers(name, longs, ints);
+        return Fmi2Status.OK;
     }
 
     @Override
