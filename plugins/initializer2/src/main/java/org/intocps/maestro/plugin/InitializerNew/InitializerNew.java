@@ -149,6 +149,8 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             previousVariable = currentVariable;
             currentSet.add(previousVariable);
         }
+        if(!currentSet.isEmpty())
+            optimizedOrder.add(currentSet);
 
         return optimizedOrder;
     }
