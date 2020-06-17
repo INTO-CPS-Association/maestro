@@ -40,10 +40,17 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
                     newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
 
+    final AFunctionDeclaration funCsvWs = newAFunctionDeclaration(newAIdentifier("fixedStepCsvWs"),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
+
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(fun, funCsv).collect(Collectors.toSet());
+        return Stream.of(fun, funCsv, funCsvWs).collect(Collectors.toSet());
     }
 
     @Override
@@ -52,14 +59,15 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
 
-        if (!Arrays.asList(fun, funCsv).contains(declaredFunction)) {
+        if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new UnfoldException("Unknown function declaration");
         }
 
         boolean withCsv = false;
+        boolean withWs = declaredFunction == funCsvWs;
         AFunctionDeclaration selectedFun = fun;
 
-        if (declaredFunction.equals(funCsv)) {
+        if (declaredFunction.equals(funCsv) || declaredFunction.equals(funCsvWs)) {
             selectedFun = funCsv;
             withCsv = true;
         }
@@ -79,9 +87,10 @@ public class FixedStep implements IMaestroUnfoldPlugin {
             LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
             ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
 
-            Optional<AVariableDeclaration> compDecl = containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance)
-                    .map(ALocalVariableStm.class::cast).map(ALocalVariableStm::getDeclaration)
-                    .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+            Optional<AVariableDeclaration> compDecl =
+                    containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
+                            .map(ALocalVariableStm::getDeclaration)
+                            .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
 
             if (!compDecl.isPresent()) {
                 throw new UnfoldException("Could not find names for comps");
@@ -99,8 +108,9 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         final List<LexIdentifier> componentNames = knownComponentNames;
 
-        Set<UnitRelationship.Relation> relations = env.getRelations(componentNames).stream()
-                .filter(r -> r.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toSet());
+        Set<UnitRelationship.Relation> relations =
+                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
+                        .collect(Collectors.toSet());
 
         PExp stepSize = formalArguments.get(1).clone();
         PExp startTime = formalArguments.get(2).clone();
@@ -121,6 +131,13 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                     newAExpInitializer(newACallExp(newADotExp(newAIdentifierExp("csv"), newAIdentifierExp("open")), Arrays.asList(csvPath))))));
         }
 
+        if (withWs) {
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("wsHandler"), newANameType("WebsocketHandler"),
+                    newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("WebsocketHandler")))))));
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("ws"), newANameType("Websocket"), newAExpInitializer(
+                    newACallExp(newADotExp(newAIdentifierExp("wsHandler"), newAIdentifierExp("open")), Collections.emptyList())))));
+        }
+
 
         LexIdentifier end = newAIdentifier("end");
         statements.add(newALocalVariableStm(
@@ -131,21 +148,21 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                 newAVariableDeclaration((LexIdentifier) time.clone(), newARealNumericPrimitiveType(), newAExpInitializer(startTime))));
 
 
-        Set<UnitRelationship.Relation> outputRelations = relations.stream()
-                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toSet());
+        Set<UnitRelationship.Relation> outputRelations =
+                relations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toSet());
 
 
-        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs = outputRelations.stream()
-                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs =
+                outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
                         s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
                                 .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
 
 
-        Set<UnitRelationship.Relation> inputRelations = relations.stream()
-                .filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.InputToOutput).collect(Collectors.toSet());
+        Set<UnitRelationship.Relation> inputRelations =
+                relations.stream().filter(r -> r.getDirection() == UnitRelationship.Relation.Direction.InputToOutput).collect(Collectors.toSet());
 
-        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs = inputRelations.stream()
-                .map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+        Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs =
+                inputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
                         s -> inputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
                                 .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
 
@@ -155,9 +172,9 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
 
-        Map<RelationVariable, PExp> csvFields = inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst())
-                .filter(Optional::isPresent).map(Optional::get).map(h -> h.scalarVariable).sorted(Comparator.comparing(getLogName::apply))
-                .collect(Collectors.toMap(l -> l, r -> {
+        Map<RelationVariable, PExp> csvFields =
+                inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
+                        .map(h -> h.scalarVariable).sorted(Comparator.comparing(getLogName::apply)).collect(Collectors.toMap(l -> l, r -> {
 
 
                     //the relation should be a one to one relation so just take the first one
@@ -172,8 +189,17 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
                 }, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
 
-        variableNames.addAll(csvFields.keySet().stream().map(k -> k.instance.getText() + "." + k.getScalarVariable().getName())
-                .collect(Collectors.toList()));
+        variableNames.addAll(csvFields.keySet().stream().map(k -> {
+
+            UnitRelationship.FrameworkUnitInfo info = env.getUnitInfo(k.instance, Framework.FMI2);
+
+            Stream<String> nameComponents = Stream.of(k.instance.getText(), k.getScalarVariable().getName());
+
+            if (info instanceof ComponentInfo) {
+                nameComponents = Stream.concat(Stream.of(((ComponentInfo) info).fmuIdentifier), nameComponents);
+            }
+            return nameComponents.collect(Collectors.joining("."));
+        }).collect(Collectors.toList()));
 
         //csvfile.writeHeader(headers);
 
@@ -184,6 +210,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
             statements.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeHeader")),
                     Arrays.asList(newAIdentifierExp("csv_headers")))));
+
+            if (withWs) {
+                statements.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeHeader")),
+                        Arrays.asList(newAIdentifierExp("csv_headers")))));
+            }
         }
 
         Consumer<List<PStm>> checkStatus = list -> {
@@ -254,9 +285,10 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
 
-            int toIndex = inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type)
-                    .stream().map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                    .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
+            int toIndex =
+                    inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type).stream()
+                            .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                            .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
 
             AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(
                     getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
@@ -275,9 +307,8 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                         getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
                                 UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
 
-                list.add(newExternalStm(newACallExp(newAIdentifierExp(newAIdentifier(
-                        "convert" + fromVar.getScalarVariable().getType().type + "2" + r.getSource().scalarVariable.getScalarVariable()
-                                .getType().type)), Arrays.asList(from, toAsExp))));
+                list.add(newExternalStm(newACallExp(newAIdentifierExp(newAIdentifier("convert" + fromVar.getScalarVariable().getType().type + "2" +
+                        r.getSource().scalarVariable.getScalarVariable().getType().type)), Arrays.asList(from, toAsExp))));
 
 
             } else {
@@ -306,6 +337,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
             list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeRow")),
                     Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
+
+            if (withWs) {
+                list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeRow")),
+                        Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
+            }
         };
 
         Consumer<List<PStm>> logCsvValues = list -> {
@@ -318,6 +354,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
             list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeRow")),
                     Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
+
+            if (withWs) {
+                list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeRow")),
+                        Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
+            }
 
         };
 
@@ -353,6 +394,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
             statements.add(newExpressionStm(
                     newACallExp(newADotExp(newAIdentifierExp("csv"), newAIdentifierExp("close")), Arrays.asList(newAIdentifierExp("csvfile")))));
             statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("csv")))));
+        }
+        if (withWs) {
+            statements.add(newExpressionStm(
+                    newACallExp(newADotExp(newAIdentifierExp("wsHandler"), newAIdentifierExp("close")), Arrays.asList(newAIdentifierExp("ws")))));
+            statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("wsHandler")))));
         }
 
 

@@ -2,20 +2,29 @@ package org.intocps.maestro.interpreter;
 
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.interpreter.values.FunctionValue;
 import org.intocps.maestro.interpreter.values.StringValue;
 import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.VoidValue;
 import org.intocps.maestro.interpreter.values.csv.CSVValue;
+import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
-public class LoadFactory implements ILoadFactory {
+/**
+ * Default interpreter factory with framework support and other basic features.
+ * This class provides run-time support only. It creates and destroys certain types based on load and unload
+ */
+public class DefaultExternalValueFactory implements IExternalValueFactory {
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
-    public LoadFactory(){
-        instantiators = new HashMap<String, Function<List<Value>, Either<Exception, Value>>>(){{
+
+    public DefaultExternalValueFactory() {
+        instantiators = new HashMap<>() {{
             put("FMI2", args -> {
                 String guid = ((StringValue) args.get(0)).getValue();
                 String path = ((StringValue) args.get(1)).getValue();
@@ -26,19 +35,29 @@ public class LoadFactory implements ILoadFactory {
                 }
                 return Either.right(new FmiInterpreter().createFmiValue(path, guid));
             });
-            put("CSV", args -> {
-                return Either.right(new CSVValue());
-            });
+            put("CSV", args -> Either.right(new CSVValue()));
         }};
-        }
+    }
 
     @Override
-    public boolean canInstantiate(String type) {
+    public boolean supports(String type) {
         return this.instantiators.containsKey(type);
     }
 
     @Override
-    public Either<Exception, Value> instantiate(String type, List<Value> args) {
+    public Either<Exception, Value> create(String type, List<Value> args) {
         return this.instantiators.get(type).apply(args);
+    }
+
+    @Override
+    public Value destroy(Value value) {
+        if (value instanceof FmuValue) {
+            FmuValue fmuVal = (FmuValue) value;
+            FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
+            return unloadFunction.evaluate(Collections.emptyList());
+        } else if (value instanceof CSVValue) {
+            return new VoidValue();
+        }
+        throw new InterpreterException("UnLoad of unknown type: " + value);
     }
 }

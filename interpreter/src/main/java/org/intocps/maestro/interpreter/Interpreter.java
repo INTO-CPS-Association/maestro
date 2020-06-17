@@ -5,14 +5,9 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.interpreter.values.*;
-import org.intocps.maestro.interpreter.values.csv.CSVValue;
-import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -20,10 +15,9 @@ import java.util.stream.IntStream;
 
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
-    private final ILoadFactory loadFactory;
+    private final IExternalValueFactory loadFactory;
 
-    public Interpreter(ILoadFactory loadFactory)
-    {
+    public Interpreter(IExternalValueFactory loadFactory) {
         this.loadFactory = loadFactory;
     }
 
@@ -81,13 +75,13 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         List<Value> args = evaluate(node.getArgs(), question);
 
         String type = ((StringValue) args.get(0)).getValue();
-        if (this.loadFactory.canInstantiate(type))
-        {
-            Either<Exception, Value> valueE = this.loadFactory.instantiate(type, args.subList(1, args.size()));
-            if(valueE.isLeft())
+        if (this.loadFactory.supports(type)) {
+            Either<Exception, Value> valueE = this.loadFactory.create(type, args.subList(1, args.size()));
+            if (valueE.isLeft()) {
                 throw new AnalysisException(valueE.getLeft());
-            else
+            } else {
                 return valueE.getRight();
+            }
         }
         throw new AnalysisException("Load of unknown type");
     }
@@ -98,14 +92,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         List<Value> args = evaluate(node.getArgs(), question);
 
         Value nameVal = args.get(0);
-        if (nameVal instanceof FmuValue) {
-            FmuValue fmuVal = (FmuValue) nameVal;
-            FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
-            return unloadFunction.evaluate(Collections.emptyList());
-        } else if (nameVal instanceof CSVValue) {
-            return new VoidValue();
-        }
-        throw new AnalysisException("UnLoad of unknown type: " + nameVal);
+        return this.loadFactory.destroy(nameVal);
     }
 
     @Override

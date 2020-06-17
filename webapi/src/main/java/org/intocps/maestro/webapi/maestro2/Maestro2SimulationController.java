@@ -21,7 +21,10 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -232,11 +235,14 @@ public class Maestro2SimulationController {
             }
         }
 
+        Thread.sleep(2000);
+
         logic.setSimulateRequestBody(body);
         Maestro2Broker mc = new Maestro2Broker();
-        ARootDocument spec = mc.CreateMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody());
+        ARootDocument spec = mc.createMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody(), logic.containsSocket(),
+                logic.rootDirectory);
         FileUtils.writeStringToFile(new File(logic.rootDirectory, "spec.mabl"), spec.getContent().get(0).toString(), StandardCharsets.UTF_8);
-        mc.ExecuteInterpreter(spec);
+        mc.executeInterpreter(spec, logic.getSocket());
 
         return getStatus(sessionId);
     }
@@ -252,15 +258,15 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET)
     public ResponseEntity<Resource> getResultPlain(@PathVariable String sessionId) throws Exception {
-        //        Coe coe = sessions.get(sessionId);
-        //        if (coe == null) {
-        //            throw new Exception("bad session");
-        //        }
-        //
-        //        ByteArrayResource resource = new ByteArrayResource(FileUtils.readFileToByteArray(coe.getResult()));
-        //        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN)
-        //                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + coe.getResult().getName() + "\"").body(resource);
-        throw new NotImplementedException("/result/{sessionId}/plain is not implemented");
+        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
+
+        if (sessionLogic == null) {
+            throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(FileUtils.readFileToByteArray(new File(sessionLogic.rootDirectory, "outputs.csv")));
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "outputs.csv" + "\"").body(resource);
     }
 
     @RequestMapping(value = "/result/{sessionId}/zip", method = RequestMethod.GET, produces = "application/zip")
@@ -333,7 +339,6 @@ public class Maestro2SimulationController {
         final Boolean reportProgress;
         @JsonProperty("liveLogInterval")
         final Integer liveLogInterval;
-
         @JsonCreator
         public SimulateRequestBody(@JsonProperty("startTime") double startTime, @JsonProperty("endTime") double endTime,
                 @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("reportProgress") Boolean reportProgress,
@@ -343,6 +348,14 @@ public class Maestro2SimulationController {
             this.logLevels = logLevels;
             this.reportProgress = reportProgress;
             this.liveLogInterval = liveLogInterval;
+        }
+
+        public double getStartTime() {
+            return startTime;
+        }
+
+        public double getEndTime() {
+            return endTime;
         }
     }
 
