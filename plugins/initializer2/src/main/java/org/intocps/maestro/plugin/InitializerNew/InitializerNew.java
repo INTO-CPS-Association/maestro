@@ -120,10 +120,19 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
 
+        var optimizedOrder = optimizeInstantiationOrder(instantiationOrder);
+
         //Initialize the ports in the correct order based on the topological sorting
+        optimizedOrder.forEach(variableSet -> {
+            initializePort(variableSet, sc, env);
+        });
+
+        /*
         instantiationOrder.forEach(o -> {
             initializePort(o, sc, env);
         });
+
+         */
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
@@ -134,40 +143,69 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         return newABlockStm(statements);
     }
 
+    private List<Set<Variable>> optimizeInstantiationOrder(List<Variable> instantiationOrder) {
+        List<Set<Variable>> optimizedOrder = new Vector<>();
+        Variable previousVariable = instantiationOrder.get(0);
+        Set<Variable> currentSet = new HashSet<Variable>(Collections.singletonList(previousVariable));
+        for (int i = 1; i < instantiationOrder.size(); i++) {
+            Variable currentVariable = instantiationOrder.get(i);
+            if (!canBeOptimized(currentVariable, previousVariable)) {
+                optimizedOrder.add(currentSet);
+                currentSet = new HashSet<>();
+            }
+            previousVariable = currentVariable;
+            currentSet.add(previousVariable);
+        }
+
+        return optimizedOrder;
+    }
+
+    private boolean canBeOptimized(Variable variable1, Variable variable2) {
+        return variable1.scalarVariable.getInstance() == variable2.scalarVariable.getInstance() &&
+                variable2.scalarVariable.getScalarVariable().causality == variable1.scalarVariable.getScalarVariable().causality &&
+                variable2.scalarVariable.getScalarVariable().getType().type == variable1.scalarVariable.getScalarVariable().getType().type;
+    }
+
     private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> createInputOutputMapping(
             List<UnitRelationship.Relation> relations, ISimulationEnvironment env) {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
                 inputToOutputMapping = new HashMap<>();
 
-        relations.forEach(o -> {
-            ComponentInfo infoSource = env.getUnitInfo(o.getSource().scalarVariable.getInstance(), Framework.FMI2);
+        var relationsPerInstance = relations.stream().collect(Collectors.groupingBy(o -> o.getSource().scalarVariable.getInstance()));
+
+        relationsPerInstance.forEach((instance, rel) -> {
+            ComponentInfo infoSource = env.getUnitInfo(instance, Framework.FMI2);
             Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>> entryMap =
                     new HashMap<>();
-            o.getTargets().values().forEach(v -> {
-                ComponentInfo infoTarget = env.getUnitInfo(v.scalarVariable.getInstance(), Framework.FMI2);
-                entryMap.put(o.getSource().scalarVariable.getScalarVariable(), new AbstractMap.SimpleEntry<>(
-                        new ModelConnection.ModelInstance(infoTarget.fmuIdentifier, v.scalarVariable.getInstance().getText()),
-                        v.scalarVariable.scalarVariable));
-                inputToOutputMapping
-                        .put(new ModelConnection.ModelInstance(infoSource.fmuIdentifier, o.getSource().scalarVariable.getInstance().getText()),
-                                entryMap);
+            rel.forEach(r -> {
+                r.getTargets().values().forEach(v -> {
+                    ComponentInfo infoTarget = env.getUnitInfo(v.scalarVariable.getInstance(), Framework.FMI2);
+                    entryMap.put(r.getSource().scalarVariable.getScalarVariable(), new AbstractMap.SimpleEntry<>(
+                            new ModelConnection.ModelInstance(infoTarget.fmuIdentifier, v.scalarVariable.getInstance().getText()),
+                            v.scalarVariable.scalarVariable));
+
+                });
             });
+            inputToOutputMapping.put(new ModelConnection.ModelInstance(infoSource.fmuIdentifier, instance.getText()), entryMap);
         });
 
         return inputToOutputMapping;
     }
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
-    private void initializePort(Variable port, StatementGeneratorContainer sc, ISimulationEnvironment env) {
-        long[] scalarValueIndices =
-                GetValueRefIndices(Collections.singletonList(port.scalarVariable.getScalarVariable()));
+    private void initializePort(Set<Variable> ports, StatementGeneratorContainer sc, ISimulationEnvironment env) {
+        var scalarVariables = ports.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
+        var type = scalarVariables.iterator().next().getType().type;
+        var instance = ports.stream().findFirst().get().scalarVariable.getInstance();
+        var causality = scalarVariables.iterator().next().causality;
+        long[] scalarValueIndices = GetValueRefIndices(scalarVariables);
 
-        if (port.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
-            getValueFromPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type, scalarValueIndices);
+        //All members of the same set has the same causality, type and comes from the same instance
+        if (causality == ModelDescription.Causality.Output) {
+            getValueFromPort(sc, instance, type, scalarValueIndices);
             return;
         }
-        setValueOnPort(sc, port.scalarVariable.getInstance(), port.scalarVariable.scalarVariable.getType().type,
-                Collections.singletonList(port.scalarVariable.scalarVariable), scalarValueIndices, env);
+        setValueOnPort(sc, instance, type, scalarVariables, scalarValueIndices, env);
     }
 
 
