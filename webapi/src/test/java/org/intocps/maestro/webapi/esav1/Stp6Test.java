@@ -6,10 +6,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.assertj.core.util.Files;
 import org.intocps.maestro.webapi.ConditionalIgnoreRule;
 import org.intocps.maestro.webapi.services.CoeService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @WebAppConfiguration
+@Ignore
 public class Stp6Test {
     final static String baseUrl = "/api/esav1/simulator";
     @Rule
