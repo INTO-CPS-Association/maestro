@@ -52,8 +52,8 @@ public class SpecGen {
         Map<ModelConnection.ModelInstance, CoeObject.FmiSimulationInstanceScalaWrapper> converted = JavaConverters
                 .mapAsJavaMapConverter(initResult._1()).asJava();
 
-        if (knownComponentNames.stream().map(l -> l.getText()).collect(Collectors.toSet())
-                .containsAll(converted.keySet().stream().map(l -> l.instanceName).collect(Collectors.toSet())) == false) {
+        if (!knownComponentNames.stream().map(l -> l.getText()).collect(Collectors.toSet())
+                .containsAll(converted.keySet().stream().map(l -> l.instanceName).collect(Collectors.toSet()))) {
             throw new UnfoldException("The env configuration and plugin configuration does not match in terms of instance names");
         }
 

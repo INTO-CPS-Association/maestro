@@ -1,7 +1,7 @@
 [
   {
     "identification": {
-      "name": "InitializerNew",
+      "name": "InitializerUsingCOE",
       "version": "0.0.0"
     },
     "config": {
@@ -54,6 +54,13 @@
           "{controllerFMU}.controller.forwardRotate": 0.5,
           "{controllerFMU}.controller.backwardRotate": 0.1
         }
+      },
+      "start_message": {
+        "startTime": 0,
+        "endTime": 10,
+        "reportProgress": true,
+        "liveLogInterval": 0,
+        "logLevels": {}
       }
     }
   }

@@ -127,13 +127,6 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             initializePort(variableSet, sc, env);
         });
 
-        /*
-        instantiationOrder.forEach(o -> {
-            initializePort(o, sc, env);
-        });
-
-         */
-
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
             sc.exitInitializationMode(comp.getText());
