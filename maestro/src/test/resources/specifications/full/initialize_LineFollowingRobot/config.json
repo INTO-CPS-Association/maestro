@@ -1,0 +1,61 @@
+
+[
+  {
+    "identification": {
+      "name": "InitializerNew",
+      "version": "0.0.0"
+    },
+    "config": {
+      "configuration": {
+        "fmus": {
+          "{controllerFMU}": "target/test-classes/LineFollowingRobot_fmus/LFRController.fmu",
+          "{sensor1FMU}": "target/test-classes/LineFollowingRobot_fmus/Sensor_Block_01.fmu",
+          "{sensor2FMU}": "target/test-classes/LineFollowingRobot_fmus/Sensor_Block_02.fmu",
+          "{bodyFMU}": "target/test-classes/LineFollowingRobot_fmus/Body_Block.fmu"
+        },
+        "connections": {
+          "{bodyFMU}.body.robot_x": [
+            "{sensor1FMU}.sensor1.robot_x",
+            "{sensor2FMU}.sensor2.robot_x"
+          ],
+          "{bodyFMU}.body.robot_y": [
+            "{sensor1FMU}.sensor1.robot_y",
+            "{sensor2FMU}.sensor2.robot_y"
+          ],
+          "{bodyFMU}.body.robot_z": [
+            "{sensor1FMU}.sensor1.robot_z",
+            "{sensor2FMU}.sensor2.robot_z"
+          ],
+          "{bodyFMU}.body.robot_theta": [
+            "{sensor1FMU}.sensor1.robot_theta",
+            "{sensor2FMU}.sensor2.robot_theta"
+          ],
+          "{bodyFMU}.body.total_energy_used": [
+            "{controllerFMU}.controller.total_energy_used"
+          ],
+          "{sensor1FMU}.sensor1.lf_1_sensor_reading": [
+            "{controllerFMU}.controller.lfLeftVal"
+          ],
+          "{sensor2FMU}.sensor2.lf_1_sensor_reading": [
+            "{controllerFMU}.controller.lfRightVal"
+          ],
+          "{controllerFMU}.controller.servoRightVal": [
+            "{bodyFMU}.body.servo_right_input"
+          ],
+          "{controllerFMU}.controller.servoLeftVal": [
+            "{bodyFMU}.body.servo_left_input"
+          ]
+        },
+        "parameters": {
+          "{sensor1FMU}.sensor1.lf_position_x": 0.01,
+          "{sensor1FMU}.sensor1.lf_position_y": 0.065,
+          "{sensor2FMU}.sensor2.lf_position_x": -0.01,
+          "{sensor2FMU}.sensor2.lf_position_y": 0.065,
+          "{controllerFMU}.controller.forwardSpeed": 0.4,
+          "{controllerFMU}.controller.forwardRotate": 0.5,
+          "{controllerFMU}.controller.backwardRotate": 0.1
+        }
+      }
+    }
+  }
+]
