@@ -6,9 +6,11 @@ import org.intocps.topologicalsorting.TarjanGraph;
 import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
 import org.intocps.topologicalsorting.data.CyclicDependencyResult;
 import org.intocps.topologicalsorting.data.Edge11;
-import scala.collection.JavaConverters;
+import scala.jdk.CollectionConverters;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class TopologicalPlugin {
@@ -28,13 +30,14 @@ public class TopologicalPlugin {
             edges.add(new Edge11(e, o.getSource(), o.getOrigin()));
         }));
 
-        var graphSolver = new TarjanGraph(JavaConverters.iterableAsScalaIterableConverter(edges).asScala());
+        var graphSolver = new TarjanGraph(CollectionConverters.IterableHasAsScala(edges).asScala());
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSort();
         if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
             CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
             throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
         }
-        return (List<UnitRelationship.Variable>) JavaConverters.seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
+
+        return scala.jdk.javaapi.CollectionConverters.asJava(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder());
     }
 }
