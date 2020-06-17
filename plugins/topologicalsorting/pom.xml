@@ -16,8 +16,8 @@
 
     <properties>
         <encoding>UTF-8</encoding>
-        <scala.version>2.13.1</scala.version>
-        <scala.compat.version>2.13</scala.compat.version>
+        <scala.version>2.11.12</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
         <spec2.version>4.9.3</spec2.version>
     </properties>
 
