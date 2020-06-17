@@ -1,3 +1,5 @@
+This branch contains maestro 1 with logging statements that describes performance. It is used by the maestro vs maestro2 eprformance test suite on gitlab.
+
 # Checkout
 
 ```
