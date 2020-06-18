@@ -291,7 +291,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
             sc.getBooleans(comp.getText(), scalarValueIndices);
         } else if (type == ModelDescription.Types.Real) {
             sc.getReals(comp.getText(), scalarValueIndices);
-        }else if(type == ModelDescription.Types.Integer){
+        }else if(type == ModelDescription.Types.Integer) {
+            sc.getIntegers(comp.getText(), scalarValueIndices);
+        }else if(type == ModelDescription.Types.String){
             sc.getReals(comp.getText(), scalarValueIndices);
         }else{
             throw new UnfoldException("Unrecognised type: " + type.name());

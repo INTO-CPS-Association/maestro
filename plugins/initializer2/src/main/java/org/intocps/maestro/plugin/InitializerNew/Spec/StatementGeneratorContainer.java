@@ -225,6 +225,31 @@ public class StatementGeneratorContainer {
         updateInstanceVariables(instanceName, longs, valueArray);
     }
 
+    public void getIntegers(String instanceName, long[] longs) {
+        if (!instancesLookupDependencies) {
+            instancesLookupDependencies = true;
+        }
+
+        // Create the value array
+        LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
+        // The array does not exist. Create it
+        if (valueArray == null) {
+            valueArray =
+                    createNewArrayAndAddToStm("intValueSize" + longs.length, intArrays, newAArrayType(newARealNumericPrimitiveType(), longs.length),
+                            null);
+        }
+
+        // Create the valRefArray
+        LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
+
+        // Create the statement
+        PStm statement = createGetSVsStatement(instanceName, "getInteger", longs, valueArray, valRefArray, statusVariable);
+        statements.add(statement);
+
+        // Update instanceVariables
+        updateInstanceVariables(instanceName, longs, valueArray);
+    }
+
     private void updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray) {
         Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
