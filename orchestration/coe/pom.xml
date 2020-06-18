@@ -9,7 +9,7 @@
     </parent>
 
     <properties>
-        <jackson-2-version>2.9.10.3</jackson-2-version>
+        <jackson-2-version>2.10.0.pr1</jackson-2-version>
     </properties>
 
     <groupId>org.into-cps.orchestration</groupId>
