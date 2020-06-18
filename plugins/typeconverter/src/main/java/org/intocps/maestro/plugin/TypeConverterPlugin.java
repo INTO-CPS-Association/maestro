@@ -24,10 +24,22 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
             Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from")),
                     newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("to"))), newAVoidType());
 
+    final AFunctionDeclaration convertBoolean2Integer = newAFunctionDeclaration(newAIdentifier("convertBoolean2Integer"),
+            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("to"))), newAVoidType());
+
+    final AFunctionDeclaration convertInteger2Boolean = newAFunctionDeclaration(newAIdentifier("convertInteger2Boolean"),
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("to"))), newAVoidType());
+
+    final AFunctionDeclaration convertReal2Boolean = newAFunctionDeclaration(newAIdentifier("convertReal2Boolean"),
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("to"))), newAVoidType());
+
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(convertBoolean2Real).collect(Collectors.toSet());
+        return Stream.of(convertBoolean2Real, convertBoolean2Integer, convertInteger2Boolean, convertReal2Boolean).collect(Collectors.toSet());
     }
 
     @Override

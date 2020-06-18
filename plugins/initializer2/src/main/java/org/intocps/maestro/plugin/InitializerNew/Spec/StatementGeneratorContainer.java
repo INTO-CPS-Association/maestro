@@ -111,7 +111,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            valueArray = createArray(longs, doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real);
+            valueArray =
+                    createArray(longs, doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real, realArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(doubles.length, valueLocator, valueArray);
@@ -132,7 +133,8 @@ public class StatementGeneratorContainer {
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
             valueArray =
-                    createArray(longs, booleans.length, valueLocator, booleanArrayVariableName.apply(longs.length), ModelDescription.Types.Boolean);
+                    createArray(longs, booleans.length, valueLocator, booleanArrayVariableName.apply(longs.length), ModelDescription.Types.Boolean,
+                            boolArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(booleans.length, valueLocator, valueArray);
@@ -154,7 +156,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            valueArray = createArray(longs, ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer);
+            valueArray =
+                    createArray(longs, ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer, intArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(ints.length, valueLocator, valueArray);
@@ -174,7 +177,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(stringArrays, strings.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            valueArray = createArray(longs, strings.length, valueLocator, stringArrayVariableName.apply(longs.length), ModelDescription.Types.String);
+            valueArray = createArray(longs, strings.length, valueLocator, stringArrayVariableName.apply(longs.length), ModelDescription.Types.String,
+                    stringArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(strings.length, valueLocator, valueArray);
@@ -197,7 +201,7 @@ public class StatementGeneratorContainer {
     }
 
     private LexIdentifier createArray(long[] longs, int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, String arrayName,
-            ModelDescription.Types type) {
+            ModelDescription.Types type, Map<Integer, LexIdentifier> array) {
         LexIdentifier valueArray;
         List<PExp> args = new ArrayList<>();
         for (int i = 0; i < valueLength; i++) {
@@ -209,8 +213,7 @@ public class StatementGeneratorContainer {
         }
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        valueArray =
-                createNewArrayAndAddToStm(arrayName, realArrays, MableAstFactory.newAArrayType(FMITypeToMablType(type), valueLength), initializer);
+        valueArray = createNewArrayAndAddToStm(arrayName, array, MableAstFactory.newAArrayType(FMITypeToMablType(type), valueLength), initializer);
         return valueArray;
     }
 
