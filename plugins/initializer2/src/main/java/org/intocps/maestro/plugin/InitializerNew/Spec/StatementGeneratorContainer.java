@@ -21,11 +21,15 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> boolArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
+    private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
+
     private final Map<String, Map<Long, VariableLocation>> instanceVariables = new HashMap<>();
     private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
             inputToOutputMapping = new HashMap<>();
     private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
+    private final IntFunction<String> intArrayVariableName = i -> "intValueSize" + i;
+    private final IntFunction<String> stringArrayVariableName = i -> "stringValueSize" + i;
 
     public PExp startTime;
     public PExp endTime;
@@ -61,12 +65,15 @@ public class StatementGeneratorContainer {
     }
 
     public SPrimitiveTypeBase FMITypeToMablType(ModelDescription.Types type) {
-
         switch (type) {
             case Boolean:
                 return newABoleanPrimitiveType();
             case Real:
                 return newARealNumericPrimitiveType();
+            case Integer:
+                return newAIntNumericPrimitiveType();
+            case String:
+                return newAStringPrimitiveType();
             default:
                 throw new UnsupportedOperationException("Converting fmi type: " + type + " to mabl type is not supported.");
         }
@@ -104,43 +111,121 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            List<PExp> args = new ArrayList<>();
-            for (int i = 0; i < doubles.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                args.add(value.getLeft());
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-            }
-
-            PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-            valueArray = createNewArrayAndAddToStm(realArrayVariableName.apply(longs.length), realArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType(), doubles.length), initializer);
+            valueArray = createArray(longs, doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real);
         } else {
             // The array exists. Assign its values.
-            for (int i = 0; i < doubles.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-                PStm stm = MableAstFactory.newAAssignmentStm(MableAstFactory
-                                .newAArayStateDesignator(MableAstFactory.newAIdentifierStateDesignator(valueArray), MableAstFactory.newAIntLiteralExp(i)),
-                        value.getLeft());
-                statements.add(stm);
-            }
+            assignValueToArray(doubles.length, valueLocator, valueArray);
         }
 
         LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
 
+        generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setReal");
+    }
+
+    public void setBooleans(String instanceName, long[] longs, boolean[] booleans) {
+        // Create a valueLocator to locate the value corresponding to a given valuereference.
+        IntFunction<Pair<PExp, List<PStm>>> valueLocator =
+                generateInstanceVariablesValueLocator(instanceName, longs, i -> newABoolLiteralExp(booleans[i]), ModelDescription.Types.Boolean);
+
+        // Create the array to contain the values
+        LexIdentifier valueArray = findArrayOfSize(boolArrays, booleans.length);
+        // The array does not exist. Create it and initialize it.
+        if (valueArray == null) {
+            valueArray =
+                    createArray(longs, booleans.length, valueLocator, booleanArrayVariableName.apply(longs.length), ModelDescription.Types.Boolean);
+        } else {
+            // The array exists. Assign its values.
+            assignValueToArray(booleans.length, valueLocator, valueArray);
+        }
+
+        LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
+
+        generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setBoolean");
+    }
+
+
+    public void setIntegers(String instanceName, long[] longs, int[] ints) {
+        // Create a valueLocator to locate the value corresponding to a given valuereference.
+        IntFunction<Pair<PExp, List<PStm>>> valueLocator =
+                generateInstanceVariablesValueLocator(instanceName, longs, i -> MableAstFactory.newAIntLiteralExp(ints[i]),
+                        ModelDescription.Types.Integer);
+
+        // Create the array to contain the values
+        LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
+        // The array does not exist. Create it and initialize it.
+        if (valueArray == null) {
+            valueArray = createArray(longs, ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer);
+        } else {
+            // The array exists. Assign its values.
+            assignValueToArray(ints.length, valueLocator, valueArray);
+        }
+
+        LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
+
+        generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setInteger");
+    }
+
+    public void setStrings(String instanceName, long[] longs, String[] strings) {
+        // Create a valueLocator to locate the value corresponding to a given valuereference.
+        IntFunction<Pair<PExp, List<PStm>>> valueLocator =
+                generateInstanceVariablesValueLocator(instanceName, longs, i -> newAStringLiteralExp(strings[i]), ModelDescription.Types.String);
+
+        // Create the array to contain the values
+        LexIdentifier valueArray = findArrayOfSize(stringArrays, strings.length);
+        // The array does not exist. Create it and initialize it.
+        if (valueArray == null) {
+            valueArray = createArray(longs, strings.length, valueLocator, stringArrayVariableName.apply(longs.length), ModelDescription.Types.String);
+        } else {
+            // The array exists. Assign its values.
+            assignValueToArray(strings.length, valueLocator, valueArray);
+        }
+
+        LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
+
+        generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setString");
+    }
+
+    private void generateAssignmentStm(String instanceName, long[] longs, LexIdentifier valueArray, LexIdentifier valRefs, String setCommand) {
         PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
                 .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setReal")), new ArrayList<PExp>(
+                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(setCommand)), new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
                                         MableAstFactory.newAIdentifierExp(valueArray))))
 
                 ));
         statements.add(statement);
     }
+
+    private LexIdentifier createArray(long[] longs, int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, String arrayName,
+            ModelDescription.Types type) {
+        LexIdentifier valueArray;
+        List<PExp> args = new ArrayList<>();
+        for (int i = 0; i < valueLength; i++) {
+            Pair<PExp, List<PStm>> value = valueLocator.apply(i);
+            args.add(value.getLeft());
+            if (value.getRight() != null) {
+                statements.addAll(value.getRight());
+            }
+        }
+
+        PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
+        valueArray =
+                createNewArrayAndAddToStm(arrayName, realArrays, MableAstFactory.newAArrayType(FMITypeToMablType(type), valueLength), initializer);
+        return valueArray;
+    }
+
+
+    private void assignValueToArray(int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, LexIdentifier valueArray) {
+        for (int i = 0; i < valueLength; i++) {
+            Pair<PExp, List<PStm>> value = valueLocator.apply(i);
+            if (value.getRight() != null) {
+                statements.addAll(value.getRight());
+            }
+            PStm stm = newAAssignmentStm(newAArayStateDesignator(newAIdentifierStateDesignator(valueArray), newAIntLiteralExp(i)), value.getLeft());
+            statements.add(stm);
+        }
+    }
+
 
     public void setInputOutputMapping(
             Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputOutputMapping) {
@@ -250,6 +335,31 @@ public class StatementGeneratorContainer {
         updateInstanceVariables(instanceName, longs, valueArray);
     }
 
+    public void getStrings(String instanceName, long[] longs) {
+        if (!instancesLookupDependencies) {
+            instancesLookupDependencies = true;
+        }
+
+        // Create the value array
+        LexIdentifier valueArray = findArrayOfSize(stringArrays, longs.length);
+        // The array does not exist. Create it
+        if (valueArray == null) {
+            valueArray = createNewArrayAndAddToStm("stringValueSize" + longs.length, intArrays,
+                    newAArrayType(newARealNumericPrimitiveType(), longs.length), null);
+        }
+
+        // Create the valRefArray
+        LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
+
+        // Create the statement
+        PStm statement = createGetSVsStatement(instanceName, "getString", longs, valueArray, valRefArray, statusVariable);
+        statements.add(statement);
+
+        // Update instanceVariables
+        updateInstanceVariables(instanceName, longs, valueArray);
+    }
+
+
     private void updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray) {
         Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
@@ -277,53 +387,6 @@ public class StatementGeneratorContainer {
         }
     }
 
-    public void setIntegers(String instanceName, long[] longs, int[] ints) {
-        // Create a valueLocator to locate the value corresponding to a given valuereference.
-        IntFunction<Pair<PExp, List<PStm>>> valueLocator =
-                generateInstanceVariablesValueLocator(instanceName, longs, i -> MableAstFactory.newAIntLiteralExp(ints[i]),
-                        ModelDescription.Types.Integer);
-
-        // Create the array to contain the values
-        LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
-        // The array does not exist. Create it and initialize it.
-        if (valueArray == null) {
-            List<PExp> args = new ArrayList<>();
-            for (int i = 0; i < ints.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                args.add(value.getLeft());
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-            }
-
-            PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-            valueArray = createNewArrayAndAddToStm(realArrayVariableName.apply(longs.length), realArrays,
-                    MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType(), ints.length), initializer);
-        } else {
-            // The array exists. Assign its values.
-            for (int i = 0; i < ints.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-                PStm stm = MableAstFactory.newAAssignmentStm(MableAstFactory
-                                .newAArayStateDesignator(MableAstFactory.newAIdentifierStateDesignator(valueArray), MableAstFactory.newAIntLiteralExp(i)),
-                        value.getLeft());
-                statements.add(stm);
-            }
-        }
-
-        LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
-
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply("setInteger")), new ArrayList<PExp>(
-                                Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
-                                        MableAstFactory.newAIdentifierExp(valueArray))))
-
-                ));
-        statements.add(statement);
-    }
 
     /**
      * This creates a function (<code>valueLocator</code>) that is used to locate an output corresponding to the given input that is to be set.
@@ -390,51 +453,6 @@ public class StatementGeneratorContainer {
             valueLocator = i -> Pair.of(literalExp.apply(i), null);
         }
         return valueLocator;
-    }
-
-    public void setBooleans(String instanceName, long[] longs, boolean[] booleans) {
-        // Create a valueLocator to locate the value corresponding to a given valuereference.
-        IntFunction<Pair<PExp, List<PStm>>> valueLocator =
-                generateInstanceVariablesValueLocator(instanceName, longs, i -> newABoolLiteralExp(booleans[i]), ModelDescription.Types.Boolean);
-
-        // Create the array to contain the values
-        LexIdentifier valueArray = findArrayOfSize(boolArrays, booleans.length);
-        // The array does not exist. Create it and initialize it.
-        if (valueArray == null) {
-            List<PExp> args = new ArrayList<>();
-            for (int i = 0; i < booleans.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                args.add(value.getLeft());
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-            }
-
-            PInitializer initializer = newAArrayInitializer(args);
-            valueArray = createNewArrayAndAddToStm(booleanArrayVariableName.apply(longs.length), realArrays,
-                    newAArrayType(newABoleanPrimitiveType(), booleans.length), initializer);
-        } else {
-            // The array exists. Assign its values.
-            for (int i = 0; i < booleans.length; i++) {
-                Pair<PExp, List<PStm>> value = valueLocator.apply(i);
-                if (value.getRight() != null) {
-                    statements.addAll(value.getRight());
-                }
-                PStm stm =
-                        newAAssignmentStm(newAArayStateDesignator(newAIdentifierStateDesignator(valueArray), newAIntLiteralExp(i)), value.getLeft());
-                statements.add(stm);
-            }
-        }
-
-        LexIdentifier valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
-
-        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("setBoolean")), new ArrayList<PExp>(
-                                Arrays.asList(newAIdentifierExp(valRefs), newAUIntLiteralExp((long) longs.length), newAIdentifierExp(valueArray))))
-
-                ));
-        statements.add(statement);
     }
 
 

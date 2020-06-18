@@ -250,6 +250,9 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         }else if(type == ModelDescription.Types.Integer){
             sc.setIntegers(comp.getText(), scalarValueIndices,
                     Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
+        }else if(type == ModelDescription.Types.String){
+            sc.setStrings(comp.getText(), scalarValueIndices,
+                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
         }else{
             throw new UnfoldException("Unrecognised type: " + type.name());
         }
@@ -294,7 +297,7 @@ public class InitializerNew implements IMaestroUnfoldPlugin {
         }else if(type == ModelDescription.Types.Integer) {
             sc.getIntegers(comp.getText(), scalarValueIndices);
         }else if(type == ModelDescription.Types.String){
-            sc.getReals(comp.getText(), scalarValueIndices);
+            sc.getStrings(comp.getText(), scalarValueIndices);
         }else{
             throw new UnfoldException("Unrecognised type: " + type.name());
         }
