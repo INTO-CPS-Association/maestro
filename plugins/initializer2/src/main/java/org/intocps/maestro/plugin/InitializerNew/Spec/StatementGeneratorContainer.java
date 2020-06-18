@@ -439,8 +439,10 @@ public class StatementGeneratorContainer {
                                         newALocalVariableStm(newAVariableDeclaration(new LexIdentifier(name, null), FMITypeToMablType(targetType)));
                                 statements.add(stm);
                             }
+
                             // Convert the value
-                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier("convertBoolean2Real", null)),
+                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier("convert" + getTypeString(output.getValue().type.type) + "2"+  getTypeString(targetType),
+                                            null)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
 
                             variableLexId = createLexIdentifier.apply(name);
@@ -456,6 +458,26 @@ public class StatementGeneratorContainer {
             valueLocator = i -> Pair.of(literalExp.apply(i), null);
         }
         return valueLocator;
+    }
+
+    private String getTypeString(ModelDescription.Types type) {
+        var res = "";
+        switch (type){
+            case String:
+                break;
+            case Integer:
+                res = "Integer";
+                break;
+            case Real:
+                res = "Real";
+                break;
+            case Boolean:
+                res = "Boolean";
+                break;
+            default:
+                return "Unknown type";
+        }
+        return res;
     }
 
 
