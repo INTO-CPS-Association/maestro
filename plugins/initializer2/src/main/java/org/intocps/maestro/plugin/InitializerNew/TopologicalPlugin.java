@@ -2,6 +2,7 @@ package org.intocps.maestro.plugin.InitializerNew;
 
 import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.topologicalsorting.TarjanGraph;
 import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
 import org.intocps.topologicalsorting.data.CyclicDependencyResult;
@@ -21,6 +22,11 @@ public class TopologicalPlugin {
                 relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toList());
         var internalRelations =
                 relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toList());
+
+
+        internalRelations =
+                internalRelations.stream().filter(o -> o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input
+                || o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output && externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource())).collect(Collectors.toList());
 
         var edges = new Vector<Edge11<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>>();
         externalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
