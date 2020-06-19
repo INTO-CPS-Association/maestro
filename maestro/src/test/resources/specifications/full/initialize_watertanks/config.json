@@ -1,27 +1,11 @@
 [
   {
     "identification": {
-      "name": "InitializerNew",
+      "name": "Initializer",
       "version": "0.0.0"
     },
     "config": {
       "configuration": {
-        "fmus": {
-          "{controller}": "WaterTankController-Standalone.fmu",
-          "{tank1}": "threewatertank1.fmu",
-          "{tank2}": "threewatertank2.fmu"
-        },
-        "connections": {
-          "{controller}.controller.wt3_valve": [
-            "{tank2}.tank2.valveControl"
-          ],
-          "{tank2}.tank2.level": [
-            "{controller}.controller.wt3_level"
-          ],
-          "{tank1}.tank1.Tank2OutFlow": [
-            "{tank2}.tank2.inFlow"
-          ]
-        },
         "parameters": {
           "{controller}.controller.wt3_max": 1.7,
           "{controller}.controller.wt3_min": 1.3

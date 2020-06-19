@@ -1,6 +1,6 @@
 simulation
 import TypeConverter;
-import InitializerNew;
+import Initializer;
 
 {
 real START_TIME = 10.0;

@@ -1,7 +1,7 @@
 simulation
 import FMI2;
 import TypeConverter;
-import InitializerNew;
+import Initializer;
 {
 
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");

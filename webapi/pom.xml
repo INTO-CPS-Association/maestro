@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>org.intocps.plugins</groupId>
-            <artifactId>initializer-wrap-coe</artifactId>
+            <artifactId>initializer</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
