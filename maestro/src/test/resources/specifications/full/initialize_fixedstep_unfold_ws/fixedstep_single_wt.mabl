@@ -1,7 +1,7 @@
 simulation
 import FixedStep;
 import TypeConverter;
-import InitializerUsingCOE;
+import InitializerNew;
 
 {
 real START_TIME = 0.0;
