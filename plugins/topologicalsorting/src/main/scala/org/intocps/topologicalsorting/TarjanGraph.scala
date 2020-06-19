@@ -36,7 +36,7 @@ class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
         val n = s.length - s.indexOf(v)
         ret += s.takeRight(n)
         //Remove these elements from the stack
-        s.dropRightInPlace(n)
+        s = s.dropRight(n)
       }
     }
 

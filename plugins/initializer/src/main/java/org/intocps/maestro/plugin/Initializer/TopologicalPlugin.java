@@ -7,7 +7,7 @@ import org.intocps.topologicalsorting.TarjanGraph;
 import org.intocps.topologicalsorting.data.AcyclicDependencyResult;
 import org.intocps.topologicalsorting.data.CyclicDependencyResult;
 import org.intocps.topologicalsorting.data.Edge11;
-import scala.jdk.CollectionConverters;
+import scala.collection.JavaConverters;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +35,7 @@ public class TopologicalPlugin {
             edges.add(new Edge11(e, o.getSource(), o.getOrigin()));
         }));
 
-        var graphSolver = new TarjanGraph(CollectionConverters.IterableHasAsScala(edges).asScala());
+        var graphSolver = new TarjanGraph(JavaConverters.iterableAsScalaIterableConverter(edges).asScala());
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSort();
         if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
@@ -43,6 +43,6 @@ public class TopologicalPlugin {
             throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
         }
 
-        return scala.jdk.javaapi.CollectionConverters.asJava(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder());
+        return (List<UnitRelationship.Variable>) JavaConverters.seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
     }
 }
