@@ -22,6 +22,15 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
+    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<ModelDescription.Types, String>(ModelDescription.Types.class){
+        {
+            put(ModelDescription.Types.Integer, "Integer");
+            put(ModelDescription.Types.String, "String");
+            put(ModelDescription.Types.Boolean, "Boolean");
+            put(ModelDescription.Types.Real, "Real");
+        }
+    };
+
 
     private final Map<String, Map<Long, VariableLocation>> instanceVariables = new HashMap<>();
     private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
@@ -285,7 +294,7 @@ public class StatementGeneratorContainer {
         statements.add(statement);
 
         // Update instanceVariables
-        updateInstanceVariables(instanceName, longs, valueArray);
+        updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Boolean);
     }
 
     public void getReals(String instanceName, long[] longs) {
@@ -310,7 +319,7 @@ public class StatementGeneratorContainer {
         statements.add(statement);
 
         // Update instanceVariables
-        updateInstanceVariables(instanceName, longs, valueArray);
+        updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Real);
     }
 
     public void getIntegers(String instanceName, long[] longs) {
@@ -335,7 +344,7 @@ public class StatementGeneratorContainer {
         statements.add(statement);
 
         // Update instanceVariables
-        updateInstanceVariables(instanceName, longs, valueArray);
+        updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Integer);
     }
 
     public void getStrings(String instanceName, long[] longs) {
@@ -359,11 +368,11 @@ public class StatementGeneratorContainer {
         statements.add(statement);
 
         // Update instanceVariables
-        updateInstanceVariables(instanceName, longs, valueArray);
+        updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.String);
     }
 
 
-    private void updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray) {
+    private void updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray, ModelDescription.Types fmiType) {
         Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
         // Move the retrieved values to the respective instance variables
@@ -374,12 +383,14 @@ public class StatementGeneratorContainer {
 
             // Create the variable, initialize it, and add it to instanceVariables
             if (svVar == null) {
+
                 String id = instanceName + "SvValRef" + longs[i];
                 PStm stm = newALocalVariableStm(
-                        newAVariableDeclaration(createLexIdentifier.apply(id), newABoleanPrimitiveType(), newAExpInitializer(assignmentExpression)));
+                        newAVariableDeclaration(createLexIdentifier.apply(id), FMITypeToMablType(fmiType),
+                                newAExpInitializer(assignmentExpression)));
                 statements.add(stm);
 
-                VariableLocation varLoc = new VariableLocation(id, ModelDescription.Types.Boolean);
+                VariableLocation varLoc = new VariableLocation(id, fmiType);
                 instanceVariables.put(longs[i], varLoc);
             }
             // Assign to the variable
@@ -441,7 +452,7 @@ public class StatementGeneratorContainer {
                             }
 
                             // Convert the value
-                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier("convert" + getTypeString(output.getValue().type.type) + "2"+  getTypeString(targetType),
+                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier("convert" + typesStringMap.get(output.getValue().type.type) + "2"+  typesStringMap.get(targetType),
                                             null)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
 
@@ -459,27 +470,6 @@ public class StatementGeneratorContainer {
         }
         return valueLocator;
     }
-
-    private String getTypeString(ModelDescription.Types type) {
-        var res = "";
-        switch (type){
-            case String:
-                break;
-            case Integer:
-                res = "Integer";
-                break;
-            case Real:
-                res = "Real";
-                break;
-            case Boolean:
-                res = "Boolean";
-                break;
-            default:
-                return "Unknown type";
-        }
-        return res;
-    }
-
 
     public void exitInitializationMode(String instanceName) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
