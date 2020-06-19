@@ -23,7 +23,6 @@ public class TopologicalPlugin {
         var internalRelations =
                 relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toList());
 
-
         internalRelations =
                 internalRelations.stream().filter(o -> o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input
                 || o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output && externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource())).collect(Collectors.toList());
