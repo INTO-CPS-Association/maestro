@@ -1,5 +1,3 @@
-//
-//import org.intocps.multimodelparser.data.{Connection, ConnectionScalarVariable, ConnectionType, Instance}
 //import org.intocps.topologicalsorting.data.{AcyclicDependencyResult, CyclicDependencyResult, Edge}
 //import org.intocps.topologicalsorting.TarjanGraph
 //import org.scalatest.flatspec.AnyFlatSpec

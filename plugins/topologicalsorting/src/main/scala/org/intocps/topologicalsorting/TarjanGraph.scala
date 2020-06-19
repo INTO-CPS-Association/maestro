@@ -36,7 +36,7 @@ class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
         val n = s.length - s.indexOf(v)
         ret += s.takeRight(n)
         //Remove these elements from the stack
-        s.dropRightInPlace(n)
+        s = s.dropRight(n)
       }
     }
 
@@ -50,7 +50,9 @@ class TarjanGraph[A,B](src: Iterable[Edge11[A,B]]) {
   lazy val tarjanCycle: Iterable[Seq[A]] = tarjan.filter(_.size >= 2).distinct.map(_.toSeq).toSeq
   lazy val topologicalSortedEdges: Seq[Edge11[A,B]] =
     if (hasCycle) Seq[Edge11[A,B]]()
-    else tarjan.flatten.reverse.flatMap(x => src.find(_.from == x)).toSeq
+    else {
+      tarjan.flatten.reverse.flatMap(x => src.filter(o => o.from == x).toList).toSeq
+    }
 
   lazy val topologicalSort: DependencyResult[A] =
     if (hasCycle) CyclicDependencyResult[A](tarjanCycle.map(o => o.reverse.mkString("Cycle: ", " -> ", " -> " + o.reverse.head.toString)).mkString("\n"))

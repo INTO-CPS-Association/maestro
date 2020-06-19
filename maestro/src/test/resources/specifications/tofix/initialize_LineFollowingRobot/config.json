@@ -1,0 +1,21 @@
+[
+  {
+    "identification": {
+      "name": "Initializer",
+      "version": "0.0.0"
+    },
+    "config": {
+      "configuration": {
+        "parameters": {
+          "{sensor1FMU}.sensor1.lf_position_x": 0.01,
+          "{sensor1FMU}.sensor1.lf_position_y": 0.065,
+          "{sensor2FMU}.sensor2.lf_position_x": -0.01,
+          "{sensor2FMU}.sensor2.lf_position_y": 0.065,
+          "{controllerFMU}.controller.forwardSpeed": 0.4,
+          "{controllerFMU}.controller.forwardRotate": 0.5,
+          "{controllerFMU}.controller.backwardRotate": 0.1
+        }
+      }
+    }
+  }
+]

@@ -27,7 +27,8 @@ public class Maestro2Broker {
 
         // Create the configuration for the initializer plugin
         PluginFactory.PluginConfiguration pluginConfiguration =
-                InitializerUsingCoeConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
+                InitializerConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
+        //InitializerUsingCoeConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
 
         // Create the context for the MaBL parser
         List<PluginFactory.PluginConfiguration> contextObj = new ArrayList<>();

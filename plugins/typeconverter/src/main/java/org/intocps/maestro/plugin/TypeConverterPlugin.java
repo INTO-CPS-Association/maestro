@@ -21,22 +21,41 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
 
     final AFunctionDeclaration convertBoolean2Real = newAFunctionDeclaration(newAIdentifier("convertBoolean2Real"),
-            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from")),
-                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("to"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
 
+    final AFunctionDeclaration convertBoolean2Integer = newAFunctionDeclaration(newAIdentifier("convertBoolean2Integer"),
+            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+
+    final AFunctionDeclaration convertInteger2Boolean = newAFunctionDeclaration(newAIdentifier("convertInteger2Boolean"),
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+
+    final AFunctionDeclaration convertReal2Boolean = newAFunctionDeclaration(newAIdentifier("convertReal2Boolean"),
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+
+    final AFunctionDeclaration convertInteger2Real = newAFunctionDeclaration(newAIdentifier("convertInteger2Real"),
+            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+
+    final AFunctionDeclaration convertReal2Integer = newAFunctionDeclaration(newAIdentifier("convertReal2Integer"),
+            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
+                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(convertBoolean2Real).collect(Collectors.toSet());
+        return Stream.of(convertBoolean2Real, convertBoolean2Integer, convertInteger2Boolean, convertReal2Boolean).collect(Collectors.toSet());
     }
 
     @Override
     public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws UnfoldException {
 
-        if (convertBoolean2Real == declaredFunction) {
+        if (getDeclaredUnfoldFunctions().contains(declaredFunction)) {
 
-            if (formalArguments == null || formalArguments.size() != convertBoolean2Real.getFormals().size()) {
+            if (formalArguments == null || formalArguments.size() != declaredFunction.getFormals().size()) {
                 throw new UnfoldException("Invalid args");
             }
 
@@ -53,22 +72,47 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
             if (target instanceof AIdentifierExp) {
                 to = newAIdentifierStateDesignator(((AIdentifierExp) target).getName());
             } else if (target instanceof AArrayIndexExp) {
-
                 AArrayIndexExp indexExp = (AArrayIndexExp) target;
                 LexIdentifier name = ((AIdentifierExp) indexExp.getArray()).getName();
-
                 to = newAArayStateDesignator(newAIdentifierStateDesignator(name), (SLiteralExp) indexExp.getIndices().iterator().next());
             }
 
             final PStateDesignator targetDesignator = to;
 
-            Function<Double, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newARealLiteralExp(val));
-
-            stms.add(newIf(formalArguments.get(0), set.apply(1.0), set.apply(0.0)));
+            stms.add(createAssignStm(declaredFunction, targetDesignator, formalArguments));
 
             return newABlockStm(stms);
         }
         throw new UnfoldException("Unknown function" + declaredFunction);
+    }
+
+    private PStm createAssignStm(AFunctionDeclaration declaredFunction, PStateDesignator targetDesignator, List<PExp> formalArguments) throws UnfoldException {
+        if (convertBoolean2Real.equals(declaredFunction)) {
+            Function<Double, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newARealLiteralExp(val));
+            return newIf(formalArguments.get(0), set.apply(1.0), set.apply(0.0));
+        } else if (convertBoolean2Integer.equals(declaredFunction)) {
+            Function<Integer, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newAIntLiteralExp(val));
+            return newIf(formalArguments.get(0), set.apply(1), set.apply(0));
+        } else if (convertInteger2Boolean.equals(declaredFunction)) {
+            Function<Boolean, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newABoolLiteralExp(val));
+            return newIf(formalArguments.get(0), set.apply(true), set.apply(false));
+        } else if (convertReal2Boolean.equals(declaredFunction)) {
+            Function<Boolean, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newABoolLiteralExp(val));
+            return newIf(formalArguments.get(0), set.apply(true), set.apply(false));
+        }else if (convertInteger2Real.equals(declaredFunction)) {
+            Function<Double, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newARealLiteralExp(val));
+            return newIf(formalArguments.get(0), set.apply(1.0), set.apply(0.0));
+            //TODO look at the conversion
+            //return set.apply(formalArguments.get(0).clone());
+        } else if (convertReal2Integer.equals(declaredFunction)) {
+            Function<Integer, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newAIntLiteralExp(val));
+  /*          if (formalArguments.get(0) instanceof AIntNumericPrimitiveType) {
+                ((AIntNumericPrimitiveType) formalArguments.get(0));
+
+    */
+            return newIf(formalArguments.get(0), set.apply(1), set.apply(0));
+        }
+        throw new UnfoldException("Unknown convert function" + declaredFunction);
     }
 
 
