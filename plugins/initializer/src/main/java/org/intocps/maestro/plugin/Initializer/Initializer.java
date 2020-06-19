@@ -46,9 +46,9 @@ public class Initializer implements IMaestroUnfoldPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), MableAstFactory.newAVoidType());
 
     private final HashMap<ModelConnection.ModelInstance, HashSet<ModelDescription.ScalarVariable>> portsAlreadySet = new HashMap<>();
+    private final TopologicalPlugin topologicalPlugin;
     Config config;
     List<ModelParameter> modelParameters;
-    private final TopologicalPlugin topologicalPlugin;
 
     public Initializer() {
         this.topologicalPlugin = new TopologicalPlugin();
@@ -143,7 +143,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
     private List<Set<Variable>> optimizeInstantiationOrder(List<Variable> instantiationOrder) {
         List<Set<Variable>> optimizedOrder = new Vector<>();
         Variable previousVariable = instantiationOrder.get(0);
-        Set<Variable> currentSet = new HashSet<Variable>(Collections.singletonList(previousVariable));
+        Set<Variable> currentSet = new HashSet<>(Collections.singletonList(previousVariable));
         for (int i = 1; i < instantiationOrder.size(); i++) {
             Variable currentVariable = instantiationOrder.get(i);
             if (!canBeOptimized(currentVariable, previousVariable)) {
@@ -153,8 +153,9 @@ public class Initializer implements IMaestroUnfoldPlugin {
             previousVariable = currentVariable;
             currentSet.add(previousVariable);
         }
-        if(!currentSet.isEmpty())
+        if (!currentSet.isEmpty()) {
             optimizedOrder.add(currentSet);
+        }
 
         return optimizedOrder;
     }
@@ -214,8 +215,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
                 var variablesToInitialize =
-                        info.modelDescription.getScalarVariables().stream().filter(predicate)
-                                .collect(Collectors.groupingBy(o -> o.getType().type));
+                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(Collectors.groupingBy(o -> o.getType().type));
                 if (!variablesToInitialize.isEmpty()) {
                     variablesToInitialize.forEach((type, variables) -> {
 
@@ -247,13 +247,13 @@ public class Initializer implements IMaestroUnfoldPlugin {
         } else if (type == ModelDescription.Types.Real) {
             sc.setReals(comp.getText(), scalarValueIndices,
                     Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
-        }else if(type == ModelDescription.Types.Integer){
+        } else if (type == ModelDescription.Types.Integer) {
             sc.setIntegers(comp.getText(), scalarValueIndices,
                     Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
-        }else if(type == ModelDescription.Types.String){
+        } else if (type == ModelDescription.Types.String) {
             sc.setStrings(comp.getText(), scalarValueIndices,
                     (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
-        }else{
+        } else {
             throw new UnfoldException("Unrecognised type: " + type.name());
         }
 
@@ -289,16 +289,17 @@ public class Initializer implements IMaestroUnfoldPlugin {
         return newVal;
     }
 
-    private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type, long[] scalarValueIndices) throws UnfoldException {
+    private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
+            long[] scalarValueIndices) throws UnfoldException {
         if (type == ModelDescription.Types.Boolean) {
             sc.getBooleans(comp.getText(), scalarValueIndices);
         } else if (type == ModelDescription.Types.Real) {
             sc.getReals(comp.getText(), scalarValueIndices);
-        }else if(type == ModelDescription.Types.Integer) {
+        } else if (type == ModelDescription.Types.Integer) {
             sc.getIntegers(comp.getText(), scalarValueIndices);
-        }else if(type == ModelDescription.Types.String){
+        } else if (type == ModelDescription.Types.String) {
             sc.getStrings(comp.getText(), scalarValueIndices);
-        }else{
+        } else {
             throw new UnfoldException("Unrecognised type: " + type.name());
         }
     }
@@ -353,7 +354,6 @@ public class Initializer implements IMaestroUnfoldPlugin {
         if (root instanceof ArrayNode) {
             root = root.get(0);
         }
-        root = root.get("configuration");
         JsonNode parameters = root.get("parameters");
         Config conf = null;
         try {
@@ -366,11 +366,11 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
     public static class Config implements IPluginConfiguration {
 
-        private List<ModelParameter> modelParameters;
+        private final List<ModelParameter> modelParameters;
 
         public Config(JsonNode parameters) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<Map<String, Object>>() {
+            Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
             modelParameters = buildParameters(result);
         }

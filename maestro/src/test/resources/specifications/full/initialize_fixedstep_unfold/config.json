@@ -5,11 +5,9 @@
       "version": "0.0.0"
     },
     "config": {
-      "configuration": {
-        "parameters": {
-          "{crtl}.crtlInstance.maxlevel": 2,
-          "{crtl}.crtlInstance.minlevel": 1
-        }
+      "parameters": {
+        "{crtl}.crtlInstance.maxlevel": 2,
+        "{crtl}.crtlInstance.minlevel": 1
       }
     }
   }
