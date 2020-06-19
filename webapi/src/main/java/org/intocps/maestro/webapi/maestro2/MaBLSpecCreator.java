@@ -20,9 +20,10 @@ public class MaBLSpecCreator {
             double stepSize, boolean withWs, File rootDirectory) throws XPathExpressionException {
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("simulation\n" + "import FixedStep;\n" + "import TypeConverter;\n" + "import InitializerUsingCOE;\n" + "{\n" +
-                "real START_TIME = " + simulationConfig.getStartTime() + ";\n" + "real END_TIME = " + simulationConfig.getEndTime() + ";\n" +
-                "real STEP_SIZE = " + stepSize + ";\n");
+        stringBuilder
+                .append("simulation\n" + "import FixedStep;\n" + "import TypeConverter;\n" + "import Initializer;\n" + "{\n" + "real START_TIME = " +
+                        simulationConfig.getStartTime() + ";\n" + "real END_TIME = " + simulationConfig.getEndTime() + ";\n" + "real STEP_SIZE = " +
+                        stepSize + ";\n");
 
         // Load the fmus
         Set<Map.Entry<String, ModelDescription>> fmusToModelDescriptions = simulationEnvironment.getFmusWithModelDescriptions();
