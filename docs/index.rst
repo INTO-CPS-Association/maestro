@@ -14,17 +14,8 @@ Furthermore, it makes it possible to write plugins that can either expand to MaB
    :caption: Table of Contents:
 
    overview
-   plugins
+   plugins/index
    developer-overview
-
-
-Plugins
--------
-The following plugins are to be described:
-
-* **Initialize**
-* **Fixed Step**
-* **CSV**
 
 Indices and tables
 ==================
