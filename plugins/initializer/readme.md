@@ -11,14 +11,15 @@ The plugin uses the internal and external connections in the system along with t
 The approach used by the plugin does not put any constraints on choosing a master algorithm to be used to carry out the simulation.
 
 ##How to use it:
-The plugin is used by ...
-
+The plugin is used as described at https://into-cps-maestro.readthedocs.io/en/latest/overview.html . 
+It is a part of the Maestro2 plugin system of unfolding plugins that can assist in creating a co-simulation specification. 
+The plugin works based on some argument (the FMUs in the system), and an environment (the connections between instances of FMUs).
 
 ###MaBL
 Maestro Base Langauge (MaBL) is a domain-specific to express the specification of co-simulation. Such specifications are then interpreted and executed, resolving in the execution of a co-simulation inside the Maestro 2 tool.
 
 ###Configuration
-The plugin requires a configuration file containing the values of parameters of FMU variables with _causality=parameter_, which the user would like to overwrite.
+The plugin requires a configuration file containing the values of parameters of FMU variables with _causality=parameter_, which the user would like to overwrite in the initialization phase.
 The format of the file should be a JSON-file.
 Example:
 ```json
