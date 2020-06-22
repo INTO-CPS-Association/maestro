@@ -96,6 +96,7 @@ repository
 
 # docs build files
 docs/_build
+docs/builddir
 
 .factorypath
 .vscode
