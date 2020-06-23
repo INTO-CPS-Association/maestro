@@ -11,6 +11,7 @@ import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
+import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
 import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
@@ -47,16 +48,20 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
     private final HashMap<ModelConnection.ModelInstance, HashSet<ModelDescription.ScalarVariable>> portsAlreadySet = new HashMap<>();
     private final TopologicalPlugin topologicalPlugin;
+    private final InitializationPrologQuery initializationPrologQuery;
+
     Config config;
     List<ModelParameter> modelParameters;
 
     public Initializer() {
+        this.initializationPrologQuery = new InitializationPrologQuery();
         this.topologicalPlugin = new TopologicalPlugin();
     }
 
 
-    public Initializer(TopologicalPlugin topologicalPlugin) {
+    public Initializer(TopologicalPlugin topologicalPlugin, InitializationPrologQuery initializationPrologQuery) {
         this.topologicalPlugin = topologicalPlugin;
+        this.initializationPrologQuery = initializationPrologQuery;
     }
 
     @Override
@@ -106,6 +111,9 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
         //Set variables for all components in IniPhase
         SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
+
+        if(!initializationPrologQuery.initializationOrderIsValid(instantiationOrder, relations))
+            throw new UnfoldException("The found initialization order is not correct");
 
         //Enter initialization Mode
         logger.debug("Enter initialization Mode");

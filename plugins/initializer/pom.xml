@@ -37,9 +37,12 @@
             <scope>compile</scope>
         </dependency>
 
-
+        <dependency>
+            <groupId>com.ugos</groupId>
+            <artifactId>JIProlog</artifactId>
+            <version>4.1.6</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/jiprolog-4.1.6.1.jar</systemPath>
+        </dependency>
     </dependencies>
-
-
-
 </project>

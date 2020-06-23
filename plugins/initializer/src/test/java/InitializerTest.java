@@ -2,6 +2,8 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.Initializer;
+import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
+import org.intocps.maestro.plugin.Initializer.PrologVerifier.PrologGenerator;
 import org.intocps.maestro.plugin.Initializer.TopologicalPlugin;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Assert;
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
 import static org.intocps.maestro.ast.MableAstFactory.newAArrayType;
 import static org.intocps.maestro.ast.MableAstFactory.newANameType;
 
-public class NewInitializerTest {
+public class InitializerTest {
     InputStream minimalConfiguration = this.getClass().getResourceAsStream("InitializePluginTest/config.json");
     InputStream envJson = this.getClass().getResourceAsStream("InitializePluginTest/env.json");
 
@@ -26,7 +28,9 @@ public class NewInitializerTest {
     public void ParseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
-        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin);
+        var prologGenerator = new PrologGenerator();
+        var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
+        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
         plugin.parseConfig(minimalConfiguration);
     }
 
@@ -34,7 +38,9 @@ public class NewInitializerTest {
     public void UnfoldCallsSpecGen() throws Exception {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
-        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin);
+        var prologGenerator = new PrologGenerator();
+        var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
+        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
         AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
