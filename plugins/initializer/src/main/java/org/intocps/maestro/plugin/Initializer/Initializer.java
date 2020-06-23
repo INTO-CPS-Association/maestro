@@ -112,8 +112,9 @@ public class Initializer implements IMaestroUnfoldPlugin {
         //Set variables for all components in IniPhase
         SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
 
-        if(this.config.verifyAgainstProlog && !initializationPrologQuery.initializationOrderIsValid(instantiationOrder, relations))
+        if (this.config.verifyAgainstProlog && !initializationPrologQuery.initializationOrderIsValid(instantiationOrder, relations)) {
             throw new UnfoldException("The found initialization order is not correct");
+        }
 
         //Enter initialization Mode
         logger.debug("Enter initialization Mode");
@@ -122,8 +123,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
         });
 
         var inputToOutputRelations =
-                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.InputToOutput)
-                        .collect(Collectors.toList());
+                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.InputToOutput()).collect(Collectors.toList());
 
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
@@ -381,7 +381,8 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
         public Config(JsonNode parameters, JsonNode verify) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {});
+            Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
+            });
             modelParameters = buildParameters(result);
             verifyAgainstProlog = verify.asBoolean(false);
         }

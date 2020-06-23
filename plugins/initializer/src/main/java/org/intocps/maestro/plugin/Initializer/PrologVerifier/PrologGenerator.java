@@ -13,15 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
-    private final EnumMap<ModelDescription.Causality, String> CausalityToMethod =
-            new EnumMap<ModelDescription.Causality, String>(ModelDescription.Causality.class) {
-                {
-                    put(ModelDescription.Causality.Output, "getOut");
-                    put(ModelDescription.Causality.Input, "setIn");
-                }
-            };
-
-
     public String CreateInitOperationOrder(List<UnitRelationship.Variable> instantiationOrder) {
         StringBuilder initOrder = new StringBuilder();
         instantiationOrder.forEach(o -> {

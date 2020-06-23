@@ -18,14 +18,12 @@ public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
     public List<UnitRelationship.Variable> FindInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
-        var externalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toList());
-        var internalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toList());
+        var externalRelations = relations.stream().filter(RelationsPredicates.External()).collect(Collectors.toList());
+        var internalRelations = relations.stream().filter(RelationsPredicates.Internal()).collect(Collectors.toList());
 
-        internalRelations =
-                internalRelations.stream().filter(o -> o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input
-                || o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output && externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource())).collect(Collectors.toList());
+        internalRelations = internalRelations.stream()
+                .filter(RelationsPredicates.InputSource().or(RelationsPredicates.OutputSource().and(o ->
+                                externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource())))).collect(Collectors.toList());
 
         var edges = new Vector<Edge11<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>>();
         externalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
@@ -43,6 +41,7 @@ public class TopologicalPlugin {
             throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
         }
 
-        return (List<UnitRelationship.Variable>) JavaConverters.seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
+        return (List<UnitRelationship.Variable>) JavaConverters
+                .seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
     }
 }
