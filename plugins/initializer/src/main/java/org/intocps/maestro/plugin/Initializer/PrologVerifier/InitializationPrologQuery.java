@@ -2,15 +2,11 @@ package org.intocps.maestro.plugin.Initializer.PrologVerifier;
 
 
 import com.ugos.jiprolog.engine.*;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.plugin.UnfoldException;
+import org.intocps.maestro.plugin.Initializer.RelationsPredicates;
 import org.intocps.maestro.plugin.env.UnitRelationship;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,9 +35,8 @@ public class InitializationPrologQuery {
             jip.consultFile(path + "/initialization.pl");
 
             var init = prologGenerator.CreateInitOperationOrder(instantiationOrder);
-            var connections = prologGenerator.createConnections(relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
-                    .collect(Collectors.toList()));
-            var fmus = prologGenerator.createFMUs(relations);
+            var connections = prologGenerator.CreateConnections(relations.stream().filter(RelationsPredicates.External()).collect(Collectors.toList()));
+            var fmus = prologGenerator.CreateFMUs(relations);
 
             queryTerm =
                     jip.getTermParser().parseTerm(String.format("?- isInitSchedule(%s,%s, %s).", init, fmus, connections));
