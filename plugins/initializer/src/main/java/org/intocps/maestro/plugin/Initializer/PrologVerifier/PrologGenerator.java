@@ -6,11 +6,20 @@ import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
+    private final EnumMap<ModelDescription.Causality, String> CausalityToMethod =
+            new EnumMap<ModelDescription.Causality, String>(ModelDescription.Causality.class){
+                {
+                    put(ModelDescription.Causality.Output,"getOut");
+                    put(ModelDescription.Causality.Input,"setIn");
+                }
+            };
+
 
     public String CreateInitOperationOrder(List<UnitRelationship.Variable> instantiationOrder) {
         StringBuilder initOrder = new StringBuilder();
@@ -78,14 +87,14 @@ public class PrologGenerator {
         var outputPorts = externalRelations.stream().filter(p -> p.getSource().scalarVariable.getInstance() == fmu).collect(Collectors.toSet());
         outputPorts.forEach(port -> {
             outPorts.append(String.format("port(%s, %s),", port.getSource().scalarVariable.getScalarVariable().getName(),
-                    getInternalRelations(port.getSource(), internalRelations)));
+                    getInternalDependencies(port.getSource(), internalRelations)));
         });
 
         return fixListFormat(outPorts).toString();
 
     }
 
-    private String getInternalRelations(UnitRelationship.Variable source, Set<UnitRelationship.Relation> internalRelations) {
+    private String getInternalDependencies(UnitRelationship.Variable source, Set<UnitRelationship.Relation> internalRelations) {
         var sources =
                 internalRelations.stream().filter(rel -> rel.getSource() == source).map(o -> o.getTargets().values()).collect(Collectors.toSet())
                         .stream().flatMap(Collection::stream).collect(Collectors.toSet());

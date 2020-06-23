@@ -16,14 +16,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InitializationPrologQuery {
-    private final EnumMap<ModelDescription.Causality, String> causalitytoMethod =
-            new EnumMap<ModelDescription.Causality, String>(ModelDescription.Causality.class){
-        {
-            put(ModelDescription.Causality.Output,"getOut");
-            put(ModelDescription.Causality.Input,"setIn");
-        }
-    };
-
     private final PrologGenerator prologGenerator;
 
     public InitializationPrologQuery(PrologGenerator prologGenerator){
@@ -75,9 +67,11 @@ public class InitializationPrologQuery {
     }
 
     private Path getPathToProlog() {
-        var current = Paths.get("").toAbsolutePath().getParent().normalize().toString();
-        return Paths.get(current, "plugins", "initializer", "src", "main", "resources", "prologCode");
+        var currentPath = Paths.get("").toAbsolutePath().getParent().normalize().toString();
+        var pluginString = "plugins";
+        if(currentPath.contains("plugins")){
+            pluginString = "";
+        }
+        return Paths.get(currentPath, pluginString, "initializer", "src", "main", "resources", "prologCode");
     }
-
-
 }
