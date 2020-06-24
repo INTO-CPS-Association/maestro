@@ -5,17 +5,13 @@
 
 Welcome to INTO-CPS Maestro's documentation!
 ============================================
-Maestro2 is for specifying and executing co-simulations based on the Functional Mock-up Interface. 
-It features a domain specific language called Mastro Base Language (MaBL) along with a parser and an interpreter. 
-Furthermore, it makes it possible to write plugins that can either expand to MaBL code or execute in the interpreter.
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Table of Contents:
+   :maxdepth: 1
 
-   overview
-   plugins/index
-   developer-overview
+   user/index
+   dev/index
+   https://github.com/INTO-CPS-Association/Documentation
 
 Indices and tables
 ==================

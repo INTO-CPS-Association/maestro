@@ -69,4 +69,4 @@ html_static_path = ['_static']
 if os.environ.get("READTHEDOCS") != None:
     plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
 else:
-    plantuml = 'java -jar plantuml.jar'
+    plantuml = 'java -jar ../plantuml.jar'
