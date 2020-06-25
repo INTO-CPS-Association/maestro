@@ -32,15 +32,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-//import org.junit.Before;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
 
 @ActiveProfiles("main")
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
 @SpringBootTest
-public class CreateMablSpec {
+public class CreateMablSpecTests {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -52,7 +49,6 @@ public class CreateMablSpec {
     }
 
     @Test
-    //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void fixedStepSimulation() throws Exception {
         ObjectMapper om = new ObjectMapper();
         Maestro2SimulationController.StatusModel statusModel = om.readValue(
@@ -94,7 +90,7 @@ public class CreateMablSpec {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl");
+        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv");
     }
 
     public String getWaterTankMMJson() {

@@ -384,7 +384,11 @@ public class Initializer implements IMaestroUnfoldPlugin {
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
             modelParameters = buildParameters(result);
-            verifyAgainstProlog = verify.asBoolean(false);
+            if (verify == null) {
+                verifyAgainstProlog = false;
+            } else {
+                verifyAgainstProlog = verify.asBoolean(false);
+            }
         }
 
         public List<ModelParameter> getModelParameters() {
