@@ -16,6 +16,7 @@ then Maestro2 `unfolds` function calls to plugins with the behaviour of the func
 As an example, consider a specification where a type conversion function from the TypeConverterPlugin is used in the initial specification passed to Maestro2:
 :code:`convertBoolean2Real(booleanVariable, realVariable)`.
 Maestro2 will then invoke the TypeConverterPlugin to get the unfolded MaBL code and replace the function call with the unfolded MaBL code provided by the TypeConverterPlugin::
+
     if( booleanVariable )
         {
             realVariable = 1.0;
