@@ -37,9 +37,10 @@
             <scope>compile</scope>
         </dependency>
 
-
+        <dependency>
+            <groupId>com.ugos</groupId>
+            <artifactId>JIProlog</artifactId>
+            <version>4.1.6.1</version>
+        </dependency>
     </dependencies>
-
-
-
 </project>

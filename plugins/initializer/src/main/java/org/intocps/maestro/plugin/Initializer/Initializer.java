@@ -11,6 +11,7 @@ import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
+import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
 import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.UnfoldException;
@@ -47,16 +48,20 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
     private final HashMap<ModelConnection.ModelInstance, HashSet<ModelDescription.ScalarVariable>> portsAlreadySet = new HashMap<>();
     private final TopologicalPlugin topologicalPlugin;
+    private final InitializationPrologQuery initializationPrologQuery;
+
     Config config;
     List<ModelParameter> modelParameters;
 
     public Initializer() {
+        this.initializationPrologQuery = new InitializationPrologQuery();
         this.topologicalPlugin = new TopologicalPlugin();
     }
 
 
-    public Initializer(TopologicalPlugin topologicalPlugin) {
+    public Initializer(TopologicalPlugin topologicalPlugin, InitializationPrologQuery initializationPrologQuery) {
         this.topologicalPlugin = topologicalPlugin;
+        this.initializationPrologQuery = initializationPrologQuery;
     }
 
     @Override
@@ -107,6 +112,10 @@ public class Initializer implements IMaestroUnfoldPlugin {
         //Set variables for all components in IniPhase
         SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
 
+        if (this.config.verifyAgainstProlog && !initializationPrologQuery.initializationOrderIsValid(instantiationOrder, relations)) {
+            throw new UnfoldException("The found initialization order is not correct");
+        }
+
         //Enter initialization Mode
         logger.debug("Enter initialization Mode");
         knownComponentNames.forEach(comp -> {
@@ -114,8 +123,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
         });
 
         var inputToOutputRelations =
-                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.InputToOutput)
-                        .collect(Collectors.toList());
+                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.InputToOutput()).collect(Collectors.toList());
 
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
@@ -355,9 +363,11 @@ public class Initializer implements IMaestroUnfoldPlugin {
             root = root.get(0);
         }
         JsonNode parameters = root.get("parameters");
+        JsonNode verify = root.get("verifyAgainstProlog");
+
         Config conf = null;
         try {
-            conf = new Config(parameters);
+            conf = new Config(parameters, verify);
         } catch (InvalidVariableStringException e) {
             e.printStackTrace();
         }
@@ -367,12 +377,18 @@ public class Initializer implements IMaestroUnfoldPlugin {
     public static class Config implements IPluginConfiguration {
 
         private final List<ModelParameter> modelParameters;
+        private final boolean verifyAgainstProlog;
 
-        public Config(JsonNode parameters) throws InvalidVariableStringException {
+        public Config(JsonNode parameters, JsonNode verify) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
             modelParameters = buildParameters(result);
+            if (verify == null) {
+                verifyAgainstProlog = false;
+            } else {
+                verifyAgainstProlog = verify.asBoolean(false);
+            }
         }
 
         public List<ModelParameter> getModelParameters() {

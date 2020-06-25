@@ -18,6 +18,15 @@
         <fmu.api.version>1.0.10</fmu.api.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>maestro2-third-party</id>
+            <name>maestro2-third-party</name>
+            <url>http://overture.au.dk/artifactory/maestro2-third-party</url>
+        </repository>
+
+    </repositories>
+
     <modules>
         <module>core</module>
         <module>ast</module>
