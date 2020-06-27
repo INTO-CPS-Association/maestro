@@ -6,10 +6,7 @@ import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
