@@ -11,12 +11,12 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-public interface IMaestroUnfoldPlugin extends IMaestroPlugin {
+public interface IMaestroExpansionPlugin extends IMaestroPlugin {
 
     Set<AFunctionDeclaration> getDeclaredUnfoldFunctions();
 
-    PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws UnfoldException;
+    PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
+            IErrorReporter errorReporter) throws ExpandException;
 
     boolean requireConfig();
 

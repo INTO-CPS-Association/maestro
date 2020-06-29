@@ -44,32 +44,32 @@ public class MableSpecificationGenerator {
         this.simulationEnvironment = simulationEnvironment;
     }
 
-    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile, Framework framework,
+    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile, Framework framework,
             List<String> importModules) throws IOException {
-        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
+        return loadExpansionPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
 
-    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
+    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
             Framework framework, List<String> importModules) throws IOException {
-        return loadUnfoldPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
+        return loadExpansionPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
 
 
-    private static PluginEnvironment loadUnfoldPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, Map<String, String> rawPluginJsonContext,
-            Framework framework, List<String> importModules) {
-        Collection<IMaestroUnfoldPlugin> plugins = PluginFactory.getPlugins(IMaestroUnfoldPlugin.class, framework);
+    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv,
+            Map<String, String> rawPluginJsonContext, Framework framework, List<String> importModules) {
+        Collection<IMaestroExpansionPlugin> plugins = PluginFactory.getPlugins(IMaestroExpansionPlugin.class, framework);
 
         plugins.forEach(p -> logger.info("Located plugins: {} - {}", p.getName(), p.getVersion()));
 
-        Collection<IMaestroUnfoldPlugin> pluginsToUnfold =
+        Collection<IMaestroExpansionPlugin> pluginsToUnfold =
                 plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
 
         logger.debug("The following plugins will be used for unfolding: {}",
                 pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
 
-        logger.debug("Plugins declared functions: {}", pluginsToUnfold.stream()
-                .map(p -> p.getName() + "-" + p.getVersion() + p.getDeclaredUnfoldFunctions().stream().map(AFunctionDeclaration::toString)
-                        .collect(Collectors.joining(",\n\t", "\n\t", ""))).collect(Collectors.joining(",\n", "\n[\n", "\n]")));
+        logger.debug("Plugins declared functions: {}", pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion() +
+                p.getDeclaredUnfoldFunctions().stream().map(AFunctionDeclaration::toString).collect(Collectors.joining(",\n\t", "\n\t", "")))
+                .collect(Collectors.joining(",\n", "\n[\n", "\n]")));
 
 
         return new PluginEnvironment(rootEnv, pluginsToUnfold.stream()
@@ -133,7 +133,7 @@ public class MableSpecificationGenerator {
     private ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit simulationModule, IErrorReporter reporter,
             TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env, int depth) {
 
-        Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
+        Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 
 
         List<AExternalStm> aExternalStms = NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>());
@@ -178,12 +178,13 @@ public class MableSpecificationGenerator {
             if (type.isPresent()) {
                 logger.debug("Unfolding node: {}", node);
 
-                Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible = (fmap) -> fmap.getKey().getName().getText()
-                        .equals(node.getCall().getRoot().toString()) && fmap.getKey().getFormals().size() == node.getCall().getArgs()
-                        .size() && comparator.compatible(fmap.getValue(), type.get());
+                Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible =
+                        (fmap) -> fmap.getKey().getName().getText().equals(node.getCall().getRoot().toString()) &&
+                                fmap.getKey().getFormals().size() == node.getCall().getArgs().size() &&
+                                comparator.compatible(fmap.getValue(), type.get());
 
 
-                Optional<Map.Entry<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch =
+                Optional<Map.Entry<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch =
                         plugins.entrySet().stream().filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
 
                 if (pluginMatch.isPresent()) {
@@ -193,21 +194,21 @@ public class MableSpecificationGenerator {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getRoot().toString());
 
                             PStm unfoled = null;
-                            IMaestroUnfoldPlugin plugin = map.getKey();
+                            IMaestroExpansionPlugin plugin = map.getKey();
                             try {
                                 if (plugin.requireConfig()) {
                                     try {
                                         IPluginConfiguration config = env.getConfiguration(plugin);
-                                        unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), config, simulationEnvironment, reporter);
+                                        unfoled = plugin.expand(fmap.getKey(), node.getCall().getArgs(), config, simulationEnvironment, reporter);
                                     } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
                                                 node.getCall().getRoot().toString(), e.getMessage());
                                     }
 
                                 } else {
-                                    unfoled = plugin.unfold(fmap.getKey(), node.getCall().getArgs(), null, simulationEnvironment, reporter);
+                                    unfoled = plugin.expand(fmap.getKey(), node.getCall().getArgs(), null, simulationEnvironment, reporter);
                                 }
-                            } catch (UnfoldException e) {
+                            } catch (ExpandException e) {
                                 logger.error("Internal error in pluginn '{}' at {}. Message: {}", plugin.getName(),
                                         node.getCall().getRoot().toString(), e.getMessage());
                             }
@@ -280,7 +281,7 @@ public class MableSpecificationGenerator {
 
 
             //load plugins
-            PluginEnvironment pluginEnvironment = loadUnfoldPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);
+            PluginEnvironment pluginEnvironment = loadExpansionPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);
 
             try {
 
@@ -295,8 +296,8 @@ public class MableSpecificationGenerator {
 
 
                 logger.info(ppPrint(unfoldedSimulationModule.toString()));
-                ARootDocument processedDoc = new ARootDocument(
-                        Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+                ARootDocument processedDoc =
+                        new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
 
                 if (typeCheck(processedDoc, reporter)) {
@@ -347,9 +348,9 @@ public class MableSpecificationGenerator {
 
 
         return sb.toString();
-  }
-  
-  public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
+    }
+
+    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
         IErrorReporter reporter = new ErrorReporter();
 
         List<ARootDocument> documentList = parse(sourceFiles);

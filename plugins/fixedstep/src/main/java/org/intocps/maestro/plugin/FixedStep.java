@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class FixedStep implements IMaestroUnfoldPlugin {
+public class FixedStep implements IMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
 
@@ -54,13 +54,13 @@ public class FixedStep implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws UnfoldException {
+    public PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
+            IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
-            throw new UnfoldException("Unknown function declaration");
+            throw new ExpandException("Unknown function declaration");
         }
 
         boolean withCsv = false;
@@ -74,11 +74,11 @@ public class FixedStep implements IMaestroUnfoldPlugin {
 
 
         if (formalArguments == null || formalArguments.size() != selectedFun.getFormals().size()) {
-            throw new UnfoldException("Invalid args");
+            throw new ExpandException("Invalid args");
         }
 
         if (env == null) {
-            throw new UnfoldException("Simulation environment must not be null");
+            throw new ExpandException("Simulation environment must not be null");
         }
 
         List<LexIdentifier> knownComponentNames = null;
@@ -93,7 +93,7 @@ public class FixedStep implements IMaestroUnfoldPlugin {
                             .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
 
             if (!compDecl.isPresent()) {
-                throw new UnfoldException("Could not find names for comps");
+                throw new ExpandException("Could not find names for comps");
             }
 
             AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
@@ -103,7 +103,7 @@ public class FixedStep implements IMaestroUnfoldPlugin {
         }
 
         if (knownComponentNames == null || knownComponentNames.isEmpty()) {
-            throw new UnfoldException("No components found cannot fixed step with 0 components");
+            throw new ExpandException("No components found cannot fixed step with 0 components");
         }
 
         final List<LexIdentifier> componentNames = knownComponentNames;

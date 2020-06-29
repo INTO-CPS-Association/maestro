@@ -2,7 +2,7 @@ package org.intocps.maestro.typechecker;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AFunctionType;
-import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
+import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 
 import java.io.ByteArrayInputStream;
@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 
 public class PluginEnvironment extends BaseEnvironment {
 
-    final Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins;
+    final Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins;
     private final Map<String, String> rawPluginJsonConfigs;
     private final Map<String, IPluginConfiguration> pluginConfigs = new HashMap<>();
 
-    public PluginEnvironment(Environment outer, Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins,
+    public PluginEnvironment(Environment outer, Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins,
             Map<String, String> rawPluginJsonContext) {
         super(outer, plugins.keySet().stream()
                 .map(aFunctionDeclarationAFunctionTypeMap -> aFunctionDeclarationAFunctionTypeMap.getDeclaredUnfoldFunctions().stream())
@@ -31,15 +31,15 @@ public class PluginEnvironment extends BaseEnvironment {
         this.rawPluginJsonConfigs = rawPluginJsonContext;
     }
 
-    public Map<IMaestroUnfoldPlugin, Map<AFunctionDeclaration, AFunctionType>> getTypesPlugins() {
+    public Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> getTypesPlugins() {
         return plugins;
     }
 
-    public Collection<IMaestroUnfoldPlugin> getPlugins() {
+    public Collection<IMaestroExpansionPlugin> getPlugins() {
         return plugins.keySet();
     }
 
-    public IPluginConfiguration getConfiguration(IMaestroUnfoldPlugin plugin) throws PluginConfigurationNotFoundException {
+    public IPluginConfiguration getConfiguration(IMaestroExpansionPlugin plugin) throws PluginConfigurationNotFoundException {
 
         if (!plugin.requireConfig()) {
             return null;

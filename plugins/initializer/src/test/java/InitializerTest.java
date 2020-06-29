@@ -1,5 +1,5 @@
 import org.intocps.maestro.ast.*;
-import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
+import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.Initializer;
 import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
@@ -30,7 +30,7 @@ public class InitializerTest {
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();
         var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
-        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
+        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
         plugin.parseConfig(minimalConfiguration);
     }
 
@@ -40,14 +40,14 @@ public class InitializerTest {
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();
         var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
-        IMaestroUnfoldPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
+        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
         AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
         var components = Arrays.asList("crtlInstance", "wtInstance");
         List<PExp> arguments = setupFormalArguments(components, 0, 10);
 
-        PStm stm1 = plugin.unfold(funcDecl, arguments, parsedPluginConfiguration, new UnitRelationship(envJson), null);
+        PStm stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration, new UnitRelationship(envJson), null);
         Console.println(stm1.toString());
 
         //Useful test to make
@@ -63,8 +63,8 @@ public class InitializerTest {
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {
         var decl = MableAstFactory.newAVariableDeclaration(new LexIdentifier("components", null), newAArrayType(newANameType("FMI2Component")),
-                MableAstFactory.newAArrayInitializer(
-                        componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
+                MableAstFactory
+                        .newAArrayInitializer(componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
 
         var stm = MableAstFactory.newALocalVariableStm(decl);
         //components
