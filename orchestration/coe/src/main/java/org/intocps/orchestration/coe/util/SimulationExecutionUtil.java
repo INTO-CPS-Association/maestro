@@ -262,6 +262,9 @@ public class SimulationExecutionUtil
 				{
 					IOUtils.closeQuietly(resultResponse.getData());
 					IOUtils.closeQuietly(output);
+					// Force cleanup. Otherwise session destroy will throw exception.
+					output = null;
+					System.gc();
 				}
 			}
 
