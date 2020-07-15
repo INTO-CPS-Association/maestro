@@ -122,9 +122,29 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static ACallExp newACallExp(PExp identifier, List<? extends PExp> args_) {
+    public static ACallExp newACallExp(LexIdentifier identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
-        exp.setRoot(identifier);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
+    public static LexToken newExternalToken() {
+        return new LexToken("EXTERNAL", 0, 0);
+    }
+
+    public static ACallExp newACallExp(LexToken external, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setExternal(external);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
+    public static ACallExp newACallExp(PExp object, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setObject(object);
+        exp.setMethodName(identifier);
         exp.setArgs(args_);
         return exp;
     }
@@ -135,10 +155,10 @@ public class MableAstFactory {
         return expInit;
     }
 
-    public static ADotExp newADotExp(PExp root, PExp exp) {
-        ADotExp exp_ = new ADotExp();
+    public static AFieldExp newAFieldExp(PExp root, LexIdentifier field) {
+        AFieldExp exp_ = new AFieldExp();
         exp_.setRoot(root);
-        exp_.setExp(exp);
+        exp_.setField(field);
         return exp_;
     }
 
@@ -215,12 +235,6 @@ public class MableAstFactory {
         return stm;
     }
 
-
-    public static AExternalStm newExternalStm(ACallExp call) {
-        AExternalStm stm = new AExternalStm();
-        stm.setCall(call);
-        return stm;
-    }
 
     public static ABooleanPrimitiveType newABoleanPrimitiveType() {
         ABooleanPrimitiveType type = new ABooleanPrimitiveType();

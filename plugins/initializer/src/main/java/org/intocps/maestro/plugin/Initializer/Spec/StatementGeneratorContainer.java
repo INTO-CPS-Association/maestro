@@ -22,7 +22,7 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
-    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<ModelDescription.Types, String>(ModelDescription.Types.class){
+    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
             put(ModelDescription.Types.Integer, "Integer");
             put(ModelDescription.Types.String, "String");
@@ -64,9 +64,11 @@ public class StatementGeneratorContainer {
 
     private static PStm createGetSVsStatement(String instanceName, String functionName, long[] longs, LexIdentifier valueArray,
             LexIdentifier valRefArray, LexIdentifier statusVariable) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                newACallExp(newAIdentifierExp(createLexIdentifier.apply(functionName)), new ArrayList<PExp>(
-                        Arrays.asList(newAIdentifierExp(valRefArray), newAUIntLiteralExp((long) longs.length), newAIdentifierExp(valueArray))))));
+        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply(functionName).clone(), new ArrayList<PExp>(
+                                Arrays.asList(newAIdentifierExp(valRefArray), newAUIntLiteralExp((long) longs.length),
+                                        newAIdentifierExp(valueArray)))));
     }
 
     public static void reset() {
@@ -94,19 +96,19 @@ public class StatementGeneratorContainer {
 
     public void createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance, boolean stopTimeDefined) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("setupExperiment").clone(), new ArrayList<>(
                                 Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance), this.startTime.clone(),
                                         newABoolLiteralExp(stopTimeDefined), this.endTime.clone())))
 
-                ));
+        );
         statements.add(statement);
     }
 
     public void enterInitializationMode(String instanceName) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("enterInitializationMode")), null)));
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("enterInitializationMode").clone(), null));
         statements.add(statement);
     }
 
@@ -120,8 +122,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            valueArray =
-                    createArray(longs, doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real, realArrays);
+            valueArray = createArray(longs, doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real,
+                    realArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(doubles.length, valueLocator, valueArray);
@@ -165,8 +167,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            valueArray =
-                    createArray(longs, ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer, intArrays);
+            valueArray = createArray(longs, ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer,
+                    intArrays);
         } else {
             // The array exists. Assign its values.
             assignValueToArray(ints.length, valueLocator, valueArray);
@@ -199,13 +201,13 @@ public class StatementGeneratorContainer {
     }
 
     private void generateAssignmentStm(String instanceName, long[] longs, LexIdentifier valueArray, LexIdentifier valRefs, String setCommand) {
-        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(setCommand)), new ArrayList<PExp>(
+        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
+                newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply(setCommand).clone(), new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
                                         MableAstFactory.newAIdentifierExp(valueArray))))
 
-                ));
+        );
         statements.add(statement);
     }
 
@@ -386,8 +388,7 @@ public class StatementGeneratorContainer {
 
                 String id = instanceName + "SvValRef" + longs[i];
                 PStm stm = newALocalVariableStm(
-                        newAVariableDeclaration(createLexIdentifier.apply(id), FMITypeToMablType(fmiType),
-                                newAExpInitializer(assignmentExpression)));
+                        newAVariableDeclaration(createLexIdentifier.apply(id), FMITypeToMablType(fmiType), newAExpInitializer(assignmentExpression)));
                 statements.add(stm);
 
                 VariableLocation varLoc = new VariableLocation(id, fmiType);
@@ -452,8 +453,8 @@ public class StatementGeneratorContainer {
                             }
 
                             // Convert the value
-                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier("convert" + typesStringMap.get(output.getValue().type.type) + "2"+  typesStringMap.get(targetType),
-                                            null)),
+                            statements.add(newExpressionStm(newACallExp(newExternalToken(), newAIdentifier(
+                                    "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
 
                             variableLexId = createLexIdentifier.apply(name);
@@ -473,8 +474,8 @@ public class StatementGeneratorContainer {
 
     public void exitInitializationMode(String instanceName) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("exitInitializationMode")), null)));
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
         statements.add(statement);
     }
 }

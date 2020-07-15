@@ -128,14 +128,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csv"), newANameType("CSV"),
                     newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("CSV")))))));
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csvfile"), newANameType("CSVFile"),
-                    newAExpInitializer(newACallExp(newADotExp(newAIdentifierExp("csv"), newAIdentifierExp("open")), Arrays.asList(csvPath))))));
+                    newAExpInitializer(newACallExp(newAIdentifierExp("csv"), newAIdentifier("open"), Arrays.asList(csvPath))))));
         }
 
         if (withWs) {
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("wsHandler"), newANameType("WebsocketHandler"),
                     newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("WebsocketHandler")))))));
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("ws"), newANameType("Websocket"), newAExpInitializer(
-                    newACallExp(newADotExp(newAIdentifierExp("wsHandler"), newAIdentifierExp("open")), Collections.emptyList())))));
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("ws"), newANameType("Websocket"),
+                    newAExpInitializer(newACallExp(newAIdentifierExp("wsHandler"), newAIdentifier("open"), Collections.emptyList())))));
         }
 
 
@@ -208,12 +208,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAVariableDeclaration(newAIdentifier("csv_headers"), newAArrayType(newAStringPrimitiveType(), variableNames.size()),
                             newAArrayInitializer(variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())))));
 
-            statements.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeHeader")),
-                    Arrays.asList(newAIdentifierExp("csv_headers")))));
+            statements.add(newExpressionStm(
+                    newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeHeader"), Arrays.asList(newAIdentifierExp("csv_headers")))));
 
             if (withWs) {
-                statements.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeHeader")),
-                        Arrays.asList(newAIdentifierExp("csv_headers")))));
+                statements.add(newExpressionStm(
+                        newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeHeader"), Arrays.asList(newAIdentifierExp("csv_headers")))));
             }
         }
 
@@ -259,25 +259,25 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         Consumer<List<PStm>> terminate = list -> {
             list.addAll(componentNames.stream().map(comp -> newExpressionStm(
-                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp("terminate")),
-                            Collections.emptyList()))).collect(Collectors.toList()));
+                    newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier("terminate"), Collections.emptyList())))
+                    .collect(Collectors.toList()));
         };
 
 
         Consumer<List<PStm>> setAll = (list) ->
                 //set inputs
                 inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
-                    list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")), newACallExp(
-                            newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.In))),
-                            Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
-                                    newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
+                    list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+                            newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.In)),
+                                    Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
+                                            newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
                     checkStatus.accept(list);
                 }));
 
         //get outputs
         Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
             list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
-                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp(getFmiGetName(type, UsageType.Out))),
+                    newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.Out)),
                             Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
                                     newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
             checkStatus.accept(list);
@@ -307,8 +307,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
                         getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
                                 UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
 
-                list.add(newExternalStm(newACallExp(newAIdentifierExp(newAIdentifier("convert" + fromVar.getScalarVariable().getType().type + "2" +
-                        r.getSource().scalarVariable.getScalarVariable().getType().type)), Arrays.asList(from, toAsExp))));
+                list.add(newExpressionStm(newACallExp(newExternalToken(), newAIdentifier(
+                        "convert" + fromVar.getScalarVariable().getType().type + "2" +
+                                r.getSource().scalarVariable.getScalarVariable().getType().type), Arrays.asList(from, toAsExp))));
 
 
             } else {
@@ -321,7 +322,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         Consumer<List<PStm>> doStep = (list) -> componentNames.forEach(comp -> {
             //int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
             list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
-                    newACallExp(newADotExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifierExp("doStep")),
+                    newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier("doStep"),
                             Arrays.asList(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone(), newABoolLiteralExp(true)))));
 
             checkStatus.accept(list);
@@ -335,11 +336,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAVariableDeclaration(newAIdentifier("csv_values"), newAArrayType(newAStringPrimitiveType(), variableNames.size()),
                             newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
 
-            list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeRow")),
+            list.add(newExpressionStm(newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeRow"),
                     Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
 
             if (withWs) {
-                list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeRow")),
+                list.add(newExpressionStm(newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeRow"),
                         Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
             }
         };
@@ -352,11 +353,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 list.add(newAAssignmentStm(to, values.get(i).clone()));
             }
 
-            list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("csvfile"), newAIdentifierExp("writeRow")),
+            list.add(newExpressionStm(newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeRow"),
                     Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
 
             if (withWs) {
-                list.add(newExpressionStm(newACallExp(newADotExp(newAIdentifierExp("ws"), newAIdentifierExp("writeRow")),
+                list.add(newExpressionStm(newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeRow"),
                         Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
             }
 
@@ -392,12 +393,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         if (withCsv) {
             statements.add(newExpressionStm(
-                    newACallExp(newADotExp(newAIdentifierExp("csv"), newAIdentifierExp("close")), Arrays.asList(newAIdentifierExp("csvfile")))));
+                    newACallExp(newAIdentifierExp("csv"), newAIdentifier("close"), Arrays.asList(newAIdentifierExp("csvfile")))));
             statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("csv")))));
         }
         if (withWs) {
             statements.add(newExpressionStm(
-                    newACallExp(newADotExp(newAIdentifierExp("wsHandler"), newAIdentifierExp("close")), Arrays.asList(newAIdentifierExp("ws")))));
+                    newACallExp(newAIdentifierExp("wsHandler"), newAIdentifier("close"), Arrays.asList(newAIdentifierExp("ws")))));
             statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("wsHandler")))));
         }
 

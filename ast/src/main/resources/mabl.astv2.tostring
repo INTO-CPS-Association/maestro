@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
 %exp->identifier = [name]
 %exp->#literal->string = "\"" + [value] +"\""
 %exp->#literal->bool =  [value]
-%exp->#literal->numeric =  [value]
+//%exp->#literal->numeric =  [value]
 %exp->load = "load("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->unload = "unload("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%exp->dot = [root]+ "." +[exp]
+%exp->field = [root]+ "." +[field]
 %exp->#binary->plus = [left]+ " + " + [right]
 %exp->#binary->minus = [left]+ " - " + [right]
 %exp->#binary->lessEqual = [left]+ " <= " + [right]
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
-%exp->call = ""+ $ $[root]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[external]$==null?"":$[external]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 %stm->while = "while( "+[test]+" ) " + [body] + ""
 %stm->observable = "observable;"
 %stm->expression = [exp]
-%stm->external = "external " +[call]
+
 
 %stateDesignator->identifier = [name]
 %stateDesignator->array = [target] + "[" + [exp] + "]"

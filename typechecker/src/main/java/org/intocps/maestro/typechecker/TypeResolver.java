@@ -22,21 +22,6 @@ public class TypeResolver {
         this.reporter = reporter;
     }
 
-    //    public AFunctionType resolve(AFunctionDeclaration def, Environment env) {
-    //
-    //        AFunctionType type = new AFunctionType();
-    //        type.setParameters(def.getFormals().stream().map(f -> f.getType().clone()).collect(Collectors.toList()));
-    //        type.setResult(def.getReturnType().clone());
-    //        return type;
-    //    }
-    //
-    //    public AFunctionType resolve(ACallExp call, Environment env) {
-    //        AFunctionType type = new AFunctionType();
-    //        type.setParameters(def.getFormals().stream().map(f -> f.getType().clone()).collect(Collectors.toList()));
-    //        type.setResult(call..getReturnType().clone());
-    //        return type;
-    //    }
-
     public PType resolve(INode node, Environment env) throws AnalysisException {
         PType type = resolvedTypes.getOrDefault(node, null);
         if (type == null) {
@@ -51,7 +36,7 @@ public class TypeResolver {
 
         @Override
         public PType caseString(String node, Environment question) throws AnalysisException {
-            return factory.newAStringPrimitiveType();
+            return MableAstFactory.newAStringPrimitiveType();
         }
 
         @Override
@@ -156,13 +141,11 @@ public class TypeResolver {
 
         @Override
         public PType caseAUnloadExp(AUnloadExp node, Environment question) throws AnalysisException {
-            return factory.newAVoidType();
+            return MableAstFactory.newAVoidType();
         }
 
-
         @Override
-        public PType caseADotExp(ADotExp node, Environment question) throws AnalysisException {
-
+        public PType caseAFieldExp(AFieldExp node, Environment question) throws AnalysisException {
             PType rootType = node.getRoot().apply(this, question);
 
             if (!(rootType instanceof AModuleType)) {
@@ -177,17 +160,29 @@ public class TypeResolver {
                 env = new ModuleEnvironment(question, new ArrayList<>(((AImportedModuleCompilationUnit) def).getFunctions()));
             }
 
-            return node.getExp().apply(this, env);
+            return env.findName(node.getField()).apply(this, env);
         }
 
         @Override
         public PType caseACallExp(ACallExp node, Environment question) throws AnalysisException {
-            return node.getRoot().apply(this, question);
+
+            if (node.getObject() == null) {
+                return question.findName(node.getMethodName()).apply(this, question);
+            }
+
+            PType object = node.getObject().apply(this, question);
+
+            if (node.getObject() instanceof AImportedModuleCompilationUnit) {
+                AModuleType moduleType = (AModuleType) object;
+                ModuleEnvironment moduleEnv = new ModuleEnvironment(question, ((AImportedModuleCompilationUnit) node.getObject()).getFunctions());
+                return moduleEnv.findName(node.getMethodName()).apply(this, moduleEnv);
+            }
+            return null;
         }
 
         @Override
         public PType caseAStringLiteralExp(AStringLiteralExp node, Environment question) throws AnalysisException {
-            return factory.newAStringPrimitiveType();
+            return MableAstFactory.newAStringPrimitiveType();
         }
 
         @Override

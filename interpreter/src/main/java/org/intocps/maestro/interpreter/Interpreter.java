@@ -187,17 +187,19 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
-    public Value caseADotExp(ADotExp node, Context question) throws AnalysisException {
-
+    public Value caseAFieldExp(AFieldExp node, Context question) throws AnalysisException {
         Value root = node.getRoot().apply(this, question);
 
         if (root instanceof ModuleValue) {
 
-            return node.getExp().apply(this, new ModuleContext((ModuleValue) root, question));
+            ModuleContext moduleContext = new ModuleContext((ModuleValue) root, question);
+            return moduleContext.lookup(node.getField());
 
         }
         throw new InterpreterException("Unhandled node: " + node);
+
     }
+
 
     @Override
     public Value caseAExpressionStm(AExpressionStm node, Context question) throws AnalysisException {
@@ -240,7 +242,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseACallExp(ACallExp node, Context question) throws AnalysisException {
 
-        Value function = node.getRoot().apply(this, question);
+        if (node.getObject() != null) {
+            ModuleValue objectModule = (ModuleValue) node.getObject().apply(this, question);
+            question = new ModuleContext(objectModule, question);
+        }
+
+        Value function = question.lookup(node.getMethodName());
 
         if (function instanceof FunctionValue) {
 

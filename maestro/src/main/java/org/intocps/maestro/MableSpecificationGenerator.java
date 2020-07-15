@@ -136,12 +136,15 @@ public class MableSpecificationGenerator {
         Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 
 
-        List<AExternalStm> aExternalStms = NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>());
+        //TODO we actually do not need to check if its external
+        List<ACallExp> aExternalStms =
+                NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().filter(call -> call.getExternal() != null)
+                        .collect(Collectors.toList());
 
 
-        Map<AExternalStm, Optional<PType>> externalTypeMap = aExternalStms.stream().collect(Collectors.toMap(Function.identity(), n -> {
+        Map<ACallExp, Optional<PType>> externalTypeMap = aExternalStms.stream().collect(Collectors.toMap(Function.identity(), n -> {
             try {
-                PType type = typeResolver.resolve(n.getCall(), env);
+                PType type = typeResolver.resolve(n, env);
                 if (type != null) {
                     return Optional.of(type);
                 } else {
@@ -154,7 +157,7 @@ public class MableSpecificationGenerator {
         }));
 
         externalTypeMap.entrySet().stream().filter(map -> !map.getValue().isPresent())
-                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s' at:", map.getKey().getCall().getRoot().toString()), null));
+                .forEach(map -> reporter.report(0, String.format("Unknown external: '%s' at:", map.getKey().getMethodName().toString()), null));
 
         if (externalTypeMap.entrySet().stream().anyMatch(map -> !map.getValue().isPresent())) {
             throw new RuntimeException("Unknown externals present cannot proceed");
@@ -169,7 +172,7 @@ public class MableSpecificationGenerator {
 
 
         logger.info("\tExternals {}",
-                NodeCollector.collect(simulationModule, AExternalStm.class).orElse(new Vector<>()).stream().map(m -> m.getCall().getRoot().toString())
+                NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().map(m -> m.getMethodName().toString())
                         .collect(Collectors.joining(" , ", "[ ", " ]")));
 
 
@@ -179,9 +182,8 @@ public class MableSpecificationGenerator {
                 logger.debug("Unfolding node: {}", node);
 
                 Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible =
-                        (fmap) -> fmap.getKey().getName().getText().equals(node.getCall().getRoot().toString()) &&
-                                fmap.getKey().getFormals().size() == node.getCall().getArgs().size() &&
-                                comparator.compatible(fmap.getValue(), type.get());
+                        (fmap) -> fmap.getKey().getName().getText().equals(node.getMethodName().toString()) &&
+                                fmap.getKey().getFormals().size() == node.getArgs().size() && comparator.compatible(fmap.getValue(), type.get());
 
 
                 Optional<Map.Entry<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch =
@@ -191,7 +193,7 @@ public class MableSpecificationGenerator {
                     logger.info("matched with {}- {}", pluginMatch.get().getKey().getName(), pluginMatch.get().getValue().keySet().iterator().next());
                     pluginMatch.ifPresent(map -> {
                         map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
-                            logger.debug("Replacing external '{}' with unfoled statement", node.getCall().getRoot().toString());
+                            logger.debug("Replacing external '{}' with unfoled statement", node.getMethodName().toString());
 
                             PStm unfoled = null;
                             IMaestroExpansionPlugin plugin = map.getKey();
@@ -199,25 +201,25 @@ public class MableSpecificationGenerator {
                                 if (plugin.requireConfig()) {
                                     try {
                                         IPluginConfiguration config = env.getConfiguration(plugin);
-                                        unfoled = plugin.expand(fmap.getKey(), node.getCall().getArgs(), config, simulationEnvironment, reporter);
+                                        unfoled = plugin.expand(fmap.getKey(), node.getArgs(), config, simulationEnvironment, reporter);
                                     } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
-                                                node.getCall().getRoot().toString(), e.getMessage());
+                                                node.getMethodName().toString(), e.getMessage());
                                     }
 
                                 } else {
-                                    unfoled = plugin.expand(fmap.getKey(), node.getCall().getArgs(), null, simulationEnvironment, reporter);
+                                    unfoled = plugin.expand(fmap.getKey(), node.getArgs(), null, simulationEnvironment, reporter);
                                 }
                             } catch (ExpandException e) {
-                                logger.error("Internal error in pluginn '{}' at {}. Message: {}", plugin.getName(),
-                                        node.getCall().getRoot().toString(), e.getMessage());
+                                logger.error("Internal error in plug-in '{}' at {}. Message: {}", plugin.getName(), node.getMethodName().toString(),
+                                        e.getMessage());
                             }
                             if (unfoled == null) {
-                                reporter.report(999,
-                                        String.format("Unfold failure in plugin %s for %s", plugin.getName(), node.getCall().getRoot() + ""), null);
+                                reporter.report(999, String.format("Unfold failure in plugin %s for %s", plugin.getName(), node.getMethodName() + ""),
+                                        null);
                             } else {
-
-                                node.parent().replaceChild(node, unfoled);
+                                //replace the call and so rounding expression statement
+                                node.parent().parent().replaceChild(node.parent(), unfoled);
                             }
                         });
                     });
