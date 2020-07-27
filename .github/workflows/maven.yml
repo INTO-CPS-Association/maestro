@@ -24,7 +24,7 @@ jobs:
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests
       - name: Maven Test
-        run: mvn test -X
+        run: mvn test
 #    - uses: actions/upload-artifact@v1
 #      with:
 #        name: maestro.jar

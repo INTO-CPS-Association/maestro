@@ -6,6 +6,7 @@ import org.intocps.maestro.webapi.services.CoeService;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -62,6 +63,7 @@ public class EsaApiAndCoeServiceTest {
     }
 
     @Test
+    @Ignore
     public void initializeSingleFMU() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
         mockMvc.perform(post(baseUrl + "/initialize").contentType(APPLICATION_JSON).content(body)).andExpect(status().is(HttpStatus.OK.value()));

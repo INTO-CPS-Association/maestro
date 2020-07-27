@@ -7,10 +7,7 @@ import org.apache.log4j.Logger;
 import org.assertj.core.util.Files;
 import org.intocps.maestro.webapi.ConditionalIgnoreRule;
 import org.intocps.maestro.webapi.services.CoeService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,6 +51,7 @@ public class Stp3Instance1Test {
     }
 
     @Test
+    @Ignore("See #85")
     public void pingTest() throws Exception {
         mockMvc.perform(post(baseUrl + "/ping").contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
     }
@@ -61,6 +59,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore("See #85")
     //    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeTest() throws Exception {
 
@@ -87,6 +86,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore("See #85")
     //    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateTest() throws Exception {
         initializeTest();
@@ -109,6 +109,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore("See #85")
     // @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulate2Test() throws Exception {
         initializeTest();
@@ -133,6 +134,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore("See #85")
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateAndGetResultTest() throws Exception {
         simulateTest();

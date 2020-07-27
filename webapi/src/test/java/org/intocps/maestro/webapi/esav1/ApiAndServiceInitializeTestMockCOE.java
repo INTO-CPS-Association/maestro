@@ -10,6 +10,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -82,6 +83,7 @@ public class ApiAndServiceInitializeTestMockCOE {
 
 
     @Test
+    @Ignore
     public void initializeSingleFMU() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
@@ -89,6 +91,7 @@ public class ApiAndServiceInitializeTestMockCOE {
     }
 
     @Test
+    @Ignore
     public void initializeTwoFmus() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));

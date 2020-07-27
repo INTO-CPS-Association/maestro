@@ -56,6 +56,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
+    @Ignore("See #85")
     public void pingTest() throws Exception {
 
         Mockito.reset(service);
@@ -63,6 +64,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
+    @Ignore("See #85")
     public void createTest() throws Exception {
 
         String res = mockMvc.perform(post(baseUrl + "/").accept(APPLICATION_JSON).contentType(APPLICATION_JSON))
@@ -73,6 +75,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
+    @Ignore("See #85")
     public void createTestXml() throws Exception {
 
         String res = mockMvc.perform(post(baseUrl + "/").accept(APPLICATION_XML).contentType(APPLICATION_JSON))
@@ -93,6 +96,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
+    @Ignore("See #85")
     public void createDelete() throws Exception {
 
         String uid = UUID.randomUUID().toString();
@@ -132,6 +136,7 @@ public class SimulatorManagementTest {
 
 
     @Test
+    @Ignore("See #85")
     public void terminate() throws Exception {
 
         mockMvc.perform(post(baseUrl + "/terminate").accept(APPLICATION_JSON).contentType(APPLICATION_JSON))
