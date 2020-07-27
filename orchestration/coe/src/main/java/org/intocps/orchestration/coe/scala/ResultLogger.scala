@@ -92,6 +92,7 @@ class ResultLogger(file: File, enabledVariables: Map[ModelInstance, Set[ScalarVa
 
   override def stop(): Unit =
   {
+    logger.debug("Closing file {}.", file)
     resultOutputStream.close()
   }
 
