@@ -64,7 +64,7 @@ csvfile.writeRow(time,values);
 real end =END_TIME-STEP_SIZE;
 
 IFmuComponent components[2]={wtInstance,crtlInstance};
-external fixedStep(components,STEP_SIZE,0.0,END_TIME);
+expand fixedStep(components,STEP_SIZE,0.0,END_TIME);
 
 
 

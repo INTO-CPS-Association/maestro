@@ -19,7 +19,7 @@ FMI2Component body = bodyFMU.instantiate("body", false, false);
 
 IFmuComponent components[4] = {controller, sensor1, sensor2, body};
 
-external initialize(components,START_TIME, END_TIME);
+expand initialize(components,START_TIME, END_TIME);
 
 
 controllerFMU.freeInstance(controller);

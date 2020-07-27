@@ -18,9 +18,9 @@ FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, fals
 IFmuComponent components[2]={wtInstance,crtlInstance};
 
 
-external initialize(components,START_TIME, END_TIME);
+expand initialize(components,START_TIME, END_TIME);
 
-external fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,"mm.csv");
+expand fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,"mm.csv");
 
 //crtlInstance.terminate();
 //wtInstance.terminate();

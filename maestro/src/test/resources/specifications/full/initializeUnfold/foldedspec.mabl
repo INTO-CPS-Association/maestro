@@ -13,7 +13,7 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 real START_TIME = 10.0;
 real END_TIME = 10.0;
 
-    external initialize(components,START_TIME,END_TIME);
+    expand initialize(components,START_TIME,END_TIME);
     unload(tankcontroller);
     unload(SingleWatertank);
 }

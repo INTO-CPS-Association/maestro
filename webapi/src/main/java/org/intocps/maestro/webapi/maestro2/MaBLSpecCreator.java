@@ -42,13 +42,13 @@ public class MaBLSpecCreator {
         stringBuilder.append(String.format("IFmuComponent components[%d]={%s};\n", instances.size(),
                 instances.stream().map(l -> l.getKey()).collect(Collectors.joining(","))));
 
-        stringBuilder.append("external initialize(components,START_TIME, END_TIME);\n");
+        stringBuilder.append("expand initialize(components,START_TIME, END_TIME);\n");
 
         if (!withWs) {
-            stringBuilder.append("external fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,\"" +
+            stringBuilder.append("expand fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,\"" +
                     new File(rootDirectory, "outputs.csv").getAbsolutePath() + "\");\n");
         } else {
-            stringBuilder.append("external fixedStepCsvWs(components,STEP_SIZE,START_TIME,END_TIME,\"" +
+            stringBuilder.append("expand fixedStepCsvWs(components,STEP_SIZE,START_TIME,END_TIME,\"" +
                     new File(rootDirectory, "outputs.csv").getAbsolutePath() + "\");\n");
         }
 
