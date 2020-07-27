@@ -109,7 +109,7 @@ expressionList
     ;
 
 methodCall
-    : EXTERNAL? IDENTIFIER '(' expressionList? ')'
+    : EXPAND? IDENTIFIER '(' expressionList? ')'
     ;
 
 

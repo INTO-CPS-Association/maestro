@@ -251,8 +251,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             call.setArgs(args);
         }
 
-        if (ctx.EXTERNAL() != null) {
-            call.setExternal(convertToLexToken(ctx.EXTERNAL().getSymbol()));
+        if (ctx.EXPAND() != null) {
+            call.setExpand(convertToLexToken(ctx.EXPAND().getSymbol()));
         }
 
         call.setMethodName(convert(ctx.IDENTIFIER()));

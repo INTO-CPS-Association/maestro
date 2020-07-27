@@ -453,7 +453,7 @@ public class StatementGeneratorContainer {
                             }
 
                             // Convert the value
-                            statements.add(newExpressionStm(newACallExp(newExternalToken(), newAIdentifier(
+                            statements.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifier(
                                     "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
 

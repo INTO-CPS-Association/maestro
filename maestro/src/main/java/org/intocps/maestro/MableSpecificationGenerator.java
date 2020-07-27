@@ -138,7 +138,7 @@ public class MableSpecificationGenerator {
 
         //TODO we actually do not need to check if its external
         List<ACallExp> aExternalStms =
-                NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().filter(call -> call.getExternal() != null)
+                NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().filter(call -> call.getExpand() != null)
                         .collect(Collectors.toList());
 
 

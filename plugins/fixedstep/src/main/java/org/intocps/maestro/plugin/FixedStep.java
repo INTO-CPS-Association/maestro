@@ -307,9 +307,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
                         getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
                                 UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
 
-                list.add(newExpressionStm(newACallExp(newExternalToken(), newAIdentifier(
-                        "convert" + fromVar.getScalarVariable().getType().type + "2" +
-                                r.getSource().scalarVariable.getScalarVariable().getType().type), Arrays.asList(from, toAsExp))));
+                list.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifier("convert" + fromVar.getScalarVariable().getType().type + "2" +
+                        r.getSource().scalarVariable.getScalarVariable().getType().type), Arrays.asList(from, toAsExp))));
 
 
             } else {

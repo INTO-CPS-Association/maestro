@@ -129,13 +129,13 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static LexToken newExternalToken() {
-        return new LexToken("EXTERNAL", 0, 0);
+    public static LexToken newExpandToken() {
+        return new LexToken("EXPAND", 0, 0);
     }
 
-    public static ACallExp newACallExp(LexToken external, LexIdentifier identifier, List<? extends PExp> args_) {
+    public static ACallExp newACallExp(LexToken expand, LexIdentifier identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
-        exp.setExternal(external);
+        exp.setExpand(expand);
         exp.setMethodName(identifier);
         exp.setArgs(args_);
         return exp;

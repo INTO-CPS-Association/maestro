@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
-%exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[external]$==null?"":$[external]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
