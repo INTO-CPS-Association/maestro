@@ -32,16 +32,23 @@ import java.util.stream.Stream;
 
 public class MableSpecificationGenerator {
 
-    final static int MAXRECURSIVEEXTERNALEXPANSIONDEPTH = 4;
+    //This values is multiplied with the count of plugin function declarations.
     final static Logger logger = LoggerFactory.getLogger(MableSpecificationGenerator.class);
     final boolean verbose;
     final ISimulationEnvironment simulationEnvironment;
     private final Framework framework;
+    private final MaestroConfiguration configuration;
 
-    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment) {
+    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment,
+            MaestroConfiguration configuration) {
         this.framework = framework;
         this.verbose = verbose;
         this.simulationEnvironment = simulationEnvironment;
+        this.configuration = configuration;
+    }
+
+    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment) {
+        this(framework, verbose, simulationEnvironment, new MaestroConfiguration());
     }
 
     private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile, Framework framework,
@@ -53,7 +60,6 @@ public class MableSpecificationGenerator {
             Framework framework, List<String> importModules) throws IOException {
         return loadExpansionPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
     }
-
 
     private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv,
             Map<String, String> rawPluginJsonContext, Framework framework, List<String> importModules) {
@@ -122,6 +128,10 @@ public class MableSpecificationGenerator {
         return documentList;
     }
 
+    public IMaestroConfiguration getConfiguration() {
+        return this.configuration;
+    }
+
     private ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit inputSimulationModule,
             IErrorReporter reporter, TypeResolver typeResolver, TypeComparator comparator, PluginEnvironment env) {
 
@@ -136,7 +146,8 @@ public class MableSpecificationGenerator {
         Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
 
 
-        //TODO we actually do not need to check if its external
+        //TODO: It is not necessary to check if it is expand as all CallExps are expand.
+        // CallExps to runtime modules are part of Dot Exp.
         List<ACallExp> aExternalStms =
                 NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().filter(call -> call.getExpand() != null)
                         .collect(Collectors.toList());
@@ -166,8 +177,8 @@ public class MableSpecificationGenerator {
 
         if (aExternalStms.isEmpty()) {
             return simulationModule;
-        } else if (depth > MAXRECURSIVEEXTERNALEXPANSIONDEPTH) {
-            throw new RuntimeException("Recursive external expansion larger than " + MAXRECURSIVEEXTERNALEXPANSIONDEPTH);
+        } else if (depth > configuration.maximumExpansionDepth) {
+            throw new RuntimeException("Recursive external expansion larger than " + configuration.maximumExpansionDepth);
         }
 
 
@@ -219,7 +230,9 @@ public class MableSpecificationGenerator {
                                         null);
                             } else {
                                 //replace the call and so rounding expression statement
+
                                 node.parent().parent().replaceChild(node.parent(), unfoled);
+
                             }
                         });
                     });

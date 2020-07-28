@@ -1,4 +1,6 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.MableSpecificationGenerator;
+import org.intocps.maestro.MaestroConfiguration;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -14,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class MaestroTest {
-
 
     @Test(expected = RuntimeException.class)
     public void simpleParseTest() throws Exception {
@@ -34,6 +35,27 @@ public class MaestroTest {
             Map<String, String> config = PluginFactory.parsePluginConfiguration(is);
             Assert.assertNotNull(config);
             Assert.assertTrue("key missing", config.containsKey("demo-0.0.1"));
+        }
+    }
+
+    @Test
+    public void maestroConfigurationCorrectDefaultValue() throws IOException {
+        MaestroConfiguration defaultMaestroConfiguration = new MaestroConfiguration();
+        try (InputStream is = this.getClass().getResourceAsStream("maestro_configuration_default.json")) {
+            ObjectMapper mapper = new ObjectMapper();
+            MaestroConfiguration maestroConfiguration = mapper.readValue(is, MaestroConfiguration.class);
+            Assert.assertNotNull(maestroConfiguration);
+            Assert.assertEquals(defaultMaestroConfiguration.getMaximumExpansionDepth(), maestroConfiguration.getMaximumExpansionDepth());
+        }
+    }
+
+    @Test
+    public void maestroConfigurationCorrectValue() throws IOException {
+        try (InputStream is = this.getClass().getResourceAsStream("maestro_configuration_custom.json")) {
+            ObjectMapper mapper = new ObjectMapper();
+            MaestroConfiguration maestroConfiguration = mapper.readValue(is, MaestroConfiguration.class);
+            Assert.assertNotNull(maestroConfiguration);
+            Assert.assertEquals(-50, maestroConfiguration.getMaximumExpansionDepth());
         }
     }
 }

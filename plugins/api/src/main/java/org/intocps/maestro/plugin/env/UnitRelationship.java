@@ -25,7 +25,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
-    private ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
+    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -36,7 +36,6 @@ public class UnitRelationship implements ISimulationEnvironment {
         EnvironmentMessage msg = null;
         msg = mapper.readValue(is, EnvironmentMessage.class);
         initialize(msg);
-
     }
 
     public static UnitRelationship of(File file) throws Exception {
@@ -184,9 +183,6 @@ public class UnitRelationship implements ISimulationEnvironment {
         return fmuKeyToFmuWithMD;
     }
 
-
-
-
     Variable getOrCreateVariable(ModelDescription.ScalarVariable inputScalarVariable, LexIdentifier instanceLexIdentifier) {
         if (variables.containsKey(inputScalarVariable.name + instanceLexIdentifier)) {
             return variables.get(inputScalarVariable.name + instanceLexIdentifier);
@@ -196,7 +192,6 @@ public class UnitRelationship implements ISimulationEnvironment {
             return variable;
         }
     }
-
 
     Set<Relation> getOrCreateRelationsForLexIdentifier(LexIdentifier instanceLexIdentifier) {
         if (variableToRelations.containsKey(instanceLexIdentifier)) {
@@ -328,6 +323,4 @@ public class UnitRelationship implements ISimulationEnvironment {
             return scalarVariable.toString();
         }
     }
-
-
 }
