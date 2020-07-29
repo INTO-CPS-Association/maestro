@@ -392,7 +392,7 @@ object CoeInitialize
 
           if (md.getNeedsExecutionTool)
             {
-              logger.warn("Make sure the execution tool: '{}' is available during this simulation.", md.getVendorToolName)
+              logger.warn("Make sure the execution tool: '{}' is available during this simulation.", md.getGenerationTool)
             }
 
           val comp = fm._1.instantiate(fm._2._1.getGuid, mi.instanceName, coe.configuration.visible, coe.configuration.loggingOn, new IFmuCallback()
