@@ -27,13 +27,12 @@ jobs:
         java-version: 1.8
     - name: Maven Build
       run: mvn -B package --file pom.xml -DskipTests
-#    - name: Maven Test
-#      run: mvn test
+    - name: Maven Test
+      run: mvn test
     - name: Artifact Name
       if: runner.os == 'macOS'
       run: |
            JARPATH=$(find . -type f -iname 'coe-*-SNAPSHOT-jar-with-dependencies.jar')
-#          echo "::set-env name=artifactname::$(find . -type f -iname 'coe-*-SNAPSHOT-jar-with-dependencies.jar' -exec basename {} \;)"
            echo "Found jar path: ${JARPATH}"
            echo "Setting artifactpath to ${JARPATH}"
            echo "::set-env name=artifactpath::${JARPATH}"
