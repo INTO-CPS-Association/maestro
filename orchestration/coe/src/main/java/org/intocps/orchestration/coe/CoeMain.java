@@ -63,6 +63,16 @@ public class CoeMain {
 
     public static void main(String[] args)
             throws InterruptedException, IOException, NanoHTTPD.ResponseException {
+        boolean cmdHandlerResult = CMDHandler(args);
+        if (cmdHandlerResult) {
+            System.exit(0);
+        } else {
+            System.exit(1);
+        }
+    }
+
+    public static boolean CMDHandler(String[] args)
+            throws InterruptedException, IOException, NanoHTTPD.ResponseException {
 
         Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
         Option verboseOpt = Option.builder("v").desc("Verbose").build();
@@ -71,6 +81,7 @@ public class CoeMain {
         Option portOpt = Option.builder("p").longOpt("port").desc("The port where the REST interface will be served").hasArg().numberOfArgs(1).argName("port").build();
         Option oneShotOpt = Option.builder("o").longOpt("oneshot").desc("Run a single simulation and shutdown").build();
         Option configOpt = Option.builder("c").longOpt("configuration").desc("Path to configuration file").hasArg().numberOfArgs(1).argName("path").build();
+        Option simulationConfigOpt = Option.builder("sc").longOpt("simulationconfiguration").desc("Path to simulation configuration file").hasArg().numberOfArgs(1).argName("path").build();
         Option resultOpt = Option.builder("r").longOpt("result").desc("Path where the csv data should be writting to").hasArg().numberOfArgs(1).argName("path").build();
         Option startTimeOpt = Option.builder("s").longOpt("starttime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
         Option endTimeOpt = Option.builder("e").longOpt("endtime").desc("The start time of the simulation").hasArg().numberOfArgs(1).argName("time").build();
@@ -81,6 +92,7 @@ public class CoeMain {
         options.addOption(portOpt);
         options.addOption(oneShotOpt);
         options.addOption(configOpt);
+        options.addOption(simulationConfigOpt);
         options.addOption(startTimeOpt);
         options.addOption(endTimeOpt);
         options.addOption(verboseOpt);
@@ -96,7 +108,7 @@ public class CoeMain {
         } catch (ParseException e1) {
             System.err.println("Parsing failed. Reason: " + e1.getMessage());
             showHelp(options);
-            return;
+            return false;
         }
 
         if (cmd.hasOption(loadSingleFMUOpt.getOpt())) {
@@ -109,29 +121,30 @@ public class CoeMain {
             } catch (FmuInvocationException | FmuMissingLibraryException e) {
                 System.out.println("Failed to load FMU:\n");
                 e.printStackTrace();
+                return false;
             }
-            return;
+            return true;
         }
 
         if (cmd.hasOption(helpOpt.getOpt())) {
             showHelp(options);
-            return;
+            return true;
         }
 
         if (cmd.hasOption(versionOpt.getOpt())) {
             System.out.println(getVersion());
-            return;
+            return true;
         }
 
         boolean verbose = cmd.hasOption(verboseOpt.getOpt());
 
         if (cmd.hasOption(extractOpt.getOpt())) {
             processExtract(cmd.getOptionValue(extractOpt.getOpt()));
-            return;
+            return true;
         }
 
         if (!checkNativeFmi()) {
-            return;
+            return true;
         }
 
         printVersion();
@@ -140,24 +153,33 @@ public class CoeMain {
             Double startTime;
             Double endTime;
             File configFile;
+            File simulationConfigFile;
             File outputFile = new File("output.csv");
 
-            configFile = getFile(configOpt, cmd);
+            configFile = getFile(configOpt, cmd, true);
 
-            startTime = getDouble(startTimeOpt, cmd);
+            startTime = getDouble(startTimeOpt, cmd, true);
 
-            endTime = getDouble(endTimeOpt, cmd);
+            endTime = getDouble(endTimeOpt, cmd, true);
+
+            simulationConfigFile = getFile(simulationConfigOpt, cmd, true);
 
             if (cmd.hasOption(resultOpt.getOpt())) {
                 outputFile = getFile(resultOpt, cmd);
             }
 
-            if (startTime == null || endTime == null || configFile == null || outputFile == null) {
-                return;
+            // If there is no simulation config file, then start and endtime has to be defined.
+            if (
+                    (simulationConfigFile == null && (startTime == null || endTime == null))
+                            || configFile == null || outputFile == null) {
+                System.err.println(String.format(
+                        "Missing an option for one shot mode.\n" +
+                                "One shot mode requires:\n" +
+                                "(-%c AND -%s) AND (-%s OR (-%s AND -%s)  ", configOpt.getLongOpt(), resultOpt.getLongOpt(), simulationConfigOpt.getLongOpt(), startTimeOpt.getLongOpt(), endTimeOpt.getLongOpt()));
+                return false;
             }
 
-            runOneShotSimulation(verbose, configFile, startTime, endTime, outputFile);
-
+            return runOneShotSimulation(verbose, configFile, simulationConfigFile, startTime, endTime, outputFile);
         } else {
 
             // Change port if requested
@@ -168,6 +190,7 @@ public class CoeMain {
 
             runHttpSerivce(port);
         }
+        return true;
     }
 
     private static void processExtract(String optionValue) throws IOException {
@@ -183,6 +206,10 @@ public class CoeMain {
     }
 
     private static Double getDouble(Option opt, CommandLine cmd) {
+        return getDouble(opt, cmd, false);
+    }
+
+    private static Double getDouble(Option opt, CommandLine cmd, boolean quiet) {
         if (cmd.hasOption(opt.getOpt())) {
             try {
                 return Double.parseDouble(cmd.getOptionValue(opt.getOpt()));
@@ -192,25 +219,39 @@ public class CoeMain {
                 return null;
             }
         } else {
-            System.err.println(
-                    "Missing option --" + opt.getLongOpt());
+            if (!quiet)
+                System.err.println(
+                        "Missing option --" + opt.getLongOpt());
             return null;
         }
     }
 
     private static File getFile(Option opt, CommandLine cmd) {
+        return getFile(opt, cmd, false);
+    }
+
+    private static File getFile(Option opt, CommandLine cmd, boolean quiet) {
         if (cmd.hasOption(opt.getOpt())) {
             return new File(cmd.getOptionValue(opt.getOpt()));
         } else {
-            System.err.println("Missing option --" + opt.getLongOpt());
+            if (!quiet)
+                System.err.println("Missing option --" + opt.getLongOpt());
             return null;
         }
     }
 
-    private static void runOneShotSimulation(boolean verbose, File configFile, double startTime,
-                                             double endTime, File outputFile) throws IOException, NanoHTTPD.ResponseException {
+    private static boolean runOneShotSimulation(boolean verbose, File configFile, File simulationConfigFile, Double startTime,
+                                                Double endTime, File outputFile) throws IOException, NanoHTTPD.ResponseException {
         String config = FileUtils.readFileToString(configFile, "UTF-8");
-        new SingleSimMain.SimulationExecutionUtilStatusWriter(verbose).run(configFile.getPath(), config, startTime, endTime, outputFile);
+
+        SingleSimMain.SimulationExecutionUtilStatusWriter simulationExecutionUtilStatusWriter = new SingleSimMain.SimulationExecutionUtilStatusWriter(verbose);
+
+        if (simulationConfigFile != null) {
+            String simulationConfig = FileUtils.readFileToString(simulationConfigFile, "UTF-8");
+            return simulationExecutionUtilStatusWriter.run(config, simulationConfig, outputFile);
+        } else {
+            return simulationExecutionUtilStatusWriter.run(config, startTime, endTime, outputFile);
+        }
     }
 
     private static void runHttpSerivce(int port) throws InterruptedException {
