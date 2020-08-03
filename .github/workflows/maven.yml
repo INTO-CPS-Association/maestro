@@ -5,7 +5,7 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ development ]
+    branches: [ development, push-jar-91 ]
   pull_request:
     branches: [ development ]
 
@@ -27,9 +27,22 @@ jobs:
         java-version: 1.8
     - name: Maven Build
       run: mvn -B package --file pom.xml -DskipTests
-    - name: Maven Test
-      run: mvn test
-    - uses: actions/upload-artifact@v1
+#    - name: Maven Test
+#      run: mvn test
+    - name: Artifact Name
+      if: runner.os == 'macOS'
+      run: |
+           JARPATH=$(find . -type f -iname 'coe-*-SNAPSHOT-jar-with-dependencies.jar')
+#          echo "::set-env name=artifactname::$(find . -type f -iname 'coe-*-SNAPSHOT-jar-with-dependencies.jar' -exec basename {} \;)"
+           echo "Found jar path: ${JARPATH}"
+           echo "Setting artifactpath to ${JARPATH}"
+           echo "::set-env name=artifactpath::${JARPATH}"
+           JARNAME=$(basename $JARPATH)
+           echo "Setting artifactname to ${JARNAME}"
+           echo "::set-env name=artifactname::${JARNAME}"
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      if: runner.os == 'macOS'
       with:
-        name: maestro.jar
-        path: orchestration/coe/target/coe-1.0.7-SNAPSHOT-jar-with-dependencies.jar
+        name: ${{env.artifactname}}
+        path: ${{env.artifactpath}}
