@@ -97,7 +97,7 @@ public class MableSpecificationGenerator {
         return documentList;
     }
 
-    private static ARootDocument parse(CharStream specStreams) {
+    public static ARootDocument parse(CharStream specStreams) {
         MablLexer l = new MablLexer(specStreams);
         MablParser p = new MablParser(new CommonTokenStream(l));
         p.addErrorListener(new BaseErrorListener() {
