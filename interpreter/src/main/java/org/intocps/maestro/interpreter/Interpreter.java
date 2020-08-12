@@ -53,8 +53,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseABlockStm(ABlockStm node, Context question) throws AnalysisException {
 
+        Context ctxt = new Context(question);
         for (PStm stm : node.getBody()) {
-            stm.apply(this, question);
+            stm.apply(this, ctxt);
         }
         return new VoidValue();
     }
@@ -89,59 +90,79 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAUnloadExp(AUnloadExp node, Context question) throws AnalysisException {
 
-        List<Value> args = evaluate(node.getArgs(), question);
+        List<Value> args = evaluate(node.getArgs(), question).stream().map(Value::deref).collect(Collectors.toList());
 
         Value nameVal = args.get(0);
         return this.loadFactory.destroy(nameVal);
     }
 
+
+    @Override
+    public Value caseAIdentifierStateDesignator(AIdentifierStateDesignator node, Context question) throws AnalysisException {
+        return question.lookup(node.getName());
+    }
+
+    @Override
+    public Value caseAArrayStateDesignator(AArrayStateDesignator node, Context question) throws AnalysisException {
+
+        Value arrayValue = node.getTarget().apply(this, question);
+
+        if (!(arrayValue.deref() instanceof ArrayValue)) {
+            throw new InterpreterException("Array designator is not an array: " + arrayValue);
+        }
+
+        return arrayValue;
+    }
+
     @Override
     public Value caseAAssigmentStm(AAssigmentStm node, Context question) throws AnalysisException {
 
-        Value value = node.getExp().apply(this, question);
-
-        if (node.getTarget() instanceof AIdentifierStateDesignator) {
-            question.put(((AIdentifierStateDesignator) node.getTarget()).getName(), value);
-            return new VoidValue();
-
-        } else if (node.getTarget() instanceof AArrayStateDesignator) {
-            AArrayStateDesignator arrayStateDesignator = (AArrayStateDesignator) node.getTarget();
-
-            if (arrayStateDesignator.getTarget() instanceof AIdentifierStateDesignator) {
-
-                AIdentifierStateDesignator designator = (AIdentifierStateDesignator) arrayStateDesignator.getTarget();
-
-                Value arrayTarget = question.lookup(designator.getName());
+        Value newValue = node.getExp().apply(this, question);
 
 
-                Value indexValue = arrayStateDesignator.getExp().apply(this, question);
+        Value currentValue = node.getTarget().apply(this, question);
+        if (!(currentValue instanceof UpdatableValue)) {
+            throw new InterpreterException("Cannot assign to a constant value");
+        }
 
-                if (!(indexValue instanceof NumericValue)) {
-                    throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
-                }
-
-                int index = ((NumericValue) indexValue).intValue();
+        UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
 
 
-                if (arrayTarget.deref() instanceof ArrayValue) {
+        if (currentUpdatableValue.deref() instanceof ArrayValue) {
 
-                    ArrayValue aval = (ArrayValue) arrayTarget.deref();
+            if (node.getTarget() instanceof AArrayStateDesignator) {
+                AArrayStateDesignator arrayStateDesignator = (AArrayStateDesignator) node.getTarget();
 
-                    if (index >= 0 && index < aval.getValues().size()) {
-                        //                        question.put(designator.getName(),newValue);
-                        aval.getValues().set(index, value);
-                        return new VoidValue();
+                if (arrayStateDesignator.getExp() == null) {
+                    //replace array completly
+                    currentUpdatableValue.setValue(newValue);
+                } else {
+                    //in-place array update
+                    Value indexValue = arrayStateDesignator.getExp().apply(this, question);
+
+                    if (!(indexValue instanceof NumericValue)) {
+                        throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
+                    }
+
+                    int index = ((NumericValue) indexValue).intValue();
+                    ArrayValue<Value> arrayValue = (ArrayValue<Value>) currentUpdatableValue.deref();
+                    if (index >= 0 && index < arrayValue.getValues().size()) {
+                        arrayValue.getValues().set(index, newValue);
                     } else {
-                        throw new InterpreterException("Array index is out of bounds: " + index);
+                        throw new InterpreterException("Array index out of bounds: " + indexValue.toString());
                     }
                 }
 
+            } else {
+                throw new InterpreterException("Bad array designator: " + node.getTarget().toString());
             }
-
-
+        } else {
+            currentUpdatableValue.setValue(newValue);
         }
 
-        throw new InterpreterException("unsupported state designator");
+
+        return new VoidValue();
+
     }
 
     @Override
@@ -164,11 +185,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 val = new ArrayValue<>(IntStream.range(0, size.intValue()).mapToObj(i -> new UndefinedValue()).collect(Collectors.toList()));
             }
 
-            question.put(node.getName(), new ReferenceValue(val));
+            question.put(node.getName(), new UpdatableValue(val));
 
         } else {
 
-            question.put(node.getName(), node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question));
+            question.put(node.getName(),
+                    new UpdatableValue(node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question)));
         }
         return new VoidValue();
     }
@@ -180,9 +202,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAArrayInitializer(AArrayInitializer node, Context question) throws AnalysisException {
-
-
-        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question));
+        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question).stream().map(Value::deref).collect(Collectors.toList()));
         return array;
     }
 
@@ -209,13 +229,17 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAIdentifierExp(AIdentifierExp node, Context question) throws AnalysisException {
-        return question.lookup(node.getName());
+        Value val = question.lookup(node.getName());
+        if (val == null) {
+            throw new InterpreterException("Variable undefined: '" + node.getName() + "':" + node.getName().getSymbol().getLine());
+        }
+        return val;
     }
 
     @Override
     public Value caseAPlusBinaryExp(APlusBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
 
         if (left instanceof IntegerValue && right instanceof IntegerValue) {
@@ -228,8 +252,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAMinusBinaryExp(AMinusBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
 
         if (left instanceof IntegerValue && right instanceof IntegerValue) {
@@ -240,18 +264,19 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
-    public Value caseACallExp(ACallExp node, Context question) throws AnalysisException {
+    public Value caseACallExp(ACallExp node, final Context question) throws AnalysisException {
 
+        Context callContext = question;
         if (node.getObject() != null) {
-            ModuleValue objectModule = (ModuleValue) node.getObject().apply(this, question);
-            question = new ModuleContext(objectModule, question);
+            ModuleValue objectModule = (ModuleValue) node.getObject().apply(this, question).deref();
+            callContext = new ModuleContext(objectModule, question);
         }
 
-        Value function = question.lookup(node.getMethodName());
+        Value function = callContext.lookup(node.getMethodName());
 
         if (function instanceof FunctionValue) {
 
-            return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), question));
+            return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
         }
 
         throw new InterpreterException("Unhandled node: " + node);
@@ -269,7 +294,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAIfStm(AIfStm node, Context question) throws AnalysisException {
-        if (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
+        if (((BooleanValue) node.getTest().apply(this, question).deref()).getValue()) {
             node.getThen().apply(this, question);
         } else if (node.getElse() != null) {
             node.getElse().apply(this, question);
@@ -279,42 +304,42 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseALessBinaryExp(ALessBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.compareTo(right) < 0);
+        return new BooleanValue(left.deref().compareTo(right.deref()) < 0);
     }
 
     @Override
     public Value caseALessEqualBinaryExp(ALessEqualBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.compareTo(right) <= 0);
+        return new BooleanValue(left.deref().compareTo(right.deref()) <= 0);
     }
 
     @Override
     public Value caseAGreaterBinaryExp(AGreaterBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.compareTo(right) > 0);
+        return new BooleanValue(left.deref().compareTo(right.deref()) > 0);
     }
 
     @Override
     public Value caseAEqualBinaryExp(AEqualBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.compareTo(right) == 0);
+        return new BooleanValue(left.deref().compareTo(right.deref()) == 0);
     }
 
     @Override
     public Value caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question);
-        NumericValue right = (NumericValue) node.getRight().apply(this, question);
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.compareTo(right) >= 0);
+        return new BooleanValue(left.deref().compareTo(right.deref()) >= 0);
     }
 
     @Override
