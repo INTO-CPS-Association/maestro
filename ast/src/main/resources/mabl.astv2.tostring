@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 %initializer->exp = [exp]
-%initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
+%initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(" , ", " ", " "))$ + "}"
 %parameter->formal = [type] +" "+[name]
 
 %exp->identifier = [name]
