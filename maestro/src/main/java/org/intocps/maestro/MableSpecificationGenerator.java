@@ -206,7 +206,7 @@ public class MableSpecificationGenerator {
                         map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getMethodName().toString());
 
-                            PStm unfoled = null;
+                            List<PStm> unfoled = null;
                             IMaestroExpansionPlugin plugin = map.getKey();
                             try {
                                 if (plugin.requireConfig()) {
@@ -231,7 +231,24 @@ public class MableSpecificationGenerator {
                             } else {
                                 //replace the call and so rounding expression statement
 
-                                node.parent().parent().replaceChild(node.parent(), unfoled);
+                                if (node.parent().parent() instanceof ABlockStm) {
+
+                                    //construct a new block body replacing the original node with the new statements
+                                    ABlockStm block = (ABlockStm) node.parent().parent();
+                                    int oldIndex = block.getBody().indexOf(node.parent());
+                                    List<PStm> newBlock = new Vector<>();
+                                    for (int i = 0; i < oldIndex; i++) {
+                                        newBlock.add(block.getBody().get(i));
+                                    }
+                                    newBlock.addAll(unfoled);
+                                    for (int i = oldIndex + 1; i < block.getBody().size(); i++) {
+                                        newBlock.add(block.getBody().get(i));
+                                    }
+                                    //set the new block body, movin all children to this node
+                                    block.setBody(newBlock);
+                                } else {
+                                    node.parent().parent().replaceChild(node.parent(), new ABlockStm(unfoled));
+                                }
 
                             }
                         });

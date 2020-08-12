@@ -50,8 +50,8 @@ public class TypeConverterPlugin implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws ExpandException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
 
         if (getDeclaredUnfoldFunctions().contains(declaredFunction)) {
 
@@ -81,7 +81,7 @@ public class TypeConverterPlugin implements IMaestroExpansionPlugin {
 
             stms.add(createAssignStm(declaredFunction, targetDesignator, formalArguments));
 
-            return newABlockStm(stms);
+            return stms;
         }
         throw new ExpandException("Unknown function" + declaredFunction);
     }

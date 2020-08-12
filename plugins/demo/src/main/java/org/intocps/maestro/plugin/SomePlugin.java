@@ -9,6 +9,7 @@ import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,13 +37,13 @@ public class SomePlugin implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter reporter) throws ExpandException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter reporter) throws ExpandException {
 
         if (config instanceof DemoConfig) {
-            return new AWhileStm(
+            return Collections.singletonList(new AWhileStm(
                     new ALessBinaryExp(new AIntLiteralExp(((DemoConfig) config).repeats), new AIntLiteralExp(((DemoConfig) config).repeats)),
-                    new ABlockStm());
+                    new ABlockStm()));
         }
         throw new ExpandException("Bad config type");
     }

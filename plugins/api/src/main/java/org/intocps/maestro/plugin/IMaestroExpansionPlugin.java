@@ -15,7 +15,7 @@ public interface IMaestroExpansionPlugin extends IMaestroPlugin {
 
     Set<AFunctionDeclaration> getDeclaredUnfoldFunctions();
 
-    PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
+    List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
             IErrorReporter errorReporter) throws ExpandException;
 
     boolean requireConfig();

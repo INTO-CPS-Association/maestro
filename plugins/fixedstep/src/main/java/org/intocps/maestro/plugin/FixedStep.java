@@ -54,8 +54,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws ExpandException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
 
@@ -402,7 +402,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         }
 
 
-        return newABlockStm(statements);
+        return (statements);
     }
 
 

@@ -80,8 +80,8 @@ public class Initializer implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public PStm expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws ExpandException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
         logger.info("Unfolding: {}", declaredFunction.toString());
 
         verifyArguments(formalArguments, env);
@@ -145,7 +145,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         });
 
         var statements = sc.getStatements();
-        return newABlockStm(statements);
+        return (statements);
     }
 
     private List<Set<Variable>> optimizeInstantiationOrder(List<Variable> instantiationOrder) {

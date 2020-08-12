@@ -47,7 +47,7 @@ public class InitializerTest {
         var components = Arrays.asList("crtlInstance", "wtInstance");
         List<PExp> arguments = setupFormalArguments(components, 0, 10);
 
-        PStm stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration, new UnitRelationship(envJson), null);
+        List<PStm> stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration, new UnitRelationship(envJson), null);
         Console.println(stm1.toString());
 
         //Useful test to make
