@@ -55,6 +55,7 @@ statement
 //    | EXTERNAL methodCall  ';'                                  #methodExternalCallStm
     | SEMI                                                      #semi
     | OBSERVABLE                                                #observable
+    | BREAK                                                     #break
     ;
 
 
@@ -82,6 +83,7 @@ expression
     | expression bop=('+'|'-') expression                                                   # plusMinusExp
     | expression bop=('<=' | '>=' | '>' | '<') expression                                   # numberComparizonExp
     | expression bop=('==' | '!=') expression                                               # equalityExp
+    | op=(BANG|SUB) expression                                                                   # unaryExp
     | <assoc=right> expression
           bop=('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=' | '^=' | '>>=' | '>>>=' | '<<=' | '%=')
           expression                                                                        # updateExp

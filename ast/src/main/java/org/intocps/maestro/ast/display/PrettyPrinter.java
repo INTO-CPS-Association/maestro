@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAdaptor;
 
+import java.util.Iterator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,11 +47,11 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         node.getTest().apply(this, question);
         sb.append(" )\n");
         sb.append(indent(question) + "{\n");
-        applyBodyIntendedScoping(node.getThen(), question + 1);
+        applyBodyIntendedScoping(node.getThen(), question + 2);
         sb.append("\n" + indent(question) + "}");
         if (node.getElse() != null) {
             sb.append("\n" + indent(question) + "else\n" + indent(question) + "{\n");
-            applyBodyIntendedScoping(node.getThen(), question + 1);
+            applyBodyIntendedScoping(node.getElse(), question + 2);
             sb.append("\n" + indent(question) + "}");
         }
         //
@@ -60,6 +61,10 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     }
 
     void applyBodyIntendedScoping(INode node, int indentation) throws AnalysisException {
+        if (node == null) {
+            return;
+        }
+
         if (node instanceof ABlockStm) {
             printABlockStm((ABlockStm) node, indentation - 1, true);
         } else {
@@ -102,11 +107,15 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
             return;
         }
         if (!skipBracket) {
-            sb.append(indent(question) + "{");
+            sb.append(indent(question) + "{\n");
         }
-        for (PStm stm : node.getBody()) {
-            sb.append("\n");
-            stm.apply(this, question + 1);
+
+        Iterator<PStm> itr = node.getBody().iterator();
+        while (itr.hasNext()) {
+            itr.next().apply(this, question + 1);
+            if (itr.hasNext()) {
+                sb.append("\n");
+            }
         }
         if (!skipBracket) {
             sb.append("\n" + indent(question) + "}");

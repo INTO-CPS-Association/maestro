@@ -67,6 +67,7 @@ exp
     | {load} [args]:exp*
     | {unload} [args]:exp*
     | #binary
+    | #unary
     | {field} [root]:exp [field]:lex_identifier
     | {call} [object]:exp [expand]:parserToken [methodName]:lex_identifier [args]:exp*
     | {arrayIndex} [array]:exp [indices]:exp*
@@ -93,6 +94,10 @@ exp
     | {notEqual}
     ;
 
+#unary {-> package='org.intocps.maestro.ast'
+  |  [exp]:exp }
+  = {not}
+  ;
 
 stateDesignator
     = {identifier} [name]:lex_identifier
@@ -107,6 +112,7 @@ stm
     | {while} [test]:exp [body]:stm
     | {expression} [exp]:exp
     | {observable} [identifier]:identifier
+    | {break}
     ;
 
 type

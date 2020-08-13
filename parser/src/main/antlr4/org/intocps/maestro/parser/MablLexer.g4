@@ -21,6 +21,7 @@ EXPAND:           'expand';
 IMPORT:           'import';
 SIMULATION:         'simulation';
 OBSERVABLE:         'observable';
+BREAK:         'break';
 
 // Literals
 

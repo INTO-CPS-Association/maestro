@@ -18,12 +18,15 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class FixedStep implements IMaestroExpansionPlugin {
+
+    final static String fixedStepStatus = "fix_status";
 
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
 
@@ -127,6 +130,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csv"), newANameType("CSV"),
                     newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("CSV")))))));
+
+
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("logger"), newANameType("Logger"),
+                    newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("Logger")))))));
+
             statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csvfile"), newANameType("CSVFile"),
                     newAExpInitializer(newACallExp(newAIdentifierExp("csv"), newAIdentifier("open"), Arrays.asList(csvPath))))));
         }
@@ -146,6 +154,15 @@ public class FixedStep implements IMaestroExpansionPlugin {
         LexIdentifier time = newAIdentifier("time");
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration((LexIdentifier) time.clone(), newARealNumericPrimitiveType(), newAExpInitializer(startTime))));
+
+
+        LexIdentifier fixedStepOverallStatus = newAIdentifier("fix_global_status");
+        statements.add(newALocalVariableStm(newAVariableDeclaration((LexIdentifier) fixedStepOverallStatus.clone(), newABoleanPrimitiveType(),
+                newAExpInitializer(newABoolLiteralExp(false)))));
+
+        LexIdentifier compIndexVar = newAIdentifier("fix_comp_index");
+        statements.add(newALocalVariableStm(newAVariableDeclaration((LexIdentifier) compIndexVar.clone(), newAIntNumericPrimitiveType(),
+                newAExpInitializer(newAIntLiteralExp(0)))));
 
 
         Set<UnitRelationship.Relation> outputRelations =
@@ -217,16 +234,83 @@ public class FixedStep implements IMaestroExpansionPlugin {
             }
         }
 
-        Consumer<List<PStm>> checkStatus = list -> {
+        Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatus = list -> {
 
-            list.add(newIf(newEqual(newAIdentifierExp("status"), newAIntLiteralExp(0)), newABlockStm(Collections.emptyList()), null));
+
+        };
+
+        Function<LexIdentifier, PExp> getCompStatusExp =
+                comp -> newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(newAIntLiteralExp(componentNames.indexOf(comp))));
+
+        Function<LexIdentifier, PStateDesignator> getCompStatusDesignator =
+                comp -> newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)),
+                        newAIntLiteralExp(componentNames.indexOf(comp)));
+
+        Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatusDoStep = list -> {
+
+
+            list.getValue().add(newIf(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(3)), newABlockStm(Arrays.asList(
+                    newExpressionStm(
+                            newACallExp(newAIdentifier("abort"), Arrays.asList(newAStringLiteralExp("Fmu step error." + " " + "Aborting")))))),
+                    newIf(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(4)), newABlockStm(Arrays.asList(newExpressionStm(
+                            newACallExp(newAIdentifier("abort"), Arrays.asList(newAStringLiteralExp("Fmu step fatal." + " " + "Aborting")))))),
+                            newIf(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(5)), newABlockStm(Arrays.asList(newExpressionStm(
+                                    newACallExp(newAIdentifier("abort"),
+                                            Arrays.asList(newAStringLiteralExp("Fmu step Pending." + " " + "Aborting - not supported")))))), null))));
+
+        };
+
+        Consumer<List<PStm>> handleDoStepStatuses = list -> {
+
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) fixedStepOverallStatus.clone()), newABoolLiteralExp(true)));
+            list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(0)));
+            //check if all ok
+            list.add(newWhile(newALessBinaryExp(newAIdentifierExp((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(componentNames.size())),
+                    newABlockStm(Arrays.asList(
+
+                            newIf(newNotEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))), newAIntLiteralExp(0)), newABlockStm(
+                                    Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) fixedStepOverallStatus.clone()),
+                                            newABoolLiteralExp(false)),
+
+                                            newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                                                    Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp("doStep failed for %d - status code "),
+                                                            newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))))))
+
+
+                                            , newBreak())), null),
+
+
+                            newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()),
+                                    newPlusExp(newAIdentifierExp((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(1)))
+
+
+                    ))));
+
+
+            list.add(newIf(newNot(newAIdentifierExp((LexIdentifier) fixedStepOverallStatus.clone())), newABlockStm(Arrays.asList(
+
+
+                    newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                            Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp("aborting %d"), newAIntLiteralExp(0)))),
+
+                    newBreak())), null));
+
+            //check for fatals
+
+
+            //check for possible reduced stepping
 
         };
 
         try {
 
 
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("status"), newAIntNumericPrimitiveType())));
+            statements.add(newALocalVariableStm(
+                    newAVariableDeclaration(newAIdentifier(fixedStepStatus), newAArrayType(newAIntNumericPrimitiveType(), componentNames.size()),
+                            newAArrayInitializer(
+                                    IntStream.range(0, componentNames.size()).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList())))));
 
 
             for (LexIdentifier comp : componentNames) {
@@ -267,20 +351,20 @@ public class FixedStep implements IMaestroExpansionPlugin {
         Consumer<List<PStm>> setAll = (list) ->
                 //set inputs
                 inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
-                    list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+                    list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
                             newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.In)),
                                     Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
                                             newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
-                    checkStatus.accept(list);
+                    checkStatus.accept(Map.entry(comp, list));
                 }));
 
         //get outputs
         Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
-            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+            list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
                     newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.Out)),
                             Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
                                     newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
-            checkStatus.accept(list);
+            checkStatus.accept(Map.entry(comp, list));
         }));
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
@@ -320,11 +404,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         Consumer<List<PStm>> doStep = (list) -> componentNames.forEach(comp -> {
             //int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
-            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("status")),
+            list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
                     newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier("doStep"),
                             Arrays.asList(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone(), newABoolLiteralExp(true)))));
 
-            checkStatus.accept(list);
+            // checkStatusDoStep.accept(Map.entry(comp, list));
         });
 
         Consumer<List<PStm>> progressTime = list -> list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) time.clone()),
@@ -377,6 +461,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         setAll.accept(loopStmts);
         //do step
         doStep.accept(loopStmts);
+        handleDoStepStatuses.accept(loopStmts);
         //get data
         getAll.accept(loopStmts);
         // time = time + STEP_SIZE;
@@ -401,8 +486,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
             statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("wsHandler")))));
         }
 
+        statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
 
-        return (statements);
+        return Arrays.asList(newABlockStm(statements));
     }
 
 

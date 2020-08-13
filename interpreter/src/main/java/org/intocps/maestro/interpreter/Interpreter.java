@@ -166,6 +166,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseANotEqualBinaryExp(ANotEqualBinaryExp node, Context question) throws AnalysisException {
+        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
+
+        return new BooleanValue(left.deref().compareTo(right.deref()) != 0);
+    }
+
+    @Override
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
 
@@ -285,8 +293,13 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAWhileStm(AWhileStm node, Context question) throws AnalysisException {
 
-        while (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
-            node.getBody().apply(this, question);
+        try {
+            while (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
+                node.getBody().apply(this, question);
+            }
+        } catch (BreakException e) {
+            //loop stopped
+            e.printStackTrace();
         }
         return new VoidValue();
 
@@ -375,12 +388,30 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (value instanceof ArrayValue) {
             ArrayValue<Value> array = (ArrayValue<Value>) value;
 
-            List<NumericValue> indies = evaluate(node.getIndices(), question).stream().map(NumericValue.class::cast).collect(Collectors.toList());
+            List<NumericValue> indies =
+                    evaluate(node.getIndices(), question).stream().map(Value::deref).map(NumericValue.class::cast).collect(Collectors.toList());
 
 
             return array.getValues().get(indies.get(0).intValue());
         }
         throw new AnalysisException("No array or index for: " + node);
+    }
+
+    @Override
+    public Value caseANotUnaryExp(ANotUnaryExp node, Context question) throws AnalysisException {
+
+        Value value = node.getExp().apply(this, question);
+
+        if (!(value.deref() instanceof BooleanValue)) {
+            throw new InterpreterException("Invalid type in not expression");
+        }
+
+        return new BooleanValue(!((BooleanValue) value.deref()).getValue());
+    }
+
+    @Override
+    public Value caseABreakStm(ABreakStm node, Context question) throws AnalysisException {
+        throw new BreakException();
     }
 
     @Override

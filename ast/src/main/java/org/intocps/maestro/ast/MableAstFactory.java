@@ -56,6 +56,13 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static ALessBinaryExp newALessBinaryExp(PExp left, PExp right) {
+        ALessBinaryExp exp = new ALessBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static ALessEqualBinaryExp newALessEqualBinaryExp(PExp left, PExp right) {
         ALessEqualBinaryExp exp = new ALessEqualBinaryExp();
         exp.setLeft(left);
@@ -63,8 +70,21 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static ANotUnaryExp newNot(PExp exp) {
+        ANotUnaryExp n = new ANotUnaryExp();
+        n.setExp(exp);
+        return n;
+    }
+
     public static AEqualBinaryExp newEqual(PExp left, PExp right) {
         AEqualBinaryExp exp = new AEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static ANotEqualBinaryExp newNotEqual(PExp left, PExp right) {
+        ANotEqualBinaryExp exp = new ANotEqualBinaryExp();
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
@@ -309,6 +329,10 @@ public class MableAstFactory {
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
+    }
+
+    public static ABreakStm newBreak() {
+        return new ABreakStm();
     }
 
     public PType newAModuleType(LexIdentifier name) {

@@ -102,6 +102,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
+    public INode visitBreak(MablParser.BreakContext ctx) {
+        return new ABreakStm();
+    }
+
+    @Override
     public INode visitAssignment(MablParser.AssignmentContext ctx) {
 
         AAssigmentStm assign = new AAssigmentStm();
@@ -135,6 +140,15 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     //
     //        return assign;
     //    }
+
+
+    @Override
+    public INode visitUnaryExp(MablParser.UnaryExpContext ctx) {
+        if (ctx.op.getText().equals("!")) {
+            return new ANotUnaryExp((PExp) this.visit(ctx.expression()));
+        }
+        return super.visitUnaryExp(ctx);
+    }
 
     @Override
     public INode visitIdentifierStateDesignator(MablParser.IdentifierStateDesignatorContext ctx) {
@@ -384,7 +398,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
         PExp left = exps.get(0);
         PExp right = exps.get(1);
-        return new AEqualBinaryExp(left, right);
+
+        if (ctx.EQUAL() != null) {
+            return new AEqualBinaryExp(left, right);
+        } else {
+            return new ANotEqualBinaryExp(left, right);
+        }
     }
 
     @Override
