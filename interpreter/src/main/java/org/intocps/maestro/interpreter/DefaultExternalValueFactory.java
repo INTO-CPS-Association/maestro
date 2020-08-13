@@ -2,10 +2,7 @@ package org.intocps.maestro.interpreter;
 
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.interpreter.values.FunctionValue;
-import org.intocps.maestro.interpreter.values.StringValue;
-import org.intocps.maestro.interpreter.values.Value;
-import org.intocps.maestro.interpreter.values.VoidValue;
+import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.csv.CSVValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
@@ -36,6 +33,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 return Either.right(new FmiInterpreter().createFmiValue(path, guid));
             });
             put("CSV", args -> Either.right(new CSVValue()));
+            put("Logger", args -> Either.right(new LoggerValue()));
         }};
     }
 
@@ -56,6 +54,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
             return unloadFunction.evaluate(Collections.emptyList());
         } else if (value instanceof CSVValue) {
+            return new VoidValue();
+        } else if (value instanceof LoggerValue) {
             return new VoidValue();
         }
         throw new InterpreterException("UnLoad of unknown type: " + value);
