@@ -3,7 +3,7 @@ import FixedStep;
 import TypeConverter;
 
 {
-
+Logger logger = load("Logger");
 CSV csv = load("CSV");
 CSVFile csvfile  = csv.open("result.csv");
 
@@ -118,4 +118,5 @@ unload(SingleWatertank);
 
 csv.close(csvfile);
 unload(csv);
+unload(logger);
 }
