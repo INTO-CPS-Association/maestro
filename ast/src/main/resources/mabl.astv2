@@ -61,7 +61,8 @@ parameter
 
 
 
-exp
+exp { ->
+    | (type):type }
     = {identifier} [name]:lex_identifier
     | #literal
     | {load} [args]:exp*
