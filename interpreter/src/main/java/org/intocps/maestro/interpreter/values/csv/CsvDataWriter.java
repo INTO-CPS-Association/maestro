@@ -1,5 +1,6 @@
 package org.intocps.maestro.interpreter.values.csv;
 
+import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
@@ -23,7 +24,7 @@ public class CsvDataWriter implements IDataListener {
 
     private String createFilename() {
         currentFileNumber++;
-        return baseFilename + currentFileNumber + ".csv";
+        return DataStore.GetInstance().getSessionDirectory().resolve(baseFilename + currentFileNumber + ".csv").toString();
     }
 
     @Override

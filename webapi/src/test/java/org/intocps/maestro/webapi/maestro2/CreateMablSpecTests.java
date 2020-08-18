@@ -50,6 +50,7 @@ public class CreateMablSpecTests {
 
     @Test
     public void fixedStepSimulation() throws Exception {
+
         ObjectMapper om = new ObjectMapper();
         Maestro2SimulationController.StatusModel statusModel = om.readValue(
                 mockMvc.perform(get("/createSession")).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
@@ -90,7 +91,9 @@ public class CreateMablSpecTests {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv");
+        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "csvResult1.csv");
+
+
     }
 
     public String getWaterTankMMJson() {

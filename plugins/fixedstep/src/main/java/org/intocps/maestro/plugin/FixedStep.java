@@ -33,18 +33,18 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-    final AFunctionDeclaration funCsv = newAFunctionDeclaration(newAIdentifier("fixedStepCsv"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
-                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
-    final AFunctionDeclaration funCsvWs = newAFunctionDeclaration(newAIdentifier("fixedStepCsvWs"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
-                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
+    //    final AFunctionDeclaration funCsv = newAFunctionDeclaration(newAIdentifier("fixedStepCsv"),
+    //            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
+    //                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
+    //    final AFunctionDeclaration funCsvWs = newAFunctionDeclaration(newAIdentifier("fixedStepCsvWs"),
+    //            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
+    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
+    //                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
     private final String data_HeadersIdentifier = "data_headers";
     private final String dataWriter = "dataWriter";
     private final String data_valuesIdentifier = "data_values";
@@ -52,7 +52,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(fun, funCsv, funCsvWs).collect(Collectors.toSet());
+        return Stream.of(fun/*, funCsv, funCsvWs*/).collect(Collectors.toSet());
     }
 
     @Override
@@ -65,14 +65,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
             throw new ExpandException("Unknown function declaration");
         }
 
-        boolean withCsv = false;
-        boolean withWs = declaredFunction == funCsvWs;
+        //        boolean withCsv = false;
+        //        boolean withWs = declaredFunction == funCsvWs;
         AFunctionDeclaration selectedFun = fun;
 
-        if (declaredFunction.equals(funCsv) || declaredFunction.equals(funCsvWs)) {
-            selectedFun = funCsv;
-            withCsv = true;
-        }
+        //        if (declaredFunction.equals(funCsv) || declaredFunction.equals(funCsvWs)) {
+        //            selectedFun = funCsv;
+        //            withCsv = true;
+        //        }
 
 
         if (formalArguments == null || formalArguments.size() != selectedFun.getFormals().size()) {
@@ -192,14 +192,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
             return nameComponents.collect(Collectors.joining("."));
         }).collect(Collectors.toList()));
 
-        if (withCsv || withWs) {
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_HeadersIdentifier),
-                    newAArrayType(newAStringPrimitiveType(), variableNames.size()),
-                    newAArrayInitializer(variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())))));
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_configuration), newANameType("DataWriterConfig"),
-                    newAExpInitializer(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeHeader"),
-                            Arrays.asList(newAIdentifierExp(this.data_HeadersIdentifier)))))));
-        }
+
+        statements.add(newALocalVariableStm(
+                newAVariableDeclaration(newAIdentifier(this.data_HeadersIdentifier), newAArrayType(newAStringPrimitiveType(), variableNames.size()),
+                        newAArrayInitializer(variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())))));
+        statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_configuration), newANameType("DataWriterConfig"),
+                newAExpInitializer(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeHeader"),
+                        Arrays.asList(newAIdentifierExp(this.data_HeadersIdentifier)))))));
+
 
         Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatus = list -> {
 
@@ -413,9 +413,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         // get prior to entering loop
         getAll.accept(statements);
-        if (withCsv) {
-            declareCsvBuffer.accept(statements);
-        }
+        //        if (withCsv) {
+        declareCsvBuffer.accept(statements);
+        //        }
 
 
         //exchange according to mapping
@@ -429,18 +429,18 @@ public class FixedStep implements IMaestroExpansionPlugin {
         getAll.accept(loopStmts);
         // time = time + STEP_SIZE;
         progressTime.accept(loopStmts);
-        if (withCsv || withWs) {
-            logCsvValues.accept(loopStmts);
-        }
+        //        if (withCsv || withWs) {
+        logCsvValues.accept(loopStmts);
+        //        }
 
         statements.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)), newABlockStm(loopStmts)));
 
 
         terminate.accept(statements);
 
-        if (withCsv || withWs) {
-            statements.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("close"), Arrays.asList())));
-        }
+        //        if (withCsv || withWs) {
+        statements.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("close"), Arrays.asList())));
+        //        }
 
         statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
 

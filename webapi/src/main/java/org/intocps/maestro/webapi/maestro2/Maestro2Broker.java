@@ -6,6 +6,8 @@ import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.DataStore;
+import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.env.EnvironmentMessage;
@@ -58,8 +60,14 @@ public class Maestro2Broker {
 
     }
 
-    public void executeInterpreter(ARootDocument doc, WebSocketSession ws) throws AnalysisException {
-        new MableInterpreter(new WebApiInterpreterFactory(ws)).execute(doc);
+    public void executeInterpreter(ARootDocument doc, WebSocketSession ws, File rootDirectory) throws AnalysisException {
+        DataStore.GetInstance().setSessionDirectory(rootDirectory.toPath());
+        if (ws != null) {
+            new MableInterpreter(new WebApiInterpreterFactory(ws)).execute(doc);
+        } else {
+            new MableInterpreter(new DefaultExternalValueFactory()).execute(doc);
+        }
+
     }
 
 

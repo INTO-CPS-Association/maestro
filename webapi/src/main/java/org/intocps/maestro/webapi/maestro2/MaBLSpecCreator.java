@@ -32,6 +32,13 @@ public class MaBLSpecCreator {
                     .format("FMI2 %s = load(\"FMI2\", \"%s\", \"%s\")" + ";\n", removeFmuKeyBraces(entry.getKey()), entry.getValue().getGuid(),
                             simulationEnvironment.getFmuToUri().stream().filter(l -> l.getKey() == entry.getKey()).findFirst().get().getValue()));
         }
+
+        // Load the logger
+        stringBuilder.append("Logger logger = load(\"Logger\");\n");
+
+        // Load the data writer
+        stringBuilder.append("DataWriter dataWriter = load(\"DataWriter\");\n");
+
         Set<Map.Entry<String, ComponentInfo>> instances = simulationEnvironment.getInstances();
         //Instantiate the instances
         for (Map.Entry<String, ComponentInfo> entry : instances) {
@@ -44,13 +51,7 @@ public class MaBLSpecCreator {
 
         stringBuilder.append("expand initialize(components,START_TIME, END_TIME);\n");
 
-        if (!withWs) {
-            stringBuilder.append("expand fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,\"" +
-                    new File(rootDirectory, "outputs.csv").getAbsolutePath() + "\");\n");
-        } else {
-            stringBuilder.append("expand fixedStepCsvWs(components,STEP_SIZE,START_TIME,END_TIME,\"" +
-                    new File(rootDirectory, "outputs.csv").getAbsolutePath() + "\");\n");
-        }
+        stringBuilder.append("expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);\n");
 
         for (Map.Entry<String, ComponentInfo> entry : instances) {
             stringBuilder.append(String.format("%s.terminate();\n", entry.getKey()));
@@ -60,6 +61,8 @@ public class MaBLSpecCreator {
         for (Map.Entry<String, ModelDescription> entry : fmusToModelDescriptions) {
             stringBuilder.append(String.format("unload(%s);\n", removeFmuKeyBraces(entry.getKey())));
         }
+
+        stringBuilder.append("unload(dataWriter);\n");
 
         stringBuilder.append("}");
 

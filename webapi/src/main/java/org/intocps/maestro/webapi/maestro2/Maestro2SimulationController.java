@@ -242,7 +242,8 @@ public class Maestro2SimulationController {
         ARootDocument spec = mc.createMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody(), logic.containsSocket(),
                 logic.rootDirectory);
         FileUtils.writeStringToFile(new File(logic.rootDirectory, "spec.mabl"), spec.getContent().get(0).toString(), StandardCharsets.UTF_8);
-        mc.executeInterpreter(spec, logic.getSocket());
+
+        mc.executeInterpreter(spec, logic.getSocket(), logic.rootDirectory);
 
         return getStatus(sessionId);
     }
@@ -339,6 +340,7 @@ public class Maestro2SimulationController {
         final Boolean reportProgress;
         @JsonProperty("liveLogInterval")
         final Integer liveLogInterval;
+
         @JsonCreator
         public SimulateRequestBody(@JsonProperty("startTime") double startTime, @JsonProperty("endTime") double endTime,
                 @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("reportProgress") Boolean reportProgress,

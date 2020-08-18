@@ -21,7 +21,7 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 
 expand initialize(components,START_TIME, END_TIME);
 
-expand fixedStepCsv(components,STEP_SIZE,START_TIME,END_TIME,"mm.csv");
+expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
 //crtlInstance.terminate();
 //wtInstance.terminate();
