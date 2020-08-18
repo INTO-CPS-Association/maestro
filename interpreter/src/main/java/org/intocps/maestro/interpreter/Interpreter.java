@@ -31,16 +31,20 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseARootDocument(ARootDocument node, Context question) throws AnalysisException {
-
-        return node.getContent().stream().filter(f -> f instanceof ASimulationSpecificationCompilationUnit).findFirst().map(spec -> {
+        AnalysisException[] exception = {null};
+        Value result = node.getContent().stream().filter(f -> f instanceof ASimulationSpecificationCompilationUnit).findFirst().map(spec -> {
             try {
                 return spec.apply(this, question);
             } catch (AnalysisException e) {
-                e.printStackTrace();
+                exception[0] = e;
                 return null;
             }
         }).orElse(null);
 
+        if (result == null) {
+            throw exception[0];
+        }
+        return result;
     }
 
     @Override

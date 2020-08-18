@@ -6,6 +6,7 @@ import TypeConverter;
 Logger logger = load("Logger");
 CSV csv = load("CSV");
 CSVFile csvfile  = csv.open("result.csv");
+DataWriter dataWriter = load("DataWriter");
 
 string headers[2] = {"level","valve"};
 csvfile.writeHeader(headers);
@@ -119,4 +120,5 @@ unload(SingleWatertank);
 csv.close(csvfile);
 unload(csv);
 unload(logger);
+unload(dataWriter);
 }

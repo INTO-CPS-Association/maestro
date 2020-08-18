@@ -32,8 +32,6 @@ public class CsvFileValue extends ExternalModuleValue<PrintWriter> {
             return array.getValues();
         }
         throw new InterpreterException("Value is not an array");
-
-
     }
 
     public static String getString(Value value) {

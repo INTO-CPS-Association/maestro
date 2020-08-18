@@ -4,10 +4,13 @@ import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.csv.CSVValue;
+import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
+import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.function.Function;
  * This class provides run-time support only. It creates and destroys certain types based on load and unload
  */
 public class DefaultExternalValueFactory implements IExternalValueFactory {
+    protected final String dataWriterInstantiaterName = "DataWriter";
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
 
     public DefaultExternalValueFactory() {
@@ -34,6 +38,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             });
             put("CSV", args -> Either.right(new CSVValue()));
             put("Logger", args -> Either.right(new LoggerValue()));
+            put(dataWriterInstantiaterName, args -> Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter()))));
         }};
     }
 
@@ -57,7 +62,10 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             return new VoidValue();
         } else if (value instanceof LoggerValue) {
             return new VoidValue();
+        } else if (value instanceof DataWriterValue) {
+            return new VoidValue();
         }
+
         throw new InterpreterException("UnLoad of unknown type: " + value);
     }
 }

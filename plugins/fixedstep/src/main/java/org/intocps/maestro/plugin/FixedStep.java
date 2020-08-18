@@ -27,29 +27,28 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class FixedStep implements IMaestroExpansionPlugin {
 
     final static String fixedStepStatus = "fix_status";
-
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
-
     final AFunctionDeclaration fun = newAFunctionDeclaration(newAIdentifier("fixedStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-
     final AFunctionDeclaration funCsv = newAFunctionDeclaration(newAIdentifier("fixedStepCsv"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
                     newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
-
     final AFunctionDeclaration funCsvWs = newAFunctionDeclaration(newAIdentifier("fixedStepCsvWs"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
                     newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
-
+    private final String data_HeadersIdentifier = "data_headers";
+    private final String dataWriter = "dataWriter";
+    private final String data_valuesIdentifier = "data_values";
+    private final String data_configuration = "dataWriter_configuration";
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
@@ -122,31 +121,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
         //relations.stream().filter(r -> r.getDirection() == In)
         List<PStm> statements = new Vector<>();
 
-
-        if (withCsv) {
-            // ADD CSV
-
-            PExp csvPath = formalArguments.get(4).clone();
-
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csv"), newANameType("CSV"),
-                    newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("CSV")))))));
-
-
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("logger"), newANameType("Logger"),
-                    newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("Logger")))))));
-
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("csvfile"), newANameType("CSVFile"),
-                    newAExpInitializer(newACallExp(newAIdentifierExp("csv"), newAIdentifier("open"), Arrays.asList(csvPath))))));
-        }
-
-        if (withWs) {
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("wsHandler"), newANameType("WebsocketHandler"),
-                    newAExpInitializer(newALoadExp(Arrays.asList(newAStringLiteralExp("WebsocketHandler")))))));
-            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier("ws"), newANameType("Websocket"),
-                    newAExpInitializer(newACallExp(newAIdentifierExp("wsHandler"), newAIdentifier("open"), Collections.emptyList())))));
-        }
-
-
         LexIdentifier end = newAIdentifier("end");
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newMinusExp(endTime, stepSize)))));
@@ -218,20 +192,13 @@ public class FixedStep implements IMaestroExpansionPlugin {
             return nameComponents.collect(Collectors.joining("."));
         }).collect(Collectors.toList()));
 
-        //csvfile.writeHeader(headers);
-
-        if (withCsv) {
-            statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(newAIdentifier("csv_headers"), newAArrayType(newAStringPrimitiveType(), variableNames.size()),
-                            newAArrayInitializer(variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())))));
-
-            statements.add(newExpressionStm(
-                    newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeHeader"), Arrays.asList(newAIdentifierExp("csv_headers")))));
-
-            if (withWs) {
-                statements.add(newExpressionStm(
-                        newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeHeader"), Arrays.asList(newAIdentifierExp("csv_headers")))));
-            }
+        if (withCsv || withWs) {
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_HeadersIdentifier),
+                    newAArrayType(newAStringPrimitiveType(), variableNames.size()),
+                    newAArrayInitializer(variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())))));
+            statements.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_configuration), newANameType("DataWriterConfig"),
+                    newAExpInitializer(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeHeader"),
+                            Arrays.asList(newAIdentifierExp(this.data_HeadersIdentifier)))))));
         }
 
         Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatus = list -> {
@@ -414,35 +381,31 @@ public class FixedStep implements IMaestroExpansionPlugin {
         Consumer<List<PStm>> progressTime = list -> list.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) time.clone()),
                 newPlusExp(newAIdentifierExp((LexIdentifier) time.clone()), stepSize.clone())));
 
+
         Consumer<List<PStm>> declareCsvBuffer = list -> {
-            list.add(newALocalVariableStm(
-                    newAVariableDeclaration(newAIdentifier("csv_values"), newAArrayType(newAStringPrimitiveType(), variableNames.size()),
-                            newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
+            list.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_valuesIdentifier),
+                    newAArrayType(newAStringPrimitiveType(), variableNames.size()),
+                    newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
 
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeRow"),
-                    Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
+            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
+                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
+                            newAIdentifierExp(this.data_valuesIdentifier)))));
 
-            if (withWs) {
-                list.add(newExpressionStm(newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeRow"),
-                        Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
-            }
         };
+
 
         Consumer<List<PStm>> logCsvValues = list -> {
             List<PExp> values = new ArrayList<>(csvFields.values());
             //values.add(0, newAIdentifierExp("time"));
             for (int i = 0; i < values.size(); i++) {
-                AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier("csv_values")), newAIntLiteralExp(i));
+                AArrayStateDesignator to =
+                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(this.data_valuesIdentifier)), newAIntLiteralExp(i));
                 list.add(newAAssignmentStm(to, values.get(i).clone()));
             }
 
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp("csvfile"), newAIdentifier("writeRow"),
-                    Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
-
-            if (withWs) {
-                list.add(newExpressionStm(newACallExp(newAIdentifierExp("ws"), newAIdentifier("writeRow"),
-                        Arrays.asList(newAIdentifierExp("time"), newAIdentifierExp("csv_values")))));
-            }
+            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
+                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
+                            newAIdentifierExp(this.data_valuesIdentifier)))));
 
         };
 
@@ -466,7 +429,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         getAll.accept(loopStmts);
         // time = time + STEP_SIZE;
         progressTime.accept(loopStmts);
-        if (withCsv) {
+        if (withCsv || withWs) {
             logCsvValues.accept(loopStmts);
         }
 
@@ -475,15 +438,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         terminate.accept(statements);
 
-        if (withCsv) {
-            statements.add(newExpressionStm(
-                    newACallExp(newAIdentifierExp("csv"), newAIdentifier("close"), Arrays.asList(newAIdentifierExp("csvfile")))));
-            statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("csv")))));
-        }
-        if (withWs) {
-            statements.add(newExpressionStm(
-                    newACallExp(newAIdentifierExp("wsHandler"), newAIdentifier("close"), Arrays.asList(newAIdentifierExp("ws")))));
-            statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("wsHandler")))));
+        if (withCsv || withWs) {
+            statements.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("close"), Arrays.asList())));
         }
 
         statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
