@@ -221,7 +221,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                                     Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone())))))),
                     newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false))));
 
-            if (!inLoop) {
+            if (inLoop) {
                 body.add(newBreak());
             }
 
