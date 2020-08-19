@@ -15,7 +15,7 @@ FMI2Component tank2 = tank2FMU.instantiate("tank2", false, false);
 
 
 IFmuComponent components[3] = {controller, tank1, tank2};
-
+bool global_execution_continue = true;
 expand initialize(components,START_TIME, END_TIME);
 
 

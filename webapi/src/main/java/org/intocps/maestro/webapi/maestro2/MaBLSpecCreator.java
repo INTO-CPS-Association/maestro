@@ -49,6 +49,8 @@ public class MaBLSpecCreator {
         stringBuilder.append(String.format("IFmuComponent components[%d]={%s};\n", instances.size(),
                 instances.stream().map(l -> l.getKey()).collect(Collectors.joining(","))));
 
+        stringBuilder.append("bool global_execution_continue = true;\n");
+
         stringBuilder.append("expand initialize(components,START_TIME, END_TIME);\n");
 
         stringBuilder.append("expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);\n");

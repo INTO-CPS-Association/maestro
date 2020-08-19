@@ -18,6 +18,7 @@ DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
 IFmuComponent components[2]={wtInstance,crtlInstance};
 
+bool global_execution_continue = true;
 
 expand initialize(components,START_TIME, END_TIME);
 

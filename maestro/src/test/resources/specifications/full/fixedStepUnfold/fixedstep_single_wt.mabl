@@ -12,6 +12,7 @@ string headers[2] = {"level","valve"};
 csvfile.writeHeader(headers);
 real END_TIME = 1000.0;
 
+bool global_execution_continue = true;
 
 int status = 0;
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
