@@ -107,7 +107,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
             return;
         }
         if (!skipBracket) {
-            sb.append(indent(question) + "{\n");
+            sb.append(indent(question) + "{\n ");
         }
 
         Iterator<PStm> itr = node.getBody().iterator();

@@ -352,6 +352,23 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAOrBinaryExp(AOrBinaryExp node, Context question) throws AnalysisException {
+        return new BooleanValue(((BooleanValue) node.getLeft().apply(this, question).deref()).getValue() ||
+                ((BooleanValue) node.getRight().apply(this, question).deref()).getValue());
+    }
+
+    @Override
+    public Value caseAParExp(AParExp node, Context question) throws AnalysisException {
+        return node.getExp().apply(this, question);
+    }
+
+    @Override
+    public Value caseAAndBinaryExp(AAndBinaryExp node, Context question) throws AnalysisException {
+        return new BooleanValue(((BooleanValue) node.getLeft().apply(this, question).deref()).getValue() &&
+                ((BooleanValue) node.getRight().apply(this, question).deref()).getValue());
+    }
+
+    @Override
     public Value caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Context question) throws AnalysisException {
         NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
         NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();

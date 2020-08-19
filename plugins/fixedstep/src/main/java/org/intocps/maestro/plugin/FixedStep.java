@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,9 +26,14 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class FixedStep implements IMaestroExpansionPlugin {
-
     final static String fixedStepStatus = "fix_status";
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
+    private final static int FMI_OK = 0;
+    private final static int FMI_WARNING = 1;
+    private final static int FMI_DISCARD = 2;
+    private final static int FMI_ERROR = 3;
+    private final static int FMI_FATAL = 4;
+    private final static int FMI_PENDING = 5;
     final AFunctionDeclaration fun = newAFunctionDeclaration(newAIdentifier("fixedStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
@@ -201,17 +207,29 @@ public class FixedStep implements IMaestroExpansionPlugin {
                         Arrays.asList(newAIdentifierExp(this.data_HeadersIdentifier)))))));
 
 
-        Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatus = list -> {
-
-
-        };
-
         Function<LexIdentifier, PExp> getCompStatusExp =
                 comp -> newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(newAIntLiteralExp(componentNames.indexOf(comp))));
 
         Function<LexIdentifier, PStateDesignator> getCompStatusDesignator =
                 comp -> newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)),
                         newAIntLiteralExp(componentNames.indexOf(comp)));
+
+        BiConsumer<Boolean, Map.Entry<LexIdentifier, List<PStm>>> checkStatus = (inLoop, list) -> {
+            List<PStmBase> body = new Vector<>(Arrays.asList(newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                    Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp("get/set failed %d "),
+                            newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone())))))),
+                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false))));
+
+            if (inLoop) {
+                body.add(newBreak());
+            }
+
+
+            list.getValue().add(newIf(newOr(newPar(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(FMI_ERROR))),
+                    newPar(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(FMI_FATAL)))), newABlockStm(body), null));
+        };
+
 
         Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatusDoStep = list -> {
 
@@ -236,7 +254,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newABlockStm(Arrays.asList(
 
                             newIf(newNotEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
-                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))), newAIntLiteralExp(0)), newABlockStm(
+                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))), newAIntLiteralExp(FMI_OK)), newABlockStm(
                                     Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) fixedStepOverallStatus.clone()),
                                             newABoolLiteralExp(false)),
 
@@ -261,6 +279,51 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                     newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
                             Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp("aborting %d"), newAIntLiteralExp(0)))),
+
+
+                    newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) fixedStepOverallStatus.clone()), newABoolLiteralExp(true)),
+                    newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(0)),
+                    //check if all ok
+                    newWhile(newALessBinaryExp(newAIdentifierExp((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(componentNames.size())),
+                            newABlockStm(Arrays.asList(
+
+                                    newIf(newOr(newOr(newPar(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                            Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))), newAIntLiteralExp(FMI_ERROR))),
+                                            newPar(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
+                                                    newAIntLiteralExp(FMI_FATAL)))), newPar(newEqual(
+                                            newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
+                                            newAIntLiteralExp(FMI_PENDING)))), newABlockStm(Arrays.asList(
+                                            newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) fixedStepOverallStatus.clone()),
+                                                    newABoolLiteralExp(false)),
+
+                                            newIf(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                    Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
+                                                    newAIntLiteralExp(FMI_PENDING)), newExpressionStm(
+                                                    newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                                                            Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp(
+                                                                    "doStep failed for %d PENDING not supported- " + "status code "),
+                                                                    newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(
+                                                                            newAIdentifierExp((LexIdentifier) compIndexVar.clone())))))),
+
+                                                    newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                                                            Arrays.asList(newAIntLiteralExp(4),
+                                                                    newAStringLiteralExp("doStep failed for %d - status code "),
+                                                                    newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(
+                                                                            newAIdentifierExp((LexIdentifier) compIndexVar.clone())))))))
+
+
+                                            , newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")),
+                                                    newABoolLiteralExp(false)), newBreak())), null),
+
+
+                                    newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()),
+                                            newPlusExp(newAIdentifierExp((LexIdentifier) compIndexVar.clone()), newAIntLiteralExp(1)))
+
+
+                            ))),
+
 
                     newBreak())), null));
 
@@ -322,16 +385,16 @@ public class FixedStep implements IMaestroExpansionPlugin {
                             newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.In)),
                                     Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
                                             newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
-                    checkStatus.accept(Map.entry(comp, list));
+                    checkStatus.accept(true, Map.entry(comp, list));
                 }));
 
         //get outputs
-        Consumer<List<PStm>> getAll = (list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
+        BiConsumer<Boolean, List<PStm>> getAll = (inLoop, list) -> outputs.forEach((comp, map) -> map.forEach((type, vars) -> {
             list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
                     newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.Out)),
                             Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
                                     newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
-            checkStatus.accept(Map.entry(comp, list));
+            checkStatus.accept(inLoop, Map.entry(comp, list));
         }));
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
@@ -412,7 +475,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         List<PStm> loopStmts = new Vector<>();
 
         // get prior to entering loop
-        getAll.accept(statements);
+        getAll.accept(false, statements);
         //        if (withCsv) {
         declareCsvBuffer.accept(statements);
         //        }
@@ -426,14 +489,15 @@ public class FixedStep implements IMaestroExpansionPlugin {
         doStep.accept(loopStmts);
         handleDoStepStatuses.accept(loopStmts);
         //get data
-        getAll.accept(loopStmts);
+        getAll.accept(true, loopStmts);
         // time = time + STEP_SIZE;
         progressTime.accept(loopStmts);
         //        if (withCsv || withWs) {
         logCsvValues.accept(loopStmts);
         //        }
 
-        statements.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)), newABlockStm(loopStmts)));
+        statements.add(newWhile(newAnd(newAIdentifierExp("global_execution_continue"),
+                newPar(newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)))), newABlockStm(loopStmts)));
 
 
         terminate.accept(statements);

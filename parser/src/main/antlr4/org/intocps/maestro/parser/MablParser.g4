@@ -69,8 +69,10 @@ stateDesignator
     ;
 
 
+//FIXME fix operator precendence ||, && should bind harder than e.g. ==
 expression
-    : IDENTIFIER                                                                            # identifierExp
+    : parExpression                                                                         #par
+    | IDENTIFIER                                                                            # identifierExp
     | literal                                                                               # literalExp
     | LOAD LPAREN expressionList? RPAREN                                                    # loadExp
     | UNLOAD LPAREN IDENTIFIER RPAREN                                                       # unloadExp
@@ -81,8 +83,9 @@ expression
 //            | expression
 //        )                                                   # dotExp
     | expression bop=('+'|'-') expression                                                   # plusMinusExp
+    |  expression bop=('&&'|'||') expression                                                 # logicExp
     | expression bop=('<=' | '>=' | '>' | '<') expression                                   # numberComparizonExp
-    | expression bop=('==' | '!=') expression                                               # equalityExp
+    |  expression bop=('==' | '!=') expression                                               # equalityExp
     | op=(BANG|SUB) expression                                                                   # unaryExp
     | <assoc=right> expression
           bop=('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=' | '^=' | '>>=' | '>>>=' | '<<=' | '%=')
@@ -91,6 +94,9 @@ expression
     | (root=fieldOrIdentifier bop='.') methodCall                                           #objectCallExp
     | methodCall                                                                            #callExp
     ;
+
+
+
 
 fieldOrIdentifier
     : fieldExpression
