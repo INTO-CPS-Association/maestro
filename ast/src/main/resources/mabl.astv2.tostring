@@ -35,9 +35,12 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
+%exp->#binary->or = [left]+ " || " + [right]
+%exp->#binary->and = [left]+ " && " + [right]
 %exp->#unary->not = "!" + [exp]
 %exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
+%exp->par = "("+ [exp] +")"
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
@@ -47,6 +50,7 @@ import java.util.stream.Collectors;
 %stm->observable = "observable;"
 %stm->expression = [exp]
 %stm->break = "break"
+
 
 
 %stateDesignator->identifier = [name]

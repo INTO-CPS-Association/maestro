@@ -289,6 +289,26 @@ public class MableAstFactory {
         return type;
     }
 
+    public static AParExp newPar(PExp exp) {
+        AParExp par = new AParExp();
+        par.setExp(exp);
+        return par;
+    }
+
+    public static AOrBinaryExp newOr(PExp left, PExp right) {
+        AOrBinaryExp exp = new AOrBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AAndBinaryExp newAnd(PExp left, PExp right) {
+        AAndBinaryExp exp = new AAndBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static AArrayType newAArrayType(PType arrayType) {
         return newAArrayType(arrayType, null);
     }
