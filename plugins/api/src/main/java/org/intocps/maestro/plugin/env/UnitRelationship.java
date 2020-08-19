@@ -10,9 +10,11 @@ import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,12 +22,13 @@ import java.util.stream.Collectors;
 
 // The relations provided are related to the FMI Component and not to the individual input/output.
 public class UnitRelationship implements ISimulationEnvironment {
+    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
-    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
+    private EnvironmentMessage environmentMessage;
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -60,6 +63,22 @@ public class UnitRelationship implements ISimulationEnvironment {
         return list;
     }
 
+    public List<RelationVariable> getVariablesToLogForComponent(
+            LexIdentifier fmuComponent) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+        ModelDescription modelDescription = instanceNameToInstanceComponentInfo.get(fmuComponent).modelDescription;
+        List<RelationVariable> variablesToLog = Collections.emptyList();
+        List<String> d = this.environmentMessage.logVariables
+                .get(this.instanceNameToInstanceComponentInfo.get(fmuComponent.getText()).fmuIdentifier + "." + fmuComponent.getText());
+        for (String x : d) {
+            for (ModelDescription.ScalarVariable y : modelDescription.getScalarVariables()) {
+                if (y.name == x) {
+                    variablesToLog.add(new RelationVariable(y, fmuComponent));
+                }
+            }
+        }
+        return variablesToLog;
+    }
+
     public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
         return this.fmuKeyToModelDescription.entrySet();
     }
@@ -73,6 +92,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     }
 
     private void initialize(EnvironmentMessage msg) throws Exception {
+        this.environmentMessage = msg;
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
 

@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+
 public class RelationVariable implements UnitRelationship.FrameworkVariableInfo {
     public final ModelDescription.ScalarVariable scalarVariable;
     // instance is necessary because:

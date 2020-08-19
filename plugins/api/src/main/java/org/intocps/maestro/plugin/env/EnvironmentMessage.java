@@ -15,6 +15,7 @@ import java.util.Map;
 public class EnvironmentMessage {
     public Map<String, String> fmus;
     public Map<String, List<String>> connections;
+    public Map<String, List<String>> logVariables;
 
     @JsonIgnore
     public Map<String, URI> getFmuFiles() throws Exception {
@@ -28,6 +29,7 @@ public class EnvironmentMessage {
                 }
             }
         }
+
 
         return files;
     }
