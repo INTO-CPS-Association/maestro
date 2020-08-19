@@ -1,6 +1,5 @@
 package org.intocps.maestro.interpreter.values.csv;
 
-import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
@@ -18,19 +17,17 @@ import java.util.UUID;
 import java.util.Vector;
 
 public class CsvDataWriter implements IDataListener {
-    private final String baseFilename = "csvResult";
+    final File outputFile;
     HashMap<UUID, PrintWriter> printers = new HashMap<>();
-    private Integer currentFileNumber = 0;
 
-    private String createFilename() {
-        currentFileNumber++;
-        return DataStore.GetInstance().getSessionDirectory().resolve(baseFilename + currentFileNumber + ".csv").toString();
+    public CsvDataWriter(File outputFile) {
+        this.outputFile = outputFile;
     }
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         try {
-            PrintWriter writer = new PrintWriter(new FileOutputStream(new File(createFilename())));
+            PrintWriter writer = new PrintWriter(new FileOutputStream(outputFile));
             printers.put(uuid, writer);
             writer.println("time," + String.join(",", headers));
         } catch (FileNotFoundException e) {

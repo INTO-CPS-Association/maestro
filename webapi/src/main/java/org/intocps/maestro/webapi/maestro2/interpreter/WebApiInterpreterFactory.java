@@ -7,17 +7,18 @@ import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.File;
 import java.util.Arrays;
 
 public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
-    public WebApiInterpreterFactory(WebSocketSession ws) {
+    public WebApiInterpreterFactory(WebSocketSession ws, File csvOutputFile) {
         super();
         this.instantiators.put(this.dataWriterInstantiaterName, args -> {
             if (ws == null) {
                 return Either.left(new AnalysisException("No websocket present"));
             } else {
-                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(), new WebsocketDataWriter(ws))));
+                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(csvOutputFile), new WebsocketDataWriter(ws))));
             }
 
 
