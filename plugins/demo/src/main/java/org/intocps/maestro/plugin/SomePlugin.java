@@ -9,13 +9,14 @@ import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class SomePlugin implements IMaestroUnfoldPlugin {
+public class SomePlugin implements IMaestroExpansionPlugin {
     final AFunctionDeclaration f1 = new AFunctionDeclaration(new LexIdentifier("initialize", null), new AVoidType(),
             Arrays.asList(new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("a", null)),
                     new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("b", null))));
@@ -36,15 +37,15 @@ public class SomePlugin implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter reporter) throws UnfoldException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter reporter) throws ExpandException {
 
         if (config instanceof DemoConfig) {
-            return new AWhileStm(
+            return Collections.singletonList(new AWhileStm(
                     new ALessBinaryExp(new AIntLiteralExp(((DemoConfig) config).repeats), new AIntLiteralExp(((DemoConfig) config).repeats)),
-                    new ABlockStm());
+                    new ABlockStm()));
         }
-        throw new UnfoldException("Bad config type");
+        throw new ExpandException("Bad config type");
     }
 
 

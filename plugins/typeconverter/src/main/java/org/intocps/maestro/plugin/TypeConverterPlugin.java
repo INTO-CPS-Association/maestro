@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
+public class TypeConverterPlugin implements IMaestroExpansionPlugin {
 
     final AFunctionDeclaration convertBoolean2Real = newAFunctionDeclaration(newAIdentifier("convertBoolean2Real"),
             Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
@@ -50,17 +50,17 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws UnfoldException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
 
         if (getDeclaredUnfoldFunctions().contains(declaredFunction)) {
 
             if (formalArguments == null || formalArguments.size() != declaredFunction.getFormals().size()) {
-                throw new UnfoldException("Invalid args");
+                throw new ExpandException("Invalid args");
             }
 
             if (env == null) {
-                throw new UnfoldException("Simulation environment must not be null");
+                throw new ExpandException("Simulation environment must not be null");
             }
 
             List<PStm> stms = new Vector<>();
@@ -81,12 +81,13 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
 
             stms.add(createAssignStm(declaredFunction, targetDesignator, formalArguments));
 
-            return newABlockStm(stms);
+            return stms;
         }
-        throw new UnfoldException("Unknown function" + declaredFunction);
+        throw new ExpandException("Unknown function" + declaredFunction);
     }
 
-    private PStm createAssignStm(AFunctionDeclaration declaredFunction, PStateDesignator targetDesignator, List<PExp> formalArguments) throws UnfoldException {
+    private PStm createAssignStm(AFunctionDeclaration declaredFunction, PStateDesignator targetDesignator,
+            List<PExp> formalArguments) throws ExpandException {
         if (convertBoolean2Real.equals(declaredFunction)) {
             Function<Double, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newARealLiteralExp(val));
             return newIf(formalArguments.get(0), set.apply(1.0), set.apply(0.0));
@@ -99,7 +100,7 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
         } else if (convertReal2Boolean.equals(declaredFunction)) {
             Function<Boolean, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newABoolLiteralExp(val));
             return newIf(formalArguments.get(0), set.apply(true), set.apply(false));
-        }else if (convertInteger2Real.equals(declaredFunction)) {
+        } else if (convertInteger2Real.equals(declaredFunction)) {
             Function<Double, PStm> set = val -> newAAssignmentStm(targetDesignator.clone(), newARealLiteralExp(val));
             return newIf(formalArguments.get(0), set.apply(1.0), set.apply(0.0));
             //TODO look at the conversion
@@ -112,7 +113,7 @@ public class TypeConverterPlugin implements IMaestroUnfoldPlugin {
     */
             return newIf(formalArguments.get(0), set.apply(1), set.apply(0));
         }
-        throw new UnfoldException("Unknown convert function" + declaredFunction);
+        throw new ExpandException("Unknown convert function" + declaredFunction);
     }
 
 

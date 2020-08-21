@@ -52,9 +52,10 @@ statement
  //   | FOR '(' forControl ')' statement
     | WHILE parExpression statement                             #while
     | statementExpression=expression  ';'                       #expressionStatement
-    | EXTERNAL methodCall  ';'                                  #methodExternalCallStm
+//    | EXTERNAL methodCall  ';'                                  #methodExternalCallStm
     | SEMI                                                      #semi
     | OBSERVABLE                                                #observable
+    | BREAK                                                     #break
     ;
 
 
@@ -68,23 +69,43 @@ stateDesignator
     ;
 
 
+//FIXME fix operator precendence ||, && should bind harder than e.g. ==
 expression
-    : IDENTIFIER                                            # identifierExp
-    | literal                                               # literalExp
-    | LOAD LPAREN expressionList? RPAREN                    # loadExp
-    | UNLOAD LPAREN IDENTIFIER RPAREN                       # unloadExp
-    | root=IDENTIFIER bop='.'
-        (
-             second= IDENTIFIER
-            | methodCall
-        )                                                   # dotExp
-    | expression bop=('+'|'-') expression                   # plusMinusExp
-    | expression bop=('<=' | '>=' | '>' | '<') expression   # numberComparizonExp
-    | expression bop=('==' | '!=') expression               # equalityExp
+    : parExpression                                                                         #par
+    | IDENTIFIER                                                                            # identifierExp
+    | literal                                                                               # literalExp
+    | LOAD LPAREN expressionList? RPAREN                                                    # loadExp
+    | UNLOAD LPAREN IDENTIFIER RPAREN                                                       # unloadExp
+    | fieldExpression                                                                       # fieldExp
+//    | root=IDENTIFIER bop='.'
+//        (
+//             second= IDENTIFIER
+//            | expression
+//        )                                                   # dotExp
+    | expression bop=('+'|'-') expression                                                   # plusMinusExp
+    |  expression bop=('&&'|'||') expression                                                 # logicExp
+    | expression bop=('<=' | '>=' | '>' | '<') expression                                   # numberComparizonExp
+    |  expression bop=('==' | '!=') expression                                               # equalityExp
+    | op=(BANG|SUB) expression                                                                   # unaryExp
     | <assoc=right> expression
           bop=('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=' | '^=' | '>>=' | '>>>=' | '<<=' | '%=')
-          expression                                        # updateExp
-    | array=expression LBRACK indecies+=expression (',' indecies+=expression )* RBRACK    #arrayIndexExp
+          expression                                                                        # updateExp
+    | array=expression LBRACK indecies+=expression (',' indecies+=expression )* RBRACK      #arrayIndexExp
+    | (root=fieldOrIdentifier bop='.') methodCall                                           #objectCallExp
+    | methodCall                                                                            #callExp
+    ;
+
+
+
+
+fieldOrIdentifier
+    : fieldExpression
+    | IDENTIFIER
+    ;
+
+fieldExpression
+    : root=IDENTIFIER bop='.' field=IDENTIFIER
+    | rootExp=fieldExpression bop='.' field=IDENTIFIER
     ;
 
 parExpression
@@ -96,7 +117,7 @@ expressionList
     ;
 
 methodCall
-    : IDENTIFIER '(' expressionList? ')'
+    : EXPAND? IDENTIFIER '(' expressionList? ')'
     ;
 
 

@@ -18,6 +18,8 @@ Tokens
     java_Long = 'java:java.lang.Long';
     lex_identifier='java:org.intocps.maestro.ast.LexIdentifier';
 
+    parserToken = 'java:node:org.intocps.maestro.ast.LexToken';
+
 
 
 Abstract Syntax Tree
@@ -65,9 +67,11 @@ exp
     | {load} [args]:exp*
     | {unload} [args]:exp*
     | #binary
-    | {dot} [root]:exp [exp]:exp
-    | {call} [root]:exp [args]:exp*
+    | #unary
+    | {field} [root]:exp [field]:lex_identifier
+    | {call} [object]:exp [expand]:parserToken [methodName]:lex_identifier [args]:exp*
     | {arrayIndex} [array]:exp [indices]:exp*
+    | {par} [exp]:exp
     ;
 
 #literal
@@ -89,8 +93,14 @@ exp
     | {greater}
     | {equal}
     | {notEqual}
+    | {or}
+    | {and}
     ;
 
+#unary {-> package='org.intocps.maestro.ast'
+  |  [exp]:exp }
+  = {not}
+  ;
 
 stateDesignator
     = {identifier} [name]:lex_identifier
@@ -105,13 +115,12 @@ stm
     | {while} [test]:exp [body]:stm
     | {expression} [exp]:exp
     | {observable} [identifier]:identifier
-    | {external} [call]:exp.call
+    | {break}
     ;
 
 type
     =   #primitive
     |   {name} [name]:lex_identifier
-//    |   {class} [name]:identifier [functions]:type.function*
     |   {function} (result):type (parameters):type*
     |   {array} [size]:java_Integer [type]:type
     |   {unknown}

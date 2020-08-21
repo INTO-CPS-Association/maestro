@@ -7,14 +7,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.IMaestroUnfoldPlugin;
+import org.intocps.maestro.plugin.ExpandException;
+import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
 import org.intocps.maestro.plugin.SimulationFramework;
-import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class Initializer implements IMaestroUnfoldPlugin {
+public class Initializer implements IMaestroExpansionPlugin {
     final static Logger logger = LoggerFactory.getLogger(Initializer.class);
 
     final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null),
@@ -80,8 +80,8 @@ public class Initializer implements IMaestroUnfoldPlugin {
     }
 
     @Override
-    public PStm unfold(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config, ISimulationEnvironment env,
-            IErrorReporter errorReporter) throws UnfoldException {
+    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
+            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
         logger.info("Unfolding: {}", declaredFunction.toString());
 
         verifyArguments(formalArguments, env);
@@ -149,7 +149,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
         optimizedOrder.forEach(variableSet -> {
             try {
                 initializePort(variableSet, sc, env);
-            } catch (UnfoldException e) {
+            } catch (ExpandException e) {
                 e.printStackTrace();
             }
         });
@@ -162,7 +162,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
         });
 
         var statements = sc.getStatements();
-        return newABlockStm(statements);
+        return (statements);
     }
 
     private void initializeLoop(Set<Variable> variables, StatementGeneratorContainer sc, ISimulationEnvironment env, int sccNumber) {
@@ -286,7 +286,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
     }
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
-    private void initializePort(Set<Variable> ports, StatementGeneratorContainer sc, ISimulationEnvironment env) throws UnfoldException {
+    private void initializePort(Set<Variable> ports, StatementGeneratorContainer sc, ISimulationEnvironment env) throws ExpandException {
         var scalarVariables = ports.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
         var type = scalarVariables.iterator().next().getType().type;
         var instance = ports.stream().findFirst().get().scalarVariable.getInstance();
@@ -314,7 +314,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
 
                         try {
                             setValueOnPort(sc, comp, type, variables, GetValueRefIndices(variables), env);
-                        } catch (UnfoldException e) {
+                        } catch (ExpandException e) {
                             e.printStackTrace();
                         }
                     });
@@ -330,7 +330,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
     }
 
     private void setValueOnPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) throws UnfoldException {
+            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) throws ExpandException {
         ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
         ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
 
@@ -347,7 +347,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
             sc.setStrings(comp.getText(), scalarValueIndices,
                     (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
         } else {
-            throw new UnfoldException("Unrecognised type: " + type.name());
+            throw new ExpandException("Unrecognised type: " + type.name());
         }
 
     }
@@ -383,7 +383,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
     }
 
     private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            long[] scalarValueIndices) throws UnfoldException {
+            long[] scalarValueIndices) throws ExpandException {
         if (type == ModelDescription.Types.Boolean) {
             sc.getBooleans(comp.getText(), scalarValueIndices);
         } else if (type == ModelDescription.Types.Real) {
@@ -393,11 +393,11 @@ public class Initializer implements IMaestroUnfoldPlugin {
         } else if (type == ModelDescription.Types.String) {
             sc.getStrings(comp.getText(), scalarValueIndices);
         } else {
-            throw new UnfoldException("Unrecognised type: " + type.name());
+            throw new ExpandException("Unrecognised type: " + type.name());
         }
     }
 
-    private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws UnfoldException {
+    private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws ExpandException {
         List<LexIdentifier> knownComponentNames = null;
         if (formalArguments.get(0) instanceof AIdentifierExp) {
             LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
@@ -409,7 +409,7 @@ public class Initializer implements IMaestroUnfoldPlugin {
                             .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
 
             if (compDecl.isEmpty()) {
-                throw new UnfoldException("Could not find names for comps");
+                throw new ExpandException("Could not find names for comps");
             }
 
             AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
@@ -419,19 +419,19 @@ public class Initializer implements IMaestroUnfoldPlugin {
         }
 
         if (knownComponentNames == null || knownComponentNames.isEmpty()) {
-            throw new UnfoldException("No components found cannot fixed step with 0 components");
+            throw new ExpandException("No components found cannot fixed step with 0 components");
         }
 
         return knownComponentNames;
     }
 
-    private void verifyArguments(List<PExp> formalArguments, ISimulationEnvironment env) throws UnfoldException {
+    private void verifyArguments(List<PExp> formalArguments, ISimulationEnvironment env) throws ExpandException {
         //maybe some of these tests are not necessary - but they are in my unit test
         if (formalArguments == null || formalArguments.size() != f1.getFormals().size()) {
-            throw new UnfoldException("Invalid args");
+            throw new ExpandException("Invalid args");
         }
         if (env == null) {
-            throw new UnfoldException("Simulation environment must not be null");
+            throw new ExpandException("Simulation environment must not be null");
         }
     }
 
@@ -469,7 +469,11 @@ public class Initializer implements IMaestroUnfoldPlugin {
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
             modelParameters = buildParameters(result);
-            verifyAgainstProlog = verify.asBoolean(false);
+            if (verify == null) {
+                verifyAgainstProlog = false;
+            } else {
+                verifyAgainstProlog = verify.asBoolean(false);
+            }
         }
 
         public List<ModelParameter> getModelParameters() {

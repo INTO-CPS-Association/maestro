@@ -72,17 +72,17 @@ public class FmiInterpreter {
 
         if (value instanceof ArrayValue) {
 
-            ArrayValue array = (ArrayValue) value;
+            ArrayValue<? extends Value> array = (ArrayValue<Value>) value;
             if (((ArrayValue) value).getValues().isEmpty()) {
                 return Collections.emptyList();
             }
 
-            if (!clz.isAssignableFrom(array.getValues().get(0).getClass())) {
+            if (!clz.isAssignableFrom(array.getValues().get(0).deref().getClass())) {
                 throw new InterpreterException("Array not containing the right type. Expected: " + clz.getSimpleName() + " Actual: " +
                         array.getValues().get(0).getClass().getSimpleName());
             }
 
-            return array.getValues();
+            return array.getValues().stream().map(Value::deref).map(clz::cast).collect(Collectors.toList());
         }
         throw new InterpreterException("Value is not an array");
 
@@ -126,6 +126,23 @@ public class FmiInterpreter {
 
                     //populate component functions
                     Map<String, Value> componentMembers = new HashMap<>();
+
+                    componentMembers.put("fmi2SetDebugLogging", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 3);
+
+                        boolean debugLogginOn = getBool(fcargs.get(0));
+                        //                        int arraySize = getInteger(fcargs.get(1));
+                        List<StringValue> categories = getArrayValue(fcargs.get(2), StringValue.class);
+
+                        try {
+                            Fmi2Status res =
+                                    component.setDebugLogging(debugLogginOn, categories.stream().map(StringValue::getValue).toArray(String[]::new));
+                            return new IntegerValue(res.value);
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+                    }));
 
                     componentMembers.put("setupExperiment", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
@@ -182,7 +199,7 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        if (!(fcargs.get(2) instanceof ReferenceValue)) {
+                        if (!(fcargs.get(2) instanceof UpdatableValue)) {
                             throw new InterpreterException("value not a reference value");
                         }
 
@@ -194,7 +211,7 @@ public class FmiInterpreter {
                             FmuResult<double[]> res = component.getReal(scalarValueIndices);
 
                             if (res.status == Fmi2Status.OK) {
-                                ReferenceValue ref = (ReferenceValue) fcargs.get(2);
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(2);
 
                                 List<RealValue> values =
                                         Arrays.stream(ArrayUtils.toObject(res.result)).map(d -> new RealValue(d)).collect(Collectors.toList());
@@ -228,7 +245,7 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        if (!(fcargs.get(2) instanceof ReferenceValue)) {
+                        if (!(fcargs.get(2) instanceof UpdatableValue)) {
                             throw new InterpreterException("value not a reference value");
                         }
 
@@ -240,7 +257,7 @@ public class FmiInterpreter {
                             FmuResult<int[]> res = component.getInteger(scalarValueIndices);
 
                             if (res.status == Fmi2Status.OK) {
-                                ReferenceValue ref = (ReferenceValue) fcargs.get(2);
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(2);
 
                                 List<IntegerValue> values =
                                         Arrays.stream(ArrayUtils.toObject(res.result)).map(i -> new IntegerValue(i)).collect(Collectors.toList());
@@ -278,7 +295,7 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        if (!(fcargs.get(2) instanceof ReferenceValue)) {
+                        if (!(fcargs.get(2) instanceof UpdatableValue)) {
                             throw new InterpreterException("value not a reference value");
                         }
 
@@ -290,7 +307,7 @@ public class FmiInterpreter {
                             FmuResult<boolean[]> res = component.getBooleans(scalarValueIndices);
 
                             if (res.status == Fmi2Status.OK) {
-                                ReferenceValue ref = (ReferenceValue) fcargs.get(2);
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(2);
 
                                 List<BooleanValue> values =
                                         Arrays.stream(ArrayUtils.toObject(res.result)).map(BooleanValue::new).collect(Collectors.toList());
@@ -327,7 +344,7 @@ public class FmiInterpreter {
 
                         checkArgLength(fcargs, 3);
 
-                        if (!(fcargs.get(2) instanceof ReferenceValue)) {
+                        if (!(fcargs.get(2) instanceof UpdatableValue)) {
                             throw new InterpreterException("value not a reference value");
                         }
 
@@ -339,7 +356,7 @@ public class FmiInterpreter {
                             FmuResult<String[]> res = component.getStrings(scalarValueIndices);
 
                             if (res.status == Fmi2Status.OK) {
-                                ReferenceValue ref = (ReferenceValue) fcargs.get(2);
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(2);
 
                                 List<StringValue> values = Arrays.stream(res.result).map(StringValue::new).collect(Collectors.toList());
 
@@ -397,6 +414,8 @@ public class FmiInterpreter {
 
             functions.put("freeInstance", new FunctionValue.ExternalFunctionValue(fargs -> {
 
+                fargs = fargs.stream().map(Value::deref).collect(Collectors.toList());
+
                 logger.debug("freeInstance");
 
                 if (fargs.size() != 1) {
@@ -419,6 +438,7 @@ public class FmiInterpreter {
             }));
 
             functions.put("unload", new FunctionValue.ExternalFunctionValue(fargs -> {
+                fargs = fargs.stream().map(Value::deref).collect(Collectors.toList());
 
                 logger.debug("unload");
 

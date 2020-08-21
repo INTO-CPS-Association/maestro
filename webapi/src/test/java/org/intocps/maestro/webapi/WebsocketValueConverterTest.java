@@ -7,8 +7,6 @@ import org.junit.Test;
 import java.util.Arrays;
 
 public class WebsocketValueConverterTest {
-
-
     @Test
     public void test() throws JsonProcessingException {
         WebsocketValueConverter wsvc = new WebsocketValueConverter(null);

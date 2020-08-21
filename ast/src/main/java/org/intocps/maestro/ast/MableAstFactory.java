@@ -56,6 +56,13 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static ALessBinaryExp newALessBinaryExp(PExp left, PExp right) {
+        ALessBinaryExp exp = new ALessBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static ALessEqualBinaryExp newALessEqualBinaryExp(PExp left, PExp right) {
         ALessEqualBinaryExp exp = new ALessEqualBinaryExp();
         exp.setLeft(left);
@@ -63,8 +70,21 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static ANotUnaryExp newNot(PExp exp) {
+        ANotUnaryExp n = new ANotUnaryExp();
+        n.setExp(exp);
+        return n;
+    }
+
     public static AEqualBinaryExp newEqual(PExp left, PExp right) {
         AEqualBinaryExp exp = new AEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static ANotEqualBinaryExp newNotEqual(PExp left, PExp right) {
+        ANotEqualBinaryExp exp = new ANotEqualBinaryExp();
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
@@ -122,9 +142,29 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static ACallExp newACallExp(PExp identifier, List<? extends PExp> args_) {
+    public static ACallExp newACallExp(LexIdentifier identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
-        exp.setRoot(identifier);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
+    public static LexToken newExpandToken() {
+        return new LexToken("EXPAND", 0, 0);
+    }
+
+    public static ACallExp newACallExp(LexToken expand, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setExpand(expand);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
+    public static ACallExp newACallExp(PExp object, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setObject(object);
+        exp.setMethodName(identifier);
         exp.setArgs(args_);
         return exp;
     }
@@ -135,10 +175,10 @@ public class MableAstFactory {
         return expInit;
     }
 
-    public static ADotExp newADotExp(PExp root, PExp exp) {
-        ADotExp exp_ = new ADotExp();
+    public static AFieldExp newAFieldExp(PExp root, LexIdentifier field) {
+        AFieldExp exp_ = new AFieldExp();
         exp_.setRoot(root);
-        exp_.setExp(exp);
+        exp_.setField(field);
         return exp_;
     }
 
@@ -216,12 +256,6 @@ public class MableAstFactory {
     }
 
 
-    public static AExternalStm newExternalStm(ACallExp call) {
-        AExternalStm stm = new AExternalStm();
-        stm.setCall(call);
-        return stm;
-    }
-
     public static ABooleanPrimitiveType newABoleanPrimitiveType() {
         ABooleanPrimitiveType type = new ABooleanPrimitiveType();
         return type;
@@ -253,6 +287,26 @@ public class MableAstFactory {
         type.setType(arrayType);
         type.setSize(size);
         return type;
+    }
+
+    public static AParExp newPar(PExp exp) {
+        AParExp par = new AParExp();
+        par.setExp(exp);
+        return par;
+    }
+
+    public static AOrBinaryExp newOr(PExp left, PExp right) {
+        AOrBinaryExp exp = new AOrBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AAndBinaryExp newAnd(PExp left, PExp right) {
+        AAndBinaryExp exp = new AAndBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
     }
 
     public static AArrayType newAArrayType(PType arrayType) {
@@ -295,6 +349,10 @@ public class MableAstFactory {
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
+    }
+
+    public static ABreakStm newBreak() {
+        return new ABreakStm();
     }
 
     public PType newAModuleType(LexIdentifier name) {

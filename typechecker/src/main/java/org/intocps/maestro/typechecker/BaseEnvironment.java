@@ -7,16 +7,15 @@ import java.util.List;
 
 abstract class BaseEnvironment extends Environment {
 
-    public BaseEnvironment(Environment outer, List<PDeclaration> definitions) {
+    protected final List<? extends PDeclaration> definitions;
+
+    public BaseEnvironment(Environment outer, List<? extends PDeclaration> definitions) {
         super(outer);
         this.definitions = definitions;
     }
 
-    protected final List<PDeclaration> definitions;
-
-
     @Override
-    protected List<PDeclaration> getDefinitions() {
+    protected List<? extends PDeclaration> getDefinitions() {
         return definitions;
     }
 

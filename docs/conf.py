@@ -37,6 +37,12 @@ extensions = [
     "sphinx.ext.autosectionlabel"
 ]
 
+# source files to generate documentation
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -63,4 +69,4 @@ html_static_path = ['_static']
 if os.environ.get("READTHEDOCS") != None:
     plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
 else:
-    plantuml = 'java -jar plantuml.jar'
+    plantuml = 'java -jar ../plantuml.jar'

@@ -3,29 +3,25 @@ package org.intocps.maestro.webapi.maestro2.interpreter;
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
-import org.intocps.maestro.interpreter.values.Value;
-import org.intocps.maestro.interpreter.values.VoidValue;
+import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
+import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.File;
+import java.util.Arrays;
 
 public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
-    public WebApiInterpreterFactory(WebSocketSession ws) {
+    public WebApiInterpreterFactory(WebSocketSession ws, File csvOutputFile) {
         super();
-        instantiators.put("WebsocketHandler", args -> {
+        this.instantiators.put(this.dataWriterInstantiaterName, args -> {
             if (ws == null) {
                 return Either.left(new AnalysisException("No websocket present"));
             } else {
-                return Either.right(new WebsocketHandlerValue(ws));
+                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(csvOutputFile), new WebsocketDataWriter(ws))));
             }
+
+
         });
     }
-
-    @Override
-    public Value destroy(Value value) {
-        if (value instanceof WebsocketHandlerValue) {
-            return new VoidValue();
-        }
-        return super.destroy(value);
-    }
-
 }

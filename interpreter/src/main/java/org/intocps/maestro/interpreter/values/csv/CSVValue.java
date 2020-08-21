@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CSVValue extends ExternalModuleValue {
     public CSVValue() {
@@ -32,6 +33,8 @@ public class CSVValue extends ExternalModuleValue {
 
         componentMembers.put("open", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
+            fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+
             checkArgLength(fcargs, 1);
 
             String path = getString(fcargs.get(0));
@@ -45,7 +48,7 @@ public class CSVValue extends ExternalModuleValue {
 
 
         componentMembers.put("close", new FunctionValue.ExternalFunctionValue(fcargs -> {
-
+            fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
             checkArgLength(fcargs, 1);
 
             if (fcargs.get(0) instanceof CsvFileValue) {

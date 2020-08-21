@@ -3,14 +3,16 @@ import FixedStep;
 import TypeConverter;
 
 {
-
+Logger logger = load("Logger");
 CSV csv = load("CSV");
 CSVFile csvfile  = csv.open("result.csv");
+DataWriter dataWriter = load("DataWriter");
 
 string headers[2] = {"level","valve"};
 csvfile.writeHeader(headers);
 real END_TIME = 1000.0;
 
+bool global_execution_continue = true;
 
 int status = 0;
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
@@ -64,7 +66,7 @@ csvfile.writeRow(time,values);
 real end =END_TIME-STEP_SIZE;
 
 IFmuComponent components[2]={wtInstance,crtlInstance};
-external fixedStep(components,STEP_SIZE,0.0,END_TIME);
+expand fixedStep(components,STEP_SIZE,0.0,END_TIME);
 
 
 
@@ -118,4 +120,6 @@ unload(SingleWatertank);
 
 csv.close(csvfile);
 unload(csv);
+unload(logger);
+unload(dataWriter);
 }

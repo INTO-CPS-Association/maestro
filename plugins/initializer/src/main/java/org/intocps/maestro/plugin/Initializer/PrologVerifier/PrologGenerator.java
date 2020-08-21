@@ -1,8 +1,8 @@
 package org.intocps.maestro.plugin.Initializer.PrologVerifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.Initializer.RelationsPredicates;
-import org.intocps.maestro.plugin.UnfoldException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -16,7 +16,7 @@ public class PrologGenerator {
             try {
                 initOrder.append(String.format("%s(%s, %s),", getMethod(o), o.scalarVariable.getInstance().getText().toLowerCase(),
                         o.scalarVariable.getScalarVariable().getName().toLowerCase()));
-            } catch (UnfoldException e) {
+            } catch (ExpandException e) {
                 e.printStackTrace();
             }
         });
@@ -96,13 +96,13 @@ public class PrologGenerator {
         return fixListFormat(internalConnections).toString();
     }
 
-    private String getMethod(UnitRelationship.Variable variable) throws UnfoldException {
+    private String getMethod(UnitRelationship.Variable variable) throws ExpandException {
         if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output) {
             return "getOut";
         } else if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input) {
             return "setIn";
         } else {
-            throw new UnfoldException("Unknown causality of port");
+            throw new ExpandException("Unknown causality of port");
         }
     }
 }

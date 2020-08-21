@@ -1,6 +1,6 @@
 package org.intocps.maestro.plugin.Initializer;
 
-import org.intocps.maestro.plugin.UnfoldException;
+import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.topologicalsorting.TarjanGraph;
 import org.intocps.topologicalsorting.data.AcyclicDependencyResult;

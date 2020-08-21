@@ -52,6 +52,7 @@ public class EsaApiTest {
 
 
     @Test
+    @Ignore
     public void initialize() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/initialize.json"));
@@ -72,6 +73,7 @@ public class EsaApiTest {
 
 
     @Test
+    @Ignore
     public void simulate() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/simulate.json"));

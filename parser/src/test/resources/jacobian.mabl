@@ -12,12 +12,12 @@ FMI2 fmuB = load("FMI2", "path/to/FMUB.fmu");
 FMI2Component a = fmuA.instantiate("A", true);
 FMI2Component b = fmuB.instantiate("B", true);
 
-external initialize(a,b);
+expand initialize(a,b);
 
 
-external jacobian(a,b);
+expand jacobian(a,b);
 
-external cleanup(a,b);
+expand cleanup(a,b);
 
 
 }

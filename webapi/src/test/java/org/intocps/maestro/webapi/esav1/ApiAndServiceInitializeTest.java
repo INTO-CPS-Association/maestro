@@ -3,6 +3,7 @@ package org.intocps.maestro.webapi.esav1;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.webapi.ConditionalIgnoreRule;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeSingleFMU() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
@@ -49,6 +51,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
+    @Ignore
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeMultipleFMUs() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));

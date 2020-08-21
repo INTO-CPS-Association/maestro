@@ -20,6 +20,7 @@
 *.gz
 *.iso
 *.jar
+!plantuml.jar
 *.rar
 *.tar
 *.zip
@@ -95,6 +96,7 @@ repository
 
 # docs build files
 docs/_build
+docs/builddir
 
 .factorypath
 .vscode

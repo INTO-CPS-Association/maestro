@@ -28,7 +28,7 @@ real time = 0.0;
 real H = 0.01;
 int status;
 
-external replaceMe(true,0.0,f,"kk");
+expand replaceMe(true,0.0,f,"kk");
 
 status = FMUB.exitInitializationMode(B);
 while (time < 10.0) {

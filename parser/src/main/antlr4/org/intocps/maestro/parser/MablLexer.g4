@@ -17,10 +17,11 @@ IF:             'if';
 MODULE   :           'module';
 LOAD   :           'load';
 UNLOAD   :           'unload';
-EXTERNAL:           'external';
+EXPAND:           'expand';
 IMPORT:           'import';
 SIMULATION:         'simulation';
 OBSERVABLE:         'observable';
+BREAK:         'break';
 
 // Literals
 

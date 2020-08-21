@@ -27,7 +27,7 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
-    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<ModelDescription.Types, String>(ModelDescription.Types.class) {
+    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
             put(ModelDescription.Types.Integer, "Integer");
             put(ModelDescription.Types.String, "String");
@@ -69,9 +69,11 @@ public class StatementGeneratorContainer {
 
     private static PStm createGetSVsStatement(String instanceName, String functionName, long[] longs, LexIdentifier valueArray,
             LexIdentifier valRefArray, LexIdentifier statusVariable) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable), newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                newACallExp(newAIdentifierExp(createLexIdentifier.apply(functionName)), new ArrayList<PExp>(
-                        Arrays.asList(newAIdentifierExp(valRefArray), newAUIntLiteralExp((long) longs.length), newAIdentifierExp(valueArray))))));
+        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply(functionName).clone(), new ArrayList<PExp>(
+                                Arrays.asList(newAIdentifierExp(valRefArray), newAUIntLiteralExp((long) longs.length),
+                                        newAIdentifierExp(valueArray)))));
     }
 
     public static void reset() {
@@ -99,12 +101,12 @@ public class StatementGeneratorContainer {
 
     public void createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance, boolean stopTimeDefined) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("setupExperiment")), new ArrayList<PExp>(
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("setupExperiment").clone(), new ArrayList<>(
                                 Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance), this.startTime.clone(),
                                         newABoolLiteralExp(stopTimeDefined), this.endTime.clone())))
 
-                ));
+        );
         statements.add(statement);
     }
 
@@ -126,8 +128,8 @@ public class StatementGeneratorContainer {
 
     public void enterInitializationMode(String instanceName) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("enterInitializationMode")), null)));
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("enterInitializationMode").clone(), null));
         statements.add(statement);
     }
 
@@ -341,8 +343,8 @@ public class StatementGeneratorContainer {
 
     public void exitInitializationMode(String instanceName) {
         PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newADotExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        newACallExp(newAIdentifierExp(createLexIdentifier.apply("exitInitializationMode")), null)));
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
         statements.add(statement);
     }
 

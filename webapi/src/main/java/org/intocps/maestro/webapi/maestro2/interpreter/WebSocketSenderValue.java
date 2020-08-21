@@ -50,7 +50,7 @@ class WebSocketSenderValue extends ExternalModuleValue<WebsocketValueConverter> 
                     data.add(((RealValue) d).realValue());
                 }
                 if (d instanceof BooleanValue) {
-                    data.add(new Boolean(((BooleanValue) d).getValue()).toString());
+                    data.add(Boolean.valueOf(((BooleanValue) d).getValue()).toString());
                 }
             }
 

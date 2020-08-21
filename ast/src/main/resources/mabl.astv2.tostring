@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 %initializer->exp = [exp]
-%initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(", "))$ + "}"
+%initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(" , ", " ", " "))$ + "}"
 %parameter->formal = [type] +" "+[name]
 
 %exp->identifier = [name]
 %exp->#literal->string = "\"" + [value] +"\""
 %exp->#literal->bool =  [value]
-%exp->#literal->numeric =  [value]
+//%exp->#literal->numeric =  [value]
 %exp->load = "load("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->unload = "unload("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%exp->dot = [root]+ "." +[exp]
+%exp->field = [root]+ "." +[field]
 %exp->#binary->plus = [left]+ " + " + [right]
 %exp->#binary->minus = [left]+ " - " + [right]
 %exp->#binary->lessEqual = [left]+ " <= " + [right]
@@ -35,8 +35,12 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
-%exp->call = ""+ $ $[root]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
+%exp->#binary->or = [left]+ " || " + [right]
+%exp->#binary->and = [left]+ " && " + [right]
+%exp->#unary->not = "!" + [exp]
+%exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
+%exp->par = "("+ [exp] +")"
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
@@ -45,7 +49,9 @@ import java.util.stream.Collectors;
 %stm->while = "while( "+[test]+" ) " + [body] + ""
 %stm->observable = "observable;"
 %stm->expression = [exp]
-%stm->external = "external " +[call]
+%stm->break = "break"
+
+
 
 %stateDesignator->identifier = [name]
 %stateDesignator->array = [target] + "[" + [exp] + "]"

@@ -12,7 +12,7 @@ FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "s
 FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, false);
 FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);
 IFmuComponent components[2] = {wtInstance, crtlInstance};
-
+bool global_execution_continue = true;
 {
 	int status = 0;
 	status = crtlInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);;

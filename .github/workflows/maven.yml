@@ -16,15 +16,15 @@ jobs:
       matrix:
         os: [ubuntu-18.04]
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Java
-      uses: actions/setup-java@v1
-      with:
-        java-version: 11.0.3
-    - name: Maven Build
-      run: mvn -B package --file pom.xml -DskipTests
-    - name: Maven Test
-      run: mvn test
+      - uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11.0.3
+      - name: Maven Build
+        run: mvn -B package --file pom.xml -DskipTests
+      - name: Maven Test
+        run: mvn test
 #    - uses: actions/upload-artifact@v1
 #      with:
 #        name: maestro.jar

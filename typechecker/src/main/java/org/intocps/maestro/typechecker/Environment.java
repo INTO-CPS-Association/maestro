@@ -17,7 +17,7 @@ public abstract class Environment {
      *
      * @return
      */
-    protected abstract List<PDeclaration> getDefinitions();
+    protected abstract List<? extends PDeclaration> getDefinitions();
 
     /**
      * Find a name in the environment of the given scope.
