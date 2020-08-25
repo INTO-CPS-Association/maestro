@@ -49,7 +49,6 @@ public class WebsocketDataWriter implements IDataListener {
     public void writeDataPoint(UUID uuid, double time, List<Value> dataPoint) {
 
         List<Object> data = new Vector<>();
-        data.add(time);
         for (Integer i : instances.get(uuid).indicesOfInterest) {
             Value d = dataPoint.get(i);
 

@@ -44,6 +44,7 @@ public class Maestro2Broker {
         EnvironmentMessage msg = new EnvironmentMessage();
         msg.fmus = initializationData.getFmus();
         msg.connections = initializationData.getConnections();
+        msg.livestream = initializationData.livestream;
         UnitRelationship simulationEnvironment = UnitRelationship.of(msg);
         simulationEnvironmentConsumer.accept(simulationEnvironment);
 

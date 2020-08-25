@@ -149,9 +149,13 @@ public class UnitRelationship implements ISimulationEnvironment {
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
                             .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
 
+            // Add the instance to the globalVariablesToLogForInstance map.
+            ArrayList<RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
+            this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
             for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                 Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
+                globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
 
                 // dependantInputs are the inputs on which the current output depends on internally
                 Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
@@ -211,7 +215,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                 }
             }
 
-            // Create a globalLogVariablesMap that is a merge between logVariables and livestream.
+            // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
             HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
             if (environmentMessage.logVariables != null) {
                 globalLogVariablesMaps.putAll(environmentMessage.logVariables);
@@ -235,7 +239,17 @@ public class UnitRelationship implements ISimulationEnvironment {
 
 
                 }
-                this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
+                if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
+                    List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
+                    for (RelationVariable rv : variablesToLogForInstance) {
+                        if (existingRVs.contains(rv) == false) {
+                            existingRVs.add(rv);
+                        }
+                    }
+                } else {
+                    this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
+                }
+
             }
         }
         if (this.environmentMessage.logVariables != null) {
