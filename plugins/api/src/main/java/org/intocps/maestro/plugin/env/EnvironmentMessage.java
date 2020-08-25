@@ -16,8 +16,10 @@ public class EnvironmentMessage {
     public Map<String, String> fmus;
     public Map<String, List<String>> connections;
     public Map<String, List<String>> logVariables;
+    public Map<String, List<String>> livestream;
 
     @JsonIgnore
+
     public Map<String, URI> getFmuFiles() throws Exception {
         Map<String, URI> files = new HashMap<>();
         if (fmus != null) {

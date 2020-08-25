@@ -11,6 +11,7 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.env.EnvironmentMessage;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.springframework.web.socket.WebSocketSession;
@@ -21,10 +22,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Maestro2Broker {
     public ARootDocument createMablSpecFromLegacyMM(Maestro2SimulationController.InitializationData initializationData,
-            Maestro2SimulationController.SimulateRequestBody simulateRequestBody, boolean withWs, File rootDirectory) throws Exception {
+            Maestro2SimulationController.SimulateRequestBody simulateRequestBody, boolean withWs, File rootDirectory,
+            Consumer<ISimulationEnvironment> simulationEnvironmentConsumer) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
 
         // Create the configuration for the initializer plugin
@@ -42,6 +45,7 @@ public class Maestro2Broker {
         msg.fmus = initializationData.getFmus();
         msg.connections = initializationData.getConnections();
         UnitRelationship simulationEnvironment = UnitRelationship.of(msg);
+        simulationEnvironmentConsumer.accept(simulationEnvironment);
 
         if (initializationData.getAlgorithm() instanceof Maestro2SimulationController.FixedStepAlgorithmConfig) {
 
@@ -60,8 +64,12 @@ public class Maestro2Broker {
 
     }
 
-    public void executeInterpreter(ARootDocument doc, WebSocketSession ws, File rootDirectory) throws AnalysisException {
-        DataStore.GetInstance().setSessionDirectory(rootDirectory.toPath());
+    public void executeInterpreter(ARootDocument doc, WebSocketSession ws, File rootDirectory,
+            ISimulationEnvironment environment) throws AnalysisException {
+        DataStore instance = DataStore.GetInstance();
+        instance.setSessionDirectory(rootDirectory.toPath());
+        instance.setSimulationEnvironment(environment);
+
         if (ws != null) {
             new MableInterpreter(new WebApiInterpreterFactory(ws)).execute(doc);
         } else {

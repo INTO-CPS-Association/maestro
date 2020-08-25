@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.ast.ARootDocument;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.zip.ZipOutputStream;
 
 
@@ -239,11 +241,15 @@ public class Maestro2SimulationController {
 
         logic.setSimulateRequestBody(body);
         Maestro2Broker mc = new Maestro2Broker();
+        var ref = new Object() {
+            ISimulationEnvironment environment;
+        };
+        Consumer<ISimulationEnvironment> environmentConsumer = env -> ref.environment = env;
         ARootDocument spec = mc.createMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody(), logic.containsSocket(),
-                logic.rootDirectory);
+                logic.rootDirectory, environmentConsumer);
         FileUtils.writeStringToFile(new File(logic.rootDirectory, "spec.mabl"), spec.getContent().get(0).toString(), StandardCharsets.UTF_8);
 
-        mc.executeInterpreter(spec, logic.getSocket(), logic.rootDirectory);
+        mc.executeInterpreter(spec, logic.getSocket(), logic.rootDirectory, ref.environment);
 
         return getStatus(sessionId);
     }

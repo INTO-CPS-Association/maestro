@@ -3,8 +3,10 @@ import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,9 +53,8 @@ public class FullSpecTestPrettyPrint {
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
-
-            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, false, UnitRelationship.of(new File(directory, "env.json")))
-                    .generate(getSpecificationFiles(), configStream);
+            ISimulationEnvironment environment = UnitRelationship.of(new File(directory, "env.json"));
+            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, false, environment).generate(getSpecificationFiles(), configStream);
 
             long stopTime = System.nanoTime();
             Instant end = Instant.now();
@@ -66,6 +67,7 @@ public class FullSpecTestPrettyPrint {
             System.out.println(sourceCode);
 
             ARootDocument reparsedDoc = MableSpecificationGenerator.parse(CharStreams.fromString(sourceCode));
+            DataStore.GetInstance().setSimulationEnvironment(environment);
             new MableInterpreter(new DefaultExternalValueFactory()).execute(reparsedDoc);
 
         }

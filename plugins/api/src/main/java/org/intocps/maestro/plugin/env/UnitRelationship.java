@@ -10,13 +10,12 @@ import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -28,7 +27,10 @@ public class UnitRelationship implements ISimulationEnvironment {
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
+    Map<String, List<RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
     private EnvironmentMessage environmentMessage;
+    private Map<String, List<RelationVariable>> csvVariablesToLog = new HashMap<>();
+    private List<String> livestreamVariablesToLog = new ArrayList<>();
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -63,26 +65,48 @@ public class UnitRelationship implements ISimulationEnvironment {
         return list;
     }
 
-    public List<RelationVariable> getVariablesToLogForComponent(
-            LexIdentifier fmuComponent) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
-        ModelDescription modelDescription = instanceNameToInstanceComponentInfo.get(fmuComponent).modelDescription;
-        List<RelationVariable> variablesToLog = Collections.emptyList();
-        List<String> d = this.environmentMessage.logVariables
-                .get(this.instanceNameToInstanceComponentInfo.get(fmuComponent.getText()).fmuIdentifier + "." + fmuComponent.getText());
-        for (String x : d) {
-            for (ModelDescription.ScalarVariable y : modelDescription.getScalarVariables()) {
-                if (y.name == x) {
-                    variablesToLog.add(new RelationVariable(y, fmuComponent));
-                }
-            }
+    private static Map<String, List<RelationVariable>> getEnvironmentVariablesToLog(Map<String, List<String>> variablesToLogMap,
+            Map<String, List<RelationVariable>> globalVariablesToLogForInstance) {
+
+        Function<String, String> extractInstance = x -> x.split("}.")[1];
+        Map<String, List<RelationVariable>> t = variablesToLogMap.entrySet().stream().collect(Collectors
+                .toMap(entry -> extractInstance.apply(entry.getKey()),
+                        entry -> globalVariablesToLogForInstance.get(extractInstance.apply(entry.getKey())).stream()
+                                .filter(x -> entry.getValue().contains(x.scalarVariable.name)).collect(Collectors.toList())));
+        return t;
+
+    }
+
+    @Override
+    public List<RelationVariable> getVariablesToLog(String instanceName) {
+        List<RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
+        if (vars == null) {
+            return new ArrayList<>();
+        } else {
+            return vars;
         }
-        return variablesToLog;
+    }
+
+    @Override
+    public List<RelationVariable> getCsvVariablesToLog(String instanceName) {
+        return this.csvVariablesToLog.getOrDefault(instanceName, new ArrayList<>());
+    }
+
+    @Override
+    public Map<String, List<String>> getLivestreamVariablesToLog() {
+        if (this.environmentMessage.livestream != null) {
+            return this.environmentMessage.livestream;
+        } else {
+            return new HashMap<>();
+        }
+
     }
 
     public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
         return this.fmuKeyToModelDescription.entrySet();
     }
 
+    @Override
     public Set<Map.Entry<String, ComponentInfo>> getInstances() {
         return this.instanceNameToInstanceComponentInfo.entrySet();
     }
@@ -186,6 +210,40 @@ public class UnitRelationship implements ISimulationEnvironment {
                     instanceRelations.add(r);
                 }
             }
+
+            // Create a globalLogVariablesMap that is a merge between logVariables and livestream.
+            HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
+            if (environmentMessage.logVariables != null) {
+                globalLogVariablesMaps.putAll(environmentMessage.logVariables);
+            }
+            if (environmentMessage.livestream != null) {
+                environmentMessage.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
+                    Set<String> set = new TreeSet<>(v1);
+                    set.addAll(v2);
+                    return new ArrayList<>(set);
+                }));
+            }
+
+
+            List<RelationVariable> variablesToLogForInstance = new ArrayList<>();
+            String logVariablesKey = instance.key + "." + instance.instanceName;
+            if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
+                for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
+                    variablesToLogForInstance.add(new RelationVariable(
+                            this.fmuKeyToModelDescription.get(instance.key).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst()
+                                    .get(), instanceLexIdentifier));
+
+
+                }
+                this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
+            }
+        }
+        if (this.environmentMessage.logVariables != null) {
+            this.csvVariablesToLog = getEnvironmentVariablesToLog(this.environmentMessage.logVariables, this.globalVariablesToLogForInstance);
+        }
+        if (this.environmentMessage.livestream != null) {
+            this.livestreamVariablesToLog = this.environmentMessage.livestream.entrySet().stream()
+                    .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
         }
     }
 
