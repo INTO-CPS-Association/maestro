@@ -180,13 +180,14 @@ public class Maestro2SimulationController {
 
         try {
             if (body.stabalizationEnabled) {
+
+                if (body.global_absolute_tolerance != 0.0) {
+                    throw new NotImplementedException("global absolute tolerance is not implemented");
+                }
+                if (body.global_relative_tolerance != 0.0) {
+                    throw new NotImplementedException("global absolute tolerance is not implemented");
+                }
                 throw new NotImplementedException("Stabilisation is not implemented");
-            }
-            if (body.global_absolute_tolerance != 0.0) {
-                throw new NotImplementedException("global absolute tolerance is not implemented");
-            }
-            if (body.global_relative_tolerance != 0.0) {
-                throw new NotImplementedException("global absolute tolerance is not implemented");
             }
             if (body.loggingOn) {
                 throw new NotImplementedException("LoggingOn is not implemented");

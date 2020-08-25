@@ -1,0 +1,15 @@
+[
+  {
+    "identification": {
+      "name": "Initializer",
+      "version": "0.0.0"
+    },
+    "config": {
+      "parameters": {
+        "{crtl}.crtlInstance.maxlevel": 2,
+        "{crtl}.crtlInstance.minlevel": 1
+      },
+      "verifyAgainstProlog": true
+    }
+  }
+]

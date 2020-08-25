@@ -67,13 +67,13 @@ public class Maestro2Broker {
     public void executeInterpreter(ARootDocument doc, WebSocketSession ws, File rootDirectory,
             ISimulationEnvironment environment) throws AnalysisException {
         DataStore instance = DataStore.GetInstance();
-        instance.setSessionDirectory(rootDirectory.toPath());
         instance.setSimulationEnvironment(environment);
 
+
         if (ws != null) {
-            new MableInterpreter(new WebApiInterpreterFactory(ws)).execute(doc);
+            new MableInterpreter(new WebApiInterpreterFactory(ws, new File(rootDirectory, "outputs.csv"))).execute(doc);
         } else {
-            new MableInterpreter(new DefaultExternalValueFactory()).execute(doc);
+            new MableInterpreter(new DefaultExternalValueFactory(rootDirectory)).execute(doc);
         }
 
     }

@@ -167,7 +167,12 @@ public class TypeResolver {
         public PType caseACallExp(ACallExp node, Environment question) throws AnalysisException {
 
             if (node.getObject() == null) {
-                return question.findName(node.getMethodName()).apply(this, question);
+                PDeclaration def = question.findName(node.getMethodName());
+                if (def == null) {
+                    return null;
+                }
+                return def.apply(this, question);
+
             }
 
             PType object = node.getObject().apply(this, question);

@@ -8,6 +8,7 @@ import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -21,10 +22,15 @@ import java.util.function.Function;
  * This class provides run-time support only. It creates and destroys certain types based on load and unload
  */
 public class DefaultExternalValueFactory implements IExternalValueFactory {
+    static final String DEFAULT_CSV_FILENAME = "outputs.csv";
     protected final String dataWriterInstantiaterName = "DataWriter";
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
 
     public DefaultExternalValueFactory() {
+        this(null);
+    }
+
+    public DefaultExternalValueFactory(File workingDirectory) {
         instantiators = new HashMap<>() {{
             put("FMI2", args -> {
                 String guid = ((StringValue) args.get(0)).getValue();
@@ -38,7 +44,10 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             });
             put("CSV", args -> Either.right(new CSVValue()));
             put("Logger", args -> Either.right(new LoggerValue()));
-            put(dataWriterInstantiaterName, args -> Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter()))));
+            put(dataWriterInstantiaterName, args -> {
+                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(
+                        workingDirectory == null ? new File(DEFAULT_CSV_FILENAME) : new File(workingDirectory, DEFAULT_CSV_FILENAME)))));
+            });
         }};
     }
 

@@ -60,7 +60,7 @@ public class WebsocketDataWriter implements IDataListener {
                 data.add(((RealValue) d).realValue());
             }
             if (d instanceof BooleanValue) {
-                data.add(Boolean.valueOf(((BooleanValue) d).getValue()));
+                data.add(Boolean.valueOf(((BooleanValue) d).getValue()) + "");
             }
         }
 

@@ -8,6 +8,7 @@ import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
 import org.intocps.maestro.interpreter.values.RealValue;
 import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.datawriter.DataFileRotater;
 import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -23,12 +24,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CsvDataWriter implements IDataListener {
-    private final String baseFilename = "csvResult";
+    private final DataFileRotater dataFileRotater;
     HashMap<UUID, CsvDataWriterInstance> instances = new HashMap<>();
     ISimulationEnvironment environment;
-    private Integer currentFileNumber = 0;
 
-    public CsvDataWriter() {
+    public CsvDataWriter(File outputFile) {
+        this.dataFileRotater = new DataFileRotater(outputFile);
         this.environment = DataStore.GetInstance().getSimulationEnvironment();
     }
 
@@ -54,11 +55,6 @@ public class CsvDataWriter implements IDataListener {
         return hoi;
     }
 
-    private String createFilename() {
-        currentFileNumber++;
-        return DataStore.GetInstance().getSessionDirectory().resolve(baseFilename + currentFileNumber + ".csv").toString();
-    }
-
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         CsvDataWriterInstance instance = new CsvDataWriterInstance();
@@ -72,10 +68,10 @@ public class CsvDataWriter implements IDataListener {
         }
 
         try {
-            PrintWriter writer = new PrintWriter(new FileOutputStream(new File(createFilename())));
+            PrintWriter writer = new PrintWriter(new FileOutputStream(dataFileRotater.getNextOutputFile()));
             instance.printWriter = writer;
             instances.put(uuid, instance);
-            writer.println("time," + String.join(",", headers));
+            instance.println("time," + String.join(",", instance.headersOfInterest));
         } catch (FileNotFoundException e) {
             throw new InterpreterException(e);
         }
@@ -125,4 +121,7 @@ public class CsvDataWriter implements IDataListener {
             this.printWriter.close();
         }
     }
+
+
 }
+
