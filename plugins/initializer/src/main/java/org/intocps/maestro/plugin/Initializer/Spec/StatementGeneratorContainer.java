@@ -2,20 +2,22 @@ package org.intocps.maestro.plugin.Initializer.Spec;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.*;
-import org.intocps.maestro.plugin.UnfoldException;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.plugin.ExpandException;
+import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
 import org.intocps.orchestration.coe.config.ModelConnection;
+import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableAstFactory.newAIntLiteralExp;
 
 public class StatementGeneratorContainer {
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
@@ -27,6 +29,11 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
+
+    private final Map<ModelDescription.ScalarVariable, LexIdentifier> convergenceRefArray =
+            new HashMap<ModelDescription.ScalarVariable, LexIdentifier>();
+    private final Map<ModelDescription.ScalarVariable, LexIdentifier> loopValueArray = new HashMap<ModelDescription.ScalarVariable, LexIdentifier>();
+
     private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
             put(ModelDescription.Types.Integer, "Integer");
@@ -110,20 +117,155 @@ public class StatementGeneratorContainer {
         statements.add(statement);
     }
 
-    public void createFixedPointIteration(int iterationMax, List<PStm> loopStmts, int sccNumber) {
+    public void exitInitializationMode(String instanceName) {
+        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
+        statements.add(statement);
+    }
+
+    public void createFixedPointIteration(List<UnitRelationship.Variable> loopVariables, int iterationMax, int sccNumber,
+            List<ModelDescription.ScalarVariable> outputs, ISimulationEnvironment env) throws ExpandException {
         LexIdentifier end = newAIdentifier(String.format("end%d", sccNumber));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
 
         LexIdentifier start = newAIdentifier(String.format("start%d", sccNumber));
+
+        for (ModelDescription.ScalarVariable output : outputs) {
+            var lexIdentifier = createReferenceArray(output);
+            //Create map to test references against
+            convergenceRefArray.put(output, lexIdentifier);
+        }
+
         statements
                 .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
+        LexIdentifier convergenceCriteria = new LexIdentifier("ConvergenceCriteria", null);
+        statements.add(newALocalVariableStm(
+                newAVariableDeclaration(convergenceCriteria, newARealNumericPrimitiveType(), newAExpInitializer(newARealLiteralExp(1.0)))));
+        List<PStm> loopStmts = new Vector<>();
+
+        LexIdentifier doesConverge = new LexIdentifier("DoesConverge", null);
+        loopStmts.add(newALocalVariableStm(
+                newAVariableDeclaration(doesConverge, newABoleanPrimitiveType(), newAExpInitializer(newABoolLiteralExp(true)))));
+
+
+        PerformLoopActions(loopVariables, env);
+
+        //Check for convergence
+        CheckLoopConvergence(outputs, iterationMax);
+
+        loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newALessEqualBinaryExp(newAIdentifierExp(start), newAIdentifierExp(end))),
+                //Break loop - not converging and maximum number of iterations run
+                newAAssignmentStm(), newABlockStm(UpdateReferenceArray(outputs))));
+
 
         loopStmts.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) start.clone()),
                 newPlusExp(newAIdentifierExp((LexIdentifier) start.clone()), newAIntLiteralExp(1))));
-        //solve problem by updating values
-        statements.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(start), newAIdentifierExp(end)), newABlockStm(loopStmts)));
 
+        //solve problem by updating values
+        statements.add(newWhile(
+                newAnd(newALessEqualBinaryExp(newAIdentifierExp(start), newAIdentifierExp(end)), newNot(newAIdentifierExp(doesConverge))),
+                newABlockStm(loopStmts)));
+    }
+
+    private List<PStm> PerformLoopActions(List<UnitRelationship.Variable> loopVariables, ISimulationEnvironment env) {
+        List<PStm> LoopStatements = new Vector<>();
+        loopVariables.stream().map(variable -> variable.scalarVariable).forEach(variable -> {
+            long[] scalarValueIndices = new long[]{variable.scalarVariable.valueReference};
+
+            //All members of the same set has the same causality, type and comes from the same instance
+            if (variable.scalarVariable.causality == ModelDescription.Causality.Output) {
+                var array = createNewArrayAndAddToStm(variable.getScalarVariable().name, null,
+                        newAArrayType(FMITypeToMablType(variable.scalarVariable.getType().type)), null);
+                loopValueArray.put(variable.scalarVariable, array);
+                try {
+                    LoopStatements
+                            .addAll(getValueStm(variable.instance.getText(), array, scalarValueIndices, variable.scalarVariable.getType().type));
+                } catch (ExpandException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    LoopStatements
+                            .add(setValueOnPortStm(variable.instance, variable.scalarVariable.getType().type, variable.scalarVariable, scalarValueIndices,
+                                    env));
+                } catch (ExpandException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        return LoopStatements;
+    }
+
+    private PStm setValueOnPortStm(LexIdentifier comp, ModelDescription.Types type, ModelDescription.ScalarVariable variable,
+            long[] scalarValueIndices, ISimulationEnvironment env) throws ExpandException {
+        ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
+        ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
+
+        if (type == ModelDescription.Types.Boolean) {
+            return setBooleansStm(comp.getText(), scalarValueIndices,
+                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).map(Boolean.class::cast)
+                            .collect(BooleanUtils.TO_BOOLEAN_ARRAY));
+        } else if (type == ModelDescription.Types.Real) {
+            return setRealsStm(comp.getText(), scalarValueIndices,
+                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString()))
+                            .toArray());
+        } else if (type == ModelDescription.Types.Integer) {
+            return setIntegersStm(comp.getText(), scalarValueIndices,
+                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).mapToInt(o -> Integer.parseInt(o.toString()))
+                            .toArray());
+        } else if (type == ModelDescription.Types.String) {
+            return setStringsStm(comp.getText(), scalarValueIndices,
+                    (String[]) Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).map(o -> o.toString()).toArray());
+        } else {
+            throw new ExpandException("Unrecognised type: " + type.name());
+        }
+    }
+
+    private LexIdentifier createReferenceArray(ModelDescription.ScalarVariable variable) throws ExpandException {
+        PExp[] args = new PExp[Math.toIntExact(variable.getValueReference())];
+        Arrays.fill(args, getDefaultArrayValue(variable.getType().type));
+
+        PInitializer initializer = MableAstFactory.newAArrayInitializer(Arrays.asList(args));
+        LexIdentifier valueArray = createNewArrayAndAddToStm("Ref" + text + "Size" + variable.getValueReference(), null,
+                newAArrayType(FMITypeToMablType(variable.getType().type)), variable.getValueReference(), initializer);
+        return valueArray;
+    }
+
+    private List<PStm> UpdateReferenceArray(List<ModelDescription.ScalarVariable> outputPorts) {
+        List<PStm> updateStms = new Vector<>();
+        outputPorts.forEach(o -> {
+            var referenceValue = convergenceRefArray.get(o);
+            var currentValue = loopValueArray.get(o);
+            updateStms.add(newAAssignmentStm(newAIdentifierStateDesignator(referenceValue), newAIdentifierExp(currentValue)));
+        });
+        return updateStms;
+    }
+
+    //This method should check if all output of the Fixed Point iteration have stabilized/converged
+    private List<PStm> CheckLoopConvergence(List<ModelDescription.ScalarVariable> outputPorts, int sccNumber,  LexIdentifier doesConverge) {
+        List<PStm> result = new Vector<>();
+
+        outputPorts.forEach(o -> {
+            LexIdentifier index = newAIdentifier("index" + sccNumber);
+            result.add(newALocalVariableStm(newAVariableDeclaration(index, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
+
+            List<PStm> convergenceLoop = new Vector<>();
+
+            var referenceValue = convergenceRefArray.get(o);
+            var currentValue = loopValueArray.get(o);
+            //TODO look at this - how to compare to arrays
+
+            //convergenceLoop.add(newIf(isClose(), null, newAAssignmentStm(newAIdentifierStateDesignator(doesConverge), newABoolLiteralExp(false)));
+            convergenceLoop.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) index.clone()),
+                    newPlusExp(newAIdentifierExp((LexIdentifier) index.clone()), newAIntLiteralExp(1))));
+
+            //find number of places in array
+            var arraySize = newAIntLiteralExp(5);
+            result.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(index), arraySize), newABlockStm(convergenceLoop)));
+        }); return result;
     }
 
     public void enterInitializationMode(String instanceName) {
@@ -136,33 +278,27 @@ public class StatementGeneratorContainer {
     public void setReals(String instanceName, long[] longs, double[] doubles) {
         statements.add(setRealsStm(instanceName, longs, doubles));
     }
-
     public void setBooleans(String instanceName, long[] longs, boolean[] booleans) {
         statements.add(setBooleansStm(instanceName, longs, booleans));
     }
-
-
     public void setIntegers(String instanceName, long[] longs, int[] ints) {
         statements.add(setIntegersStm(instanceName, longs, ints));
     }
-
     public void setStrings(String instanceName, long[] longs, String[] strings) {
         statements.add(setStringsStm(instanceName, longs, strings));
     }
 
     private PStm generateAssignmentStm(String instanceName, long[] longs, LexIdentifier valueArray, LexIdentifier valRefs, String setCommand) {
-        return MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable), MableAstFactory
-                .newADotExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)), MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(setCommand)), new ArrayList<PExp>(
+        PStm statement = MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
+                newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
+                        (LexIdentifier) createLexIdentifier.apply(setCommand).clone(), new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
-                                        MableAstFactory.newAIdentifierExp(valueArray))))
-
-                ));
+                                        MableAstFactory.newAIdentifierExp(valueArray)))));
+        return statement;
     }
 
     private LexIdentifier createArray(long[] longs, int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, String arrayName,
             ModelDescription.Types type, Map<Integer, LexIdentifier> array) {
-        LexIdentifier valueArray;
         List<PExp> args = new ArrayList<>();
         for (int i = 0; i < valueLength; i++) {
             Pair<PExp, List<PStm>> value = valueLocator.apply(i);
@@ -173,7 +309,8 @@ public class StatementGeneratorContainer {
         }
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        valueArray = createNewArrayAndAddToStm(arrayName, array, MableAstFactory.newAArrayType(FMITypeToMablType(type), valueLength), initializer);
+        LexIdentifier valueArray =
+                createNewArrayAndAddToStm(arrayName, array, MableAstFactory.newAArrayType(FMITypeToMablType(type), valueLength), initializer);
         return valueArray;
     }
 
@@ -224,23 +361,6 @@ public class StatementGeneratorContainer {
         return lexID;
     }
 
-    public void getBooleans(String instanceName, long[] longs) {
-        statements.addAll(getBooleansStm(instanceName, longs));
-    }
-
-    public void getReals(String instanceName, long[] longs) {
-        statements.addAll(getRealsStm(instanceName, longs));
-    }
-
-    public void getIntegers(String instanceName, long[] longs) {
-        statements.addAll(getIntegersStm(instanceName, longs));
-    }
-
-    public void getStrings(String instanceName, long[] longs) {
-        statements.addAll(getStringsStm(instanceName, longs));
-    }
-
-
     private List<PStm> updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray, ModelDescription.Types fmiType) {
         Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
@@ -270,7 +390,6 @@ public class StatementGeneratorContainer {
         }
         return result;
     }
-
 
     /**
      * This creates a function (<code>valueLocator</code>) that is used to locate an output corresponding to the given input that is to be set.
@@ -322,9 +441,10 @@ public class StatementGeneratorContainer {
                             }
 
                             // Convert the value
-                            statements.add(newExternalStm(newACallExp(newAIdentifierExp(new LexIdentifier(
-                                            "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType), null)),
+                            statements.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifier(
+                                    "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
+
 
                             variableLexId = createLexIdentifier.apply(name);
                         }
@@ -339,13 +459,6 @@ public class StatementGeneratorContainer {
             valueLocator = i -> Pair.of(literalExp.apply(i), null);
         }
         return valueLocator;
-    }
-
-    public void exitInitializationMode(String instanceName) {
-        PStm statement = newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
-                newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
-                        (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
-        statements.add(statement);
     }
 
     public PStm setRealsStm(String instanceName, long[] longs, double[] doubles) {
@@ -392,7 +505,6 @@ public class StatementGeneratorContainer {
         return generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setBoolean");
     }
 
-
     public PStm setIntegersStm(String instanceName, long[] longs, int[] ints) {
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<Pair<PExp, List<PStm>>> valueLocator =
@@ -436,105 +548,86 @@ public class StatementGeneratorContainer {
         return generateAssignmentStm(instanceName, longs, valueArray, valRefs, "setString");
     }
 
-
-    public List<PStm> getBooleansStm(String instanceName, long[] longs) {
-        if (!instancesLookupDependencies) {
-            instancesLookupDependencies = true;
+    public Object[] GetValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
+        Object[] values = new Object[variables.size()];
+        var i = 0;
+        for (ModelDescription.ScalarVariable v : variables) {
+            values[i++] = getNewValue(v, modelInstance);
         }
-
-        // Create the value array
-        LexIdentifier valueArray = findArrayOfSize(boolArrays, longs.length);
-        // The array does not exist. Create it
-        if (valueArray == null) {
-            valueArray = createNewArrayAndAddToStm(booleanArrayVariableName.apply(longs.length), boolArrays,
-                    newAArrayType(newABoleanPrimitiveType(), longs.length), null);
-        }
-
-        // Create the valRefArray
-        LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
-
-        List<PStm> result = new Vector<>();
-        // Create the getBoolean statement
-        result.add(createGetSVsStatement(instanceName, "getBoolean", longs, valueArray, valRefArray, statusVariable));
-
-        // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Boolean));
-        return result;
+        return values;
     }
 
-    public List<PStm> getRealsStm(String instanceName, long[] longs) {
-        if (!instancesLookupDependencies) {
-            instancesLookupDependencies = true;
+    private Object getNewValue(ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
+        Object newVal = null;
+        if (sv.type.start != null) {
+            newVal = sv.type.start;
         }
 
-        // Create the value array
-        LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
-        // The array does not exist. Create it
-        if (valueArray == null) {
-            valueArray =
-                    createNewArrayAndAddToStm("realValueSize" + longs.length, realArrays, newAArrayType(newARealNumericPrimitiveType(), longs.length),
-                            null);
+        for (ModelParameter par : modelParameters) {
+            if (par.variable.toString().equals(comp + "." + sv.name)) {
+                newVal = par.value;
+                par.isSet = true;
+            }
+        }
+        if (sv.type.type == ModelDescription.Types.Real) {
+            if (newVal instanceof Integer) {
+                newVal = (double) (int) newVal;
+            }
         }
 
-        // Create the valRefArray
-        LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
-
-        List<PStm> result = new Vector<>();
-
-        // Create the statement
-        result.add(createGetSVsStatement(instanceName, "getReal", longs, valueArray, valRefArray, statusVariable));
-
-        // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Real));
-        return result;
+        return newVal;
     }
 
-    public List<PStm> getIntegersStm(String instanceName, long[] longs) {
+    public List<PStm> getValueStm(String instanceName, LexIdentifier valueArray, long[] longs, ModelDescription.Types type) throws ExpandException {
         if (!instancesLookupDependencies) {
             instancesLookupDependencies = true;
         }
 
         // Create the value array
-        LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
-        // The array does not exist. Create it
         if (valueArray == null) {
-            valueArray =
-                    createNewArrayAndAddToStm("intValueSize" + longs.length, intArrays, newAArrayType(newARealNumericPrimitiveType(), longs.length),
-                            null);
+            valueArray = findArrayOfSize(getArrayMapOfType(type), longs.length);
         }
 
-        // Create the valRefArray
-        LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
-
-        List<PStm> result = new Vector<>();
-
-        result.add(createGetSVsStatement(instanceName, "getInteger", longs, valueArray, valRefArray, statusVariable));
-        // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Integer));
-        return result;
-    }
-
-    public List<PStm> getStringsStm(String instanceName, long[] longs) {
-        if (!instancesLookupDependencies) {
-            instancesLookupDependencies = true;
-        }
-
-        // Create the value array
-        LexIdentifier valueArray = findArrayOfSize(stringArrays, longs.length);
         // The array does not exist. Create it
         if (valueArray == null) {
-            valueArray = createNewArrayAndAddToStm("stringValueSize" + longs.length, intArrays,
+            valueArray = createNewArrayAndAddToStm(type.name() + "ValueSize" + longs.length, getArrayMapOfType(type),
                     newAArrayType(newARealNumericPrimitiveType(), longs.length), null);
         }
 
         // Create the valRefArray
         LexIdentifier valRefArray = findOrCreateValueReferenceArrayAndAssign(longs);
+
         List<PStm> result = new Vector<>();
 
-        result.add(createGetSVsStatement(instanceName, "getString", longs, valueArray, valRefArray, statusVariable));
+        result.add(createGetSVsStatement(instanceName, "get" + type.name(), longs, valueArray, valRefArray, statusVariable));
         // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.String));
-
+        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Integer));
         return result;
+    }
+
+    private PExp getDefaultArrayValue(ModelDescription.Types type) throws ExpandException {
+        if (type == ModelDescription.Types.Boolean) {
+            return newABoolLiteralExp(false);
+        } else if (type == ModelDescription.Types.Real) {
+            return newARealLiteralExp(0.0);
+        } else if (type == ModelDescription.Types.Integer) {
+            return newAIntLiteralExp(0);
+        } else {
+            throw new ExpandException("Unknown type");
+        }
+    }
+
+    private Map<Integer, LexIdentifier> getArrayMapOfType(ModelDescription.Types type) throws ExpandException {
+        if (type == ModelDescription.Types.Boolean) {
+            return boolArrays;
+        } else if (type == ModelDescription.Types.Real) {
+            return realArrays;
+        } else if (type == ModelDescription.Types.Integer) {
+            return intArrays;
+        } else if (type == ModelDescription.Types.String) {
+            return stringArrays;
+        } else {
+            throw new ExpandException("Unrecognised type: " + type.name());
+        }
     }
 }

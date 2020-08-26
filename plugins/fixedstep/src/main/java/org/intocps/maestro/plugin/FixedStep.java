@@ -173,7 +173,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
                         .map(h -> h.scalarVariable).sorted(Comparator.comparing(getLogName::apply)).collect(Collectors.toMap(l -> l, r -> {
 
-
                     //the relation should be a one to one relation so just take the first one
                     RelationVariable fromVar = r;
                     PExp from = newAArrayIndexExp(
@@ -232,8 +231,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
         Consumer<Map.Entry<LexIdentifier, List<PStm>>> checkStatusDoStep = list -> {
-
-
             list.getValue().add(newIf(newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(3)), newABlockStm(Arrays.asList(
                     newExpressionStm(
                             newACallExp(newAIdentifier("abort"), Arrays.asList(newAStringLiteralExp("Fmu step error." + " " + "Aborting")))))),
@@ -398,7 +395,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
         }));
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
-
             int toIndex =
                     inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type).stream()
                             .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())

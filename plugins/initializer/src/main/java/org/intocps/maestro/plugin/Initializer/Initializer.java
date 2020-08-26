@@ -114,7 +114,7 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         if (this.config.verifyAgainstProlog && !initializationPrologQuery
                 .initializationOrderIsValid(instantiationOrder.stream().flatMap(Collection::stream).collect(Collectors.toList()), relations)) {
-            throw new UnfoldException("The found initialization order is not correct");
+            throw new ExpandException("The found initialization order is not correct");
         }
 
         //Enter initialization Mode
@@ -131,107 +131,48 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         //var optimizedOrder = optimizeInstantiationOrder(instantiationOrder);
 
-        var sccNumber = 0;
-        //Initialize the ports in the correct order based on the topological sorting
-        for (Set<Variable> variables : instantiationOrder) {//normal variable
-            if (variables.size() == 1) {
-                try {
-                    initializePort(variables, sc, env);
-                } catch (UnfoldException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                //Algebraic loop - specially initialization strategy should be taken.
-                initializeLoop(variables, sc, env, sccNumber++);
-            }
-        }
-                /*
-        optimizedOrder.forEach(variableSet -> {
-            try {
-                initializePort(variableSet, sc, env);
-            } catch (ExpandException e) {
-                e.printStackTrace();
-            }
-        });
-
-                 */
+        initializeInterconnectedPorts(env, sc, instantiationOrder);
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
             sc.exitInitializationMode(comp.getText());
         });
 
-        var statements = sc.getStatements();
-        return (statements);
+        return (sc.getStatements());
     }
 
-    private void initializeLoop(Set<Variable> variables, StatementGeneratorContainer sc, ISimulationEnvironment env, int sccNumber) {
-        List<PStm> loopStms = new Vector<>();
-        var optimizedOrder = optimizeInstantiationOrder(new ArrayList<>(variables));
-
-        optimizedOrder.forEach(variable -> {
-            try {
-                loopStms.addAll(createStm(variables, sc, env));
-            } catch (UnfoldException e) {
-                e.printStackTrace();
+    private void initializeInterconnectedPorts(ISimulationEnvironment env, StatementGeneratorContainer sc,
+            List<Set<Variable>> instantiationOrder) throws ExpandException {
+        var sccNumber = 0;
+        //Initialize the ports in the correct order based on the topological sorting
+        for (Set<Variable> variables : instantiationOrder) {//normal variable
+            if (variables.size() == 1) {
+                try {
+                    initializePort(variables, sc, env);
+                } catch (ExpandException e) {
+                    e.printStackTrace();
+                }
+            } else if(this.config.Stabilisation && variables.size() > 1){
+                //Algebraic loop - specially initialization strategy should be taken.
+                initializeUsingFixedPoint(variables, sc, env, sccNumber++);
+            }else if(!this.config.Stabilisation && variables.size() > 1)){
+                throw new ExpandException("The co-simulation scenario contains loops, but the initialization is not configured to handle these " +
+                        "scenarios");
             }
-        });
-        sc.createFixedPointIteration(1, loopStms, sccNumber);
-    }
-
-    private List<PStm> createStm(Set<Variable> variables, StatementGeneratorContainer sc, ISimulationEnvironment env) throws UnfoldException {
-        var scalarVariables = variables.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
-        var type = scalarVariables.iterator().next().getType().type;
-        var instance = variables.stream().findFirst().get().scalarVariable.getInstance();
-        var causality = scalarVariables.iterator().next().causality;
-        long[] scalarValueIndices = GetValueRefIndices(scalarVariables);
-
-        //All members of the same set has the same causality, type and comes from the same instance
-        if (causality == ModelDescription.Causality.Output) {
-            return getValueFromPortStm(sc, instance, type, scalarValueIndices);
-        }
-        return new ArrayList<PStm>(Collections.singleton(setValueOnPortStm(sc, instance, type, scalarVariables, scalarValueIndices, env)));
-    }
-
-    private List<PStm> getValueFromPortStm(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            long[] scalarValueIndices) throws UnfoldException {
-        if (type == ModelDescription.Types.Boolean) {
-            return sc.getBooleansStm(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Real) {
-            return sc.getRealsStm(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Integer) {
-            return sc.getIntegersStm(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.String) {
-            return sc.getStringsStm(comp.getText(), scalarValueIndices);
-        } else {
-            throw new UnfoldException("Unrecognised type: " + type.name());
         }
     }
 
-    private PStm setValueOnPortStm(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) throws UnfoldException {
-        ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
-        ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
+    private void initializeUsingFixedPoint(List<Variable> variables, StatementGeneratorContainer sc, ISimulationEnvironment env, int sccNumber) throws ExpandException {
+        var optimizedOrder = optimizeInstantiationOrder(variables);
+        var outputs =
+                variables.stream().filter(o -> o.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output).map(o -> o.scalarVariable.scalarVariable).collect(Collectors.toList());
 
-        if (type == ModelDescription.Types.Boolean) {
-            return sc.setBooleansStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
-        } else if (type == ModelDescription.Types.Real) {
-            return sc.setRealsStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.Integer) {
-            return sc.setIntegersStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.String) {
-            return sc.setStringsStm(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
-        } else {
-            throw new UnfoldException("Unrecognised type: " + type.name());
-        }
-
+        sc.createFixedPointIteration(variables, 5, sccNumber, outputs, env);
     }
 
-
+    private List<ModelDescription.ScalarVariable> getScalarVariables(Set<Variable> variables) {
+        return variables.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
+    }
     private List<Set<Variable>> optimizeInstantiationOrder(List<Variable> instantiationOrder) {
         List<Set<Variable>> optimizedOrder = new Vector<>();
         Variable previousVariable = instantiationOrder.get(0);
@@ -287,7 +228,7 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
     private void initializePort(Set<Variable> ports, StatementGeneratorContainer sc, ISimulationEnvironment env) throws ExpandException {
-        var scalarVariables = ports.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
+        var scalarVariables = getScalarVariables(ports);
         var type = scalarVariables.iterator().next().getType().type;
         var instance = ports.stream().findFirst().get().scalarVariable.getInstance();
         var causality = scalarVariables.iterator().next().causality;
@@ -295,7 +236,8 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         //All members of the same set has the same causality, type and comes from the same instance
         if (causality == ModelDescription.Causality.Output) {
-            getValueFromPort(sc, instance, type, scalarValueIndices);
+            //These statement should be added
+            sc.getValueStm(instance.getText(), null, scalarValueIndices, type);
             return;
         }
         setValueOnPort(sc, instance, type, scalarVariables, scalarValueIndices, env);
@@ -336,62 +278,16 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         if (type == ModelDescription.Types.Boolean) {
             sc.setBooleans(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
+                    Arrays.stream(sc.GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
         } else if (type == ModelDescription.Types.Real) {
             sc.setReals(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
+                    Arrays.stream(sc.GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
         } else if (type == ModelDescription.Types.Integer) {
             sc.setIntegers(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
+                    Arrays.stream(sc.GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
         } else if (type == ModelDescription.Types.String) {
             sc.setStrings(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
-        } else {
-            throw new ExpandException("Unrecognised type: " + type.name());
-        }
-
-    }
-
-    private Object[] GetValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
-        Object[] values = new Object[variables.size()];
-        var i = 0;
-        for (ModelDescription.ScalarVariable v : variables) {
-            values[i++] = getNewValue(v, modelInstance);
-        }
-        return values;
-    }
-
-    private Object getNewValue(ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
-        Object newVal = null;
-        if (sv.type.start != null) {
-            newVal = sv.type.start;
-        }
-
-        for (ModelParameter par : modelParameters) {
-            if (par.variable.toString().equals(comp + "." + sv.name)) {
-                newVal = par.value;
-                par.isSet = true;
-            }
-        }
-        if (sv.type.type == ModelDescription.Types.Real) {
-            if (newVal instanceof Integer) {
-                newVal = (double) (int) newVal;
-            }
-        }
-
-        return newVal;
-    }
-
-    private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            long[] scalarValueIndices) throws ExpandException {
-        if (type == ModelDescription.Types.Boolean) {
-            sc.getBooleans(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Real) {
-            sc.getReals(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Integer) {
-            sc.getIntegers(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.String) {
-            sc.getStrings(comp.getText(), scalarValueIndices);
+                    (String[]) Arrays.stream(sc.GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
         }
@@ -449,10 +345,12 @@ public class Initializer implements IMaestroExpansionPlugin {
         }
         JsonNode parameters = root.get("parameters");
         JsonNode verify = root.get("verifyAgainstProlog");
+        JsonNode stabilisation = root.get("stabilisation");
+        JsonNode fixedPointIteration = root.get("fixedPointIteration");
 
         Config conf = null;
         try {
-            conf = new Config(parameters, verify);
+            conf = new Config(parameters, verify, stabilisation, fixedPointIteration);
         } catch (InvalidVariableStringException e) {
             e.printStackTrace();
         }
@@ -463,8 +361,10 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         private final List<ModelParameter> modelParameters;
         private final boolean verifyAgainstProlog;
+        public final boolean Stabilisation;
+        private final int maxIterations;
 
-        public Config(JsonNode parameters, JsonNode verify) throws InvalidVariableStringException {
+        public Config(JsonNode parameters, JsonNode verify, JsonNode stabilisation, JsonNode fixedPointIteration) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
@@ -473,6 +373,18 @@ public class Initializer implements IMaestroExpansionPlugin {
                 verifyAgainstProlog = false;
             } else {
                 verifyAgainstProlog = verify.asBoolean(false);
+            }
+
+            if (stabilisation == null) {
+                Stabilisation = false;
+            } else {
+                Stabilisation = stabilisation.asBoolean(false);
+            }
+
+            if (fixedPointIteration == null) {
+                maxIterations = 5;
+            } else {
+                maxIterations = fixedPointIteration.asInt(5);
             }
         }
 

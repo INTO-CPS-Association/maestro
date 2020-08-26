@@ -1,5 +1,6 @@
 package org.intocps.maestro.plugin.Initializer;
 
+import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.topologicalsorting.TarjanGraph;
@@ -14,13 +15,13 @@ import java.util.stream.Collectors;
 public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
-    public List<UnitRelationship.Variable> FindInstantiationOrder(Set<UnitRelationship.Relation> relations) throws UnfoldException {
+    public List<UnitRelationship.Variable> FindInstantiationOrder(Set<UnitRelationship.Relation> relations) throws ExpandException {
         TarjanGraph graphSolver = getTarjanGraph(relations);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSort();
         if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
             CyclicDependencyResult cycles = (CyclicDependencyResult) topologicalOrderToInstantiate;
-            throw new UnfoldException("Cycles are present in the systems: " + cycles.cycle());
+            throw new ExpandException("Cycles are present in the systems: " + cycles.cycle());
         }
 
         return (List<UnitRelationship.Variable>) JavaConverters
