@@ -24,5 +24,6 @@
         <module>demo</module>
         <module>topologicalsorting</module>
         <module>initializer</module>
+        <module>debuglogging</module>
     </modules>
 </project>

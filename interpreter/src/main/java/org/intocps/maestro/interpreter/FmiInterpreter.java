@@ -127,6 +127,23 @@ public class FmiInterpreter {
                     //populate component functions
                     Map<String, Value> componentMembers = new HashMap<>();
 
+                    componentMembers.put("fmi2SetDebugLogging", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 3);
+
+                        boolean debugLogginOn = getBool(fcargs.get(0));
+                        //                        int arraySize = getInteger(fcargs.get(1));
+                        List<StringValue> categories = getArrayValue(fcargs.get(2), StringValue.class);
+
+                        try {
+                            Fmi2Status res =
+                                    component.setDebugLogging(debugLogginOn, categories.stream().map(StringValue::getValue).toArray(String[]::new));
+                            return new IntegerValue(res.value);
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+                    }));
+
                     componentMembers.put("setupExperiment", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 5);

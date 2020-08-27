@@ -39,7 +39,6 @@ public class WebsocketDataWriter implements IDataListener {
     public void writeDataPoint(UUID uuid, double time, List<Value> dataPoint) {
 
         List<Object> data = new Vector<>();
-        data.add(time);
 
         for (Value d : dataPoint) {
             if (d instanceof IntegerValue) {
@@ -49,7 +48,7 @@ public class WebsocketDataWriter implements IDataListener {
                 data.add(((RealValue) d).realValue());
             }
             if (d instanceof BooleanValue) {
-                data.add(Boolean.valueOf(((BooleanValue) d).getValue()));
+                data.add(Boolean.valueOf(((BooleanValue) d).getValue()) + "");
             }
         }
 

@@ -44,6 +44,15 @@ public class FullSpecTestPrettyPrint {
     public void test() throws Exception {
 
         File config = new File(directory, "config.json");
+        String s = "target/" + config.getAbsolutePath().substring(
+                config.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
+                        ("src" + "/test" + "/resources/").length());
+
+        File workingDir = new File(s.replace('/', File.separatorChar)).getParentFile();
+        if (!workingDir.exists()) {
+            workingDir.mkdirs();
+        }
+
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
 
@@ -65,8 +74,9 @@ public class FullSpecTestPrettyPrint {
             String sourceCode = PrettyPrinter.print(doc);
             System.out.println(sourceCode);
 
+
             ARootDocument reparsedDoc = MableSpecificationGenerator.parse(CharStreams.fromString(sourceCode));
-            new MableInterpreter(new DefaultExternalValueFactory()).execute(reparsedDoc);
+            new MableInterpreter(new DefaultExternalValueFactory(workingDir)).execute(reparsedDoc);
 
         }
 

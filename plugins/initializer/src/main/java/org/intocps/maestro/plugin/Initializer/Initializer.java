@@ -82,7 +82,7 @@ public class Initializer implements IMaestroExpansionPlugin {
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
             ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
-        logger.info("Unfolding: {}", declaredFunction.toString());
+        logger.debug("Unfolding: {}", declaredFunction.toString());
 
         verifyArguments(formalArguments, env);
         final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);

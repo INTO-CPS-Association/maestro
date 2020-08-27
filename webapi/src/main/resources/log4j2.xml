@@ -32,6 +32,21 @@
             <Appender-ref ref="Console" level="INFO"/>
         </Logger>
 
+        <Logger name="org.intocps.maestro.webapi.maestro2.interpreter.WebsocketValueConverter" level="OFF"
+                additivity="false">
+            <AppenderRef ref="Console" level="OFF"/>
+        </Logger>
+
+        <Logger name="org.reflections.Reflections" level="INFO"
+                additivity="false">
+            <AppenderRef ref="Console" level="INFO"/>
+        </Logger>
+
+        <Logger name="springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
 
         <Root level="DEBUG">
             <AppenderRef ref="Console"/>

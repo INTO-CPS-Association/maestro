@@ -71,6 +71,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.intocps.plugins</groupId>
+            <artifactId>debuglogging</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.intocps</groupId>
             <artifactId>interpreter</artifactId>
             <version>1.0.0-SNAPSHOT</version>
