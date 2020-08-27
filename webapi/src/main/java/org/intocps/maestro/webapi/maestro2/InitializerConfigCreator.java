@@ -28,7 +28,7 @@ public class InitializerConfigCreator {
         initPluginID.name = "Initializer";
         initPluginID.version = "0.0.0";
         initPluginConfig.identification = initPluginID;
-        initPluginConfig.config = mapper.valueToTree(initializerConfiguration).toString();
+        initPluginConfig.config = mapper.valueToTree(initializerConfiguration.configuration).toString();
         return initPluginConfig;
     }
 

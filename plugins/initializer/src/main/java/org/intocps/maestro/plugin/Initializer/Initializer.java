@@ -362,6 +362,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         if (root instanceof ArrayNode) {
             root = root.get(0);
         }
+
         JsonNode parameters = root.get("parameters");
         JsonNode verify = root.get("verifyAgainstProlog");
 

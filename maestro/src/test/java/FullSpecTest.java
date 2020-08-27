@@ -1,6 +1,7 @@
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -59,19 +60,17 @@ public class FullSpecTest {
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
-
-            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, UnitRelationship.of(new File(directory, "env.json")))
-                    .generate(getSpecificationFiles(), configStream);
+            UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
+            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, environment).generate(getSpecificationFiles(), configStream);
 
             long stopTime = System.nanoTime();
             Instant end = Instant.now();
 
-
+            DataStore.GetInstance().setSimulationEnvironment(environment);
             new MableInterpreter(new DefaultExternalValueFactory(workingDir)).execute(doc);
 
             System.out.println("Generated spec time: " + (stopTime - startTime) + " " + Duration.between(start, end));
         }
-
     }
 
     private List<File> getSpecificationFiles() {

@@ -13,9 +13,9 @@ public class MableInterpreter {
     final static Logger logger = LoggerFactory.getLogger(MableInterpreter.class);
     private final DefaultExternalValueFactory loadFactory;
 
+
     public MableInterpreter(DefaultExternalValueFactory loadFactory) {
         this.loadFactory = loadFactory;
-
     }
 
     public void execute(ARootDocument document) throws AnalysisException {

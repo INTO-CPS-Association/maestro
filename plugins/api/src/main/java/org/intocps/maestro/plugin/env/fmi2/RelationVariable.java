@@ -30,4 +30,17 @@ public class RelationVariable implements UnitRelationship.FrameworkVariableInfo 
     public String toString() {
         return instance + "." + scalarVariable;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof RelationVariable)) {
+            return false;
+        }
+
+        RelationVariable rv = (RelationVariable) o;
+        return rv.toString().equals(this.toString());
+    }
 }
