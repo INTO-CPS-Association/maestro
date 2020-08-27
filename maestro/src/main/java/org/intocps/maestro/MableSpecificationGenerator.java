@@ -65,7 +65,7 @@ public class MableSpecificationGenerator {
             Map<String, String> rawPluginJsonContext, Framework framework, List<String> importModules) {
         Collection<IMaestroExpansionPlugin> plugins = PluginFactory.getPlugins(IMaestroExpansionPlugin.class, framework);
 
-        plugins.forEach(p -> logger.info("Located plugins: {} - {}", p.getName(), p.getVersion()));
+        plugins.forEach(p -> logger.debug("Located plugins: {} - {}", p.getName(), p.getVersion()));
 
         Collection<IMaestroExpansionPlugin> pluginsToUnfold =
                 plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
@@ -182,7 +182,7 @@ public class MableSpecificationGenerator {
         }
 
 
-        logger.info("\tExternals {}",
+        logger.debug("Externals {}",
                 NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().map(m -> m.getMethodName().toString())
                         .collect(Collectors.joining(" , ", "[ ", " ]")));
 
@@ -201,7 +201,8 @@ public class MableSpecificationGenerator {
                         plugins.entrySet().stream().filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
 
                 if (pluginMatch.isPresent()) {
-                    logger.info("matched with {}- {}", pluginMatch.get().getKey().getName(), pluginMatch.get().getValue().keySet().iterator().next());
+                    logger.trace("matched with {}- {}", pluginMatch.get().getKey().getName(),
+                            pluginMatch.get().getValue().keySet().iterator().next());
                     pluginMatch.ifPresent(map -> {
                         map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getMethodName().toString());
@@ -327,7 +328,7 @@ public class MableSpecificationGenerator {
                 }
 
 
-                logger.info(ppPrint(unfoldedSimulationModule.toString()));
+                logger.trace(ppPrint(unfoldedSimulationModule.toString()));
                 ARootDocument processedDoc =
                         new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
@@ -394,7 +395,7 @@ public class MableSpecificationGenerator {
 
         Collection<IMaestroVerifier> verifiers = PluginFactory.getPlugins(IMaestroVerifier.class, framework);
 
-        verifiers.forEach(p -> logger.info("Loaded verifiers: {} - {}", p.getName(), p.getVersion()));
+        verifiers.forEach(p -> logger.debug("Loaded verifiers: {} - {}", p.getName(), p.getVersion()));
 
         return verifiers.stream().allMatch(verifier -> {
             logger.info("Verifying with {} - {}", verifier.getName(), verifier.getVersion());
