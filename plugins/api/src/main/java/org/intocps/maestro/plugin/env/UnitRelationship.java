@@ -334,6 +334,11 @@ public class UnitRelationship implements ISimulationEnvironment {
                 .flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
+    @Override
+    public EnvironmentMessage getEnvironmentMessage() {
+        return this.environmentMessage;
+    }
+
     /**
      * Finds all the relations for the given FMU Component LexIdentifiers
      *

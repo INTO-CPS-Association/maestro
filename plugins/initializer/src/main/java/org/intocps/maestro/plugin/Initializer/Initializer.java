@@ -361,6 +361,8 @@ public class Initializer implements IMaestroExpansionPlugin {
         //We are only interested in one configuration, so in case it is an array we take the first one.
         if (root instanceof ArrayNode) {
             root = root.get(0);
+        } else {
+            root = root.get("configuration");
         }
         JsonNode parameters = root.get("parameters");
         JsonNode verify = root.get("verifyAgainstProlog");

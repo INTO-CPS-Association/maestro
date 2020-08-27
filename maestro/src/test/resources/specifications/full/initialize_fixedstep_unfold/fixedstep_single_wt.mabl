@@ -24,9 +24,6 @@ expand initialize(components,START_TIME, END_TIME);
 
 expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
-//crtlInstance.terminate();
-//wtInstance.terminate();
-
 tankcontroller.freeInstance(crtlInstance);
 SingleWatertank.freeInstance(wtInstance);
 

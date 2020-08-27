@@ -346,12 +346,12 @@ public class Maestro2SimulationController {
         @JsonProperty("reportProgress")
         final Boolean reportProgress;
         @JsonProperty("liveLogInterval")
-        final Integer liveLogInterval;
+        final Double liveLogInterval;
 
         @JsonCreator
         public SimulateRequestBody(@JsonProperty("startTime") double startTime, @JsonProperty("endTime") double endTime,
                 @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("reportProgress") Boolean reportProgress,
-                @JsonProperty("liveLogInterval") Integer liveLogInterval) {
+                @JsonProperty("liveLogInterval") Double liveLogInterval) {
             this.startTime = startTime;
             this.endTime = endTime;
             this.logLevels = logLevels;

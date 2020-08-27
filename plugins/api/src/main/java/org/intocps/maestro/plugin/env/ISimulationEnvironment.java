@@ -35,6 +35,8 @@ public interface ISimulationEnvironment {
 
     Set<UnitRelationship.Relation> getRelations(List<LexIdentifier> identifiers);
 
+    EnvironmentMessage getEnvironmentMessage();
+
     /**
      * Returns information about the unit
      *

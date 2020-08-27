@@ -38,35 +38,39 @@ public class WebsocketDataWriter implements IDataListener {
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
-        List<String> hoi = calculateHeadersOfInterest(DataStore.GetInstance().getSimulationEnvironment());
+        ISimulationEnvironment environment = DataStore.GetInstance().getSimulationEnvironment();
+        List<String> hoi = calculateHeadersOfInterest(environment);
         List<Integer> ioi = DataListenerUtilities.indicesOfInterest(headers, hoi);
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);
+        wdwi.interval = environment.getEnvironmentMessage().liveLogInterval;
         this.instances.put(uuid, wdwi);
         this.webSocketConverter.configure(hoi);
     }
 
     @Override
     public void writeDataPoint(UUID uuid, double time, List<Value> dataPoint) {
+        WebsocketDataWriterInstance instance = instances.get(uuid);
+        if (instance.shallLog(time)) {
+            instance.updateNextReportTime();
+            List<Object> data = new Vector<>();
+            for (Integer i : instance.indicesOfInterest) {
+                Value d = dataPoint.get(i);
 
-        List<Object> data = new Vector<>();
-        for (Integer i : instances.get(uuid).indicesOfInterest) {
-            Value d = dataPoint.get(i);
+                if (d instanceof IntegerValue) {
+                    data.add(((IntegerValue) d).intValue());
+                }
+                if (d instanceof RealValue) {
+                    data.add(((RealValue) d).realValue());
+                }
+                if (d instanceof BooleanValue) {
+                    data.add(Boolean.valueOf(((BooleanValue) d).getValue()) + "");
+                }
+            }
 
-            if (d instanceof IntegerValue) {
-                data.add(((IntegerValue) d).intValue());
-            }
-            if (d instanceof RealValue) {
-                data.add(((RealValue) d).realValue());
-            }
-            if (d instanceof BooleanValue) {
-                data.add(Boolean.valueOf(((BooleanValue) d).getValue()) + "");
-            }
+            this.webSocketConverter.update(time, data);
+            this.webSocketConverter.send();
         }
-
-        this.webSocketConverter.update(time, data);
-        this.webSocketConverter.send();
     }
-
 
     @Override
     public void close() {
@@ -75,17 +79,27 @@ public class WebsocketDataWriter implements IDataListener {
         } catch (IOException e) {
             throw new InterpreterException(e);
         }
-
     }
 
     static class WebsocketDataWriterInstance {
         public final List<Integer> indicesOfInterest;
         public final List<String> headersOfInterest;
+        public double nextReportTime = 0.0;
+        public Double interval = 0.1;
 
         WebsocketDataWriterInstance(List<String> headersOfInterest, List<Integer> indicesOfInterest) {
             this.headersOfInterest = headersOfInterest;
             this.indicesOfInterest = indicesOfInterest;
-
         }
+
+        public Boolean shallLog(Double time) {
+            return time >= nextReportTime;
+        }
+
+        public void updateNextReportTime() {
+            this.nextReportTime += this.interval;
+        }
+
+
     }
 }
