@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -221,10 +223,11 @@ public class Maestro2SimulationController {
         throw new Exception("internal error");
     }
 
-    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST)
-    public StatusModel simulate(@PathVariable String sessionId, @RequestBody String body1) throws Exception {
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-        SimulateRequestBody body = mapper.readValue(body1, SimulateRequestBody.class);
+
+    @ApiOperation(value = "This request begins the co-simulation")
+    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"})
+    public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
+        //        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
         Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
@@ -337,6 +340,7 @@ public class Maestro2SimulationController {
 
 
     public static class SimulateRequestBody {
+        @ApiModelProperty(value = "The start time of the co-simulation")
         @JsonProperty("startTime")
         final double startTime;
         @JsonProperty("endTime")

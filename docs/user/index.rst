@@ -12,4 +12,5 @@ Maestro2 user documentation
    :caption: Table of Contents:
 
    overview
+   web-api
 
