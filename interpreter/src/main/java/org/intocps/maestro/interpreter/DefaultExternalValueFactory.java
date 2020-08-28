@@ -24,6 +24,7 @@ import java.util.function.Function;
 public class DefaultExternalValueFactory implements IExternalValueFactory {
     static final String DEFAULT_CSV_FILENAME = "outputs.csv";
     protected final String dataWriterInstantiaterName = "DataWriter";
+    protected final String mathInstantiaterName = "Math";
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
 
     public DefaultExternalValueFactory() {
@@ -48,6 +49,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(
                         workingDirectory == null ? new File(DEFAULT_CSV_FILENAME) : new File(workingDirectory, DEFAULT_CSV_FILENAME)))));
             });
+            put(mathInstantiaterName, args -> Either.right(new MathValue()));
         }};
     }
 
