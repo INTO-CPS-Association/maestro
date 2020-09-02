@@ -6,6 +6,7 @@ import Initializer;
 real START_TIME = 10.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.1;
+Math math = load("Math"):
 FMI2 controllerFMU = load("FMI2", "{aba0e9f3-a9f4-46bc-a84d-eac67ba72cbf}", "src/test/resources/three_tank/WaterTankController_Standalone.fmu");
 FMI2 tank1FMU = load("FMI2", "{dcd729ec-423a-4a0d-8030-4c42a840abba}", "src/test/resources/three_tank/threewatertank1.fmu");
 FMI2 tank2FMU = load("FMI2", "{25941611-1350-4ca2-8fe8-85d9193c14fd}", "src/test/resources/three_tank/threewatertank2.fmu");

@@ -54,6 +54,9 @@ public class StatementGeneratorContainer {
 
     public PExp startTime;
     public PExp endTime;
+    public double absoluteTolerance;
+    public double relativeTolerance;
+
     /**
      * <code>instancesLookupDependencies</code> is set to true the co-simulatino enters the stage where
      * dependencies are to be looked up. It is detected by the first "get".
@@ -140,9 +143,7 @@ public class StatementGeneratorContainer {
 
         statements
                 .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
-        LexIdentifier convergenceCriteria = new LexIdentifier("ConvergenceCriteria", null);
-        statements.add(newALocalVariableStm(
-                newAVariableDeclaration(convergenceCriteria, newARealNumericPrimitiveType(), newAExpInitializer(newARealLiteralExp(1.0)))));
+
         List<PStm> loopStmts = new Vector<>();
 
         LexIdentifier doesConverge = new LexIdentifier("DoesConverge", null);
@@ -187,9 +188,8 @@ public class StatementGeneratorContainer {
                 }
             } else {
                 try {
-                    LoopStatements
-                            .add(setValueOnPortStm(variable.instance, variable.scalarVariable.getType().type, variable.scalarVariable, scalarValueIndices,
-                                    env));
+                    LoopStatements.add(setValueOnPortStm(variable.instance, variable.scalarVariable.getType().type, variable.scalarVariable,
+                            scalarValueIndices, env));
                 } catch (ExpandException e) {
                     e.printStackTrace();
                 }
@@ -235,17 +235,17 @@ public class StatementGeneratorContainer {
     }
 
     private List<PStm> UpdateReferenceArray(List<ModelDescription.ScalarVariable> outputPorts) {
-        List<PStm> updateStms = new Vector<>();
+        List<PStm> updateStmts = new Vector<>();
         outputPorts.forEach(o -> {
             var referenceValue = convergenceRefArray.get(o);
             var currentValue = loopValueArray.get(o);
-            updateStms.add(newAAssignmentStm(newAIdentifierStateDesignator(referenceValue), newAIdentifierExp(currentValue)));
+            updateStmts.add(newAAssignmentStm(newAIdentifierStateDesignator(referenceValue), newAIdentifierExp(currentValue)));
         });
-        return updateStms;
+        return updateStmts;
     }
 
     //This method should check if all output of the Fixed Point iteration have stabilized/converged
-    private List<PStm> CheckLoopConvergence(List<ModelDescription.ScalarVariable> outputPorts, int sccNumber,  LexIdentifier doesConverge) {
+    private List<PStm> CheckLoopConvergence(List<ModelDescription.ScalarVariable> outputPorts, int sccNumber, LexIdentifier doesConverge) {
         List<PStm> result = new Vector<>();
 
         outputPorts.forEach(o -> {
@@ -256,16 +256,38 @@ public class StatementGeneratorContainer {
 
             var referenceValue = convergenceRefArray.get(o);
             var currentValue = loopValueArray.get(o);
-            //TODO look at this - how to compare to arrays
+            //find number of places in array
+            var arraySize = newAIntLiteralExp(5);
 
             //convergenceLoop.add(newIf(isClose(), null, newAAssignmentStm(newAIdentifierStateDesignator(doesConverge), newABoolLiteralExp(false)));
             convergenceLoop.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) index.clone()),
                     newPlusExp(newAIdentifierExp((LexIdentifier) index.clone()), newAIntLiteralExp(1))));
 
-            //find number of places in array
-            var arraySize = newAIntLiteralExp(5);
-            result.add(newWhile(newALessEqualBinaryExp(newAIdentifierExp(index), arraySize), newABlockStm(convergenceLoop)));
-        }); return result;
+            convergenceLoop.add(newIf(
+                    newACallExp(newAIdentifierExp(createLexIdentifier.apply("Math")), (LexIdentifier) createLexIdentifier.apply("isClose").clone(),
+                            new ArrayList<>(Arrays.asList(newAArrayIndexExp(newAIdentifierExp(currentValue),
+                                    Collections.singletonList(newAUIntLiteralExp((long) index.clone()))),
+                                    newAArrayIndexExp(newAIdentifierExp(referenceValue),
+                                            Collections.singletonList(newAUIntLiteralExp((long) index.clone()))),
+                                    newARealLiteralExp(this.absoluteTolerance), newARealLiteralExp(this.relativeTolerance)))), null,
+                    newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) doesConverge.clone()), newABoolLiteralExp(false))));
+
+            convergenceLoop.add(newIf(newAnd(newALessEqualBinaryExp(arraySize, newAIdentifierExp(index)), newNot(newAIdentifierExp(doesConverge))),
+                    newABlockStm(
+                            Arrays.asList(
+                                    //newAAssignmentStm();
+                                    newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                            Arrays.asList(newAIntLiteralExp(4),
+                                    newAStringLiteralExp("The initialization of the system was not possible since loop " + "is not converging")))))),
+                    null));
+
+
+            result.add(newWhile(newAnd(newALessEqualBinaryExp(newAIdentifierExp(index), arraySize), newNot(newAIdentifierExp(doesConverge))),
+                    newABlockStm(convergenceLoop)));
+
+        });
+
+        return result;
     }
 
     public void enterInitializationMode(String instanceName) {
@@ -278,12 +300,15 @@ public class StatementGeneratorContainer {
     public void setReals(String instanceName, long[] longs, double[] doubles) {
         statements.add(setRealsStm(instanceName, longs, doubles));
     }
+
     public void setBooleans(String instanceName, long[] longs, boolean[] booleans) {
         statements.add(setBooleansStm(instanceName, longs, booleans));
     }
+
     public void setIntegers(String instanceName, long[] longs, int[] ints) {
         statements.add(setIntegersStm(instanceName, longs, ints));
     }
+
     public void setStrings(String instanceName, long[] longs, String[] strings) {
         statements.add(setStringsStm(instanceName, longs, strings));
     }

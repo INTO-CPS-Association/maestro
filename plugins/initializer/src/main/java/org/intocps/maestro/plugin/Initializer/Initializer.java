@@ -94,6 +94,9 @@ public class Initializer implements IMaestroExpansionPlugin {
         sc.endTime = formalArguments.get(2).clone();
         this.config = (Config) config;
         this.modelParameters = this.config.getModelParameters();
+        sc.absoluteTolerance = this.config.absoluteTolerance;
+        sc.relativeTolerance = this.config.relativeTolerance;
+
 
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
@@ -154,8 +157,8 @@ public class Initializer implements IMaestroExpansionPlugin {
                 }
             } else if(this.config.Stabilisation && variables.size() > 1){
                 //Algebraic loop - specially initialization strategy should be taken.
-                initializeUsingFixedPoint(variables, sc, env, sccNumber++);
-            }else if(!this.config.Stabilisation && variables.size() > 1)){
+                initializeUsingFixedPoint((List<Variable>) variables, sc, env, sccNumber++);
+            }else if(!this.config.Stabilisation && variables.size() > 1){
                 throw new ExpandException("The co-simulation scenario contains loops, but the initialization is not configured to handle these " +
                         "scenarios");
             }
@@ -348,10 +351,12 @@ public class Initializer implements IMaestroExpansionPlugin {
         JsonNode verify = root.get("verifyAgainstProlog");
         JsonNode stabilisation = root.get("stabilisation");
         JsonNode fixedPointIteration = root.get("fixedPointIteration");
+        JsonNode absoluteTolerance = root.get("absoluteTolerance");
+        JsonNode relativeTolerance = root.get("relativeTolerance");
 
         Config conf = null;
         try {
-            conf = new Config(parameters, verify, stabilisation, fixedPointIteration);
+            conf = new Config(parameters, verify, stabilisation, fixedPointIteration, absoluteTolerance, relativeTolerance);
         } catch (InvalidVariableStringException e) {
             e.printStackTrace();
         }
@@ -364,8 +369,12 @@ public class Initializer implements IMaestroExpansionPlugin {
         private final boolean verifyAgainstProlog;
         public final boolean Stabilisation;
         private final int maxIterations;
+        private final double absoluteTolerance;
+        private final double relativeTolerance;
 
-        public Config(JsonNode parameters, JsonNode verify, JsonNode stabilisation, JsonNode fixedPointIteration) throws InvalidVariableStringException {
+
+        public Config(JsonNode parameters, JsonNode verify, JsonNode stabilisation, JsonNode fixedPointIteration, JsonNode absoluteTolerance,
+                JsonNode relativeTolerance) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
@@ -386,6 +395,18 @@ public class Initializer implements IMaestroExpansionPlugin {
                 maxIterations = 5;
             } else {
                 maxIterations = fixedPointIteration.asInt(5);
+            }
+
+            if (absoluteTolerance == null) {
+                this.absoluteTolerance = 0.2;
+            } else {
+                this.absoluteTolerance = absoluteTolerance.asDouble(0.2);
+            }
+
+            if (relativeTolerance == null) {
+                this.relativeTolerance = 0.1;
+            } else {
+                this.relativeTolerance = relativeTolerance.asDouble(0.1);
             }
         }
 
