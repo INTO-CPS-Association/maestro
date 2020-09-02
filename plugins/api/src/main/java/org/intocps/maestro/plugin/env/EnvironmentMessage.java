@@ -15,6 +15,9 @@ import java.util.Map;
 public class EnvironmentMessage {
     public Map<String, String> fmus;
     public Map<String, List<String>> connections;
+    public Map<String, List<String>> logVariables;
+    public Map<String, List<String>> livestream;
+    public Double liveLogInterval;
 
     @JsonIgnore
     public Map<String, URI> getFmuFiles() throws Exception {
@@ -29,7 +32,17 @@ public class EnvironmentMessage {
             }
         }
 
+
         return files;
+    }
+
+    @JsonIgnore
+    public Double getLivelogInterval() {
+        if (this.liveLogInterval != null) {
+            return this.liveLogInterval;
+        } else {
+            return 0.1;
+        }
     }
 
 }

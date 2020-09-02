@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+
 public class RelationVariable implements UnitRelationship.FrameworkVariableInfo {
     public final ModelDescription.ScalarVariable scalarVariable;
     // instance is necessary because:
@@ -28,5 +29,18 @@ public class RelationVariable implements UnitRelationship.FrameworkVariableInfo 
     @Override
     public String toString() {
         return instance + "." + scalarVariable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof RelationVariable)) {
+            return false;
+        }
+
+        RelationVariable rv = (RelationVariable) o;
+        return rv.toString().equals(this.toString());
     }
 }

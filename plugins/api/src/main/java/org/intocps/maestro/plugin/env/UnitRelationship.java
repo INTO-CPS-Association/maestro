@@ -15,17 +15,22 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
 // The relations provided are related to the FMI Component and not to the individual input/output.
 public class UnitRelationship implements ISimulationEnvironment {
+    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
-    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
+    Map<String, List<RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
+    private EnvironmentMessage environmentMessage;
+    private Map<String, List<RelationVariable>> csvVariablesToLog = new HashMap<>();
+    private List<String> livestreamVariablesToLog = new ArrayList<>();
 
     public UnitRelationship(EnvironmentMessage msg) throws Exception {
         initialize(msg);
@@ -60,10 +65,48 @@ public class UnitRelationship implements ISimulationEnvironment {
         return list;
     }
 
+    private static Map<String, List<RelationVariable>> getEnvironmentVariablesToLog(Map<String, List<String>> variablesToLogMap,
+            Map<String, List<RelationVariable>> globalVariablesToLogForInstance) {
+
+        Function<String, String> extractInstance = x -> x.split("}.")[1];
+        Map<String, List<RelationVariable>> t = variablesToLogMap.entrySet().stream().collect(Collectors
+                .toMap(entry -> extractInstance.apply(entry.getKey()),
+                        entry -> globalVariablesToLogForInstance.get(extractInstance.apply(entry.getKey())).stream()
+                                .filter(x -> entry.getValue().contains(x.scalarVariable.name)).collect(Collectors.toList())));
+        return t;
+
+    }
+
+    @Override
+    public List<RelationVariable> getVariablesToLog(String instanceName) {
+        List<RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
+        if (vars == null) {
+            return new ArrayList<>();
+        } else {
+            return vars;
+        }
+    }
+
+    @Override
+    public List<RelationVariable> getCsvVariablesToLog(String instanceName) {
+        return this.csvVariablesToLog.getOrDefault(instanceName, new ArrayList<>());
+    }
+
+    @Override
+    public Map<String, List<String>> getLivestreamVariablesToLog() {
+        if (this.environmentMessage.livestream != null) {
+            return this.environmentMessage.livestream;
+        } else {
+            return new HashMap<>();
+        }
+
+    }
+
     public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
         return this.fmuKeyToModelDescription.entrySet();
     }
 
+    @Override
     public Set<Map.Entry<String, ComponentInfo>> getInstances() {
         return this.instanceNameToInstanceComponentInfo.entrySet();
     }
@@ -73,6 +116,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     }
 
     private void initialize(EnvironmentMessage msg) throws Exception {
+        this.environmentMessage = msg;
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
 
@@ -105,9 +149,13 @@ public class UnitRelationship implements ISimulationEnvironment {
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
                             .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
 
+            // Add the instance to the globalVariablesToLogForInstance map.
+            ArrayList<RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
+            this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
             for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                 Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
+                globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
 
                 // dependantInputs are the inputs on which the current output depends on internally
                 Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
@@ -166,6 +214,50 @@ public class UnitRelationship implements ISimulationEnvironment {
                     instanceRelations.add(r);
                 }
             }
+
+            // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
+            HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
+            if (environmentMessage.logVariables != null) {
+                globalLogVariablesMaps.putAll(environmentMessage.logVariables);
+            }
+            if (environmentMessage.livestream != null) {
+                environmentMessage.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
+                    Set<String> set = new TreeSet<>(v1);
+                    set.addAll(v2);
+                    return new ArrayList<>(set);
+                }));
+            }
+
+
+            List<RelationVariable> variablesToLogForInstance = new ArrayList<>();
+            String logVariablesKey = instance.key + "." + instance.instanceName;
+            if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
+                for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
+                    variablesToLogForInstance.add(new RelationVariable(
+                            this.fmuKeyToModelDescription.get(instance.key).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst()
+                                    .get(), instanceLexIdentifier));
+
+
+                }
+                if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
+                    List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
+                    for (RelationVariable rv : variablesToLogForInstance) {
+                        if (existingRVs.contains(rv) == false) {
+                            existingRVs.add(rv);
+                        }
+                    }
+                } else {
+                    this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
+                }
+
+            }
+        }
+        if (this.environmentMessage.logVariables != null) {
+            this.csvVariablesToLog = getEnvironmentVariablesToLog(this.environmentMessage.logVariables, this.globalVariablesToLogForInstance);
+        }
+        if (this.environmentMessage.livestream != null) {
+            this.livestreamVariablesToLog = this.environmentMessage.livestream.entrySet().stream()
+                    .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
         }
     }
 
@@ -240,6 +332,11 @@ public class UnitRelationship implements ISimulationEnvironment {
          * then use the relation to set these*/
         return identifiers.stream().filter(id -> variableToRelations.containsKey(id)).map(lexId -> variableToRelations.get(lexId))
                 .flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    @Override
+    public EnvironmentMessage getEnvironmentMessage() {
+        return this.environmentMessage;
     }
 
     /**
