@@ -62,6 +62,7 @@ public class StatementGeneratorContainer {
      * dependencies are to be looked up. It is detected by the first "get".
      */
     private boolean instancesLookupDependencies = false;
+    public List<ModelParameter> modelParameters;
 
 
     private StatementGeneratorContainer() {
@@ -154,11 +155,13 @@ public class StatementGeneratorContainer {
         PerformLoopActions(loopVariables, env);
 
         //Check for convergence
-        CheckLoopConvergence(outputs, iterationMax);
+        CheckLoopConvergence(outputs, iterationMax, doesConverge);
 
         loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newALessEqualBinaryExp(newAIdentifierExp(start), newAIdentifierExp(end))),
                 //Break loop - not converging and maximum number of iterations run
-                newAAssignmentStm(), newABlockStm(UpdateReferenceArray(outputs))));
+                //newAAssignmentStm(),
+                null,
+                newABlockStm(UpdateReferenceArray(outputs))));
 
 
         loopStmts.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) start.clone()),
@@ -229,8 +232,8 @@ public class StatementGeneratorContainer {
         Arrays.fill(args, getDefaultArrayValue(variable.getType().type));
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(Arrays.asList(args));
-        LexIdentifier valueArray = createNewArrayAndAddToStm("Ref" + text + "Size" + variable.getValueReference(), null,
-                newAArrayType(FMITypeToMablType(variable.getType().type)), variable.getValueReference(), initializer);
+        LexIdentifier valueArray = createNewArrayAndAddToStm("Ref" + variable.getName() + "Size" + variable.getValueReference(), null,
+                newAArrayType(FMITypeToMablType(variable.getType().type)), initializer);
         return valueArray;
     }
 
@@ -588,7 +591,7 @@ public class StatementGeneratorContainer {
             newVal = sv.type.start;
         }
 
-        for (ModelParameter par : modelParameters) {
+        for (ModelParameter par : this.modelParameters) {
             if (par.variable.toString().equals(comp + "." + sv.name)) {
                 newVal = par.value;
                 par.isSet = true;

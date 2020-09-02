@@ -96,7 +96,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         this.modelParameters = this.config.getModelParameters();
         sc.absoluteTolerance = this.config.absoluteTolerance;
         sc.relativeTolerance = this.config.relativeTolerance;
-
+        sc.modelParameters = this.modelParameters;
 
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
