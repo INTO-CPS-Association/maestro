@@ -278,10 +278,11 @@ public class StatementGeneratorContainer {
             convergenceLoop.add(newIf(newAnd(newALessEqualBinaryExp(arraySize, newAIdentifierExp(index)), newNot(newAIdentifierExp(doesConverge))),
                     newABlockStm(
                             Arrays.asList(
-                                    //newAAssignmentStm();
+                                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")),
+                                            newABoolLiteralExp(false)),
                                     newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
                             Arrays.asList(newAIntLiteralExp(4),
-                                    newAStringLiteralExp("The initialization of the system was not possible since loop " + "is not converging")))))),
+                                    newAStringLiteralExp("The initialization of the system was not possible since loop is not converging")))))),
                     null));
 
 
