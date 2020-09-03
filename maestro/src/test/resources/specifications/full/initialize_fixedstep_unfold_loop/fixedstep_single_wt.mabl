@@ -10,8 +10,8 @@ real STEP_SIZE = 0.1;
 
 
 Math math = load("Math");
-FMI2 MassSpringDamper2 = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/mass_spring_damper/resources/MassSpringDamper2.fmu");
-FMI2 MassSpringDamper1 = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/mass_spring_damper/MassSpringDamper1fmu");
+FMI2 MassSpringDamper2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}", "src/test/resources/mass_spring_damper/MassSpringDamper2.fmu");
+FMI2 MassSpringDamper1 = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}",  "src/test/resources/mass_spring_damper/MassSpringDamper1.fmu");
 FMI2Component i1 = MassSpringDamper1.instantiate("i1", false, false);;
 FMI2Component i2 = MassSpringDamper2.instantiate("i2", false, false);;
 DataWriter dataWriter = load("DataWriter");
