@@ -620,7 +620,7 @@ public class StatementGeneratorContainer {
         // The array does not exist. Create it
         if (valueArray == null) {
             valueArray = createNewArrayAndAddToStm(type.name() + "ValueSize" + longs.length, getArrayMapOfType(type),
-                    newAArrayType(newARealNumericPrimitiveType(), longs.length), null);
+                    newAArrayType(FMITypeToMablType(type), longs.length), null);
         }
 
         // Create the valRefArray
@@ -630,7 +630,7 @@ public class StatementGeneratorContainer {
 
         result.add(createGetSVsStatement(instanceName, "get" + type.name(), longs, valueArray, valRefArray, statusVariable));
         // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, ModelDescription.Types.Integer));
+        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, type));
         return result;
     }
 
@@ -658,5 +658,9 @@ public class StatementGeneratorContainer {
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
         }
+    }
+
+    public void addStatements(List<PStm> statements) {
+        this.statements.addAll(statements);
     }
 }

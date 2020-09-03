@@ -239,8 +239,8 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         //All members of the same set has the same causality, type and comes from the same instance
         if (causality == ModelDescription.Causality.Output) {
-            //These statement should be added
-            sc.getValueStm(instance.getText(), null, scalarValueIndices, type);
+            var statements = sc.getValueStm(instance.getText(), null, scalarValueIndices, type);
+            sc.addStatements(statements);
             return;
         }
         setValueOnPort(sc, instance, type, scalarVariables, scalarValueIndices, env);
