@@ -95,16 +95,20 @@ exp
     | {notEqual}
     | {or}
     | {and}
+    | {divide}
+    | {multiply}
     ;
 
 #unary {-> package='org.intocps.maestro.ast'
   |  [exp]:exp }
   = {not}
+  | {minus}
+  | {plus}
   ;
 
 stateDesignator
     = {identifier} [name]:lex_identifier
-    | {array} [target]:stateDesignator [exp]:exp.#literal
+    | {array} [target]:stateDesignator [exp]:exp
     ;
 
 stm
