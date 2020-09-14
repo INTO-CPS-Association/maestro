@@ -191,7 +191,7 @@ public class StatementGeneratorContainer {
             } else {
                 try {
                     LoopStatements.addAll(setValueOnPortStm(variable.scalarVariable.instance, variable.scalarVariable.scalarVariable.getType().type,
-                            variable.scalarVariable.scalarVariable, scalarValueIndices, env));
+                            Collections.singletonList(variable.scalarVariable.scalarVariable), scalarValueIndices, env));
                 } catch (ExpandException e) {
                     e.printStackTrace();
                 }
@@ -201,26 +201,26 @@ public class StatementGeneratorContainer {
         return LoopStatements;
     }
 
-    private List<PStm> setValueOnPortStm(LexIdentifier comp, ModelDescription.Types type, ModelDescription.ScalarVariable variable,
+    public List<PStm> setValueOnPortStm(LexIdentifier comp, ModelDescription.Types type, List<ModelDescription.ScalarVariable> variables,
             long[] scalarValueIndices, ISimulationEnvironment env) throws ExpandException {
         ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
         ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
 
         if (type == ModelDescription.Types.Boolean) {
             return setBooleansStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).map(Boolean.class::cast)
+                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast)
                             .collect(BooleanUtils.TO_BOOLEAN_ARRAY));
         } else if (type == ModelDescription.Types.Real) {
             return setRealsStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString()))
+                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString()))
                             .toArray());
         } else if (type == ModelDescription.Types.Integer) {
             return setIntegersStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).mapToInt(o -> Integer.parseInt(o.toString()))
+                    Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString()))
                             .toArray());
         } else if (type == ModelDescription.Types.String) {
             return setStringsStm(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(GetValues(Collections.singletonList(variable), modelInstances)).map(o -> o.toString()).toArray());
+                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
         }
@@ -313,7 +313,7 @@ public class StatementGeneratorContainer {
         }
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        var arType = MableAstFactory.newAArrayType(FMITypeToMablType(type));
+        var arType = MableAstFactory.newAArrayType(FMITypeToMablType(type), args.size());
         LexIdentifier lexID = createLexIdentifier.apply(arrayName);
         PStm stm = newALocalVariableStm(newAVariableDeclaration(lexID, arType, initializer));
         statements.add(stm);

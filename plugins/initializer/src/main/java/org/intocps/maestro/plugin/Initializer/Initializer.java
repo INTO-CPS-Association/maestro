@@ -10,7 +10,6 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
-import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
@@ -110,7 +109,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         List<Set<UnitRelationship.Variable>> instantiationOrder = topologicalPlugin.FindInstantiationOrderStrongComponents(relations);
 
         //Set variables for all components in IniPhase
-        SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
+        statements.addAll(SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase()));
 
         if (this.config.verifyAgainstProlog && !initializationPrologQuery
                 .initializationOrderIsValid(instantiationOrder.stream().flatMap(Collection::stream).collect(Collectors.toList()), relations)) {
@@ -257,14 +256,15 @@ public class Initializer implements IMaestroExpansionPlugin {
             var statements = sc.getValueStm(instance.getText(), null, scalarValueIndices, type);
             stms.addAll(statements);
         } else {
-            stms.addAll(setValueOnPort(sc, instance, type, scalarVariables, scalarValueIndices, env));
+            stms.addAll(sc.setValueOnPortStm(instance, type, scalarVariables, scalarValueIndices, env));
         }
         return stms;
     }
 
 
-    private void SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
+    private List<PStm> SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
             Predicate<ModelDescription.ScalarVariable> predicate) {
+        List<PStm> stms = new Vector<>();
         knownComponentNames.forEach(comp -> {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
@@ -274,7 +274,7 @@ public class Initializer implements IMaestroExpansionPlugin {
                     variablesToInitialize.forEach((type, variables) -> {
 
                         try {
-                            setValueOnPort(sc, comp, type, variables, GetValueRefIndices(variables), env);
+                            stms.addAll(sc.setValueOnPortStm(comp, type, variables, GetValueRefIndices(variables), env));
                         } catch (ExpandException e) {
                             e.printStackTrace();
                         }
@@ -284,34 +284,11 @@ public class Initializer implements IMaestroExpansionPlugin {
                 logger.error(e.getMessage());
             }
         });
+        return stms;
     }
 
     private long[] GetValueRefIndices(List<ModelDescription.ScalarVariable> variables) {
         return variables.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
-    }
-
-    private List<PStm> setValueOnPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) throws ExpandException {
-        ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
-        ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
-        List<PStm> stm = new Vector<>();
-        if (type == ModelDescription.Types.Boolean) {
-            stm.addAll(sc.setBooleansStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(sc.GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY)));
-        } else if (type == ModelDescription.Types.Real) {
-            stm.addAll(sc.setRealsStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(sc.GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray()));
-        } else if (type == ModelDescription.Types.Integer) {
-            stm.addAll(sc.setIntegersStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(sc.GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray()));
-        } else if (type == ModelDescription.Types.String) {
-            stm.addAll(sc.setStringsStm(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(sc.GetValues(variables, modelInstances)).map(o -> o.toString()).toArray()));
-        } else {
-            throw new ExpandException("Unrecognised type: " + type.name());
-        }
-
-        return stm;
     }
 
     private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws ExpandException {
