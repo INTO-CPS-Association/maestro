@@ -131,7 +131,9 @@ public class StatementGeneratorContainer {
                 .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
-        var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output)
+        var outputs =
+                loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output
+                        && o.scalarVariable.scalarVariable.getType().type == ModelDescription.Types.Real)
                 .collect(Collectors.toList());
 
         for (UnitRelationship.Variable output : outputs) {
@@ -143,7 +145,6 @@ public class StatementGeneratorContainer {
             convergenceRefArray.put(output, lexIdentifier);
         }
 
-
         LexIdentifier doesConverge = new LexIdentifier("DoesConverge", null);
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(doesConverge, newABoleanPrimitiveType(), newAExpInitializer(newABoolLiteralExp(true)))));
@@ -152,9 +153,9 @@ public class StatementGeneratorContainer {
         loopStmts.addAll(PerformLoopActions(loopVariables, env));
 
         //Check for convergence
-        loopStmts.addAll(CheckLoopConvergence(outputs, iterationMax, doesConverge));
+        loopStmts.addAll(CheckLoopConvergence(outputs, doesConverge));
 
-        loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newALessEqualBinaryExp(newAIdentifierExp(start), newAIdentifierExp(end))),
+        loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newEqual(newAIdentifierExp(start), newAIdentifierExp(end))),
                 newABlockStm(Arrays.asList(
                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)),
                         newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"), Arrays.asList(newAIntLiteralExp(4),
@@ -162,6 +163,7 @@ public class StatementGeneratorContainer {
 
         loopStmts.addAll(UpdateReferenceArray(outputs));
 
+        //Perform next iteration
         loopStmts.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) start.clone()),
                 newPlusExp(newAIdentifierExp((LexIdentifier) start.clone()), newAIntLiteralExp(1))));
 
@@ -241,24 +243,19 @@ public class StatementGeneratorContainer {
         outputPorts.forEach(o -> {
             var referenceValue = convergenceRefArray.get(o);
             var currentValue = loopValueArray.get(o);
-            updateStmts.add(newAAssignmentStm(newAIdentifierStateDesignator(referenceValue), newAIdentifierExp(currentValue)));
+            //TODO
+            //updateStmts.add(newAAssignmentStm((referenceValue), newAIdentifierExp(currentValue));
         });
         return updateStmts;
     }
 
     //This method should check if all output of the Fixed Point iteration have stabilized/converged
-    private List<PStm> CheckLoopConvergence(List<UnitRelationship.Variable> outputPorts, int sccNumber, LexIdentifier doesConverge) {
+    private List<PStm> CheckLoopConvergence(List<UnitRelationship.Variable> outputPorts, LexIdentifier doesConverge) {
+        LexIdentifier index = newAIdentifier("index");
         List<PStm> result = new Vector<>();
-        LexIdentifier index = newAIdentifier("index" + sccNumber);
         result.add(newALocalVariableStm(newAVariableDeclaration(index, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
-        AtomicBoolean isFirst = new AtomicBoolean(true);
         outputPorts.forEach(o -> {
             List<PStm> convergenceLoop = new Vector<>();
-            if (!isFirst.get()) {
-                convergenceLoop.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) index.clone()), newAIntLiteralExp(0)));
-            }
-            isFirst.set(false);
-
             var referenceValue = convergenceRefArray.get(o);
             var currentValue = loopValueArray.get(o);
             //find number of places in array

@@ -85,7 +85,7 @@ public class Initializer implements IMaestroExpansionPlugin {
 
         verifyArguments(formalArguments, env);
         final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);
-
+        StatementGeneratorContainer.reset();
         var sc = StatementGeneratorContainer.getInstance();
 
         setSCParameters(formalArguments, (Config) config, sc);
