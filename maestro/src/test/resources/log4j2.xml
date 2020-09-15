@@ -31,7 +31,10 @@
                 additivity="false">
             <Appender-ref ref="Console" level="INFO"/>
         </Logger>
-
+        <Logger name="org.reflections.Reflections" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
 
         <Root level="DEBUG">
             <AppenderRef ref="Console"/>

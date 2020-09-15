@@ -194,7 +194,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
                 //array deceleration
                 NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-                val = new ArrayValue<>(IntStream.range(0, size.intValue()).mapToObj(i -> new UndefinedValue()).collect(Collectors.toList()));
+                val = new ArrayValue<>(
+                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
             }
 
             question.put(node.getName(), new UpdatableValue(val));
@@ -303,7 +304,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             }
         } catch (BreakException e) {
             //loop stopped
-            e.printStackTrace();
+            logger.trace("Loop stopped:" + node);
         }
         return new VoidValue();
 

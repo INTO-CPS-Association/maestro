@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class MableAstFactory {
     public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
@@ -190,8 +192,12 @@ public class MableAstFactory {
 
     public static ABlockStm newABlockStm(List<? extends PStm> statements) {
         ABlockStm stm = new ABlockStm();
-        stm.setBody(statements);
+        stm.setBody(statements.stream().filter(Objects::nonNull).collect(Collectors.toList()));
         return stm;
+    }
+
+    public static ABlockStm newABlockStm(PStm... statements) {
+        return newABlockStm(Arrays.asList(statements));
     }
 
     public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name, List<? extends AFormalParameter> arguments, PType returnType) {
@@ -313,7 +319,7 @@ public class MableAstFactory {
         return newAArrayType(arrayType, null);
     }
 
-    public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, SLiteralExp exp) {
+    public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, PExp exp) {
         AArrayStateDesignator arrayStateDesignator = new AArrayStateDesignator();
         arrayStateDesignator.setExp(exp);
         arrayStateDesignator.setTarget(target);
