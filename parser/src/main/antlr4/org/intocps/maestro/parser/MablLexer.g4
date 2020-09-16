@@ -15,8 +15,6 @@ WHILE:          'while';
 ELSE:               'else';
 IF:             'if';
 MODULE   :           'module';
-LOAD   :           'load';
-UNLOAD   :           'unload';
 EXPAND:           'expand';
 IMPORT:           'import';
 SIMULATION:         'simulation';

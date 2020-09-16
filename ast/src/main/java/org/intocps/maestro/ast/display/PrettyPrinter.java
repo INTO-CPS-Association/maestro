@@ -18,6 +18,19 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         return printer.sb.toString();
     }
 
+    public static String printLineNumbers(INode node) throws AnalysisException {
+        PrettyPrinter printer = new PrettyPrinter();
+        node.apply(printer, 0);
+        int lineNumber = 0;
+        StringBuilder sb = new StringBuilder();
+        int decimals = 3;
+        for (String line : printer.sb.toString().split("\n")) {
+            sb.append(String.format("%1$" + decimals + "s", (lineNumber++) + "  ")).append(line).append("\n");
+
+        }
+        return sb.toString();
+    }
+
     static String indent(int indentionCount) {
         return IntStream.range(0, indentionCount).mapToObj(i -> "\t").collect(Collectors.joining());
     }
