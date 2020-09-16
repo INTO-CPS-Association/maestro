@@ -39,20 +39,13 @@ block
     : '{' statement* '}'
     ;
 
-//blockStatement
-//    : localVariableDecleration ';'
-//    | statement
-//    ;
-
 statement
     : blockLabel=block                                          #blockStm
     | assignment                                                #assignmentStm
     |  var=variableDeclarator ';'                               #localVariable
     | IF parExpression then=statement (ELSE el=statement)?      #if
- //   | FOR '(' forControl ')' statement
     | WHILE parExpression statement                             #while
     | statementExpression=expression  ';'                       #expressionStatement
-//    | EXTERNAL methodCall  ';'                                  #methodExternalCallStm
     | SEMI                                                      #semi
     | OBSERVABLE                                                #observable
     | BREAK                                                     #break
@@ -77,7 +70,6 @@ expression
     | expression '.'
         ( IDENTIFIER
         | methodCall)                                   #dotPrefixExp
-//    | fieldOrIdentifier                                 #fieldOrIdExp
     | array=expression LBRACK index=expression  RBRACK  #arrayIndex
     | methodCall                                        #plainMetodExp
     |  <assoc=right> op=('+'|'-') expression            #unaryExp
@@ -97,14 +89,6 @@ expression
     | left=expression   '&&' right=expression           #binaryExp
     | left=expression   '||' right=expression           #binaryExp
     ;
-
-
-
-//fieldOrIdentifier
-//    : IDENTIFIER                                        #identifier
-//    | array=IDENTIFIER LBRACK index=expression  RBRACK  #arrayIndex
-//    ;
-
 
 expressionList
     : expression (',' expression)*
