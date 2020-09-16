@@ -6,11 +6,10 @@ import org.intocps.maestro.interpreter.values.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+// See the related file "DerivativeEstimator.mabl" for the interface
 public class DerivativeEstimatorValue extends ExternalModuleValue {
-    HashMap<UUID, DerivativeEstimatorInstance> instances = new HashMap<>();
 
     public DerivativeEstimatorValue() {
         super(createMembers(), null);
@@ -18,6 +17,7 @@ public class DerivativeEstimatorValue extends ExternalModuleValue {
 
     private static Map<String, Value> createMembers() {
         Map<String, Value> componentMembers = new HashMap<>();
+        // variablesOfInterest(String[] variables, int[] order, int[] provided, uInt size)
         componentMembers.put("variablesOfInterest", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
             fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
@@ -27,22 +27,12 @@ public class DerivativeEstimatorValue extends ExternalModuleValue {
             List<StringValue> variables = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
             List<IntegerValue> order = ValueExtractionUtilities.getArrayValue(fcargs.get(1), IntegerValue.class);
             List<IntegerValue> provided = ValueExtractionUtilities.getArrayValue(fcargs.get(2), IntegerValue.class);
-            IntegerValue size = ValueExtractionUtilities.getValue(fcargs.get(3), IntegerValue.class);
+            UnsignedIntegerValue size = ValueExtractionUtilities.getValue(fcargs.get(3), UnsignedIntegerValue.class);
 
             DerivativeEstimatorInstanceValue de =
                     DerivativeEstimatorInstanceValue.createDerivativeEstimatorInstanceValue(variables, order, provided, size);
 
             return de;
-        }));
-
-        componentMembers.put("calculateDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
-            fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
-
-            checkArgLength(fcargs, 4);
-
-            DerivativeEstimatorInstanceValue de = ValueExtractionUtilities.getValue(fcargs.get(0), DerivativeEstimatorInstanceValue.class);
-
-            return null;
         }));
 
         return componentMembers;

@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
+// See the related file "DerivativeEstimatorInstance.mabl" for the interface
 public class DerivativeEstimatorInstanceValue extends ExternalModuleValue {
 
     HashMap<Integer, DerivativesForVariable> derivatives;
-    int variablesCount;
+    long variablesCount;
 
-    public DerivativeEstimatorInstanceValue(int variablesCount_, HashMap<Integer, DerivativesForVariable> derivatives) {
+    public DerivativeEstimatorInstanceValue(long variablesCount_, HashMap<Integer, DerivativesForVariable> derivatives) {
         super(createMembers(variablesCount_, derivatives), null);
         this.variablesCount = variablesCount_;
         this.derivatives = derivatives;
@@ -28,8 +28,8 @@ public class DerivativeEstimatorInstanceValue extends ExternalModuleValue {
      * @param variablesCount
      */
     public static DerivativeEstimatorInstanceValue createDerivativeEstimatorInstanceValue(List<StringValue> variables, List<IntegerValue> orders,
-            List<IntegerValue> provided, IntegerValue variablesCount) {
-        int variablesCount_ = variablesCount.getValue();
+            List<IntegerValue> provided, UnsignedIntegerValue variablesCount) {
+        long variablesCount_ = variablesCount.getValue();
         HashMap<Integer, DerivativesForVariable> derivatives = new HashMap<>();
         for (int i = 0; i < variablesCount_; i++) {
             String s = variables.get(i).getValue();
@@ -41,7 +41,7 @@ public class DerivativeEstimatorInstanceValue extends ExternalModuleValue {
         return new DerivativeEstimatorInstanceValue(variablesCount_, derivatives);
     }
 
-    private static Map<String, Value> createMembers(int size, HashMap<Integer, DerivativesForVariable> derivatives) {
+    private static Map<String, Value> createMembers(long size, HashMap<Integer, DerivativesForVariable> derivatives) {
         Map<String, Value> componentMembers = new HashMap<>();
 
         // calculate(real time, real[] values, ref real[] derivativesOutput)
@@ -69,12 +69,11 @@ public class DerivativeEstimatorInstanceValue extends ExternalModuleValue {
 
                 // Extract values related to variable
                 int nextValuesIndex = valuesIndex + derivativesForVariable.sizeOfProvidedValues;
+
                 // provided has to be of size 3 for the estimator.
                 Double[] provided = values.subList(valuesIndex, nextValuesIndex).toArray(new Double[3]);
                 variableIndexToProvidedValues.put(variableIterator, provided);
                 derivativesForVariable.estimator.advance(provided, time);
-
-                double[] calculatedDerivatives = new double[derivativesForVariable.order];
 
                 // j-for loop is for retrieving derivatives
                 // k-for loop is for indexing them into calculatedDerivatives
