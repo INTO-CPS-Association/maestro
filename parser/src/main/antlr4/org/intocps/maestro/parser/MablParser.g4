@@ -121,7 +121,7 @@ typeType
 
 primitiveType
     : REAL              #realType
-    | UINT              #unitType
+    | UINT              #uintType
     | INT               #intType
     | STRING            #stringType
     | BOOL              #boolType

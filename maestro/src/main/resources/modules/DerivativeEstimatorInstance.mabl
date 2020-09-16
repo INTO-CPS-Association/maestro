@@ -1,0 +1,3 @@
+module DerivativeEstimatorInstance {
+    calculate(real time, real[] values, ref real[] derivativesOutput);
+}
