@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // See the related file "DerivativeEstimator.mabl" for the interface
-public class DerivativeEstimatorValue extends ExternalModuleValue {
+public class DerivativeEstimatorValue extends ModuleValue {
 
     public DerivativeEstimatorValue() {
-        super(createMembers(), null);
+        super(createMembers());
     }
 
     private static Map<String, Value> createMembers() {

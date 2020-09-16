@@ -5,10 +5,10 @@ import org.intocps.maestro.interpreter.values.*;
 
 import java.util.*;
 
-public class DataWriterValue extends ExternalModuleValue {
+public class DataWriterValue extends ModuleValue {
 
     public DataWriterValue(List<IDataListener> dataListeners) {
-        super(createMembers(dataListeners), null);
+        super(createMembers(dataListeners));
     }
 
     public static <T extends Value> List<T> getArrayValue(Value value, Class<T> clz) {

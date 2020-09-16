@@ -9,13 +9,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // See the related file "DerivativeEstimatorInstance.mabl" for the interface
-public class DerivativeEstimatorInstanceValue extends ExternalModuleValue {
+public class DerivativeEstimatorInstanceValue extends ModuleValue {
 
     HashMap<Integer, DerivativesForVariable> derivatives;
     long variablesCount;
 
     public DerivativeEstimatorInstanceValue(long variablesCount_, HashMap<Integer, DerivativesForVariable> derivatives) {
-        super(createMembers(variablesCount_, derivatives), null);
+        super(createMembers(variablesCount_, derivatives));
         this.variablesCount = variablesCount_;
         this.derivatives = derivatives;
     }
