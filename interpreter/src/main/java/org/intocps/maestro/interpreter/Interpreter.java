@@ -139,10 +139,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
                 if (arrayStateDesignator.getExp() == null) {
                     //replace array completly
-                    currentUpdatableValue.setValue(newValue);
+                    currentUpdatableValue.setValue(newValue.deref());
                 } else {
                     //in-place array update
-                    Value indexValue = arrayStateDesignator.getExp().apply(this, question);
+                    Value indexValue = arrayStateDesignator.getExp().apply(this, question).deref();
 
                     if (!(indexValue instanceof NumericValue)) {
                         throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
@@ -161,7 +161,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 throw new InterpreterException("Bad array designator: " + node.getTarget().toString());
             }
         } else {
-            currentUpdatableValue.setValue(newValue);
+            currentUpdatableValue.setValue(newValue.deref());
         }
 
 
