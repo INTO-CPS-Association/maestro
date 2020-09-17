@@ -23,6 +23,8 @@
         <module>fixedstep</module>
         <module>demo</module>
         <module>topologicalsorting</module>
+        <module>verificationsuite</module>
+        <module>prologverifier</module>
         <module>initializer</module>
         <module>debuglogging</module>
     </modules>
