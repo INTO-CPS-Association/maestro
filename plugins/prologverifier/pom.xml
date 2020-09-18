@@ -24,5 +24,10 @@
             <artifactId>JIProlog</artifactId>
             <version>4.1.6.1</version>
         </dependency>
+        <dependency>
+            <groupId>guru.nidi</groupId>
+            <artifactId>graphviz-java</artifactId>
+            <version>0.17.0</version>
+        </dependency>
     </dependencies>
 </project>
