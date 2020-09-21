@@ -1,6 +1,8 @@
 package org.intocps.maestro.plugin.prologverifier.graph;
 
 import guru.nidi.graphviz.attribute.Color;
+import guru.nidi.graphviz.attribute.LinkAttr;
+import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
@@ -11,8 +13,7 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static guru.nidi.graphviz.model.Factory.mutGraph;
-import static guru.nidi.graphviz.model.Factory.mutNode;
+import static guru.nidi.graphviz.model.Factory.*;
 
 public class GraphDrawer {
     private String getInstanceName(UnitRelationship.Variable o) {
@@ -30,6 +31,7 @@ public class GraphDrawer {
             if(rel.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal){
                 targets.forEach(t -> {
                     g.add(t.addLink(source));
+                    g.nodes().stream().filter(o -> o == t).forEach(o -> o.links().forEach(r -> r.attrs().add(Style.DASHED)));
                 });
             }else {
                 targets.forEach(t -> {
@@ -38,6 +40,7 @@ public class GraphDrawer {
             }
         }
 
-        Graphviz.fromGraph(g).height(200).render(Format.PNG).toFile(new File(String.format("example/%s.png", name)));
+
+        Graphviz.fromGraph(g).height(500).render(Format.PNG).toFile(new File(String.format("example/%s.png", name)));
     }
 }
