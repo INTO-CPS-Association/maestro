@@ -18,22 +18,22 @@
  	int exitInitializationMode();
 
     // state exchange
- 	int setReal(UInt[] vr, UInt nvr,real[] values);
- 	int getReal(UInt[] vr, UInt nvr, real[] values);
- 	int setInteger(UInt[] vr, UInt nvr,int[] values);
-    int getInteger(UInt[] vr, UInt nvr, int[] values);
-    int setBoolean(UInt[] vr, UInt nvr,bool[] values);
-    int getBoolean(UInt[] vr, UInt nvr, bool[] values);
-    int setString(UInt[] vr, UInt nvr,string[] values);
-    int getString(UInt[] vr, UInt nvr, string[] values);
+ 	int setReal(UInt[] vr, UInt nvr, ref real[] values);
+ 	int getReal(UInt[] vr, UInt nvr, ref real[] values);
+ 	int setInteger(UInt[] vr, UInt nvr, ref int[] values);
+    int getInteger(UInt[] vr, UInt nvr, ref int[] values);
+    int setBoolean(UInt[] vr, UInt nvr, ref bool[] values);
+    int getBoolean(UInt[] vr, UInt nvr, ref bool[] values);
+    int setString(UInt[] vr, UInt nvr, ref string[] values);
+    int getString(UInt[] vr, UInt nvr, ref string[] values);
 
     // derivatives
-    int setRealInputDerivatives(UInt[] scalarValueIndices, int[] order,	real[] derivatives);
+    int setRealInputDerivatives(UInt[] scalarValueIndices, int[] order, ref real[] derivatives);
     int getRealOutputDerivatives(long[] scalarValueIndices, int[] order, ref double[] derivatives);
-    int getDirectionalDerivative(long[] vUnknownRef,long[] vKnownRef, double[] dvKnown,ref double[] derivatives);
+    int getDirectionalDerivative(long[] vUnknownRef,long[] vKnownRef, double[] dvKnown, ref double[] derivatives);
 
     // logging
- 	int setDebugLogging(boolean loggingOn, string[] categories);
+ 	int setDebugLogging(boolean loggingOn, ref string[] categories);
 
     // status
     int getStatus(Fmi2StatusKind kind, ref int status);
@@ -44,7 +44,7 @@
 
     //state
     int getState(ref FmuState state);
-    int setState(FmuState state);
+    int setState(ref FmuState state);
     int freeState(ref FmuState state);
 
 }

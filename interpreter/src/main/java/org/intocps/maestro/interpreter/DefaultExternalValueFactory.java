@@ -75,6 +75,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             return new VoidValue();
         } else if (value instanceof DataWriterValue) {
             return new VoidValue();
+        } else if (value instanceof MathValue) {
+            return new VoidValue();
         }
 
         throw new InterpreterException("UnLoad of unknown type: " + value);

@@ -25,20 +25,20 @@ import java.util.stream.Collectors;
 
 
 @RunWith(Parameterized.class)
-public class FullSpecTestPrettyPrint {
+public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
 
     final File directory;
     private final String name;
 
-    public FullSpecTestPrettyPrint(String name, File directory) {
+    public FullSpecTestOnlinePrettyPrint(String name, File directory) {
         this.name = name;
         this.directory = directory;
     }
 
     @Parameterized.Parameters(name = "{index} {0}")
     public static Collection<Object[]> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
-                .map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "online").toFile().listFiles()))
+                .filter(n -> !n.getName().startsWith(".")).map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 
     @Test
@@ -70,6 +70,8 @@ public class FullSpecTestPrettyPrint {
             System.out.println("############################################################");
             System.out.println("##################### Pretty Print #########################");
             System.out.println("############################################################");
+
+            download(collectFmus(doc, true));
 
             String sourceCode = PrettyPrinter.print(doc);
             System.out.println(sourceCode);
