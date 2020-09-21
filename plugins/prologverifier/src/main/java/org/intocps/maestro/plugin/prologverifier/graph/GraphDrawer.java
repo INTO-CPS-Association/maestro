@@ -21,10 +21,21 @@ public class GraphDrawer {
 
     public void plotGraph(Set<UnitRelationship.Relation> relations, String name) throws IOException {
         MutableGraph g = mutGraph(name).setDirected(true);
-        for (UnitRelationship.Relation rel :
-                relations.stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toList())) {
-            var toNode = rel.getTargets().values().stream().map(o -> mutNode(getInstanceName(o))).collect(Collectors.toList());
-            g.add(mutNode(getInstanceName(rel.getSource())).add(Color.BLACK).addLink(toNode));
+        var connections =
+                relations.stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput).collect(Collectors.toList());
+        for (UnitRelationship.Relation rel : connections) {
+            var targets = rel.getTargets().values().stream().map(o -> mutNode(getInstanceName(o)).add(Color.BLACK)).collect(Collectors.toList());
+            var source = mutNode(getInstanceName(rel.getSource())).add(Color.BLACK);
+
+            if(rel.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal){
+                targets.forEach(t -> {
+                    g.add(t.addLink(source));
+                });
+            }else {
+                targets.forEach(t -> {
+                    g.add(source.addLink(t));
+                });
+            }
         }
 
         Graphviz.fromGraph(g).height(200).render(Format.PNG).toFile(new File(String.format("example/%s.png", name)));

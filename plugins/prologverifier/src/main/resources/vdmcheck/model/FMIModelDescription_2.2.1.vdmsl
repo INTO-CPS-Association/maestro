@@ -1,0 +1,384 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * 2.2.1 Definition of an FMU (fmiModelDescription)
+ */
+types
+	ModelAttributes ::
+		location					: Location
+		fmiVersion					: NormalizedString
+		modelName					: AnyString
+		guid						: NormalizedString
+		description					: [AnyString]
+		author						: [AnyString]
+		version						: [NormalizedString]
+		copyright					: [AnyString]
+		license						: [AnyString]
+		generationTool				: [NormalizedString]
+		generationDateAndTime		: [AnyString]
+		variableNamingConvention	: [<flat> | <structured>]
+		numberOfEventIndicators		: [nat];
+
+
+	-- XSD definition in section 2.2.1, p25
+	FMIModelDescription ::
+		-- The common model attributes
+		attributes			: ModelAttributes			-- XSD 2.2.1, p31
+
+		-- ModelExchange
+		modelExchange		: [ModelExchange]			-- XSD 3.3.1, p89
+
+		-- CoSimulation
+		coSimulation		: [CoSimulation ]			-- XSD 4.3.1, p109
+
+		-- Unit Definitions that are utilized in "ModelVariables"
+		unitDefinitions		: [seq1 of Unit]			-- XSD 2.2.2, p33
+
+		-- A global list of type definitions that are utilized in "ModelVariables"
+		typeDefinitions		: [set1 of SimpleType]		-- XSD 2.2.3, p38
+
+		-- Log categories
+		logCategories		: [seq1 of Category]		-- XSD 2.2.4, p42
+
+		-- Default experiment
+		defaultExperiment	: [DefaultExperiment]		-- XSD 2.2.5, p43
+
+		-- Vendor annotations
+		vendorAnnotations	: [seq1 of Tool]			-- XSD 2.2.6, p43
+
+		-- The central FMU data structure defining all variables of the FMU that
+		-- Are visible/accessible via the FMU functions.
+		modelVariables		: seq1 of ScalarVariable	-- XSD 2.2.7, p44
+
+		-- Defines the structure of the model. Especially, the ordered lists of
+		-- outputs, continuous-time states and initial unknowns (the unknowns
+		-- during Initialization Mode) are defined here. Furthermore, the
+		-- dependency of the unknowns from the knowns can be optionally
+		-- defined.
+		modelStructure		: ModelStructure;			-- XSD 2.2.8, p56
+
+functions
+	/**
+	 * Valid description attributes.
+	 */
+	isValidModelAttributes: ModelAttributes +> bool
+	isValidModelAttributes(attrs) ==
+		-- @OnFail("2.2.1 ModelAttribute fmiVersion should be 2.0")
+		( attrs.fmiVersion in set { "2.0" } );
+
+	/**
+	 * Invariant definition for FMIModelDescription
+	 */
+	isValidFMIModelDescription: FMIModelDescription +> bool
+	isValidFMIModelDescription(md) ==
+		-- First fill in effective values for model variables' missing attributes
+		let eModelVariables = effectiveScalarVariables(md) in
+		{
+			-- @OnFail("2.2.1 ModelAttributes invalid at line %s", md.attributes.location)
+			( isValidModelAttributes(md.attributes) ),
+
+			-- @OnFail("2.2.1 ModelExchange invalid at line %s", md.modelExchange.location)
+			( isValidModelExchange(md.modelExchange) ),
+
+			-- @OnFail("2.2.1 CoSimulation invalid at line %s", md.coSimulation.location)
+			( isValidCoSimulation(md.coSimulation) ),
+
+			-- @OnFail("2.2.1 UnitDefinitions invalid"))
+			( isValidUnitDefinitions(md.unitDefinitions) ),
+
+			-- @OnFail("2.2.1 TypeDefinitions invalid")
+			( isValidTypeDefinitions(md.typeDefinitions) ),
+
+			-- @OnFail("2.2.1 LogCategories invalid")
+			( isValidLogCategories(md.logCategories) ),
+
+			-- @OnFail("2.2.1 DefaultExperiment invalid at line %s", md.defaultExperiment.location)
+			( isValidDefaultExperiment(md.defaultExperiment) ),
+
+			-- @OnFail("2.2.1 VendorAnnotations invalid")
+			( isValidVendorAnnotations(md.vendorAnnotations) ),
+
+			-- @OnFail("2.2.1 ScalarVariables invalid")
+			( isValidScalarVariables(md.modelVariables) ),			-- NOTE: NOT effective variables!
+
+			-- @OnFail("2.2.1 Effective ScalarVariables invalid")
+			( isValidEffectiveVariables(eModelVariables) ),			-- NOTE: effective variables!
+
+			-- @OnFail("2.2.1 ScalarVariables typecheck against TypeDefinitions failed")
+			( typeCheck(eModelVariables, md.typeDefinitions) ),
+
+			-- @OnFail("2.2.1 ModelStructure invalid at line %s", md.modelStructure.location)
+			( isValidModelStructure(md.modelStructure) ),
+
+			-- @OnFail("2.2.1 Neither ModelExchange nor CoSimulation specified")
+			( md.modelExchange <> nil or md.coSimulation <> nil ),
+
+			(
+				md.attributes.variableNamingConvention = <structured> =>
+					dunion
+					{
+						{
+							-- @OnFail("2.2.9 Structured name %s invalid at line %s", sv.name, sv.location)
+							( isValidStructuredName(sv.name) ),
+
+							-- @OnFail("2.2.9 Name %s is not Real at line %s", sv.name, sv.location)
+							( sv.name(1, ..., 4) = "der(" => is_Real(sv.variable) )
+						}
+
+						| sv in seq eModelVariables
+					}
+					= {true}
+			),
+
+			(
+				md.typeDefinitions <> nil =>
+					{
+						/* @OnFail("2.2.3 TypeDefinition and ScalarVariable names overlap: %s at line %s",
+								simpleType.name, simpleType.location) */
+						( not exists sv in seq eModelVariables & sv.name = simpleType.name )
+
+						| simpleType in set md.typeDefinitions
+					} = {true}
+			),
+
+			(
+				md.typeDefinitions <> nil =>
+					{
+						is_RealType(std.type) =>
+							std.type.unit <> nil =>
+								/* @OnFail("2.2.3 SimpleType %s, Real unit %s not defined in UnitDefinitions at line %s",
+									std.name, std.type.unit, std.location) */
+								( md.unitDefinitions <> nil
+								  and exists u in seq md.unitDefinitions & u.name = std.type.unit )
+
+						| std in set md.typeDefinitions
+					} = {true}
+			),
+
+			(
+				{
+					sv.canHandleMultipleSetPerTimeInstant <> nil =>
+						/* @OnFail("2.2.7 ScalarVariable %s, canHandleMultipleSetPerTimeInstant invalid at line %s",
+							sv.name, sv.location) */
+						( md.modelExchange <> nil and sv.causality = <input> )
+
+					| sv in seq eModelVariables
+				} = {true}
+			),
+
+			(
+				{
+					is_Real(sv.variable) =>
+					{
+						/* @OnFail("2.2.7 ScalarVariable %s, Real unit must be defined for displayUnit %s at line %s",
+							sv.name, sv.variable.displayUnit, sv.location) */
+						( sv.variable.displayUnit <> nil => sv.variable.unit <> nil ),
+
+						sv.variable.unit <> nil =>
+							/* @OnFail("2.2.7 ScalarVariable %s, Real unit %s not defined in UnitDefinitions at line %s",
+								sv.name, sv.variable.unit, sv.location) */
+							( md.unitDefinitions <> nil
+							  and exists u in seq md.unitDefinitions & u.name = sv.variable.unit )
+					}
+					= {true}
+
+					| sv in seq eModelVariables
+				} = {true}
+			),
+
+			(
+				{
+					let sv = eModelVariables(svi) in
+						is_Real(sv.variable) and sv.variable.reinit <> nil =>
+						/* @OnFail("2.2.7 ScalarVariable %s, Real reinit for model exchange continuous time only at line %s",
+								sv.name, sv.location) */
+						( isContinuousTimeState(svi, eModelVariables) and md.modelExchange <> nil )
+
+					| svi in set inds eModelVariables
+				} = {true}
+			),
+
+			(
+				let outputIndexes = { svi | svi in set inds eModelVariables &
+					eModelVariables(svi).causality = <output> }
+				in
+					if outputIndexes <> {}
+					then
+						/* @OnFail("2.2.8 Output variables but no outputs declared at line %s",
+							md.modelStructure.location) */
+						( md.modelStructure.outputs <> nil )
+
+						and let structIndexes = { u.index | u in seq md.modelStructure.outputs } in
+						{
+							/* @OnFail("2.2.8 Outputs section does not match output variables at line %s",
+								md.modelStructure.location) */
+							( structIndexes = outputIndexes ),
+
+							/* @OnFail("2.2.8 Output indexes out of range at line %s",
+								md.modelStructure.location) */
+							( forall i in set structIndexes & i <= len eModelVariables )
+						} = {true}
+					else
+						/* @OnFail("2.2.8 Outputs should be omitted at line %s",
+							md.modelStructure.location) */
+						( md.modelStructure.outputs = nil )
+			),
+
+			-- ModelStructure derivative indexes must be valid and if the derivative has dependencies, then
+			-- it must be continuous. Note that SVs can have derivative set but not be listed here.
+			(
+				md.modelExchange <> nil
+				or (md.coSimulation <> nil and nilBool(md.coSimulation.providesDirectionalDerivative)) =>
+					md.modelStructure.derivatives <> nil =>
+					{
+						/* @OnFail("2.2.8 Derivative index out of range at line %s", u.location) */
+						( u.index <= len eModelVariables )
+
+						and let sv = eModelVariables(u.index) in
+						{
+							/* @OnFail("2.2.8 SV not a state derivative at line %s", u.location) */
+							( isStateDerivative(sv) ),
+
+							/* @OnFail("2.2.8 Derivative must be continuous at line %s", u.location) */
+							( u.dependencies <> nil => sv.variability = <continuous> )
+						}
+						= {true}
+
+						| u in seq md.modelStructure.derivatives
+					}
+					= {true}
+			),
+
+			-- InitalUnknowns must include all output (approx/calculated), calculatedParameters and 
+			-- all continuous-time states and derivatives that are approx/calculated.
+			-- And the list must be in ascending index order
+			(
+				let ctVars = continuousTimeStates(eModelVariables),
+					sdVars = stateDerivatives(eModelVariables),
+					initIndexes = { svi | svi in set inds eModelVariables &
+						let sv = eModelVariables(svi) in
+							(sv.causality = <output>
+								and sv.initial in set { <approx>, <calculated> })
+
+							or (sv.causality = <calculatedParameter>)
+
+							or (sv in set ctVars
+								and sv.initial in set { <approx>, <calculated> })
+
+							or (sv in set sdVars
+								and sv.initial in set { <approx>, <calculated> }) }
+				in
+					initIndexes <> {} =>
+						let ius = md.modelStructure.initialUnknowns in
+						{
+							-- @OnFail("2.2.8 InitialUnknowns must include: %s", initIndexes)
+							( ius <> nil ),
+
+							-- @OnFail("2.2.8 InitialUnknowns must include: %s", initIndexes)
+							( ius <> nil => { u.index | u in seq ius } subset initIndexes ),
+
+							-- @OnFail("2.2.8 InitialUnknowns are not sorted: %s", [ u.index | u in seq ius ])
+							( ius <> nil => 
+									forall i in set inds ius &
+										i = len ius or ius(i).index < ius(i+1).index )
+						} = {true}
+			)
+		} = {true};
+
+	/**
+	 * Check that all variables' declaredTypes are defined, that the variables' types match
+	 * the declared types.
+	 */
+	typeCheck: seq1 of ScalarVariable * [set1 of SimpleType] +> bool
+	typeCheck(variables, typedefs) ==
+		{
+			let dname = sv.variable.declaredType in
+				dname <> nil =>
+					let matchingTypes = { td | td in set nilSet[SimpleType](typedefs) & td.name = dname } in
+					{
+						/* @OnFail("2.2.3 Typedefs have multiple matching names: %s",
+							{ m.name | m in set matchingTypes } ) */
+						( matchingTypes <> {} => card matchingTypes = 1 ),
+
+						/* @OnFail("2.2.3 Declared type %s unknown at line %s",
+							sv.variable.declaredType, sv.location ) */
+						( card matchingTypes <> 0 ),
+
+						-- The match is has compatible values in the ScalarVariable
+						card matchingTypes = 1 => let { simpleType } = matchingTypes in
+							cases simpleType.type:
+								mk_RealType(-, -, -, -, min, max, -, -) ->
+									/* @OnFail("2.2.7 ScalarVariable %s min/max exceeds RealType %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( (min <> nil and sv.variable.min <> nil => min <= sv.variable.min)
+										and
+									  (max <> nil and sv.variable.max <> nil => max >= sv.variable.max) ),
+
+								mk_IntegerType(-, min, max) ->
+									/* @OnFail("2.2.7 ScalarVariable %s min/max exceeds IntegerType %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( (min <> nil and sv.variable.min <> nil => min <= sv.variable.min)
+										and
+									  (max <> nil and sv.variable.max <> nil => max >= sv.variable.max) ),
+
+								others -> true
+							end,
+
+						-- The match is the same type as the ScalarVariable type and for numerics,
+						card matchingTypes = 1 => let { simpleType } = matchingTypes in
+							cases simpleType.type:
+								mk_RealType(-, -, -, -, -, -, -, -) ->
+									/* @OnFail("2.2.7 ScalarVariable %s, RealType not referenced by Real variable %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( is_Real(sv.variable) ),
+
+								mk_IntegerType(-, -, -) ->
+									/* @OnFail("2.2.7 ScalarVariable %s, IntegerType not referenced by Integer variable %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( is_Integer(sv.variable) ),
+
+								mk_BooleanType() ->
+									/* @OnFail("2.2.7 ScalarVariable %s, BooleanType not referenced by Boolean variable %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( is_Boolean(sv.variable) ),
+
+								mk_StringType() ->
+									/* @OnFail("2.2.7 ScalarVariable %s, StringType not referenced by String variable %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( is_String(sv.variable) ),
+
+								mk_EnumerationType(-, -) ->
+									/* @OnFail("2.2.7 ScalarVariable %s, EnumerationType not referenced by Enumeration variable %s at line %s",
+										sv.name, sv.variable.declaredType, sv.location) */
+									( is_Enumeration(sv.variable) )
+							end
+					} = {true}
+			| sv in seq variables
+		} = {true};
