@@ -1,20 +1,9 @@
-import org.intocps.maestro.MableSpecificationGenerator;
-import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.interpreter.DataStore;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
-import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -43,34 +32,36 @@ public class FullSpecTest {
     @Test
     public void test() throws Exception {
 
-        File config = new File(directory, "config.json");
+        //        File config = new File(directory, "config.json");
 
-        String s = "target/" + config.getAbsolutePath().substring(
-                config.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
-                        ("src" + "/test" + "/resources/").length());
+        CSVComparer.csvTest(directory);
 
-        File workingDir = new File(s.replace('/', File.separatorChar)).getParentFile();
-        if (!workingDir.exists()) {
-            workingDir.mkdirs();
-        }
-
-        try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
-
-
-            long startTime = System.nanoTime();
-            Instant start = Instant.now();
-
-            UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
-            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, environment).generate(getSpecificationFiles(), configStream);
-
-            long stopTime = System.nanoTime();
-            Instant end = Instant.now();
-
-            DataStore.GetInstance().setSimulationEnvironment(environment);
-            new MableInterpreter(new DefaultExternalValueFactory(workingDir)).execute(doc);
-
-            System.out.println("Generated spec time: " + (stopTime - startTime) + " " + Duration.between(start, end));
-        }
+        //        String s = "target/" + config.getAbsolutePath().substring(
+        //                config.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
+        //                        ("src" + "/test" + "/resources/").length());
+        //
+        //        File workingDir = new File(s.replace('/', File.separatorChar)).getParentFile();
+        //        if (!workingDir.exists()) {
+        //            workingDir.mkdirs();
+        //        }
+        //
+        //        try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
+        //
+        //
+        //            long startTime = System.nanoTime();
+        //            Instant start = Instant.now();
+        //
+        //            UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
+        //            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, environment).generate(getSpecificationFiles(), configStream);
+        //
+        //            long stopTime = System.nanoTime();
+        //            Instant end = Instant.now();
+        //
+        //            DataStore.GetInstance().setSimulationEnvironment(environment);
+        //            new MableInterpreter(new DefaultExternalValueFactory(workingDir)).execute(doc);
+        //
+        //            System.out.println("Generated spec time: " + (stopTime - startTime) + " " + Duration.between(start, end));
+        //        }
     }
 
     private List<File> getSpecificationFiles() {
