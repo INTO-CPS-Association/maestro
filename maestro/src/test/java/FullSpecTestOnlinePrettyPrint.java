@@ -1,6 +1,7 @@
 import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
+import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
@@ -57,6 +58,9 @@ public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
 
+            for (INode spec : MableSpecificationGenerator.parse(getSpecificationFiles())) {
+                download(collectFmus(spec, false));
+            }
 
             long startTime = System.nanoTime();
             Instant start = Instant.now();
@@ -71,7 +75,7 @@ public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
             System.out.println("##################### Pretty Print #########################");
             System.out.println("############################################################");
 
-            download(collectFmus(doc, true));
+            collectFmus(doc, true);
 
             String sourceCode = PrettyPrinter.print(doc);
             System.out.println(sourceCode);

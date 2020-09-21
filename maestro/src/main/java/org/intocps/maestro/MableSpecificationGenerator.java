@@ -113,7 +113,7 @@ public class MableSpecificationGenerator {
         return root;
     }
 
-    private static List<ARootDocument> parse(List<File> sourceFiles) throws IOException {
+    public static List<ARootDocument> parse(List<File> sourceFiles) throws IOException {
         List<ARootDocument> documentList = new Vector<>();
 
         for (File file : sourceFiles) {
