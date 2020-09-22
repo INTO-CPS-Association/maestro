@@ -49,18 +49,18 @@ public class GraphPlotterTest {
         var relations = new HashSet<UnitRelationship.Relation>();
 
         var variable1 = createVariable("Ctrl", "Sig", unitRelationship);
-        var variable2 = createVariable("Ctrl", "Sig", unitRelationship);
+        var variable2 = createVariable("Ctrl", "Input", unitRelationship);
         var variable3 = createVariable("CE", "Level", unitRelationship);
         var variable4 = createVariable("Tank", "Level", unitRelationship);
 
         HashMap<LexIdentifier, Variable> target1 = new HashMap<>();
-        target1.put(new LexIdentifier(variable1.scalarVariable.scalarVariable.getName(), null), variable1);
+        target1.put(new LexIdentifier(variable1.scalarVariable.instance.getText(), null), variable1);
         HashMap<LexIdentifier, Variable> target2 = new HashMap<>();
-        target2.put(new LexIdentifier(variable2.scalarVariable.scalarVariable.getName(), null), variable2);
+        target2.put(new LexIdentifier(variable2.scalarVariable.instance.getText(), null), variable2);
         HashMap<LexIdentifier, Variable> target3 = new HashMap<>();
-        target3.put(new LexIdentifier(variable3.scalarVariable.scalarVariable.getName(), null), variable3);
+        target3.put(new LexIdentifier(variable3.scalarVariable.instance.getText(), null), variable3);
         HashMap<LexIdentifier, Variable> target4 = new HashMap<>();
-        target4.put(new LexIdentifier(variable4.scalarVariable.scalarVariable.getName(), null), variable4);
+        target4.put(new LexIdentifier(variable4.scalarVariable.instance.getText(), null), variable4);
         relations.add(new UnitRelationship.Relation.RelationBuilder(variable1, target2).build());
         relations.add(new UnitRelationship.Relation.RelationBuilder(variable3, target2)
                 .setInternalOrExternal(UnitRelationship.Relation.InternalOrExternal.Internal).build());
