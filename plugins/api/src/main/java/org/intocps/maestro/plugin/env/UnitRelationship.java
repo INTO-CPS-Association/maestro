@@ -371,6 +371,17 @@ public class UnitRelationship implements ISimulationEnvironment {
         Direction direction;
         Map<LexIdentifier, Variable> targets;
 
+        public Relation() {
+        }
+
+        public Relation(Direction direction, Variable source, Map<LexIdentifier, Variable> targets, InternalOrExternal origin) {
+            this.direction = direction;
+            this.origin = origin;
+            this.targets = targets;
+            this.source = source;
+        }
+
+
         public InternalOrExternal getOrigin() {
             return origin;
         }
@@ -404,7 +415,7 @@ public class UnitRelationship implements ISimulationEnvironment {
         }
     }
 
-    public class Variable {
+    public static class Variable {
         public final RelationVariable scalarVariable;
 
         public Variable(RelationVariable scalarVariable) {
