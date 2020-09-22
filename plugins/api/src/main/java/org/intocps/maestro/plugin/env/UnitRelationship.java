@@ -371,17 +371,6 @@ public class UnitRelationship implements ISimulationEnvironment {
         Direction direction;
         Map<LexIdentifier, Variable> targets;
 
-        public Relation() {
-        }
-
-        public Relation(Direction direction, Variable source, Map<LexIdentifier, Variable> targets, InternalOrExternal origin) {
-            this.direction = direction;
-            this.origin = origin;
-            this.targets = targets;
-            this.source = source;
-        }
-
-
         public InternalOrExternal getOrigin() {
             return origin;
         }
@@ -413,9 +402,40 @@ public class UnitRelationship implements ISimulationEnvironment {
             OutputToInput,
             InputToOutput
         }
+
+        public static class RelationBuilder {
+
+            private Variable source;
+            private InternalOrExternal origin = InternalOrExternal.External;
+            private Direction direction = Direction.OutputToInput;
+            private Map<LexIdentifier, Variable> targets;
+            public RelationBuilder(Variable source , Map<LexIdentifier, Variable> targets) {
+                this.source = source;
+                this.targets = targets;
+            }
+
+            public RelationBuilder setInternalOrExternal(InternalOrExternal origin) {
+                this.origin = origin;
+                return this;
+            }
+
+            public RelationBuilder setDirection(Direction direction) {
+                this.direction = direction;
+                return this;
+            }
+
+            public Relation build() {
+                var rel = new Relation();
+                rel.source = this.source;
+                rel.targets = this.targets;
+                rel.origin = this.origin;
+                rel.direction = this.direction;
+                return rel;
+            }
+        }
     }
 
-    public static class Variable {
+    public class Variable {
         public final RelationVariable scalarVariable;
 
         public Variable(RelationVariable scalarVariable) {
