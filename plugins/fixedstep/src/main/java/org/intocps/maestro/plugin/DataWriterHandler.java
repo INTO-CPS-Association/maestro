@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.plugin.JacobiStepGenerator.getBufferName;
+import static org.intocps.maestro.plugin.DataExchangeHandler.getBufferName;
 import static org.intocps.maestro.plugin.MableBuilder.*;
 
 public class DataWriterHandler implements GeneratorComponent {
@@ -43,7 +43,7 @@ public class DataWriterHandler implements GeneratorComponent {
 
                     //the relation should be a one to one relation so just take the first one
                     RelationVariable fromVar = r;
-                    PExp from = arrayGet(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, JacobiStepGenerator.UsageType.Out),
+                    PExp from = arrayGet(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, DataExchangeHandler.UsageType.Out),
                             outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
                                     .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
                                     .indexOf(fromVar.scalarVariable.getName()));
