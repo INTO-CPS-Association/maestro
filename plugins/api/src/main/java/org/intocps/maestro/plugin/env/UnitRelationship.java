@@ -115,6 +115,10 @@ public class UnitRelationship implements ISimulationEnvironment {
         return this.fmuToUri.entrySet();
     }
 
+    public URI getUriFromFMUName(String fmuName) {
+        return this.fmuToUri.get(fmuName);
+    }
+
     private void initialize(EnvironmentMessage msg) throws Exception {
         this.environmentMessage = msg;
         // Remove { } around fmu name.

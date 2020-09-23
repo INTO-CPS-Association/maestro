@@ -19,6 +19,10 @@ public class MableAstFactory {
         return identifier;
     }
 
+    public static AInstanceMappingStm newAInstanceMappingStm(LexIdentifier mablName, String envName) {
+        AInstanceMappingStm ims = new AInstanceMappingStm();
+    }
+
     public static AIdentifierExp newAIdentifierExp(String name) {
         return newAIdentifierExp(newAIdentifier(name));
     }

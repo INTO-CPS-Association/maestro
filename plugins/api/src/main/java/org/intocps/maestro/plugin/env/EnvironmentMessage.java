@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -13,6 +14,10 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvironmentMessage {
+    @JsonProperty("end_time")
+    public Double endTime = 10.0;
+    @JsonProperty("step_size")
+    public Double stepSize = 0.1;
     public Map<String, String> fmus;
     public Map<String, List<String>> connections;
     public Map<String, List<String>> logVariables;
