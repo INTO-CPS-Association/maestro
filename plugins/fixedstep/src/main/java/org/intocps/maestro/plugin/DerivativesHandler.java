@@ -212,7 +212,7 @@ class DerivativesHandler {
     }
 
     public List<PStm> set(String errorStateLocation) {
-        return set(errorStateLocation);
+        return set(errorStateLocation, null);
     }
 
     public List<PStm> set(String errorStateLocation, List<LexIdentifier> componentNamesFilter) {
