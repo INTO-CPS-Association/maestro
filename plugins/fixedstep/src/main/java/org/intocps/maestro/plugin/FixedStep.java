@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.plugin.JacobiStepGenerator.*;
 import static org.intocps.maestro.plugin.MableBuilder.*;
 
 @SimulationFramework(framework = Framework.FMI2)
@@ -41,27 +42,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-    private final String data_HeadersIdentifier = "data_headers";
-    private final String dataWriter = "dataWriter";
-    private final String data_valuesIdentifier = "data_values";
-    private final String data_configuration = "dataWriter_configuration";
 
-    static SPrimitiveType convert(ModelDescription.Types type) {
-        switch (type) {
-
-            case Boolean:
-                return newABoleanPrimitiveType();
-            case Real:
-                return newARealNumericPrimitiveType();
-            case Integer:
-                return newAIntNumericPrimitiveType();
-            case String:
-                return newAStringPrimitiveType();
-            case Enumeration:
-            default:
-                return null;
-        }
-    }
 
     static PExp simLog(SimLogLevel level, String msg, PExp... args) {
 
@@ -74,31 +55,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
         return newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"), cargs);
     }
 
-    static LexIdentifier getBufferName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
-        return getBufferName(comp, convert(type), usage);
-    }
-
-    static LexIdentifier getBufferName(LexIdentifier comp, SPrimitiveType type, UsageType usage) {
-
-        String t = getTypeId(type);
-
-        return newAIdentifier(comp.getText() + t + usage);
-    }
-
-    private static String getTypeId(SPrimitiveType type) {
-        String t = type.getClass().getSimpleName();
-
-        if (type instanceof ARealNumericPrimitiveType) {
-            t = "R";
-        } else if (type instanceof AIntNumericPrimitiveType) {
-            t = "I";
-        } else if (type instanceof AStringPrimitiveType) {
-            t = "S";
-        } else if (type instanceof ABooleanPrimitiveType) {
-            t = "B";
-        }
-        return t;
-    }
 
     /**
      * @param loopAccumulatingVars vars before while
@@ -268,48 +224,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
         //string headers[2] = {"level","valve"};
-        List<String> variableNames = new Vector<>();
-
-        Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
-
-        Map<RelationVariable, PExp> csvFields =
-                inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
-                        .flatMap(h -> {
-                            List<RelationVariable> outputs_ = env.getVariablesToLog(h.scalarVariable.instance.getText());
-                            //outputs_.add(h.scalarVariable);
-                            return outputs_.stream();
-                            //return h.scalarVariable;
-                        }).sorted(Comparator.comparing(getLogName::apply)).collect(Collectors.toMap(l -> l, r -> {
-
-
-                    //the relation should be a one to one relation so just take the first one
-                    RelationVariable fromVar = r;
-                    PExp from = arrayGet(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out),
-                            outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                                    .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                                    .indexOf(fromVar.scalarVariable.getName()));
-                    return from;
-
-                }, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
-
-        variableNames.addAll(csvFields.keySet().stream().map(k -> {
-
-            UnitRelationship.FrameworkUnitInfo info = env.getUnitInfo(k.instance, Framework.FMI2);
-
-            Stream<String> nameComponents = Stream.of(k.instance.getText(), k.getScalarVariable().getName());
-
-            if (info instanceof ComponentInfo) {
-                nameComponents = Stream.concat(Stream.of(((ComponentInfo) info).fmuIdentifier), nameComponents);
-            }
-            return nameComponents.collect(Collectors.joining("."));
-        }).collect(Collectors.toList()));
-
-        statements.add(newVariable(this.data_HeadersIdentifier, newAStringPrimitiveType(),
-                variableNames.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList())));
-
-
-        statements.add(newVariable(this.data_configuration, newANameType("DataWriterConfig"),
-                call(this.dataWriter, "writeHeader", newAIdentifierExp(this.data_HeadersIdentifier))));
 
 
         Function<LexIdentifier, PExp> getCompStatusExp = comp -> arrayGet(fixedStepStatus, componentNames.indexOf(comp));
@@ -524,18 +438,22 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
             //create output buffers
             outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getBufferName(comp, type, UsageType.Out), newAArrayType(convert(type), vars.size()))))));
+                    newAVariableDeclaration(getBufferName(comp, type, JacobiStepGenerator.UsageType.Out),
+                            newAArrayType(convert(type), vars.size()))))));
 
             outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getVrefName(comp, type, UsageType.Out), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                    newAVariableDeclaration(getVrefName(comp, type, JacobiStepGenerator.UsageType.Out),
+                            newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
                             newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
 
             //create input buffers
             inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getBufferName(comp, type, UsageType.In), newAArrayType(convert(type), vars.size()))))));
+                    newAVariableDeclaration(getBufferName(comp, type, JacobiStepGenerator.UsageType.In),
+                            newAArrayType(convert(type), vars.size()))))));
 
             inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                    newAVariableDeclaration(getVrefName(comp, type, UsageType.In), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                    newAVariableDeclaration(getVrefName(comp, type, JacobiStepGenerator.UsageType.In),
+                            newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
                             newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
 
 
@@ -554,8 +472,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 inputs.forEach((comp, map) -> map.forEach((type, vars) -> {
                     list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
                             newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.In)),
-                                    Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.In)), newAIntLiteralExp(vars.size()),
-                                            newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
+                                    Arrays.asList(newAIdentifierExp(getVrefName(comp, type, JacobiStepGenerator.UsageType.In)),
+                                            newAIntLiteralExp(vars.size()), newAIdentifierExp(getBufferName(comp, type, UsageType.In))))));
                     checkStatus.accept(Map.entry(true, "set failed"), Map.entry(comp, list));
                 }));
 
@@ -616,31 +534,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 newPlusExp(newAIdentifierExp((LexIdentifier) time.clone()), newAIdentifierExp(fix_stepSize))));
 
 
-        Consumer<List<PStm>> declareCsvBuffer = list -> {
-            list.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_valuesIdentifier),
-                    newAArrayType(newAStringPrimitiveType(), variableNames.size()),
-                    newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
-
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
-                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
-                            newAIdentifierExp(this.data_valuesIdentifier)))));
-        };
-
-        Consumer<List<PStm>> logCsvValues = list -> {
-            List<PExp> values = new ArrayList<>(csvFields.values());
-            //values.add(0, newAIdentifierExp("time"));
-            for (int i = 0; i < values.size(); i++) {
-                AArrayStateDesignator to =
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(this.data_valuesIdentifier)), newAIntLiteralExp(i));
-                list.add(newAAssignmentStm(to, values.get(i).clone()));
-            }
-
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
-                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
-                            newAIdentifierExp(this.data_valuesIdentifier)))));
-
-        };
-
         List<PStm> loopStmts = new Vector<>();
         loopStmts.add(newIf(newAIdentifierExp(fix_recovering), newABlockStm(
                 Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_stepSize)), newAIdentifierExp(fix_recoveryStepSize)),
@@ -651,9 +544,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
         getAll.accept(false, statements);
         statements.addAll(derivativesHandler.allocateMemory(componentNames, inputRelations, unitRelationShip));
         statements.addAll(derivativesHandler.get("global_execution_continue"));
-        //        if (withCsv) {
-        declareCsvBuffer.accept(statements);
-        //        }
+
+        DataWriterHandler dataWriter = new DataWriterHandler();
+        statements.addAll(dataWriter.allocate(inputRelations, outputs, unitRelationShip));
 
 
         //exchange according to mapping
@@ -676,7 +569,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
         // time = time + STEP_SIZE;
         progressTime.accept(loopStmtsPost);
         //        if (withCsv || withWs) {
-        logCsvValues.accept(loopStmtsPost);
+        //        logCsvValues.accept(loopStmtsPost);
+        statements.addAll(dataWriter.write());
         if (supportsGetSetState) {
             freeAllStates.accept(loopStmtsPost);
         }
@@ -692,32 +586,13 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         terminate.accept(statements);
 
-        //        if (withCsv || withWs) {
-        statements.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("close"), Arrays.asList())));
-        //        }
+        statements.addAll(dataWriter.deallocate());
 
         statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
 
         return Arrays.asList(newABlockStm(statements));
     }
 
-    private String getFmiGetName(ModelDescription.Types type, UsageType usage) {
-
-        String fun = usage == UsageType.In ? "set" : "get";
-        switch (type) {
-            case Boolean:
-                return fun + "Boolean";
-            case Real:
-                return fun + "Real";
-            case Integer:
-                return fun + "Integer";
-            case String:
-                return fun + "String";
-            case Enumeration:
-            default:
-                return null;
-        }
-    }
 
     LexIdentifier getStateName(LexIdentifier comp) {
         return newAIdentifier(comp.getText() + "State");
@@ -763,9 +638,5 @@ public class FixedStep implements IMaestroExpansionPlugin {
         }
     }
 
-    enum UsageType {
-        In,
-        Out
-    }
 
 }
