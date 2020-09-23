@@ -120,6 +120,7 @@ stm
     | {expression} [exp]:exp
     | {observable} [identifier]:identifier
     | {break}
+    | {instanceMapping} [identifier]:lex_identifier [name]:java_String
     ;
 
 type

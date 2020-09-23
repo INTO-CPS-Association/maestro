@@ -49,6 +49,8 @@ statement
     | SEMI                                                      #semi
     | OBSERVABLE                                                #observable
     | BREAK                                                     #break
+    | INSTANCE_MAP identifier=IDENTIFIER '->'
+                     name=STRING_LITERAL ';'                    #expandMapping
     ;
 
 

@@ -394,6 +394,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
+    public INode visitExpandMapping(MablParser.ExpandMappingContext ctx) {
+        return new AInstanceMappingStm(convert(ctx.identifier), ctx.name.getText());
+    }
+
+    @Override
     public INode visitUnknownType(MablParser.UnknownTypeContext ctx) {
         return new AUnknownType();
     }
