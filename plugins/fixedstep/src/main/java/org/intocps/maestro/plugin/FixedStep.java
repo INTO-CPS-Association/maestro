@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.plugin.FixedStep.MableBuilder.*;
+import static org.intocps.maestro.plugin.MableBuilder.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class FixedStep implements IMaestroExpansionPlugin {
@@ -41,18 +41,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-    //    final AFunctionDeclaration funCsv = newAFunctionDeclaration(newAIdentifier("fixedStepCsv"),
-    //            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
-    //                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
-    //    final AFunctionDeclaration funCsvWs = newAFunctionDeclaration(newAIdentifier("fixedStepCsvWs"),
-    //            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-    //                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime")),
-    //                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("csv_file_path"))), newAVoidType());
     private final String data_HeadersIdentifier = "data_headers";
     private final String dataWriter = "dataWriter";
     private final String data_valuesIdentifier = "data_values";
@@ -152,15 +140,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
             throw new ExpandException("Unknown function declaration");
         }
 
-        //        boolean withCsv = false;
-        //        boolean withWs = declaredFunction == funCsvWs;
         AFunctionDeclaration selectedFun = fun;
-
-        //        if (declaredFunction.equals(funCsv) || declaredFunction.equals(funCsvWs)) {
-        //            selectedFun = funCsv;
-        //            withCsv = true;
-        //        }
-
 
         if (formalArguments == null || formalArguments.size() != selectedFun.getFormals().size()) {
             throw new ExpandException("Invalid args");
@@ -223,6 +203,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
                         return false;
                     }
                 });
+
+        DerivativesHandler derivativesHandler = new DerivativesHandler();
+
         logger.debug("Expand with get/set state: {}", supportsGetSetState);
 
         List<PStm> statements = new Vector<>();
@@ -666,6 +649,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         // get prior to entering loop
         getAll.accept(false, statements);
+        statements.addAll(derivativesHandler.allocateMemory(componentNames, inputRelations, unitRelationShip));
+        statements.addAll(derivativesHandler.get("global_execution_continue"));
         //        if (withCsv) {
         declareCsvBuffer.accept(statements);
         //        }
@@ -675,6 +660,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         exchangeData.accept(loopStmts);
         //set inputs
         setAll.accept(loopStmts);
+        loopStmts.addAll(derivativesHandler.set("global_execution_continue"));
         if (supportsGetSetState) {
             getAllStates.accept(loopStmts);
         }
@@ -686,6 +672,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         //get data
         getAll.accept(true, loopStmtsPost);
+        loopStmtsPost.addAll(derivativesHandler.get("global_execution_continue"));
         // time = time + STEP_SIZE;
         progressTime.accept(loopStmtsPost);
         //        if (withCsv || withWs) {
@@ -761,6 +748,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         return "0.0.1";
     }
 
+
     enum SimLogLevel {
         TRACE(0),
         DEBUG(2),
@@ -780,90 +768,4 @@ public class FixedStep implements IMaestroExpansionPlugin {
         Out
     }
 
-    static class MableBuilder {
-        public static PStm newVariable(LexIdentifier name, PType type, PExp value) {
-            return newVariable(name.getText(), type, value);
-        }
-
-        public static PStm newVariable(String name, PType type, PExp value) {
-            return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type.clone(), newAExpInitializer(value.clone())));
-        }
-
-        public static PStm newVariable(LexIdentifier name, PType type, List<PExp> values) {
-            return newVariable(name.getText(), type, values);
-
-        }
-
-        public static PStm newVariable(String name, PType type, List<PExp> values) {
-            return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone(), values.size()),
-                    newAArrayInitializer(values.stream().map(PExp::clone).collect(Collectors.toList()))));
-
-        }
-
-        public static PStm newVariable(String name, PType type, int size) {
-            return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone(), size), null));
-
-        }
-
-        public static PExp call(String object, String method, PExp... args) {
-            return call(object, method, args == null ? null : Arrays.asList(args));
-        }
-
-        public static PExp call(String object, String method, List<PExp> args) {
-            return call(newAIdentifierExp(object), method, args);
-        }
-
-        public static PExp call(PExp object, String method, List<PExp> args) {
-            return newACallExp(object, newAIdentifier(method), args);
-        }
-
-        public static PExp call(PExp object, String method, PExp... args) {
-            return newACallExp(object, newAIdentifier(method), Arrays.asList(args));
-        }
-
-        public static PExp call(String object, String method) {
-            return call(object, method, (List<PExp>) null);
-        }
-
-        public static PExp call(String method, PExp... args) {
-            return call(method, args == null ? null : Arrays.asList(args));
-        }
-
-        public static PExp call(String method, List<PExp> args) {
-            return newACallExp(newAIdentifier(method), args);
-        }
-
-        public static PExp call(String method) {
-            return call(method, (List<PExp>) null);
-        }
-
-        public static PExp arrayGet(String name, PExp index) {
-            return newAArrayIndexExp(newAIdentifierExp(name), Collections.singletonList(index));
-        }
-
-        public static PExp arrayGet(PExp name, PExp index) {
-            return newAArrayIndexExp(name.clone(), Collections.singletonList(index.clone()));
-        }
-
-        public static PExp arrayGet(String name, int index) {
-            return arrayGet(name, newAIntLiteralExp(index));
-        }
-
-
-        public static PExp arrayGet(LexIdentifier name, AIntLiteralExp index) {
-            return arrayGet(name.getText(), index);
-        }
-
-        public static PExp arrayGet(LexIdentifier name, int index) {
-            return arrayGet(name.getText(), index);
-        }
-    }
-
-    class FixedstepConfig implements IPluginConfiguration {
-        final int endTime;
-
-        public FixedstepConfig(int endTime) {
-            this.endTime = endTime;
-        }
-    }
 }

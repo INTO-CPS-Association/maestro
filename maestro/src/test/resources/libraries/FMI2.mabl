@@ -28,8 +28,8 @@
     int getString(UInt[] vr, UInt nvr, ref string[] values);
 
     // derivatives
-    int setRealInputDerivatives(UInt[] scalarValueIndices, int[] order, ref real[] derivatives);
-    int getRealOutputDerivatives(long[] scalarValueIndices, int[] order, ref double[] derivatives);
+    int setRealInputDerivatives(UInt[] scalarValueIndices, UInt nvr, int[] order, ref real[] derivatives);
+    int getRealOutputDerivatives(long[] scalarValueIndices, UInt nvr, int[] order, ref double[] derivatives);
     int getDirectionalDerivative(long[] vUnknownRef,long[] vKnownRef, double[] dvKnown, ref double[] derivatives);
 
     // logging

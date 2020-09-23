@@ -411,6 +411,10 @@ public class UnitRelationship implements ISimulationEnvironment {
             this.scalarVariable = scalarVariable;
         }
 
+        public RelationVariable getScalarVariable() {
+            return scalarVariable;
+        }
+
         <T extends FrameworkVariableInfo> T getFrameworkInfo(Framework framework) {
             return (T) scalarVariable;
         }
