@@ -1,7 +1,6 @@
-package org.intocps.maestro.plugin.prologverifier.graph;
+package org.intocps.maestro.plugin.verificationsuite.graph;
 
 import guru.nidi.graphviz.attribute.Color;
-import guru.nidi.graphviz.attribute.LinkAttr;
 import guru.nidi.graphviz.attribute.Style;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -34,9 +33,7 @@ public class GraphDrawer {
                     g.nodes().stream().filter(o -> o == t).forEach(o -> o.links().forEach(r -> r.attrs().add(Style.DASHED)));
                 });
             }else {
-                targets.forEach(t -> {
-                    g.add(source.addLink(t));
-                });
+                targets.forEach(t -> g.add(source.addLink(t)));
             }
         }
 

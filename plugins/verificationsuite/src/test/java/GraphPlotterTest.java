@@ -2,17 +2,15 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
 import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
-import org.intocps.maestro.plugin.prologverifier.graph.GraphDrawer;
-import org.intocps.maestro.plugin.prologverifier.graph.VDMChecker;
+import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
+import org.intocps.maestro.plugin.verificationsuite.vdmcheck.VDMChecker;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class GraphPlotterTest {
@@ -71,28 +69,11 @@ public class GraphPlotterTest {
     }
 
 
-    @Test
-    public void VDMCheckerWaterTank() throws Exception {
-        var VDMCheck = new VDMChecker();
-        var unitRelationship = new UnitRelationship(envWaterTankJson);
-        var fmus = unitRelationship.getFmuToUri();
-        var fmuPaths = fmus.stream().map(o -> String.valueOf(o.getValue())).collect(Collectors.toList());
-        VDMCheck.CheckFMUS(fmuPaths);
-    }
-
-    @Test
-    public void VDMCheckerThreeTank() throws Exception {
-        var VDMCheck = new VDMChecker();
-        var unitRelationship = new UnitRelationship(envThreeTankJson);
-        var fmus = unitRelationship.getFmuToUri();
-        var fmuPaths = fmus.stream().map(o -> String.valueOf(o.getValue())).collect(Collectors.toList());
-        VDMCheck.CheckFMUS(fmuPaths);
-    }
-
-    private Variable createVariable(String fmuName, String variableName, UnitRelationship unitRelationship){
+    private Variable createVariable(String fmuName, String variableName, UnitRelationship unitRelationship) {
         var scalarVar = new ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
         return unitRelationship.new Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
     }
 
 }
+

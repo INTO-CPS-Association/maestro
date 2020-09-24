@@ -18,7 +18,7 @@ import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
 import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
-import org.intocps.maestro.plugin.prologverifier.PrologVerifier.InitializationPrologQuery;
+import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;

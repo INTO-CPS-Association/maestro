@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.prologverifier.graph;
+package org.intocps.maestro.plugin.verificationsuite.vdmcheck;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,6 +37,6 @@ public class VDMChecker {
         if (currentPath.contains("plugins")) {
             pluginString = "";
         }
-        return Paths.get(currentPath, pluginString, "prologverifier", "src", "main", "resources", "vdmcheck");
+        return Paths.get(currentPath, pluginString, "verificationsuite", "src", "main", "resources", "vdmcheck");
     }
 }

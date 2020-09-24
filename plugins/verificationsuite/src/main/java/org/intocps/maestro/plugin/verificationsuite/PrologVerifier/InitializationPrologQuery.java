@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.prologverifier.PrologVerifier;
+package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import com.ugos.jiprolog.engine.*;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -66,6 +66,6 @@ public class InitializationPrologQuery {
         if (currentPath.contains("plugins")) {
             pluginString = "";
         }
-        return Paths.get(currentPath, pluginString, "prologverifier", "src", "main", "resources", "prologCode");
+        return Paths.get(currentPath, pluginString, "verificationsuite", "src", "main", "resources", "prologCode");
     }
 }

@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>org.intocps.plugins</groupId>
-    <artifactId>prologverifier</artifactId>
+    <artifactId>verificationsuite</artifactId>
 
     <dependencies>
         <dependency>

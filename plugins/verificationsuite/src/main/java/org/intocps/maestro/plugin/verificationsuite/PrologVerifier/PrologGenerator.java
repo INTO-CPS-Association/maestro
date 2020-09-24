@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.prologverifier.PrologVerifier;
+package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.plugin.ExpandException;
