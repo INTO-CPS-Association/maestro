@@ -75,7 +75,7 @@ This requires a bit more than execting a co-simulation using the CLI.
 For this reason, a Python scrpt will be used as reference and explained in bits. :download:`Full Python Script <../resources/getting-started-python-master.py>`
 
 4b.1 Launch the COE
--------------------
+^^^^^^^^^^^^^^^^^^^
 Launch the COE with a single argument, which makes it start up as a web server on port 8082: :code:`java -jar coe-1.0.10-jar-with-dependencies.jar -p 8082`.
 
 .. literalinclude:: ../resources/getting-started-python-master.py
@@ -83,7 +83,7 @@ Launch the COE with a single argument, which makes it start up as a web server o
     :lines: 28
 
 4b.2 Create a Session
-----------------------
+^^^^^^^^^^^^^^^^^^^^^
 It is necessary to create a session before conducting a co-simulation.
 
 Example response: :code:`{'sessionId': '5f439916-23f8-4609-9ff8-5f81408b9046'}`.
@@ -96,7 +96,7 @@ Python code:
 
 
 4b.3 Initialize the co-simulation
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Send the `scenario.json` to the server.
 
 Example response: :code:`[{"status":"Initialized","sessionId":"5f439916-23f8-4609-9ff8-5f81408b9046","lastExecTime":0,"avaliableLogLevels":{"{msd2}.msd2i":[],"{msd1}.msd1i":[]}}]`.
@@ -108,12 +108,12 @@ Python code:
     :lines: 40-45
 
 4b.4 Optional: Connect Web Socket
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 At this stage, one can connect a web socket if so desired.
 This is currently not part of the scenario. See the :ref:`api` for more information.
 
 4b.5 Run the Co-Simulation
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 The information passed as CLI arguments are now part of a `simulate.json` file:
 
 .. code-block:: JSON
@@ -136,7 +136,7 @@ Python code:
 
 
 4b.6 Get the results
----------------------
+^^^^^^^^^^^^^^^^^^^^
 Retrieve the csv results and store in `result.csv`
 
 Example response: CSV content (too large to show).
@@ -148,7 +148,7 @@ Python code:
     :lines: 55-66
 
 4b.7 Destroy the session
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 Destroy the session and allow Maestro to clean up session data
 
 Example reponse: 'Session 5f439916-23f8-4609-9ff8-5f81408b9046 destroyed'
