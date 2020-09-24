@@ -4,12 +4,12 @@ This page presents a getting started guide using the command-line interface of M
 
 Additional information is available at :ref:`api`.
 
-Environment
------------
+0. Environment
+---------------
 Maestro is built with Java 11, but it is expected that Java 8 will work as well.
 
-Downloads
----------
+1. Downloads
+-------------
 Download the latest coe jar from releases: https://github.com/INTO-CPS-Association/maestro/releases/latest
 
 We will be running a co-simulation of the MassSpringDamper case study, described in https://github.com/INTO-CPS-Association/example-mass_spring_damper.
@@ -18,8 +18,8 @@ Download the two Mass Spring Damper FMUs exported from 20-sim: https://github.co
 
 Place both jar and FMUs in the same folder.
 
-Describe FMU Connections
-------------------------
+2. Describe FMU Connections
+----------------------------
 Create the following :code:`scenario.json` file in the same folder as the jar file:
 
 .. code-block:: JSON
@@ -62,8 +62,8 @@ Create the following :code:`scenario.json` file in the same folder as the jar fi
       "overrideLogLevel":"INFO"
   }
 
-Run Co-simulation using CLI
----------------------------
+4. Run Co-simulation using CLI
+------------------------------
 Open a terminal in the same folder and execute :code:`java -jar coe-1.0.10-jar-with-dependencies.jar --configuration scenario.json  --oneshot --starttime 0.0 --endtime 10.0`
 
 Afterwards an `outputs.csv` file is available with the co-simulation results.

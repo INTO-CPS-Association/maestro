@@ -102,5 +102,6 @@ orchestration/coe/interpreter.log*
 repository
 orchestration/coe/src/main/resources/coe-protocol/.texlipse
 orchestration/coe/src/main/java/META-INF/MANIFEST.MF
+/docs/_build
 /docs/build
 .vscode
