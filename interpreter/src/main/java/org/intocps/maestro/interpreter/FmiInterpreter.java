@@ -4,6 +4,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.intocps.fmi.*;
 import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
@@ -398,6 +399,107 @@ public class FmiInterpreter {
                         }
                     }));
 
+                    componentMembers.put("setState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+                        checkArgLength(fcargs, 1);
+
+                        Value v = fcargs.get(0).deref();
+
+                        if (v instanceof FmuComponentStateValue) {
+                            try {
+                                FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                                Fmi2Status res = component.setState(stateValue.getModule());
+                                return new IntegerValue(res.value);
+                            } catch (FmuInvocationException e) {
+                                throw new InterpreterException(e);
+                            }
+                        }
+
+                        throw new InterpreterException("Invalid value");
+                    }));
+                    componentMembers.put("getState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 1);
+
+                        if (!(fcargs.get(0) instanceof UpdatableValue)) {
+                            throw new InterpreterException("value not a reference value");
+                        }
+
+
+                        try {
+
+                            FmuResult<IFmiComponentState> res = component.getState();
+
+                            if (res.status == Fmi2Status.OK) {
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(0);
+                                ref.setValue(new FmuComponentStateValue(res.result));
+                            }
+
+
+                            return new IntegerValue(res.status.value);
+
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+
+                    }));
+                    componentMembers.put("freeState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 1);
+
+                        Value v = fcargs.get(0).deref();
+
+                        if (v instanceof FmuComponentStateValue) {
+                            try {
+                                FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                                Fmi2Status res = component.freeState(stateValue.getModule());
+                                return new IntegerValue(res.value);
+                            } catch (FmuInvocationException e) {
+                                throw new InterpreterException(e);
+                            }
+                        }
+
+                        throw new InterpreterException("Invalid value");
+
+
+                    }));
+
+                    componentMembers.put("getRealStatus", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 2);
+
+                        if (!(fcargs.get(1) instanceof UpdatableValue)) {
+                            throw new InterpreterException("value not a reference value");
+                        }
+
+                        Value kindValue = fcargs.get(0).deref();
+
+                        if (!(kindValue instanceof IntegerValue)) {
+                            throw new InterpreterException("Invalid kind value: " + kindValue);
+                        }
+
+                        int kind = ((IntegerValue) kindValue).getValue();
+
+                        Fmi2StatusKind kindEnum = Arrays.stream(Fmi2StatusKind.values()).filter(v -> v.value == kind).findFirst().orElse(null);
+
+                        try {
+                            FmuResult<Double> res = component.getRealStatus(kindEnum);
+
+                            if (res.status == Fmi2Status.OK) {
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(1);
+
+                                ref.setValue(new RealValue(res.result));
+                            }
+
+
+                            return new IntegerValue(res.status.value);
+
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+
+                    }));
 
                     long stopInstantiateTime = System.nanoTime();
                     System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));

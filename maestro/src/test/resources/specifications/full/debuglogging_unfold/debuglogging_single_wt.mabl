@@ -14,7 +14,6 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 
 bool global_execution_continue = true;
 
-
 expand enableDebugLogging(components);
 
 expand disableDebugLogging(components);

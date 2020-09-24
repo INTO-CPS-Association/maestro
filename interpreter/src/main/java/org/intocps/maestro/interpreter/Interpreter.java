@@ -139,10 +139,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
                 if (arrayStateDesignator.getExp() == null) {
                     //replace array completly
-                    currentUpdatableValue.setValue(newValue);
+                    currentUpdatableValue.setValue(newValue.deref());
                 } else {
                     //in-place array update
-                    Value indexValue = arrayStateDesignator.getExp().apply(this, question);
+                    Value indexValue = arrayStateDesignator.getExp().apply(this, question).deref();
 
                     if (!(indexValue instanceof NumericValue)) {
                         throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
@@ -161,7 +161,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 throw new InterpreterException("Bad array designator: " + node.getTarget().toString());
             }
         } else {
-            currentUpdatableValue.setValue(newValue);
+            currentUpdatableValue.setValue(newValue.deref());
         }
 
 
@@ -194,7 +194,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
                 //array deceleration
                 NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-                val = new ArrayValue<>(IntStream.range(0, size.intValue()).mapToObj(i -> new UndefinedValue()).collect(Collectors.toList()));
+                val = new ArrayValue<>(
+                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
             }
 
             question.put(node.getName(), new UpdatableValue(val));
@@ -303,7 +304,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             }
         } catch (BreakException e) {
             //loop stopped
-            e.printStackTrace();
+            logger.trace("Loop stopped:" + node);
         }
         return new VoidValue();
 
