@@ -14,5 +14,6 @@ Maestro is currently undergoing documentation updates. Currently, the user docum
    :maxdepth: 3
    :caption: Table of Contents:
 
+   getting-started
    api/api
 
