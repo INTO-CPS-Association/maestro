@@ -37,7 +37,11 @@ import java.util.stream.Collectors;
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary->or = [left]+ " || " + [right]
 %exp->#binary->and = [left]+ " && " + [right]
+%exp->#binary->multiply = [left]+ " * " + [right]
+%exp->#binary->divide = [left]+ " / " + [right]
 %exp->#unary->not = "!" + [exp]
+%exp->#unary->minus = "-" + [exp]
+%exp->#unary->plus = "+" + [exp]
 %exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
 %exp->par = "("+ [exp] +")"

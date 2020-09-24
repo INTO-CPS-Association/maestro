@@ -1,8 +1,6 @@
-package org.intocps.maestro.plugin.Initializer.PrologVerifier;
-
+package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import com.ugos.jiprolog.engine.*;
-import org.intocps.maestro.plugin.Initializer.RelationsPredicates;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 
 import java.nio.file.Path;
@@ -35,10 +33,14 @@ public class InitializationPrologQuery {
             jip.consultFile(path + "/initialization.pl");
 
             var init = prologGenerator.CreateInitOperationOrder(instantiationOrder);
-            var connections = prologGenerator.CreateConnections(relations.stream().filter(RelationsPredicates.External()).collect(Collectors.toList()));
+            var connections = prologGenerator
+                    .CreateConnections(relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
+                    .collect(Collectors.toList()));
             var fmus = prologGenerator.CreateFMUs(relations);
 
             queryTerm = jip.getTermParser().parseTerm(String.format("?- isInitSchedule(%s,%s, %s).", init, fmus, connections));
+
+            //queryTerm = jip.getTermParser().parseTerm("?- father(X, Y).");
         } catch (JIPSyntaxErrorException ex) {
             ex.printStackTrace();
         }
@@ -64,7 +66,7 @@ public class InitializationPrologQuery {
         if (currentPath.contains("plugins")) {
             pluginString = "";
         }
-        return Paths.get(currentPath, pluginString, "initializer", "src", "main", "resources", "prologCode");
+        return Paths.get(currentPath, pluginString, "verificationsuite", "src", "main", "resources", "prologCode");
     }
 
 }

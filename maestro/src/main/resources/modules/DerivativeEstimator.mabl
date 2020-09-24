@@ -1,0 +1,4 @@
+module DerivativeEstimator
+{
+    variablesOfInterest(String[] variables, int[] order, int[] provided, uInt size);
+}

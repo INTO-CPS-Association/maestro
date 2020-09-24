@@ -1,0 +1,123 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * 2.2.3 Definition of Types (TypeDefinitions)
+ */
+types
+	RealType ::			 -- XSD p39
+		quantity			: [NormalizedString]
+		unit				: [NormalizedString]
+		displayUnit			: [NormalizedString]
+		relativeQuantity	: [bool]
+		min					: [real]
+		max					: [real]
+		nominal				: [real]
+		unbounded			: [bool];
+
+	IntegerType ::  -- XSD p39
+		quantity			: [NormalizedString]
+		min					: [int]
+		max					: [int];
+
+	BooleanType ::
+		;
+
+	StringType ::
+		;
+
+	-- Items of an enumeration are a sequence of "name" and "value" pairs.
+	-- An EnumerationType must have at least one Item.
+
+	Item ::
+		name				: NormalizedString
+		value				: int
+		description			: [AnyString];
+
+	EnumerationType ::	  -- XSD p39
+		quantity			: [NormalizedString]
+		items				: seq1 of Item;
+
+
+	SimpleType ::	-- XSD p38
+		location			: Location
+		name				: NormalizedString
+		description			: [AnyString]
+		type				: RealType | IntegerType | BooleanType | StringType | EnumerationType;
+
+	Kind = <Real> | <Integer> | <Boolean> | <String>;	-- Note: Enumeration is Integer
+
+functions
+	isValidType: SimpleType +> bool
+	isValidType(stype) ==
+		cases stype.type:
+			mk_RealType(-, unit, dunit, -, min, max, -, -) ->
+			{
+				-- @OnFail("2.2.3 SimpleType %s, Real max %s not >= min %s", stype.name, max, min)
+				( max <> nil and min <> nil => max >= min ),
+
+				-- @OnFail("2.2.3 SimpleType %s, Real unit must be defined for displayUnit %s", stype.name, dunit)
+				( dunit <> nil => unit <> nil )
+			} = {true},
+
+			mk_IntegerType(-, min, max) ->
+				-- @OnFail("2.2.3 SimpleType %s, Integer max %s not >= min %s", stype.name, max, min)
+				( max <> nil and min <> nil => max >= min ),
+
+			-- Items of an enumeration as a sequence of "name" and "value" pairs. The
+			-- values can be any integer number, but must be unique within the same
+			-- enumeration (in order that the mapping between "name" and "value" is
+			-- bijective). An Enumeration element must have at least one Item.
+
+			mk_EnumerationType(-, items) ->
+				-- @OnFail("2.2.3 SimpleType %s, EnumerationType item name/values do not form a bijection", stype.name)
+				(
+					card { i.name | i in seq items } = len items
+					and	card { i.value | i in seq items } = len items
+				),
+
+			others -> true		-- String and Boolean
+		end;
+
+	isValidTypeDefinitions: [set1 of SimpleType] +> bool
+	isValidTypeDefinitions(defs) ==
+		defs <> nil =>
+			{
+				/* @OnFail("2.2.3 TypeDefinitions names are not unique: %s",
+					{ a.name | a, b in set defs & a <> b and a.name = b.name }) */
+				( card { stype.name | stype in set defs } = card defs )
+			}
+			union
+			{
+				-- @OnFail("2.2.3 TypeDefinition %s invalid at line %s", stype.name, stype.location)
+				( isValidType(stype) )
+
+				| stype in set defs
+			} = {true};
+

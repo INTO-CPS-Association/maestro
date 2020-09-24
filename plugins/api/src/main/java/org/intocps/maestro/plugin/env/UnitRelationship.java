@@ -402,6 +402,37 @@ public class UnitRelationship implements ISimulationEnvironment {
             OutputToInput,
             InputToOutput
         }
+
+        public static class RelationBuilder {
+
+            private Variable source;
+            private InternalOrExternal origin = InternalOrExternal.External;
+            private Direction direction = Direction.OutputToInput;
+            private Map<LexIdentifier, Variable> targets;
+            public RelationBuilder(Variable source , Map<LexIdentifier, Variable> targets) {
+                this.source = source;
+                this.targets = targets;
+            }
+
+            public RelationBuilder setInternalOrExternal(InternalOrExternal origin) {
+                this.origin = origin;
+                return this;
+            }
+
+            public RelationBuilder setDirection(Direction direction) {
+                this.direction = direction;
+                return this;
+            }
+
+            public Relation build() {
+                var rel = new Relation();
+                rel.source = this.source;
+                rel.targets = this.targets;
+                rel.origin = this.origin;
+                rel.direction = this.direction;
+                return rel;
+            }
+        }
     }
 
     public class Variable {

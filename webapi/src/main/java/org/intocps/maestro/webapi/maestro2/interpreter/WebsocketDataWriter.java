@@ -42,7 +42,7 @@ public class WebsocketDataWriter implements IDataListener {
         List<String> hoi = calculateHeadersOfInterest(environment);
         List<Integer> ioi = DataListenerUtilities.indicesOfInterest(headers, hoi);
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);
-        wdwi.interval = environment.getEnvironmentMessage().liveLogInterval;
+        wdwi.interval = environment.getEnvironmentMessage().getLivelogInterval();
         this.instances.put(uuid, wdwi);
         this.webSocketConverter.configure(hoi);
     }

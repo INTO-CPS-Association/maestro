@@ -1,0 +1,100 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * 4.3.1 Definition of a CoSimulation section of an FMU.
+ */
+types
+	CoSimulation ::
+		location								: Location
+		modelIdentifier							: NormalizedString
+		needsExecutionTool						: [bool]
+		canHandleVariableCommunicationStepSize	: [bool]
+		canInterpolateInputs					: [bool]
+		maxOutputDerivativeOrder				: [nat]
+		canRunAsynchronuously					: [bool]
+		canBeInstantiatedOnlyOncePerProcess		: [bool]
+		canNotUseMemoryManagementFunctions		: [bool]
+		canGetAndSetFMUstate					: [bool]
+		canSerializeFMUstate					: [bool]
+		providesDirectionalDerivative			: [bool]
+		sourceFiles								: [seq1 of SourceFile];
+
+	SourceFile ::
+		location	: Location
+		name		: NormalizedString;
+
+functions
+	/**
+	 * Apply defaults to return effective CoSimulation settings.
+	 */
+	effCoSimulation: CoSimulation +> CoSimulation
+	effCoSimulation(cs) ==
+		mk_CoSimulation
+		(
+			cs.location,
+			cs.modelIdentifier,
+			nilBool(cs.needsExecutionTool),
+			nilBool(cs.canHandleVariableCommunicationStepSize),
+			nilBool(cs.canInterpolateInputs),
+			nilNat(cs.maxOutputDerivativeOrder),
+			nilBool(cs.canRunAsynchronuously),
+			nilBool(cs.canBeInstantiatedOnlyOncePerProcess),
+			nilBool(cs.canNotUseMemoryManagementFunctions),
+			nilBool(cs.canGetAndSetFMUstate),
+			nilBool(cs.canSerializeFMUstate),
+			nilBool(cs.providesDirectionalDerivative),
+			nilSeq[SourceFile](cs.sourceFiles)
+		);
+
+	/**
+	 * Check CoSimulation values.
+	 */
+	isValidCoSimulation: [CoSimulation] +> bool
+	isValidCoSimulation(cs) ==
+		cs <> nil =>
+		{
+			cs.sourceFiles <> nil =>
+				/* @OnFail("4.3.1 CoSimulation source file names are not unique: %s",
+					let files = cs.sourceFiles in
+						{ files(a).name | a, b in set inds files &
+							a <> b and files(a).name = files(b).name })
+
+					The file names within the sequence of source files listed for the CoSimulation
+					must be unique. This is determined by checking that the set of names is the same
+					size as the length of the list of source files.
+				 */
+				( len cs.sourceFiles = card { f.name | f in seq cs.sourceFiles } ),
+
+			/* @OnFail("4.3.1 CoSimulation modelIdentifer %s not valid C variable name at line %s",
+						cs.modelIdentifier, cs.location) */
+			( cs.modelIdentifier <> ""
+			  and cs.modelIdentifier(1) in set elems NONDIGITS )
+		}
+		= {true};
