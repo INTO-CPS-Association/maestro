@@ -16,4 +16,5 @@ bool global_execution_continue = true;
 expand initialize(components,START_TIME,END_TIME);
 unload(tankcontroller);
 unload(SingleWatertank);
+unload(math);
 }
