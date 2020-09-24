@@ -36,12 +36,6 @@
             <version>2.11.12</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.ugos</groupId>
-            <artifactId>JIProlog</artifactId>
-            <version>4.1.6.1</version>
-        </dependency>
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>verificationsuite</artifactId>
