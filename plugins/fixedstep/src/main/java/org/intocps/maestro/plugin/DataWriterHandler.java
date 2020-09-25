@@ -75,10 +75,6 @@ public class DataWriterHandler implements GeneratorComponent {
             list.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_valuesIdentifier),
                     newAArrayType(newAStringPrimitiveType(), variableNames.size()),
                     newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
-
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
-                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
-                            newAIdentifierExp(this.data_valuesIdentifier)))));
         };
 
         declareCsvBuffer.accept(statements);

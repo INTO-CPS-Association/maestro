@@ -141,6 +141,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
         DerivativesHandler derivativesHandler = new DerivativesHandler();
         DataExchangeHandler dataExchangeHandler = new DataExchangeHandler(relations, env, getCompStatusDesignator, checkStatus);
         DataWriterHandler dataWriter = new DataWriterHandler();
+        List<PStm> dataWriterAllocateStms =
+                dataWriter.allocate(dataExchangeHandler.getInputRelations(), dataExchangeHandler.getOutputs(), unitRelationShip);
 
 
         Consumer<List<PStm>> handleDoStepStatuses = list -> {
@@ -324,10 +326,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         List<PStm> loopStmtsPost = new Vector<>();
 
+        //
+
         //get data
         loopStmtsPost.addAll(dataExchangeHandler.getAll(true));
         loopStmtsPost.addAll(derivativesHandler.get("global_execution_continue"));
+
         progressTime.accept(loopStmtsPost);
+        loopStmtsPost.addAll(dataWriter.write());
         loopStmtsPost.addAll(stateHandler.freeAllStates());
 
         loopStmts.add(newIf(newAnd(newAIdentifierExp("global_execution_continue"), newNot(newAIdentifierExp(newAIdentifier(fix_recovering)))),
@@ -353,7 +359,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         statements.addAll(dataExchangeHandler.getAll(false));
         statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
         statements.addAll(derivativesHandler.get("global_execution_continue"));
-        statements.addAll(dataWriter.allocate(dataExchangeHandler.getInputRelations(), dataExchangeHandler.getOutputs(), unitRelationShip));
+        statements.addAll(dataWriterAllocateStms);
         statements.addAll(dataWriter.write());
         //loop
         statements.add(newWhile(

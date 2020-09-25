@@ -24,8 +24,8 @@ expand initialize(components,START_TIME, END_TIME);
 
 expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
-tankcontroller.freeInstance(roller);
-SingleWatertank.freeInstance(cont);
+fmu1.freeInstance(pump);
+fmu2.freeInstance(sink);
 
 unload(fmu1);
 unload(fmu2);
