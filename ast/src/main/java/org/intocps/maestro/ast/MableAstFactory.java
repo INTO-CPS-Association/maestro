@@ -21,6 +21,9 @@ public class MableAstFactory {
 
     public static AInstanceMappingStm newAInstanceMappingStm(LexIdentifier mablName, String envName) {
         AInstanceMappingStm ims = new AInstanceMappingStm();
+        ims.setIdentifier(mablName);
+        ims.setName(envName);
+        return ims;
     }
 
     public static AIdentifierExp newAIdentifierExp(String name) {
@@ -45,6 +48,14 @@ public class MableAstFactory {
             vardecl.setIsArray(false);
         }
         return vardecl;
+    }
+
+    public static ASimulationSpecificationCompilationUnit newASimulationSpecificationCompilationUnit(List<? extends LexIdentifier> imports,
+            PStm body) {
+        ASimulationSpecificationCompilationUnit stm = new ASimulationSpecificationCompilationUnit();
+        stm.setImports(imports);
+        stm.setBody(body);
+        return stm;
     }
 
     public static AWhileStm newWhile(PExp test, PStm body) {

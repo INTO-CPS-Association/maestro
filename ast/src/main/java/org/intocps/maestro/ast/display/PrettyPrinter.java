@@ -135,5 +135,8 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         }
     }
 
-
+    @Override
+    public void caseAInstanceMappingStm(AInstanceMappingStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question) + "@map " + node.getIdentifier().getText() + " -> \"" + node.getName() + "\"");
+    }
 }
