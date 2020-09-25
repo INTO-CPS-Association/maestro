@@ -143,14 +143,14 @@ public class UnitRelationship implements ISimulationEnvironment {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName,
-                        new ComponentInfo(modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.from.instance.key)),
-                                instance.from.instance.key));
+                instanceNameToInstanceComponentInfo
+                        .put(instance.from.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key)/*modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.from
+                                .instance.key)*/, instance.from.instance.key));
             }
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName,
-                        new ComponentInfo(modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.to.instance.key)),
-                                instance.to.instance.key));
+                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription
+                        .get(instance.to.instance.key)/*modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.to.instance.key))*/,
+                        instance.to.instance.key));
             }
         }
 
@@ -173,8 +173,10 @@ public class UnitRelationship implements ISimulationEnvironment {
                 // dependantInputs are the inputs on which the current output depends on internally
                 Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
                 for (ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
-                    Variable inputVariable = getOrCreateVariable(inputScalarVariable, instanceLexIdentifier);
-                    dependantInputs.put(instanceLexIdentifier, inputVariable);
+                    if (inputScalarVariable.causality == ModelDescription.Causality.Input) {
+                        Variable inputVariable = getOrCreateVariable(inputScalarVariable, instanceLexIdentifier);
+                        dependantInputs.put(instanceLexIdentifier, inputVariable);
+                    }
                     // TODO: Add relation from each input to the given output?
                 }
                 if (dependantInputs.size() != 0) {
@@ -415,6 +417,38 @@ public class UnitRelationship implements ISimulationEnvironment {
             OutputToInput,
             InputToOutput
         }
+
+        public static class RelationBuilder {
+
+            private final Variable source;
+            private final Map<LexIdentifier, Variable> targets;
+            private InternalOrExternal origin = InternalOrExternal.External;
+            private Direction direction = Direction.OutputToInput;
+
+            public RelationBuilder(Variable source, Map<LexIdentifier, Variable> targets) {
+                this.source = source;
+                this.targets = targets;
+            }
+
+            public RelationBuilder setInternalOrExternal(InternalOrExternal origin) {
+                this.origin = origin;
+                return this;
+            }
+
+            public RelationBuilder setDirection(Direction direction) {
+                this.direction = direction;
+                return this;
+            }
+
+            public Relation build() {
+                var rel = new Relation();
+                rel.source = this.source;
+                rel.targets = this.targets;
+                rel.origin = this.origin;
+                rel.direction = this.direction;
+                return rel;
+            }
+        }
     }
 
     public class Variable {
@@ -422,6 +456,10 @@ public class UnitRelationship implements ISimulationEnvironment {
 
         public Variable(RelationVariable scalarVariable) {
             this.scalarVariable = scalarVariable;
+        }
+
+        public RelationVariable getScalarVariable() {
+            return scalarVariable;
         }
 
         <T extends FrameworkVariableInfo> T getFrameworkInfo(Framework framework) {

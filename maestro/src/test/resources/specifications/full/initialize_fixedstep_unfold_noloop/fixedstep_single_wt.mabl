@@ -1,0 +1,36 @@
+simulation
+import FixedStep;
+import TypeConverter;
+import Initializer;
+
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+
+Math math = load("Math");
+FMI2 MassSpringDamper2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}", "src/test/resources/mass_spring_damper/MassSpringDamper2.fmu");
+FMI2 MassSpringDamper1 = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}",  "src/test/resources/mass_spring_damper/MassSpringDamper1.fmu");
+FMI2Component i1 = MassSpringDamper1.instantiate("i1", false, false);;
+FMI2Component i2 = MassSpringDamper2.instantiate("i2", false, false);;
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+IFmuComponent components[2]={i1,i2};
+
+bool global_execution_continue = true;
+
+expand initialize(components,START_TIME, END_TIME);
+
+expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+
+MassSpringDamper1.freeInstance(i1);
+MassSpringDamper2.freeInstance(i2);
+
+unload(MassSpringDamper1);
+unload(MassSpringDamper2);
+unload(dataWriter);
+unload(logger);
+unload(math);
+
+}

@@ -1,14 +1,11 @@
-package org.intocps.maestro.plugin.Initializer.PrologVerifier;
+package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.plugin.ExpandException;
-import org.intocps.maestro.plugin.Initializer.RelationsPredicates;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
@@ -73,8 +70,10 @@ public class PrologGenerator {
 
     private String getOutPorts(Set<UnitRelationship.Relation> relations, LexIdentifier fmu) {
         StringBuilder outPorts = new StringBuilder();
-        var externalRelations = relations.stream().filter(RelationsPredicates.External()).collect(Collectors.toSet());
-        var internalRelations = relations.stream().filter(RelationsPredicates.Internal()).collect(Collectors.toSet());
+        var externalRelations =
+                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toSet());
+        var internalRelations =
+                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toSet());
         var outputPorts = externalRelations.stream().filter(p -> p.getSource().scalarVariable.getInstance() == fmu).collect(Collectors.toSet());
 
         outputPorts.forEach(port -> {

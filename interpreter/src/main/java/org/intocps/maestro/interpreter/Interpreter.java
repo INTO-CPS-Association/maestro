@@ -443,6 +443,17 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value createNewReturnValue(Object node, Context question) throws AnalysisException {
-        throw new InterpreterException("Unhandled node: " + node);
+        logger.debug("Unhandled interpreter object: {}", node.getClass().getSimpleName());
+        throw new InterpreterException("Unhandled object: " + node);
+    }
+
+    @Override
+    public Value caseAMinusUnaryExp(AMinusUnaryExp node, Context question) throws AnalysisException {
+        NumericValue exp = (NumericValue) node.getExp().apply(this, question).deref();
+        if (exp instanceof IntegerValue) {
+            return new IntegerValue(exp.intValue() * (-1));
+        } else {
+            return new RealValue(exp.realValue() * (-1));
+        }
     }
 }

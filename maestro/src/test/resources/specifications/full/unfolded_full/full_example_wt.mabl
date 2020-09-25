@@ -4,7 +4,7 @@
 simulation
 import  FMI2;
 {
-
+Math math = load("Math");
 FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
 FMI2 fmuB = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
 CSV csv = load("CSV");
@@ -97,6 +97,8 @@ unload(fmuB);
 
 csv.close(csvfile);
 unload(csv);
+unload(math);
+
 }
 
 

@@ -4,7 +4,7 @@ import TypeConverter;
 import Initializer;
 
 {
-
+Math math = load("Math");
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
 FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
 FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, false);
@@ -24,5 +24,6 @@ SingleWatertank.freeInstance(wtInstance);
 unload(tankcontroller);
 unload(SingleWatertank);
 unload(logger);
+unload(math);
 
 }

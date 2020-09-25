@@ -1,0 +1,91 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * 4.3.1 Definition of a ModelExchange section of an FMU.
+ */
+types
+	ModelExchange ::
+		location							: Location
+		modelIdentifier						: NormalizedString
+		needsExecutionTool					: [bool]
+		completedIntegratorStepNotNeeded	: [bool]
+		canBeInstantiatedOnlyOncePerProcess	: [bool]
+		canNotUseMemoryManagementFunctions	: [bool]
+		canGetAndSetFMUstate				: [bool]
+		canSerializeFMUstate				: [bool]
+		providesDirectionalDerivative		: [bool]
+		sourceFiles							: [seq1 of SourceFile];
+
+functions
+	/**
+	 * Apply defaults to return effective ModelExchange settings.
+	 */
+	effModelExchange: ModelExchange +> ModelExchange
+	effModelExchange(me) ==
+		mk_ModelExchange
+		(
+			me.location,
+			me.modelIdentifier,
+			nilBool(me.needsExecutionTool),
+			nilBool(me.completedIntegratorStepNotNeeded),
+			nilBool(me.canBeInstantiatedOnlyOncePerProcess),
+			nilBool(me.canNotUseMemoryManagementFunctions),
+			nilBool(me.canGetAndSetFMUstate),
+			nilBool(me.canSerializeFMUstate),
+			nilBool(me.providesDirectionalDerivative),
+			nilSeq[SourceFile](me.sourceFiles)
+		);
+
+	/**
+	 * Check ModelExchange values.
+	 */
+	isValidModelExchange: [ModelExchange] +> bool
+	isValidModelExchange(me) ==
+		me <> nil =>
+		{
+			me.sourceFiles <> nil =>
+				/* @OnFail("3.3.1 ModelExchange source file names are not unique: %s",
+					let files = me.sourceFiles in
+						{ files(a).name | a, b in set inds files &
+							a <> b and files(a).name = files(b).name })
+
+					The file names within the sequence of source files listed for the ModelExchange
+					must be unique. This is determined by checking that the set of names is the same
+					size as the length of the list of source files.
+				 */
+				( len me.sourceFiles = card { f.name | f in seq me.sourceFiles } ),
+
+			/* @OnFail("3.3.1 ModelExchange modelIdentifer %s not valid C variable name at line %s",
+							me.modelIdentifier, me.location) */
+			( me.modelIdentifier <> ""
+			  and me.modelIdentifier(1) in set elems NONDIGITS )
+		}
+		= {true};
+

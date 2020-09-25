@@ -1,0 +1,36 @@
+simulation
+import FixedStep;
+import TypeConverter;
+import Initializer;
+
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+Math Math = load("Math");
+
+FMI2 fmu1 = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/pump.fmu");
+FMI2 fmu2 = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/sink.fmu");
+FMI2Component pump = fmu1.instantiate("m1", false, false);
+FMI2Component sink = fmu2.instantiate("m2", false, false);
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+IFmuComponent components[2]={pump,sink};
+
+bool global_execution_continue = true;
+
+expand initialize(components,START_TIME, END_TIME);
+
+expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+
+fmu1.freeInstance(pump);
+fmu2.freeInstance(sink);
+
+unload(fmu1);
+unload(fmu2);
+unload(dataWriter);
+unload(logger);
+unload(Math);
+
+}
