@@ -399,8 +399,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAUIntLiteralExp(AUIntLiteralExp node, Context question) throws AnalysisException {
-        //TODO
-        return new IntegerValue(node.getValue().intValue());
+        return new UnsignedIntegerValue(node.getValue());
     }
 
     @Override

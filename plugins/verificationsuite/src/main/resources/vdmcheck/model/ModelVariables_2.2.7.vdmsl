@@ -1,0 +1,638 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * 2.2.7 Definition of Model Variables (ModelVariables)
+ */
+types
+	-- XSD p45, description p46
+	Causality	= <parameter> | <calculatedParameter> | <input> | <output> | <local> | <independent>;
+
+	-- XSD p45, description p46, ordering p53 (2.0.1)
+	Variability	= <constant> | <fixed> | <tunable> | <discrete> | <continuous>
+	ord a < b ==
+		let value =
+		{
+			<constant>   |-> 1,
+			<fixed>      |-> 2,
+			<tunable>    |-> 3,
+			<discrete>   |-> 4,
+			<continuous> |-> 5
+		}
+		in value(a) < value(b);
+
+	-- XSD p45, description p46
+	Initial		= <exact> | <approx> | <calculated>;
+
+	Real ::		-- XSD p52
+		declaredType		: [NormalizedString]
+		quantity			: [NormalizedString]
+		unit				: [NormalizedString]
+		displayUnit			: [NormalizedString]
+		relativeQuantity	: [bool]
+		min					: [real]
+		max					: [real]	
+		nominal				: [real]
+		unbounded			: [bool]
+		start				: [real]
+		derivative			: [nat1]
+		reinit				: [bool];
+
+	Integer ::	-- XSD p52
+		declaredType		: [NormalizedString]
+		quantity			: [NormalizedString]
+		min					: [int]
+		max					: [int]
+		start				: [int];
+
+	Boolean ::				-- XSD p53
+		declaredType		: [NormalizedString]
+		start				: [bool];
+
+	String ::				-- XSD p53
+		declaredType		: [NormalizedString]
+		start				: [AnyString];
+
+	Enumeration ::			-- XSD p53
+		declaredType		: NormalizedString	 -- Note, not optional
+		quantity			: [NormalizedString]
+		min					: [int]
+		max					: [int]
+		start				: [int];
+
+	Variable = Real | Integer | Boolean | String | Enumeration;
+
+	VarName = NormalizedString;		-- Has a syntax defined in section 2.2.9, p64
+
+	ScalarVariable ::	-- XSD 2.2.7, p44, p54
+		location							: Location
+		-- attributes
+		name								: VarName
+		valueReference						: nat
+		description							: [AnyString]
+		causality							: [Causality]
+		variability							: [Variability]
+		initial								: [Initial]
+		canHandleMultipleSetPerTimeInstant	: [bool]
+
+		-- elements
+		variable		: Variable
+		annotations		: [seq1 of Tool];
+
+	-- Value references
+	fmi2ValueReference = nat;
+
+	-- A tag used to uniquely identify aliased variables (since refs are only unique per type),
+	-- made of the SV valueReference and the type's kind.
+	AliasTag ::
+		vref	: fmi2ValueReference
+		kind	: Kind;
+
+functions
+	/**
+	 * Lookup a valueReference in the variable list passed. Note this assumes that there will
+	 * be at most one, so previous checks have passed.
+	 */
+	lookup: seq1 of ScalarVariable * fmi2ValueReference * Kind +> [ScalarVariable]
+	lookup(svs, vr, kind) ==
+		let found = { v | v in seq svs & v.valueReference = vr and kindOf(v.variable) = kind } in
+			if found = {}
+			then nil
+			else let {v} union  - = found in v;
+
+	/**
+	 * Invariant helper for min/max/start checks on Real, Integer and Enumeration.
+	 */
+	isInRange[@T]: [@T] * [@T] * [@T] * [Initial] * Location +> bool
+	isInRange(min, max, start, initial, location) ==
+	{
+		max <> nil and min <> nil =>
+			--@OnFail("2.2.7 min %s is not <= max %s at line %s", min, max, location)
+			( max >= min ),
+
+		start <> nil =>
+			--@OnFail("2.2.7 start %s is not within min %s/max %s at line %s", start, min, max, location)
+			( (min <> nil => min <= start) and
+			  (max <> nil => max >= start) ),
+
+		start = nil and initial not in set {<calculated>, <independent>} =>
+			--@OnFail("2.2.7 Warning: implicit start of 0 is not within min %s/max %s at line %s", min, max, location)
+			( (min <> nil => min <= 0) and
+			  (max <> nil => max >= 0) ) or true	-- NOTE warning
+	} = {true}
+	pre is_(min, [real]) and is_(max, [real]) and is_(start, [real]);	-- ie. numerics
+
+	/**
+	 * Verify a sequence of raw ScalarVariables.
+	 */
+	isValidScalarVariables: seq1 of ScalarVariable +> bool
+	isValidScalarVariables(svs) ==
+		{
+			/* @OnFail("2.2.7 ScalarVariables define more than one independent variable: %s",
+				{ sv.name | sv in seq svs & sv.causality = <independent> }) */
+			( card { sv | sv in seq svs & sv.causality = <independent> } <= 1 ),
+
+			/* @OnFail("2.2.7 ScalarVariable names are not unique: %s",
+				{ svs(a).name | a, b in set inds svs &
+					a <> b and svs(a).name = svs(b).name } ) */
+			( card { sv.name | sv in seq svs } = len svs )
+		}
+		union
+		{
+			-- @OnFail("2.2.7 ScalarVariable %s invalid at line %s", sv.name, sv.location)
+			( isValidScalarVariable(sv) )
+
+			| sv in seq svs
+		} = {true};
+
+	/**
+	 * Raw ScalarVariable invariant. Rules defined in the table on p49.
+	 */
+	isValidScalarVariable: ScalarVariable +> bool
+	isValidScalarVariable(sv) ==
+		let eCausality   = effectiveCausality(sv.causality),
+			eVariability = effectiveVariability(sv.variability),
+			eInitial     = effectiveInitial(sv.initial, eCausality, eVariability)
+		in
+		{
+			-- Table on p46 defining causality, and p48/49 defining combinations
+			/* @OnFail("2.2.7 Variable %s causality/variability/initial/start %s/%s/%s/%s invalid at line %s",
+				sv.name, eCausality, eVariability, eInitial, sv.variable.start, sv.location) */
+			(
+				cases eCausality:
+					<parameter> ->
+						eVariability in set {<fixed>, <tunable>}
+						and eInitial = <exact>,		-- (A)
+
+					<calculatedParameter> ->
+						eVariability in set {<fixed>, <tunable>}
+						and eInitial in set {<approx>, <calculated>},	-- (B)
+
+					<input> ->
+						eVariability in set {<discrete>, <continuous>}
+						and eInitial = nil
+						and sv.variable.start <> nil,		-- (D)
+
+					<independent> ->
+						eVariability = <continuous>
+						and eInitial = nil		-- (D)
+						and sv.variable.start = nil,
+
+					<output> ->
+						cases eVariability:
+							<constant> ->
+								eInitial in set {<exact>},	-- (A)
+
+							<discrete>,
+							<continuous> ->
+								eInitial in set { <exact>, <approx>, <calculated> }, -- (C)
+
+							others -> false
+						end,
+
+					<local> ->
+						cases eVariability:
+							<constant> ->
+								eInitial = <exact>,	-- (A)
+
+							<fixed>,
+							<tunable> ->
+								eInitial in set { <calculated>, <approx> },	-- (B)
+
+							<discrete>,
+							<continuous> ->
+								eInitial in set { <exact>, <approx>, <calculated> } -- (C)
+						end
+				end
+			),
+
+			-- @OnFail("2.2.7 Independent variable must be Real at line %s", sv.location)
+			(
+				eCausality = <independent> => is_Real(sv.variable)
+			),
+
+			-- Table on p46 defining variability, and p49 defining combinations
+			/* @OnFail("2.2.7 Variable %s variability/causality %s/%s invalid at line %s",
+				sv.name, eVariability, eCausality, sv.location) */
+			(
+				cases eVariability:
+					<constant> ->
+						eCausality in set {<output>, <local>},
+
+					<fixed>, <tunable> ->
+						eCausality in set {<parameter>, <calculatedParameter>, <local>},
+
+					<discrete> ->
+						eCausality in set {<input>, <output>, <local>},
+
+					<continuous> ->
+						eCausality in set {<input>, <output>, <local>, <independent>}
+				end
+			),
+
+			-- @OnFail("2.2.7 Continuous variable must be Real at line %s", sv.location)
+			(
+				eVariability = <continuous> => is_Real(sv.variable)
+			),
+
+			-- Table on p47 defining initial
+			/* @OnFail("2.2.7 Variable %s initial/causality %s/%s invalid at %s",
+				sv.name, sv.initial, eCausality, sv.location) */
+			(
+				sv.initial <> nil =>
+					(eCausality not in set {<input>, <independent>})
+			),
+
+			-- Table on p47 defining initial
+			/* @OnFail("2.2.7 Variable %s initial/variability/start %s/%s/%s invalid at line %s",
+				sv.name, eInitial, eVariability, sv.variable.start, sv.location) */
+			(
+				cases eInitial:
+					<exact> ->
+						sv.variable.start <> nil,
+
+					<approx> ->
+						sv.variable.start <> nil
+						and eVariability <> <constant>,
+
+					<calculated> ->
+						sv.variable.start = nil
+						and eVariability <> <constant>,
+
+					nil ->		-- Note that eInitial can be nil (undefined in table on p48)
+						true	-- Tests on eInitial above are sufficient
+				end
+			),
+
+			-- @OnFail("2.2.7 VendorAnnotations invalid")
+			( isValidVendorAnnotations(sv.annotations) )
+		} = {true};
+
+
+	/**
+	 * Vaidity checks that depend on inherited values from any declaredType - ie. passed
+	 * effective ScalarVariables.
+	 */
+	isValidEffectiveVariables: seq1 of ScalarVariable +> bool
+	isValidEffectiveVariables(svs) ==
+	{
+		-- @OnFail("2.2.7 Variable %s min/max/start/nominal invalid at line %s", sv.name, sv.location)
+		(
+			cases sv.variable:
+				mk_Real(-, -, -, -, -, min, max, nominal, -, start, -, -) ->
+					isInRange[real](min, max, start, sv.initial, sv.location)
+					-- @OnFail("2.2.7 Real nominal must be >0.0 at line %s", sv.location)
+					and (nominal <> nil => nominal > 0.0),
+
+				mk_Integer(-, -, min, max, start) ->
+					isInRange[real](min, max, start, sv.initial, sv.location),
+
+				mk_Enumeration(-, -, min, max, start) ->
+					isInRange[real](min, max, start, sv.initial, sv.location),
+
+				others -> true		-- String, Boolean
+			end
+		)
+
+		| sv in seq svs
+	}
+	union
+	{
+		/* @OnFail("2.2.7 Invalid ScalarVariable aliasing") */
+		(
+			let refmap = getAliasRefMap(svs) in
+			card dom refmap < len svs => dunion	-- Must be some aliases
+			{
+				let aliases = refmap(ref) in
+				{
+					/* @OnFail("2.2.7 Multiple aliases of reference %s are settable: %s", ref,
+							{ a.name | a in set aliases & isSettable(a) }) */
+					( card { a | a in set aliases & isSettable(a) } <= 1 ),
+
+					/* @OnFail("2.2.7 Aliases of reference %s are settable and independent: %s", ref,
+							{ {a.name, b.name} | a, b in set aliases &
+								a <> b and isSettable(a) and b.causality = <independent> } ) */
+					( not exists a, b in set aliases & a <> b and isSettable(a) and b.causality = <independent> ),
+
+					-- @OnFail("2.2.7 Too many aliases of reference %s have start set", ref)
+					( card { a.variable.start | a in set aliases & a.variability <> <constant> and a.variable.start <> nil } <= 1 ),
+
+					-- @OnFail("2.2.7 Constant aliases of reference %s have different start values", ref)
+					( card { a.variable.start | a in set aliases & a.variability = <constant> and a.variable.start <> nil } <= 1 ),
+
+					-- @OnFail("2.2.7 Aliases of reference %s must all be constant or variable", ref)
+					( card { a | a in set aliases & a.variability = <constant> } in set {0, card aliases} ),
+
+					-- @OnFail("2.2.7 Aliases of reference %s must all have same unit/baseUnits", ref)
+					( card { a.variable.unit | a in set aliases & is_Real(a.variable) } <= 1 ),
+
+					/*
+					 * In case of different variability among the set of alias variables, and if that set of aliases
+					 * does not contain an input or parameter, the variability should be the highest of the variables
+					 * in the set, e.g. continuous > discrete > tunable > fixed. If the set includes a parameter or
+					 * input the aliases will have the stated variability of that parameter or input.
+					 */
+					 let vars = { a.variability | a in set aliases } in
+					 	if exists a in set aliases & a.causality in set {<input>, <parameter>}
+					 	then
+					 		let a in set aliases be st a.causality in set {<input>, <parameter>} in
+				 				/* @OnFail("2.2.7 Warning: aliases of reference %s must all be %s, because of %s",
+				 						ref, a.variability, a.name) */
+				 				( vars = { a.variability } ) or true
+					 	else
+					 		let highest in set vars be st not exists v in set vars & v > highest in
+					 			-- @OnFail("2.2.7 Warning: aliases of reference %s must all be %s", ref, highest)
+					 			( vars = { highest } ) or true
+				}
+
+				| ref in set dom refmap & card refmap(ref) > 1
+			}
+			= {true}
+		)
+	} = {true};
+
+	/**
+	 * The default value for initial, defined by the (effective) values of causality and
+	 * variability, via the table on p48/49.
+	 */ 
+	effectiveInitial: [Initial] * Causality * Variability -> [Initial]
+	effectiveInitial(i, eCausality, eVariability) ==
+		if i <> nil
+		then i
+		else cases eCausality:
+			<parameter> ->
+				cases eVariability:
+					<fixed>, <tunable> -> <exact>,
+					others -> nil
+				end,
+
+			<calculatedParameter> ->
+				cases eVariability:
+					<fixed>, <tunable> -> <calculated>,
+					others -> nil
+				end,
+
+			<input> ->
+				cases eVariability:
+					<discrete>, <continuous> -> nil,
+					others -> nil
+				end,
+
+			<output> ->
+				cases eVariability:
+					<constant> -> <exact>,
+					<discrete>, <continuous> -> <calculated>,
+					others -> nil
+				end,
+
+			<local> ->
+				cases eVariability:
+					<constant> -> <exact>,
+					<fixed>, <tunable> -> <calculated>,
+					<discrete>, <continuous> -> <calculated>
+				end,
+
+			<independent> ->
+				cases eVariability:
+					<continuous> -> nil,
+					others -> nil
+				end
+		end;
+
+	effectiveCausality: [Causality] -> Causality
+	effectiveCausality(c) ==
+		if c = nil
+		then <local>
+		else c;
+
+	effectiveVariability: [Variability] -> Variability
+	effectiveVariability(v) ==
+		if v = nil
+		then <continuous>
+		else v;
+
+	/**
+	 * Generate all of the effective ScalarVariables. Note that an effective "time"
+	 * variable is created if there are no independent variables defined.
+	 */
+	effectiveScalarVariables: FMIModelDescription +> seq1 of ScalarVariable
+	effectiveScalarVariables(model) ==
+		let evs =
+		[
+			effectiveScalarVariable(sv, model.typeDefinitions)
+			| sv in seq model.modelVariables
+		]
+		in
+			if not exists esv in seq evs & esv.causality = <independent>
+			then evs ^
+				[
+					-- If no variable is defined as "independent", it is implicitly
+					-- present with name = "time" and unit = "s" (2.2.7, p47)
+
+					mk_ScalarVariable
+					(
+						0,
+						"time",
+						let allvrs = { sv.valueReference | sv in seq evs } in
+							let vr in set {1, ..., len evs + 1} be st vr not in set allvrs in vr,
+						"Implicit independent time variable",
+						<independent>,
+						<continuous>,
+						nil,
+						nil,
+						mk_Real(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),	-- Unit "s"?
+						nil
+					)
+				]
+			else evs;
+
+	/**
+	 * Generate the effective value of a ScalarVariable, accounting for fields inherited from
+	 * any declaredType and defaulted values of causality, variability and initial.
+	 */
+	effectiveScalarVariable: ScalarVariable * [set1 of SimpleType] +> ScalarVariable
+	effectiveScalarVariable(sv, typedefs) ==
+		let causality   = effectiveCausality(sv.causality),
+			variability = effectiveVariability(sv.variability)
+		in 
+			mk_ScalarVariable
+			(
+				sv.location,
+				sv.name,
+				sv.valueReference,
+				sv.description,
+				causality,
+				variability,
+				effectiveInitial(sv.initial, causality, variability),
+				sv.canHandleMultipleSetPerTimeInstant,
+				effectiveVariable(sv.variable, typedefs),
+				sv.annotations
+			);
+
+	/**
+	 * Generate the effective value of a Variable, accounting for fields inherited from
+	 * its declaredType.
+	 */
+	effectiveVariable: Variable * [set1 of SimpleType] +> Variable
+	effectiveVariable(v, typedefs) ==
+		if v.declaredType = nil or typedefs = nil
+		then v
+		else let dtypes = { td | td in set typedefs & td.name = v.declaredType } in
+			cases dtypes:
+				{ dt } ->
+					cases dt.type:
+						mk_RealType(dquantity, dunit, ddisplayUnit, drelq, dmin, dmax, dnominal, dunbounded) ->
+							if is_Real(v) then
+								mu(v,
+									quantity			|-> if v.quantity <> nil then v.quantity else dquantity,
+									unit				|-> if v.unit <> nil then v.unit else dunit,
+									displayUnit			|-> if v.displayUnit <> nil then v.displayUnit else ddisplayUnit,
+									relativeQuantity	|-> if v.relativeQuantity <> nil then v.relativeQuantity else drelq,
+									min					|-> if v.min <> nil then v.min else dmin,
+									max					|-> if v.max <> nil then v.max else dmax,
+									nominal				|-> if v.nominal <> nil then v.nominal else dnominal,
+									unbounded			|-> if v.unbounded <> nil then v.unbounded else dunbounded)
+							else
+								v,	-- Error reported elsewhere
+
+						mk_IntegerType(dquantity, dmin, dmax) ->
+							if is_Integer(v) then
+								mu(v,
+									quantity			|-> if v.quantity <> nil then v.quantity else dquantity,
+									min					|-> if v.min <> nil then v.min else dmin,
+									max					|-> if v.max <> nil then v.max else dmax)
+							else
+								v,	-- Error reported elsewhere
+
+						mk_EnumerationType(dquantity, -) ->
+							if is_Enumeration(v) then
+								mu(v,
+									quantity			|-> if v.quantity <> nil then v.quantity else dquantity)
+							else
+								v,	-- Error reported elsewhere
+
+						others -> v		-- Boolean and String unchanged
+					end,
+
+				others -> v		-- Duplicate typedefs caught elsewhere
+			end;
+
+	/**
+	 * Test whether a ScalarVariable is settable with fmi2SetXXX. See sections 3.2.3 and 4.2.4.
+	 */
+	isSettable: ScalarVariable +> bool
+	isSettable(sv) ==
+		sv.variability <> <constant> and sv.initial in set { <exact>, <approx> }
+		or
+		sv.causality = <input>
+		or
+		sv.causality = <parameter> and sv.variability = <tunable>;
+
+	/**
+	 * Test whether two Variables are the same basic type.
+	 */
+	sameTypes: Variable * Variable +> bool
+	sameTypes(a, b) ==
+		kindOf(a) = kindOf(b);
+
+	/**
+	 * Get the kind of a Variable.
+	 */
+	kindOf: Variable -> Kind
+	kindOf(v) ==
+		if is_Real(v) then <Real>
+		else if is_Integer(v) then <Integer>
+		else if is_Boolean(v) then <Boolean>
+		else if is_String(v) then <String>
+		else if is_Enumeration(v) then <Integer>	-- Note!
+		else undefined;
+
+	/**
+	 * Return the ScalarVariables from a list which are continuous-time states, defined to be
+	 * Real variables which are continuous and have a derivative.
+	 */
+	continuousTimeStates: seq of ScalarVariable -> set of ScalarVariable
+	continuousTimeStates(svs) ==
+		{ svs(i) | i in set inds svs & isContinuousTimeState(i, svs) };
+
+	/**
+	 * Test ith index variable as a continuous time state.
+	 */
+	isContinuousTimeState: nat1 * seq of ScalarVariable +> bool
+	isContinuousTimeState(i, svs) ==
+		is_Real(svs(i).variable)
+		and svs(i).variability = <continuous>
+		and svs(i).causality in set { <local>, <output> }	-- See defn. causality
+		and exists j in seq svs &
+			is_Real(j.variable) and j.variable.derivative = i;
+
+	/**
+	 * Return the ScalarVariables from a list which are state derivatives, defined to be
+	 * variables which are the derivative of some other variable.
+	 */
+	stateDerivatives: seq of ScalarVariable -> set of ScalarVariable
+	stateDerivatives(svs) ==
+		{ sv | sv in seq svs & isStateDerivative(sv) };
+
+	/**
+	 * Test ScalarVariable as a state derivative.
+	 */
+	isStateDerivative: ScalarVariable +> bool
+	isStateDerivative(sv) ==
+		is_Real(sv.variable) and sv.variable.derivative <> nil;
+
+	/**
+	 * Get derivative order of a variable.
+	 */
+	getDerivativeBase: nat1 * seq of ScalarVariable +> nat * nat1
+	getDerivativeBase(idx, svs) ==
+		if not is_Real(svs(idx).variable) or svs(idx).variable.derivative = nil
+		then mk_(0, idx)
+		else let mk_(o, r) = getDerivativeBase(svs(idx).variable.derivative, svs) in
+			mk_(o+1, r)
+	measure is not yet specified;
+
+	/**
+	 * Get the alias refmap, from alias tags to sets of SVs
+	 */
+	getAliasRefMap: seq1 of ScalarVariable -> map AliasTag to set of ScalarVariable
+	getAliasRefMap(svs) ==
+		let tags = { svi |-> aliasTag(svs(svi)) | svi in set inds svs } in
+		{
+			tags(svi) |-> { svs(v) | v in set inds svs & tags(v) = tags(svi) }
+			| svi in set inds svs
+		};
+
+	/**
+	 * Generate an alias "tag" for a ScalarVariable, made of the valueReference and
+	 * the type of the variable. All aliases of a variable have the same tag.
+	 */
+	aliasTag: ScalarVariable +> AliasTag
+	aliasTag(sv) ==
+		mk_AliasTag(sv.valueReference, kindOf(sv.variable));

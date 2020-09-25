@@ -1,0 +1,1 @@
+Tests enable and disable debug logging expansion plugin

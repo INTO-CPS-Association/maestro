@@ -1,0 +1,87 @@
+/**
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-2019, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License are
+ * obtained from the INTO-CPS Association, either from the above address, from
+ * the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
+
+/**
+ * Miscellaneous support types and functions, not related to a specific section of the FMI spec.
+ */
+types
+	AnyString = seq of char;			-- Note, can be empty string
+
+	NormalizedString = seq of char		-- Note, can be empty string
+	inv ns ==
+		forall c in seq ns &
+			c not in set { '\r', '\n', '\t'};
+
+	Location = nat;						-- XML source line number
+
+functions
+	nilSeq[@T]: [seq of @T] +> seq of @T
+	nilSeq(s) ==
+		if s = nil then [] else s;
+
+	nilSet[@T]: [set of @T] +> set of @T
+	nilSet(s) ==
+		if s = nil then {} else s;
+
+	nilBool: [bool] +> bool
+	nilBool(b) ==
+		if b = nil then false else b;
+
+	nilNat: [nat] +> nat
+	nilNat(n) ==
+		if n = nil then 0 else n;
+
+	nilInt: [int] +> int
+	nilInt(n) ==
+		if n = nil then 0 else n;
+
+	nilReal: [real] +> real
+	nilReal(n) ==
+		if n = nil then 0 else n;
+
+	count[@T]: set of set of @T +> nat
+	count(s) ==
+		if s = {}
+		then 0
+		else let e in set s in
+			card e + count[@T](s \ {e})
+	measure card s;
+
+	setToSeq[@T]: set of @T +> seq of @T
+	setToSeq(s) ==
+		if s = {}
+		then []
+		else let e in set s in
+			[e] ^ setToSeq[@T](s \ {e})
+	measure card s;
+
+	epsilon: real * real +> bool
+	epsilon(a, b) ==
+		let EPSILON = 1e-8 in
+			abs(a - b) < EPSILON;

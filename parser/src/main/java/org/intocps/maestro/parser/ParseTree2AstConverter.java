@@ -410,7 +410,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitUnitType(MablParser.UnitTypeContext ctx) {
+    public INode visitUintType(MablParser.UintTypeContext ctx) {
         return new AUIntNumericPrimitiveType();
     }
 

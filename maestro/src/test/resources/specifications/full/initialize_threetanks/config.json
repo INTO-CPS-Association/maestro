@@ -1,0 +1,19 @@
+[
+  {
+    "identification": {
+      "name": "Initializer",
+      "version": "0.0.0"
+    },
+    "config": {
+      "parameters": {
+        "{controller}.controller.wt3_max": 1.7,
+        "{controller}.controller.wt3_min": 1.3
+      },
+      "verifyAgainstProlog": true,
+      "stabilisation": true,
+      "fixedPointIteration": 5,
+      "absoluteTolerance": 0.1,
+      "relativeTolerance": 0.1
+    }
+  }
+]

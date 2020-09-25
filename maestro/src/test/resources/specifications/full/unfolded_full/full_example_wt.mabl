@@ -1,0 +1,104 @@
+
+
+
+simulation
+import  FMI2;
+{
+Math math = load("Math");
+FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+FMI2 fmuB = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+CSV csv = load("CSV");
+bool global_execution_continue = true;
+CSVFile csvfile  = csv.open("result.csv");
+
+string headers[2] = {"level"};
+csvfile.writeHeader(headers);
+
+FMI2Component a = fmuA.instantiate("A", true,true);
+FMI2Component b = fmuB.instantiate("B", true,true);
+
+real END_TIME = 1000.0;
+
+a.setupExperiment( false, 0.0, 0.0, true, END_TIME);
+b.setupExperiment( false, 0.0, 0.0, true, END_TIME);
+
+
+
+a.enterInitializationMode();
+b.enterInitializationMode();
+
+UInt vref[1];
+real data[1];
+
+vref[0]=16;
+data[0] = 0.0;
+a.setReal( vref, 1, data);
+b.setReal( vref, 1, data);
+
+a.exitInitializationMode();
+b.exitInitializationMode();
+
+
+real level = 0.0;
+
+
+
+real time = 0.0;
+
+real STEP_SIZE = 0.01;
+
+
+
+while(time < END_TIME)
+{
+
+
+
+? values[2]={level,level};
+csvfile.writeRow(time,values);
+
+    //how do we handle out?
+    vref[0]=16;
+
+    a.getReal(vref, 1, data);
+    level = data[0];
+    vref[0]=17;
+
+    if( level < 1.0)
+     {
+        data[0]=0.0;
+        a.setReal( vref, 1, data);
+        b.setReal( vref, 1, data);
+    }
+
+    if( level > 2.0)
+    {
+        data[0]=1.0;
+        a.setReal( vref, 1, data);
+        b.setReal( vref, 1, data);
+    }
+
+    a.doStep( time, STEP_SIZE,false);
+    b.doStep( time, STEP_SIZE,false);
+
+    time = time + STEP_SIZE;
+}
+
+
+
+a.terminate();
+b.terminate();
+
+fmuA.freeInstance(a);
+fmuB.freeInstance(b);
+
+unload(fmuA);
+unload(fmuB);
+
+csv.close(csvfile);
+unload(csv);
+unload(math);
+
+}
+
+
