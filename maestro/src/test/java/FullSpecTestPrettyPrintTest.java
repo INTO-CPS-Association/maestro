@@ -1,7 +1,6 @@
 import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
@@ -26,20 +25,20 @@ import java.util.stream.Collectors;
 
 
 @RunWith(Parameterized.class)
-public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
+public class FullSpecTestPrettyPrintTest {
 
     final File directory;
     private final String name;
 
-    public FullSpecTestOnlinePrettyPrint(String name, File directory) {
+    public FullSpecTestPrettyPrintTest(String name, File directory) {
         this.name = name;
         this.directory = directory;
     }
 
     @Parameterized.Parameters(name = "{index} {0}")
     public static Collection<Object[]> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "online").toFile().listFiles()))
-                .filter(n -> !n.getName().startsWith(".")).map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
+                .map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 
     @Test
@@ -58,9 +57,6 @@ public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
 
-            for (INode spec : MableSpecificationGenerator.parse(getSpecificationFiles())) {
-                download(collectFmus(spec, false));
-            }
 
             long startTime = System.nanoTime();
             Instant start = Instant.now();
@@ -74,8 +70,6 @@ public class FullSpecTestOnlinePrettyPrint extends OnlineTestFmusTest {
             System.out.println("############################################################");
             System.out.println("##################### Pretty Print #########################");
             System.out.println("############################################################");
-
-            collectFmus(doc, true);
 
             String sourceCode = PrettyPrinter.print(doc);
             System.out.println(sourceCode);
