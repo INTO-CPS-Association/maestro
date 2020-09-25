@@ -21,7 +21,9 @@ public class MaBLTemplateGenerator {
     public static final String LOGGER_MODULE_NAME = "Logger";
     public static final String DATAWRITER_MODULE_NAME = "DataWriter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
+    public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
+    public static final String COMPONENTS_ARRAY_NAME = "components";
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
@@ -60,6 +62,11 @@ public class MaBLTemplateGenerator {
                                         MableAstFactory.newAStringLiteralExp(uriFromFMUName.toString()))))));
     }
 
+    public static PStm createFMUUnload(String fmuLexName) {
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAStringLiteralExp(fmuLexName))));
+    }
+
     public static PStm createFMUInstantiateStatement(String instanceName, String fmuLexName) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(new LexIdentifier(instanceName, null), MableAstFactory.newANameType("FMI2Component"), MableAstFactory
@@ -70,11 +77,13 @@ public class MaBLTemplateGenerator {
 
     }
 
-    public static List<PStm> generateAlgorithmStms(IStepAlgorithm algorithm) {
+    public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
         switch (algorithm.getType()) {
             case FIXEDSTEP:
                 FixedStepSizeAlgorithm a = (FixedStepSizeAlgorithm) algorithm;
-                return Arrays.asList(createRealVariable(STEP_SIZE_NAME, a.stepSize), createRealVariable(END_TIME_NAME, a.endTime));
+                return new ExpandStatements(
+                        Arrays.asList(createRealVariable(STEP_SIZE_NAME, a.stepSize), createRealVariable(END_TIME_NAME, a.endTime)),
+                        Arrays.asList(createExpandFixedStep(COMPONENTS_ARRAY_NAME, STEP_SIZE_NAME, START_TIME_NAME, END_TIME_NAME)));
             default:
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
@@ -88,12 +97,14 @@ public class MaBLTemplateGenerator {
 
         UnitRelationship unitRelationShip = templateConfiguration.getUnitRelationship();
 
-        // Create load statements
+        // Create FMU load statements
+        List<PStm> unloadFmuStatements = new ArrayList<>();
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
         for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
 
             PStm fmuLoadStatement = createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey()));
+            unloadFmuStatements.add(createFMUUnload(fmuLexName));
 
             statements.add(fmuLoadStatement);
             fmuNameToLexIdentifier.put(entry.getKey(), fmuLexName);
@@ -102,6 +113,7 @@ public class MaBLTemplateGenerator {
         // Create Instantiate Statements
         HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
+        List<PStm> freeInstanceStatements = new ArrayList<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Find parent lex
             String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
@@ -111,6 +123,7 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
 
             PStm instantiateStatement = createFMUInstantiateStatement(instanceLexName, parentLex);
+            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
             statements.add(instantiateStatement);
         });
         //Map from instance lex to instance name
@@ -120,23 +133,44 @@ public class MaBLTemplateGenerator {
         }
 
         // Components Array
-        statements.add(createComponentsArray("components", instanceLexToInstanceName.keySet()));
+        statements.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToInstanceName.keySet()));
 
 
         statements.add(createRealVariable(START_TIME_NAME, 0.0));
 
-        if (templateConfiguration.getInitialize()) {
-            statements.add(createExpandInitialize("components", START_TIME_NAME, END_TIME_NAME));
-
-        }
-
+        // Generate the algorithm statements, but only add the variables.
+        ExpandStatements algorithmStatements = null;
         if (templateConfiguration.getAlgorithm() != null) {
-            statements.addAll(generateAlgorithmStms(templateConfiguration.getAlgorithm()));
+            algorithmStatements = generateAlgorithmStms(templateConfiguration.getAlgorithm());
+            if (algorithmStatements.variablesToTopOfMabl != null) {
+                statements.addAll(algorithmStatements.variablesToTopOfMabl);
+            }
         }
 
+        // Add the initializer expand stm
+        if (templateConfiguration.getInitialize()) {
+            statements.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+        }
+
+        // Add the algorithm expand stm
+        if (algorithmStatements.body != null) {
+            statements.addAll(algorithmStatements.body);
+        }
+
+        // Free instances
+        statements.addAll(freeInstanceStatements);
+
+        // Unload the FMUs
+        statements.addAll(unloadFmuStatements);
         statements.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createUnloadStatement));
 
         return MableAstFactory.newASimulationSpecificationCompilationUnit(null, MableAstFactory.newABlockStm(statements));
+    }
+
+    private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
+                        Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceLexName))));
     }
 
     private static Collection<? extends PStm> generateUnloadStms() {
@@ -172,12 +206,24 @@ public class MaBLTemplateGenerator {
                                 AIdentifierExpFromString(endTimeLexName))));
     }
 
+    public static PStm createExpandFixedStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName, String endTimeLexName) {
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newExpandToken(), MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_FUNCTION_NAME),
+                        Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(stepSizeLexName),
+                                AIdentifierExpFromString(startTimeLexName), AIdentifierExpFromString(endTimeLexName))));
+    }
+
     public static AIdentifierExp AIdentifierExpFromString(String x) {
         return MableAstFactory.newAIdentifierExp(MableAstFactory.newAIdentifier(x));
     }
 
-    enum LOADUNLOAD {
-        LOAD,
-        UNLOAD
+    public static class ExpandStatements {
+        public List<PStm> variablesToTopOfMabl;
+        public List<PStm> body;
+
+        public ExpandStatements(List<PStm> variablesToTopOfMabl, List<PStm> body) {
+            this.variablesToTopOfMabl = variablesToTopOfMabl;
+            this.body = body;
+        }
     }
 }
