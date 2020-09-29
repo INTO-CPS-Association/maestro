@@ -117,6 +117,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return assign;
     }
 
+
     @Override
     public INode visitArrayStateDesignator(MablParser.ArrayStateDesignatorContext ctx) {
         AArrayStateDesignator designator = new AArrayStateDesignator();
@@ -395,7 +396,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     @Override
     public INode visitExpandMapping(MablParser.ExpandMappingContext ctx) {
-        return new AInstanceMappingStm(convert(ctx.identifier), ctx.name.getText());
+        return new AInstanceMappingStm(convert(ctx.identifier), ctx.name.getText().substring(1, ctx.name.getText().length() - 1));
     }
 
     @Override

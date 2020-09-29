@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -11,6 +12,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.plugin.env.EnvironmentMessage;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +21,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -58,23 +61,44 @@ public class FullSpecTestPrettyPrintTest {
             workingDir.mkdirs();
         }
 
+        TestJsonObject testJsonObject = null;
         File test = new File(directory, "test.json");
-        ObjectMapper mapper = new ObjectMapper();
-        TestJsonObject testJsonObject = mapper.readValue(test, TestJsonObject.class);
+        if (Files.exists(test.toPath())) {
+            ObjectMapper mapper = new ObjectMapper();
+            testJsonObject = mapper.readValue(test, TestJsonObject.class);
+        } else {
+            testJsonObject = new TestJsonObject();
+        }
 
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
-
 
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
             UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
 
-            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
-                    .useInitializer(testJsonObject.initialize).setStepAlgorithm(getStepAlgorithm(test))
+            MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, environment);
+            ARootDocument doc;
+            if (testJsonObject.useLocalSpec == false) {
 
-            ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, false, environment).generate(getSpecificationFiles(), configStream);
+                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder templateBuilder =
+                        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                                .useInitializer(testJsonObject.initialize);
+
+                if (testJsonObject.simulate && environment.getEnvironmentMessage().algorithm instanceof EnvironmentMessage.FixedStepAlgorithmConfig) {
+                    EnvironmentMessage.FixedStepAlgorithmConfig a =
+                            (EnvironmentMessage.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
+                    templateBuilder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
+                }
+
+                MaBLTemplateConfiguration configuration = templateBuilder.build();
+                String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
+                System.out.println(template);
+                doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(template)), configStream);
+            } else {
+                doc = mableSpecificationGenerator.generate(getSpecificationFiles(), configStream);
+            }
 
             long stopTime = System.nanoTime();
             Instant end = Instant.now();

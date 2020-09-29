@@ -167,7 +167,7 @@ public class MableAstFactory {
     }
 
     public static LexToken newExpandToken() {
-        return new LexToken("EXPAND", 0, 0);
+        return new LexToken("expand", 0, 0);
     }
 
     public static ACallExp newACallExp(LexToken expand, LexIdentifier identifier, List<? extends PExp> args_) {

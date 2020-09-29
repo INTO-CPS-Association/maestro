@@ -49,6 +49,8 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node, Integer question) throws AnalysisException {
 
         sb.append(indent(question) + "simulation ");
+        node.getImports().forEach(x -> sb.append(indent(question) + "\nimport " + x.getText() + ";"));
+        sb.append("\n");
         node.getBody().apply(this, question);
         //"simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [body]
         //        return indent(question) + "simulation " + node.getBody().apply(this, question);
@@ -137,6 +139,6 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
 
     @Override
     public void caseAInstanceMappingStm(AInstanceMappingStm node, Integer question) throws AnalysisException {
-        sb.append(indent(question) + "@map " + node.getIdentifier().getText() + " -> \"" + node.getName() + "\"");
+        sb.append(indent(question) + "@map " + node.getIdentifier().getText() + " -> \"" + node.getName() + "\";");
     }
 }

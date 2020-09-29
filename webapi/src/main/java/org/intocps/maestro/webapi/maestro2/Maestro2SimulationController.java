@@ -310,7 +310,6 @@ public class Maestro2SimulationController {
 
     @ApiModel(subTypes = {FixedStepAlgorithmConfig.class, VariableStepAlgorithmConfig.class}, discriminator = "type",
             description = "Simulation algorithm.")
-
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes(
             {@Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step"), @Type(value = VariableStepAlgorithmConfig.class, name = "var-step")})

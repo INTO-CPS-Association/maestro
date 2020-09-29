@@ -33,7 +33,7 @@ public class MaBLTemplateConfiguration {
         private boolean initialize = false;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
-            return new MaBLTemplateConfigurationBuilder()
+            return new MaBLTemplateConfigurationBuilder();
         }
 
         public MaBLTemplateConfigurationBuilder setUnitRelationship(UnitRelationship unitRelationship) {

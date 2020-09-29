@@ -1,5 +1,6 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.API.IStepAlgorithm;
@@ -24,6 +25,7 @@ public class MaBLTemplateGenerator {
     public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
+    public static final String GLOBAL_EXECUTION_CONTINUE = "global_execution_continue";
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
@@ -63,8 +65,8 @@ public class MaBLTemplateGenerator {
     }
 
     public static PStm createFMUUnload(String fmuLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAStringLiteralExp(fmuLexName))));
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
     public static PStm createFMUInstantiateStatement(String instanceName, String fmuLexName) {
@@ -138,6 +140,8 @@ public class MaBLTemplateGenerator {
 
         statements.add(createRealVariable(START_TIME_NAME, 0.0));
 
+        statements.add(createGlobalExecutionContinue());
+
         // Generate the algorithm statements, but only add the variables.
         ExpandStatements algorithmStatements = null;
         if (templateConfiguration.getAlgorithm() != null) {
@@ -162,15 +166,23 @@ public class MaBLTemplateGenerator {
 
         // Unload the FMUs
         statements.addAll(unloadFmuStatements);
-        statements.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createUnloadStatement));
+        statements.addAll(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
 
-        return MableAstFactory.newASimulationSpecificationCompilationUnit(null, MableAstFactory.newABlockStm(statements));
+        return MableAstFactory.newASimulationSpecificationCompilationUnit(
+                Arrays.asList(MableAstFactory.newAIdentifier("FixedStep"), MableAstFactory.newAIdentifier("TypeConverter"),
+                        MableAstFactory.newAIdentifier("Initializer")), MableAstFactory.newABlockStm(statements));
+    }
+
+    private static PStm createGlobalExecutionContinue() {
+        return MableAstFactory.newALocalVariableStm(MableAstFactory
+                .newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE), MableAstFactory.newABoleanPrimitiveType(),
+                        MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
-                        Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceLexName))));
+                        Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));
     }
 
     private static Collection<? extends PStm> generateUnloadStms() {
@@ -184,7 +196,7 @@ public class MaBLTemplateGenerator {
     }
 
     private static PStm createUnloadStatement(String moduleName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory.newUnloadExp(Arrays.asList(MableAstFactory.newAStringLiteralExp(moduleName))));
+        return MableAstFactory.newExpressionStm(MableAstFactory.newUnloadExp(Arrays.asList(MableAstFactory.newAIdentifierExp(moduleName))));
     }
 
     private static Collection<? extends PStm> generateLoadUnloadStms(Function<String, PStm> function) {
@@ -194,8 +206,8 @@ public class MaBLTemplateGenerator {
 
     private static PStm createLoadStatement(String moduleName) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(moduleName.toLowerCase()), MableAstFactory.newANameType(moduleName),
-                        MableAstFactory
+                .newAVariableDeclaration(MableAstFactory.newAIdentifier(StringUtils.uncapitalize(moduleName)),
+                        MableAstFactory.newANameType(moduleName), MableAstFactory
                                 .newAExpInitializer(MableAstFactory.newALoadExp(Arrays.asList(MableAstFactory.newAStringLiteralExp(moduleName))))));
     }
 
