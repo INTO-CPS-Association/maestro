@@ -26,11 +26,14 @@ public class MaBLTemplateConfiguration {
     }
 
     public static class MaBLTemplateConfigurationBuilder {
+
+
         private IStepAlgorithm stepAlgorithm = null;
         private UnitRelationship unitRelationship = null;
         private boolean initialize = false;
 
-        public MaBLTemplateConfigurationBuilder() {
+        public static MaBLTemplateConfigurationBuilder getBuilder() {
+            return new MaBLTemplateConfigurationBuilder()
         }
 
         public MaBLTemplateConfigurationBuilder setUnitRelationship(UnitRelationship unitRelationship) {
@@ -39,7 +42,9 @@ public class MaBLTemplateConfiguration {
         }
 
         public MaBLTemplateConfigurationBuilder setStepAlgorithm(IStepAlgorithm stepAlgorithm) {
-            this.stepAlgorithm = stepAlgorithm;
+            if (stepAlgorithm != null) {
+                this.stepAlgorithm = stepAlgorithm;
+            }
             return this;
         }
 

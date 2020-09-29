@@ -1,12 +1,16 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.API.IStepAlgorithm;
+import org.intocps.maestro.core.API.StepAlgorithm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +58,10 @@ public class FullSpecTestPrettyPrintTest {
             workingDir.mkdirs();
         }
 
+        File test = new File(directory, "test.json");
+        ObjectMapper mapper = new ObjectMapper();
+        TestJsonObject testJsonObject = mapper.readValue(test, TestJsonObject.class);
+
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
 
@@ -61,7 +69,11 @@ public class FullSpecTestPrettyPrintTest {
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
-            ISimulationEnvironment environment = UnitRelationship.of(new File(directory, "env.json"));
+            UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
+
+            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                    .useInitializer(testJsonObject.initialize).setStepAlgorithm(getStepAlgorithm(test))
+
             ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, false, environment).generate(getSpecificationFiles(), configStream);
 
             long stopTime = System.nanoTime();
@@ -88,6 +100,15 @@ public class FullSpecTestPrettyPrintTest {
 
         }
 
+    }
+
+    private IStepAlgorithm getStepAlgorithm(StepAlgorithm stepAlgorithm, double endTime, double stepSize) {
+        switch (stepAlgorithm) {
+            case FIXEDSTEP:
+                return new FixedStepSizeAlgorithm(endTime, stepSize);
+            default:
+                return null;
+        }
     }
 
     private List<File> getSpecificationFiles() {
