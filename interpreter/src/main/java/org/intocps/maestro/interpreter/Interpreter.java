@@ -441,6 +441,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseANullExp(ANullExp node, Context question) throws AnalysisException {
+        return new NullValue();
+    }
+
+    @Override
     public Value createNewReturnValue(INode node, Context question) throws AnalysisException {
         logger.debug("Unhandled interpreter node: {}", node.getClass().getSimpleName());
         throw new InterpreterException("Unhandled node: " + node);

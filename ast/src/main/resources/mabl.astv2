@@ -72,6 +72,7 @@ exp
     | {call} [object]:exp [expand]:parserToken [methodName]:lex_identifier [args]:exp*
     | {arrayIndex} [array]:exp [indices]:exp*
     | {par} [exp]:exp
+    | {null} [token]:parserToken
     ;
 
 #literal

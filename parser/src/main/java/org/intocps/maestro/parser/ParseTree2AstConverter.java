@@ -390,6 +390,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             //remove quotes
             literal.setValue((ctx.STRING_LITERAL().getText().substring(1, ctx.STRING_LITERAL().getText().length() - 1)));
             return literal;
+        } else if (ctx.NULL_LITERAL() != null) {
+            ANullExp literal = new ANullExp();
+            //remove quotes
+            literal.setToken(convertToLexToken(ctx.NULL_LITERAL().getSymbol()));
+            return literal;
         }
         throw new RuntimeException("unsupported literal");
     }

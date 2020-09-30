@@ -135,4 +135,5 @@ literal
     | BOOL_LITERAL
     | DECIMAL_LITERAL
     | FLOAT_LITERAL
+    | NULL_LITERAL
     ;
