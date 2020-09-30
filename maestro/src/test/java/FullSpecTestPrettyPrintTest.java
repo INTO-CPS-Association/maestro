@@ -4,10 +4,9 @@ import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
+import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
-import org.intocps.maestro.core.API.IStepAlgorithm;
-import org.intocps.maestro.core.API.StepAlgorithm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
@@ -18,10 +17,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -48,54 +48,68 @@ public class FullSpecTestPrettyPrintTest {
                 .map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 
-    @Test
-    public void test() throws Exception {
+    private static TestJsonObject getTestJsonObject(File directory) throws java.io.IOException {
+        TestJsonObject testJsonObject = null;
+        File test = new File(directory, "test.json");
 
-        File config = new File(directory, "config.json");
-        String s = "target/" + config.getAbsolutePath().substring(
-                config.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
+        if (test.exists()) {
+            ObjectMapper mapper = new ObjectMapper();
+            testJsonObject = mapper.readValue(test, TestJsonObject.class);
+        } else {
+            testJsonObject = new TestJsonObject();
+            testJsonObject.useLocalSpec = true;
+        }
+        return testJsonObject;
+    }
+
+    private static File getWorkingDirectory(File configurationFile) {
+        String s = "target/" + configurationFile.getAbsolutePath().substring(
+                configurationFile.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
                         ("src" + "/test" + "/resources/").length());
 
         File workingDir = new File(s.replace('/', File.separatorChar)).getParentFile();
         if (!workingDir.exists()) {
             workingDir.mkdirs();
         }
+        return workingDir;
+    }
 
-        TestJsonObject testJsonObject = null;
-        File test = new File(directory, "test.json");
-        if (Files.exists(test.toPath())) {
-            ObjectMapper mapper = new ObjectMapper();
-            testJsonObject = mapper.readValue(test, TestJsonObject.class);
-        } else {
-            testJsonObject = new TestJsonObject();
+    private static ARootDocument generateDocumentWithTemplate(TestJsonObject testJsonObject, InputStream configStream, UnitRelationship environment,
+            MableSpecificationGenerator mableSpecificationGenerator) throws AnalysisException, XPathExpressionException, IOException {
+        ARootDocument doc;
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder templateBuilder =
+                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                        .useInitializer(testJsonObject.initialize);
+
+        if (testJsonObject.simulate && environment.getEnvironmentMessage().algorithm instanceof EnvironmentMessage.FixedStepAlgorithmConfig) {
+            EnvironmentMessage.FixedStepAlgorithmConfig a =
+                    (EnvironmentMessage.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
+            templateBuilder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
         }
 
+        MaBLTemplateConfiguration configuration = templateBuilder.build();
+        String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
+        System.out.println(template);
+        doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(template)), configStream);
+        return doc;
+    }
+
+    @Test
+    public void test() throws Exception {
+        File config = new File(directory, "config.json");
 
         try (InputStream configStream = config.exists() ? new FileInputStream(config) : null) {
-
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
             UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
 
             MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, environment);
-            ARootDocument doc;
+
+            TestJsonObject testJsonObject = getTestJsonObject(directory);
+            ARootDocument doc = null;
             if (testJsonObject.useLocalSpec == false) {
-
-                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder templateBuilder =
-                        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
-                                .useInitializer(testJsonObject.initialize);
-
-                if (testJsonObject.simulate && environment.getEnvironmentMessage().algorithm instanceof EnvironmentMessage.FixedStepAlgorithmConfig) {
-                    EnvironmentMessage.FixedStepAlgorithmConfig a =
-                            (EnvironmentMessage.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
-                    templateBuilder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
-                }
-
-                MaBLTemplateConfiguration configuration = templateBuilder.build();
-                String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
-                System.out.println(template);
-                doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(template)), configStream);
+                doc = generateDocumentWithTemplate(testJsonObject, configStream, environment, mableSpecificationGenerator);
             } else {
                 doc = mableSpecificationGenerator.generate(getSpecificationFiles(), configStream);
             }
@@ -120,18 +134,8 @@ public class FullSpecTestPrettyPrintTest {
             }
 
             DataStore.GetInstance().setSimulationEnvironment(environment);
+            File workingDir = getWorkingDirectory(config);
             new MableInterpreter(new DefaultExternalValueFactory(workingDir)).execute(reparsedDoc);
-
-        }
-
-    }
-
-    private IStepAlgorithm getStepAlgorithm(StepAlgorithm stepAlgorithm, double endTime, double stepSize) {
-        switch (stepAlgorithm) {
-            case FIXEDSTEP:
-                return new FixedStepSizeAlgorithm(endTime, stepSize);
-            default:
-                return null;
         }
     }
 
