@@ -1,6 +1,5 @@
-package org.intocps.maestro.plugin;
+package org.intocps.maestro.ast;
 
-import org.intocps.maestro.ast.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,7 +8,7 @@ import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-class MableBuilder {
+public class MableBuilder {
     public static PStm newVariable(LexIdentifier name, PType type, PExp value) {
         return newVariable(name.getText(), type, value);
     }

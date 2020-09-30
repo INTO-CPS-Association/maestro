@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableBuilder.*;
 import static org.intocps.maestro.plugin.DataExchangeHandler.getBufferName;
-import static org.intocps.maestro.plugin.MableBuilder.*;
 
 public class DataWriterHandler implements GeneratorComponent {
 
