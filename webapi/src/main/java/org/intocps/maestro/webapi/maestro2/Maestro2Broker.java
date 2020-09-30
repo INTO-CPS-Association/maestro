@@ -2,9 +2,13 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
@@ -33,7 +37,6 @@ public class Maestro2Broker {
         // Create the configuration for the initializer plugin
         PluginFactory.PluginConfiguration pluginConfiguration =
                 InitializerConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
-        //InitializerUsingCoeConfigCreator.createInitializationJsonNode(initializationData, simulateRequestBody);
 
         // Create the context for the MaBL parser
         List<PluginFactory.PluginConfiguration> contextObj = new ArrayList<>();
@@ -50,16 +53,19 @@ public class Maestro2Broker {
         simulationEnvironmentConsumer.accept(simulationEnvironment);
 
         if (initializationData.getAlgorithm() instanceof Maestro2SimulationController.FixedStepAlgorithmConfig) {
+            Maestro2SimulationController.FixedStepAlgorithmConfig algorithm =
+                    (Maestro2SimulationController.FixedStepAlgorithmConfig) initializationData.getAlgorithm();
+            MaBLTemplateConfiguration templateConfiguration =
+                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(true)
+                            .setStepAlgorithm(new FixedStepSizeAlgorithm(simulateRequestBody.endTime, algorithm.getSize()))
+                            .setUnitRelationship(simulationEnvironment).build();
+            String mablTemplateSpec = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(templateConfiguration));
 
-            double stepSize = ((Maestro2SimulationController.FixedStepAlgorithmConfig) initializationData.getAlgorithm()).getSize();
-
-            String spec = MaBLSpecCreator.createMaBLSpec(simulateRequestBody, simulationEnvironment, stepSize, withWs, rootDirectory);
 
             //Create unfolded mabl spec
             MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, simulationEnvironment);
-            ARootDocument doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(spec)), context);
+            ARootDocument doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(mablTemplateSpec)), context);
             return doc;
-
         }
 
         throw new Exception("Algorithm not supported: " + initializationData.getAlgorithm());

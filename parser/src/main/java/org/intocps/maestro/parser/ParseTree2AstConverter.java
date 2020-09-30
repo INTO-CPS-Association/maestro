@@ -117,6 +117,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return assign;
     }
 
+
     @Override
     public INode visitArrayStateDesignator(MablParser.ArrayStateDesignatorContext ctx) {
         AArrayStateDesignator designator = new AArrayStateDesignator();
@@ -391,6 +392,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             return literal;
         }
         throw new RuntimeException("unsupported literal");
+    }
+
+    @Override
+    public INode visitExpandMapping(MablParser.ExpandMappingContext ctx) {
+        return new AInstanceMappingStm(convert(ctx.identifier), ctx.name.getText().substring(1, ctx.name.getText().length() - 1));
     }
 
     @Override

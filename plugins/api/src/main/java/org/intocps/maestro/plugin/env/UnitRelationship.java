@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 // The relations provided are related to the FMI Component and not to the individual input/output.
 public class UnitRelationship implements ISimulationEnvironment {
     private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
+    private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
@@ -77,6 +78,14 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     }
 
+    public void setLexNameToInstanceNameMapping(String lexName, String instanceName) {
+        this.instanceLexToInstanceName.put(lexName, instanceName);
+    }
+
+    public ComponentInfo getInstanceByLexName(String lexName) {
+        return this.instanceNameToInstanceComponentInfo.get(this.instanceLexToInstanceName.get(lexName));
+    }
+
     @Override
     public List<RelationVariable> getVariablesToLog(String instanceName) {
         List<RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
@@ -113,6 +122,10 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     public Set<Map.Entry<String, URI>> getFmuToUri() {
         return this.fmuToUri.entrySet();
+    }
+
+    public URI getUriFromFMUName(String fmuName) {
+        return this.fmuToUri.get(fmuName);
     }
 
     private void initialize(EnvironmentMessage msg) throws Exception {

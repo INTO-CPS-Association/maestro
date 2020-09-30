@@ -368,7 +368,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         //post simulation
         terminate.accept(statements);
         statements.addAll(dataWriter.deallocate());
-        statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
+        //statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
         return Collections.singletonList(newABlockStm(statements));
     }
 

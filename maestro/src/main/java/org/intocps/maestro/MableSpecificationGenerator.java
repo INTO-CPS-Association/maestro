@@ -11,6 +11,7 @@ import org.intocps.maestro.parser.MablParser;
 import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.typechecker.PluginEnvironment;
 import org.intocps.maestro.typechecker.RootEnvironment;
 import org.intocps.maestro.typechecker.TypeComparator;
@@ -312,6 +313,15 @@ public class MableSpecificationGenerator {
 
             logger.info("\tImports {}", ("[ " + String.join(" , ", importedModuleNames) + " ]"));
 
+
+            // Extract Instance Mapping Statements (@map a -> x) and add to the unitrelationship
+            if (simulationModule.getBody() instanceof ABlockStm) {
+                Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
+                if (instanceMappings.isPresent()) {
+                    instanceMappings.get().forEach(x -> ((UnitRelationship) this.simulationEnvironment)
+                            .setLexNameToInstanceNameMapping(x.getIdentifier().getText(), x.getName()));
+                }
+            }
 
             //load plugins
             PluginEnvironment pluginEnvironment = loadExpansionPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);

@@ -65,6 +65,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAInstanceMappingStm(AInstanceMappingStm node, Context question) {
+        return new VoidValue();
+    }
+
+    @Override
     public Value caseALocalVariableStm(ALocalVariableStm node, Context question) throws AnalysisException {
 
         return node.getDeclaration().apply(this, question);

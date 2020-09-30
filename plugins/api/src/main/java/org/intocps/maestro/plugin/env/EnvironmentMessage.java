@@ -1,8 +1,6 @@
 package org.intocps.maestro.plugin.env;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.net.URI;
@@ -13,11 +11,17 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EnvironmentMessage {
+    @JsonProperty("end_time")
+    public Double endTime = 10.0;
+    @JsonProperty("step_size")
+    public Double stepSize = 0.1;
     public Map<String, String> fmus;
     public Map<String, List<String>> connections;
     public Map<String, List<String>> logVariables;
     public Map<String, List<String>> livestream;
     public Double liveLogInterval;
+    @JsonProperty("algorithm")
+    public IAlgorithmConfig algorithm;
 
     @JsonIgnore
     public Map<String, URI> getFmuFiles() throws Exception {
@@ -42,6 +46,27 @@ public class EnvironmentMessage {
             return this.liveLogInterval;
         } else {
             return 0.1;
+        }
+    }
+
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+    @JsonSubTypes({@JsonSubTypes.Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step")})
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public interface IAlgorithmConfig {
+    }
+
+    public static class FixedStepAlgorithmConfig implements IAlgorithmConfig {
+        @JsonProperty("size")
+        public final Double size;
+
+        @JsonCreator
+        public FixedStepAlgorithmConfig(@JsonProperty("size") Double size) {
+            this.size = size;
+        }
+
+        public Double getSize() {
+            return size;
         }
     }
 
