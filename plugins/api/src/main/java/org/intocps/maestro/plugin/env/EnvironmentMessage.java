@@ -23,6 +23,16 @@ public class EnvironmentMessage {
     @JsonProperty("algorithm")
     public IAlgorithmConfig algorithm;
 
+    @JsonProperty("logLevels")
+    public Map<String, List<String>> logLevels = new HashMap<>();
+
+    @JsonIgnore
+    public static String extractInstanceFromKeyInstance(String tuple) {
+        String startInstanceSplitSequence = "}.";
+        int indexStart = tuple.indexOf(startInstanceSplitSequence);
+        return tuple.substring(indexStart + startInstanceSplitSequence.length());
+    }
+
     @JsonIgnore
     public Map<String, URI> getFmuFiles() throws Exception {
         Map<String, URI> files = new HashMap<>();
@@ -49,6 +59,16 @@ public class EnvironmentMessage {
         }
     }
 
+    @JsonIgnore
+    public Map<String, List<String>> getInstanceNameToLogLevels() {
+        if (this.logLevels != null) {
+            final Map<String, List<String>> ll = new HashMap<>();
+            this.logLevels.forEach((k, v) -> ll.put(extractInstanceFromKeyInstance(k), v));
+            return ll;
+        } else {
+            return null;
+        }
+    }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes({@JsonSubTypes.Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step")})
@@ -69,5 +89,4 @@ public class EnvironmentMessage {
             return size;
         }
     }
-
 }

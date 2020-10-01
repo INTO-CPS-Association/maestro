@@ -14,9 +14,10 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 
 bool global_execution_continue = true;
 
-expand enableDebugLogging(components);
+String[] wtInstance_debug_logging[1] = {"logAll"};
+expand enableDebugLogging(wtInstance,wtInstance_debug_logging, 1);
 
-expand disableDebugLogging(components);
+expand disableDebugLogging(wtInstance, wtInstance_debug_logging, 1);
 
 tankcontroller.freeInstance(crtlInstance);
 SingleWatertank.freeInstance(wtInstance);
