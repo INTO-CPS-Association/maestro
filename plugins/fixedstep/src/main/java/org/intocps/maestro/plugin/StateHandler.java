@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.plugin.MableBuilder.*;
+import static org.intocps.maestro.ast.MableBuilder.*;
 
 public class StateHandler {
     final static Logger logger = LoggerFactory.getLogger(StateHandler.class);

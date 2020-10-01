@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.plugin.MableBuilder.*;
+import static org.intocps.maestro.ast.MableBuilder.*;
 
 class DerivativesHandler {
     final static Logger logger = LoggerFactory.getLogger(DerivativesHandler.class);
