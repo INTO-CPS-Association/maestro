@@ -314,14 +314,8 @@ public class MableSpecificationGenerator {
             logger.info("\tImports {}", ("[ " + String.join(" , ", importedModuleNames) + " ]"));
 
 
-            // Extract Instance Mapping Statements (@map a -> x) and add to the unitrelationship
-            if (simulationModule.getBody() instanceof ABlockStm) {
-                Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
-                if (instanceMappings.isPresent()) {
-                    instanceMappings.get().forEach(x -> ((UnitRelationship) this.simulationEnvironment)
-                            .setLexNameToInstanceNameMapping(x.getIdentifier().getText(), x.getName()));
-                }
-            }
+            // Add instance mapping statements to the unitrelationship
+            handleInstanceMappingStatements(simulationModule);
 
             //load plugins
             PluginEnvironment pluginEnvironment = loadExpansionPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);
@@ -367,6 +361,21 @@ public class MableSpecificationGenerator {
 
         } else {
             throw new InternalException("No Specification module found");
+        }
+    }
+
+    /**
+     * This adds instance mapping statements (@map a-> "a") to the unitrelationship.
+     *
+     * @param simulationModule
+     */
+    private void handleInstanceMappingStatements(ASimulationSpecificationCompilationUnit simulationModule) {
+        if (simulationModule.getBody() instanceof ABlockStm) {
+            Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
+            if (instanceMappings.isPresent()) {
+                instanceMappings.get().forEach(x -> ((UnitRelationship) this.simulationEnvironment)
+                        .setLexNameToInstanceNameMapping(x.getIdentifier().getText(), x.getName()));
+            }
         }
     }
 

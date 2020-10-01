@@ -79,7 +79,7 @@ public class FullSpecTestPrettyPrintTest {
         ARootDocument doc;
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder templateBuilder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
-                        .useInitializer(testJsonObject.initialize);
+                        .useInitializer(testJsonObject.initialize).setLogLevels(environment.getLogLevels());
 
         if (testJsonObject.simulate && environment.getEnvironmentMessage().algorithm instanceof EnvironmentMessage.FixedStepAlgorithmConfig) {
             EnvironmentMessage.FixedStepAlgorithmConfig a =

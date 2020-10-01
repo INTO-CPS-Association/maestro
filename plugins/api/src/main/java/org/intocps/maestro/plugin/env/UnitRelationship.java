@@ -9,6 +9,8 @@ import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,8 +23,11 @@ import java.util.stream.Collectors;
 
 // The relations provided are related to the FMI Component and not to the individual input/output.
 public class UnitRelationship implements ISimulationEnvironment {
+    public static final String LOGALL_LOGLEVEL = "logAll";
+    final static Logger logger = LoggerFactory.getLogger(UnitRelationship.class);
     private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
+    private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
@@ -53,6 +58,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     public static UnitRelationship of(EnvironmentMessage msg) throws Exception {
         return new UnitRelationship(msg);
     }
+
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
         List<ModelConnection> list = new Vector<>();
@@ -133,27 +139,29 @@ public class UnitRelationship implements ISimulationEnvironment {
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
 
+        // Build map from fmuKey to ModelDescription
         this.fmuToUri = fmuToURI;
         List<ModelConnection> connections = buildConnections(msg.connections);
         HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
+        // Build map from InstanceName to InstanceComponentInfo
         Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
         for (ModelConnection instance : connections) {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo
-                        .put(instance.from.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key)/*modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.from
-                                .instance.key)*/, instance.from.instance.key));
+                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName,
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key));
             }
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, new ComponentInfo(fmuKeyToModelDescription
-                        .get(instance.to.instance.key)/*modelDescriptionValidator.Verify(fmuKeyToModelDescription.get(instance.to.instance.key))*/,
-                        instance.to.instance.key));
+                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName,
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key));
             }
         }
 
+
+        // Build relations
         for (ModelConnection.ModelInstance instance : instancesFromConnections) {
             LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
             Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
@@ -267,13 +275,53 @@ public class UnitRelationship implements ISimulationEnvironment {
 
             }
         }
+
+        // Build logVariables
         if (this.environmentMessage.logVariables != null) {
             this.csvVariablesToLog = getEnvironmentVariablesToLog(this.environmentMessage.logVariables, this.globalVariablesToLogForInstance);
         }
+
+        // Build live stream variables
         if (this.environmentMessage.livestream != null) {
             this.livestreamVariablesToLog = this.environmentMessage.livestream.entrySet().stream()
                     .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
         }
+
+        Map<String, List<String>> instanceNameToLogLevels = environmentMessage.getInstanceNameToLogLevels();
+        if (instanceNameToLogLevels != null) {
+            for (Map.Entry<String, List<String>> entry : instanceNameToLogLevels.entrySet()) {
+                ComponentInfo instanceComponentInfo = this.instanceNameToInstanceComponentInfo.get(entry.getKey());
+                if (instanceComponentInfo == null) {
+                    logger.warn(String.format("The instance %s used in logLevels does not exist and is therefore ignored.", entry));
+                } else {
+                    List<String> logCategories =
+                            instanceComponentInfo.modelDescription.getLogCategories().stream().map(x -> x.name).collect(Collectors.toList());
+                    // Ensure that each log level is available in the model description.
+                    // Find the ones that do not exist in the model description.
+                    List<String> logLevels = new ArrayList<>();
+                    List<String> unknownLogLevels = new ArrayList<>();
+
+                    for (String logLevel : entry.getValue()) {
+                        logLevels.add(logLevel);
+                        if (!logCategories.contains(logLevel)) {
+                            unknownLogLevels.add(logLevel);
+                        }
+                    }
+                    logger.warn(String.format(
+                            "The instance %s of the FMU %s is configured with log levels that do not exist in the model description file. The " +
+                                    "log levels not in the model description file are: %s.", entry.getKey(), instanceComponentInfo.fmuIdentifier,
+                            String.join(", ", unknownLogLevels)));
+                    if (!logLevels.isEmpty()) {
+                        this.instanceNameToLogLevels.put(entry.getKey(), logLevels);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public Map<String, List<String>> getLogLevels() {
+        return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
 
     private HashMap<String, ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus) throws Exception {
@@ -375,6 +423,7 @@ public class UnitRelationship implements ISimulationEnvironment {
 
     public interface FrameworkVariableInfo {
     }
+
 
     public interface FrameworkUnitInfo {
     }
