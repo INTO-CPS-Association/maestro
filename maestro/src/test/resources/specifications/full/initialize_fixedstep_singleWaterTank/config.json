@@ -9,11 +9,11 @@
         "{crtl}.crtlInstance.maxlevel": 2,
         "{crtl}.crtlInstance.minlevel": 1
       },
-      "verifyAgainstProlog": true,
-      "stabilisation" : true,
-      "fixedPointIteration" : 5,
-      "absoluteTolerance" : 0.1,
-       "relativeTolerance" : 0.1
+      "verifyAgainstProlog": false,
+      "stabilisation": false,
+      "fixedPointIteration": 5,
+      "absoluteTolerance": 0.1,
+      "relativeTolerance": 0.1
     }
   }
 ]
