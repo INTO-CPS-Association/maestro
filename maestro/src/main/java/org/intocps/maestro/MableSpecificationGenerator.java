@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import org.antlr.v4.runtime.*;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.InternalException;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -12,10 +13,7 @@ import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
-import org.intocps.maestro.typechecker.PluginEnvironment;
-import org.intocps.maestro.typechecker.RootEnvironment;
-import org.intocps.maestro.typechecker.TypeComparator;
-import org.intocps.maestro.typechecker.TypeResolver;
+import org.intocps.maestro.typechecker.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -337,14 +335,30 @@ public class MableSpecificationGenerator {
                         new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
 
-                if (typeCheck(processedDoc, reporter)) {
-                    if (verify(processedDoc, reporter)) {
-                        return processedDoc;
+                String printedSpec = null;
+                try {
+                    printedSpec = PrettyPrinter.printLineNumbers(processedDoc);
+                } catch (AnalysisException e) {
+                    printedSpec = processedDoc + "";
+                }
+
+
+                ARootDocument specToCheck = null;
+                try {
+                    specToCheck = parse(CharStreams.fromString(PrettyPrinter.print(processedDoc)));
+                } catch (AnalysisException e) {
+                    specToCheck = processedDoc;
+                }
+
+
+                if (typeCheck(specToCheck, reporter)) {
+                    if (verify(specToCheck, reporter)) {
+                        return specToCheck;
                     }
                 }
 
 
-                throw new RuntimeException("No valid spec produced");
+                throw new RuntimeException("No valid spec prod.\n" + printedSpec);
 
             } finally {
                 if (verbose) {
@@ -425,6 +439,11 @@ public class MableSpecificationGenerator {
     private boolean typeCheck(final ARootDocument doc, final IErrorReporter reporter) {
         //TODO: implement type check
         logger.warn("Type checker not yet implemented");
-        return true;
+        try {
+            doc.apply(new TypeChecker(reporter));
+        } catch (AnalysisException e) {
+            e.printStackTrace();
+        }
+        return reporter.getErrorCount() == 0;
     }
 }

@@ -1,9 +1,9 @@
 package org.intocps.maestro.core.messages;
 
-import org.antlr.v4.runtime.Token;
+import org.intocps.maestro.ast.LexToken;
 
 public class MableWarning extends MableMessage {
-    public MableWarning(int number, String message, Token location) {
+    public MableWarning(int number, String message, LexToken location) {
         super(number, message, location);
     }
 

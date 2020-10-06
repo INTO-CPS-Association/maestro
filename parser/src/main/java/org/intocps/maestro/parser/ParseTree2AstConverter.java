@@ -103,7 +103,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     @Override
     public INode visitBreak(MablParser.BreakContext ctx) {
-        return new ABreakStm();
+
+        return new ABreakStm(convertToLexToken(ctx.BREAK().getSymbol()));
     }
 
     @Override
@@ -436,11 +437,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     private LexIdentifier convert(Token identifier) {
-        return new LexIdentifier(identifier.getText(), identifier);
+        return new LexIdentifier(identifier.getText(), convertToLexToken(identifier));
     }
 
     private LexIdentifier convert(TerminalNode identifier) {
-        return new LexIdentifier(identifier.getText(), identifier.getSymbol());
+        return new LexIdentifier(identifier.getText(), convertToLexToken(identifier.getSymbol()));
     }
 
 

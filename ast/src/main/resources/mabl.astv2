@@ -120,7 +120,7 @@ stm
     | {while} [test]:exp [body]:stm
     | {expression} [exp]:exp
     | {observable} [identifier]:identifier
-    | {break}
+    | {break} [token]:parserToken
     | {instanceMapping} [identifier]:lex_identifier [name]:java_String
     ;
 

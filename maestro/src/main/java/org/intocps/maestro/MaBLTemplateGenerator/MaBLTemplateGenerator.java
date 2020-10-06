@@ -2,8 +2,8 @@ package org.intocps.maestro.MaBLTemplateGenerator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.ast.*;
-import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
-import org.intocps.maestro.core.API.IStepAlgorithm;
+import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 

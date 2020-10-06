@@ -1,16 +1,16 @@
 package org.intocps.maestro.core.messages;
 
 
-import org.antlr.v4.runtime.Token;
+import org.intocps.maestro.ast.LexToken;
 
 import java.io.PrintWriter;
 import java.util.List;
 
 public interface IErrorReporter {
 
-    void report(int number, String problem, Token location);
+    void report(int number, String problem, LexToken location);
 
-    void warning(int number, String problem, Token location);
+    void warning(int number, String problem, LexToken location);
 
     void detail(String tag, Object obj);
 

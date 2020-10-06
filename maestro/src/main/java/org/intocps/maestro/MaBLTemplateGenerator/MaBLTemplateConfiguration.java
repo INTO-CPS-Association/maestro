@@ -1,6 +1,6 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
-import org.intocps.maestro.core.API.IStepAlgorithm;
+import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 
 import java.util.List;

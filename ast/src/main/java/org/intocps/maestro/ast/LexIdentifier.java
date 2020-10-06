@@ -1,19 +1,17 @@
 package org.intocps.maestro.ast;
 
-import org.antlr.v4.runtime.Token;
-
 import java.util.Objects;
 
 public class LexIdentifier implements ExternalNode {
     private final String text;
-    private final Token symbol;
+    private final LexToken symbol;
 
-    public LexIdentifier(String text, org.antlr.v4.runtime.Token symbol) {
+    public LexIdentifier(String text, LexToken symbol) {
         this.text = text;
         this.symbol = symbol;
     }
 
-    public Token getSymbol() {
+    public LexToken getSymbol() {
         return symbol;
     }
 

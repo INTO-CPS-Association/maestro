@@ -2,7 +2,7 @@ import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.ast.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.core.API.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Test;
 

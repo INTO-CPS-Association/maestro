@@ -21,7 +21,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     public static String printLineNumbers(INode node) throws AnalysisException {
         PrettyPrinter printer = new PrettyPrinter();
         node.apply(printer, 0);
-        int lineNumber = 0;
+        int lineNumber = 1;
         StringBuilder sb = new StringBuilder();
         int decimals = 3;
         for (String line : printer.sb.toString().split("\n")) {

@@ -1,6 +1,6 @@
 package org.intocps.maestro.core.messages;
 
-import org.antlr.v4.runtime.Token;
+import org.intocps.maestro.ast.LexToken;
 
 import java.util.List;
 import java.util.Vector;
@@ -9,7 +9,7 @@ public class MableMessage {
 
     public final int number;
     public final String message;
-    public final Token location;
+    public final LexToken location;
 
     protected List<String> details = new Vector<>();
 
@@ -17,7 +17,7 @@ public class MableMessage {
         this(number, "", null);
     }
 
-    public MableMessage(int number, String message, Token location) {
+    public MableMessage(int number, String message, LexToken location) {
         this.number = number;
         this.message = message;
         this.location = location;
