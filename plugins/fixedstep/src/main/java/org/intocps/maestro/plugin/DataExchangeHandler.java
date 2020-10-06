@@ -156,7 +156,7 @@ public class DataExchangeHandler {
                     newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier(getFmiGetName(type, UsageType.Out)),
                             Arrays.asList(newAIdentifierExp(getVrefName(comp, type, UsageType.Out)), newAIntLiteralExp(vars.size()),
                                     newAIdentifierExp(getBufferName(comp, type, UsageType.Out))))));
-            checkStatus.accept(Map.entry(true, "get failed"), Map.entry(comp, list));
+            checkStatus.accept(Map.entry(inSimulationLoop, "get failed"), Map.entry(comp, list));
         }));
 
         List<PStm> statements = new Vector<>();
