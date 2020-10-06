@@ -3,16 +3,16 @@ import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
 import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
-import org.intocps.maestro.plugin.verificationsuite.vdmcheck.VDMChecker;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
+@Ignore
 public class GraphPlotterTest {
     InputStream envWaterTankJson = this.getClass().getResourceAsStream("PrologVerifierTest/env.json");
     InputStream envThreeTankJson = this.getClass().getResourceAsStream("PrologVerifierTest/threetank_env.json");
