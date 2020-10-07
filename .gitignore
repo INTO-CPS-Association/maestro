@@ -102,3 +102,7 @@ docs/build
 .factorypath
 .vscode
 /plugins/prologverifier/example/ExampleGraph.png
+
+
+
+.java-version

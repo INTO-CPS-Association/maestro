@@ -13,7 +13,6 @@ import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -30,8 +29,8 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
 
-    private final Map<UnitRelationship.Variable, LexIdentifier> convergenceRefArray = new HashMap<UnitRelationship.Variable, LexIdentifier>();
-    private final Map<UnitRelationship.Variable, LexIdentifier> loopValueArray = new HashMap<UnitRelationship.Variable, LexIdentifier>();
+    private final Map<UnitRelationship.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
+    private final Map<UnitRelationship.Variable, LexIdentifier> loopValueArray = new HashMap<>();
 
     private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
@@ -55,13 +54,12 @@ public class StatementGeneratorContainer {
     public PExp endTime;
     public double absoluteTolerance;
     public double relativeTolerance;
-
+    public List<ModelParameter> modelParameters;
     /**
      * <code>instancesLookupDependencies</code> is set to true the co-simulatino enters the stage where
      * dependencies are to be looked up. It is detected by the first "get".
      */
     private boolean instancesLookupDependencies = false;
-    public List<ModelParameter> modelParameters;
 
 
     private StatementGeneratorContainer() {
@@ -131,10 +129,8 @@ public class StatementGeneratorContainer {
                 .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
-        var outputs =
-                loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output
-                        && o.scalarVariable.scalarVariable.getType().type == ModelDescription.Types.Real)
-                .collect(Collectors.toList());
+        var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output &&
+                o.scalarVariable.scalarVariable.getType().type == ModelDescription.Types.Real).collect(Collectors.toList());
 
         for (UnitRelationship.Variable output : outputs) {
             var lexIdentifier = createLexIdentifier
@@ -150,18 +146,18 @@ public class StatementGeneratorContainer {
                 newAVariableDeclaration(doesConverge, newABoleanPrimitiveType(), newAExpInitializer(newABoolLiteralExp(true)))));
         List<PStm> loopStmts = new Vector<>();
 
-        loopStmts.addAll(PerformLoopActions(loopVariables, env));
+        loopStmts.addAll(performLoopActions(loopVariables, env));
 
         //Check for convergence
-        loopStmts.addAll(CheckLoopConvergence(outputs, doesConverge));
+        loopStmts.addAll(checkLoopConvergence(outputs, doesConverge));
 
-        loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newEqual(newAIdentifierExp(start), newAIdentifierExp(end))),
-                newABlockStm(Arrays.asList(
+        loopStmts.add(newIf(newAnd(newNot(newAIdentifierExp(doesConverge)), newEqual(newAIdentifierExp(start), newAIdentifierExp(end))), newABlockStm(
+                Arrays.asList(
                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)),
                         newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"), Arrays.asList(newAIntLiteralExp(4),
                                 newAStringLiteralExp("The initialization of the system was not possible since loop is not converging")))))), null));
 
-        loopStmts.addAll(UpdateReferenceArray(outputs));
+        loopStmts.addAll(updateReferenceArray(outputs));
 
         //Perform next iteration
         loopStmts.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) start.clone()),
@@ -173,7 +169,7 @@ public class StatementGeneratorContainer {
         return statements;
     }
 
-    private List<PStm> PerformLoopActions(List<UnitRelationship.Variable> loopVariables, ISimulationEnvironment env) {
+    private List<PStm> performLoopActions(List<UnitRelationship.Variable> loopVariables, ISimulationEnvironment env) {
         List<PStm> LoopStatements = new Vector<>();
         loopVariables.stream().forEach(variable -> {
             long[] scalarValueIndices = new long[]{variable.scalarVariable.scalarVariable.valueReference};
@@ -181,8 +177,8 @@ public class StatementGeneratorContainer {
             //All members of the same set has the same causality, type and comes from the same instance
             if (variable.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
                 var lexId = createLexIdentifier.apply(variable.scalarVariable.instance + variable.scalarVariable.getScalarVariable().name);
-                LoopStatements.add(newALocalVariableStm(newAVariableDeclaration(lexId,
-                        newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type), 1))));
+                LoopStatements.add(newALocalVariableStm(
+                        newAVariableDeclaration(lexId, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type), 1))));
                 loopValueArray.put(variable, lexId);
                 try {
                     LoopStatements.addAll(getValueStm(variable.scalarVariable.instance.getText(), lexId, scalarValueIndices,
@@ -210,19 +206,16 @@ public class StatementGeneratorContainer {
 
         if (type == ModelDescription.Types.Boolean) {
             return setBooleansStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast)
-                            .collect(BooleanUtils.TO_BOOLEAN_ARRAY));
+                    Arrays.stream(getValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
         } else if (type == ModelDescription.Types.Real) {
             return setRealsStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString()))
-                            .toArray());
+                    Arrays.stream(getValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
         } else if (type == ModelDescription.Types.Integer) {
             return setIntegersStm(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString()))
-                            .toArray());
+                    Arrays.stream(getValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
         } else if (type == ModelDescription.Types.String) {
             return setStringsStm(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
+                    (String[]) Arrays.stream(getValues(variables, modelInstances)).map(o -> o.toString()).toArray());
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
         }
@@ -238,7 +231,7 @@ public class StatementGeneratorContainer {
                         initializer));
     }
 
-    private List<PStm> UpdateReferenceArray(List<UnitRelationship.Variable> outputPorts) {
+    private List<PStm> updateReferenceArray(List<UnitRelationship.Variable> outputPorts) {
         List<PStm> updateStmts = new Vector<>();
         outputPorts.forEach(o -> {
             var referenceValue = convergenceRefArray.get(o);
@@ -250,7 +243,7 @@ public class StatementGeneratorContainer {
     }
 
     //This method should check if all output of the Fixed Point iteration have stabilized/converged
-    private List<PStm> CheckLoopConvergence(List<UnitRelationship.Variable> outputPorts, LexIdentifier doesConverge) {
+    private List<PStm> checkLoopConvergence(List<UnitRelationship.Variable> outputPorts, LexIdentifier doesConverge) {
         LexIdentifier index = newAIdentifier("index");
         List<PStm> result = new Vector<>();
         result.add(newALocalVariableStm(newAVariableDeclaration(index, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
@@ -559,7 +552,7 @@ public class StatementGeneratorContainer {
         return statements;
     }
 
-    public Object[] GetValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
+    public Object[] getValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
         Object[] values = new Object[variables.size()];
         var i = 0;
         for (ModelDescription.ScalarVariable v : variables) {

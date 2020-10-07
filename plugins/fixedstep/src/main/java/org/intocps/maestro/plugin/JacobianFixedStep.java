@@ -74,7 +74,8 @@ public class JacobianFixedStep {
             List<PStm> body = new Vector<>(Arrays.asList(newExpressionStm(
                     call("logger", "log", newAIntLiteralExp(4), newAStringLiteralExp(inLoopAndMessage.getValue() + " %d "),
                             arrayGet(fixedStepStatus, newAIdentifierExp((LexIdentifier) compIndexVar.clone())))),
-                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false))));
+                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
+                            newABoolLiteralExp(false))));
 
             if (inLoopAndMessage.getKey()) {
                 body.add(newBreak());
@@ -202,7 +203,8 @@ public class JacobianFixedStep {
                                                     ), null)
 
 
-                                                    , newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")),
+                                                    , newAAssignmentStm(
+                                                            newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
                                                             newABoolLiteralExp(false)), newBreak())), null),
 
 
@@ -213,7 +215,7 @@ public class JacobianFixedStep {
                             ))),
 
 
-                    newIf(newNot(newAIdentifierExp(newAIdentifier("global_execution_continue"))),
+                    newIf(newNot(newAIdentifierExp(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE))),
                             !stateHandler.supportsGetSetState ? newBreak() : newIf(newAIdentifierExp("discardObserved"),
 
                                     new Supplier<PStm>() {
@@ -256,7 +258,8 @@ public class JacobianFixedStep {
 
                                             }));
                                             list.addAll(stateHandler.freeAllStates());
-                                            list.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")),
+                                            list.add(newAAssignmentStm(
+                                                    newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
                                                     newABoolLiteralExp(true)));
                                             return newABlockStm(list);
                                         }
@@ -286,7 +289,7 @@ public class JacobianFixedStep {
         loopStmts.addAll(dataExchangeHandler.exchangeData());
         //set inputs
         loopStmts.addAll(dataExchangeHandler.setAll());
-        loopStmts.addAll(derivativesHandler.set("global_execution_continue"));
+        loopStmts.addAll(derivativesHandler.set(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         //get state
         loopStmts.addAll(stateHandler.getAllStates());
         //do step
@@ -300,13 +303,14 @@ public class JacobianFixedStep {
 
         //get data
         loopStmtsPost.addAll(dataExchangeHandler.getAll(true));
-        loopStmtsPost.addAll(derivativesHandler.get("global_execution_continue"));
+        loopStmtsPost.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
 
         progressTime.accept(loopStmtsPost);
         loopStmtsPost.addAll(dataWriter.write());
         loopStmtsPost.addAll(stateHandler.freeAllStates());
 
-        loopStmts.add(newIf(newAnd(newAIdentifierExp("global_execution_continue"), newNot(newAIdentifierExp(newAIdentifier(fix_recovering)))),
+        loopStmts.add(newIf(
+                newAnd(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newNot(newAIdentifierExp(newAIdentifier(fix_recovering)))),
                 newABlockStm(loopStmtsPost), null));
 
 
@@ -328,13 +332,12 @@ public class JacobianFixedStep {
         // get prior to entering loop
         statements.addAll(dataExchangeHandler.getAll(false));
         statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
-        statements.addAll(derivativesHandler.get("global_execution_continue"));
+        statements.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         statements.addAll(dataWriterAllocateStms);
         statements.addAll(dataWriter.write());
         //loop
-        statements.add(newWhile(
-                newAnd(newAIdentifierExp("global_execution_continue"), (newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)))),
-                newABlockStm(loopStmts)));
+        statements.add(newWhile(newAnd(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE),
+                (newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)))), newABlockStm(loopStmts)));
         //post simulation
         terminate.accept(statements);
         statements.addAll(dataWriter.deallocate());

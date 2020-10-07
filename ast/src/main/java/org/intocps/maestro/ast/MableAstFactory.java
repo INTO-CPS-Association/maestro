@@ -50,6 +50,10 @@ public class MableAstFactory {
         return vardecl;
     }
 
+    public static ANullExp newNullExp() {
+        return new ANullExp();
+    }
+
     public static ASimulationSpecificationCompilationUnit newASimulationSpecificationCompilationUnit(List<? extends LexIdentifier> imports,
             PStm body) {
         ASimulationSpecificationCompilationUnit stm = new ASimulationSpecificationCompilationUnit();

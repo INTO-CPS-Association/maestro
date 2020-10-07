@@ -1,6 +1,5 @@
 package org.intocps.maestro.plugin.Initializer;
 
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.topologicalsorting.TarjanGraph;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
-    public List<UnitRelationship.Variable> FindInstantiationOrder(Set<UnitRelationship.Relation> relations) throws ExpandException {
+    public List<UnitRelationship.Variable> findInstantiationOrder(Set<UnitRelationship.Relation> relations) throws ExpandException {
         TarjanGraph graphSolver = getTarjanGraph(relations);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSort();
@@ -28,7 +27,7 @@ public class TopologicalPlugin {
                 .seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
     }
 
-    public List<Set<UnitRelationship.Variable>> FindInstantiationOrderStrongComponents(Set<UnitRelationship.Relation> relations) {
+    public List<Set<UnitRelationship.Variable>> findInstantiationOrderStrongComponents(Set<UnitRelationship.Relation> relations) {
         TarjanGraph graphSolver = getTarjanGraph(relations);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSCC();
@@ -52,11 +51,11 @@ public class TopologicalPlugin {
 
 
     private TarjanGraph getTarjanGraph(Set<UnitRelationship.Relation> relations) {
-        var externalRelations = relations.stream().filter(RelationsPredicates.External()).collect(Collectors.toList());
-        var internalRelations = relations.stream().filter(RelationsPredicates.Internal()).collect(Collectors.toList());
+        var externalRelations = relations.stream().filter(RelationsPredicates.external()).collect(Collectors.toList());
+        var internalRelations = relations.stream().filter(RelationsPredicates.internal()).collect(Collectors.toList());
 
-        internalRelations = internalRelations.stream().filter(RelationsPredicates.InputSource()
-                .or(RelationsPredicates.OutputSource().and(o -> externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource()))))
+        internalRelations = internalRelations.stream().filter(RelationsPredicates.inputSource()
+                .or(RelationsPredicates.outputSource().and(o -> externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource()))))
                 .collect(Collectors.toList());
 
         var edges = new Vector<Edge11<UnitRelationship.Variable, UnitRelationship.Relation.InternalOrExternal>>();

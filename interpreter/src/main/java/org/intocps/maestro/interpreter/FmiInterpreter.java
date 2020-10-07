@@ -91,14 +91,13 @@ public class FmiInterpreter {
     }
 
 
-    public ModuleValue createFmiValue(String path, String guid) throws InterpreterException {
+    public Value createFmiValue(String path, String guid) throws InterpreterException {
 
         try {
             long startExecTime = System.nanoTime();
             final IFmu fmu = Factory.create(new File(path));
 
             fmu.load();
-
 
             Map<String, Value> functions = new HashMap<>();
 
@@ -124,6 +123,11 @@ public class FmiInterpreter {
 
                         }
                     });
+
+                    if (component == null) {
+                        logger.debug("Component instantiate failed");
+                        return new NullValue();
+                    }
 
                     //populate component functions
                     Map<String, Value> componentMembers = new HashMap<>();
@@ -620,7 +624,7 @@ public class FmiInterpreter {
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {
 
             e.printStackTrace();
-            throw new InterpreterException(e);
+            return new NullValue();
         }
     }
 }

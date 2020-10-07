@@ -351,10 +351,22 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAEqualBinaryExp(AEqualBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
-        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
-        return new BooleanValue(left.deref().compareTo(right.deref()) == 0);
+        Value lv = node.getLeft().apply(this, question).deref();
+        Value rv = node.getRight().apply(this, question).deref();
+
+        if (lv.equals(rv)) {
+            new BooleanValue(true);
+        } else if (lv instanceof NumericValue && rv instanceof NumericValue) {
+            NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
+            NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
+
+            return new BooleanValue(left.deref().compareTo(right.deref()) == 0);
+        }
+        return new BooleanValue(false);
+        //        throw new InterpreterException(
+        //                "Equality not implement for: " + lv.getClass().getSimpleName() + " == " + rv.getClass().getSimpleName() + " (" + lv + " == " + rv +
+        //                        ")");
     }
 
     @Override

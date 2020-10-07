@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
+import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -14,6 +15,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableBuilder.call;
+import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MaBLTemplateGenerator {
 
@@ -28,7 +31,7 @@ public class MaBLTemplateGenerator {
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
-    public static final String GLOBAL_EXECUTION_CONTINUE = "global_execution_continue";
+    public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
     public static final String IMPORT_DEBUGLOGGING = "DebugLogging";
     public static final String IMPORT_FIXEDSTEP = "FixedStep";
@@ -46,10 +49,6 @@ public class MaBLTemplateGenerator {
         return fmuKey.substring(1, fmuKey.length() - 1);
     }
 
-    public static PStm createInstanceMappingStms(Map.Entry<String, String> entryInstanceLextoInstanceName) {
-        return MableAstFactory.newAInstanceMappingStm(MableAstFactory.newAIdentifier(entryInstanceLextoInstanceName.getKey()),
-                entryInstanceLextoInstanceName.getValue());
-    }
 
     public static String findInstanceLexName(String preferredName, Collection<String> invalidNames) {
         // Remove dots
@@ -65,12 +64,10 @@ public class MaBLTemplateGenerator {
 
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(fmuLexName), MableAstFactory.newANameType("FMI2"), MableAstFactory
-                        .newAExpInitializer(MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("load"),
-                                Arrays.asList(MableAstFactory.newAStringLiteralExp("FMI2"),
-                                        MableAstFactory.newAStringLiteralExp(entry.getValue().getGuid()),
-                                        MableAstFactory.newAStringLiteralExp(uriFromFMUName.toString()))))));
+        return newVariable(fmuLexName, newANameType("FMI2"),
+                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()),
+                        newAStringLiteralExp(uriFromFMUName.toString())));
+
     }
 
     public static PStm createFMUUnload(String fmuLexName) {
@@ -78,14 +75,18 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
-    public static PStm createFMUInstantiateStatement(String instanceName, String fmuLexName) {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(new LexIdentifier(instanceName, null), MableAstFactory.newANameType("FMI2Component"), MableAstFactory
-                        .newAExpInitializer(MableAstFactory
-                                .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("instantiate"),
-                                        Arrays.asList(MableAstFactory.newAStringLiteralExp(instanceName), MableAstFactory.newABoolLiteralExp(false),
-                                                MableAstFactory.newABoolLiteralExp(false))))));
+    public static List<PStm> createFMUInstantiateStatement(String key, String instanceName, String fmuLexName) {
 
+
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(key), instanceName);
+        PStm var = newVariable(instanceName, newANameType("FMI2Component"), newNullExp());
+
+
+        AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceName)),
+                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceName), newABoolLiteralExp(false), newABoolLiteralExp(false))),
+                checkNullAndStop(instanceName)), null);
+        return Arrays.asList(mapping, var, ifAssign);
     }
 
     public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
@@ -104,6 +105,7 @@ public class MaBLTemplateGenerator {
             MaBLTemplateConfiguration templateConfiguration) throws XPathExpressionException {
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
+        stmMaintainer.add(createGlobalExecutionContinue());
 
         stmMaintainer.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement));
 
@@ -115,10 +117,10 @@ public class MaBLTemplateGenerator {
         for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
 
-            PStm fmuLoadStatement = createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey()));
+            stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
+            stmMaintainer.add(checkNullAndStop(fmuLexName));
             unloadFmuStatements.add(createFMUUnload(fmuLexName));
 
-            stmMaintainer.add(fmuLoadStatement);
             fmuNameToLexIdentifier.put(entry.getKey(), fmuLexName);
         }
 
@@ -136,17 +138,10 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
-            PStm instantiateStatement = createFMUInstantiateStatement(instanceLexName, parentLex);
+            stmMaintainer.addAll(createFMUInstantiateStatement(entry.getKey(), instanceLexName, parentLex));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
-            stmMaintainer.add(instantiateStatement);
         });
-        // Map from instance lex to instance name
-        for (Map.Entry<String, String> entryIsntanceLextoInstanceName : instanceLexToInstanceName.entrySet()) {
-            PStm mappingStm = createInstanceMappingStms(entryIsntanceLextoInstanceName);
-            stmMaintainer.add(mappingStm);
-        }
 
-        stmMaintainer.add(createGlobalExecutionContinue());
 
         // Debug logging
         if (templateConfiguration.getLogLevels() != null) {
@@ -189,6 +184,12 @@ public class MaBLTemplateGenerator {
                 Arrays.asList(MableAstFactory.newAIdentifier(IMPORT_FIXEDSTEP), MableAstFactory.newAIdentifier(IMPORT_TYPECONVERTER),
                         MableAstFactory.newAIdentifier(IMPORT_INITIALIZER), MableAstFactory.newAIdentifier(IMPORT_DEBUGLOGGING)),
                 MableAstFactory.newABlockStm(stmMaintainer.getStatements()));
+    }
+
+
+    private static PStm checkNullAndStop(String identifier) {
+        return newIf(newEqual(newAIdentifierExp(identifier), newNullExp()),
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(GLOBAL_EXECUTION_CONTINUE)), newABoolLiteralExp(false)), null);
     }
 
     private static Collection<? extends PStm> createDebugLoggingStms(Map<String, String> instaceNameToInstanceLex,
@@ -303,7 +304,7 @@ public class MaBLTemplateGenerator {
             List<PStm> stms = new ArrayList<>();
             stms.addAll(statements);
             if (wrapInIfBlock) {
-                stms.add(newIf(newAIdentifierExp("global_execution_continue"), newABlockStm(ifBlock), null));
+                stms.add(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(ifBlock), null));
             }
             stms.addAll(cleanup);
 

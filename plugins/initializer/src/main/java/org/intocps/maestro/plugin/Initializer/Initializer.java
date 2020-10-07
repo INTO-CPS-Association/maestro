@@ -106,10 +106,10 @@ public class Initializer implements IMaestroExpansionPlugin {
                         .collect(Collectors.toSet());
 
         //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-        List<Set<UnitRelationship.Variable>> instantiationOrder = topologicalPlugin.FindInstantiationOrderStrongComponents(relations);
+        List<Set<UnitRelationship.Variable>> instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(relations);
 
         //Set variables for all components in IniPhase
-        statements.addAll(SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase()));
+        statements.addAll(setComponentsVariables(env, knownComponentNames, sc, PhasePredicates.iniPhase()));
 
         if (this.config.verifyAgainstProlog && !initializationPrologQuery
                 .initializationOrderIsValid(instantiationOrder.stream().flatMap(Collection::stream).collect(Collectors.toList()), relations)) {
@@ -123,7 +123,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         });
 
         var inputToOutputRelations =
-                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.InputToOutput()).collect(Collectors.toList());
+                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.inputToOutput()).collect(Collectors.toList());
 
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
@@ -262,7 +262,7 @@ public class Initializer implements IMaestroExpansionPlugin {
     }
 
 
-    private List<PStm> SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
+    private List<PStm> setComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
             Predicate<ModelDescription.ScalarVariable> predicate) {
         List<PStm> stms = new Vector<>();
         knownComponentNames.forEach(comp -> {
@@ -360,9 +360,9 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     public static class Config implements IPluginConfiguration {
 
+        public final boolean Stabilisation;
         private final List<ModelParameter> modelParameters;
         private final boolean verifyAgainstProlog;
-        public final boolean Stabilisation;
         private final int maxIterations;
         private final double absoluteTolerance;
         private final double relativeTolerance;
