@@ -75,17 +75,18 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
-    public static List<PStm> createFMUInstantiateStatement(String key, String instanceName, String fmuLexName, boolean visible, boolean loggingOn) {
+    public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
+            boolean loggingOn) {
 
 
-        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(key), instanceName);
-        PStm var = newVariable(instanceName, newANameType("FMI2Component"), newNullExp());
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
+        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
 
 
         AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceName)),
-                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceName), newABoolLiteralExp(visible),
-                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceName)), null);
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName)), null);
         return Arrays.asList(mapping, var, ifAssign);
     }
 
@@ -138,7 +139,7 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
-            stmMaintainer.addAll(createFMUInstantiateStatement(entry.getKey(), instanceLexName, parentLex, templateConfiguration.getVisible(),
+            stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
                     templateConfiguration.getLoggingOn()));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
         });
