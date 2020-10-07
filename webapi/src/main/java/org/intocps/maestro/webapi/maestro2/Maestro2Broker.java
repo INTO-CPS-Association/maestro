@@ -49,6 +49,9 @@ public class Maestro2Broker {
         msg.connections = initializationData.getConnections();
         msg.livestream = initializationData.livestream;
         msg.liveLogInterval = simulateRequestBody.liveLogInterval;
+        msg.visible = initializationData.visible;
+        msg.loggingOn = initializationData.loggingOn;
+
         UnitRelationship simulationEnvironment = UnitRelationship.of(msg);
         simulationEnvironmentConsumer.accept(simulationEnvironment);
 

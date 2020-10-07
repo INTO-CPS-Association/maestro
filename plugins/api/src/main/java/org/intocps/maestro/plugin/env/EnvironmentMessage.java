@@ -26,6 +26,12 @@ public class EnvironmentMessage {
     @JsonProperty("logLevels")
     public Map<String, List<String>> logLevels = new HashMap<>();
 
+    @JsonProperty("visible")
+    public boolean visible = false;
+
+    @JsonProperty("loggingOn")
+    public boolean loggingOn = false;
+
     @JsonIgnore
     public static String extractInstanceFromKeyInstance(String tuple) {
         String startInstanceSplitSequence = "}.";

@@ -31,6 +31,14 @@ public class MaBLTemplateConfiguration {
         return this.logLevels;
     }
 
+    public boolean getLoggingOn() {
+        return this.unitRelationShip.getEnvironmentMessage().loggingOn;
+    }
+
+    public boolean getVisible() {
+        return this.unitRelationShip.getEnvironmentMessage().visible;
+    }
+
     public static class MaBLTemplateConfigurationBuilder {
         private IStepAlgorithm stepAlgorithm = null;
         private UnitRelationship unitRelationship = null;

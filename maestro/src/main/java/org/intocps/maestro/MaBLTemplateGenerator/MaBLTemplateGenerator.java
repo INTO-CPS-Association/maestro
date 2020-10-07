@@ -75,7 +75,7 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
-    public static List<PStm> createFMUInstantiateStatement(String key, String instanceName, String fmuLexName) {
+    public static List<PStm> createFMUInstantiateStatement(String key, String instanceName, String fmuLexName, boolean visible, boolean loggingOn) {
 
 
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(key), instanceName);
@@ -84,8 +84,8 @@ public class MaBLTemplateGenerator {
 
         AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
                 newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceName)),
-                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceName), newABoolLiteralExp(false), newABoolLiteralExp(false))),
-                checkNullAndStop(instanceName)), null);
+                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceName), newABoolLiteralExp(visible),
+                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceName)), null);
         return Arrays.asList(mapping, var, ifAssign);
     }
 
@@ -138,7 +138,8 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
-            stmMaintainer.addAll(createFMUInstantiateStatement(entry.getKey(), instanceLexName, parentLex));
+            stmMaintainer.addAll(createFMUInstantiateStatement(entry.getKey(), instanceLexName, parentLex, templateConfiguration.getVisible(),
+                    templateConfiguration.getLoggingOn()));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
         });
 

@@ -215,7 +215,7 @@ public class StatementGeneratorContainer {
                     Arrays.stream(getValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
         } else if (type == ModelDescription.Types.String) {
             return setStringsStm(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(getValues(variables, modelInstances)).map(o -> o.toString()).toArray());
+                    Arrays.stream(getValues(variables, modelInstances)).map(o -> o.toString()).toArray(String[]::new));
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
         }

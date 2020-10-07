@@ -191,12 +191,6 @@ public class Maestro2SimulationController {
                 }
                 throw new NotImplementedException("Stabilisation is not implemented");
             }
-            if (body.loggingOn) {
-                throw new NotImplementedException("LoggingOn is not implemented");
-            }
-            if (body.visible) {
-                throw new NotImplementedException("Visible is not implemented");
-            }
             if (body.parallelSimulation) {
                 throw new NotImplementedException("ParallelSimulation is not implemented");
             }
