@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.plugin.ExpandException;
+import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.intocps.maestro.plugin.env.UnitRelationship;
@@ -13,25 +14,29 @@ import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableBuilder.call;
 
 public class StatementGeneratorContainer {
+    public static final BiFunction<PExp, String, PStm> errorReporter = (status, message) -> {
+        return newExpressionStm(call("logger", "log", newAIntLiteralExp(4), newAStringLiteralExp(message + " %d"), status.clone()));
+    };
+    public final static Integer[] FMIWARNINGANDFATALERRORCODES = {3, 4};
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
     private static StatementGeneratorContainer container = null;
-    private final LexIdentifier statusVariable = createLexIdentifier.apply("status");
+    private final String statusVariable = "status";
     private final Map<Integer, LexIdentifier> realArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> boolArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
-
     private final Map<UnitRelationship.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
     private final Map<UnitRelationship.Variable, LexIdentifier> loopValueArray = new HashMap<>();
-
     private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
             put(ModelDescription.Types.Integer, "Integer");
@@ -64,7 +69,7 @@ public class StatementGeneratorContainer {
 
     private StatementGeneratorContainer() {
         AVariableDeclaration status =
-                newAVariableDeclaration(statusVariable, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)));
+                newAVariableDeclaration(newAIdentifier(statusVariable), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)));
         //statements.add(newALocalVariableStm(status));
     }
 
@@ -73,6 +78,16 @@ public class StatementGeneratorContainer {
             container = new StatementGeneratorContainer();
         }
         return container;
+    }
+
+    private static PExp statusErrorExpressions(PExp statusExpression, Integer[] errorCodes) {
+
+        List<PExp> orExpressions = new ArrayList<>();
+        for (Integer i : errorCodes) {
+            orExpressions.add(newEqual(statusExpression.clone(), newAIntLiteralExp(i)));
+        }
+        PExp orExpression = MableBuilder.nestedOr(orExpressions);
+        return orExpression;
     }
 
     private static PStm createGetSVsStatement(String instanceName, String functionName, long[] longs, LexIdentifier valueArray,
@@ -86,6 +101,21 @@ public class StatementGeneratorContainer {
 
     public static void reset() {
         container = null;
+    }
+
+    public static PStm statusCheck(PExp status, Integer[] statusCodes, String message, boolean breakOut, boolean setGlobalExecution) {
+        List<PStm> thenStm = new ArrayList<>();
+        thenStm.add(errorReporter.apply(status, message));
+        if (setGlobalExecution) {
+            thenStm.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
+                    newABoolLiteralExp(false)));
+        }
+        if (breakOut) {
+            thenStm.add(newBreak());
+        }
+
+
+        return newIf(statusErrorExpressions(status.clone(), statusCodes), newABlockStm(thenStm), null);
     }
 
     public SPrimitiveTypeBase FMITypeToMablType(ModelDescription.Types type) {
@@ -104,7 +134,7 @@ public class StatementGeneratorContainer {
     }
 
     public PStm createSetupExperimentStatement(String instanceName, boolean toleranceDefined, double tolerance, boolean stopTimeDefined) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(statusVariable)),
                 newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         (LexIdentifier) createLexIdentifier.apply("setupExperiment").clone(), new ArrayList<>(
                                 Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance), this.startTime.clone(),
@@ -114,7 +144,7 @@ public class StatementGeneratorContainer {
     }
 
     public PStm exitInitializationMode(String instanceName) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(statusVariable)),
                 newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
     }
@@ -276,13 +306,13 @@ public class StatementGeneratorContainer {
     }
 
     public PStm enterInitializationMode(String instanceName) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(statusVariable),
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(statusVariable)),
                 newACallExp(newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         (LexIdentifier) createLexIdentifier.apply("enterInitializationMode").clone(), null));
     }
 
     private PStm generateAssignmentStm(String instanceName, long[] longs, LexIdentifier valueArray, LexIdentifier valRefs, String setCommand) {
-        return MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(statusVariable),
+        return MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(newAIdentifier(statusVariable)),
                 newACallExp(MableAstFactory.newAIdentifierExp(createLexIdentifier.apply(instanceName)),
                         (LexIdentifier) createLexIdentifier.apply(setCommand).clone(), new ArrayList<PExp>(
                                 Arrays.asList(MableAstFactory.newAIdentifierExp(valRefs), MableAstFactory.newAUIntLiteralExp((long) longs.length),
@@ -311,7 +341,6 @@ public class StatementGeneratorContainer {
 
         return Pair.of(lexID, statements);
     }
-
 
     private List<PStm> assignValueToArray(int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, LexIdentifier valueArray) {
         List<PStm> statements = new Vector<>();
@@ -474,7 +503,7 @@ public class StatementGeneratorContainer {
         var valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
         statements.addAll(valRefs.getRight());
 
-        statements.add(generateAssignmentStm(instanceName, longs, valueArray, valRefs.getLeft(), "setReal"));
+        statements.addAll(generateAssignmentStmForSet(instanceName, longs, valueArray, valRefs.getLeft(), "setReal"));
         return statements;
     }
 
@@ -500,7 +529,7 @@ public class StatementGeneratorContainer {
         var valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
         statements.addAll(valRefs.getRight());
 
-        statements.add(generateAssignmentStm(instanceName, longs, valueArray, valRefs.getLeft(), "setBoolean"));
+        statements.addAll(generateAssignmentStmForSet(instanceName, longs, valueArray, valRefs.getLeft(), "setBoolean"));
         return statements;
     }
 
@@ -524,7 +553,7 @@ public class StatementGeneratorContainer {
 
         var valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
         statements.addAll(valRefs.getRight());
-        statements.add(generateAssignmentStm(instanceName, longs, valueArray, valRefs.getLeft(), "setInteger"));
+        statements.addAll(generateAssignmentStmForSet(instanceName, longs, valueArray, valRefs.getLeft(), "setInteger"));
         return statements;
     }
 
@@ -548,8 +577,48 @@ public class StatementGeneratorContainer {
 
         var valRefs = findOrCreateValueReferenceArrayAndAssign(longs);
         statements.addAll(valRefs.getRight());
-        statements.add(generateAssignmentStm(instanceName, longs, valueArray, valRefs.getLeft(), "setString"));
+
+        statements.addAll(generateAssignmentStmForSet(instanceName, longs, valueArray, valRefs.getLeft(), "setString"));
+
         return statements;
+    }
+
+    public List<PStm> generateAssignmentStmForSet(String instanceName, long[] longs, LexIdentifier valueArray, LexIdentifier valRefs,
+            String setCommand) {
+        List<PStm> pstms = new ArrayList<>();
+        pstms.add(generateAssignmentStm(instanceName, longs, valueArray, valRefs, setCommand));
+        pstms.add(statusCheck(newAIdentifierExp(newAIdentifier(statusVariable)), FMIWARNINGANDFATALERRORCODES, "set failed", true, true));
+        return pstms;
+
+    }
+
+    // Input:
+    // A variable that is compared to a test
+
+
+    //    public void test() {
+    //        BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus = (inLoopAndMessage, list) -> {
+    //            List<PStm> body = new Vector<>(Arrays.asList(newExpressionStm(
+    //                    call("logger", "log", newAIntLiteralExp(4), newAStringLiteralExp(inLoopAndMessage.getValue() + " %d "),
+    //                            arrayGet(fixedStepStatus, newAIdentifierExp((LexIdentifier) compIndexVar.clone())))),
+    //                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
+    //                            newABoolLiteralExp(false))));
+    //
+    //            if (inLoopAndMessage.getKey()) {
+    //                body.add(newBreak());
+    //            }
+    //
+    //            list.getValue().add(newIf(newOr((newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(FMI_ERROR))),
+    //                    (newEqual(getCompStatusExp.apply(list.getKey()), newAIntLiteralExp(FMI_FATAL)))), newABlockStm(body), null));
+    //        };
+    //    }
+
+    public PStm generateIfConditionForSetGet() {
+        PExp orExp = statusErrorExpressions(newAIdentifierExp(newAIdentifier(statusVariable)), FMIWARNINGANDFATALERRORCODES);
+        return newIf(orExp, newABlockStm(
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)), newABoolLiteralExp(false)),
+                newBreak()), null);
+
     }
 
     public Object[] getValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
@@ -607,10 +676,23 @@ public class StatementGeneratorContainer {
 
         result.addAll(valRefs.getRight());
 
-        result.add(createGetSVsStatement(instanceName, "get" + type.name(), longs, valueArray, valRefs.getLeft(), statusVariable));
+        result.addAll(Arrays.asList(
+                createGetSVsStatement(instanceName, "get" + type.name(), longs, valueArray, valRefs.getLeft(), newAIdentifier(statusVariable)),
+                statusCheck(newAIdentifierExp(newAIdentifier(statusVariable)), FMIWARNINGANDFATALERRORCODES, "get failed", true, true)));
+
+
         // Update instanceVariables
-        result.addAll(updateInstanceVariables(instanceName, longs, valueArray, type));
+        result.addAll(updateInstanceVariables(instanceName, longs, (LexIdentifier) valueArray.clone(), type));
         return result;
+    }
+
+    //status expression
+    // besked
+
+    public Object test() {
+
+
+        return null;
     }
 
     private PExp getDefaultArrayValue(ModelDescription.Types type) throws ExpandException {

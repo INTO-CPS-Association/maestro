@@ -77,8 +77,6 @@ public class MaBLTemplateGenerator {
 
     public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
             boolean loggingOn) {
-
-
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
         PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
 
@@ -104,6 +102,9 @@ public class MaBLTemplateGenerator {
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
             MaBLTemplateConfiguration templateConfiguration) throws XPathExpressionException {
+
+        // This variable determines whether an expansion should be wrapped in globalExecutionContinue or not.
+        boolean wrapExpansionPluginInGlobalExecutionContinue = false;
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
         stmMaintainer.add(createGlobalExecutionContinue());

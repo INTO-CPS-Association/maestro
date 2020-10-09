@@ -103,9 +103,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
         PExp startTime = formalArguments.get(2).clone();
         PExp endTime = formalArguments.get(3).clone();
 
-        return Stream.concat(Stream.of(componentDecl),
+        return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(Stream.concat(Stream.of(componentDecl),
                 JacobianFixedStep.generate(env, errorReporter, componentNames, componentsIdentifier, stepSize, startTime, endTime, relations)
-                        .stream()).collect(Collectors.toList());
+                        .stream()).collect(Collectors.toList())), null));
     }
 
     LexIdentifier getStateName(LexIdentifier comp) {
