@@ -18,12 +18,12 @@
 
     <repositories>
         <repository>
-            <id>central</id>
+            <id>overture.au.dk-releases</id>
             <name>overture.au.dk-releases</name>
             <url>https://overture.au.dk/artifactory/into-cps</url>
         </repository>
         <repository>
-            <id>snapshots</id>
+            <id>overture.au.dk-snapshots</id>
             <name>overture.au.dk-snapshots</name>
             <url>https://overture.au.dk/artifactory/into-cps</url>
         </repository>
