@@ -2,6 +2,7 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.MableSpecificationGenerator;
@@ -10,13 +11,14 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.EnvironmentMessage;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
-import org.intocps.maestro.plugin.env.EnvironmentMessage;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -49,7 +51,10 @@ public class Maestro2Broker {
         msg.connections = initializationData.getConnections();
         msg.livestream = initializationData.livestream;
         msg.liveLogInterval = simulateRequestBody.liveLogInterval;
-        UnitRelationship simulationEnvironment = UnitRelationship.of(msg);
+        IErrorReporter reporter = new ErrorReporter();
+        FmiSimulationEnvironment simulationEnvironment = FmiSimulationEnvironment.of(msg, reporter);
+
+
         simulationEnvironmentConsumer.accept(simulationEnvironment);
 
         if (initializationData.getAlgorithm() instanceof Maestro2SimulationController.FixedStepAlgorithmConfig) {

@@ -11,7 +11,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;

@@ -2,6 +2,9 @@ package org.intocps.maestro.interpreter.values.csv;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
@@ -10,10 +13,6 @@ import org.intocps.maestro.interpreter.values.RealValue;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.datawriter.DataFileRotater;
 import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
-import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
-import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,26 +25,31 @@ import java.util.stream.Stream;
 public class CsvDataWriter implements IDataListener {
     private final DataFileRotater dataFileRotater;
     HashMap<UUID, CsvDataWriterInstance> instances = new HashMap<>();
-    ISimulationEnvironment environment;
+    FmiSimulationEnvironment environment;
 
     public CsvDataWriter(File outputFile) {
         this.dataFileRotater = new DataFileRotater(outputFile);
-        this.environment = DataStore.GetInstance().getSimulationEnvironment();
+        this.environment = (FmiSimulationEnvironment) DataStore.GetInstance().getSimulationEnvironment();
     }
 
     /**
      * The headers of interest for the CSVWriter are all connected outputs and those in logVariables
      *
-     * @param environment
+     * @param env
      * @return
      */
-    public static List<String> calculateHeadersOfInterest(ISimulationEnvironment environment) {
+    public static List<String> calculateHeadersOfInterest(ISimulationEnvironment env) {
+
+        FmiSimulationEnvironment environment = (FmiSimulationEnvironment) env;
+
         Set<Map.Entry<String, ComponentInfo>> instances = environment.getInstances();
 
         List<String> hoi = instances.stream().flatMap(instance -> {
-            Stream<RelationVariable> relationOutputs = environment.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
-                    .filter(relation -> (relation.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External) &&
-                            (relation.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable);
+            Stream<org.intocps.maestro.framework.fmi2.RelationVariable> relationOutputs =
+                    environment.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
+                            .filter(relation -> (relation.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External) &&
+                                    (relation.getDirection() == FmiSimulationEnvironment.Relation.Direction.OutputToInput))
+                            .map(x -> x.getSource().scalarVariable);
             return Stream.concat(relationOutputs, environment.getCsvVariablesToLog(instance.getKey()).stream());
         }).map(x -> {
             ComponentInfo i = environment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);

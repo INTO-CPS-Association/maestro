@@ -1,11 +1,11 @@
-package org.intocps.maestro.plugin.env;
+package org.intocps.maestro.framework.fmi2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
-import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.*;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -20,11 +20,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-
-// The relations provided are related to the FMI Component and not to the individual input/output.
-public class UnitRelationship implements ISimulationEnvironment {
+public class FmiSimulationEnvironment implements ISimulationEnvironment {
     public static final String LOGALL_LOGLEVEL = "logAll";
-    final static Logger logger = LoggerFactory.getLogger(UnitRelationship.class);
+    final static Logger logger = LoggerFactory.getLogger(FmiSimulationEnvironment.class);
     private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
@@ -33,30 +31,42 @@ public class UnitRelationship implements ISimulationEnvironment {
     HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
-    Map<String, List<RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
+    Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
     private EnvironmentMessage environmentMessage;
-    private Map<String, List<RelationVariable>> csvVariablesToLog = new HashMap<>();
+    private Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> csvVariablesToLog = new HashMap<>();
     private List<String> livestreamVariablesToLog = new ArrayList<>();
 
-    public UnitRelationship(EnvironmentMessage msg) throws Exception {
+    protected FmiSimulationEnvironment(EnvironmentMessage msg) throws Exception {
         initialize(msg);
     }
 
-    public UnitRelationship(InputStream is) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        EnvironmentMessage msg = null;
-        msg = mapper.readValue(is, EnvironmentMessage.class);
-        initialize(msg);
-    }
 
-    public static UnitRelationship of(File file) throws Exception {
+    public static FmiSimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
         try (InputStream is = new FileInputStream(file)) {
-            return new UnitRelationship(is);
+            return of(is, reporter);
         }
     }
 
-    public static UnitRelationship of(EnvironmentMessage msg) throws Exception {
-        return new UnitRelationship(msg);
+    public static FmiSimulationEnvironment of(EnvironmentMessage msg, IErrorReporter reporter) throws Exception {
+
+        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
+
+        Map<String, Boolean> validated = msg.getFmuFiles().entrySet().stream().collect(
+                Collectors.toMap(map -> map.getKey(), map -> validators.stream().allMatch(v -> v.validate(map.getKey(), map.getValue(), reporter))));
+
+        if (validated.values().stream().anyMatch(v -> !v)) {
+            throw new Exception("The following FMUs does not respected the standard: " +
+                    validated.entrySet().stream().filter(map -> !map.getValue()).map(map -> map.getKey()).collect(Collectors.joining(",", "[", "]")));
+        }
+
+        return new FmiSimulationEnvironment(msg);
+    }
+
+    public static FmiSimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        EnvironmentMessage msg = null;
+        msg = mapper.readValue(inputStream, EnvironmentMessage.class);
+        return of(msg, reporter);
     }
 
 
@@ -72,11 +82,12 @@ public class UnitRelationship implements ISimulationEnvironment {
         return list;
     }
 
-    private static Map<String, List<RelationVariable>> getEnvironmentVariablesToLog(Map<String, List<String>> variablesToLogMap,
-            Map<String, List<RelationVariable>> globalVariablesToLogForInstance) {
+    private static Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> getEnvironmentVariablesToLog(
+            Map<String, List<String>> variablesToLogMap,
+            Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance) {
 
         Function<String, String> extractInstance = x -> x.split("}.")[1];
-        Map<String, List<RelationVariable>> t = variablesToLogMap.entrySet().stream().collect(Collectors
+        Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> t = variablesToLogMap.entrySet().stream().collect(Collectors
                 .toMap(entry -> extractInstance.apply(entry.getKey()),
                         entry -> globalVariablesToLogForInstance.get(extractInstance.apply(entry.getKey())).stream()
                                 .filter(x -> entry.getValue().contains(x.scalarVariable.name)).collect(Collectors.toList())));
@@ -93,8 +104,8 @@ public class UnitRelationship implements ISimulationEnvironment {
     }
 
     @Override
-    public List<RelationVariable> getVariablesToLog(String instanceName) {
-        List<RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
+    public List<org.intocps.maestro.framework.fmi2.RelationVariable> getVariablesToLog(String instanceName) {
+        List<org.intocps.maestro.framework.fmi2.RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
         if (vars == null) {
             return new ArrayList<>();
         } else {
@@ -103,7 +114,7 @@ public class UnitRelationship implements ISimulationEnvironment {
     }
 
     @Override
-    public List<RelationVariable> getCsvVariablesToLog(String instanceName) {
+    public List<org.intocps.maestro.framework.fmi2.RelationVariable> getCsvVariablesToLog(String instanceName) {
         return this.csvVariablesToLog.getOrDefault(instanceName, new ArrayList<>());
     }
 
@@ -171,7 +182,7 @@ public class UnitRelationship implements ISimulationEnvironment {
                             .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
 
             // Add the instance to the globalVariablesToLogForInstance map.
-            ArrayList<RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
+            ArrayList<org.intocps.maestro.framework.fmi2.RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
             this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
             for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
@@ -252,19 +263,20 @@ public class UnitRelationship implements ISimulationEnvironment {
             }
 
 
-            List<RelationVariable> variablesToLogForInstance = new ArrayList<>();
+            List<org.intocps.maestro.framework.fmi2.RelationVariable> variablesToLogForInstance = new ArrayList<>();
             String logVariablesKey = instance.key + "." + instance.instanceName;
             if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
                 for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
-                    variablesToLogForInstance.add(new RelationVariable(
+                    variablesToLogForInstance.add(new org.intocps.maestro.framework.fmi2.RelationVariable(
                             this.fmuKeyToModelDescription.get(instance.key).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst()
                                     .get(), instanceLexIdentifier));
 
 
                 }
                 if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
-                    List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
-                    for (RelationVariable rv : variablesToLogForInstance) {
+                    List<org.intocps.maestro.framework.fmi2.RelationVariable> existingRVs =
+                            this.globalVariablesToLogForInstance.get(instance.instanceName);
+                    for (org.intocps.maestro.framework.fmi2.RelationVariable rv : variablesToLogForInstance) {
                         if (existingRVs.contains(rv) == false) {
                             existingRVs.add(rv);
                         }
@@ -330,7 +342,7 @@ public class UnitRelationship implements ISimulationEnvironment {
             String key = entry.getKey();
             URI value = entry.getValue();
             IFmu fmu = FmuFactory.create(null, value);
-            ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
             fmu.unLoad();
             fmuKeyToFmuWithMD.put(key, md);
         }
@@ -342,7 +354,7 @@ public class UnitRelationship implements ISimulationEnvironment {
         if (variables.containsKey(inputScalarVariable.name + instanceLexIdentifier)) {
             return variables.get(inputScalarVariable.name + instanceLexIdentifier);
         } else {
-            Variable variable = new Variable(new RelationVariable(inputScalarVariable, instanceLexIdentifier));
+            Variable variable = new Variable(new org.intocps.maestro.framework.fmi2.RelationVariable(inputScalarVariable, instanceLexIdentifier));
             variables.put(inputScalarVariable.name + instanceLexIdentifier, variable);
             return variable;
         }
@@ -365,7 +377,7 @@ public class UnitRelationship implements ISimulationEnvironment {
      * @return
      */
     @Override
-    public Set<UnitRelationship.Relation> getRelations(List<LexIdentifier> identifiers) {
+    public Set<Relation> getRelations(List<LexIdentifier> identifiers) {
 
         // a, b
 
@@ -421,14 +433,8 @@ public class UnitRelationship implements ISimulationEnvironment {
         return (T) this.instanceNameToInstanceComponentInfo.get(identifier.getText());
     }
 
-    public interface FrameworkVariableInfo {
-    }
 
-
-    public interface FrameworkUnitInfo {
-    }
-
-    public static class Relation {
+    public static class Relation implements FrameworkVariableInfo {
 
         Variable source;
         InternalOrExternal origin;
@@ -500,14 +506,14 @@ public class UnitRelationship implements ISimulationEnvironment {
         }
     }
 
-    public class Variable {
-        public final RelationVariable scalarVariable;
+    public static class Variable {
+        public final org.intocps.maestro.framework.fmi2.RelationVariable scalarVariable;
 
-        public Variable(RelationVariable scalarVariable) {
+        public Variable(org.intocps.maestro.framework.fmi2.RelationVariable scalarVariable) {
             this.scalarVariable = scalarVariable;
         }
 
-        public RelationVariable getScalarVariable() {
+        public org.intocps.maestro.framework.fmi2.RelationVariable getScalarVariable() {
             return scalarVariable;
         }
 

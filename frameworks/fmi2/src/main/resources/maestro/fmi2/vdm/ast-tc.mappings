@@ -1,0 +1,8 @@
+##########################################################################################
+# The annotation class mapping definition for the VDMJ Type Checker. See ClassMapper.
+##########################################################################################
+
+# annotations
+package org.intocps.maestro.framework.fmi2.vdm.annotations.ast to org.intocps.maestro.framework.fmi2.vdm.annotations.tc;
+map ASTOnFailAnnotation{name, args} to TCOnFailAnnotation(name, args);
+

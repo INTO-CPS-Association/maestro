@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.MableSpecificationGenerator;
@@ -8,20 +9,19 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.EnvironmentMessage;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.EnvironmentMessage;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import javax.xml.xpath.XPathExpressionException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -74,7 +74,8 @@ public class FullSpecTestPrettyPrintTest {
         return workingDir;
     }
 
-    private static ARootDocument generateDocumentWithTemplate(TestJsonObject testJsonObject, InputStream configStream, UnitRelationship environment,
+    private static ARootDocument generateDocumentWithTemplate(TestJsonObject testJsonObject, InputStream configStream,
+            FmiSimulationEnvironment environment,
             MableSpecificationGenerator mableSpecificationGenerator) throws AnalysisException, XPathExpressionException, IOException {
         ARootDocument doc;
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder templateBuilder =
@@ -102,8 +103,12 @@ public class FullSpecTestPrettyPrintTest {
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
-            UnitRelationship environment = UnitRelationship.of(new File(directory, "env.json"));
-
+            IErrorReporter reporter = new ErrorReporter();
+            FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(new File(directory, "env.json"), reporter);
+            if (reporter.getErrorCount() > 0) {
+                reporter.printErrors(new PrintWriter(System.err, true));
+                Assert.fail();
+            }
             MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, environment);
 
             TestJsonObject testJsonObject = getTestJsonObject(directory);

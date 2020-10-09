@@ -1,6 +1,6 @@
 package org.intocps.maestro.interpreter;
 
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

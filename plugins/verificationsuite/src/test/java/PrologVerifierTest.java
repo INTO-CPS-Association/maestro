@@ -1,15 +1,14 @@
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.plugin.env.UnitRelationship;
-import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
-import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
-import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.PrologGenerator;
-import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 public class PrologVerifierTest {
@@ -32,11 +31,11 @@ public class PrologVerifierTest {
     @Test
     public void VerifyInitializationOrderNotValidWatertankTest() throws Exception {
         var prologVerifier = new InitializationPrologQuery();
-        var unitRelationship = new UnitRelationship(envWaterTankJson);
+        var unitRelationship = FmiSimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
         var components = Arrays.asList("crtlInstance", "wtInstance");
-        var relations = new HashSet<UnitRelationship.Relation>();
+        var relations = new HashSet<FmiSimulationEnvironment.Relation>();
         components.forEach(c -> relations.addAll(unitRelationship.getRelations(new LexIdentifier(c, null))));
-        var initializationOrder = relations.stream().map(UnitRelationship.Relation::getSource).distinct().collect(Collectors.toList());
+        var initializationOrder = relations.stream().map(FmiSimulationEnvironment.Relation::getSource).distinct().collect(Collectors.toList());
         var result = prologVerifier.initializationOrderIsValid(initializationOrder, relations);
         assert (!result);
     }
@@ -72,10 +71,10 @@ public class PrologVerifierTest {
     }
 */
 
-    private Variable createVariable(String fmuName, String variableName, UnitRelationship unitRelationship) {
+    private FmiSimulationEnvironment.Variable createVariable(String fmuName, String variableName, FmiSimulationEnvironment unitRelationship) {
         var scalarVar = new ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
-        return unitRelationship.new Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
+        return new FmiSimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
     }
 
 }

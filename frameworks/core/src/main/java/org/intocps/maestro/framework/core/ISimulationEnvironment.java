@@ -1,9 +1,7 @@
-package org.intocps.maestro.plugin.env;
+package org.intocps.maestro.framework.core;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
-import org.intocps.maestro.plugin.env.fmi2.RelationVariable;
 
 import java.util.List;
 import java.util.Map;
@@ -17,9 +15,9 @@ public interface ISimulationEnvironment {
      * @param identifiers
      * @return
      */
-    Set<UnitRelationship.Relation> getRelations(LexIdentifier... identifiers);
+    Set<? extends FrameworkVariableInfo> getRelations(LexIdentifier... identifiers);
 
-    List<RelationVariable> getVariablesToLog(String instanceName);
+    List<? extends RelationVariable> getVariablesToLog(String instanceName);
 
     /**
      * Returns a list of all scalar variables to log in CSV for a given instance
@@ -27,13 +25,13 @@ public interface ISimulationEnvironment {
      * @param instanceName
      * @return
      */
-    List<RelationVariable> getCsvVariablesToLog(String instanceName);
+    List<? extends RelationVariable> getCsvVariablesToLog(String instanceName);
 
     Map<String, List<String>> getLivestreamVariablesToLog();
 
-    Set<Map.Entry<String, ComponentInfo>> getInstances();
+    Set<? extends Map.Entry<String, ? extends FrameworkUnitInfo>> getInstances();
 
-    Set<UnitRelationship.Relation> getRelations(List<LexIdentifier> identifiers);
+    Set<? extends FrameworkVariableInfo> getRelations(List<LexIdentifier> identifiers);
 
     EnvironmentMessage getEnvironmentMessage();
 
@@ -45,5 +43,5 @@ public interface ISimulationEnvironment {
      * @param <T>
      * @return
      */
-    <T extends UnitRelationship.FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework);
+    <T extends FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework);
 }

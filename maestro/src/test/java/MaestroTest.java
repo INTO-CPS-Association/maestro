@@ -2,8 +2,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.MaestroConfiguration;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.plugin.PluginFactory;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,9 +21,9 @@ public class MaestroTest {
     @Test(expected = RuntimeException.class)
     public void simpleParseTest() throws Exception {
         InputStream contextFile = null;
-        new MableSpecificationGenerator(Framework.FMI2, true,
-                UnitRelationship.of(Paths.get("src", "test", "resources", "watertank_env.json").toAbsolutePath().toFile())).generate(
-                Stream.of(Paths.get("src", "test", "resources", "libraries/FMI2.mabl").toAbsolutePath().toString(),
+        new MableSpecificationGenerator(Framework.FMI2, true, FmiSimulationEnvironment
+                .of(Paths.get("src", "test", "resources", "watertank_env.json").toAbsolutePath().toFile(), new IErrorReporter.SilentReporter()))
+                .generate(Stream.of(Paths.get("src", "test", "resources", "libraries/FMI2.mabl").toAbsolutePath().toString(),
                         Paths.get("src", "test", "resources", "jacobian.mabl").toAbsolutePath().toString()).map(File::new)
                         .collect(Collectors.toList()), contextFile);
 

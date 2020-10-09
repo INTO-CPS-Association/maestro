@@ -2,14 +2,16 @@ import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.junit.Assert;
 
 import java.io.*;
@@ -51,7 +53,14 @@ public class CSVComparer {
             long startTime = System.nanoTime();
             Instant start = Instant.now();
 
-            UnitRelationship environment = UnitRelationship.of(new File(configurationDirectory, "env.json"));
+            IErrorReporter reporter = new ErrorReporter();
+            FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(new File(configurationDirectory, "env.json"), reporter);
+
+            if (reporter.getErrorCount() > 0) {
+                reporter.printErrors(new PrintWriter(System.err, true));
+            }
+            reporter.printWarnings(new PrintWriter(System.err, true));
+
             ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, true, environment)
                     .generate(getSpecificationFiles(configurationDirectory), configStream);
 

@@ -1,11 +1,10 @@
-package org.intocps.maestro.plugin.env.fmi2;
+package org.intocps.maestro.framework.fmi2;
 
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 
-public class RelationVariable implements UnitRelationship.FrameworkVariableInfo {
+public class RelationVariable implements org.intocps.maestro.framework.core.RelationVariable {
     public final ModelDescription.ScalarVariable scalarVariable;
     // instance is necessary because:
     // If you look up the relations for FMU Component A,

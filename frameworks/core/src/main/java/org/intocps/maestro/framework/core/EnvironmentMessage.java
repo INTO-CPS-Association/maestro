@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.env;
+package org.intocps.maestro.framework.core;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

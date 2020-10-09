@@ -4,17 +4,19 @@ import org.apache.commons.cli.*;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -103,7 +105,12 @@ public class Main {
                     System.err.println("Missing required argument " + simulationEnvOpt.getLongOpt() + " for framework: " + framework);
                     return;
                 }
-                simulationEnvironment = UnitRelationship.of(new File(cmd.getOptionValue(simulationEnvOpt.getOpt())));
+                IErrorReporter reporter = new ErrorReporter();
+                simulationEnvironment = FmiSimulationEnvironment.of(new File(cmd.getOptionValue(simulationEnvOpt.getOpt())), reporter);
+                if (reporter.getErrorCount() > 0) {
+                    reporter.printErrors(new PrintWriter(System.err));
+                    return;
+                }
                 break;
             case Any:
                 break;

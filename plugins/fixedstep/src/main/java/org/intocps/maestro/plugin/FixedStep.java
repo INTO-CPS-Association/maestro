@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
-            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
+            ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
 
@@ -54,9 +54,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
             throw new ExpandException("Invalid args");
         }
 
-        if (env == null) {
+        if (envIn == null) {
             throw new ExpandException("Simulation environment must not be null");
         }
+
+
+        FmiSimulationEnvironment env = (FmiSimulationEnvironment) envIn;
 
         PStm componentDecl = null;
         String componentsIdentifier = "fix_components";
@@ -95,8 +98,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         final List<LexIdentifier> componentNames = knownComponentNames;
 
-        Set<UnitRelationship.Relation> relations =
-                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
+        Set<FmiSimulationEnvironment.Relation> relations =
+                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External)
                         .collect(Collectors.toSet());
 
         PExp stepSize = formalArguments.get(1).clone();
