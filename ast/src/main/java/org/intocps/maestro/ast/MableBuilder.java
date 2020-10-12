@@ -37,6 +37,50 @@ public class MableBuilder {
         return call(object, method, args == null ? null : Arrays.asList(args));
     }
 
+    /**
+     * Creates a possibly nested or expression.
+     *
+     * @param expressionsToAdd THIS METHOD EMPTIES COLLECTION. List of expressions to "or" together
+     * @return Top level or expression.
+     */
+    public static PExp nestedOr(List<PExp> expressionsToAdd) {
+        if (expressionsToAdd == null || expressionsToAdd.size() == 0) {
+            return null;
+        } else {
+            if (expressionsToAdd.size() == 1) {
+                return expressionsToAdd.remove(0);
+            } else {
+                PExp firstExpression = expressionsToAdd.remove(0);
+                AOrBinaryExp exp = new AOrBinaryExp();
+                exp.setLeft(firstExpression);
+                nestedOrRecursive(expressionsToAdd, exp);
+                return exp;
+            }
+        }
+
+    }
+
+    /**
+     * This method creates a possibly nested or expression. I.e.: x == 1 || (x == 2 || (x == 3))
+     *
+     * @param expressionsToAdd  THIS METHOD EMPTIES THE COLLECTION! Expressions to add. In example above: x == 1, x==2 and x == 3. This method empties
+     *                          the collection!
+     * @param currentExpression Starting expression.
+     */
+    public static void nestedOrRecursive(List<PExp> expressionsToAdd, SBinaryExp currentExpression) {
+        if (expressionsToAdd.size() > 0) {
+            if (expressionsToAdd.size() > 1) {
+                AOrBinaryExp orBinaryExp = new AOrBinaryExp();
+                orBinaryExp.setLeft(expressionsToAdd.get(0));
+                currentExpression.setRight(orBinaryExp);
+                expressionsToAdd.remove(0);
+                nestedOrRecursive(expressionsToAdd, orBinaryExp);
+            } else {
+                currentExpression.setRight(expressionsToAdd.get(0));
+            }
+        }
+    }
+
     public static PExp call(String object, String method, List<PExp> args) {
         return call(newAIdentifierExp(object), method, args);
     }

@@ -51,6 +51,8 @@ public class Maestro2Broker {
         msg.connections = initializationData.getConnections();
         msg.livestream = initializationData.livestream;
         msg.liveLogInterval = simulateRequestBody.liveLogInterval;
+        msg.visible = initializationData.visible;
+        msg.loggingOn = initializationData.loggingOn;
         IErrorReporter reporter = new ErrorReporter();
         FmiSimulationEnvironment simulationEnvironment = FmiSimulationEnvironment.of(msg, reporter);
 
@@ -65,6 +67,7 @@ public class Maestro2Broker {
                             .setStepAlgorithm(new FixedStepSizeAlgorithm(simulateRequestBody.endTime, algorithm.getSize()))
                             .setUnitRelationship(simulationEnvironment).build();
             String mablTemplateSpec = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(templateConfiguration));
+            System.out.println(mablTemplateSpec);
 
 
             //Create unfolded mabl spec
@@ -82,7 +85,7 @@ public class Maestro2Broker {
         DataStore instance = DataStore.GetInstance();
         instance.setSimulationEnvironment(environment);
 
-
+        MableInterpreter interpreter = null;
         if (ws != null) {
             new MableInterpreter(new WebApiInterpreterFactory(ws, new File(rootDirectory, "outputs.csv"))).execute(doc);
         } else {

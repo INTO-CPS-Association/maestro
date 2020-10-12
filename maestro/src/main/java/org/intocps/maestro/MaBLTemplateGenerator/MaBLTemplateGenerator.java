@@ -75,17 +75,16 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
-    public static List<PStm> createFMUInstantiateStatement(String key, String instanceName, String fmuLexName) {
-
-
-        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(key), instanceName);
-        PStm var = newVariable(instanceName, newANameType("FMI2Component"), newNullExp());
+    public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
+            boolean loggingOn) {
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
+        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
 
 
         AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceName)),
-                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceName), newABoolLiteralExp(false), newABoolLiteralExp(false))),
-                checkNullAndStop(instanceName)), null);
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName)), null);
         return Arrays.asList(mapping, var, ifAssign);
     }
 
@@ -103,6 +102,9 @@ public class MaBLTemplateGenerator {
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
             MaBLTemplateConfiguration templateConfiguration) throws XPathExpressionException {
+
+        // This variable determines whether an expansion should be wrapped in globalExecutionContinue or not.
+        boolean wrapExpansionPluginInGlobalExecutionContinue = false;
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
         stmMaintainer.add(createGlobalExecutionContinue());
@@ -138,7 +140,8 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
-            stmMaintainer.addAll(createFMUInstantiateStatement(entry.getKey(), instanceLexName, parentLex));
+            stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
+                    templateConfiguration.getLoggingOn()));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
         });
 

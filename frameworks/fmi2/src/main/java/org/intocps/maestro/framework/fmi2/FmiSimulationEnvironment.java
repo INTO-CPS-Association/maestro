@@ -299,32 +299,34 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
                     .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
         }
 
-        Map<String, List<String>> instanceNameToLogLevels = environmentMessage.getInstanceNameToLogLevels();
-        if (instanceNameToLogLevels != null) {
-            for (Map.Entry<String, List<String>> entry : instanceNameToLogLevels.entrySet()) {
-                ComponentInfo instanceComponentInfo = this.instanceNameToInstanceComponentInfo.get(entry.getKey());
-                if (instanceComponentInfo == null) {
-                    logger.warn(String.format("The instance %s used in logLevels does not exist and is therefore ignored.", entry));
-                } else {
-                    List<String> logCategories =
-                            instanceComponentInfo.modelDescription.getLogCategories().stream().map(x -> x.name).collect(Collectors.toList());
-                    // Ensure that each log level is available in the model description.
-                    // Find the ones that do not exist in the model description.
-                    List<String> logLevels = new ArrayList<>();
-                    List<String> unknownLogLevels = new ArrayList<>();
+        if (environmentMessage.loggingOn) {
+            Map<String, List<String>> instanceNameToLogLevels = environmentMessage.getInstanceNameToLogLevels();
+            if (instanceNameToLogLevels != null) {
+                for (Map.Entry<String, List<String>> entry : instanceNameToLogLevels.entrySet()) {
+                    ComponentInfo instanceComponentInfo = this.instanceNameToInstanceComponentInfo.get(entry.getKey());
+                    if (instanceComponentInfo == null) {
+                        logger.warn(String.format("The instance %s used in logLevels does not exist and is therefore ignored.", entry));
+                    } else {
+                        List<String> logCategories =
+                                instanceComponentInfo.modelDescription.getLogCategories().stream().map(x -> x.name).collect(Collectors.toList());
+                        // Ensure that each log level is available in the model description.
+                        // Find the ones that do not exist in the model description.
+                        List<String> logLevels = new ArrayList<>();
+                        List<String> unknownLogLevels = new ArrayList<>();
 
-                    for (String logLevel : entry.getValue()) {
-                        logLevels.add(logLevel);
-                        if (!logCategories.contains(logLevel)) {
-                            unknownLogLevels.add(logLevel);
+                        for (String logLevel : entry.getValue()) {
+                            logLevels.add(logLevel);
+                            if (!logCategories.contains(logLevel)) {
+                                unknownLogLevels.add(logLevel);
+                            }
                         }
-                    }
-                    logger.warn(String.format(
-                            "The instance %s of the FMU %s is configured with log levels that do not exist in the model description file. The " +
-                                    "log levels not in the model description file are: %s.", entry.getKey(), instanceComponentInfo.fmuIdentifier,
-                            String.join(", ", unknownLogLevels)));
-                    if (!logLevels.isEmpty()) {
-                        this.instanceNameToLogLevels.put(entry.getKey(), logLevels);
+                        logger.warn(String.format(
+                                "The instance %s of the FMU %s is configured with log levels that do not exist in the model description file. The " +
+                                        "log levels not in the model description file are: %s.", entry.getKey(), instanceComponentInfo.fmuIdentifier,
+                                String.join(", ", unknownLogLevels)));
+                        if (!logLevels.isEmpty()) {
+                            this.instanceNameToLogLevels.put(entry.getKey(), logLevels);
+                        }
                     }
                 }
             }

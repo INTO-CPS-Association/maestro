@@ -10,12 +10,9 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
-import org.intocps.maestro.plugin.ExpandException;
-import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
-import org.intocps.maestro.plugin.IPluginConfiguration;
+import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
-import org.intocps.maestro.plugin.SimulationFramework;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
@@ -94,12 +91,15 @@ public class Initializer implements IMaestroExpansionPlugin {
         List<PStm> statements = new Vector<>();
         AVariableDeclaration status =
                 newAVariableDeclaration(new LexIdentifier("status", null), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)));
-        //statements.add(newALocalVariableStm(status));
+
         statements.add(newALocalVariableStm(status));
+
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
         knownComponentNames.forEach(comp -> {
-            statements.add(sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true));
+            statements.addAll(Arrays.asList(sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true), StatementGeneratorContainer
+                    .statusCheck(newAIdentifierExp("status"), StatementGeneratorContainer.FMIWARNINGANDFATALERRORCODES, "Setup Experiment Failed: ",
+                            true, true)));
         });
 
         //All connections - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicated of this
@@ -137,8 +137,9 @@ public class Initializer implements IMaestroExpansionPlugin {
         knownComponentNames.forEach(comp -> {
             statements.add(sc.exitInitializationMode(comp.getText()));
         });
+        statements.add(newBreak());
 
-        return statements;
+        return Arrays.asList(newWhile(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(statements)));
     }
 
     private void setSCParameters(List<PExp> formalArguments, Config config, StatementGeneratorContainer sc) {
@@ -165,6 +166,8 @@ public class Initializer implements IMaestroExpansionPlugin {
                 if (this.config.Stabilisation) {
                     //Algebraic loop - specially initialization strategy should be taken.
                     stms.addAll(initializeUsingFixedPoint(new ArrayList<>(variables), sc, env, sccNumber++));
+                    // In this case we need to check global_execution_continue and otherwise break.
+                    stms.add(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newBreak(), null));
                 } else if (variables.size() == 1) {
                     try {
                         stms.addAll(initializePort(variables, sc, env));

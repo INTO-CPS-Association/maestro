@@ -304,7 +304,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseAWhileStm(AWhileStm node, Context question) throws AnalysisException {
 
         try {
-            while (((BooleanValue) node.getTest().apply(this, question)).getValue()) {
+            while (((BooleanValue) (node.getTest().apply(this, question).deref())).getValue()) {
                 node.getBody().apply(this, question);
             }
         } catch (BreakException e) {
@@ -362,8 +362,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
             return new BooleanValue(left.deref().compareTo(right.deref()) == 0);
+        } else if (lv instanceof BooleanValue && rv instanceof BooleanValue) {
+            BooleanValue left = (BooleanValue) node.getLeft().apply(this, question).deref();
+            BooleanValue right = (BooleanValue) node.getRight().apply(this, question).deref();
+
+            return new BooleanValue(left.getValue().compareTo(right.getValue()) == 0);
         }
+
         return new BooleanValue(false);
+
         //        throw new InterpreterException(
         //                "Equality not implement for: " + lv.getClass().getSimpleName() + " == " + rv.getClass().getSimpleName() + " (" + lv + " == " + rv +
         //                        ")");
