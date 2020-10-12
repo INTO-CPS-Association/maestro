@@ -1,9 +1,10 @@
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.Initializer;
 import org.intocps.maestro.plugin.Initializer.TopologicalPlugin;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.PrologGenerator;
 import org.junit.Assert;
@@ -47,7 +48,8 @@ public class InitializerTest {
         var components = Arrays.asList("crtlInstance", "wtInstance");
         List<PExp> arguments = setupFormalArguments(components, 0, 10);
 
-        List<PStm> stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration, new UnitRelationship(envJson), null);
+        List<PStm> stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration,
+                FmiSimulationEnvironment.of(envJson, new IErrorReporter.SilentReporter()), null);
         Console.println(stm1.toString());
 
         //Useful test to make

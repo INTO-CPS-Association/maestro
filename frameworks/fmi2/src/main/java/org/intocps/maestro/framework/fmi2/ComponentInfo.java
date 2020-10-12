@@ -1,9 +1,9 @@
-package org.intocps.maestro.plugin.env.fmi2;
+package org.intocps.maestro.framework.fmi2;
 
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-public class ComponentInfo implements UnitRelationship.FrameworkUnitInfo {
+public class ComponentInfo implements FrameworkUnitInfo {
     public final ModelDescription modelDescription;
     public final String fmuIdentifier;
 

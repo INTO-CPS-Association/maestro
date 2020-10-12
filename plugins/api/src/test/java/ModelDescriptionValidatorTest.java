@@ -1,6 +1,7 @@
-import org.intocps.maestro.plugin.env.EnvironmentException;
-import org.intocps.maestro.plugin.env.ModelDescriptionValidator;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.EnvironmentException;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ModelDescriptionValidator;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +19,7 @@ public class ModelDescriptionValidatorTest {
     @Before
     public void beforeEachTestMethod() throws Exception {
         InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel.json");
-        UnitRelationship env = new UnitRelationship(multimodelJson);
+        FmiSimulationEnvironment env = FmiSimulationEnvironment.of(multimodelJson, new IErrorReporter.SilentReporter());
         modelDescriptionValidator = new ModelDescriptionValidator();
         var iterator = env.getFmusWithModelDescriptions().iterator();
         iterator.next();
@@ -98,8 +99,7 @@ public class ModelDescriptionValidatorTest {
     //Tank.volume.initial and Valve.outflow.initial
     @Test
     public void addInitialModelDescription_ValveOutFlow() throws Exception {
-        var valuesBefore =
-                variables.stream().filter(o -> o.getValueReference() == 5 || o.getValueReference() == 6).collect(Collectors.toList());
+        var valuesBefore = variables.stream().filter(o -> o.getValueReference() == 5 || o.getValueReference() == 6).collect(Collectors.toList());
         valuesBefore.forEach(o -> o.initial = null);
         Assert.assertTrue(valuesBefore.stream().allMatch(o -> o.initial == null));
 

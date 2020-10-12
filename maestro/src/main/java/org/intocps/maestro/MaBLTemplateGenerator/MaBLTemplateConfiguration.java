@@ -1,7 +1,7 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
 import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 
 import java.util.List;
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.Map;
 public class MaBLTemplateConfiguration {
     private Map<String, List<String>> logLevels;
     private IStepAlgorithm stepAlgorithm;
-    private UnitRelationship unitRelationShip;
+    private FmiSimulationEnvironment unitRelationShip;
     private boolean initialize;
 
     private MaBLTemplateConfiguration() {
@@ -19,7 +19,7 @@ public class MaBLTemplateConfiguration {
         return this.stepAlgorithm;
     }
 
-    public UnitRelationship getUnitRelationship() {
+    public FmiSimulationEnvironment getUnitRelationship() {
         return unitRelationShip;
     }
 
@@ -41,7 +41,7 @@ public class MaBLTemplateConfiguration {
 
     public static class MaBLTemplateConfigurationBuilder {
         private IStepAlgorithm stepAlgorithm = null;
-        private UnitRelationship unitRelationship = null;
+        private FmiSimulationEnvironment unitRelationship = null;
         private boolean initialize = false;
         private Map<String, List<String>> logLevels;
 
@@ -49,7 +49,7 @@ public class MaBLTemplateConfiguration {
             return new MaBLTemplateConfigurationBuilder();
         }
 
-        public MaBLTemplateConfigurationBuilder setUnitRelationship(UnitRelationship unitRelationship) {
+        public MaBLTemplateConfigurationBuilder setUnitRelationship(FmiSimulationEnvironment unitRelationship) {
             this.unitRelationship = unitRelationship;
             return this;
         }

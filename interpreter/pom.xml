@@ -45,7 +45,6 @@
         <dependency>
             <groupId>org.into-cps.fmi</groupId>
             <artifactId>jnifmuapi</artifactId>
-            <version>${fmu.api.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>

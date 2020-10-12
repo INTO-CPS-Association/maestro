@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import com.ugos.jiprolog.engine.*;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,7 +20,8 @@ public class InitializationPrologQuery {
         this.prologGenerator = new PrologGenerator();
     }
 
-    public boolean initializationOrderIsValid(List<UnitRelationship.Variable> instantiationOrder, Set<UnitRelationship.Relation> relations) {
+    public boolean initializationOrderIsValid(List<FmiSimulationEnvironment.Variable> instantiationOrder,
+            Set<FmiSimulationEnvironment.Relation> relations) {
         // New instance of prolog engine
         JIPEngine jip = new JIPEngine();
         JIPTerm queryTerm = null;
@@ -33,9 +34,9 @@ public class InitializationPrologQuery {
             jip.consultFile(path + "/initialization.pl");
 
             var init = prologGenerator.CreateInitOperationOrder(instantiationOrder);
-            var connections = prologGenerator
-                    .CreateConnections(relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External)
-                    .collect(Collectors.toList()));
+            var connections = prologGenerator.CreateConnections(
+                    relations.stream().filter(o -> o.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External)
+                            .collect(Collectors.toList()));
             var fmus = prologGenerator.CreateFMUs(relations);
 
             queryTerm = jip.getTermParser().parseTerm(String.format("?- isInitSchedule(%s,%s, %s).", init, fmus, connections));

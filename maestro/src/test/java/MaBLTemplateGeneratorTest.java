@@ -3,7 +3,8 @@ import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.ast.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.junit.Test;
 
 import java.io.File;
@@ -18,7 +19,7 @@ public class MaBLTemplateGeneratorTest {
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
         File config = new File(configurationDirectory, "env.json");
-        UnitRelationship ur = new UnitRelationship(new FileInputStream(config));
+        FmiSimulationEnvironment ur = FmiSimulationEnvironment.of(new FileInputStream(config), new IErrorReporter.SilentReporter());
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
         FixedStepSizeAlgorithm stepSizeAlgorithm = new FixedStepSizeAlgorithm(endTime, stepSize);

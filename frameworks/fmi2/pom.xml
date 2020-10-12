@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.intocps</groupId>
+        <artifactId>frameworks</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+
+    <groupId>org.intocps.frameworks</groupId>
+    <artifactId>fmi2</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>Fmi frameworks</name>
+
+    <repositories>
+        <repository>
+            <id>overture.au.dk-releases</id>
+            <name>overture.au.dk-releases</name>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
+        </repository>
+        <repository>
+            <id>overture.au.dk-snapshots</id>
+            <name>overture.au.dk-snapshots</name>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.into-cps.vdmcheck.fmi2</groupId>
+            <artifactId>fmi2vdm</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fujitsu</groupId>
+                    <artifactId>annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.intocps</groupId>
+            <artifactId>core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.fmi</groupId>
+            <artifactId>jnifmuapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.orchestration</groupId>
+            <artifactId>coe</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.intocps.frameworks</groupId>
+            <artifactId>core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+    </dependencies>
+
+</project>

@@ -1,14 +1,16 @@
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -16,6 +18,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -64,8 +67,13 @@ public class FullSpecTestOnlinePrettyPrintTest extends OnlineTestFmusTest {
 
             long startTime = System.nanoTime();
             Instant start = Instant.now();
-
-            ISimulationEnvironment environment = UnitRelationship.of(new File(directory, "env.json"));
+            IErrorReporter reporter = new ErrorReporter();
+            FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(new File(directory, "env.json"), reporter);
+            if (reporter.getErrorCount() > 0) {
+                reporter.printErrors(new PrintWriter(System.err, true));
+                Assert.fail();
+            }
+            reporter.printWarnings(new PrintWriter(System.err, true));
             ARootDocument doc = new MableSpecificationGenerator(Framework.FMI2, false, environment).generate(getSpecificationFiles(), configStream);
 
             long stopTime = System.nanoTime();

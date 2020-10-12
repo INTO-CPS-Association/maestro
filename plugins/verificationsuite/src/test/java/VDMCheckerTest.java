@@ -1,4 +1,5 @@
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.plugin.verificationsuite.vdmcheck.VDMChecker;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public class VDMCheckerTest {
     @Test
     public void VDMCheckerWaterTank() throws Exception {
         var VDMCheck = new VDMChecker();
-        var unitRelationship = new UnitRelationship(envWaterTankJson);
+        var unitRelationship = FmiSimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
         var fmus = unitRelationship.getFmuToUri();
         var fmuPaths = fmus.stream().map(o -> String.valueOf(o.getValue())).collect(Collectors.toList());
         VDMCheck.CheckFMUS(fmuPaths);
@@ -21,7 +22,7 @@ public class VDMCheckerTest {
     @Test
     public void VDMCheckerThreeTank() throws Exception {
         var VDMCheck = new VDMChecker();
-        var unitRelationship = new UnitRelationship(envThreeTankJson);
+        var unitRelationship = FmiSimulationEnvironment.of(envThreeTankJson, new IErrorReporter.SilentReporter());
         var fmus = unitRelationship.getFmuToUri();
         var fmuPaths = fmus.stream().map(o -> String.valueOf(o.getValue())).collect(Collectors.toList());
         VDMCheck.CheckFMUS(fmuPaths);

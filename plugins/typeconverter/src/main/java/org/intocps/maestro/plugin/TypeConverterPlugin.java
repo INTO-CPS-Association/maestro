@@ -3,7 +3,7 @@ package org.intocps.maestro.plugin;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;

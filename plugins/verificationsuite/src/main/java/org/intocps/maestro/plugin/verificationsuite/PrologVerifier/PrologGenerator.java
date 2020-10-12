@@ -1,15 +1,17 @@
 package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
-import org.intocps.maestro.plugin.env.UnitRelationship;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
-    public String CreateInitOperationOrder(List<UnitRelationship.Variable> instantiationOrder) {
+    public String CreateInitOperationOrder(List<FmiSimulationEnvironment.Variable> instantiationOrder) {
         StringBuilder initOrder = new StringBuilder();
         instantiationOrder.forEach(o -> {
             try {
@@ -23,7 +25,7 @@ public class PrologGenerator {
         return fixListFormat(initOrder).toString();
     }
 
-    public String CreateFMUs(Set<UnitRelationship.Relation> relations) {
+    public String CreateFMUs(Set<FmiSimulationEnvironment.Relation> relations) {
         StringBuilder fmuString = new StringBuilder();
         var fmuList = relations.stream().map(o -> o.getSource().scalarVariable.getInstance()).collect(Collectors.toSet());
         fmuList.forEach(fmu -> {
@@ -33,7 +35,7 @@ public class PrologGenerator {
         return fixListFormat(fmuString).toString();
     }
 
-    public String CreateConnections(List<UnitRelationship.Relation> relations) {
+    public String CreateConnections(List<FmiSimulationEnvironment.Relation> relations) {
         StringBuilder connections = new StringBuilder();
         relations.forEach(relation -> {
             relation.getTargets().values().forEach(target -> {
@@ -55,7 +57,7 @@ public class PrologGenerator {
         return stringBuilder;
     }
 
-    private String getInPorts(Set<UnitRelationship.Relation> relations, LexIdentifier fmu) {
+    private String getInPorts(Set<FmiSimulationEnvironment.Relation> relations, LexIdentifier fmu) {
         StringBuilder inPorts = new StringBuilder();
         var inputPorts = relations.stream().map(p -> p.getTargets().values()).collect(Collectors.toList()).stream().flatMap(Collection::stream)
                 .collect(Collectors.toSet()).stream().filter(o -> o.scalarVariable.getInstance().getText().equals(fmu.getText()))
@@ -68,12 +70,12 @@ public class PrologGenerator {
         return fixListFormat(inPorts).toString();
     }
 
-    private String getOutPorts(Set<UnitRelationship.Relation> relations, LexIdentifier fmu) {
+    private String getOutPorts(Set<FmiSimulationEnvironment.Relation> relations, LexIdentifier fmu) {
         StringBuilder outPorts = new StringBuilder();
-        var externalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.External).collect(Collectors.toSet());
-        var internalRelations =
-                relations.stream().filter(o -> o.getOrigin() == UnitRelationship.Relation.InternalOrExternal.Internal).collect(Collectors.toSet());
+        var externalRelations = relations.stream().filter(o -> o.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External)
+                .collect(Collectors.toSet());
+        var internalRelations = relations.stream().filter(o -> o.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.Internal)
+                .collect(Collectors.toSet());
         var outputPorts = externalRelations.stream().filter(p -> p.getSource().scalarVariable.getInstance() == fmu).collect(Collectors.toSet());
 
         outputPorts.forEach(port -> {
@@ -84,7 +86,7 @@ public class PrologGenerator {
         return fixListFormat(outPorts).toString();
     }
 
-    private String getInternalDependencies(UnitRelationship.Variable source, Set<UnitRelationship.Relation> internalRelations) {
+    private String getInternalDependencies(FmiSimulationEnvironment.Variable source, Set<FmiSimulationEnvironment.Relation> internalRelations) {
         var sources =
                 internalRelations.stream().filter(rel -> rel.getSource() == source).map(o -> o.getTargets().values()).collect(Collectors.toSet())
                         .stream().flatMap(Collection::stream).collect(Collectors.toSet());
@@ -97,7 +99,7 @@ public class PrologGenerator {
         return fixListFormat(internalConnections).toString();
     }
 
-    private String getMethod(UnitRelationship.Variable variable) throws ExpandException {
+    private String getMethod(FmiSimulationEnvironment.Variable variable) throws ExpandException {
         if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output) {
             return "getOut";
         } else if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input) {

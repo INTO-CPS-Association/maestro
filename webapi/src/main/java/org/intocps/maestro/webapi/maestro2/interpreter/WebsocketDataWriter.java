@@ -1,5 +1,6 @@
 package org.intocps.maestro.webapi.maestro2.interpreter;
 
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
@@ -8,7 +9,6 @@ import org.intocps.maestro.interpreter.values.RealValue;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.datawriter.DataListenerUtilities;
 import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
@@ -31,14 +31,14 @@ public class WebsocketDataWriter implements IDataListener {
         this.webSocketConverter = new WebsocketValueConverter(ws);
     }
 
-    public static List<String> calculateHeadersOfInterest(ISimulationEnvironment environment) {
+    public static List<String> calculateHeadersOfInterest(FmiSimulationEnvironment environment) {
         return environment.getLivestreamVariablesToLog().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
     }
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
-        ISimulationEnvironment environment = DataStore.GetInstance().getSimulationEnvironment();
+        FmiSimulationEnvironment environment = (FmiSimulationEnvironment) DataStore.GetInstance().getSimulationEnvironment();
         List<String> hoi = calculateHeadersOfInterest(environment);
         List<Integer> ioi = DataListenerUtilities.indicesOfInterest(headers, hoi);
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);

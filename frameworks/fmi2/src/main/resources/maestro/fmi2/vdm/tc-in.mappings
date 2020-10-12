@@ -1,0 +1,7 @@
+##########################################################################################
+# The annotation class mapping definition for the VDMJ Interpreter. See ClassMapper.
+##########################################################################################
+
+# annotations
+package org.intocps.maestro.framework.fmi2.vdm.annotations.tc to org.intocps.maestro.framework.fmi2.vdm.annotations.in;
+map TCOnFailAnnotation{name, args} to INOnFailAnnotation(name, args);

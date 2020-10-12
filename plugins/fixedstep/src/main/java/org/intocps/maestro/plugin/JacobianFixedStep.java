@@ -2,8 +2,7 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 
 import java.util.*;
 import java.util.function.*;
@@ -50,10 +49,10 @@ public class JacobianFixedStep {
         return newABlockStm(body);
     }
 
-    public static List<PStm> generate(ISimulationEnvironment env, IErrorReporter errorReporter, final List<LexIdentifier> componentNames,
+    public static List<PStm> generate(FmiSimulationEnvironment env, IErrorReporter errorReporter, final List<LexIdentifier> componentNames,
             String componentsIdentifier, PExp stepSize, PExp startTime, PExp endTime,
-            Set<UnitRelationship.Relation> relations) throws ExpandException {
-        UnitRelationship unitRelationShip = (UnitRelationship) env;
+            Set<FmiSimulationEnvironment.Relation> relations) throws ExpandException {
+        FmiSimulationEnvironment unitRelationShip = (FmiSimulationEnvironment) env;
         Function<LexIdentifier, PStateDesignator> getCompStatusDesignator =
                 comp -> newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)),
                         newAIntLiteralExp(componentNames.indexOf(comp)));
