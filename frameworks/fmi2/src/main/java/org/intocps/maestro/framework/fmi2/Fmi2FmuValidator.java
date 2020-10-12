@@ -20,6 +20,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,10 +48,8 @@ public class Fmi2FmuValidator implements IFmuValidator {
                 //convert to VDM
                 saxParser.parse(fmu.getModelDescription(), handler);
 
-                StringWriter out = new StringWriter();
-                PrintWriter writer = new PrintWriter(out);
 
-                handler.getFMIModelDescription().toVDM("\t", writer);
+                String vdm = handler.getFMIModelDescription().toVDM("\t");
 
                 String annotationsSearchClassPath = System.getProperty("vdmj.annotations",
                         "com.fujitsu.vdmj.ast.annotations");//"org.intocps.maestro.framework.fmi2.vdm.annotations.ast")
@@ -92,7 +91,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
                         }).collect(Collectors.toList());
 
                         File modelSped = File.createTempFile("fmi2", "");
-                        FileUtils.write(modelSped, out.toString());
+                        FileUtils.write(modelSped, vdm, StandardCharsets.UTF_8);
 
                         specFiles.add(modelSped);
                         synchronized (INOnFailAnnotation.class) {
