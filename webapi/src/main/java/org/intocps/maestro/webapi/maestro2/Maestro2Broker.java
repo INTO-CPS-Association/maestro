@@ -1,22 +1,13 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.ErrorReporter;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
-import org.intocps.maestro.MableSpecificationGenerator;
 import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.EnvironmentMessage;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
-import org.intocps.maestro.interpreter.DataStore;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
@@ -26,7 +17,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -60,20 +50,39 @@ public class Maestro2Broker {
         simulationEnvironmentConsumer.accept(simulationEnvironment);
 
         if (initializationData.getAlgorithm() instanceof Maestro2SimulationController.FixedStepAlgorithmConfig) {
-            Maestro2SimulationController.FixedStepAlgorithmConfig algorithm =
-                    (Maestro2SimulationController.FixedStepAlgorithmConfig) initializationData.getAlgorithm();
-            MaBLTemplateConfiguration templateConfiguration =
-                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(true)
-                            .setStepAlgorithm(new FixedStepSizeAlgorithm(simulateRequestBody.endTime, algorithm.getSize()))
-                            .setUnitRelationship(simulationEnvironment).build();
-            String mablTemplateSpec = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(templateConfiguration));
-            System.out.println(mablTemplateSpec);
+            //            Maestro2SimulationController.FixedStepAlgorithmConfig algorithm =
+            //                    (Maestro2SimulationController.FixedStepAlgorithmConfig) initializationData.getAlgorithm();
+            //            MaBLTemplateConfiguration templateConfiguration =
+            //                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(true)
+            //                            .setStepAlgorithm(new FixedStepSizeAlgorithm(simulateRequestBody.endTime, algorithm.getSize()))
+            //                            .setUnitRelationship(simulationEnvironment).build();
+            //            String mablTemplateSpec = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(templateConfiguration));
+            //            System.out.println(mablTemplateSpec);
+
+
+            //            Mabl mabl = new Mabl(directory, null);
+            //            mabl.setReporter(reporter);
+            //            mabl.setVerbose(true);
+
+            //FIXME enable generation
+            //            mabl.generateSpec();
+            //mabl.parse(getSpecificationFiles());
+
+            //            mabl.expand();
+            //
+            //
+            //            if (reporter.getErrorCount() > 0) {
+            //                reporter.printErrors(new PrintWriter(System.err, true));
+            //
+            //            }
+            //
+            //            mabl.dump(workingDirectory);
 
 
             //Create unfolded mabl spec
-            MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, simulationEnvironment);
-            ARootDocument doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(mablTemplateSpec)), context);
-            return doc;
+            //            MableSpecificationGenerator mableSpecificationGenerator = new MableSpecificationGenerator(Framework.FMI2, true, simulationEnvironment);
+            //            ARootDocument doc = mableSpecificationGenerator.generateFromStreams(Arrays.asList(CharStreams.fromString(mablTemplateSpec)), context);
+            return null;
         }
 
         throw new Exception("Algorithm not supported: " + initializationData.getAlgorithm());
@@ -82,14 +91,13 @@ public class Maestro2Broker {
 
     public void executeInterpreter(ARootDocument doc, WebSocketSession ws, File rootDirectory,
             ISimulationEnvironment environment) throws AnalysisException {
-        DataStore instance = DataStore.GetInstance();
-        instance.setSimulationEnvironment(environment);
 
         MableInterpreter interpreter = null;
         if (ws != null) {
             new MableInterpreter(new WebApiInterpreterFactory(ws, new File(rootDirectory, "outputs.csv"))).execute(doc);
         } else {
-            new MableInterpreter(new DefaultExternalValueFactory(rootDirectory)).execute(doc);
+            //FIXME
+            //            new MableInterpreter(new DefaultExternalValueFactory(rootDirectory)).execute(doc);
         }
 
     }

@@ -1,11 +1,5 @@
 package org.intocps.maestro.interpreter.values.csv;
 
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
-import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
@@ -19,54 +13,26 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CsvDataWriter implements IDataListener {
+    final List<String> filter;
     private final DataFileRotater dataFileRotater;
     HashMap<UUID, CsvDataWriterInstance> instances = new HashMap<>();
-    FmiSimulationEnvironment environment;
 
-    public CsvDataWriter(File outputFile) {
+    public CsvDataWriter(File outputFile, List<String> filter) {
         this.dataFileRotater = new DataFileRotater(outputFile);
-        this.environment = (FmiSimulationEnvironment) DataStore.GetInstance().getSimulationEnvironment();
+        this.filter = filter;
     }
 
-    /**
-     * The headers of interest for the CSVWriter are all connected outputs and those in logVariables
-     *
-     * @param env
-     * @return
-     */
-    public static List<String> calculateHeadersOfInterest(ISimulationEnvironment env) {
-
-        FmiSimulationEnvironment environment = (FmiSimulationEnvironment) env;
-
-        Set<Map.Entry<String, ComponentInfo>> instances = environment.getInstances();
-
-        List<String> hoi = instances.stream().flatMap(instance -> {
-            Stream<org.intocps.maestro.framework.fmi2.RelationVariable> relationOutputs =
-                    environment.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
-                            .filter(relation -> (relation.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External) &&
-                                    (relation.getDirection() == FmiSimulationEnvironment.Relation.Direction.OutputToInput))
-                            .map(x -> x.getSource().scalarVariable);
-            return Stream.concat(relationOutputs, environment.getCsvVariablesToLog(instance.getKey()).stream());
-        }).map(x -> {
-            ComponentInfo i = environment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
-        }).collect(Collectors.toList());
-
-        return hoi;
-    }
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         CsvDataWriterInstance instance = new CsvDataWriterInstance();
-        instance.headersOfInterest = calculateHeadersOfInterest(this.environment);
+        instance.headersOfInterest = filter == null ? headers : filter;
         // Discover the headers of interest and store the index of these
         for (int i = 0; i < headers.size(); i++) {
             String header = headers.get(i);
-            if (instance.headersOfInterest.contains(header)) {
+            if (filter == null || (filter != null && instance.headersOfInterest.contains(header))) {
                 instance.indicesOfInterest.add(i);
             }
         }

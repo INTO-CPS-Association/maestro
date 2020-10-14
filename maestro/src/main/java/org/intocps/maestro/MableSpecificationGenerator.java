@@ -1,6 +1,6 @@
 package org.intocps.maestro;
 
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -10,8 +10,6 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
-import org.intocps.maestro.parser.MablParser;
-import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.typechecker.*;
 import org.slf4j.Logger;
@@ -19,15 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static org.intocps.maestro.parser.MablParserUtil.parse;
 
 public class MableSpecificationGenerator {
 
@@ -35,33 +34,29 @@ public class MableSpecificationGenerator {
     final static Logger logger = LoggerFactory.getLogger(MableSpecificationGenerator.class);
     final boolean verbose;
     final ISimulationEnvironment simulationEnvironment;
+    final IntermediateSpecWriter intermediateSpecWriter;
     private final Framework framework;
     private final MaestroConfiguration configuration;
+    private final File specificationFolder;
 
     public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment,
-            MaestroConfiguration configuration) {
+            MaestroConfiguration configuration, File specificationFolder, IntermediateSpecWriter intermediateSpecWriter) {
         this.framework = framework;
         this.verbose = verbose;
         this.simulationEnvironment = simulationEnvironment;
         this.configuration = configuration;
+        this.specificationFolder = specificationFolder;
+        this.intermediateSpecWriter = intermediateSpecWriter;
     }
 
-    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment) {
-        this(framework, verbose, simulationEnvironment, new MaestroConfiguration());
+    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment, File specificationFolder,
+            IntermediateSpecWriter intermediateSpecWriter) {
+        this(framework, verbose, simulationEnvironment, new MaestroConfiguration(), specificationFolder, intermediateSpecWriter);
     }
 
-    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, File contextFile, Framework framework,
-            List<String> importModules) throws IOException {
-        return loadExpansionPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
-    }
 
-    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, InputStream contextFile,
-            Framework framework, List<String> importModules) throws IOException {
-        return loadExpansionPlugins(typeResolver, rootEnv, PluginFactory.parsePluginConfiguration(contextFile), framework, importModules);
-    }
-
-    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv,
-            Map<String, String> rawPluginJsonContext, Framework framework, List<String> importModules) {
+    private static PluginEnvironment loadExpansionPlugins(TypeResolver typeResolver, RootEnvironment rootEnv, Framework framework,
+            List<String> importModules) {
         Collection<IMaestroExpansionPlugin> plugins = PluginFactory.getPlugins(IMaestroExpansionPlugin.class, framework);
 
         plugins.forEach(p -> logger.debug("Located plugins: {} - {}", p.getName(), p.getVersion()));
@@ -85,47 +80,9 @@ public class MableSpecificationGenerator {
                         e.printStackTrace();
                         return null;
                     }
-                })))), rawPluginJsonContext);
+                })))));
     }
 
-    private static List<ARootDocument> parseStreams(List<CharStream> specStreams) {
-        List<ARootDocument> documentList = new Vector<>();
-        for (CharStream specStream : specStreams) {
-            documentList.add(parse(specStream));
-        }
-        return documentList;
-    }
-
-    public static ARootDocument parse(CharStream specStreams) {
-        MablLexer l = new MablLexer(specStreams);
-        MablParser p = new MablParser(new CommonTokenStream(l));
-        p.addErrorListener(new BaseErrorListener() {
-            @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-                    RecognitionException e) {
-                throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
-            }
-        });
-        MablParser.CompilationUnitContext unit = p.compilationUnit();
-
-        ARootDocument root = (ARootDocument) new ParseTree2AstConverter().visit(unit);
-        return root;
-    }
-
-    public static List<ARootDocument> parse(List<File> sourceFiles) throws IOException {
-        List<ARootDocument> documentList = new Vector<>();
-
-        for (File file : sourceFiles) {
-            if (!file.exists()) {
-                logger.warn("Unable to parse file. File does not exist: {}", file);
-                continue;
-            }
-            logger.info("Parting file: {}", file);
-
-            documentList.add(parse(CharStreams.fromPath(Paths.get(file.toURI()))));
-        }
-        return documentList;
-    }
 
     public IMaestroConfiguration getConfiguration() {
         return this.configuration;
@@ -136,7 +93,8 @@ public class MableSpecificationGenerator {
 
         ASimulationSpecificationCompilationUnit simulationModule = inputSimulationModule.clone();
 
-        return expandExternals(simulationModule, reporter, typeResolver, comparator, env, 0);
+        intermediateSpecWriter.write(simulationModule);
+        return expandExternals(simulationModule, reporter, typeResolver, comparator, env, 1);
     }
 
     private ASimulationSpecificationCompilationUnit expandExternals(ASimulationSpecificationCompilationUnit simulationModule, IErrorReporter reporter,
@@ -186,6 +144,7 @@ public class MableSpecificationGenerator {
                         .collect(Collectors.joining(" , ", "[ ", " ]")));
 
 
+        AtomicInteger typeIndex = new AtomicInteger(0);
         externalTypeMap.forEach((node, type) -> {
 
             if (type.isPresent()) {
@@ -207,13 +166,21 @@ public class MableSpecificationGenerator {
                             logger.debug("Replacing external '{}' with unfoled statement", node.getMethodName().toString());
 
                             List<PStm> unfoled = null;
+                            AConfigStm configRightAbove = null;
                             IMaestroExpansionPlugin plugin = map.getKey();
                             try {
                                 if (plugin.requireConfig()) {
                                     try {
-                                        IPluginConfiguration config = env.getConfiguration(plugin);
+                                        configRightAbove = findConfig(node);
+
+                                        if (plugin.requireConfig() && configRightAbove == null) {
+                                            throw new ExpandException("Cannot expand no " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_CONFIG) +
+                                                    " specified on line: " + (node.getMethodName().getSymbol().getLine() - 1));
+                                        }
+
+                                        IPluginConfiguration config = env.getConfiguration(plugin, configRightAbove, specificationFolder);
                                         unfoled = plugin.expand(fmap.getKey(), node.getArgs(), config, simulationEnvironment, reporter);
-                                    } catch (PluginEnvironment.PluginConfigurationNotFoundException e) {
+                                    } catch (IOException e) {
                                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
                                                 node.getMethodName().toString(), e.getMessage());
                                     }
@@ -231,24 +198,9 @@ public class MableSpecificationGenerator {
                             } else {
                                 //replace the call and so rounding expression statement
 
-                                if (node.parent().parent() instanceof ABlockStm) {
-
-                                    //construct a new block body replacing the original node with the new statements
-                                    ABlockStm block = (ABlockStm) node.parent().parent();
-                                    int oldIndex = block.getBody().indexOf(node.parent());
-                                    List<PStm> newBlock = new Vector<>();
-                                    for (int i = 0; i < oldIndex; i++) {
-                                        newBlock.add(block.getBody().get(i));
-                                    }
-                                    newBlock.addAll(unfoled);
-                                    for (int i = oldIndex + 1; i < block.getBody().size(); i++) {
-                                        newBlock.add(block.getBody().get(i));
-                                    }
-                                    //set the new block body, movin all children to this node
-                                    block.setBody(newBlock);
-                                } else {
-                                    node.parent().parent().replaceChild(node.parent(), new ABlockStm(unfoled));
-                                }
+                                replaceExpandedCall(node, configRightAbove, unfoled);
+                                //                                writeIntermediateSpec(depth, typeIndex.getAndAdd(1), simulationModule);
+                                intermediateSpecWriter.write(simulationModule);
 
                             }
                         });
@@ -262,12 +214,54 @@ public class MableSpecificationGenerator {
         return expandExternals(simulationModule, reporter, typeResolver, comparator, env, depth + 1);
     }
 
-    public ARootDocument generateFromStreams(List<CharStream> sourceStreams, InputStream contextFile) throws IOException {
-        List<ARootDocument> documentList = parseStreams(sourceStreams);
-        return generateFromDocuments(documentList, contextFile);
+    private void replaceExpandedCall(ACallExp node, AConfigStm config, List<PStm> unfoled) {
+        if (node.parent().parent() instanceof ABlockStm) {
+
+            //construct a new block body replacing the original node with the new statements
+            ABlockStm block = (ABlockStm) node.parent().parent();
+            int oldIndex = block.getBody().indexOf(node.parent());
+            List<PStm> newBlock = new Vector<>();
+            for (int i = 0; i < oldIndex; i++) {
+                newBlock.add(block.getBody().get(i));
+            }
+            newBlock.addAll(unfoled);
+            for (int i = oldIndex + 1; i < block.getBody().size(); i++) {
+                newBlock.add(block.getBody().get(i));
+            }
+            if (config != null) {
+                newBlock.remove(config);
+            }
+            //set the new block body, move all children to this node
+            block.setBody(newBlock);
+        } else {
+            node.parent().parent().replaceChild(node.parent(), new ABlockStm(unfoled));
+        }
     }
 
-    private ARootDocument generateFromDocuments(List<ARootDocument> documentList, InputStream contextFile) throws IOException {
+    private AConfigStm findConfig(ACallExp node) {
+        INode parentBlock = node.parent().parent();
+
+        if (parentBlock instanceof ABlockStm) {
+            ABlockStm block = (ABlockStm) parentBlock;
+
+            int index = block.getBody().indexOf(node.parent());
+            if (index > 0) {
+                PStm configCondidate = block.getBody().get(index - 1);
+                if (configCondidate instanceof AConfigStm) {
+                    return (AConfigStm) configCondidate;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    //    public ARootDocument generateFromStreams(List<CharStream> sourceStreams, InputStream contextFile) throws IOException {
+    //        List<ARootDocument> documentList = parseStreams(sourceStreams);
+    //        return generateFromDocuments(documentList, contextFile);
+    //    }
+
+    public ARootDocument generateFromDocuments(List<ARootDocument> documentList) throws IOException {
         IErrorReporter reporter = new ErrorReporter();
 
         List<AImportedModuleCompilationUnit> importedModules =
@@ -316,7 +310,7 @@ public class MableSpecificationGenerator {
             handleInstanceMappingStatements(simulationModule);
 
             //load plugins
-            PluginEnvironment pluginEnvironment = loadExpansionPlugins(typeResolver, rootEnv, contextFile, framework, importedModuleNames);
+            PluginEnvironment pluginEnvironment = loadExpansionPlugins(typeResolver, rootEnv, framework, importedModuleNames);
 
             try {
 
@@ -346,7 +340,7 @@ public class MableSpecificationGenerator {
                 ARootDocument specToCheck = null;
                 try {
                     specToCheck = parse(CharStreams.fromString(PrettyPrinter.print(processedDoc)));
-                } catch (AnalysisException e) {
+                } catch (AnalysisException | IllegalStateException e) {
                     specToCheck = processedDoc;
                 }
 
@@ -416,13 +410,13 @@ public class MableSpecificationGenerator {
         return sb.toString();
     }
 
-    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
-        IErrorReporter reporter = new ErrorReporter();
-
-        List<ARootDocument> documentList = parse(sourceFiles);
-        return generateFromDocuments(documentList, contextFile);
-
-    }
+    //    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
+    //        IErrorReporter reporter = new ErrorReporter();
+    //
+    //        List<ARootDocument> documentList = parse(sourceFiles);
+    //        return generateFromDocuments(documentList, contextFile);
+    //
+    //    }
 
     private boolean verify(final ARootDocument doc, final IErrorReporter reporter) {
 

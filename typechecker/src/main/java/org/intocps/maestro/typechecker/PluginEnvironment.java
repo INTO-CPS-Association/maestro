@@ -1,34 +1,34 @@
 package org.intocps.maestro.typechecker;
 
+import org.intocps.maestro.ast.AConfigStm;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AFunctionType;
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.intocps.maestro.core.StringAnnotationProcessor.processStringAnnotations;
 
 public class PluginEnvironment extends BaseEnvironment {
 
     final Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins;
-    private final Map<String, String> rawPluginJsonConfigs;
     private final Map<String, IPluginConfiguration> pluginConfigs = new HashMap<>();
 
-    public PluginEnvironment(Environment outer, Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins,
-            Map<String, String> rawPluginJsonContext) {
+    public PluginEnvironment(Environment outer, Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins) {
         super(outer, plugins.keySet().stream()
-                .map(aFunctionDeclarationAFunctionTypeMap -> aFunctionDeclarationAFunctionTypeMap.getDeclaredUnfoldFunctions().stream())
-                .flatMap(Function.identity()).collect(Collectors.toList()));
+                .flatMap(aFunctionDeclarationAFunctionTypeMap -> aFunctionDeclarationAFunctionTypeMap.getDeclaredUnfoldFunctions().stream())
+                .collect(Collectors.toList()));
         this.plugins = plugins;
 
-        this.rawPluginJsonConfigs = rawPluginJsonContext;
     }
 
     public Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> getTypesPlugins() {
@@ -39,32 +39,20 @@ public class PluginEnvironment extends BaseEnvironment {
         return plugins.keySet();
     }
 
-    public IPluginConfiguration getConfiguration(IMaestroExpansionPlugin plugin) throws PluginConfigurationNotFoundException {
+    public IPluginConfiguration getConfiguration(IMaestroExpansionPlugin plugin, AConfigStm configStm, File specificationFolder) throws IOException {
 
-        if (!plugin.requireConfig()) {
+        if (!plugin.requireConfig() || configStm == null) {
             return null;
         }
 
-        String key = plugin.getName() + "-" + plugin.getVersion();
-
-        if (pluginConfigs.containsKey(key)) {
-            return pluginConfigs.get(key);
-        }
-
-        //TODO make version search
-        if (!rawPluginJsonConfigs.containsKey(key)) {
-            throw new PluginConfigurationNotFoundException("No raw JSON data available with key: " + key);
-        }
-
-        try (InputStream is = new ByteArrayInputStream(rawPluginJsonConfigs.get(key).getBytes(StandardCharsets.UTF_8))) {
+        String data = configStm.getConfig();
+        data = processStringAnnotations(specificationFolder, data);
+        try (InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8))) {
             IPluginConfiguration config = plugin.parseConfig(is);
-            pluginConfigs.put(key, config);
             return config;
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return null;
     }
+
 
     public static class PluginConfigurationNotFoundException extends Exception {
         public PluginConfigurationNotFoundException() {

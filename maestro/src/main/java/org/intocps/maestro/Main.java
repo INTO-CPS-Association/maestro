@@ -1,22 +1,17 @@
 package org.intocps.maestro;
 
 import org.apache.commons.cli.*;
-import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.core.Framework;
+import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
-import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -46,25 +41,22 @@ public class Main {
         Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
         Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose").build();
         Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
-        Option contextOpt = Option.builder("c").longOpt("config").desc("path to a plugin config JSON file").build();
+        //        Option contextOpt = Option.builder("c").longOpt("config").desc("path to a plugin config JSON file").build();
         Option mablOpt =
                 Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required().build();
-        Option frameworkOpt = Option.builder("f").longOpt("framework")
-                .desc("Specify simulation framework: " + Arrays.stream(Framework.values()).map(Object::toString).collect(Collectors.joining(", ")))
-                .hasArg().type(Framework.class).required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
-        Option simulationEnvOpt =
-                Option.builder("e").longOpt("env").desc("Path to an env file for the selected framework").hasArg().argName("path").build();
+        Option dumpLocation = Option.builder("d").longOpt("dump").desc("Path to a directory where the spec and rutime data will be dumped").build();
+        Option dumpIntermediateSpecs = Option.builder("di").longOpt("dump-intermediate").desc("Dump intermediate specs during expansion").build();
 
         Options options = new Options();
         options.addOption(helpOpt);
         options.addOption(mablOpt);
         options.addOption(verboseOpt);
         options.addOption(versionOpt);
-        options.addOption(contextOpt);
+        //        options.addOption(contextOpt);
         options.addOption(interpretOpt);
-        options.addOption(frameworkOpt);
-        options.addOption(simulationEnvOpt);
+        options.addOption(dumpLocation);
+        options.addOption(dumpIntermediateSpecs);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -86,48 +78,49 @@ public class Main {
             return;
         }
 
-        Framework framework = Framework.valueOf(cmd.getOptionValue(frameworkOpt.getOpt()));
 
         boolean verbose = cmd.hasOption(verboseOpt.getOpt());
 
         List<File> sourceFiles = Arrays.stream(cmd.getOptionValues(mablOpt.getOpt())).map(File::new).collect(Collectors.toList());
 
-        File configFile = null;
-        if (cmd.hasOption(contextOpt.getOpt())) {
-            configFile = new File(cmd.getOptionValue(contextOpt.getOpt()));
+
+        IErrorReporter reporter = new ErrorReporter();
+
+        //used to file lookup
+        File specificationDirectory = new File(".");
+        File workingDirectory = new File(".");
+
+        Mabl mabl = new Mabl(specificationDirectory, workingDirectory);
+        mabl.setReporter(reporter);
+        mabl.setVerbose(verbose);
+        mabl.getSettings().dumpIntermediateSpecs = cmd.hasOption(dumpIntermediateSpecs.getOpt());
+
+        if (!sourceFiles.isEmpty()) {
+            mabl.parse(sourceFiles);
+        }
+        //        if (useTemplate) {
+        //            mabl.generateSpec(testJsonObject.initialize, testJsonObject.simulate, testJsonObject.useLogLevels, new File(directory, "env.json"));
+        //        }
+
+        mabl.expand();
+
+
+        if (reporter.getErrorCount() > 0) {
+            reporter.printErrors(new PrintWriter(System.err, true));
+            System.exit(1);
         }
 
-        ISimulationEnvironment simulationEnvironment = null;
-
-        switch (framework) {
-            case FMI2:
-                if (!cmd.hasOption(simulationEnvOpt.getOpt())) {
-                    System.err.println("Missing required argument " + simulationEnvOpt.getLongOpt() + " for framework: " + framework);
-                    return;
-                }
-                IErrorReporter reporter = new ErrorReporter();
-                simulationEnvironment = FmiSimulationEnvironment.of(new File(cmd.getOptionValue(simulationEnvOpt.getOpt())), reporter);
-                if (reporter.getErrorCount() > 0) {
-                    reporter.printErrors(new PrintWriter(System.err));
-                    return;
-                }
-                break;
-            case Any:
-                break;
+        if (cmd.hasOption(dumpLocation.getOpt())) {
+            mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
         }
 
-        try (InputStream configIs = configFile == null ? null : new FileInputStream(configFile)) {
 
-            ARootDocument spec = new MableSpecificationGenerator(framework, verbose, simulationEnvironment).generate(sourceFiles, configIs);
-
-            if (cmd.hasOption(interpretOpt.getOpt())) {
-                DataStore.GetInstance().setSimulationEnvironment(simulationEnvironment);
-                new MableInterpreter(new DefaultExternalValueFactory()).execute(spec);
-            }
-        } catch (AnalysisException e) {
-            e.printStackTrace();
+        if (cmd.hasOption(interpretOpt.getOpt())) {
+            new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+                    IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
         }
     }
-
-
 }
+
+
+

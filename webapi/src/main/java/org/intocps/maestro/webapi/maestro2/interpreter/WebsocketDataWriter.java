@@ -1,7 +1,6 @@
 package org.intocps.maestro.webapi.maestro2.interpreter;
 
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
-import org.intocps.maestro.interpreter.DataStore;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
@@ -22,13 +21,17 @@ import java.util.stream.Collectors;
  * Only works for a single websocket.
  */
 public class WebsocketDataWriter implements IDataListener {
+    final List<String> filter;
+    final double interval;
     private final HashMap<UUID, WebsocketDataWriterInstance> instances = new HashMap<>();
     private final WebSocketSession webSocketSession;
     private final WebsocketValueConverter webSocketConverter;
 
-    public WebsocketDataWriter(WebSocketSession ws) {
+    public WebsocketDataWriter(WebSocketSession ws, List<String> filter, double interval) {
         this.webSocketSession = ws;
+        this.filter = filter;
         this.webSocketConverter = new WebsocketValueConverter(ws);
+        this.interval = interval;
     }
 
     public static List<String> calculateHeadersOfInterest(FmiSimulationEnvironment environment) {
@@ -38,11 +41,10 @@ public class WebsocketDataWriter implements IDataListener {
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
-        FmiSimulationEnvironment environment = (FmiSimulationEnvironment) DataStore.GetInstance().getSimulationEnvironment();
-        List<String> hoi = calculateHeadersOfInterest(environment);
+        List<String> hoi = filter;
         List<Integer> ioi = DataListenerUtilities.indicesOfInterest(headers, hoi);
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);
-        wdwi.interval = environment.getEnvironmentMessage().getLivelogInterval();
+        wdwi.interval = interval;
         this.instances.put(uuid, wdwi);
         this.webSocketConverter.configure(hoi);
     }

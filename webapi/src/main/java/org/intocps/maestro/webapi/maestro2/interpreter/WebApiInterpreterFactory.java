@@ -14,11 +14,11 @@ public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
     public WebApiInterpreterFactory(WebSocketSession ws, File csvOutputFile) {
         super();
-        this.instantiators.put(this.dataWriterInstantiaterName, args -> {
+        this.instantiators.put(this.DATA_WRITER_TYPE_NAME, args -> {
             if (ws == null) {
                 return Either.left(new AnalysisException("No websocket present"));
             } else {
-                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(csvOutputFile), new WebsocketDataWriter(ws))));
+                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(csvOutputFile, environment), new WebsocketDataWriter(ws))));
             }
 
 

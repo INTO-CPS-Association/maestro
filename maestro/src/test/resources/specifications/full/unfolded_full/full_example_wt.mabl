@@ -3,6 +3,8 @@
 
 simulation
 import  FMI2;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
 {
 Math math = load("Math");
 FMI2 fmuA = load("FMI2","{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");

@@ -69,14 +69,34 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         ASimulationSpecificationCompilationUnit unit = new ASimulationSpecificationCompilationUnit();
 
-        unit.setBody((PStm) this.visit(ctx.block()));
+        unit.setBody((PStm) this.visit(ctx.statement()));
 
         if (ctx.imports != null && !ctx.imports.isEmpty()) {
-            unit.setImports(ctx.imports.stream().map(c -> convert(c)).collect(Collectors.toList()));
+            unit.setImports(ctx.imports.stream().map(this::convert).collect(Collectors.toList()));
+        }
+
+        if (ctx.framework() != null && !ctx.framework().isEmpty()) {
+            unit.setFramework(ctx.framework().names.stream()
+                    .map(s -> new LexIdentifier(s.getText().substring(1, s.getText().length() - 1), convertToLexToken(s)))
+                    .collect(Collectors.toList()));
+        }
+
+        if (ctx.frameworkConfigs() != null && !ctx.frameworkConfigs().isEmpty()) {
+            unit.setFrameworkConfigs(ctx.frameworkConfigs().stream().map(this::visit).map(AConfigFramework.class::cast).collect(Collectors.toList()));
         }
 
         return unit;
 
+    }
+
+    @Override
+    public INode visitFrameworkConfigs(MablParser.FrameworkConfigsContext ctx) {
+        AConfigFramework config = new AConfigFramework();
+        config.setName(new LexIdentifier(ctx.frameworkName.getText().substring(1, ctx.frameworkName.getText().length() - 1),
+                convertToLexToken(ctx.frameworkName)));
+        config.setConfig(ctx.config.getText().substring(1, ctx.config.getText().length() - 1));
+
+        return config;
     }
 
     @Override
@@ -99,6 +119,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         return block;
 
+    }
+
+    @Override
+    public INode visitConfig(MablParser.ConfigContext ctx) {
+        AConfigStm config = new AConfigStm();
+        config.setConfig(ctx.config.getText().substring(1, ctx.STRING_LITERAL().getText().length() - 1));
+        return config;
     }
 
     @Override

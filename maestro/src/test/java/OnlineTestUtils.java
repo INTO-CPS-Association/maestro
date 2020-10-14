@@ -13,36 +13,10 @@ import java.net.URL;
 import java.util.List;
 import java.util.Vector;
 
-public abstract class OnlineTestFmusTest {
+public class OnlineTestUtils {
 
     public final static String baseDownloadUrl = "https://overture.au.dk/into-cps/examples/public-coe-test-fmus/latest/";
     final static String prefix = "/online-models";
-
-    //    public static void scanConfigsAndDownloadFmus(File rootPath) throws IOException {
-    //        List<java.net.URL> urls = new Vector<>();
-    //
-    //        final ObjectMapper mapper = new ObjectMapper();
-    //        File dir = rootPath;
-    //        String[] extensions = new String[]{"json"};
-    //        List<File> files = (List<File>) FileUtils.listFiles(dir, extensions, true);
-    //        for (File file : files) {
-    //            System.out.println("file: " + file.getCanonicalPath());
-    //
-    //            InitializationMsgJson st = mapper.readValue(FileUtils.readFileToString(file), InitializationMsgJson.class);
-    //
-    //            for (String fmuPath : st.fmus.values()) {
-    //                String fmuName = fmuPath.substring(fmuPath.lastIndexOf('/') + 1);
-    //                if (fmuName.endsWith(".fmu")) {
-    //                    urls.add(new URL(baseDownloadUrl + fmuName));
-    //                } else {
-    //                    System.err.println("Invalid fmu name: " + fmuName);
-    //                }
-    //            }
-    //        }
-    //
-    //        download(urls);
-    //
-    //    }
 
     public static void download(List<URL> urls) throws IOException {
         System.out.println("Downloading FMUs");
@@ -59,12 +33,7 @@ public abstract class OnlineTestFmusTest {
         }
     }
 
-    //    @BeforeClass
-    //    public static void downloadFmus() throws IOException {
-    //        scanConfigsAndDownloadFmus(new File("src/test/resources" + prefix));
-    //    }
-
-    public List<URL> collectFmus(INode spec, boolean updatePath) throws AnalysisException {
+    public static List<URL> collectFmus(INode spec, boolean updatePath) throws AnalysisException {
         class FmuCollector extends DepthFirstAnalysisAdaptor {
             final List<URL> fmus = new Vector<>();
 
@@ -97,10 +66,4 @@ public abstract class OnlineTestFmusTest {
         spec.apply(collector);
         return collector.fmus;
     }
-
-    //    @Override
-    //    protected void test(String configPath, double startTime,
-    //            double endTime) throws IOException, JsonParseException, JsonMappingException, JsonProcessingException, NanoHTTPD.ResponseException {
-    //        super.test(prefix + configPath, startTime, endTime);
-    //    }
 }

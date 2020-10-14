@@ -50,6 +50,17 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
 
         sb.append(indent(question) + "simulation ");
         node.getImports().forEach(x -> sb.append(indent(question) + "\nimport " + x.getText() + ";"));
+
+        if (node.getFramework() != null && !node.getFramework().isEmpty()) {
+            sb.append(indent(question) + "\n@Framework( " +
+                    node.getFramework().stream().map(LexIdentifier::getText).map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) + ");");
+        }
+
+        if (node.getFrameworkConfigs() != null && !node.getFrameworkConfigs().isEmpty()) {
+            node.getFrameworkConfigs()
+                    .forEach(x -> sb.append(indent(question) + "\n@FrameworkConfig( \"" + x.getName().getText() + "\", \"" + x.getConfig() + "\");"));
+        }
+
         sb.append("\n");
         node.getBody().apply(this, question);
         //"simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [body]
@@ -85,6 +96,11 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         } else {
             node.apply(this, indentation);
         }
+    }
+
+    @Override
+    public void caseAConfigStm(AConfigStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question) + "@Config(\"" + node.getConfig() + "\");");
     }
 
     @Override

@@ -1,0 +1,8 @@
+ simulation
+  import FMI2;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+ {
+        FMI2 FMUA = load("FMI2", "path/to/FMUA.fmu");
+
+ }

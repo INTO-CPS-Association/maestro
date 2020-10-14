@@ -2,7 +2,8 @@ simulation
 import DebugLogging;
 import TypeConverter;
 import Initializer;
-
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
 {
 Math math = load("Math");
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
