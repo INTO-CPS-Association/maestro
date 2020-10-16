@@ -43,7 +43,7 @@ import java.io.File;
  * Created by ctha on 23-02-2016.
  */
 public interface SessionLogicFactory {
-    Coe CreateCoe(File root);
+    Coe createCoe(File root);
 
-    SessionLogic CreateSessionLogic(File root);
+    SessionLogic createSessionLogic(File root);
 }

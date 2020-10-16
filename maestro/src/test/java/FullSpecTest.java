@@ -4,9 +4,14 @@ import difflib.DiffUtils;
 import difflib.Patch;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.core.Fmi2EnvironmentConfiguration;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -50,7 +55,7 @@ public class FullSpecTest {
             testJsonObject = mapper.readValue(test, TestJsonObject.class);
         } else {
             testJsonObject = new TestJsonObject();
-            testJsonObject.useLocalSpec = true;
+            testJsonObject.autoGenerate = false;
         }
         return testJsonObject;
     }
@@ -102,7 +107,7 @@ public class FullSpecTest {
         File workingDirectory = getWorkingDirectory(this.directory);
 
         TestJsonObject testJsonObject = getTestJsonObject(directory);
-        boolean useTemplate = testJsonObject != null && !testJsonObject.useLocalSpec;
+        boolean useTemplate = testJsonObject != null && testJsonObject.autoGenerate;
 
         IErrorReporter reporter = new ErrorReporter();
 
@@ -113,7 +118,29 @@ public class FullSpecTest {
         mabl.parse(getSpecificationFiles());
         postParse(mabl);
         if (useTemplate) {
-            mabl.generateSpec(testJsonObject.initialize, testJsonObject.simulate, testJsonObject.useLogLevels, new File(directory, "env.json"));
+
+            FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(new File(directory, "env.json"), reporter);
+
+            String frameworkConfig = Files.readString(new File(directory, "env.json").toPath(), StandardCharsets.UTF_8);
+            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
+                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                            .useInitializer(testJsonObject.initialize, "{}").setFramework(Framework.FMI2)
+                            .setFrameworkConfig(Framework.FMI2, frameworkConfig);
+
+            if (testJsonObject.useLogLevels) {
+                builder.setLogLevels(environment.getLogLevels());
+            }
+
+            if (testJsonObject.simulate &&
+                    environment.getEnvironmentMessage().algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
+                Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
+                        (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
+                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
+            }
+
+            MaBLTemplateConfiguration configuration = builder.build();
+
+            mabl.generateSpec(configuration);
         }
 
         mabl.expand();

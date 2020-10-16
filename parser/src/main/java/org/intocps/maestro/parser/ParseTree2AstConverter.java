@@ -94,7 +94,9 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AConfigFramework config = new AConfigFramework();
         config.setName(new LexIdentifier(ctx.frameworkName.getText().substring(1, ctx.frameworkName.getText().length() - 1),
                 convertToLexToken(ctx.frameworkName)));
-        config.setConfig(ctx.config.getText().substring(1, ctx.config.getText().length() - 1));
+        if (ctx.config != null) {
+            config.setConfig(ctx.config.getText().substring(1, ctx.config.getText().length() - 1));
+        }
 
         return config;
     }

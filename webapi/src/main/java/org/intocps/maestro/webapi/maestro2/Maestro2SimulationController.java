@@ -10,12 +10,15 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.intocps.maestro.ast.ARootDocument;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.framework.core.Fmi2EnvironmentConfiguration;
+import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
-import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.Algorithm;
@@ -37,11 +40,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Vector;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 
@@ -206,6 +210,7 @@ public class Maestro2SimulationController {
             logger.trace("Initialization completed");
             logic.setInitializationData(body);
 
+
             return new InitializeStatusModel("initialized", sessionId, null, 0);
 
         } catch (Exception e) {
@@ -224,30 +229,51 @@ public class Maestro2SimulationController {
         //        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
-        Map<ModelConnection.ModelInstance, List<String>> logLevels = new HashMap<>();
-        if (body.logLevels != null) {
-            for (Map.Entry<String, List<String>> entry : body.logLevels.entrySet()) {
-                try {
-                    logLevels.put(ModelConnection.ModelInstance.parse(entry.getKey()), entry.getValue());
-                } catch (Exception e) {
-                    throw new Exception("Error in logging " + "levels");
-                }
-            }
-        }
 
-        Thread.sleep(2000);
+        Fmi2EnvironmentConfiguration frameworkConfig = new Fmi2EnvironmentConfiguration();
+        InitializationData initializeRequest = logic.getInitializationData();
+        frameworkConfig.fmus = initializeRequest.fmus;
+        frameworkConfig.connections = initializeRequest.connections;
+        frameworkConfig.logLevels = body.logLevels;
+        frameworkConfig.endTime = body.endTime;
+        frameworkConfig.liveLogInterval = body.liveLogInterval;
+        frameworkConfig.livestream = initializeRequest.livestream;
+        frameworkConfig.loggingOn = initializeRequest.loggingOn;
+        frameworkConfig.logVariables = initializeRequest.logVariables;
+        frameworkConfig.algorithm =
+                new Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
+        frameworkConfig.stepSize = ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize();
+        frameworkConfig.visible = initializeRequest.visible;
 
-        logic.setSimulateRequestBody(body);
-        Maestro2Broker mc = new Maestro2Broker();
-        var ref = new Object() {
-            ISimulationEnvironment environment;
-        };
-        Consumer<ISimulationEnvironment> environmentConsumer = env -> ref.environment = env;
-        ARootDocument spec = mc.createMablSpecFromLegacyMM(logic.getInitializationData(), logic.getSimulateRequestBody(), logic.containsSocket(),
-                logic.rootDirectory, environmentConsumer);
-        FileUtils.writeStringToFile(new File(logic.rootDirectory, "spec.mabl"), spec.getContent().get(0).toString(), StandardCharsets.UTF_8);
+        Map<String, Object> initialize = new HashMap<>();
+        initialize.put("parameters", initializeRequest.parameters);
 
-        mc.executeInterpreter(spec, logic.getSocket(), logic.rootDirectory, ref.environment);
+        ErrorReporter reporter = new ErrorReporter();
+
+        FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(frameworkConfig, reporter);
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
+                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                        .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
+                        .setFrameworkConfig(Framework.FMI2, new ObjectMapper().writeValueAsString(frameworkConfig));
+
+
+        builder.setLogLevels(environment.getLogLevels());
+
+
+        builder.setStepAlgorithm(new FixedStepSizeAlgorithm(body.endTime, ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
+
+        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory);
+        MaBLTemplateConfiguration configuration = builder.build();
+        mc.generateSpecification(configuration);
+
+        Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+                map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                        .collect(Collectors.toList());
+
+
+        mc.executeInterpreter(logic.getSocket(),
+                initializeRequest.logVariables == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.logVariables),
+                initializeRequest.livestream == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.livestream), body.liveLogInterval);
 
         return getStatus(sessionId);
     }

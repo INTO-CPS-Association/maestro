@@ -57,8 +57,8 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         }
 
         if (node.getFrameworkConfigs() != null && !node.getFrameworkConfigs().isEmpty()) {
-            node.getFrameworkConfigs()
-                    .forEach(x -> sb.append(indent(question) + "\n@FrameworkConfig( \"" + x.getName().getText() + "\", \"" + x.getConfig() + "\");"));
+            node.getFrameworkConfigs().forEach(
+                    x -> sb.append(indent(question) + "\n@FrameworkConfig( \"" + x.getName().getText() + "\", \"" + x.getConfig() + "\")" + ";"));
         }
 
         sb.append("\n");

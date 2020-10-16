@@ -1,5 +1,6 @@
 package org.intocps.maestro.typechecker;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AConfigStm;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AFunctionType;
@@ -47,7 +48,7 @@ public class PluginEnvironment extends BaseEnvironment {
 
         String data = configStm.getConfig();
         data = processStringAnnotations(specificationFolder, data);
-        try (InputStream is = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8))) {
+        try (InputStream is = new ByteArrayInputStream(StringEscapeUtils.unescapeJava(data).getBytes(StandardCharsets.UTF_8))) {
             IPluginConfiguration config = plugin.parseConfig(is);
             return config;
         }

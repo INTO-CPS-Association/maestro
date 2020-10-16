@@ -43,13 +43,13 @@ import java.io.File;
  */
 public class ProdSessionLogicFactory implements SessionLogicFactory {
     @Override
-    public Coe CreateCoe(File root) {
+    public Coe createCoe(File root) {
         root.mkdirs();
         return new Coe(root);
     }
 
     @Override
-    public SessionLogic CreateSessionLogic(File root) {
+    public SessionLogic createSessionLogic(File root) {
         return new SessionLogic(root);
     }
 }

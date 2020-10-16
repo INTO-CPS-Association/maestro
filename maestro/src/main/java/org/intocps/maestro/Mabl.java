@@ -5,15 +5,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.StringAnnotationProcessor;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.core.EnvironmentMessage;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
@@ -62,6 +61,9 @@ public class Mabl {
     }
 
     public void parse(List<File> sourceFiles) throws IOException {
+        if (sourceFiles.isEmpty()) {
+            return;
+        }
         document = mergeDocuments(MablParserUtil.parse(sourceFiles));
         postProcessParting();
     }
@@ -72,8 +74,13 @@ public class Mabl {
     }
 
     public void parse(CharStream specStreams) throws IOException {
-        document = mergeDocuments(Collections.singletonList(MablParserUtil.parse(specStreams)));
-        postProcessParting();
+        if (reporter.getErrorCount() != 0) {
+            throw new IllegalArgumentException("Parsing cannot be called with errors");
+        }
+        document = mergeDocuments(Collections.singletonList(MablParserUtil.parse(specStreams, reporter)));
+        if (reporter.getErrorCount() == 0) {
+            postProcessParting();
+        }
     }
 
     private void postProcessParting() throws IOException {
@@ -92,7 +99,7 @@ public class Mabl {
             String data = StringAnnotationProcessor.processStringAnnotations(specificationFolder, pair.getValue().getValue());
 
             if (settings.inlineFrameworkConfig) {
-                pair.getValue().getKey().setConfig(data.replace("\"", "\\\"").replace("\n", ""));
+                pair.getValue().getKey().setConfig(data);
             }
             frameworkConfigs.put(pair.getKey(), Map.entry(pair.getValue().getKey(), data));
         }
@@ -106,7 +113,11 @@ public class Mabl {
 
     public void expand() throws Exception {
 
-        if (!frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
+        if (reporter.getErrorCount() != 0) {
+            throw new IllegalArgumentException("Expansion cannot be called with errors");
+        }
+
+        if (frameworks == null || frameworkConfigs == null || !frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
             throw new Exception(
                     "Framework annotations required for expansion. Please specify: " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK) +
                             " and " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK_CONFIG));
@@ -136,38 +147,24 @@ public class Mabl {
         }
     }
 
-    public void generateSpec(boolean generateInitialize, boolean generateSimulate, boolean generateLogLevels, File templateData) throws Exception {
+    public void generateSpec(MaBLTemplateConfiguration configuration) throws Exception {
 
-        if (templateData == null || !templateData.exists() || !templateData.isFile()) {
-            throw new Exception("No template data valuable file does not exist: " + templateData);
-        }
-        FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(templateData, reporter);
-
-        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
-                        .useInitializer(generateInitialize);
-
-        if (generateLogLevels) {
-            builder.setLogLevels(environment.getLogLevels());
+        if (configuration == null) {
+            throw new Exception("No configuration");
         }
 
-        if (generateSimulate && environment.getEnvironmentMessage().algorithm instanceof EnvironmentMessage.FixedStepAlgorithmConfig) {
-            EnvironmentMessage.FixedStepAlgorithmConfig a =
-                    (EnvironmentMessage.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
-            builder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
-        }
-
-        MaBLTemplateConfiguration configuration = builder.build();
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
+        postProcessParting();
     }
 
     //FIXME should be private
     public ISimulationEnvironment getSimulationEnv() throws Exception {
         if (this.frameworks.contains(Framework.FMI2) && frameworkConfigs.get(Framework.FMI2) != null) {
-            return FmiSimulationEnvironment
-                    .of(new ByteArrayInputStream(frameworkConfigs.get(Framework.FMI2).getValue().getBytes(StandardCharsets.UTF_8)), reporter);
+
+            return FmiSimulationEnvironment.of(new ByteArrayInputStream(
+                    StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
         }
         logger.error("No framework env found");
         return null;

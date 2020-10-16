@@ -32,11 +32,11 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
     Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
-    private EnvironmentMessage environmentMessage;
+    private Fmi2EnvironmentConfiguration environmentMessage;
     private Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> csvVariablesToLog = new HashMap<>();
     private List<String> livestreamVariablesToLog = new ArrayList<>();
 
-    protected FmiSimulationEnvironment(EnvironmentMessage msg) throws Exception {
+    protected FmiSimulationEnvironment(Fmi2EnvironmentConfiguration msg) throws Exception {
         initialize(msg);
     }
 
@@ -47,7 +47,7 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-    public static FmiSimulationEnvironment of(EnvironmentMessage msg, IErrorReporter reporter) throws Exception {
+    public static FmiSimulationEnvironment of(Fmi2EnvironmentConfiguration msg, IErrorReporter reporter) throws Exception {
 
         List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
 
@@ -64,8 +64,8 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
 
     public static FmiSimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        EnvironmentMessage msg = null;
-        msg = mapper.readValue(inputStream, EnvironmentMessage.class);
+        Fmi2EnvironmentConfiguration msg = null;
+        msg = mapper.readValue(inputStream, Fmi2EnvironmentConfiguration.class);
         return of(msg, reporter);
     }
 
@@ -145,7 +145,7 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
         return this.fmuToUri.get(fmuName);
     }
 
-    private void initialize(EnvironmentMessage msg) throws Exception {
+    private void initialize(Fmi2EnvironmentConfiguration msg) throws Exception {
         this.environmentMessage = msg;
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
@@ -412,7 +412,7 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
     }
 
     @Override
-    public EnvironmentMessage getEnvironmentMessage() {
+    public Fmi2EnvironmentConfiguration getEnvironmentMessage() {
         return this.environmentMessage;
     }
 

@@ -94,6 +94,12 @@
                     <version>3.0.0</version>
                 </plugin>
 
+                <plugin>
+                    <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
 
             </plugins>
         </pluginManagement>
@@ -193,6 +199,21 @@
                 <version>2.6</version>
                 <scope>compile</scope>
             </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.11</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.9</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>org.into-cps.fmi</groupId>

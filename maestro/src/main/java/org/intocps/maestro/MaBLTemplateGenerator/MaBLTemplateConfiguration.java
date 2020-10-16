@@ -1,5 +1,7 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 
@@ -10,9 +12,19 @@ public class MaBLTemplateConfiguration {
     private Map<String, List<String>> logLevels;
     private IStepAlgorithm stepAlgorithm;
     private FmiSimulationEnvironment unitRelationShip;
-    private boolean initialize;
+    private Framework framework;
+    private Pair<Framework, String> frameworkConfig;
+    private Pair<Boolean, String> initialize;
 
     private MaBLTemplateConfiguration() {
+    }
+
+    public Framework getFramework() {
+        return framework;
+    }
+
+    public Pair<Framework, String> getFrameworkConfig() {
+        return frameworkConfig;
     }
 
     public IStepAlgorithm getAlgorithm() {
@@ -23,7 +35,7 @@ public class MaBLTemplateConfiguration {
         return unitRelationShip;
     }
 
-    public boolean getInitialize() {
+    public Pair<Boolean, String> getInitialize() {
         return this.initialize;
     }
 
@@ -42,11 +54,23 @@ public class MaBLTemplateConfiguration {
     public static class MaBLTemplateConfigurationBuilder {
         private IStepAlgorithm stepAlgorithm = null;
         private FmiSimulationEnvironment unitRelationship = null;
-        private boolean initialize = false;
+        private Pair<Boolean, String> initialize = Pair.of(false, null);
         private Map<String, List<String>> logLevels;
+        private Framework framework;
+        private Pair<Framework, String> frameworkConfig;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
             return new MaBLTemplateConfigurationBuilder();
+        }
+
+        public MaBLTemplateConfigurationBuilder setFramework(Framework framework) {
+            this.framework = framework;
+            return this;
+        }
+
+        public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework, String config) {
+            this.frameworkConfig = Pair.of(framework, config);
+            return this;
         }
 
         public MaBLTemplateConfigurationBuilder setUnitRelationship(FmiSimulationEnvironment unitRelationship) {
@@ -61,8 +85,8 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
-        public MaBLTemplateConfigurationBuilder useInitializer(boolean useInitializer) {
-            this.initialize = useInitializer;
+        public MaBLTemplateConfigurationBuilder useInitializer(boolean useInitializer, String config) {
+            this.initialize = Pair.of(useInitializer, config);
             return this;
         }
 
@@ -76,12 +100,15 @@ public class MaBLTemplateConfiguration {
         }
 
         public MaBLTemplateConfiguration build() {
-            MaBLTemplateConfiguration templateConfiguration = new MaBLTemplateConfiguration();
-            templateConfiguration.stepAlgorithm = this.stepAlgorithm;
-            templateConfiguration.unitRelationShip = this.unitRelationship;
-            templateConfiguration.initialize = this.initialize;
-            templateConfiguration.logLevels = this.logLevels;
-            return templateConfiguration;
+            //FIXME validate
+            MaBLTemplateConfiguration config = new MaBLTemplateConfiguration();
+            config.stepAlgorithm = this.stepAlgorithm;
+            config.unitRelationShip = this.unitRelationship;
+            config.initialize = this.initialize;
+            config.logLevels = this.logLevels;
+            config.framework = this.framework;
+            config.frameworkConfig = this.frameworkConfig;
+            return config;
         }
     }
 }

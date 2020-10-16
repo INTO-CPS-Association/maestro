@@ -20,6 +20,9 @@ class IntermediateSpecWriter {
     }
 
     public void write(INode spec) {
+        if (!enabled) {
+            return;
+        }
         try {
             int index = count++;
             FileUtils.write(new File(directory, "spec" + String.format("%05d", index) + "-numbered.mabl"), PrettyPrinter.printLineNumbers(spec),

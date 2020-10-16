@@ -33,7 +33,7 @@ public interface ISimulationEnvironment {
 
     Set<? extends FrameworkVariableInfo> getRelations(List<LexIdentifier> identifiers);
 
-    EnvironmentMessage getEnvironmentMessage();
+    Fmi2EnvironmentConfiguration getEnvironmentMessage();
 
     /**
      * Returns information about the unit

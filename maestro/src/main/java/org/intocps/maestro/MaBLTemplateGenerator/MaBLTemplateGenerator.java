@@ -1,6 +1,7 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
@@ -167,7 +168,8 @@ public class MaBLTemplateGenerator {
         }
 
         // Add the initializer expand stm
-        if (templateConfiguration.getInitialize()) {
+        if (templateConfiguration.getInitialize().getKey()) {
+            stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
             stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
         }
 
@@ -183,10 +185,15 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(unloadFmuStatements);
         stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
 
-        return MableAstFactory.newASimulationSpecificationCompilationUnit(
-                Arrays.asList(MableAstFactory.newAIdentifier(IMPORT_FIXEDSTEP), MableAstFactory.newAIdentifier(IMPORT_TYPECONVERTER),
-                        MableAstFactory.newAIdentifier(IMPORT_INITIALIZER), MableAstFactory.newAIdentifier(IMPORT_DEBUGLOGGING)),
-                MableAstFactory.newABlockStm(stmMaintainer.getStatements()));
+        ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(
+                Arrays.asList(newAIdentifier(IMPORT_FIXEDSTEP), newAIdentifier(IMPORT_TYPECONVERTER), newAIdentifier(IMPORT_INITIALIZER),
+                        newAIdentifier(IMPORT_DEBUGLOGGING)), newABlockStm(stmMaintainer.getStatements()));
+        unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
+
+        unit.setFrameworkConfigs(Arrays.asList(
+                new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
+                        StringEscapeUtils.escapeJava(templateConfiguration.getFrameworkConfig().getValue()))));
+        return unit;
     }
 
 

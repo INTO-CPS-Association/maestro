@@ -2,6 +2,7 @@ package org.intocps.maestro.core;
 
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class StringAnnotationProcessor {
 
             if (file.exists() && file.isFile()) {
 
-                data = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                data = StringEscapeUtils.escapeJava(FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             } else {
                 logger.warn("Tag '" + FILE_TAG + "' not replaced in '" + data + "' file does not exist: '" + file.getAbsolutePath() + "'");
             }

@@ -339,7 +339,7 @@ public class MableSpecificationGenerator {
 
                 ARootDocument specToCheck = null;
                 try {
-                    specToCheck = parse(CharStreams.fromString(PrettyPrinter.print(processedDoc)));
+                    specToCheck = parse(CharStreams.fromString(PrettyPrinter.print(processedDoc)), reporter);
                 } catch (AnalysisException | IllegalStateException e) {
                     specToCheck = processedDoc;
                 }
