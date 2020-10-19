@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CsvDataWriter implements IDataListener {
     final List<String> filter;
@@ -28,7 +29,7 @@ public class CsvDataWriter implements IDataListener {
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         CsvDataWriterInstance instance = new CsvDataWriterInstance();
-        instance.headersOfInterest = filter == null ? headers : filter;
+        instance.headersOfInterest = filter == null ? headers : headers.stream().filter(filter::contains).collect(Collectors.toList());
         // Discover the headers of interest and store the index of these
         for (int i = 0; i < headers.size(); i++) {
             String header = headers.get(i);

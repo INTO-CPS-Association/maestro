@@ -12,10 +12,13 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
-import org.intocps.maestro.framework.core.Fmi2EnvironmentConfiguration;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -46,6 +49,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
 
@@ -230,37 +234,41 @@ public class Maestro2SimulationController {
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
-        Fmi2EnvironmentConfiguration frameworkConfig = new Fmi2EnvironmentConfiguration();
+        //        Fmi2EnvironmentConfiguration frameworkConfig = new Fmi2EnvironmentConfiguration();
         InitializationData initializeRequest = logic.getInitializationData();
-        frameworkConfig.fmus = initializeRequest.fmus;
-        frameworkConfig.connections = initializeRequest.connections;
-        frameworkConfig.logLevels = body.logLevels;
-        frameworkConfig.endTime = body.endTime;
-        frameworkConfig.liveLogInterval = body.liveLogInterval;
-        frameworkConfig.livestream = initializeRequest.livestream;
-        frameworkConfig.loggingOn = initializeRequest.loggingOn;
-        frameworkConfig.logVariables = initializeRequest.logVariables;
-        frameworkConfig.algorithm =
-                new Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
-        frameworkConfig.stepSize = ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize();
-        frameworkConfig.visible = initializeRequest.visible;
+        //        frameworkConfig.fmus = initializeRequest.fmus;
+        //        frameworkConfig.connections = initializeRequest.connections;
+        //        frameworkConfig.logLevels = body.logLevels;
+        //        frameworkConfig.endTime = body.endTime;
+        //        frameworkConfig.liveLogInterval = body.liveLogInterval;
+        //        frameworkConfig.livestream = initializeRequest.livestream;
+        //        frameworkConfig.loggingOn = initializeRequest.loggingOn;
+        //        frameworkConfig.logVariables = initializeRequest.logVariables;
+        //        frameworkConfig.algorithm =
+        //                new Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
+        //        frameworkConfig.stepSize = ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize();
+        //        frameworkConfig.visible = initializeRequest.visible;
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", initializeRequest.parameters);
 
         ErrorReporter reporter = new ErrorReporter();
 
-        Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(frameworkConfig, reporter);
+
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
+        simulationConfiguration.fmus = initializeRequest.getFmus();
+        simulationConfiguration.connections = initializeRequest.getConnections();
+        simulationConfiguration.logVariables = initializeRequest.getLogVariables();
+        simulationConfiguration.livestream = initializeRequest.livestream;
+
+        Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, new IErrorReporter.SilentReporter());
+
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
+                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
-                        .setFrameworkConfig(Framework.FMI2, new ObjectMapper().writeValueAsString(frameworkConfig));
-
-
-        builder.setLogLevels(environment.getLogLevels());
-
-
-        builder.setStepAlgorithm(new FixedStepSizeAlgorithm(body.endTime, ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
+                        .setLogLevels(body.logLevels).setVisible(initializeRequest.visible).setLoggingOn(initializeRequest.loggingOn).
+                        setStepAlgorithm(
+                                new FixedStepSizeAlgorithm(body.endTime, ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
 
         Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory);
         MaBLTemplateConfiguration configuration = builder.build();
@@ -271,8 +279,15 @@ public class Maestro2SimulationController {
                         .collect(Collectors.toList());
 
 
-        mc.executeInterpreter(logic.getSocket(),
-                initializeRequest.logVariables == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.logVariables),
+        List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
+            ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+        }).collect(Collectors.toList());
+
+
+        mc.executeInterpreter(logic.getSocket(), Stream.concat(connectedOutputs.stream(),
+                (initializeRequest.logVariables == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.logVariables)).stream())
+                        .collect(Collectors.toList()),
                 initializeRequest.livestream == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.livestream), body.liveLogInterval);
 
         return getStatus(sessionId);

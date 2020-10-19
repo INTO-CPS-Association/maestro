@@ -23,6 +23,8 @@ public interface ISimulationEnvironment {
 
     Set<? extends FrameworkVariableInfo> getRelations(List<LexIdentifier> identifiers);
 
+    List<? extends RelationVariable> getConnectedOutputs();
+
     /**
      * Returns information about the unit
      *

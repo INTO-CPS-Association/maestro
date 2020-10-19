@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
@@ -37,7 +38,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
     }
-
 
     public static Fmi2SimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
         try (InputStream is = new FileInputStream(file)) {
@@ -67,7 +67,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         return of(msg, reporter);
     }
 
-
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
         List<ModelConnection> list = new Vector<>();
 
@@ -90,6 +89,23 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
                         entry -> globalVariablesToLogForInstance.get(extractInstance.apply(entry.getKey())).stream()
                                 .filter(x -> entry.getValue().contains(x.scalarVariable.name)).collect(Collectors.toList())));
         return t;
+
+    }
+
+    @Override
+    public List<RelationVariable> getConnectedOutputs() {
+        return getInstances().stream().flatMap(instance -> {
+            Stream<RelationVariable> relationOutputs = this.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
+                    .filter(relation -> (relation.getOrigin() == Relation.InternalOrExternal.External) &&
+                            (relation.getDirection() == Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable);
+            return relationOutputs;
+        })//.map(x -> {
+                //            ComponentInfo i = this.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
+                //
+                //            return i;
+                ////            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+                //})
+                .collect(Collectors.toList());
 
     }
 
