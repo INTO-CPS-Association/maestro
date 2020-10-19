@@ -15,7 +15,7 @@ import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.framework.core.Fmi2EnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -250,7 +250,7 @@ public class Maestro2SimulationController {
 
         ErrorReporter reporter = new ErrorReporter();
 
-        FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(frameworkConfig, reporter);
+        Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(frameworkConfig, reporter);
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)

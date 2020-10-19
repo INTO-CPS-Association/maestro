@@ -8,7 +8,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.InternalException;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.typechecker.*;
@@ -381,7 +381,7 @@ public class MableSpecificationGenerator {
         if (simulationModule.getBody() instanceof ABlockStm) {
             Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
             if (instanceMappings.isPresent()) {
-                instanceMappings.get().forEach(x -> ((FmiSimulationEnvironment) this.simulationEnvironment)
+                instanceMappings.get().forEach(x -> ((Fmi2SimulationEnvironment) this.simulationEnvironment)
                         .setLexNameToInstanceNameMapping(x.getIdentifier().getText(), x.getName()));
             }
         }

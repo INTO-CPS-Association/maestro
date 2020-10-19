@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import com.ugos.jiprolog.engine.*;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,8 +20,8 @@ public class InitializationPrologQuery {
         this.prologGenerator = new PrologGenerator();
     }
 
-    public boolean initializationOrderIsValid(List<FmiSimulationEnvironment.Variable> instantiationOrder,
-            Set<FmiSimulationEnvironment.Relation> relations) {
+    public boolean initializationOrderIsValid(List<Fmi2SimulationEnvironment.Variable> instantiationOrder,
+            Set<Fmi2SimulationEnvironment.Relation> relations) {
         // New instance of prolog engine
         JIPEngine jip = new JIPEngine();
         JIPTerm queryTerm = null;
@@ -35,7 +35,7 @@ public class InitializationPrologQuery {
 
             var init = prologGenerator.CreateInitOperationOrder(instantiationOrder);
             var connections = prologGenerator.CreateConnections(
-                    relations.stream().filter(o -> o.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External)
+                    relations.stream().filter(o -> o.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External)
                             .collect(Collectors.toList()));
             var fmus = prologGenerator.CreateFMUs(relations);
 

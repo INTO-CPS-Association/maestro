@@ -3,7 +3,9 @@ package org.intocps.maestro.MaBLTemplateGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -11,28 +13,34 @@ import java.util.Map;
 public class MaBLTemplateConfiguration {
     private Map<String, List<String>> logLevels;
     private IStepAlgorithm stepAlgorithm;
-    private FmiSimulationEnvironment unitRelationShip;
+    private Fmi2SimulationEnvironment simulationEnvironment;
     private Framework framework;
-    private Pair<Framework, String> frameworkConfig;
+    private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
     private Pair<Boolean, String> initialize;
+    private boolean loggingOn = false;
+    private boolean visible = false;
 
     private MaBLTemplateConfiguration() {
     }
 
-    public Framework getFramework() {
-        return framework;
+    public Fmi2SimulationEnvironment getSimulationEnvironment() {
+        return simulationEnvironment;
     }
 
-    public Pair<Framework, String> getFrameworkConfig() {
-        return frameworkConfig;
+    public Framework getFramework() {
+        return this.framework;
+    }
+
+    public Pair<Framework, Fmi2SimulationEnvironmentConfiguration> getFrameworkConfig() {
+        return this.frameworkConfig;
     }
 
     public IStepAlgorithm getAlgorithm() {
         return this.stepAlgorithm;
     }
 
-    public FmiSimulationEnvironment getUnitRelationship() {
-        return unitRelationShip;
+    public Fmi2SimulationEnvironment getUnitRelationship() {
+        return this.simulationEnvironment;
     }
 
     public Pair<Boolean, String> getInitialize() {
@@ -44,23 +52,43 @@ public class MaBLTemplateConfiguration {
     }
 
     public boolean getLoggingOn() {
-        return this.unitRelationShip.getEnvironmentMessage().loggingOn;
+        return this.loggingOn;
     }
 
     public boolean getVisible() {
-        return this.unitRelationShip.getEnvironmentMessage().visible;
+        return this.visible;
     }
 
     public static class MaBLTemplateConfigurationBuilder {
+        private boolean loggingOn = false;
+        private boolean visible = false;
         private IStepAlgorithm stepAlgorithm = null;
-        private FmiSimulationEnvironment unitRelationship = null;
+        private Fmi2SimulationEnvironment simulationEnvironment = null;
         private Pair<Boolean, String> initialize = Pair.of(false, null);
         private Map<String, List<String>> logLevels;
         private Framework framework;
-        private Pair<Framework, String> frameworkConfig;
+        private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
             return new MaBLTemplateConfigurationBuilder();
+        }
+
+        public boolean isLoggingOn() {
+            return loggingOn;
+        }
+
+        public MaBLTemplateConfigurationBuilder setLoggingOn(boolean loggingOn) {
+            this.loggingOn = loggingOn;
+            return this;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public MaBLTemplateConfigurationBuilder setVisible(boolean visible) {
+            this.visible = visible;
+            return this;
         }
 
         public MaBLTemplateConfigurationBuilder setFramework(Framework framework) {
@@ -68,15 +96,17 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
-        public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework, String config) {
-            this.frameworkConfig = Pair.of(framework, config);
+        public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework,
+                Fmi2SimulationEnvironmentConfiguration configuration) throws Exception {
+            this.frameworkConfig = Pair.of(framework, configuration);
+            this.simulationEnvironment = Fmi2SimulationEnvironment.of(configuration, new IErrorReporter.SilentReporter());
             return this;
         }
 
-        public MaBLTemplateConfigurationBuilder setUnitRelationship(FmiSimulationEnvironment unitRelationship) {
-            this.unitRelationship = unitRelationship;
-            return this;
-        }
+        //        public MaBLTemplateConfigurationBuilder setUnitRelationship(Fmi2SimulationEnvironment unitRelationship) {
+        //            this.unitRelationship = unitRelationship;
+        //            return this;
+        //        }
 
         public MaBLTemplateConfigurationBuilder setStepAlgorithm(IStepAlgorithm stepAlgorithm) {
             if (stepAlgorithm != null) {
@@ -103,11 +133,13 @@ public class MaBLTemplateConfiguration {
             //FIXME validate
             MaBLTemplateConfiguration config = new MaBLTemplateConfiguration();
             config.stepAlgorithm = this.stepAlgorithm;
-            config.unitRelationShip = this.unitRelationship;
             config.initialize = this.initialize;
             config.logLevels = this.logLevels;
             config.framework = this.framework;
             config.frameworkConfig = this.frameworkConfig;
+            config.simulationEnvironment = this.simulationEnvironment;
+            config.loggingOn = this.loggingOn;
+            config.visible = this.visible;
             return config;
         }
     }

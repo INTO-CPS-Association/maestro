@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.*;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -15,19 +15,19 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class DataExchangeHandler {
 
-    private final Set<FmiSimulationEnvironment.Relation> outputRelations;
+    private final Set<Fmi2SimulationEnvironment.Relation> outputRelations;
     private final Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs;
-    private final Set<FmiSimulationEnvironment.Relation> inputRelations;
+    private final Set<Fmi2SimulationEnvironment.Relation> inputRelations;
     private final Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs;
     Function<LexIdentifier, PStateDesignator> getCompStatusDesignator;
     BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus;
 
-    public DataExchangeHandler(Set<FmiSimulationEnvironment.Relation> relations, FmiSimulationEnvironment env,
+    public DataExchangeHandler(Set<Fmi2SimulationEnvironment.Relation> relations, Fmi2SimulationEnvironment env,
             Function<LexIdentifier, PStateDesignator> getCompStatusDesignator,
             BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus) {
         this.checkStatus = checkStatus;
         this.getCompStatusDesignator = getCompStatusDesignator;
-        outputRelations = relations.stream().filter(r -> r.getDirection() == FmiSimulationEnvironment.Relation.Direction.OutputToInput)
+        outputRelations = relations.stream().filter(r -> r.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput)
                 .collect(Collectors.toSet());
 
         // outputs contains both outputs based on relations and outputs based on additional variables to log
@@ -41,7 +41,7 @@ public class DataExchangeHandler {
 
         // We need to add the additional
 
-        inputRelations = relations.stream().filter(r -> r.getDirection() == FmiSimulationEnvironment.Relation.Direction.InputToOutput)
+        inputRelations = relations.stream().filter(r -> r.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.InputToOutput)
                 .collect(Collectors.toSet());
 
         inputs = inputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
@@ -115,7 +115,7 @@ public class DataExchangeHandler {
         return outputs;
     }
 
-    public Set<FmiSimulationEnvironment.Relation> getInputRelations() {
+    public Set<Fmi2SimulationEnvironment.Relation> getInputRelations() {
         return inputRelations;
     }
 

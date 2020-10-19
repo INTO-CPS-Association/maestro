@@ -11,7 +11,8 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.Fmi2EnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -119,23 +120,26 @@ public class FullSpecTest {
         postParse(mabl);
         if (useTemplate) {
 
-            FmiSimulationEnvironment environment = FmiSimulationEnvironment.of(new File(directory, "env.json"), reporter);
+            Fmi2EnvironmentConfiguration simulationConfiguration =
+                    new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2EnvironmentConfiguration.class);
 
-            String frameworkConfig = Files.readString(new File(directory, "env.json").toPath(), StandardCharsets.UTF_8);
+
+            Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
+                    new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
+
             MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setUnitRelationship(environment)
-                            .useInitializer(testJsonObject.initialize, "{}").setFramework(Framework.FMI2)
-                            .setFrameworkConfig(Framework.FMI2, frameworkConfig);
+                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(testJsonObject.initialize, "{}")
+                            .setFramework(Framework.FMI2).setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration);
 
+            Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, reporter);
             if (testJsonObject.useLogLevels) {
                 builder.setLogLevels(environment.getLogLevels());
             }
 
-            if (testJsonObject.simulate &&
-                    environment.getEnvironmentMessage().algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
+            if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
                 Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
-                        (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) environment.getEnvironmentMessage().algorithm;
-                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(environment.getEnvironmentMessage().endTime, a.size));
+                        (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
+                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime, a.size)).setVisible(true).setLoggingOn(true);
             }
 
             MaBLTemplateConfiguration configuration = builder.build();

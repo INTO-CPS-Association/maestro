@@ -1,6 +1,6 @@
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -31,11 +31,11 @@ public class PrologVerifierTest {
     @Test
     public void VerifyInitializationOrderNotValidWatertankTest() throws Exception {
         var prologVerifier = new InitializationPrologQuery();
-        var unitRelationship = FmiSimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
+        var unitRelationship = Fmi2SimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
         var components = Arrays.asList("crtlInstance", "wtInstance");
-        var relations = new HashSet<FmiSimulationEnvironment.Relation>();
+        var relations = new HashSet<Fmi2SimulationEnvironment.Relation>();
         components.forEach(c -> relations.addAll(unitRelationship.getRelations(new LexIdentifier(c, null))));
-        var initializationOrder = relations.stream().map(FmiSimulationEnvironment.Relation::getSource).distinct().collect(Collectors.toList());
+        var initializationOrder = relations.stream().map(Fmi2SimulationEnvironment.Relation::getSource).distinct().collect(Collectors.toList());
         var result = prologVerifier.initializationOrderIsValid(initializationOrder, relations);
         assert (!result);
     }
@@ -71,10 +71,10 @@ public class PrologVerifierTest {
     }
 */
 
-    private FmiSimulationEnvironment.Variable createVariable(String fmuName, String variableName, FmiSimulationEnvironment unitRelationship) {
+    private Fmi2SimulationEnvironment.Variable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
         var scalarVar = new ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
-        return new FmiSimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
+        return new Fmi2SimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
     }
 
 }

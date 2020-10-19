@@ -1,6 +1,5 @@
 package org.intocps.maestro.webapi.maestro2.interpreter;
 
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.BooleanValue;
 import org.intocps.maestro.interpreter.values.IntegerValue;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.stream.Collectors;
 
 /**
  * Only works for a single websocket.
@@ -32,11 +30,6 @@ public class WebsocketDataWriter implements IDataListener {
         this.filter = filter;
         this.webSocketConverter = new WebsocketValueConverter(ws);
         this.interval = interval;
-    }
-
-    public static List<String> calculateHeadersOfInterest(FmiSimulationEnvironment environment) {
-        return environment.getLivestreamVariablesToLog().entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
     }
 
     @Override

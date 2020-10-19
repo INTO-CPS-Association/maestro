@@ -14,7 +14,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.StringAnnotationProcessor;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public class Mabl {
             return;
         }
         document = mergeDocuments(MablParserUtil.parse(sourceFiles));
-        postProcessParting();
+        postProcessParsing();
     }
 
     private ARootDocument mergeDocuments(List<ARootDocument> parse) {
@@ -79,11 +79,11 @@ public class Mabl {
         }
         document = mergeDocuments(Collections.singletonList(MablParserUtil.parse(specStreams, reporter)));
         if (reporter.getErrorCount() == 0) {
-            postProcessParting();
+            postProcessParsing();
         }
     }
 
-    private void postProcessParting() throws IOException {
+    private void postProcessParsing() throws IOException {
         intermediateSpecWriter.write(document);
         if (document != null) {
             NodeCollector.collect(document, ASimulationSpecificationCompilationUnit.class).ifPresent(unit -> unit.forEach(u -> {
@@ -156,14 +156,14 @@ public class Mabl {
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
-        postProcessParting();
+        postProcessParsing();
     }
 
     //FIXME should be private
     public ISimulationEnvironment getSimulationEnv() throws Exception {
         if (this.frameworks.contains(Framework.FMI2) && frameworkConfigs.get(Framework.FMI2) != null) {
 
-            return FmiSimulationEnvironment.of(new ByteArrayInputStream(
+            return Fmi2SimulationEnvironment.of(new ByteArrayInputStream(
                     StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
         }
         logger.error("No framework env found");

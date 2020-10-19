@@ -1,11 +1,13 @@
 package org.intocps.maestro.MaBLTemplateGenerator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -20,7 +22,6 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MaBLTemplateGenerator {
-
     public static final String START_TIME_NAME = "START_TIME";
     public static final String END_TIME_NAME = "END_TIME";
     public static final String STEP_SIZE_NAME = "STEP_SIZE";
@@ -38,7 +39,7 @@ public class MaBLTemplateGenerator {
     public static final String IMPORT_FIXEDSTEP = "FixedStep";
     public static final String IMPORT_TYPECONVERTER = "TypeConverter";
     public static final String IMPORT_INITIALIZER = "Initializer";
-
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
@@ -102,7 +103,7 @@ public class MaBLTemplateGenerator {
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
-            MaBLTemplateConfiguration templateConfiguration) throws XPathExpressionException {
+            MaBLTemplateConfiguration templateConfiguration) throws XPathExpressionException, JsonProcessingException {
 
         // This variable determines whether an expansion should be wrapped in globalExecutionContinue or not.
         boolean wrapExpansionPluginInGlobalExecutionContinue = false;
@@ -112,7 +113,7 @@ public class MaBLTemplateGenerator {
 
         stmMaintainer.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement));
 
-        FmiSimulationEnvironment unitRelationShip = templateConfiguration.getUnitRelationship();
+        Fmi2SimulationEnvironment unitRelationShip = templateConfiguration.getUnitRelationship();
 
         // Create FMU load statements
         List<PStm> unloadFmuStatements = new ArrayList<>();
@@ -192,7 +193,7 @@ public class MaBLTemplateGenerator {
 
         unit.setFrameworkConfigs(Arrays.asList(
                 new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
-                        StringEscapeUtils.escapeJava(templateConfiguration.getFrameworkConfig().getValue()))));
+                        StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
         return unit;
     }
 

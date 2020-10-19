@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -26,8 +26,8 @@ public class DataWriterHandler implements GeneratorComponent {
     private final String data_configuration = "dataWriter_configuration";
     Map<RelationVariable, PExp> csvFields;
 
-    public List<PStm> allocate(Set<FmiSimulationEnvironment.Relation> inputRelations,
-            Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs, FmiSimulationEnvironment env) {
+    public List<PStm> allocate(Set<Fmi2SimulationEnvironment.Relation> inputRelations,
+            Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs, Fmi2SimulationEnvironment env) {
         List<PStm> statements = new Vector<>();
         List<String> variableNames = new Vector<>();
 

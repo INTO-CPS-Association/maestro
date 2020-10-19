@@ -1,6 +1,6 @@
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.EnvironmentException;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelDescriptionValidator;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.junit.Assert;
@@ -19,7 +19,7 @@ public class ModelDescriptionValidatorTest {
     @Before
     public void beforeEachTestMethod() throws Exception {
         InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel.json");
-        FmiSimulationEnvironment env = FmiSimulationEnvironment.of(multimodelJson, new IErrorReporter.SilentReporter());
+        Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(multimodelJson, new IErrorReporter.SilentReporter());
         modelDescriptionValidator = new ModelDescriptionValidator();
         var iterator = env.getFmusWithModelDescriptions().iterator();
         iterator.next();

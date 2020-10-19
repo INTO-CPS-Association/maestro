@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.PExp;
 import org.intocps.maestro.ast.PStateDesignator;
 import org.intocps.maestro.ast.PStm;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public class StateHandler {
     BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus;
     Function<LexIdentifier, PExp> getCompStateDesignator;
 
-    public StateHandler(List<LexIdentifier> componentNames, FmiSimulationEnvironment env,
+    public StateHandler(List<LexIdentifier> componentNames, Fmi2SimulationEnvironment env,
             Function<LexIdentifier, PStateDesignator> getCompStatusDesignator,
             BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus) {
         this.componentNames = componentNames;
