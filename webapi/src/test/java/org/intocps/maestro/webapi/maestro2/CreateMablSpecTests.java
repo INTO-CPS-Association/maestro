@@ -91,7 +91,9 @@ public class CreateMablSpecTests {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json");
+        assertThat(filesInZip)
+                .containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json", "crtlInstance.log",
+                        "wtInstance.log");
 
 
     }

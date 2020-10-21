@@ -14,9 +14,9 @@ import java.util.List;
 
 public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
-    public WebApiInterpreterFactory(WebSocketSession ws, double interval, List<String> webSocketFilter, File csvOutputFile,
+    public WebApiInterpreterFactory(File workingDirectory, WebSocketSession ws, double interval, List<String> webSocketFilter, File csvOutputFile,
             List<String> csvFilter) throws IOException {
-        super(null, null);
+        super(workingDirectory, null);
         this.instantiators.put(this.DATA_WRITER_TYPE_NAME, args -> {
             if (ws == null) {
                 return Either.left(new AnalysisException("No websocket present"));
@@ -29,8 +29,8 @@ public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
         });
     }
 
-    public WebApiInterpreterFactory(File csvOutputFile, List<String> csvFilter) throws IOException {
-        super(null, null);
+    public WebApiInterpreterFactory(File workingDirectory, File csvOutputFile, List<String> csvFilter) throws IOException {
+        super(workingDirectory, null);
         this.instantiators.put(this.DATA_WRITER_TYPE_NAME,
                 args -> Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(csvOutputFile, csvFilter)))));
     }
