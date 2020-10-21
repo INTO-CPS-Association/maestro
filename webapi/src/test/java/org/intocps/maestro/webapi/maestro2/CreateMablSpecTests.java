@@ -98,9 +98,11 @@ public class CreateMablSpecTests {
 
     public String getWaterTankMMJson() {
         String singlewatertank_20simfmu = "file:///" +
-                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "singlewatertank-20sim.fmu").toAbsolutePath().toString();
+                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "singlewatertank-20sim.fmu").toAbsolutePath().toString()
+                        .replace("\\", "/");
         String watertankcontroller_cfmu = "file:///" +
-                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "watertankcontroller-c.fmu").toAbsolutePath().toString();
+                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "watertankcontroller-c.fmu").toAbsolutePath().toString()
+                        .replace("\\", "/");
 
         String json = "{\n" + "  \"fmus\": {\n" + "    \"{crtl}\": \"" + watertankcontroller_cfmu + "\",\n" + "    \"{wt}\": \"" +
                 singlewatertank_20simfmu + "\"\n" + "  },\n" + "  \"connections\": {\n" + "    \"{crtl}.crtlInstance.valve\": [\n" +
