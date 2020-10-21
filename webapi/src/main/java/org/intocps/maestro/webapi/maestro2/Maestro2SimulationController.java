@@ -10,6 +10,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -100,6 +105,17 @@ public class Maestro2SimulationController {
         return null;
     }
 
+    public void overrideRootLoggerLogLevel(Level level) {
+        if (level == null) {
+            return;
+        }
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        loggerConfig.setLevel(level);
+        ctx.updateLoggers();
+    }
+
     @RequestMapping(value = "/upload/{sessionId}", method = RequestMethod.POST)
     public void uploadFile(@PathVariable String sessionId,
             @ApiParam(value = "File", required = true) @RequestParam("fieldFile") MultipartFile file) throws IOException {
@@ -154,6 +170,10 @@ public class Maestro2SimulationController {
 
         if (body == null) {
             throw new Exception("Could not parse configuration: ");
+        }
+
+        if (body.overrideLogLevel != null) {
+            overrideRootLoggerLogLevel(convertLogLevel(body.overrideLogLevel));
         }
 
         if (body.fmus == null) {
@@ -224,6 +244,29 @@ public class Maestro2SimulationController {
 
 
         throw new Exception("internal error");
+    }
+
+    private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {
+        switch (overrideLogLevel) {
+
+            case OFF:
+                return Level.OFF;
+            case FATAL:
+                return Level.FATAL;
+            case ERROR:
+                return Level.ERROR;
+            case WARN:
+                return Level.WARN;
+            case INFO:
+                return Level.INFO;
+            case DEBUG:
+                return Level.DEBUG;
+            case TRACE:
+                return Level.TRACE;
+            case ALL:
+                return Level.ALL;
+        }
+        return null;
     }
 
 
