@@ -6,8 +6,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
@@ -17,6 +15,8 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
+import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

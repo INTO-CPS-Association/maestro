@@ -1,11 +1,11 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateGenerator;
 import org.intocps.maestro.ast.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.junit.Test;
 
 import java.io.File;

@@ -1,10 +1,10 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import org.intocps.maestro.ErrorReporter;
-import org.intocps.maestro.MaBLTemplateGenerator.MaBLTemplateConfiguration;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

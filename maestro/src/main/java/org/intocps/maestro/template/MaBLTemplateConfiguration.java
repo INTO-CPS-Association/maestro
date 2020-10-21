@@ -1,4 +1,4 @@
-package org.intocps.maestro.MaBLTemplateGenerator;
+package org.intocps.maestro.template;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
