@@ -7,6 +7,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +74,11 @@ public class MaBLTemplateConfiguration {
             return new MaBLTemplateConfigurationBuilder();
         }
 
+        public static String getFmuInstanceFromFmuKeyInstance(String fmuKeyInstance) {
+            // 2 due to: } and .
+            return fmuKeyInstance.substring(fmuKeyInstance.indexOf('}') + 2);
+        }
+
         public boolean isLoggingOn() {
             return loggingOn;
         }
@@ -88,7 +94,7 @@ public class MaBLTemplateConfiguration {
 
         public MaBLTemplateConfigurationBuilder setVisible(boolean visible) {
             this.visible = visible;
-            return this;
+            a return this;
         }
 
         public MaBLTemplateConfigurationBuilder setFramework(Framework framework) {
@@ -96,17 +102,17 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
+        //        public MaBLTemplateConfigurationBuilder setUnitRelationship(Fmi2SimulationEnvironment unitRelationship) {
+        //            this.unitRelationship = unitRelationship;
+        //            return this;
+        //        }
+
         public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework,
                 Fmi2SimulationEnvironmentConfiguration configuration) throws Exception {
             this.frameworkConfig = Pair.of(framework, configuration);
             this.simulationEnvironment = Fmi2SimulationEnvironment.of(configuration, new IErrorReporter.SilentReporter());
             return this;
         }
-
-        //        public MaBLTemplateConfigurationBuilder setUnitRelationship(Fmi2SimulationEnvironment unitRelationship) {
-        //            this.unitRelationship = unitRelationship;
-        //            return this;
-        //        }
 
         public MaBLTemplateConfigurationBuilder setStepAlgorithm(IStepAlgorithm stepAlgorithm) {
             if (stepAlgorithm != null) {
@@ -125,7 +131,16 @@ public class MaBLTemplateConfiguration {
          * @return
          */
         public MaBLTemplateConfigurationBuilder setLogLevels(Map<String, List<String>> logLevels) {
-            this.logLevels = logLevels;
+            // Peel of the keys
+            if (this.logLevels == null) {
+                this.logLevels = new HashMap<>();
+            } else if (this.logLevels.size() != 0) {
+                this.logLevels.clear();
+            }
+
+            for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
+                this.logLevels.put(getFmuInstanceFromFmuKeyInstance(entry.getKey()), entry.getValue());
+            }
             return this;
         }
 
