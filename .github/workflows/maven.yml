@@ -20,8 +20,6 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
-      - name: Print github ref
-        run: echo ${{ github.ref }}
       - name: Set up Java
         uses: actions/setup-java@v1
         with:

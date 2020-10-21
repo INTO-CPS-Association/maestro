@@ -94,7 +94,7 @@ public class MaBLTemplateConfiguration {
 
         public MaBLTemplateConfigurationBuilder setVisible(boolean visible) {
             this.visible = visible;
-            a return this;
+            return this;
         }
 
         public MaBLTemplateConfigurationBuilder setFramework(Framework framework) {
