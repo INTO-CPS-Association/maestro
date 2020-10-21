@@ -306,10 +306,15 @@ public class Maestro2SimulationController {
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, new IErrorReporter.SilentReporter());
 
+        // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
+        Map<String, List<String>> removedFMUKeyFromLogLevels = body.logLevels.entrySet().stream().collect(Collectors
+                .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                        entry -> entry.getValue()));
+
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
-                        .setLogLevels(body.logLevels).setVisible(initializeRequest.visible).setLoggingOn(initializeRequest.loggingOn).
+                        .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.visible).setLoggingOn(initializeRequest.loggingOn).
                         setStepAlgorithm(
                                 new FixedStepSizeAlgorithm(body.endTime, ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
 

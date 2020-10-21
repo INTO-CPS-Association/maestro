@@ -7,7 +7,6 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,16 +130,7 @@ public class MaBLTemplateConfiguration {
          * @return
          */
         public MaBLTemplateConfigurationBuilder setLogLevels(Map<String, List<String>> logLevels) {
-            // Peel of the keys
-            if (this.logLevels == null) {
-                this.logLevels = new HashMap<>();
-            } else if (this.logLevels.size() != 0) {
-                this.logLevels.clear();
-            }
-
-            for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
-                this.logLevels.put(getFmuInstanceFromFmuKeyInstance(entry.getKey()), entry.getValue());
-            }
+            this.logLevels = logLevels;
             return this;
         }
 
