@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.intocps</groupId>
         <artifactId>root</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.intocps.maestro</groupId>
@@ -39,7 +39,7 @@
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>initializer</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -103,7 +103,7 @@
         <dependency>
             <groupId>org.intocps</groupId>
             <artifactId>maestro</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>

@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.intocps</groupId>
         <artifactId>root</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>maestro</artifactId>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -38,49 +38,49 @@
         <dependency>
             <groupId>org.intocps</groupId>
             <artifactId>parser</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.intocps</groupId>
             <artifactId>typechecker</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>demo</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>fixedstep</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>typeconverter</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>initializer</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.intocps.plugins</groupId>
             <artifactId>debuglogging</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.intocps</groupId>
             <artifactId>interpreter</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
 
         </dependency>
         <dependency>
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.intocps.frameworks</groupId>
             <artifactId>fmi2</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
