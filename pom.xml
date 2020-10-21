@@ -10,6 +10,13 @@
     <packaging>pom</packaging>
     <name>root</name>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -23,6 +30,11 @@
             <id>maestro2-third-party</id>
             <name>maestro2-third-party</name>
             <url>http://overture.au.dk/artifactory/maestro2-third-party</url>
+        </repository>
+        <repository>
+            <id>overture.au.dk</id>
+            <name>overture.au.dk-releases</name>
+            <url>http://overture.au.dk/artifactory/into-cps</url>
         </repository>
 
     </repositories>
@@ -272,4 +284,55 @@
             <artifactId>log4j-1.2-api</artifactId>
         </dependency>
     </dependencies>
+
+    <organization>
+        <name>INTO CPS</name>
+        <url>http://into-cps.org/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>INTO-CPS Association Public License</name>
+            <url>https://github.com/INTO-CPS-Association/INTO-CPS-Association.github.io/blob/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>overture.au.dk-snapshots</name>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
 </project>
