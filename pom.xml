@@ -71,6 +71,8 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>3.0.0-M1</version>
                     <configuration>
+                          <releaseProfiles>release-sign-artifacts
+                        </releaseProfiles>
                         <tagNameFormat>Release/@{project.version}</tagNameFormat>
                     </configuration>
                 </plugin>
