@@ -99,13 +99,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
                     .filter(relation -> (relation.getOrigin() == Relation.InternalOrExternal.External) &&
                             (relation.getDirection() == Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable);
             return relationOutputs;
-        })//.map(x -> {
-                //            ComponentInfo i = this.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-                //
-                //            return i;
-                ////            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
-                //})
-                .collect(Collectors.toList());
+        }).collect(Collectors.toList());
 
     }
 
@@ -285,52 +279,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
 
             }
         }
-
-        //        // Build logVariables
-        //        if (msg.logVariables != null) {
-        //            this.csvVariablesToLog = getEnvironmentVariablesToLog(msg.logVariables, this.globalVariablesToLogForInstance);
-        //        }
-        //
-        //        // Build live stream variables
-        //        if (msg.livestream != null) {
-        //            this.livestreamVariablesToLog =
-        //                    msg.livestream.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x))
-        //                            .collect(Collectors.toList());
-        //        }
-        // TODO: Move to templateconfiguration build
-
-        //        if (msg.loggingOn) {
-        //            Map<String, List<String>> instanceNameToLogLevels = msg.getInstanceNameToLogLevels();
-        //            if (instanceNameToLogLevels != null) {
-        //                for (Map.Entry<String, List<String>> entry : instanceNameToLogLevels.entrySet()) {
-        //                    ComponentInfo instanceComponentInfo = this.instanceNameToInstanceComponentInfo.get(entry.getKey());
-        //                    if (instanceComponentInfo == null) {
-        //                        logger.warn(String.format("The instance %s used in logLevels does not exist and is therefore ignored.", entry));
-        //                    } else {
-        //                        List<String> logCategories =
-        //                                instanceComponentInfo.modelDescription.getLogCategories().stream().map(x -> x.name).collect(Collectors.toList());
-        //                        // Ensure that each log level is available in the model description.
-        //                        // Find the ones that do not exist in the model description.
-        //                        List<String> logLevels = new ArrayList<>();
-        //                        List<String> unknownLogLevels = new ArrayList<>();
-        //
-        //                        for (String logLevel : entry.getValue()) {
-        //                            logLevels.add(logLevel);
-        //                            if (!logCategories.contains(logLevel)) {
-        //                                unknownLogLevels.add(logLevel);
-        //                            }
-        //                        }
-        //                        logger.warn(String.format(
-        //                                "The instance %s of the FMU %s is configured with log levels that do not exist in the model description file. The " +
-        //                                        "log levels not in the model description file are: %s.", entry.getKey(), instanceComponentInfo.fmuIdentifier,
-        //                                String.join(", ", unknownLogLevels)));
-        //                        if (!logLevels.isEmpty()) {
-        //                            this.instanceNameToLogLevels.put(entry.getKey(), logLevels);
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
     }
 
 
@@ -345,7 +293,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
             URI value = entry.getValue();
             IFmu fmu = FmuFactory.create(null, value);
             ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
-            fmu.unLoad();
             fmuKeyToFmuWithMD.put(key, md);
         }
 
@@ -381,16 +328,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     @Override
     public Set<Relation> getRelations(List<LexIdentifier> identifiers) {
 
-        // a, b
-
-        //        Map<LexIdentifier, Object> internalMapping = identifiers.stream().collect(Collectors.toMap(Function.identity(), id -> {
-
-        //check context to find which FMU in the internal map that id points to in terms of FMU.modelinstance
-        //            return null;
-
-        //        }));
-
-        //a -> FMUA, b-> FMUB
 
         /*
          * use mapping of a.#1 -> b.#4 and produce a relation for these
