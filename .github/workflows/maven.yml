@@ -30,7 +30,7 @@ jobs:
         run: mvn test
 
   deploy:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/2.0.0-alpha' || github.ref == 'refs/heads/kel/newMableAndFramework')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
 
     needs: build
     runs-on: ubuntu-latest
