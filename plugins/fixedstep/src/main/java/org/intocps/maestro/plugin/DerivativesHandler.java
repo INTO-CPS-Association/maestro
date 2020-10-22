@@ -3,7 +3,7 @@ package org.intocps.maestro.plugin;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ import static org.intocps.maestro.ast.MableBuilder.*;
 
 class DerivativesHandler {
     final static Logger logger = LoggerFactory.getLogger(DerivativesHandler.class);
-    final BiPredicate<FmiSimulationEnvironment, FmiSimulationEnvironment.Variable> canInterpolateInputsFilter = (env, v) -> {
+    final BiPredicate<Fmi2SimulationEnvironment, Fmi2SimulationEnvironment.Variable> canInterpolateInputsFilter = (env, v) -> {
         try {
             return ((ComponentInfo) env.getUnitInfo(v.scalarVariable.instance, Framework.FMI2)).modelDescription.getCanInterpolateInputs();
         } catch (XPathExpressionException e) {
@@ -31,7 +31,7 @@ class DerivativesHandler {
         }
     };
 
-    final BiFunction<FmiSimulationEnvironment, LexIdentifier, Integer> maxOutputDerivativeOrder = (env, id) -> {
+    final BiFunction<Fmi2SimulationEnvironment, LexIdentifier, Integer> maxOutputDerivativeOrder = (env, id) -> {
         try {
             return ((ComponentInfo) env.getUnitInfo(id, Framework.FMI2)).modelDescription.getMaxOutputDerivativeOrder();
         } catch (XPathExpressionException e) {
@@ -44,26 +44,26 @@ class DerivativesHandler {
     //  Map<LexIdentifier, List<UnitRelationship.Variable>> vars = null;
 
     Map<LexIdentifier, GetDerivativesInfo> derivativesGetInfo = new HashMap<>();
-    private Map<Map.Entry<LexIdentifier, List<FmiSimulationEnvironment.Relation>>, LinkedHashMap<FmiSimulationEnvironment.Variable, Map.Entry<FmiSimulationEnvironment.Variable, GetDerivativesInfo>>>
+    private Map<Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Relation>>, LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>>>
             resolvedInputData;
 
-    public List<PStm> allocateMemory(List<LexIdentifier> componentNames, Set<FmiSimulationEnvironment.Relation> inputRelations,
-            FmiSimulationEnvironment env) {
+    public List<PStm> allocateMemory(List<LexIdentifier> componentNames, Set<Fmi2SimulationEnvironment.Relation> inputRelations,
+            Fmi2SimulationEnvironment env) {
 
 
-        Set<Map<LexIdentifier, FmiSimulationEnvironment.Variable>> tmp =
+        Set<Map<LexIdentifier, Fmi2SimulationEnvironment.Variable>> tmp =
                 inputRelations.stream().filter(r -> canInterpolateInputsFilter.test(env, r.getSource()))
-                        .map(FmiSimulationEnvironment.Relation::getTargets).collect(Collectors.toSet());
+                        .map(Fmi2SimulationEnvironment.Relation::getTargets).collect(Collectors.toSet());
 
 
-        Map<LexIdentifier, List<FmiSimulationEnvironment.Variable>> vars = new HashMap<>();
-        for (Map<LexIdentifier, FmiSimulationEnvironment.Variable> map : tmp) {
-            for (Map.Entry<LexIdentifier, FmiSimulationEnvironment.Variable> entry : map.entrySet()) {
+        Map<LexIdentifier, List<Fmi2SimulationEnvironment.Variable>> vars = new HashMap<>();
+        for (Map<LexIdentifier, Fmi2SimulationEnvironment.Variable> map : tmp) {
+            for (Map.Entry<LexIdentifier, Fmi2SimulationEnvironment.Variable> entry : map.entrySet()) {
                 vars.computeIfAbsent(entry.getKey(), key -> new Vector<>()).add(entry.getValue());
             }
         }
 
-        for (Map.Entry<LexIdentifier, List<FmiSimulationEnvironment.Variable>> entry : vars.entrySet()) {
+        for (Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Variable>> entry : vars.entrySet()) {
             entry.getValue().sort(Comparator.comparing(v -> v.getScalarVariable().getScalarVariable().valueReference));
         }
 
@@ -84,7 +84,7 @@ class DerivativesHandler {
                 varDerInfo.varMaxOrder = order;
 
                 for (int i = 0; i < f.getValue().size(); i++) {
-                    FmiSimulationEnvironment.Variable var = f.getValue().get(i);
+                    Fmi2SimulationEnvironment.Variable var = f.getValue().get(i);
                     varDerInfo.varStartIndex.put(var, varDerInfo.varStartIndex.size() * order);
                 }
 
@@ -123,15 +123,15 @@ class DerivativesHandler {
         return statements;
     }
 
-    private List<PStm> allocateForInput(Set<FmiSimulationEnvironment.Relation> inputRelations, FmiSimulationEnvironment env) {
+    private List<PStm> allocateForInput(Set<Fmi2SimulationEnvironment.Relation> inputRelations, Fmi2SimulationEnvironment env) {
         resolvedInputData = inputRelations.stream().filter(r -> canInterpolateInputsFilter.test(env, r.getSource()))
                 .collect(Collectors.groupingBy(s -> s.getSource().getScalarVariable().instance)).entrySet().stream().collect(Collectors
                         .toMap(Function.identity(), mapped -> mapped.getValue().stream()
                                 .sorted(Comparator.comparing(map -> map.getSource().getScalarVariable().getScalarVariable().valueReference))
-                                .collect(Collectors.toMap(FmiSimulationEnvironment.Relation::getSource, map -> {
+                                .collect(Collectors.toMap(Fmi2SimulationEnvironment.Relation::getSource, map -> {
 
                                     //the relation should be a one to one relation so just take the first one
-                                    FmiSimulationEnvironment.Variable next = map.getTargets().values().iterator().next();
+                                    Fmi2SimulationEnvironment.Variable next = map.getTargets().values().iterator().next();
                                     RelationVariable fromVar = next.scalarVariable;
 
                                     GetDerivativesInfo fromVarDerivativeInfo = derivativesGetInfo.get(fromVar.instance);
@@ -156,7 +156,7 @@ class DerivativesHandler {
         return Stream.concat(Stream.of(newVariable("der_input_buffer", newARealNumericPrimitiveType(), size)),
                 resolvedInputData.entrySet().stream().map(map -> {
 
-                    LinkedHashMap<FmiSimulationEnvironment.Variable, Map.Entry<FmiSimulationEnvironment.Variable, GetDerivativesInfo>> resolved =
+                    LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>> resolved =
                             map.getValue();
 
                     List<Integer> inputSelectIndices = resolved.entrySet().stream()
@@ -259,7 +259,7 @@ class DerivativesHandler {
         String orderArrayId;
         String valueSelectArrayId;
         PExp valueDestIdentifier;
-        Map<FmiSimulationEnvironment.Variable, Integer> varStartIndex = new HashMap<>();
+        Map<Fmi2SimulationEnvironment.Variable, Integer> varStartIndex = new HashMap<>();
         Integer varMaxOrder;
     }
 }

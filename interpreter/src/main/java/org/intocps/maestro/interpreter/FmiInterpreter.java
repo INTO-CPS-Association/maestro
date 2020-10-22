@@ -1,6 +1,11 @@
 package org.intocps.maestro.interpreter;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.intocps.fmi.*;
 import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.maestro.interpreter.values.*;
@@ -11,13 +16,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class FmiInterpreter {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
+    private final File workingDirectory;
+
+    public FmiInterpreter(File workingDirectory) {
+        this.workingDirectory = workingDirectory;
+    }
 
     static boolean getBool(Value value) {
 
@@ -112,10 +125,51 @@ public class FmiInterpreter {
                 try {
 
                     long startInstantiateTime = System.nanoTime();
+
+                    logger.debug(String.format("Loading native FMU. GUID: %s, NAME: %s", "" + guid, "" + name));
+
+                    BufferedOutputStream fmuLogOutputStream =
+                            new BufferedOutputStream(new FileOutputStream(new File(workingDirectory, name + ".log")));
+
+                    final String formatter = "{} {} {} {}";
+                    String pattern = "%d{ISO8601} %-5p - %m%n";
+
+                    Layout layout = PatternLayout.newBuilder().withPattern(pattern).withCharset(StandardCharsets.UTF_8).build();//
                     IFmiComponent component = fmu.instantiate(guid, name, visible, logginOn, new IFmuCallback() {
                         @Override
                         public void log(String instanceName, Fmi2Status status, String category, String message) {
                             logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
+                            {
+
+                                Log4jLogEvent.Builder builder = Log4jLogEvent.newBuilder()
+                                        .setMessage(new ParameterizedMessage(formatter, category, status, instanceName, message));
+
+
+                                switch (status) {
+                                    case OK:
+                                    case Discard:
+                                    case Pending:
+                                        builder.setLevel(Level.INFO);
+                                        break;
+                                    case Error:
+                                    case Fatal:
+                                        builder.setLevel(Level.ERROR);
+                                    case Warning:
+                                        builder.setLevel(Level.WARN);
+                                        break;
+                                    default:
+                                        builder.setLevel(Level.TRACE);
+                                        break;
+                                }
+
+                                try {
+                                    Log4jLogEvent event = builder.build();
+                                    fmuLogOutputStream.write(layout.toByteArray(event));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
                         }
 
                         @Override
@@ -562,10 +616,10 @@ public class FmiInterpreter {
 
                     long stopInstantiateTime = System.nanoTime();
                     System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
-                    return new FmuComponentValue(componentMembers, component);
+                    return new FmuComponentValue(componentMembers, component, fmuLogOutputStream);
 
 
-                } catch (XPathExpressionException | FmiInvalidNativeStateException e) {
+                } catch (XPathExpressionException | FmiInvalidNativeStateException | IOException e) {
                     e.printStackTrace();
                 }
 
@@ -590,10 +644,11 @@ public class FmiInterpreter {
                 FmuComponentValue component = (FmuComponentValue) fargs.get(0);
 
                 try {
-                    component.getModule().freeInstance();
-                } catch (FmuInvocationException e) {
+                    component.getFmuLoggerOutputStream().close();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
+
 
                 return new VoidValue();
             }));

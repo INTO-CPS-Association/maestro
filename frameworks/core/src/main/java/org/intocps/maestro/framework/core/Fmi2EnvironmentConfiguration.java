@@ -10,7 +10,7 @@ import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EnvironmentMessage {
+public class Fmi2EnvironmentConfiguration {
     @JsonProperty("end_time")
     public Double endTime = 10.0;
     @JsonProperty("step_size")

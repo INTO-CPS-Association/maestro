@@ -4,7 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
@@ -35,8 +35,8 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
 
-    private final Map<FmiSimulationEnvironment.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
-    private final Map<FmiSimulationEnvironment.Variable, LexIdentifier> loopValueArray = new HashMap<>();
+    private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
+    private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> loopValueArray = new HashMap<>();
 
     private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
         {
@@ -150,8 +150,8 @@ public class StatementGeneratorContainer {
                         (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
     }
 
-    public List<PStm> createFixedPointIteration(List<FmiSimulationEnvironment.Variable> loopVariables, int iterationMax, int sccNumber,
-            FmiSimulationEnvironment env) throws ExpandException {
+    public List<PStm> createFixedPointIteration(List<Fmi2SimulationEnvironment.Variable> loopVariables, int iterationMax, int sccNumber,
+            Fmi2SimulationEnvironment env) throws ExpandException {
         LexIdentifier end = newAIdentifier(String.format("end%d", sccNumber));
         LexIdentifier start = newAIdentifier(String.format("start%d", sccNumber));
         List<PStm> statements = new Vector<>();
@@ -163,7 +163,7 @@ public class StatementGeneratorContainer {
         var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output &&
                 o.scalarVariable.scalarVariable.getType().type == ModelDescription.Types.Real).collect(Collectors.toList());
 
-        for (FmiSimulationEnvironment.Variable output : outputs) {
+        for (Fmi2SimulationEnvironment.Variable output : outputs) {
             var lexIdentifier = createLexIdentifier
                     .apply("Ref" + output.scalarVariable.instance.getText() + output.scalarVariable.scalarVariable.getName() + "ValueRef" +
                             output.scalarVariable.scalarVariable.getValueReference());
@@ -200,7 +200,7 @@ public class StatementGeneratorContainer {
         return statements;
     }
 
-    private List<PStm> performLoopActions(List<FmiSimulationEnvironment.Variable> loopVariables, FmiSimulationEnvironment env) {
+    private List<PStm> performLoopActions(List<Fmi2SimulationEnvironment.Variable> loopVariables, Fmi2SimulationEnvironment env) {
         List<PStm> LoopStatements = new Vector<>();
         loopVariables.stream().forEach(variable -> {
             long[] scalarValueIndices = new long[]{variable.scalarVariable.scalarVariable.valueReference};
@@ -231,7 +231,7 @@ public class StatementGeneratorContainer {
     }
 
     public List<PStm> setValueOnPortStm(LexIdentifier comp, ModelDescription.Types type, List<ModelDescription.ScalarVariable> variables,
-            long[] scalarValueIndices, FmiSimulationEnvironment env) throws ExpandException {
+            long[] scalarValueIndices, Fmi2SimulationEnvironment env) throws ExpandException {
         ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
         ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
 
@@ -252,7 +252,7 @@ public class StatementGeneratorContainer {
         }
     }
 
-    private PStm createReferenceArray(FmiSimulationEnvironment.Variable variable, LexIdentifier lexID) throws ExpandException {
+    private PStm createReferenceArray(Fmi2SimulationEnvironment.Variable variable, LexIdentifier lexID) throws ExpandException {
         List<PExp> args = new ArrayList<>();
         args.add(getDefaultArrayValue(variable.scalarVariable.scalarVariable.getType().type));
 
@@ -262,7 +262,7 @@ public class StatementGeneratorContainer {
                         initializer));
     }
 
-    private List<PStm> updateReferenceArray(List<FmiSimulationEnvironment.Variable> outputPorts) {
+    private List<PStm> updateReferenceArray(List<Fmi2SimulationEnvironment.Variable> outputPorts) {
         List<PStm> updateStmts = new Vector<>();
         outputPorts.forEach(o -> {
             var referenceValue = convergenceRefArray.get(o);
@@ -274,7 +274,7 @@ public class StatementGeneratorContainer {
     }
 
     //This method should check if all output of the Fixed Point iteration have stabilized/converged
-    private List<PStm> checkLoopConvergence(List<FmiSimulationEnvironment.Variable> outputPorts, LexIdentifier doesConverge) {
+    private List<PStm> checkLoopConvergence(List<Fmi2SimulationEnvironment.Variable> outputPorts, LexIdentifier doesConverge) {
         LexIdentifier index = newAIdentifier("index");
         List<PStm> result = new Vector<>();
         result.add(newALocalVariableStm(newAVariableDeclaration(index, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));

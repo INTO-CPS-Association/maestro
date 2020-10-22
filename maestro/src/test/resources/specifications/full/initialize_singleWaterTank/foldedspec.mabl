@@ -2,6 +2,8 @@ simulation
 import FMI2;
 import TypeConverter;
 import Initializer;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
 {
 Math math = load("Math");
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
@@ -13,6 +15,7 @@ IFmuComponent components[2]={wtInstance,crtlInstance};
 real START_TIME = 10.0;
 real END_TIME = 10.0;
 bool global_execution_continue = true;
+@Config("@file: config.json");
 expand initialize(components,START_TIME,END_TIME);
 unload(tankcontroller);
 unload(SingleWatertank);

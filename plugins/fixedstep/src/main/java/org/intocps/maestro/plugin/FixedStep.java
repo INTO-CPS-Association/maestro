@@ -5,7 +5,7 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
         }
 
 
-        FmiSimulationEnvironment env = (FmiSimulationEnvironment) envIn;
+        Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
 
         PStm componentDecl = null;
         String componentsIdentifier = "fix_components";
@@ -98,8 +98,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         final List<LexIdentifier> componentNames = knownComponentNames;
 
-        Set<FmiSimulationEnvironment.Relation> relations =
-                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == FmiSimulationEnvironment.Relation.InternalOrExternal.External)
+        Set<Fmi2SimulationEnvironment.Relation> relations =
+                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External)
                         .collect(Collectors.toSet());
 
         PExp stepSize = formalArguments.get(1).clone();

@@ -5,17 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.intocps</groupId>
+        <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
 
-    <groupId>org.intocps</groupId>
     <artifactId>plugins</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>plugins</name>
+    <name>Mable plugins</name>
 
     <modules>
         <module>api</module>

@@ -2,7 +2,8 @@ simulation
 import FixedStep;
 import TypeConverter;
 import Initializer;
-
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
 {
 real START_TIME = 0.0;
 real END_TIME = 10.0;
@@ -19,7 +20,7 @@ Logger logger = load("Logger");
 IFmuComponent components[2]={i1,i2};
 
 bool global_execution_continue = true;
-
+@Config("@file: config.json");
 expand initialize(components,START_TIME, END_TIME);
 
 expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);

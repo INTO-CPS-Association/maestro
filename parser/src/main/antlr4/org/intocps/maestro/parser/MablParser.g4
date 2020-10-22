@@ -31,8 +31,16 @@ formalParameter
     : typeType IDENTIFIER
     ;
 
+framework
+    : AT_FRAMEWORK LPAREN (names+=STRING_LITERAL ','? )* RPAREN
+    ;
+
+frameworkConfigs
+    : AT_FRAMEWORK_CONFIG LPAREN frameworkName=STRING_LITERAL ',' config=STRING_LITERAL  RPAREN ';'
+    ;
+
 simulationSpecification
-    : SIMULATION (IMPORT imports+=IDENTIFIER ';')* block
+    : SIMULATION (IMPORT imports+=IDENTIFIER ';')* (frameworkList=framework ';')? frameworkConfigList=frameworkConfigs* statement
     ;
 
 block
@@ -51,6 +59,7 @@ statement
     | BREAK                                                     #break
     | INSTANCE_MAP identifier=IDENTIFIER '->'
                      name=STRING_LITERAL ';'                    #expandMapping
+    | AT_CONFIG LPAREN  config=STRING_LITERAL  RPAREN ';'       #config
     ;
 
 

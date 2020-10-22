@@ -65,7 +65,7 @@ public class SessionController {
 
     public String createNewSession() {
         String session = UUID.randomUUID().toString();
-        maestroInstanceMap.put(session, sessionLogicFactory.CreateSessionLogic(this.getSessionRootDir(session)));
+        maestroInstanceMap.put(session, sessionLogicFactory.createSessionLogic(this.getSessionRootDir(session)));
         return session;
     }
 

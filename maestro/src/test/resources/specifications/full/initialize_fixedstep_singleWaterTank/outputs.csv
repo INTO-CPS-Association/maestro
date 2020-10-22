@@ -1,4 +1,4 @@
-time,{x2}.wtInstance.level,{x1}.crtlInstance.valve
+time,{x1}.crtlInstance.valve,{x2}.wtInstance.level
 0.0,false,0.0
 0.1,false,0.1099999999999999
 0.2,false,0.19999999999999996

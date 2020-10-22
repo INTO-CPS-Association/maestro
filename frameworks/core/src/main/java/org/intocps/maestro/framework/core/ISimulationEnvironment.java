@@ -19,21 +19,11 @@ public interface ISimulationEnvironment {
 
     List<? extends RelationVariable> getVariablesToLog(String instanceName);
 
-    /**
-     * Returns a list of all scalar variables to log in CSV for a given instance
-     *
-     * @param instanceName
-     * @return
-     */
-    List<? extends RelationVariable> getCsvVariablesToLog(String instanceName);
-
-    Map<String, List<String>> getLivestreamVariablesToLog();
-
     Set<? extends Map.Entry<String, ? extends FrameworkUnitInfo>> getInstances();
 
     Set<? extends FrameworkVariableInfo> getRelations(List<LexIdentifier> identifiers);
 
-    EnvironmentMessage getEnvironmentMessage();
+    List<? extends RelationVariable> getConnectedOutputs();
 
     /**
      * Returns information about the unit

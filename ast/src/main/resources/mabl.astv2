@@ -38,9 +38,16 @@ document
 
 compilationUnit
     =   {importedModule} [name]:lex_identifier [functions]:declaration.function*
-    |   {simulationSpecification} [body]:stm [imports]:lex_identifier*
+    |   {simulationSpecification}
+            [body]:stm
+            [imports]:lex_identifier*
+            [framework]:lex_identifier*
+            [frameworkConfigs]:framework.config*
     ;
 
+framework
+    = {config} [name]:lex_identifier [config]:java_String
+    ;
 
 declaration {
         -> package='org.intocps.maestro.ast'
@@ -122,6 +129,7 @@ stm
     | {observable} [identifier]:identifier
     | {break} [token]:parserToken
     | {instanceMapping} [identifier]:lex_identifier [name]:java_String
+    | {config} [config]:java_String
     ;
 
 type

@@ -2,7 +2,8 @@ simulation
 import FixedStep;
 import TypeConverter;
 import Initializer;
-
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
 {
 real START_TIME = 0.0;
 real END_TIME = 10.0;

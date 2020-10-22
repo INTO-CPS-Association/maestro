@@ -1,6 +1,6 @@
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.fmi2.FmiSimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.Initializer.Initializer;
@@ -49,7 +49,7 @@ public class InitializerTest {
         List<PExp> arguments = setupFormalArguments(components, 0, 10);
 
         List<PStm> stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration,
-                FmiSimulationEnvironment.of(envJson, new IErrorReporter.SilentReporter()), null);
+                Fmi2SimulationEnvironment.of(envJson, new IErrorReporter.SilentReporter()), null);
         Console.println(stm1.toString());
 
         //Useful test to make

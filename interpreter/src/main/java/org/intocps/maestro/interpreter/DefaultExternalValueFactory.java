@@ -1,5 +1,7 @@
 package org.intocps.maestro.interpreter;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.values.*;
@@ -9,13 +11,14 @@ import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Default interpreter factory with framework support and other basic features.
@@ -23,15 +26,42 @@ import java.util.function.Function;
  */
 public class DefaultExternalValueFactory implements IExternalValueFactory {
     static final String DEFAULT_CSV_FILENAME = "outputs.csv";
-    protected final String dataWriterInstantiaterName = "DataWriter";
-    protected final String mathInstantiaterName = "Math";
+    protected final String DATA_WRITER_TYPE_NAME = "DataWriter";
+    protected final String MATH_TYPE_NAME = "Math";
     protected HashMap<String, Function<List<Value>, Either<Exception, Value>>> instantiators;
 
-    public DefaultExternalValueFactory() {
-        this(null);
+    public DefaultExternalValueFactory() throws IOException {
+        this(null, null);
     }
 
-    public DefaultExternalValueFactory(File workingDirectory) {
+    public DefaultExternalValueFactory(File workingDirectory, InputStream config) throws IOException {
+
+
+        String dataWriterFileName = DEFAULT_CSV_FILENAME;
+        List<String> dataWriterFilter = null;
+
+        if (config != null) {
+            JsonNode configTree = new ObjectMapper().readTree(config);
+
+            if (configTree.has(DATA_WRITER_TYPE_NAME)) {
+                JsonNode dwConfig = configTree.get(DATA_WRITER_TYPE_NAME);
+
+                for (JsonNode val : dwConfig) {
+                    if (val.has("type") && val.get("type").equals("CSV")) {
+                        dataWriterFileName = val.get("filename").asText();
+
+                        dataWriterFilter =
+                                StreamSupport.stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
+                                        .map(v -> v.asText()).collect(Collectors.toList());
+                    }
+                }
+            }
+        }
+
+        final String dataWriterFileNameFinal = dataWriterFileName;
+        final List<String> dataWriterFilterFinal = dataWriterFilter;
+
+
         instantiators = new HashMap<>() {{
             put("FMI2", args -> {
                 String guid = ((StringValue) args.get(0)).getValue();
@@ -41,17 +71,19 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 } catch (URISyntaxException e) {
                     return Either.left(new AnalysisException("The path passed to load is not a URI", e));
                 }
-                return Either.right(new FmiInterpreter().createFmiValue(path, guid));
+                return Either.right(new FmiInterpreter(workingDirectory).createFmiValue(path, guid));
             });
             put("CSV", args -> Either.right(new CSVValue()));
             put("Logger", args -> Either.right(new LoggerValue()));
-            put(dataWriterInstantiaterName, args -> {
-                return Either.right(new DataWriterValue(Arrays.asList(new CsvDataWriter(
-                        workingDirectory == null ? new File(DEFAULT_CSV_FILENAME) : new File(workingDirectory, DEFAULT_CSV_FILENAME)))));
-            });
-            put(mathInstantiaterName, args -> Either.right(new MathValue()));
+            put(DATA_WRITER_TYPE_NAME, args -> Either.right(new DataWriterValue(Collections.singletonList(new CsvDataWriter(
+                    workingDirectory == null ? new File(dataWriterFileNameFinal) : new File(workingDirectory, dataWriterFileNameFinal),
+                    dataWriterFilterFinal)))));
+
+
+            put(MATH_TYPE_NAME, args -> Either.right(new MathValue()));
         }};
     }
+
 
     @Override
     public boolean supports(String type) {

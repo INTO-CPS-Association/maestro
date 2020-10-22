@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.controllers;
 
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.intocps.maestro.webapi.services.CoeService;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.io.IOException;
 
-@ControllerAdvice("org.intocps.orchestration.coe.webapi")
+@ControllerAdvice("org.intocps.maestro.webapi")
 @Order()
 @RequestMapping(produces = "application/vnd.error+json")
 public class ControllerAdvisor {
@@ -96,4 +97,13 @@ public class ControllerAdvisor {
         logger.error("Internal API Exception ref: " + guid, e);
         return error(e, HttpStatus.BAD_REQUEST, guid);
     }
+
+
+    @ExceptionHandler(NotImplementedException.class)
+    public ResponseEntity<VndErrors> notImplementedException(final NotImplementedException e) {
+        final String guid = java.util.UUID.randomUUID().toString();
+        logger.error("Internal API Exception ref: " + guid, e);
+        return error(e, HttpStatus.BAD_REQUEST, guid);
+    }
+
 }

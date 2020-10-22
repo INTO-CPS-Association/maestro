@@ -4,32 +4,54 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
+
     </Appenders>
     <Loggers>
 
         <Logger name="org.apache" level="INFO"
                 additivity="false">
-            <Appender-ref ref="Console" level="INFO"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger name="org.springframework" level="INFO"
+        <Logger name="org.springframework" level="WARN"
                 additivity="false">
-            <Appender-ref ref="Console" level="INFO"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger name="org.flywaydb" level="INFO"
+        <Logger name="org.flywaydb" level="WARN"
                 additivity="false">
-            <Appender-ref ref="Console" level="INFO"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger name="springfox.documentation" level="INFO"
+        <Logger name="springfox.documentation" level="WARN"
                 additivity="false">
-            <Appender-ref ref="Console" level="INFO"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger name="org.hibernate" level="INFO"
+        <Logger name="org.hibernate" level="WARN"
                 additivity="false">
-            <Appender-ref ref="Console" level="INFO"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Logger name="org.intocps.maestro.webapi.maestro2.interpreter.WebsocketValueConverter" level="OFF"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Logger name="org.reflections.Reflections" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Logger name="springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+
+        <Logger name="fmi.instance" level="ALL"
+                additivity="false">
+            <AppenderRef ref="Console"/>
         </Logger>
 
 

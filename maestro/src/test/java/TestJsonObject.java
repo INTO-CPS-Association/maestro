@@ -5,8 +5,8 @@ public class TestJsonObject {
     public boolean initialize = false;
     @JsonProperty
     public boolean simulate = false;
-    @JsonProperty("use_local_spec")
-    public boolean useLocalSpec = false;
+    @JsonProperty("auto_generate")
+    public boolean autoGenerate = false;
     @JsonProperty("use_log_levels")
     public boolean useLogLevels = false;
 }

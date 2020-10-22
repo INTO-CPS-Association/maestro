@@ -5,7 +5,10 @@ import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.core.*;
+import org.intocps.maestro.framework.core.EnvironmentException;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
+import org.intocps.maestro.framework.core.FrameworkVariableInfo;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -19,11 +22,10 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class FmiSimulationEnvironment implements ISimulationEnvironment {
-    public static final String LOGALL_LOGLEVEL = "logAll";
-    final static Logger logger = LoggerFactory.getLogger(FmiSimulationEnvironment.class);
-    private final ModelDescriptionValidator modelDescriptionValidator = new ModelDescriptionValidator();
+public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
+    final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
@@ -32,22 +34,18 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
     Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
-    private EnvironmentMessage environmentMessage;
-    private Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> csvVariablesToLog = new HashMap<>();
-    private List<String> livestreamVariablesToLog = new ArrayList<>();
 
-    protected FmiSimulationEnvironment(EnvironmentMessage msg) throws Exception {
+    protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
     }
 
-
-    public static FmiSimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
+    public static Fmi2SimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
         try (InputStream is = new FileInputStream(file)) {
             return of(is, reporter);
         }
     }
 
-    public static FmiSimulationEnvironment of(EnvironmentMessage msg, IErrorReporter reporter) throws Exception {
+    public static Fmi2SimulationEnvironment of(Fmi2SimulationEnvironmentConfiguration msg, IErrorReporter reporter) throws Exception {
 
         List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
 
@@ -59,16 +57,15 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
                     validated.entrySet().stream().filter(map -> !map.getValue()).map(map -> map.getKey()).collect(Collectors.joining(",", "[", "]")));
         }
 
-        return new FmiSimulationEnvironment(msg);
+        return new Fmi2SimulationEnvironment(msg);
     }
 
-    public static FmiSimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
+    public static Fmi2SimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        EnvironmentMessage msg = null;
-        msg = mapper.readValue(inputStream, EnvironmentMessage.class);
+        Fmi2SimulationEnvironmentConfiguration msg = null;
+        msg = mapper.readValue(inputStream, Fmi2SimulationEnvironmentConfiguration.class);
         return of(msg, reporter);
     }
-
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
         List<ModelConnection> list = new Vector<>();
@@ -95,6 +92,17 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
 
     }
 
+    @Override
+    public List<RelationVariable> getConnectedOutputs() {
+        return getInstances().stream().flatMap(instance -> {
+            Stream<RelationVariable> relationOutputs = this.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
+                    .filter(relation -> (relation.getOrigin() == Relation.InternalOrExternal.External) &&
+                            (relation.getDirection() == Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable);
+            return relationOutputs;
+        }).collect(Collectors.toList());
+
+    }
+
     public void setLexNameToInstanceNameMapping(String lexName, String instanceName) {
         this.instanceLexToInstanceName.put(lexName, instanceName);
     }
@@ -111,21 +119,6 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
         } else {
             return vars;
         }
-    }
-
-    @Override
-    public List<org.intocps.maestro.framework.fmi2.RelationVariable> getCsvVariablesToLog(String instanceName) {
-        return this.csvVariablesToLog.getOrDefault(instanceName, new ArrayList<>());
-    }
-
-    @Override
-    public Map<String, List<String>> getLivestreamVariablesToLog() {
-        if (this.environmentMessage.livestream != null) {
-            return this.environmentMessage.livestream;
-        } else {
-            return new HashMap<>();
-        }
-
     }
 
     public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
@@ -145,8 +138,7 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
         return this.fmuToUri.get(fmuName);
     }
 
-    private void initialize(EnvironmentMessage msg) throws Exception {
-        this.environmentMessage = msg;
+    private void initialize(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
 
@@ -251,11 +243,11 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
 
             // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
             HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
-            if (environmentMessage.logVariables != null) {
-                globalLogVariablesMaps.putAll(environmentMessage.logVariables);
+            if (msg.logVariables != null) {
+                globalLogVariablesMaps.putAll(msg.logVariables);
             }
-            if (environmentMessage.livestream != null) {
-                environmentMessage.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
+            if (msg.livestream != null) {
+                msg.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
                     Set<String> set = new TreeSet<>(v1);
                     set.addAll(v2);
                     return new ArrayList<>(set);
@@ -287,50 +279,6 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
 
             }
         }
-
-        // Build logVariables
-        if (this.environmentMessage.logVariables != null) {
-            this.csvVariablesToLog = getEnvironmentVariablesToLog(this.environmentMessage.logVariables, this.globalVariablesToLogForInstance);
-        }
-
-        // Build live stream variables
-        if (this.environmentMessage.livestream != null) {
-            this.livestreamVariablesToLog = this.environmentMessage.livestream.entrySet().stream()
-                    .flatMap(entry -> entry.getValue().stream().map(x -> entry.getKey() + "." + x)).collect(Collectors.toList());
-        }
-
-        if (environmentMessage.loggingOn) {
-            Map<String, List<String>> instanceNameToLogLevels = environmentMessage.getInstanceNameToLogLevels();
-            if (instanceNameToLogLevels != null) {
-                for (Map.Entry<String, List<String>> entry : instanceNameToLogLevels.entrySet()) {
-                    ComponentInfo instanceComponentInfo = this.instanceNameToInstanceComponentInfo.get(entry.getKey());
-                    if (instanceComponentInfo == null) {
-                        logger.warn(String.format("The instance %s used in logLevels does not exist and is therefore ignored.", entry));
-                    } else {
-                        List<String> logCategories =
-                                instanceComponentInfo.modelDescription.getLogCategories().stream().map(x -> x.name).collect(Collectors.toList());
-                        // Ensure that each log level is available in the model description.
-                        // Find the ones that do not exist in the model description.
-                        List<String> logLevels = new ArrayList<>();
-                        List<String> unknownLogLevels = new ArrayList<>();
-
-                        for (String logLevel : entry.getValue()) {
-                            logLevels.add(logLevel);
-                            if (!logCategories.contains(logLevel)) {
-                                unknownLogLevels.add(logLevel);
-                            }
-                        }
-                        logger.warn(String.format(
-                                "The instance %s of the FMU %s is configured with log levels that do not exist in the model description file. The " +
-                                        "log levels not in the model description file are: %s.", entry.getKey(), instanceComponentInfo.fmuIdentifier,
-                                String.join(", ", unknownLogLevels)));
-                        if (!logLevels.isEmpty()) {
-                            this.instanceNameToLogLevels.put(entry.getKey(), logLevels);
-                        }
-                    }
-                }
-            }
-        }
     }
 
 
@@ -345,7 +293,6 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
             URI value = entry.getValue();
             IFmu fmu = FmuFactory.create(null, value);
             ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
-            fmu.unLoad();
             fmuKeyToFmuWithMD.put(key, md);
         }
 
@@ -381,16 +328,6 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
     @Override
     public Set<Relation> getRelations(List<LexIdentifier> identifiers) {
 
-        // a, b
-
-        //        Map<LexIdentifier, Object> internalMapping = identifiers.stream().collect(Collectors.toMap(Function.identity(), id -> {
-
-        //check context to find which FMU in the internal map that id points to in terms of FMU.modelinstance
-        //            return null;
-
-        //        }));
-
-        //a -> FMUA, b-> FMUB
 
         /*
          * use mapping of a.#1 -> b.#4 and produce a relation for these
@@ -409,11 +346,6 @@ public class FmiSimulationEnvironment implements ISimulationEnvironment {
          * then use the relation to set these*/
         return identifiers.stream().filter(id -> variableToRelations.containsKey(id)).map(lexId -> variableToRelations.get(lexId))
                 .flatMap(Collection::stream).collect(Collectors.toSet());
-    }
-
-    @Override
-    public EnvironmentMessage getEnvironmentMessage() {
-        return this.environmentMessage;
     }
 
     /**
