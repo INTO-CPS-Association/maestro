@@ -348,6 +348,32 @@
         <url>http://into-cps.org/</url>
     </organization>
 
+    <scm>
+        <url>git@github.com:INTO-CPS-Association/maestro</url>
+        <connection>scm:git:git//github.com/INTO-CPS-Association/maestro
+        </connection>
+        <developerConnection>
+            scm:git:git@github.com:INTO-CPS-Association/maestro
+        </developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+
+        <developer>
+            <id>lausdahl</id>
+            <email>lausdahl@eng.au.dk</email>
+            <name>Kenneth Lausdahl</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>http://eng.au.dk/</organizationUrl>
+        </developer>
+
+    </developers>
+
     <licenses>
         <license>
             <name>INTO-CPS Association Public License</name>
