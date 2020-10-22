@@ -33,7 +33,7 @@
         <dependency>
             <groupId>org.into-cps.vdmcheck.fmi2</groupId>
             <artifactId>fmi2vdm</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fujitsu</groupId>
