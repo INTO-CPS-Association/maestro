@@ -520,10 +520,10 @@ public class Maestro2SimulationController {
         @JsonProperty("initsize")
         final Double initsize;
         @JsonProperty("constraints")
-        final List<IVarStepConstraint> constraints;
+        final Map<String, IVarStepConstraint> constraints;
 
         public VariableStepAlgorithmConfig(@JsonProperty("size") Double[] size, @JsonProperty("initsize") Double initsize,
-                @JsonProperty("constraints") final List<IVarStepConstraint> constraints) {
+                @JsonProperty("constraints") final Map<String, IVarStepConstraint> constraints) {
             this.size = size;
             this.initsize = initsize;
             this.constraints = constraints;
@@ -537,7 +537,7 @@ public class Maestro2SimulationController {
             return initsize;
         }
 
-        public List<IVarStepConstraint> getConstraints() {
+        public Map<String, IVarStepConstraint> getConstraints() {
             return constraints;
         }
 
@@ -692,9 +692,12 @@ public class Maestro2SimulationController {
 
         @ApiModel(parent = IVarStepConstraint.class)
         public static class SamplingConstraint implements IVarStepConstraint {
-            final Integer base;
-            final Integer rate;
-            final Integer startTime;
+            Integer base;
+            Integer rate;
+            Integer startTime;
+
+            public SamplingConstraint() {
+            }
 
             public SamplingConstraint(Integer base, Integer rate, Integer startTime) {
                 this.base = base;
@@ -731,11 +734,14 @@ public class Maestro2SimulationController {
 
         @ApiModel(parent = IVarStepConstraint.class)
         public static class BoundedDifferenceConstraint implements IVarStepConstraint {
-            final List<String> ports;
-            final Double reltol;
-            final Double abstol;
-            final Double safety;
-            final Boolean skipDiscrete;
+            List<String> ports;
+            Double reltol;
+            Double abstol;
+            Double safety;
+            Boolean skipDiscrete;
+
+            public BoundedDifferenceConstraint() {
+            }
 
             public BoundedDifferenceConstraint(List<String> ports, Double reltol, Double abstol, Double safety, Boolean skipDiscrete) {
                 this.ports = ports;
@@ -773,10 +779,13 @@ public class Maestro2SimulationController {
 
         @ApiModel(parent = IVarStepConstraint.class)
         public static class ZeroCrossingConstraint implements IVarStepConstraint {
-            final List<String> ports;
-            final Integer order;
-            final Double abstol;
-            final Double safety;
+            List<String> ports;
+            Integer order;
+            Double abstol;
+            Double safety;
+
+            public ZeroCrossingConstraint() {
+            }
 
             public ZeroCrossingConstraint(List<String> ports, Integer order, Double abstol, Double safety) {
                 this.ports = ports;
