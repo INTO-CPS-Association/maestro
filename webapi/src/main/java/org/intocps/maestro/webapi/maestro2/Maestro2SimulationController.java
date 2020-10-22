@@ -2,7 +2,6 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -160,7 +159,7 @@ public class Maestro2SimulationController {
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body1);
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper mapper = new ObjectMapper();//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
 
 
@@ -208,42 +207,33 @@ public class Maestro2SimulationController {
         }
         Map<String, List<ModelDescription.LogCategory>> logs = null;
 
-        try {
-            if (body.stabalizationEnabled) {
+        if (body.stabalizationEnabled) {
 
-                if (body.global_absolute_tolerance != 0.0) {
-                    throw new NotImplementedException("global absolute tolerance is not implemented");
-                }
-                if (body.global_relative_tolerance != 0.0) {
-                    throw new NotImplementedException("global absolute tolerance is not implemented");
-                }
-                throw new NotImplementedException("Stabilisation is not implemented");
+            if (body.global_absolute_tolerance != 0.0) {
+                throw new NotImplementedException("global absolute tolerance is not implemented");
             }
-            if (body.parallelSimulation) {
-                throw new NotImplementedException("ParallelSimulation is not implemented");
+            if (body.global_relative_tolerance != 0.0) {
+                throw new NotImplementedException("global absolute tolerance is not implemented");
             }
-            if (body.simulationProgramDelay) {
-                throw new NotImplementedException("SimulationProgramDelay is not implemented");
-            }
+            throw new NotImplementedException("Stabilisation is not implemented");
+        }
+        if (body.parallelSimulation) {
+            throw new NotImplementedException("ParallelSimulation is not implemented");
+        }
+        if (body.simulationProgramDelay) {
+            throw new NotImplementedException("SimulationProgramDelay is not implemented");
+        }
 
-            if (body.hasExternalSignals) {
-                throw new NotImplementedException("HasExternalSignals is not implemented");
-            }
-
-
-            logger.trace("Initialization completed");
-            logic.setInitializationData(body);
-
-
-            return new InitializeStatusModel("initialized", sessionId, null, 0);
-
-        } catch (Exception e) {
-            logger.error("Internal error in initialization", e);
-            //            return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, e.getMessage());
+        if (body.hasExternalSignals) {
+            throw new NotImplementedException("HasExternalSignals is not implemented");
         }
 
 
-        throw new Exception("internal error");
+        logger.trace("Initialization completed");
+        logic.setInitializationData(body);
+
+
+        return new InitializeStatusModel("initialized", sessionId, null, 0);
     }
 
     private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {
@@ -273,24 +263,10 @@ public class Maestro2SimulationController {
     @ApiOperation(value = "This request begins the co-simulation")
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"})
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
-        //        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
-        //        Fmi2EnvironmentConfiguration frameworkConfig = new Fmi2EnvironmentConfiguration();
         InitializationData initializeRequest = logic.getInitializationData();
-        //        frameworkConfig.fmus = initializeRequest.fmus;
-        //        frameworkConfig.connections = initializeRequest.connections;
-        //        frameworkConfig.logLevels = body.logLevels;
-        //        frameworkConfig.endTime = body.endTime;
-        //        frameworkConfig.liveLogInterval = body.liveLogInterval;
-        //        frameworkConfig.livestream = initializeRequest.livestream;
-        //        frameworkConfig.loggingOn = initializeRequest.loggingOn;
-        //        frameworkConfig.logVariables = initializeRequest.logVariables;
-        //        frameworkConfig.algorithm =
-        //                new Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
-        //        frameworkConfig.stepSize = ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize();
-        //        frameworkConfig.visible = initializeRequest.visible;
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", initializeRequest.parameters);
@@ -309,7 +285,7 @@ public class Maestro2SimulationController {
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
         Map<String, List<String>> removedFMUKeyFromLogLevels = body.logLevels.entrySet().stream().collect(Collectors
                 .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                        entry -> entry.getValue()));
+                        Map.Entry::getValue));
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
@@ -544,6 +520,15 @@ public class Maestro2SimulationController {
     }
 
     public static class InitializationData {
+
+        @JsonIgnore
+        @JsonProperty("liveGraphColumns")
+        final Object liveGraphColumns = null;
+
+        @JsonIgnore
+        @JsonProperty("liveGraphVisibleRowCount")
+        final Object liveGraphVisibleRowCount = null;
+
         @JsonProperty("fmus")
         final Map<String, String> fmus;
         @JsonProperty("connections")
@@ -552,7 +537,7 @@ public class Maestro2SimulationController {
         final Map<String, Object> parameters;
         @JsonProperty("livestream")
         final Map<String, List<String>> livestream;
-        @JsonProperty("logvariables")
+        @JsonProperty("logVariables")
         final Map<String, List<String>> logVariables;
         @JsonProperty("parallelSimulation")
         final boolean parallelSimulation;
@@ -578,13 +563,15 @@ public class Maestro2SimulationController {
         @JsonCreator
         public InitializationData(@JsonProperty("fmus") Map<String, String> fmus, @JsonProperty("connections") Map<String, List<String>> connections,
                 @JsonProperty("parameters") Map<String, Object> parameters, @JsonProperty("livestream") Map<String, List<String>> livestream,
-                @JsonProperty("logvariables") Map<String, List<String>> logVariables, @JsonProperty("parallelSimulation") boolean parallelSimulation,
+                @JsonProperty("logVariables") Map<String, List<String>> logVariables, @JsonProperty("parallelSimulation") boolean parallelSimulation,
                 @JsonProperty("stabalizationEnabled") boolean stabalizationEnabled,
                 @JsonProperty("global_absolute_tolerance") double global_absolute_tolerance,
                 @JsonProperty("global_relative_tolerance") double global_relative_tolerance, @JsonProperty("loggingOn") boolean loggingOn,
                 @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
                 @JsonProperty("hasExternalSignals") boolean hasExternalSignals, @JsonProperty("algorithm") IAlgorithmConfig algorithm,
-                @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel) {
+                @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel,
+                @JsonProperty("liveGraphColumns") final Object liveGraphColumns,
+                @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount) {
             this.fmus = fmus;
             this.connections = connections;
             this.parameters = parameters;
