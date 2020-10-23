@@ -48,7 +48,7 @@
         <module>interpreter</module>
         <module>plugins</module>
         <module>frameworks</module>
-        <module>webapi</module>
+        <module>maestro-webapi</module>
     </modules>
 
     <build>
