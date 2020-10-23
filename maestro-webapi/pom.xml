@@ -8,7 +8,7 @@
         <version>2.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>webapi</artifactId>
+    <artifactId>maestro-webapi</artifactId>
     <properties>
         <sprintboot.version>2.2.7.RELEASE</sprintboot.version>
     </properties>
