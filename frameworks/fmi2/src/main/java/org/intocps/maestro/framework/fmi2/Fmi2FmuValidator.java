@@ -26,14 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Fmi2FmuValidator implements IFmuValidator {
-
-    /**
-     * This methos
-     *
-     * @param path
-     * @param reporter
-     * @throws Exception
-     */
+    
     @Override
     public boolean validate(String id, URI path, IErrorReporter reporter) {
         try {
