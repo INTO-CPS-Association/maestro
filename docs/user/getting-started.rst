@@ -16,9 +16,9 @@ The first step is to install the dependencies and the tools that are to be used
 Generate a specification
 ------------------------
 Maestro2 features a specification generator that can assist in generating a specification. Its input is a configuration file in the :code:`json` format.
-It can be utilised with the following command: 
+It can be utilised with the following command:
 
-.. code-block:: 
+.. code-block:: json
 
     $ java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
     where 
