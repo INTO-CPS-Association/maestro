@@ -20,7 +20,7 @@ It can be utilised with the following command:
 
 .. code-block:: json
 
-    $ java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
+    java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
     where 
         -sg specifies to use the specification generator 
         -c specifies the path to the configuration file for the specification generator
