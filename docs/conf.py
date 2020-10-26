@@ -34,7 +34,7 @@ extensions = [
     "recommonmark",
     "sphinx_rtd_theme",
     "sphinxcontrib.plantuml",
-    "sphinx.ext.autosectionlabel"
+#    "sphinx.ext.autosectionlabel"
 ]
 
 # source files to generate documentation
