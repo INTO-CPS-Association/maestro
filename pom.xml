@@ -112,7 +112,7 @@
                     </configuration>
                 </plugin>
                 <!-- Enable JavaDoc but dont fail on error. This must be disabled for
-                    the Eclipse project in the IDE -->
+                     the Eclipse project in the IDE -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
@@ -375,7 +375,18 @@
     </scm>
 
     <developers>
-
+        <developer>
+            <id>thule</id>
+            <email>casper.thule@eng.au.dk</email>
+            <name>Casper Thule</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>productowner</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>https://eng.au.dk</organizationUrl>
+        </developer>
         <developer>
             <id>lausdahl</id>
             <email>lausdahl@eng.au.dk</email>
