@@ -18,9 +18,9 @@ Generate a specification
 Maestro2 features a specification generator that can assist in generating a specification. Its input is a configuration file in the :code:`json` format.
 It can be utilised with the following command: 
 
-.. code-block::
+.. code-block:: 
 
-    > java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
+    $ java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
     where 
         -sg specifies to use the specification generator 
         -c specifies the path to the configuration file for the specification generator
