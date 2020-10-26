@@ -18,17 +18,15 @@ Generate a specification
 Maestro2 features a specification generator that can assist in generating a specification. Its input is a configuration file in the :code:`json` format.
 It can be utilised with the following command:
 
-.. code-block:: json
+.. code-block:: none
 
-    java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
+    > java -jar maestro2.jar -sg -c pathToConfigurationFile.json -o build
     where 
         -sg specifies to use the specification generator 
         -c specifies the path to the configuration file for the specification generator
         -o specifies the output directory for the resulting specification file
 
-The configuration file is:
-
-.. code-block::
+The configuration file is::
 
     CONFIGURATION FILE HERE TBD
 
@@ -45,7 +43,7 @@ Expanding a specification
 -------------------------
 Once a specification has been generated it has to be expanded before it can be interpreted. This is carried out with the following command:
 
-.. code-block::
+.. code-block:: none
 
     > java -jar maestro2.jar -e -m build -d build_interpretation -di
     where
@@ -63,7 +61,7 @@ Interpreting a specification
 ----------------------------
 Finally, it is time for interpreting the specification. Execute the following command to do so:
 
-.. code-block::
+.. code-block:: none
 
     > java -jar maestro2.jar -i -m build_interpretation -r results
     where
@@ -80,7 +78,7 @@ Combining the steps above
 -------------------------
 It is also possible to create a specification, expand it and interpret it with one command:
 
-.. code-block::
+.. code-block:: none
 
     COMMAND HERE TBD
 
