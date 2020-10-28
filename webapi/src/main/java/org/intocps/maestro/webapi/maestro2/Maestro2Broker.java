@@ -7,7 +7,6 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
-import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -34,23 +33,21 @@ public class Maestro2Broker {
     final File workingDirectory;
     final ErrorReporter reporter;
 
-    public Maestro2Broker(File workingDirectory) {
+    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
         this.workingDirectory = workingDirectory;
         this.mabl = new Mabl(workingDirectory, null);
-        this.reporter = new ErrorReporter();
-        mabl.setReporter(reporter);
+        this.reporter = reporter;
+
+        mabl.setReporter(this.reporter);
         mabl.getSettings().dumpIntermediateSpecs = false;
         mabl.getSettings().inlineFrameworkConfig = true;
     }
 
-    public void build(Maestro2SimulationController.InitializationData initializeRequest, Maestro2SimulationController.SimulateRequestBody body,
-            WebSocketSession socket) throws Exception {
+    public void buildAndRun(Maestro2SimulationController.InitializationData initializeRequest, Maestro2SimulationController.SimulateRequestBody body,
+            WebSocketSession socket, File csvOutputFile) throws Exception {
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", initializeRequest.parameters);
-
-        ErrorReporter reporter = new ErrorReporter();
-
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = initializeRequest.getFmus();
@@ -58,7 +55,7 @@ public class Maestro2Broker {
         simulationConfiguration.logVariables = initializeRequest.getLogVariables();
         simulationConfiguration.livestream = initializeRequest.livestream;
 
-        Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, new IErrorReporter.SilentReporter());
+        Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, this.reporter);
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
         Map<String, List<String>> removedFMUKeyFromLogLevels = body.logLevels.entrySet().stream().collect(Collectors
@@ -90,7 +87,8 @@ public class Maestro2Broker {
         executeInterpreter(socket, Stream.concat(connectedOutputs.stream(),
                 (initializeRequest.logVariables == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.logVariables)).stream())
                         .collect(Collectors.toList()),
-                initializeRequest.livestream == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.livestream), body.liveLogInterval);
+                initializeRequest.livestream == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.livestream), body.liveLogInterval,
+                csvOutputFile);
 
     }
 
@@ -101,15 +99,19 @@ public class Maestro2Broker {
         //logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
     }
 
-    public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter,
-            double interval) throws IOException, AnalysisException {
+    public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,
+            File csvOutputFile) throws IOException, AnalysisException {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
                     csvFilter);
         } else {
-            factory = new WebApiInterpreterFactory(workingDirectory, new File(workingDirectory, "outputs.csv"), csvFilter);
+            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter);
         }
         new MableInterpreter(factory).execute(mabl.getMainSimulationUnit());
+    }
+
+    public void setVerbose(boolean verbose) {
+        mabl.setVerbose(verbose);
     }
 }

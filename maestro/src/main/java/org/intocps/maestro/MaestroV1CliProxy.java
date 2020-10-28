@@ -1,5 +1,6 @@
 package org.intocps.maestro;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.FmuInvocationException;
@@ -13,15 +14,6 @@ import java.io.*;
 import java.util.Properties;
 
 public class MaestroV1CliProxy {
-    //    public static void main(String[] args)
-    //            throws InterruptedException, IOException, NanoHTTPD.ResponseException {
-    //        boolean cmdHandlerResult = CMDHandler(args);
-    //        if (cmdHandlerResult) {
-    //            System.exit(0);
-    //        } else {
-    //            System.exit(1);
-    //        }
-    //    }
     public final static Option verboseOpt = Option.builder("v").desc("Verbose").build();
     public final static Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
     public final static Option extractOpt =
@@ -154,6 +146,11 @@ public class MaestroV1CliProxy {
                 return false;
             }
 
+            if (simulationConfigFile != null && simulationConfigFile.exists() && simulationConfigFile.isFile()) {
+                startTime = new ObjectMapper().readTree(simulationConfigFile).get("startTime").asDouble();
+                endTime = new ObjectMapper().readTree(simulationConfigFile).get("endTime").asDouble();
+            }
+
             return oneShotRunner.run(verbose, configFile, simulationConfigFile, startTime, endTime, outputFile);
         } else {
 
@@ -281,7 +278,7 @@ public class MaestroV1CliProxy {
     }
 
     public interface WebServiceRunner {
-        public void run(int port);
+        void run(int port);
     }
 
     public interface OneShotRunner {
