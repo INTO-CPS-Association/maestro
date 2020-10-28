@@ -1,0 +1,104 @@
+simulation
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+DataWriter dataWriter = load("DataWriter");
+string[] data_headers[1] = {"crtlValveState","wtLevel"};
+DataWriterConfig dataWriterConfiguration = dataWriter.writeHeader(data_headers);
+string[] data_values[2];
+
+FMI2 tankController = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+FMI2 singleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
+FMI2Component crtlInstance = tankController.instantiate("crtlInstance", false, false);
+FMI2Component wtInstance = singleWatertank.instantiate("wtInstance", false, false);
+
+wtInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+crtlInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+
+real[] crtlParameters[2] = { 2.0 , 1.0 };
+uInt[] crtlParameterValRefs[2] = { 0 , 1 };
+crtlInstance.setReal(crtlParameterValRefs, 2, crtlParameters);
+
+
+wtInstance.enterInitializationMode();
+crtlInstance.enterInitializationMode();
+
+uInt[] crtlValveStateValRef[1] = { 4 };
+bool[] crtlValveStateOutput[1];
+
+uInt[] crtlLevelInputValRef[1] = { 3 };
+real[] crtlLevelInputValue[1];
+
+uInt[] wtValveStateValRef[1] = { 16 };
+real[] wtValveStateInputs[1];
+
+uInt[] wtLevelValRef[1] = { 17 };
+real[] wtLevelOutputValue[1];
+
+crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+real wtValveStateInput;
+if( crtlValveStateOutput[0] )
+{
+    wtValveStateInput = 1.0;
+}
+else
+{
+    wtValveStateInput = 0.0;
+}
+
+wtValveStateInputs[0] = wtValveStateInput;
+wtInstance.setReal(wtValveStateValRef, 1, wtValveStateInputs);
+
+wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+crtlInstance.setReal(crtlLevelInputValRef, 1, wtLevelOutputValue);
+
+wtInstance.exitInitializationMode();
+crtlInstance.exitInitializationMode();
+
+crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+data_values[0] = crtlValveStateOutput[0];
+data_values[1] = wtLevelOutputValue[0];
+dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, data_values);
+
+
+real time = START_TIME;
+while(time < END_TIME)
+{
+    if( crtlValveStateOutput[0] )
+    {
+        wtValveStateInput = 1.0;
+    }
+    else
+    {
+        wtValveStateInput = 0.0;
+    }
+    wtValveStateInputs[0] = wtValveStateInput;
+    wtInstance.setReal(wtValveStateValRef, 1, wtValveStateInputs);
+    crtlInstance.setReal(crtlLevelInputValRef, 1, wtLevelOutputValue);
+
+	wtInstance.doStep(time, STEP_SIZE, true);
+    crtlInstance.doStep(time, STEP_SIZE, true);
+
+    crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+    wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+
+    time = time + STEP_SIZE;
+    data_values[0] = crtlValveStateOutput[0];
+    data_values[1] = wtLevelOutputValue[0];
+    dataWriter.writeDataPoint(dataWriterConfiguration, time, data_values);
+
+}
+
+dataWriter.close();
+wtInstance.terminate();
+crtlInstance.terminate();
+tankController.freeInstance(crtlInstance);
+singleWatertank.freeInstance(wtInstance);
+
+unload(tankController);
+unload(singleWatertank);
+unload(dataWriter);
+}

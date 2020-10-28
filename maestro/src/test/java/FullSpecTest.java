@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -102,6 +103,33 @@ public class FullSpecTest {
         }
     }
 
+    public static void compareCsvResults(File expectedCsvFile, File actualCsvFile) throws IOException {
+
+        if (Boolean.parseBoolean(System.getProperty("TEST_CREATE_OUTPUT_CSV_FILES", "false")) && actualCsvFile.exists()) {
+            System.out.println("Storing outputs csv file in specification directory to be used in future tests.");
+            Files.copy(actualCsvFile.toPath(), expectedCsvFile.toPath(), REPLACE_EXISTING);
+        }
+
+        boolean actualOutputsCsvExists = actualCsvFile.exists();
+        boolean expectedOutputsCsvExists = expectedCsvFile.exists();
+        if (actualOutputsCsvExists && expectedOutputsCsvExists) {
+            assertResultEqualsDiff(new FileInputStream(actualCsvFile), new FileInputStream(expectedCsvFile));
+        } else {
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("Cannot compare CSV files.\n");
+            if (!actualOutputsCsvExists) {
+                sb.append("The actual outputs csv file does not exist.\n");
+            }
+            if (!expectedOutputsCsvExists) {
+                sb.append("The expected outputs csv file does not exist.\n");
+            }
+            System.out.println(sb.toString());
+
+        }
+    }
+
     @Test
     public void test() throws Exception {
 
@@ -158,7 +186,7 @@ public class FullSpecTest {
         mabl.dump(workingDirectory);
         Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists());
         Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists());
-
+        System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         new MableInterpreter(
                 new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
                 .execute(mabl.getMainSimulationUnit());
@@ -174,32 +202,5 @@ public class FullSpecTest {
     protected List<File> getSpecificationFiles() {
         return Arrays.stream(Objects.requireNonNull(directory.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
                 .collect(Collectors.toList());
-    }
-
-    public void compareCsvResults(File expectedCsvFile, File actualCsvFile) throws IOException {
-
-        if (Boolean.parseBoolean(System.getProperty("TEST_CREATE_OUTPUT_CSV_FILES", "false")) && actualCsvFile.exists()) {
-            System.out.println("Storing outputs csv file in specification directory to be used in future tests.");
-            Files.copy(actualCsvFile.toPath(), expectedCsvFile.toPath(), REPLACE_EXISTING);
-        }
-
-        boolean actualOutputsCsvExists = actualCsvFile.exists();
-        boolean expectedOutputsCsvExists = expectedCsvFile.exists();
-        if (actualOutputsCsvExists && expectedOutputsCsvExists) {
-            assertResultEqualsDiff(new FileInputStream(actualCsvFile), new FileInputStream(expectedCsvFile));
-        } else {
-
-            StringBuilder sb = new StringBuilder();
-
-            sb.append("Cannot compare CSV files.\n");
-            if (!actualOutputsCsvExists) {
-                sb.append("The actual outputs csv file does not exist.\n");
-            }
-            if (!expectedOutputsCsvExists) {
-                sb.append("The expected outputs csv file does not exist.\n");
-            }
-            System.out.println(sb.toString());
-
-        }
     }
 }
