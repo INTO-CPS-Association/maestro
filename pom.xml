@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.into-cps.maestro</groupId>
     <artifactId>root</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Maestro Root</name>
 
@@ -48,7 +47,7 @@
         <module>interpreter</module>
         <module>plugins</module>
         <module>frameworks</module>
-        <module>webapi</module>
+        <module>maestro-webapi</module>
     </modules>
 
     <build>
@@ -112,7 +111,7 @@
                     </configuration>
                 </plugin>
                 <!-- Enable JavaDoc but dont fail on error. This must be disabled for
-                    the Eclipse project in the IDE -->
+                     the Eclipse project in the IDE -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
@@ -375,7 +374,18 @@
     </scm>
 
     <developers>
-
+        <developer>
+            <id>thule</id>
+            <email>casper.thule@eng.au.dk</email>
+            <name>Casper Thule</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>productowner</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>https://eng.au.dk</organizationUrl>
+        </developer>
         <developer>
             <id>lausdahl</id>
             <email>lausdahl@eng.au.dk</email>
