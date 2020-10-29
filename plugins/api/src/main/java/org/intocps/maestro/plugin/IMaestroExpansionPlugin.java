@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.PExp;
 import org.intocps.maestro.ast.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;

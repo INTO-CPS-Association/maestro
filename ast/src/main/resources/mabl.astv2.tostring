@@ -7,9 +7,10 @@ import java.util.stream.Collectors;
 
 %document->root = [content]
 
+%framework->config = "@FrameworkConfig(\"" + [name] + "\", \""+ [config] + "\")"
 
 %compilationUnit->importedModule = "imported "+ $ $[name]$+" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
-%compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [body]
+%compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + $[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n"))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
@@ -35,9 +36,17 @@ import java.util.stream.Collectors;
 %exp->#binary->notEqual = [left]+ " != " + [right]
 %exp->#binary = [left]+ "" + [right]
 %exp->#binary = [left]+ "" + [right]
+%exp->#binary->or = [left]+ " || " + [right]
+%exp->#binary->and = [left]+ " && " + [right]
+%exp->#binary->multiply = [left]+ " * " + [right]
+%exp->#binary->divide = [left]+ " / " + [right]
 %exp->#unary->not = "!" + [exp]
+%exp->#unary->minus = "-" + [exp]
+%exp->#unary->plus = "+" + [exp]
 %exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
+%exp->par = "("+ [exp] +")"
+%exp->null = "null"
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
@@ -47,6 +56,9 @@ import java.util.stream.Collectors;
 %stm->observable = "observable;"
 %stm->expression = [exp]
 %stm->break = "break"
+%stm->instanceMapping = "@Map(" + [identifier]+ " -> "+[name] + ")"
+%stm->config = "@Config(\"" + [config] + "\")"
+
 
 
 %stateDesignator->identifier = [name]

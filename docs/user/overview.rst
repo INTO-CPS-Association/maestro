@@ -1,21 +1,20 @@
+.. _overview:
+
 Overview
 =========
-This page presents an overview of the Maestro 2 approach to co-simulation and the different components.
-
-The Maestro2 approach is to generate a specification expressed in the DSL Maestro Base Language (MaBL) and then execute it in order to conduct a co-simulation.
-This specification is a recipe of what is going to be executed in order to conduct a co-simulation. 
+This section presents an overview of the Maestro 2 approach to co-simulation. Roughly, the approach is to generate a specification expressed in the Domain Specfic Language called Maestro Base Language (MaBL) and then execute it in order to conduct a co-simulation.
+This specification is a recipe of what is going to be executed in order to conduct a co-simulation.
 By seperating the specification and execution it is possible to verify the specification prior to executing it.
-
-
 
 Creating a specification
 ------------------------
-A specification can be written completely by hand if so desired, but Maestro2 also features a plugin system of `unfolding plugins` that can assist in creating a specification.
-An unfolding plugin offer a function that can be called in the specification. If a specifiation makes use of unfolding plugins, 
-then Maestro2 `unfolds` function calls to plugins with the behaviour of the function call, which is provided by the unfolding plugin.
-As an example, consider a specification where a type conversion function from the TypeConverterPlugin is used in the initial specification passed to Maestro2:
-:code:`convertBoolean2Real(booleanVariable, realVariable)`.
-Maestro2 will then invoke the TypeConverterPlugin to get the unfolded MaBL code and replace the function call with the unfolded MaBL code provided by the TypeConverterPlugin::
+A specification can be written completely by hand if so desired, but Maestro2 also features a `TemplateGenerator` that can assist in creating a co-simulation according to a given configuration. For more information on how to use the the `TemplateGenerator` please see :doc:`TemplateGenerator`. Furthermore, Maestro2 also contains a plugin system of `expansion plugins` that can assist in creating a specification. An expansion plugin offers one or more functions that can be invoked in the specification. If a specifiation makes use of expansion plugins, then Maestro2 replaces `expand` function calls to plugins with the behaviour of the function call, which is provided by the expansion plugin. For more information on `expansion plugins`, please see :ref:`Expansion Plugins`.
+
+Expansion of a Specification
+----------------------------
+Once a specification has been created it goes through an expansion phase, where :code:`expand` statements related to the aforementioned `Expansion Plugins` are replaced with their corresponding behaviour.
+
+For example, if a specification passed to Maestro2 contains the statement :code:`expand convertBoolean2Real(booleanVariable, realVariable)`, then it will be replaced by the behaviour of the function :code:`convertBoolean2Real`::
 
     if( booleanVariable )
         {
@@ -26,6 +25,8 @@ Maestro2 will then invoke the TypeConverterPlugin to get the unfolded MaBL code 
             realVariable = 0.0;
         }
 
+Once a specification is free of :code:`expand` statements it is ready for execution.
+
 Executing a specification
 --------------------------
 Maestro2 has an interpreter capable of executing a MaBL specification.
@@ -35,7 +36,6 @@ One such example is the CSV plugin, which writes values to a CSV file.
 Outline of the Co-simulation Process with Maestro2
 ------------------------------------------------------
 The sections outlines the process of how Maestro2 generates a MaBL specification and executes it.
-The elements in the diagram are briefly described afterwards and extended upon elsewhere (TBD).
 
 .. uml:: 
     

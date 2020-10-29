@@ -38,9 +38,16 @@ document
 
 compilationUnit
     =   {importedModule} [name]:lex_identifier [functions]:declaration.function*
-    |   {simulationSpecification} [body]:stm [imports]:lex_identifier*
+    |   {simulationSpecification}
+            [body]:stm
+            [imports]:lex_identifier*
+            [framework]:lex_identifier*
+            [frameworkConfigs]:framework.config*
     ;
 
+framework
+    = {config} [name]:lex_identifier [config]:java_String
+    ;
 
 declaration {
         -> package='org.intocps.maestro.ast'
@@ -72,6 +79,8 @@ exp { ->
     | {field} [root]:exp [field]:lex_identifier
     | {call} [object]:exp [expand]:parserToken [methodName]:lex_identifier [args]:exp*
     | {arrayIndex} [array]:exp [indices]:exp*
+    | {par} [exp]:exp
+    | {null} [token]:parserToken
     ;
 
 #literal
@@ -93,16 +102,22 @@ exp { ->
     | {greater}
     | {equal}
     | {notEqual}
+    | {or}
+    | {and}
+    | {divide}
+    | {multiply}
     ;
 
 #unary {-> package='org.intocps.maestro.ast'
   |  [exp]:exp }
   = {not}
+  | {minus}
+  | {plus}
   ;
 
 stateDesignator
     = {identifier} [name]:lex_identifier
-    | {array} [target]:stateDesignator [exp]:exp.#literal
+    | {array} [target]:stateDesignator [exp]:exp
     ;
 
 stm
@@ -113,7 +128,9 @@ stm
     | {while} [test]:exp [body]:stm
     | {expression} [exp]:exp
     | {observable} [identifier]:identifier
-    | {break}
+    | {break} [token]:parserToken
+    | {instanceMapping} [identifier]:lex_identifier [name]:java_String
+    | {config} [config]:java_String
     ;
 
 type

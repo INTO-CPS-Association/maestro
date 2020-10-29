@@ -1,0 +1,37 @@
+simulation
+import FixedStep;
+import TypeConverter;
+import Initializer;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+Math Math = load("Math");
+
+FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/rollback-end.fmu");
+FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/rollback-test.fmu");
+FMI2Component roller = tankcontroller.instantiate("crtlInstance", false, false);;
+FMI2Component cont = SingleWatertank.instantiate("wtInstance", false, false);;
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+IFmuComponent components[2]={roller,cont};
+
+bool global_execution_continue = true;
+
+//expand initialize(components,START_TIME, END_TIME);
+
+expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+
+tankcontroller.freeInstance(roller);
+SingleWatertank.freeInstance(cont);
+
+unload(tankcontroller);
+unload(SingleWatertank);
+unload(dataWriter);
+unload(logger);
+unload(Math);
+
+}

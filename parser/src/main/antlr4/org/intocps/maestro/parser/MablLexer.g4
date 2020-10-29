@@ -15,8 +15,6 @@ WHILE:          'while';
 ELSE:               'else';
 IF:             'if';
 MODULE   :           'module';
-LOAD   :           'load';
-UNLOAD   :           'unload';
 EXPAND:           'expand';
 IMPORT:           'import';
 SIMULATION:         'simulation';
@@ -89,6 +87,12 @@ MOD_ASSIGN:         '%=';
 LSHIFT_ASSIGN:      '<<=';
 RSHIFT_ASSIGN:      '>>=';
 URSHIFT_ASSIGN:     '>>>=';
+
+RIGHT_ARROW:        '->';
+INSTANCE_MAP:       '@map';
+AT_CONFIG:          '@Config';
+AT_FRAMEWORK:      '@Framework';
+AT_FRAMEWORK_CONFIG:'@FrameworkConfig';
 
 // Whitespace and comments
 WS:                 [ \t\r\n\u000C]+ -> channel(HIDDEN);

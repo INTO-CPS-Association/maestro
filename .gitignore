@@ -97,6 +97,12 @@ repository
 # docs build files
 docs/_build
 docs/builddir
+docs/build
 
 .factorypath
 .vscode
+/plugins/prologverifier/example/ExampleGraph.png
+
+
+
+.java-version

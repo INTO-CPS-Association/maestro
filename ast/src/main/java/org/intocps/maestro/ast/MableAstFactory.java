@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class MableAstFactory {
     public static AUIntNumericPrimitiveType newAUIntNumericPrimitiveType() {
@@ -15,6 +17,13 @@ public class MableAstFactory {
         AIdentifierExp identifier = new AIdentifierExp();
         identifier.setName(name);
         return identifier;
+    }
+
+    public static AInstanceMappingStm newAInstanceMappingStm(LexIdentifier mablName, String envName) {
+        AInstanceMappingStm ims = new AInstanceMappingStm();
+        ims.setIdentifier(mablName);
+        ims.setName(envName);
+        return ims;
     }
 
     public static AIdentifierExp newAIdentifierExp(String name) {
@@ -39,6 +48,18 @@ public class MableAstFactory {
             vardecl.setIsArray(false);
         }
         return vardecl;
+    }
+
+    public static ANullExp newNullExp() {
+        return new ANullExp();
+    }
+
+    public static ASimulationSpecificationCompilationUnit newASimulationSpecificationCompilationUnit(List<? extends LexIdentifier> imports,
+            PStm body) {
+        ASimulationSpecificationCompilationUnit stm = new ASimulationSpecificationCompilationUnit();
+        stm.setImports(imports);
+        stm.setBody(body);
+        return stm;
     }
 
     public static AWhileStm newWhile(PExp test, PStm body) {
@@ -150,7 +171,7 @@ public class MableAstFactory {
     }
 
     public static LexToken newExpandToken() {
-        return new LexToken("EXPAND", 0, 0);
+        return new LexToken("expand", 0, 0);
     }
 
     public static ACallExp newACallExp(LexToken expand, LexIdentifier identifier, List<? extends PExp> args_) {
@@ -190,8 +211,12 @@ public class MableAstFactory {
 
     public static ABlockStm newABlockStm(List<? extends PStm> statements) {
         ABlockStm stm = new ABlockStm();
-        stm.setBody(statements);
+        stm.setBody(statements.stream().filter(Objects::nonNull).collect(Collectors.toList()));
         return stm;
+    }
+
+    public static ABlockStm newABlockStm(PStm... statements) {
+        return newABlockStm(Arrays.asList(statements));
     }
 
     public static AFunctionDeclaration newAFunctionDeclaration(LexIdentifier name, List<? extends AFormalParameter> arguments, PType returnType) {
@@ -289,11 +314,31 @@ public class MableAstFactory {
         return type;
     }
 
+    public static AParExp newPar(PExp exp) {
+        AParExp par = new AParExp();
+        par.setExp(exp);
+        return par;
+    }
+
+    public static AOrBinaryExp newOr(PExp left, PExp right) {
+        AOrBinaryExp exp = new AOrBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AAndBinaryExp newAnd(PExp left, PExp right) {
+        AAndBinaryExp exp = new AAndBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static AArrayType newAArrayType(PType arrayType) {
         return newAArrayType(arrayType, null);
     }
 
-    public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, SLiteralExp exp) {
+    public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, PExp exp) {
         AArrayStateDesignator arrayStateDesignator = new AArrayStateDesignator();
         arrayStateDesignator.setExp(exp);
         arrayStateDesignator.setTarget(target);

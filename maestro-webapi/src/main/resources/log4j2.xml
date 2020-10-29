@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <RollingFile name="coeLog" fileName="coe.log" immediateFlush="true" append="false"
+                     filePattern="coe-%i.log.gz">
+            <PatternLayout pattern="%5p [%t] (%F:%L) - %m%n"/>
+            <Policies>
+
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="13"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+
+        <Logger name="org.apache" level="INFO"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="org.springframework" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="org.flywaydb" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="springfox.documentation" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="org.hibernate" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="org.intocps.maestro.webapi.maestro2.interpreter.WebsocketValueConverter" level="OFF"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="org.reflections.Reflections" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+        <Logger name="springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator" level="WARN"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+
+        <Logger name="fmi.instance" level="ALL"
+                additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Logger>
+
+
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="coeLog"/>
+        </Root>
+    </Loggers>
+</Configuration>

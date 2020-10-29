@@ -18,6 +18,19 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         return printer.sb.toString();
     }
 
+    public static String printLineNumbers(INode node) throws AnalysisException {
+        PrettyPrinter printer = new PrettyPrinter();
+        node.apply(printer, 0);
+        int lineNumber = 1;
+        StringBuilder sb = new StringBuilder();
+        int decimals = 3;
+        for (String line : printer.sb.toString().split("\n")) {
+            sb.append(String.format("%1$" + decimals + "s", (lineNumber++) + "  ")).append(line).append("\n");
+
+        }
+        return sb.toString();
+    }
+
     static String indent(int indentionCount) {
         return IntStream.range(0, indentionCount).mapToObj(i -> "\t").collect(Collectors.joining());
     }
@@ -36,6 +49,19 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node, Integer question) throws AnalysisException {
 
         sb.append(indent(question) + "simulation ");
+        node.getImports().forEach(x -> sb.append(indent(question) + "\nimport " + x.getText() + ";"));
+
+        if (node.getFramework() != null && !node.getFramework().isEmpty()) {
+            sb.append(indent(question) + "\n@Framework( " +
+                    node.getFramework().stream().map(LexIdentifier::getText).map(s -> "\"" + s + "\"").collect(Collectors.joining(",")) + ");");
+        }
+
+        if (node.getFrameworkConfigs() != null && !node.getFrameworkConfigs().isEmpty()) {
+            node.getFrameworkConfigs().forEach(
+                    x -> sb.append(indent(question) + "\n@FrameworkConfig( \"" + x.getName().getText() + "\", \"" + x.getConfig() + "\")" + ";"));
+        }
+
+        sb.append("\n");
         node.getBody().apply(this, question);
         //"simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [body]
         //        return indent(question) + "simulation " + node.getBody().apply(this, question);
@@ -73,6 +99,11 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     }
 
     @Override
+    public void caseAConfigStm(AConfigStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question) + "@Config(\"" + node.getConfig() + "\");");
+    }
+
+    @Override
     public void caseAWhileStm(AWhileStm node, Integer question) throws AnalysisException {
         sb.append(indent(question) + "while( ");
         node.getTest().apply(this, question);
@@ -107,7 +138,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
             return;
         }
         if (!skipBracket) {
-            sb.append(indent(question) + "{\n");
+            sb.append(indent(question) + "{\n ");
         }
 
         Iterator<PStm> itr = node.getBody().iterator();
@@ -122,5 +153,8 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         }
     }
 
-
+    @Override
+    public void caseAInstanceMappingStm(AInstanceMappingStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question) + "@map " + node.getIdentifier().getText() + " -> \"" + node.getName() + "\";");
+    }
 }

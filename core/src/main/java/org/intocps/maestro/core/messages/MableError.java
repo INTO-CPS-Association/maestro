@@ -1,10 +1,10 @@
 package org.intocps.maestro.core.messages;
 
-import org.antlr.v4.runtime.Token;
+import org.intocps.maestro.ast.LexToken;
 
 public class MableError extends MableMessage {
 
-    public MableError(int number, String message, Token location) {
+    public MableError(int number, String message, LexToken location) {
         super(number, message, location);
     }
 

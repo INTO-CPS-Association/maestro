@@ -1,0 +1,17 @@
+[
+  {
+    "identification": {
+      "name": "Initializer",
+      "version": "0.0.0"
+    },
+    "config": {
+      "parameters": {
+        "{pump}.pump.mdotInit": 5,
+        "{pump}.pump.tBegin": 4,
+        "{pump}.pump.tLength": 2,
+        "{pump}.pump.h": -5
+      },
+      "verifyAgainstProlog": false
+    }
+  }
+]

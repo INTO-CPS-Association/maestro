@@ -7,18 +7,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.plugin.ExpandException;
-import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
-import org.intocps.maestro.plugin.IPluginConfiguration;
-import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
-import org.intocps.maestro.plugin.Initializer.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
-import org.intocps.maestro.plugin.SimulationFramework;
-import org.intocps.maestro.plugin.env.ISimulationEnvironment;
-import org.intocps.maestro.plugin.env.UnitRelationship;
-import org.intocps.maestro.plugin.env.UnitRelationship.Variable;
-import org.intocps.maestro.plugin.env.fmi2.ComponentInfo;
+import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
@@ -36,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment.Variable;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class Initializer implements IMaestroExpansionPlugin {
@@ -81,71 +77,121 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
-            ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
-        logger.info("Unfolding: {}", declaredFunction.toString());
+            ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+        logger.debug("Unfolding: {}", declaredFunction.toString());
+
+        Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
 
         verifyArguments(formalArguments, env);
         final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);
-
-        //Make sure the statement container doesn't container any statements
         StatementGeneratorContainer.reset();
         var sc = StatementGeneratorContainer.getInstance();
-        sc.startTime = formalArguments.get(1).clone();
-        sc.endTime = formalArguments.get(2).clone();
-        this.config = (Config) config;
-        this.modelParameters = this.config.getModelParameters();
+
+        setSCParameters(formalArguments, (Config) config, sc);
+        List<PStm> statements = new Vector<>();
+        AVariableDeclaration status =
+                newAVariableDeclaration(new LexIdentifier("status", null), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)));
+
+        statements.add(newALocalVariableStm(status));
 
         //Setup experiment for all components
         logger.debug("Setup experiment for all components");
         knownComponentNames.forEach(comp -> {
-            sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true);
+            statements.addAll(Arrays.asList(sc.createSetupExperimentStatement(comp.getText(), false, 0.0, true), StatementGeneratorContainer
+                    .statusCheck(newAIdentifierExp("status"), StatementGeneratorContainer.FMIWARNINGANDFATALERRORCODES, "Setup Experiment Failed: ",
+                            true, true)));
         });
 
         //All connections - Only relations in the fashion InputToOutput is necessary since the OutputToInputs are just a dublicated of this
-        Set<UnitRelationship.Relation> relations =
-                env.getRelations(knownComponentNames).stream().filter(o -> o.getDirection() == UnitRelationship.Relation.Direction.OutputToInput)
-                        .collect(Collectors.toSet());
+        Set<Fmi2SimulationEnvironment.Relation> relations = env.getRelations(knownComponentNames).stream()
+                .filter(o -> o.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput).collect(Collectors.toSet());
 
         //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-        List<UnitRelationship.Variable> instantiationOrder = topologicalPlugin.FindInstantiationOrder(relations);
+        List<Set<Fmi2SimulationEnvironment.Variable>> instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(relations);
 
         //Set variables for all components in IniPhase
-        SetComponentsVariables(env, knownComponentNames, sc, PhasePredicates.IniPhase());
+        statements.addAll(setComponentsVariables(env, knownComponentNames, sc, PhasePredicates.iniPhase()));
 
-        if (this.config.verifyAgainstProlog && !initializationPrologQuery.initializationOrderIsValid(instantiationOrder, relations)) {
+        if (this.config.verifyAgainstProlog && !initializationPrologQuery
+                .initializationOrderIsValid(instantiationOrder.stream().flatMap(Collection::stream).collect(Collectors.toList()), relations)) {
             throw new ExpandException("The found initialization order is not correct");
         }
 
         //Enter initialization Mode
         logger.debug("Enter initialization Mode");
         knownComponentNames.forEach(comp -> {
-            sc.enterInitializationMode(comp.getText());
+            statements.add(sc.enterInitializationMode(comp.getText()));
         });
 
         var inputToOutputRelations =
-                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.InputToOutput()).collect(Collectors.toList());
+                env.getRelations(knownComponentNames).stream().filter(RelationsPredicates.inputToOutput()).collect(Collectors.toList());
 
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
 
-        var optimizedOrder = optimizeInstantiationOrder(instantiationOrder);
+        //var optimizedOrder = optimizeInstantiationOrder(instantiationOrder);
 
-        //Initialize the ports in the correct order based on the topological sorting
-        optimizedOrder.forEach(variableSet -> {
-            try {
-                initializePort(variableSet, sc, env);
-            } catch (ExpandException e) {
-                e.printStackTrace();
-            }
-        });
+        statements.addAll(initializeInterconnectedPorts(env, sc, instantiationOrder));
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
-            sc.exitInitializationMode(comp.getText());
+            statements.add(sc.exitInitializationMode(comp.getText()));
         });
+        statements.add(newBreak());
 
-        var statements = sc.getStatements();
-        return (statements);
+        return Arrays.asList(newWhile(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(statements)));
+    }
+
+    private void setSCParameters(List<PExp> formalArguments, Config config, StatementGeneratorContainer sc) {
+        sc.startTime = formalArguments.get(1).clone();
+        sc.endTime = formalArguments.get(2).clone();
+        this.config = config;
+        this.modelParameters = this.config.getModelParameters();
+        sc.absoluteTolerance = this.config.absoluteTolerance;
+        sc.relativeTolerance = this.config.relativeTolerance;
+        sc.modelParameters = this.modelParameters;
+    }
+
+    private List<PStm> initializeInterconnectedPorts(Fmi2SimulationEnvironment env, StatementGeneratorContainer sc,
+            List<Set<Variable>> instantiationOrder) throws ExpandException {
+        var sccNumber = 0;
+        List<PStm> stms = new Vector<>();
+        if (config.Stabilisation && instantiationOrder.stream().noneMatch(v -> v.size() > 1)) {
+            //The scenario does not contain any loops, but it should still be stabilized - the whole scenario will therefore be initialized in a loop
+            stms.addAll(initializeUsingFixedPoint(instantiationOrder.stream().flatMap(Collection::stream).collect(Collectors.toList()), sc, env,
+                    sccNumber));
+        } else {
+            //Initialize the ports in the correct order based on the topological sorting
+            for (Set<Variable> variables : instantiationOrder) {//normal variable
+                if (this.config.Stabilisation) {
+                    //Algebraic loop - specially initialization strategy should be taken.
+                    stms.addAll(initializeUsingFixedPoint(new ArrayList<>(variables), sc, env, sccNumber++));
+                    // In this case we need to check global_execution_continue and otherwise break.
+                    stms.add(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newBreak(), null));
+                } else if (variables.size() == 1) {
+                    try {
+                        stms.addAll(initializePort(variables, sc, env));
+                    } catch (ExpandException e) {
+                        e.printStackTrace();
+                    }
+                } else if (variables.size() > 1) {
+                    throw new ExpandException(
+                            "The co-simulation scenario contains loops, but the initialization is not configured to handle these " + "scenarios");
+                }
+            }
+        }
+        return stms;
+    }
+
+    private List<PStm> initializeUsingFixedPoint(List<Variable> variables, StatementGeneratorContainer sc, Fmi2SimulationEnvironment env,
+            int sccNumber) throws ExpandException {
+        var optimizedOrder = optimizeInstantiationOrder(variables);
+
+        return sc.createFixedPointIteration(variables, this.config.maxIterations, sccNumber, env);
+    }
+
+    private List<ModelDescription.ScalarVariable> getScalarVariables(Set<Variable> variables) {
+        return variables.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
     }
 
     private List<Set<Variable>> optimizeInstantiationOrder(List<Variable> instantiationOrder) {
@@ -168,6 +214,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         return optimizedOrder;
     }
 
+
     private boolean canBeOptimized(Variable variable1, Variable variable2) {
         return variable1.scalarVariable.getInstance() == variable2.scalarVariable.getInstance() &&
                 variable2.scalarVariable.getScalarVariable().causality == variable1.scalarVariable.getScalarVariable().causality &&
@@ -175,7 +222,7 @@ public class Initializer implements IMaestroExpansionPlugin {
     }
 
     private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> createInputOutputMapping(
-            List<UnitRelationship.Relation> relations, ISimulationEnvironment env) {
+            List<Fmi2SimulationEnvironment.Relation> relations, ISimulationEnvironment env) {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
                 inputToOutputMapping = new HashMap<>();
 
@@ -201,24 +248,27 @@ public class Initializer implements IMaestroExpansionPlugin {
     }
 
     //Graph doesn't contain any loops and the ports gets passed in a topological sorted order
-    private void initializePort(Set<Variable> ports, StatementGeneratorContainer sc, ISimulationEnvironment env) throws ExpandException {
-        var scalarVariables = ports.stream().map(o -> o.scalarVariable.getScalarVariable()).collect(Collectors.toList());
+    private List<PStm> initializePort(Set<Variable> ports, StatementGeneratorContainer sc, Fmi2SimulationEnvironment env) throws ExpandException {
+        var scalarVariables = getScalarVariables(ports);
         var type = scalarVariables.iterator().next().getType().type;
         var instance = ports.stream().findFirst().get().scalarVariable.getInstance();
         var causality = scalarVariables.iterator().next().causality;
         long[] scalarValueIndices = GetValueRefIndices(scalarVariables);
-
+        List<PStm> stms = new Vector<>();
         //All members of the same set has the same causality, type and comes from the same instance
         if (causality == ModelDescription.Causality.Output) {
-            getValueFromPort(sc, instance, type, scalarValueIndices);
-            return;
+            var statements = sc.getValueStm(instance.getText(), null, scalarValueIndices, type);
+            stms.addAll(statements);
+        } else {
+            stms.addAll(sc.setValueOnPortStm(instance, type, scalarVariables, scalarValueIndices, env));
         }
-        setValueOnPort(sc, instance, type, scalarVariables, scalarValueIndices, env);
+        return stms;
     }
 
 
-    private void SetComponentsVariables(ISimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
+    private List<PStm> setComponentsVariables(Fmi2SimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
             Predicate<ModelDescription.ScalarVariable> predicate) {
+        List<PStm> stms = new Vector<>();
         knownComponentNames.forEach(comp -> {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
@@ -228,7 +278,7 @@ public class Initializer implements IMaestroExpansionPlugin {
                     variablesToInitialize.forEach((type, variables) -> {
 
                         try {
-                            setValueOnPort(sc, comp, type, variables, GetValueRefIndices(variables), env);
+                            stms.addAll(sc.setValueOnPortStm(comp, type, variables, GetValueRefIndices(variables), env));
                         } catch (ExpandException e) {
                             e.printStackTrace();
                         }
@@ -238,78 +288,11 @@ public class Initializer implements IMaestroExpansionPlugin {
                 logger.error(e.getMessage());
             }
         });
+        return stms;
     }
 
     private long[] GetValueRefIndices(List<ModelDescription.ScalarVariable> variables) {
         return variables.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
-    }
-
-    private void setValueOnPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            List<ModelDescription.ScalarVariable> variables, long[] scalarValueIndices, ISimulationEnvironment env) throws ExpandException {
-        ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
-        ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
-
-        if (type == ModelDescription.Types.Boolean) {
-            sc.setBooleans(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
-        } else if (type == ModelDescription.Types.Real) {
-            sc.setReals(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.Integer) {
-            sc.setIntegers(comp.getText(), scalarValueIndices,
-                    Arrays.stream(GetValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.String) {
-            sc.setStrings(comp.getText(), scalarValueIndices,
-                    (String[]) Arrays.stream(GetValues(variables, modelInstances)).map(o -> o.toString()).toArray());
-        } else {
-            throw new ExpandException("Unrecognised type: " + type.name());
-        }
-
-    }
-
-    private Object[] GetValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
-        Object[] values = new Object[variables.size()];
-        var i = 0;
-        for (ModelDescription.ScalarVariable v : variables) {
-            values[i++] = getNewValue(v, modelInstance);
-        }
-        return values;
-    }
-
-    private Object getNewValue(ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
-        Object newVal = null;
-        if (sv.type.start != null) {
-            newVal = sv.type.start;
-        }
-
-        for (ModelParameter par : modelParameters) {
-            if (par.variable.toString().equals(comp + "." + sv.name)) {
-                newVal = par.value;
-                par.isSet = true;
-            }
-        }
-        if (sv.type.type == ModelDescription.Types.Real) {
-            if (newVal instanceof Integer) {
-                newVal = (double) (int) newVal;
-            }
-        }
-
-        return newVal;
-    }
-
-    private void getValueFromPort(StatementGeneratorContainer sc, LexIdentifier comp, ModelDescription.Types type,
-            long[] scalarValueIndices) throws ExpandException {
-        if (type == ModelDescription.Types.Boolean) {
-            sc.getBooleans(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Real) {
-            sc.getReals(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.Integer) {
-            sc.getIntegers(comp.getText(), scalarValueIndices);
-        } else if (type == ModelDescription.Types.String) {
-            sc.getStrings(comp.getText(), scalarValueIndices);
-        } else {
-            throw new ExpandException("Unrecognised type: " + type.name());
-        }
     }
 
     private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws ExpandException {
@@ -362,12 +345,17 @@ public class Initializer implements IMaestroExpansionPlugin {
         if (root instanceof ArrayNode) {
             root = root.get(0);
         }
+
         JsonNode parameters = root.get("parameters");
         JsonNode verify = root.get("verifyAgainstProlog");
+        JsonNode stabilisation = root.get("stabilisation");
+        JsonNode fixedPointIteration = root.get("fixedPointIteration");
+        JsonNode absoluteTolerance = root.get("absoluteTolerance");
+        JsonNode relativeTolerance = root.get("relativeTolerance");
 
         Config conf = null;
         try {
-            conf = new Config(parameters, verify);
+            conf = new Config(parameters, verify, stabilisation, fixedPointIteration, absoluteTolerance, relativeTolerance);
         } catch (InvalidVariableStringException e) {
             e.printStackTrace();
         }
@@ -376,10 +364,16 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     public static class Config implements IPluginConfiguration {
 
+        public final boolean Stabilisation;
         private final List<ModelParameter> modelParameters;
         private final boolean verifyAgainstProlog;
+        private final int maxIterations;
+        private final double absoluteTolerance;
+        private final double relativeTolerance;
 
-        public Config(JsonNode parameters, JsonNode verify) throws InvalidVariableStringException {
+
+        public Config(JsonNode parameters, JsonNode verify, JsonNode stabilisation, JsonNode fixedPointIteration, JsonNode absoluteTolerance,
+                JsonNode relativeTolerance) throws InvalidVariableStringException {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> result = mapper.convertValue(parameters, new TypeReference<>() {
             });
@@ -388,6 +382,30 @@ public class Initializer implements IMaestroExpansionPlugin {
                 verifyAgainstProlog = false;
             } else {
                 verifyAgainstProlog = verify.asBoolean(false);
+            }
+
+            if (stabilisation == null) {
+                Stabilisation = false;
+            } else {
+                Stabilisation = stabilisation.asBoolean(false);
+            }
+
+            if (fixedPointIteration == null) {
+                maxIterations = 5;
+            } else {
+                maxIterations = fixedPointIteration.asInt(5);
+            }
+
+            if (absoluteTolerance == null) {
+                this.absoluteTolerance = 0.2;
+            } else {
+                this.absoluteTolerance = absoluteTolerance.asDouble(0.2);
+            }
+
+            if (relativeTolerance == null) {
+                this.relativeTolerance = 0.1;
+            } else {
+                this.relativeTolerance = relativeTolerance.asDouble(0.1);
             }
         }
 

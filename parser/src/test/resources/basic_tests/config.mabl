@@ -1,0 +1,5 @@
+ simulation
+ {
+    @Config("some config");
+    m();
+ }

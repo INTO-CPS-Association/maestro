@@ -1,6 +1,6 @@
 package org.intocps.maestro;
 
-import org.antlr.v4.runtime.Token;
+import org.intocps.maestro.ast.LexToken;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableMessage;
@@ -23,7 +23,7 @@ public class ErrorReporter implements IErrorReporter {
     }
 
     @Override
-    public void report(int number, String problem, Token location) {
+    public void report(int number, String problem, LexToken location) {
         if (suppress) {
             return;
         }
@@ -40,7 +40,7 @@ public class ErrorReporter implements IErrorReporter {
     }
 
     @Override
-    public void warning(int number, String problem, Token location) {
+    public void warning(int number, String problem, LexToken location) {
         if (suppress) {
             return;
         }

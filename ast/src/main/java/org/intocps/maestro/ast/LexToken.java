@@ -47,4 +47,9 @@ public class LexToken extends Token {
     public <Q, A> A apply(IQuestionAnswer<Q, A> caller, Q question) throws AnalysisException {
         return caller.defaultIToken(this, question);
     }
+
+    @Override
+    public String toString() {
+        return "'" + getText() + "' at " + getLine() + ":" + getPos();
+    }
 }

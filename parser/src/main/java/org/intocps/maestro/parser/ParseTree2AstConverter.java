@@ -69,14 +69,36 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         ASimulationSpecificationCompilationUnit unit = new ASimulationSpecificationCompilationUnit();
 
-        unit.setBody((PStm) this.visit(ctx.block()));
+        unit.setBody((PStm) this.visit(ctx.statement()));
 
         if (ctx.imports != null && !ctx.imports.isEmpty()) {
-            unit.setImports(ctx.imports.stream().map(c -> convert(c)).collect(Collectors.toList()));
+            unit.setImports(ctx.imports.stream().map(this::convert).collect(Collectors.toList()));
+        }
+
+        if (ctx.framework() != null && !ctx.framework().isEmpty()) {
+            unit.setFramework(ctx.framework().names.stream()
+                    .map(s -> new LexIdentifier(s.getText().substring(1, s.getText().length() - 1), convertToLexToken(s)))
+                    .collect(Collectors.toList()));
+        }
+
+        if (ctx.frameworkConfigs() != null && !ctx.frameworkConfigs().isEmpty()) {
+            unit.setFrameworkConfigs(ctx.frameworkConfigs().stream().map(this::visit).map(AConfigFramework.class::cast).collect(Collectors.toList()));
         }
 
         return unit;
 
+    }
+
+    @Override
+    public INode visitFrameworkConfigs(MablParser.FrameworkConfigsContext ctx) {
+        AConfigFramework config = new AConfigFramework();
+        config.setName(new LexIdentifier(ctx.frameworkName.getText().substring(1, ctx.frameworkName.getText().length() - 1),
+                convertToLexToken(ctx.frameworkName)));
+        if (ctx.config != null) {
+            config.setConfig(ctx.config.getText().substring(1, ctx.config.getText().length() - 1));
+        }
+
+        return config;
     }
 
     @Override
@@ -102,8 +124,16 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
+    public INode visitConfig(MablParser.ConfigContext ctx) {
+        AConfigStm config = new AConfigStm();
+        config.setConfig(ctx.config.getText().substring(1, ctx.STRING_LITERAL().getText().length() - 1));
+        return config;
+    }
+
+    @Override
     public INode visitBreak(MablParser.BreakContext ctx) {
-        return new ABreakStm();
+
+        return new ABreakStm(convertToLexToken(ctx.BREAK().getSymbol()));
     }
 
     @Override
@@ -117,37 +147,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return assign;
     }
 
+
     @Override
     public INode visitArrayStateDesignator(MablParser.ArrayStateDesignatorContext ctx) {
         AArrayStateDesignator designator = new AArrayStateDesignator();
         designator.setTarget((PStateDesignator) this.visit(ctx.stateDesignator()));
-        designator.setExp((SLiteralExp) this.visit(ctx.literal()));
+        designator.setExp((PExp) this.visit(ctx.expression()));
         return designator;
-    }
-
-    //    @Override
-    //    public INode visitAssignmentStm(MablParser.AssignmentStmContext ctx) {
-    //
-    //        ctx.assignment()
-    //
-    //        AAssigmentStm assign = new AAssigmentStm();
-    //
-    //        AIdentifierExp identifierExp = new AIdentifierExp();
-    //        identifierExp.setName(convert(ctx.assignment().IDENTIFIER()));
-    //
-    //        assign.setIdentifier(identifierExp.g);
-    //        assign.setExp((PExp) this.visit(ctx.assignment().expression()));
-    //
-    //        return assign;
-    //    }
-
-
-    @Override
-    public INode visitUnaryExp(MablParser.UnaryExpContext ctx) {
-        if (ctx.op.getText().equals("!")) {
-            return new ANotUnaryExp((PExp) this.visit(ctx.expression()));
-        }
-        return super.visitUnaryExp(ctx);
     }
 
     @Override
@@ -168,26 +174,107 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitPlusMinusExp(MablParser.PlusMinusExpContext ctx) {
-        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
-        if (ctx.ADD() != null) {
-            return new APlusBinaryExp(exps.get(0), exps.get(1));
+    public INode visitBinaryExp(MablParser.BinaryExpContext ctx) {
+
+        SBinaryExp exp = null;
+        if (ctx.MUL() != null) {
+            exp = new AMultiplyBinaryExp();
+        } else if (ctx.DIV() != null) {
+            exp = new ADivideBinaryExp();
+        } else if (ctx.ADD() != null) {
+            exp = new APlusBinaryExp();
         } else if (ctx.SUB() != null) {
-            return new AMinusBinaryExp(exps.get(0), exps.get(1));
+            exp = new AMinusBinaryExp();
+        } else if (ctx.LE() != null) {
+            exp = new ALessEqualBinaryExp();
+        } else if (ctx.GE() != null) {
+            exp = new AGreaterEqualBinaryExp();
+        } else if (ctx.GT() != null) {
+            exp = new AGreaterBinaryExp();
+        } else if (ctx.LT() != null) {
+            exp = new ALessBinaryExp();
+        } else if (ctx.EQUAL() != null) {
+            exp = new AEqualBinaryExp();
+        } else if (ctx.NOTEQUAL() != null) {
+            exp = new ANotEqualBinaryExp();
+        } else if (ctx.AND() != null) {
+            exp = new AAndBinaryExp();
+        } else if (ctx.OR() != null) {
+            exp = new AOrBinaryExp();
+        }
+
+        exp.setLeft((PExp) this.visit(ctx.left));
+        exp.setRight((PExp) this.visit(ctx.right));
+
+        return exp;
+    }
+
+    @Override
+    public INode visitParenExp(MablParser.ParenExpContext ctx) {
+        return new AParExp((PExp) this.visit(ctx.expression()));
+    }
+
+    @Override
+    public INode visitLiteralExp(MablParser.LiteralExpContext ctx) {
+        return this.visit(ctx.literal());
+    }
+
+    @Override
+    public INode visitDotPrefixExp(MablParser.DotPrefixExpContext ctx) {
+
+        PExp root = (PExp) this.visit(ctx.expression());
+
+        if (ctx.IDENTIFIER() != null) {
+            //field access
+            AFieldExp fieldExp = new AFieldExp();
+            fieldExp.setRoot(root);
+            fieldExp.setField(convert(ctx.IDENTIFIER()));
+            return fieldExp;
+        } else if (ctx.methodCall() != null) {
+            //object call
+            ACallExp call = (ACallExp) this.visit(ctx.methodCall());
+            call.setObject(root);
+            return call;
         }
 
         return null;
     }
 
     @Override
-    public INode visitArrayIndexExp(MablParser.ArrayIndexExpContext ctx) {
+    public INode visitPlainMetodExp(MablParser.PlainMetodExpContext ctx) {
+        return this.visit(ctx.methodCall());
+    }
 
+
+    @Override
+    public INode visitUnaryExp(MablParser.UnaryExpContext ctx) {
+        SUnaryExp exp = null;
+        if (ctx.BANG() != null) {
+            exp = new ANotUnaryExp();
+        } else if (ctx.ADD() != null) {
+            exp = new APlusUnaryExp();
+        } else if (ctx.SUB() != null) {
+            exp = new AMinusUnaryExp();
+        }
+        exp.setExp((PExp) this.visit(ctx.expression()));
+
+        return exp;
+    }
+
+    @Override
+    public INode visitIdentifierExp(MablParser.IdentifierExpContext ctx) {
+        return new AIdentifierExp(convert(ctx.IDENTIFIER()));
+    }
+
+    @Override
+
+    public INode visitArrayIndex(MablParser.ArrayIndexContext ctx) {
         AArrayIndexExp apply = new AArrayIndexExp();
 
         apply.setArray((PExp) this.visit(ctx.array));
 
-        if (ctx.indecies != null) {
-            apply.setIndices(ctx.indecies.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        if (ctx.index != null) {
+            apply.setIndices(Collections.singletonList((PExp) this.visit(ctx.index)));
         }
         return apply;
     }
@@ -198,26 +285,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitLoadExp(MablParser.LoadExpContext ctx) {
-        ALoadExp exp = new ALoadExp();
-        exp.setArgs(ctx.expressionList().expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
-        return exp;
-    }
-
-    @Override
-    public INode visitUnloadExp(MablParser.UnloadExpContext ctx) {
-        AUnloadExp exp = new AUnloadExp();
-
-        AIdentifierExp identifierExp = new AIdentifierExp();
-        identifierExp.setName(convert(ctx.IDENTIFIER()));
-
-        exp.setArgs(Collections.singletonList(identifierExp));
-        return exp;
-    }
-
-    @Override
     public INode visitParExpression(MablParser.ParExpressionContext ctx) {
-        return this.visit(ctx.expression());
+        return new AParExp((PExp) this.visit(ctx.expression()));
     }
 
     void checkList(List source, List processed) {
@@ -237,24 +306,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitFieldExp(MablParser.FieldExpContext ctx) {
-        return this.visitFieldExpression(ctx.fieldExpression());
-    }
-
-    @Override
-    public INode visitFieldExpression(MablParser.FieldExpressionContext ctx) {
-
-        AFieldExp fieldExp = new AFieldExp();
-        fieldExp.setField(convert(ctx.field));
-        if (ctx.root != null) {
-            fieldExp.setRoot(MableAstFactory.newAIdentifierExp(convert(ctx.root)));
-        } else if (ctx.rootExp != null) {
-            fieldExp.setRoot((PExp) this.visitFieldExpression(ctx.rootExp));
-        }
-        return fieldExp;
-    }
-
-    @Override
     public INode visitMethodCall(MablParser.MethodCallContext ctx) {
 
         ACallExp call = new ACallExp();
@@ -270,27 +321,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         }
 
         call.setMethodName(convert(ctx.IDENTIFIER()));
+
+        if (call.getMethodName().getText().equals("load")) {
+            ALoadExp load = new ALoadExp();
+            load.setArgs(call.getArgs());
+            return load;
+        } else if (call.getMethodName().getText().equals("unload")) {
+            AUnloadExp unload = new AUnloadExp();
+            unload.setArgs(call.getArgs());
+            return unload;
+        }
+
         return call;
-    }
-
-    //    @Override
-    //    public INode visitDotExp(MablParser.DotExpContext ctx) {
-    //
-    //        ADotExp exp = new ADotExp();
-    //        exp.setRoot(convertToExp(ctx.IDENTIFIER(0)));
-    //        if (ctx.methodCall() != null) {
-    //            exp.setExp((PExp) this.visit(ctx.methodCall()));
-    //        }
-    //        if (ctx.IDENTIFIER(2) != null) {
-    //            exp.setExp(convertToExp(ctx.IDENTIFIER(2)));
-    //        }
-    //
-    //        return exp;
-    //    }
-
-    @Override
-    public INode visitIdentifierExp(MablParser.IdentifierExpContext ctx) {
-        return this.convertToExp(ctx.IDENTIFIER());
     }
 
     @Override
@@ -299,39 +341,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         stm.setExp((PExp) this.visit(ctx.statementExpression));
         return stm;
     }
-
-    @Override
-    public INode visitCallExp(MablParser.CallExpContext ctx) {
-
-        return this.visitMethodCall(ctx.methodCall());
-    }
-
-    @Override
-    public INode visitObjectCallExp(MablParser.ObjectCallExpContext ctx) {
-        ACallExp call = (ACallExp) this.visitMethodCall(ctx.methodCall());
-        call.setObject((PExp) this.visitFieldOrIdentifier(ctx.fieldOrIdentifier()));
-        return call;
-    }
-
-    //    @Override
-    //    public INode visitMethodExternalCallStm(MablParser.MethodExternalCallStmContext ctx) {
-    //
-    //        AExternalStm stm = new AExternalStm();
-    //        stm.setCall((ACallExp) this.visit(ctx.methodCall()));
-    //        return stm;
-    //    }
-
-
-    @Override
-    public INode visitFieldOrIdentifier(MablParser.FieldOrIdentifierContext ctx) {
-
-        if (ctx.fieldExpression() != null) {
-            return this.visitFieldExpression(ctx.fieldExpression());
-        } else {
-            return convertToExp(ctx.IDENTIFIER());
-        }
-    }
-
 
     @Override
     public INode visitIf(MablParser.IfContext ctx) {
@@ -370,60 +379,9 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitNumberComparizonExp(MablParser.NumberComparizonExpContext ctx) {
-        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
-
-        PExp left = exps.get(0);
-        PExp right = exps.get(1);
-
-        if (ctx.GE() != null) {
-            return new AGreaterEqualBinaryExp(left, right);
-        }
-        if (ctx.GT() != null) {
-            return new AGreaterBinaryExp(left, right);
-        }
-        if (ctx.LE() != null) {
-            return new ALessEqualBinaryExp(left, right);
-        }
-        if (ctx.LT() != null) {
-            return new ALessBinaryExp(left, right);
-        }
-
-        return null;
-
-    }
-
-    @Override
-    public INode visitEqualityExp(MablParser.EqualityExpContext ctx) {
-        List<PExp> exps = ctx.expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
-        PExp left = exps.get(0);
-        PExp right = exps.get(1);
-
-        if (ctx.EQUAL() != null) {
-            return new AEqualBinaryExp(left, right);
-        } else {
-            return new ANotEqualBinaryExp(left, right);
-        }
-    }
-
-    @Override
     public INode visitLocalVariable(MablParser.LocalVariableContext ctx) {
         return this.visit(ctx.variableDeclarator());
     }
-    //
-    //        AVariableDeclaration def = new AVariableDeclaration();
-    //
-    //        def.setType((PType) this.visit(ctx.type));
-    //        def.setName(convert(ctx.var.varid.IDENTIFIER()));
-    //        MablParser.VariableInitializerContext initializer = ctx.var.initializer;
-    //        if (initializer != null) {
-    //            def.setInitializer((PInitializer) this.visit(initializer));
-    //        }
-    //
-    //        ALocalVariableStm var = new ALocalVariableStm();
-    //        var.setDeclaration(def);
-    //        return var;
-    //    }
 
     @Override
     public INode visitArrayInit(MablParser.ArrayInitContext ctx) {
@@ -453,10 +411,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             literal.setValue(Integer.parseInt(ctx.DECIMAL_LITERAL().getText()));
             return literal;
         } else if (ctx.FLOAT_LITERAL() != null) {
-            //            AUIntLiteralExp literal = new AUIntLiteralExp();
-            //            literal.setValue(Long.parseLong(ctx.FLOAT_LITERAL().getText()));
-            //            return literal;
-
             ARealLiteralExp literal = new ARealLiteralExp();
             literal.setValue(Double.parseDouble(ctx.FLOAT_LITERAL().getText()));
             return literal;
@@ -466,8 +420,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             //remove quotes
             literal.setValue((ctx.STRING_LITERAL().getText().substring(1, ctx.STRING_LITERAL().getText().length() - 1)));
             return literal;
+        } else if (ctx.NULL_LITERAL() != null) {
+            ANullExp literal = new ANullExp();
+            //remove quotes
+            literal.setToken(convertToLexToken(ctx.NULL_LITERAL().getSymbol()));
+            return literal;
         }
         throw new RuntimeException("unsupported literal");
+    }
+
+    @Override
+    public INode visitExpandMapping(MablParser.ExpandMappingContext ctx) {
+        return new AInstanceMappingStm(convert(ctx.identifier), ctx.name.getText().substring(1, ctx.name.getText().length() - 1));
     }
 
     @Override
@@ -487,7 +451,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
-    public INode visitUnitType(MablParser.UnitTypeContext ctx) {
+    public INode visitUintType(MablParser.UintTypeContext ctx) {
         return new AUIntNumericPrimitiveType();
     }
 
@@ -502,20 +466,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     private LexIdentifier convert(Token identifier) {
-        return new LexIdentifier(identifier.getText(), identifier);
+        return new LexIdentifier(identifier.getText(), convertToLexToken(identifier));
     }
 
     private LexIdentifier convert(TerminalNode identifier) {
-        return new LexIdentifier(identifier.getText(), identifier.getSymbol());
+        return new LexIdentifier(identifier.getText(), convertToLexToken(identifier.getSymbol()));
     }
 
-    private AIdentifierExp convertToExp(TerminalNode identifier) {
-        AIdentifierExp exp = new AIdentifierExp();
-
-        exp.setName(convert(identifier));
-
-        return exp;
-    }
 
     @Override
     public INode visitTypeType(MablParser.TypeTypeContext ctx) {

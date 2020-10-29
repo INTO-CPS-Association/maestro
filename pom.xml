@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.intocps</groupId>
+    <groupId>org.into-cps.maestro</groupId>
     <artifactId>root</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>root</name>
+    <name>Maestro Root</name>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -24,6 +30,11 @@
             <name>maestro2-third-party</name>
             <url>http://overture.au.dk/artifactory/maestro2-third-party</url>
         </repository>
+        <repository>
+            <id>overture.au.dk</id>
+            <name>overture.au.dk-releases</name>
+            <url>http://overture.au.dk/artifactory/into-cps</url>
+        </repository>
 
     </repositories>
 
@@ -35,13 +46,91 @@
         <module>maestro</module>
         <module>interpreter</module>
         <module>plugins</module>
-        <module>webapi</module>
+        <module>frameworks</module>
+        <module>maestro-webapi</module>
     </modules>
 
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.5</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
 
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>3.0.0-M1</version>
+                    <configuration>
+                        <releaseProfiles>release-sign-artifacts,release-sources-javadoc
+                        </releaseProfiles>
+                        <tagNameFormat>Release/@{project.version}</tagNameFormat>
+                    </configuration>
+                </plugin>
+
+
+                <!-- Attatch sources to all installed jars -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <attach>true</attach>
+                    </configuration>
+                </plugin>
+                <!-- Enable JavaDoc but dont fail on error. This must be disabled for
+                     the Eclipse project in the IDE -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                        <quiet>true</quiet>
+                        <attach>true</attach>
+                    </configuration>
+                </plugin>
+
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
@@ -50,27 +139,30 @@
                 <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.8.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.2</version>
+                    <version>3.0.0-M4</version>
+                    <configuration>
+                        <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>2.5.2</version>
+                    <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
+                    <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -90,7 +182,14 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.1</version>
+                </plugin>
+
+                <plugin>
+                    <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.3.0</version>
                 </plugin>
 
 
@@ -180,8 +279,43 @@
             </dependency>
 
             <dependency>
+                <groupId>org.into-cps.orchestration</groupId>
+                <artifactId>coe</artifactId>
+                <version>1.0.10</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.6</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.11</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.9</version>
+            </dependency>
+
+
+            <dependency>
                 <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
+                <version>${fmu.api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.into-cps</groupId>
+                <artifactId>modeldefinition</artifactId>
                 <version>${fmu.api.version}</version>
             </dependency>
 
@@ -192,13 +326,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <distributionManagement>
-        <site>
-            <id>${project.artifactId}-site</id>
-            <url>${project.baseUri}</url>
-        </site>
-    </distributionManagement>
 
     <dependencies>
 
@@ -230,4 +357,114 @@
             <artifactId>log4j-1.2-api</artifactId>
         </dependency>
     </dependencies>
+
+    <organization>
+        <name>INTO CPS</name>
+        <url>http://into-cps.org/</url>
+    </organization>
+
+    <scm>
+        <url>git@github.com:INTO-CPS-Association/maestro</url>
+        <connection>scm:git:git//github.com/INTO-CPS-Association/maestro
+        </connection>
+        <developerConnection>
+            scm:git:git@github.com:INTO-CPS-Association/maestro
+        </developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>thule</id>
+            <email>casper.thule@eng.au.dk</email>
+            <name>Casper Thule</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>productowner</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>https://eng.au.dk</organizationUrl>
+        </developer>
+        <developer>
+            <id>lausdahl</id>
+            <email>lausdahl@eng.au.dk</email>
+            <name>Kenneth Lausdahl</name>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <organization>Aarhus University</organization>
+            <organizationUrl>http://eng.au.dk/</organizationUrl>
+        </developer>
+
+    </developers>
+
+    <licenses>
+        <license>
+            <name>INTO-CPS Association Public License</name>
+            <url>https://github.com/INTO-CPS-Association/INTO-CPS-Association.github.io/blob/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>release-sources-javadoc</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>overture.au.dk-snapshots</name>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
 </project>

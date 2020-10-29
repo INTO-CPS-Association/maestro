@@ -1,22 +1,36 @@
 package org.intocps.maestro.interpreter;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.intocps.fmi.*;
 import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class FmiInterpreter {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
+    private final File workingDirectory;
+
+    public FmiInterpreter(File workingDirectory) {
+        this.workingDirectory = workingDirectory;
+    }
 
     static boolean getBool(Value value) {
 
@@ -90,14 +104,13 @@ public class FmiInterpreter {
     }
 
 
-    public ModuleValue createFmiValue(String path, String guid) throws InterpreterException {
+    public Value createFmiValue(String path, String guid) throws InterpreterException {
 
         try {
             long startExecTime = System.nanoTime();
             final IFmu fmu = Factory.create(new File(path));
 
             fmu.load();
-
 
             Map<String, Value> functions = new HashMap<>();
 
@@ -112,10 +125,51 @@ public class FmiInterpreter {
                 try {
 
                     long startInstantiateTime = System.nanoTime();
+
+                    logger.debug(String.format("Loading native FMU. GUID: %s, NAME: %s", "" + guid, "" + name));
+
+                    BufferedOutputStream fmuLogOutputStream =
+                            new BufferedOutputStream(new FileOutputStream(new File(workingDirectory, name + ".log")));
+
+                    final String formatter = "{} {} {} {}";
+                    String pattern = "%d{ISO8601} %-5p - %m%n";
+
+                    Layout layout = PatternLayout.newBuilder().withPattern(pattern).withCharset(StandardCharsets.UTF_8).build();//
                     IFmiComponent component = fmu.instantiate(guid, name, visible, logginOn, new IFmuCallback() {
                         @Override
                         public void log(String instanceName, Fmi2Status status, String category, String message) {
                             logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
+                            {
+
+                                Log4jLogEvent.Builder builder = Log4jLogEvent.newBuilder()
+                                        .setMessage(new ParameterizedMessage(formatter, category, status, instanceName, message));
+
+
+                                switch (status) {
+                                    case OK:
+                                    case Discard:
+                                    case Pending:
+                                        builder.setLevel(Level.INFO);
+                                        break;
+                                    case Error:
+                                    case Fatal:
+                                        builder.setLevel(Level.ERROR);
+                                    case Warning:
+                                        builder.setLevel(Level.WARN);
+                                        break;
+                                    default:
+                                        builder.setLevel(Level.TRACE);
+                                        break;
+                                }
+
+                                try {
+                                    Log4jLogEvent event = builder.build();
+                                    fmuLogOutputStream.write(layout.toByteArray(event));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
                         }
 
                         @Override
@@ -124,8 +178,30 @@ public class FmiInterpreter {
                         }
                     });
 
+                    if (component == null) {
+                        logger.debug("Component instantiate failed");
+                        return new NullValue();
+                    }
+
                     //populate component functions
                     Map<String, Value> componentMembers = new HashMap<>();
+
+                    componentMembers.put("fmi2SetDebugLogging", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 3);
+
+                        boolean debugLogginOn = getBool(fcargs.get(0));
+                        //                        int arraySize = getInteger(fcargs.get(1));
+                        List<StringValue> categories = getArrayValue(fcargs.get(2), StringValue.class);
+
+                        try {
+                            Fmi2Status res =
+                                    component.setDebugLogging(debugLogginOn, categories.stream().map(StringValue::getValue).toArray(String[]::new));
+                            return new IntegerValue(res.value);
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+                    }));
 
                     componentMembers.put("setupExperiment", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
@@ -381,13 +457,169 @@ public class FmiInterpreter {
                         }
                     }));
 
+                    componentMembers.put("setState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+                        checkArgLength(fcargs, 1);
+
+                        Value v = fcargs.get(0).deref();
+
+                        if (v instanceof FmuComponentStateValue) {
+                            try {
+                                FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                                Fmi2Status res = component.setState(stateValue.getModule());
+                                return new IntegerValue(res.value);
+                            } catch (FmuInvocationException e) {
+                                throw new InterpreterException(e);
+                            }
+                        }
+
+                        throw new InterpreterException("Invalid value");
+                    }));
+                    componentMembers.put("getState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 1);
+
+                        if (!(fcargs.get(0) instanceof UpdatableValue)) {
+                            throw new InterpreterException("value not a reference value");
+                        }
+
+
+                        try {
+
+                            FmuResult<IFmiComponentState> res = component.getState();
+
+                            if (res.status == Fmi2Status.OK) {
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(0);
+                                ref.setValue(new FmuComponentStateValue(res.result));
+                            }
+
+
+                            return new IntegerValue(res.status.value);
+
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+
+                    }));
+                    componentMembers.put("freeState", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 1);
+
+                        Value v = fcargs.get(0).deref();
+
+                        if (v instanceof FmuComponentStateValue) {
+                            try {
+                                FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                                Fmi2Status res = component.freeState(stateValue.getModule());
+                                return new IntegerValue(res.value);
+                            } catch (FmuInvocationException e) {
+                                throw new InterpreterException(e);
+                            }
+                        }
+
+                        throw new InterpreterException("Invalid value");
+
+
+                    }));
+
+                    componentMembers.put("getRealStatus", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+                        checkArgLength(fcargs, 2);
+
+                        if (!(fcargs.get(1) instanceof UpdatableValue)) {
+                            throw new InterpreterException("value not a reference value");
+                        }
+
+                        Value kindValue = fcargs.get(0).deref();
+
+                        if (!(kindValue instanceof IntegerValue)) {
+                            throw new InterpreterException("Invalid kind value: " + kindValue);
+                        }
+
+                        int kind = ((IntegerValue) kindValue).getValue();
+
+                        Fmi2StatusKind kindEnum = Arrays.stream(Fmi2StatusKind.values()).filter(v -> v.value == kind).findFirst().orElse(null);
+
+                        try {
+                            FmuResult<Double> res = component.getRealStatus(kindEnum);
+
+                            if (res.status == Fmi2Status.OK) {
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(1);
+
+                                ref.setValue(new RealValue(res.result));
+                            }
+
+
+                            return new IntegerValue(res.status.value);
+
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+
+                    }));
+
+                    componentMembers.put("getRealOutputDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
+                        //   int getRealOutputDerivatives(long[] scalarValueIndices, UInt nvr, int[] order, ref double[] derivatives);
+                        checkArgLength(fcargs, 4);
+
+                        if (!(fcargs.get(3) instanceof UpdatableValue)) {
+                            throw new InterpreterException("value not a reference value");
+                        }
+
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
+
+                        int[] orders = getArrayValue(fcargs.get(2), NumericValue.class).stream().mapToInt(NumericValue::intValue).toArray();
+
+
+                        try {
+                            FmuResult<double[]> res = component.getRealOutputDerivatives(scalarValueIndices, orders);
+
+                            if (res.status == Fmi2Status.OK) {
+                                UpdatableValue ref = (UpdatableValue) fcargs.get(3);
+
+                                List<RealValue> values =
+                                        Arrays.stream(ArrayUtils.toObject(res.result)).map(d -> new RealValue(d)).collect(Collectors.toList());
+
+                                ref.setValue(new ArrayValue<>(values));
+                            }
+
+
+                            return new IntegerValue(res.status.value);
+
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+
+                    }));
+
+                    componentMembers.put("setRealInputDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
+                        // int setRealInputDerivatives(UInt[] scalarValueIndices, UInt nvr, int[] order, ref real[] derivatives);
+                        checkArgLength(fcargs, 4);
+                        long[] scalarValueIndices =
+                                getArrayValue(fcargs.get(0), NumericValue.class).stream().mapToLong(NumericValue::longValue).toArray();
+
+                        int[] orders = getArrayValue(fcargs.get(2), NumericValue.class).stream().mapToInt(NumericValue::intValue).toArray();
+
+                        double[] values = getArrayValue(fcargs.get(3), RealValue.class).stream().mapToDouble(RealValue::getValue).toArray();
+
+                        try {
+                            Fmi2Status res = component.setRealInputDerivatives(scalarValueIndices, orders, values);
+                            return new IntegerValue(res.value);
+                        } catch (FmuInvocationException e) {
+                            throw new InterpreterException(e);
+                        }
+
+                    }));
 
                     long stopInstantiateTime = System.nanoTime();
                     System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
-                    return new FmuComponentValue(componentMembers, component);
+                    return new FmuComponentValue(componentMembers, component, fmuLogOutputStream);
 
 
-                } catch (XPathExpressionException | FmiInvalidNativeStateException e) {
+                } catch (XPathExpressionException | FmiInvalidNativeStateException | IOException e) {
                     e.printStackTrace();
                 }
 
@@ -412,10 +644,11 @@ public class FmiInterpreter {
                 FmuComponentValue component = (FmuComponentValue) fargs.get(0);
 
                 try {
-                    component.getModule().freeInstance();
-                } catch (FmuInvocationException e) {
+                    component.getFmuLoggerOutputStream().close();
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
+
 
                 return new VoidValue();
             }));
@@ -446,7 +679,7 @@ public class FmiInterpreter {
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {
 
             e.printStackTrace();
-            throw new InterpreterException(e);
+            return new NullValue();
         }
     }
 }
