@@ -2,6 +2,7 @@ package org.intocps.maestro.webapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaestroV1CliProxy;
 import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
 import org.intocps.maestro.webapi.maestro2.Maestro2SimulationController;
@@ -10,7 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.io.PrintWriter;
 import java.util.HashMap;
 
 @SpringBootApplication
@@ -49,12 +50,19 @@ public class Application {
                 simulationData = new Maestro2SimulationController.SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
             }
 
-            File workingDirectory = Paths.get("").toFile();
-            Maestro2Broker mc = new Maestro2Broker(workingDirectory);
+            //use parent to output as working directory, if no output is specified this will default to execution directory
+            File workingDirectory = outputFile.getParentFile();
+            ErrorReporter reporter = new ErrorReporter();
+            Maestro2Broker mc = new Maestro2Broker(workingDirectory, reporter);
+            mc.setVerbose(verbose);
             try {
-                mc.build(initializationData, simulationData, null);
+                mc.buildAndRun(initializationData, simulationData, null, outputFile);
                 return true;
             } catch (Exception e) {
+                if (reporter.getErrorCount() > 0) {
+                    reporter.printWarnings(new PrintWriter(System.err, true));
+                    reporter.printErrors(new PrintWriter(System.err, true));
+                }
                 e.printStackTrace();
                 return false;
             }

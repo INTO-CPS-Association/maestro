@@ -45,7 +45,7 @@ public class Main {
         Option mablOpt =
                 Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
-        Option dumpLocation = Option.builder("d").longOpt("dump").desc("Path to a directory where the spec and rutime data will be dumped").build();
+        Option dumpLocation = Option.builder("d").longOpt("dump").desc("Path to a directory where the spec and runtime data will be dumped").build();
         Option dumpIntermediateSpecs = Option.builder("di").longOpt("dump-intermediate").desc("Dump intermediate specs during expansion").build();
 
         Options options = new Options();

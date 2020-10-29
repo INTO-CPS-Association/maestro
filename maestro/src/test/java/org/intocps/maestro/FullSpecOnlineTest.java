@@ -1,4 +1,5 @@
-import org.intocps.maestro.Mabl;
+package org.intocps.maestro;
+
 import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.junit.Test;

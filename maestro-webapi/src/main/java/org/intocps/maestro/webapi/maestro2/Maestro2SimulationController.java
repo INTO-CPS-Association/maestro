@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -37,6 +38,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -253,8 +256,18 @@ public class Maestro2SimulationController {
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
-        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory);
-        mc.build(logic.getInitializationData(), body, logic.getSocket());
+        ErrorReporter reporter = new ErrorReporter();
+        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
+        mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
+
+        if (reporter.getErrorCount() > 0) {
+            StringWriter out = new StringWriter();
+            PrintWriter writer = new PrintWriter(out);
+            reporter.printWarnings(writer);
+            reporter.printErrors(writer);
+            throw new Exception(out.toString());
+        }
+
         return getStatus(sessionId);
     }
 
