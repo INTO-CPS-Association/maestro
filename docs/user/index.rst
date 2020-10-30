@@ -17,5 +17,6 @@ Furthermore, if you wish to try a co-simulation please see :ref:`getting_started
 
    overview
    getting-started
+   getting-startedv2
    web-api
 
