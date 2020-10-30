@@ -34,9 +34,10 @@ To execute this (one can use the file corresponding wt-example.mabl from the unz
 
 .. code-block:: none
 
-    TO BE DONE
+    > java -jar maestro-2.x.x-jar-with-dependencies.jar --interpret wt-example.mabl
+        where --interpret is to interpret a specification
 
-The `pythoncsvplotter.py` can be used to plot the co-simulation results, which should look like below:
+The result is available in `outputs.csv`. This can be plotted with `pythoncsvplotter.py`, and the result should look like the figure below.
 
 .. _fig-watertankexample-result:
 .. figure:: images/wt-example-result.png
