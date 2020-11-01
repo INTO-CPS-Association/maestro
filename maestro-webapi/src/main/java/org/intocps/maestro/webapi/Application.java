@@ -26,10 +26,12 @@ public class Application {
         if (cmd.hasOption(MaestroV1CliProxy.oneShotOpt.getOpt()) || cmd.hasOption(MaestroV1CliProxy.portOpt.getOpt()) ||
                 cmd.hasOption(MaestroV1CliProxy.versionOpt.getOpt())) {
 
-            MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
+            if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
                 SpringApplication app = new SpringApplication(Application.class);
                 app.run("--server.port=" + port);
-            });
+            })) {
+                System.exit(1);
+            }
             return;
         }
         SpringApplication.run(Application.class, args);
