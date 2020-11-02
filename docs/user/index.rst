@@ -7,8 +7,11 @@
 
 User documentation
 ==================
-To get an overview of the Maestro2 approach to co-simulation please see :ref:`overview`.
-Furthermore, if you wish to try a co-simulation please see :ref:`getting_started`.
+The Maestro2 approach to co-simulation is presented and described in :ref:`overview`. 
+Overall, the approach consists of creating a specification in the domain specific language MaBL, verifying the specification and finally, executing the specification.
+There is a particular focus on making the FMI-commands explicit in the specification, but it is possible to define runtime behaviour that is not limited to MaBL.
+
+The ideal place to get a first impression of co-simulation with Maestro2 is :ref:`getting_started`.
 
 .. toctree::
    :numbered:
@@ -17,6 +20,8 @@ Furthermore, if you wish to try a co-simulation please see :ref:`getting_started
 
    overview
    getting-started
-   getting-startedv2
+   cli
    web-api
+   specification_components
+   runtime_components
 

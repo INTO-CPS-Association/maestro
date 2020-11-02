@@ -188,7 +188,7 @@ public class Main {
         if (!argumentHandler(args)) {
             exitCode = 1;
         }
-        System.exit(1);
+        System.exit(exitCode);
     }
 
     private static MaBLTemplateConfiguration generateTemplateSpecificationFromV1(MaestroV1SimulationConfiguration simulationConfiguration,

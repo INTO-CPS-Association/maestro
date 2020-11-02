@@ -19,5 +19,5 @@
     "type": "fixed-step",
     "size": 0.001
   },
-  "end_time": 10.0
+  "endTime": 10.0
 }

@@ -7,6 +7,7 @@ import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -49,6 +50,7 @@ public class DocumentationGettingStartedExamplesTest {
     }
 
     @Test
+    @Ignore("Ignored due to storing outputs.csv in non-target place")
     public void part2_json_parse() throws Exception {
         File configurationFile = new File(testFilesDirectory, "wt-example-config.json");
         File targetDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2");
@@ -58,9 +60,9 @@ public class DocumentationGettingStartedExamplesTest {
 
         FileUtils.deleteDirectory(targetDirectory);
 
-        assert (Main.argumentHandler(
-                new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--dump-intermediate", intermediateDirectory.getAbsolutePath(),
-                        "--dump", specificationDirectory.getAbsolutePath(), "--interpret", interpretSpecification.getAbsolutePath()}));
+        assert (Main.argumentHandler(new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump-intermediate",
+                intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
+                interpretSpecification.getAbsolutePath()}));
 
 
     }

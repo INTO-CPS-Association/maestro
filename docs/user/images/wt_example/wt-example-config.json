@@ -12,13 +12,13 @@
         ]
     },
     "parameters": {
-        "{controller}.crtlInstance.maxlevel": 5,
+        "{controller}.crtlInstance.maxlevel": 2,
         "{controller}.crtlInstance.minlevel": 1
     },
 
     "algorithm": {
         "type": "fixed-step",
-        "size": 0.001
+        "size": 0.1
     },
-    "end_time": 10.0
+    "endTime": 10.0
 }
