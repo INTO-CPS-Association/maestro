@@ -1,0 +1,135 @@
+simulation 
+import FixedStep;
+import TypeConverter;
+import Initializer;
+import DebugLogging;
+@Framework( "FMI2");
+@FrameworkConfig( "FMI2", "{\"fmus\":{\"{controller}\":\"src/test/resources/watertankcontroller-c.fmu\",\"{tank}\":\"src/test/resources/singlewatertank-20sim.fmu\"},\"connections\":{\"{controller}.crtlInstance.valve\":[\"{tank}.wtInstance.valvecontrol\"],\"{tank}.wtInstance.level\":[\"{controller}.crtlInstance.level\"]},\"parameters\":{\"{controller}.crtlInstance.maxlevel\":2,\"{controller}.crtlInstance.minlevel\":1},\"startTime\":0.0,\"endTime\":0.0,\"loggingOn\":false,\"visible\":false,\"algorithm\":{\"type\":\"fixed-step\",\"size\":0.001}}");
+{
+ 	bool global_execution_continue = true;
+	Math math = load("Math");
+	Logger logger = load("Logger");
+	DataWriter dataWriter = load("DataWriter");
+	FMI2 tank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+	if( (tank == null) )
+	{
+		global_execution_continue = false;
+	}
+	FMI2 controller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+	if( (controller == null) )
+	{
+		global_execution_continue = false;
+	}
+	@map wtInstance -> "wtInstance";
+	FMI2Component wtInstance = null;
+	if( (global_execution_continue) )
+	{
+			wtInstance = tank.instantiate("wtInstance", false, false);
+			if( (wtInstance == null) )
+			{
+				global_execution_continue = false;
+			}
+	}
+	@map crtlInstance -> "crtlInstance";
+	FMI2Component crtlInstance = null;
+	if( (global_execution_continue) )
+	{
+			crtlInstance = controller.instantiate("crtlInstance", false, false);
+			if( (crtlInstance == null) )
+			{
+				global_execution_continue = false;
+			}
+	}
+	FMI2Component[] components[2] = { wtInstance , crtlInstance };
+	real START_TIME = 0.0;
+	real STEP_SIZE = 0.001;
+	real END_TIME = 0.0;
+	while( global_execution_continue )
+	{
+		int status = 0;
+		status = wtInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "Setup Experiment Failed:  %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		status = crtlInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "Setup Experiment Failed:  %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real[] realValueSize7[7] = { 9.0 , 1.0 , 1.0 , 9.81 , 1.0 , 0.0 , 0.0 };
+		uInt[] valRefsSize7[7] = { 0 , 1 , 2 , 3 , 4 , 5 , 6 };
+		status = wtInstance.setReal(valRefsSize7, 7, realValueSize7);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real[] realValueSize2[2] = { 2.0 , 1.0 };
+		uInt[] valRefsSize2[2] = { 0 , 1 };
+		status = crtlInstance.setReal(valRefsSize2, 2, realValueSize2);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		status = wtInstance.enterInitializationMode();
+		status = crtlInstance.enterInitializationMode();
+		bool[] BooleanValueSize1[1];
+		uInt[] valRefsSize1[1] = { 4 };
+		status = crtlInstance.getBoolean(valRefsSize1, 1, BooleanValueSize1);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "get failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		bool crtlInstanceSvValRef4 = BooleanValueSize1[0];
+		real wtInstanceSvValRef16Real;
+		expand convertBoolean2Real(crtlInstanceSvValRef4, wtInstanceSvValRef16Real);
+		real[] realValueSize1[1] = { wtInstanceSvValRef16Real };
+		valRefsSize1[0] = 16;
+		status = wtInstance.setReal(valRefsSize1, 1, realValueSize1);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		valRefsSize1[0] = 17;
+		status = wtInstance.getReal(valRefsSize1, 1, realValueSize1);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "get failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real wtInstanceSvValRef17 = realValueSize1[0];
+		realValueSize1[0] = wtInstanceSvValRef17;
+		valRefsSize1[0] = 3;
+		status = crtlInstance.setReal(valRefsSize1, 1, realValueSize1);
+		if( status == 3 || status == 4 )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		status = wtInstance.exitInitializationMode();
+		status = crtlInstance.exitInitializationMode();
+		break;
+	}
+	expand fixedStep(components, STEP_SIZE, START_TIME, END_TIME);
+	tank.freeInstance(wtInstance);
+	controller.freeInstance(crtlInstance);
+	unload(tank);
+	unload(controller);
+	unload(math);
+	unload(logger);
+	unload(dataWriter);
+}

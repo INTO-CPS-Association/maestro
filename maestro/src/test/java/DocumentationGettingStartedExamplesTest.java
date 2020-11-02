@@ -1,7 +1,9 @@
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.FullSpecTest;
 import org.intocps.maestro.Mabl;
+import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
@@ -18,9 +20,10 @@ import java.util.List;
  */
 public class DocumentationGettingStartedExamplesTest {
 
+    File testFilesDirectory = new File("src/test/resources/documentation_example_files");
+
     @Test
-    public void initial() throws Exception {
-        File testFilesDirectory = new File("src/test/resources/documentation_example_files");
+    public void part1() throws Exception {
         List<File> sourceFiles = Arrays.asList(new File(testFilesDirectory, "example1.mabl"));
         File specificationDirectory = new File("target", "DocumentationGettingStartedExamplesTest/initial/specification");
         File workingDirectory = new File("target", "DocumentationGettingStartedExamplesTest/initial/working");
@@ -43,6 +46,24 @@ public class DocumentationGettingStartedExamplesTest {
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
             FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
         }
+    }
+
+    @Test
+    public void part2_json_parse() throws Exception {
+        File configurationFile = new File(testFilesDirectory, "wt-example-config.json");
+
+        File intermediateDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2/intermediate");
+        File specificationDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2/specification");
+        File interpretSpecification = new File(specificationDirectory, "spec.mabl");
+
+        FileUtils.deleteDirectory(intermediateDirectory);
+        FileUtils.deleteDirectory(specificationDirectory);
+
+        assert (Main.argumentHandler(
+                new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--dump-intermediate", intermediateDirectory.getAbsolutePath(),
+                        "--dump", specificationDirectory.getAbsolutePath(), "--interpret", interpretSpecification.getAbsolutePath()}));
+
+
     }
 
 
