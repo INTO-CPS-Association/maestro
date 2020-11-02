@@ -51,13 +51,12 @@ public class DocumentationGettingStartedExamplesTest {
     @Test
     public void part2_json_parse() throws Exception {
         File configurationFile = new File(testFilesDirectory, "wt-example-config.json");
-
-        File intermediateDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2/intermediate");
-        File specificationDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2/specification");
+        File targetDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2");
+        File intermediateDirectory = new File(targetDirectory, "intermediate");
+        File specificationDirectory = new File(targetDirectory, "specification");
         File interpretSpecification = new File(specificationDirectory, "spec.mabl");
 
-        FileUtils.deleteDirectory(intermediateDirectory);
-        FileUtils.deleteDirectory(specificationDirectory);
+        FileUtils.deleteDirectory(targetDirectory);
 
         assert (Main.argumentHandler(
                 new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--dump-intermediate", intermediateDirectory.getAbsolutePath(),
