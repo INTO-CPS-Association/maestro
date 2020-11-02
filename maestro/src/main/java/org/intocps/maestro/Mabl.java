@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.StringAnnotationProcessor;
@@ -117,6 +119,11 @@ public class Mabl {
             throw new IllegalArgumentException("Expansion cannot be called with errors");
         }
 
+        if (!ShouldExpandAnalysis.shouldExpand(document)) {
+            return;
+        }
+
+
         if (frameworks == null || frameworkConfigs == null || !frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
             throw new Exception(
                     "Framework annotations required for expansion. Please specify: " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK) +
@@ -192,5 +199,23 @@ public class Mabl {
         public boolean inlineFrameworkConfig = true;
         public boolean dumpIntermediateSpecs = true;
         public boolean preserveFrameworkAnnotations = false;
+    }
+
+    private static class ShouldExpandAnalysis extends DepthFirstAnalysisAdaptor {
+        boolean shouldExpand = false;
+
+        static boolean shouldExpand(INode node) throws AnalysisException {
+            ShouldExpandAnalysis analysis = new ShouldExpandAnalysis();
+            node.apply(analysis);
+            return analysis.shouldExpand;
+        }
+
+        @Override
+        public void caseACallExp(ACallExp node) throws AnalysisException {
+            super.caseACallExp(node);
+            if (node.getObject() == null) {
+                shouldExpand = true;
+            }
+        }
     }
 }

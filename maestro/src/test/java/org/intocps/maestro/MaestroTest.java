@@ -1,5 +1,6 @@
+package org.intocps.maestro;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.maestro.MaestroConfiguration;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,7 +15,7 @@ public class MaestroTest {
     @Test
     public void jsonParseTest() throws IOException {
 
-        try (InputStream is = this.getClass().getResourceAsStream("plugin_configuration_1.json")) {
+        try (InputStream is = this.getClass().getResourceAsStream("/plugin_configuration_1.json")) {
             Map<String, String> config = PluginFactory.parsePluginConfiguration(is);
             Assert.assertNotNull(config);
             Assert.assertTrue("key missing", config.containsKey("demo-0.0.1"));
@@ -24,7 +25,7 @@ public class MaestroTest {
     @Test
     public void maestroConfigurationCorrectDefaultValue() throws IOException {
         MaestroConfiguration defaultMaestroConfiguration = new MaestroConfiguration();
-        try (InputStream is = this.getClass().getResourceAsStream("maestro_configuration_default.json")) {
+        try (InputStream is = this.getClass().getResourceAsStream("/maestro_configuration_default.json")) {
             ObjectMapper mapper = new ObjectMapper();
             MaestroConfiguration maestroConfiguration = mapper.readValue(is, MaestroConfiguration.class);
             Assert.assertNotNull(maestroConfiguration);
@@ -34,7 +35,7 @@ public class MaestroTest {
 
     @Test
     public void maestroConfigurationCorrectValue() throws IOException {
-        try (InputStream is = this.getClass().getResourceAsStream("maestro_configuration_custom.json")) {
+        try (InputStream is = this.getClass().getResourceAsStream("/maestro_configuration_custom.json")) {
             ObjectMapper mapper = new ObjectMapper();
             MaestroConfiguration maestroConfiguration = mapper.readValue(is, MaestroConfiguration.class);
             Assert.assertNotNull(maestroConfiguration);

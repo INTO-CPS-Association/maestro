@@ -1,3 +1,5 @@
+package org.intocps.maestro;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TestJsonObject {

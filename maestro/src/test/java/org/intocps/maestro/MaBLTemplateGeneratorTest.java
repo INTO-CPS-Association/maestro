@@ -1,3 +1,5 @@
+package org.intocps.maestro;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.display.PrettyPrinter;

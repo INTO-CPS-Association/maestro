@@ -1,6 +1,5 @@
 package org.intocps.maestro.webapi.controllers;
 
-import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
 import org.intocps.maestro.webapi.maestro2.Maestro2SimulationController;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -8,14 +7,12 @@ import java.io.File;
 
 public class SessionLogic {
     public final File rootDirectory;
-    final Maestro2Broker mc;
     private Maestro2SimulationController.InitializationData initializationData;
     private WebSocketSession socket;
 
     public SessionLogic(File rootDirectory) {
         rootDirectory.mkdir();
         this.rootDirectory = rootDirectory;
-        mc = new Maestro2Broker(rootDirectory);
 
     }
 

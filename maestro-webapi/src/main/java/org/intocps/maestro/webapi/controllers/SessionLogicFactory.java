@@ -35,15 +35,12 @@
 package org.intocps.maestro.webapi.controllers;
 
 
-import org.intocps.orchestration.coe.scala.Coe;
-
 import java.io.File;
 
 /**
  * Created by ctha on 23-02-2016.
  */
 public interface SessionLogicFactory {
-    Coe createCoe(File root);
 
     SessionLogic createSessionLogic(File root);
 }
