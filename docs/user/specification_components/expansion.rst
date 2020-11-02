@@ -1,4 +1,4 @@
-.. _expansion:
+.. _sec-expansion:
 
 Expansion
 ---------

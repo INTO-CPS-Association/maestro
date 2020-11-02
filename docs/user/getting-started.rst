@@ -1,7 +1,7 @@
 .. _getting_started:
 
 Getting Started
-==================
+===============
 This section takes you through a the entire process of conducting a co-simulation with Maestro2.
 
 | This guide is based on the command line interface (CLI) of Maestro2 and consists of two parts: 
@@ -15,26 +15,37 @@ Setup
 The first step is to install the dependencies along with the tools and resources that are to be used
 
 - Download and install Java 11
-- Download the :download:`getting started part1 resources <images/wt_example/getting-started-part1.zip>` and unzip into a directory.
-- Download the :download:`getting started part2 resources <images/wt_example/getting-started-part2.zip>` and unzip into a directory.
-- Download `maestro-2.x.x-jar-with-dependencies.jar` from the newest `Maestro2 2.x.x` release on the Maestro release page https://github.com/INTO-CPS-Association/maestro/releases and place it in the same directory as the example resources were unzipped into.
+- Download `maestro-2.x.x-jar-with-dependencies.jar` from the newest `Maestro2 2.x.x` release on the Maestro release page https://github.com/INTO-CPS-Association/maestro/releases. To easier follow the tutorials below it is recommended to rename the jar file to `maestro2.jar`, such that the terminal commands can be copy-pasted.
+- Optional: Python 3 for plotting capabilities
 
 
 Example
 -------
-The example throughout this getting started guide concerns a water tank. The tank (Continuous Time component) has a constant inflow of water and a valve that is controlled by a controller (Discrete-Event component). When the valve is open, the water level within the tank decreases, and whe the valve is closed, the water level increases.
+The example throughout this getting started guide concerns a water tank.
+The tank (Continuous Time component) has a constant inflow of water and a valve that is controlled by a controller (Discrete-Event component). When the valve is open, the water level within the tank decreases, and whe the valve is closed, the water level increases.
 The controller determines when to open and close the valve based on a maximum and a minimum water level.
+
+.. _fig-watertankgraphic:
+.. figure:: images/wt_example/wt-example-graphic.png
+    :align: center
+
+    Water Tank Example
+
+This is modelled as two FMUs with external connections, internal connections and parameters as presented in the figure below.
 
 .. _fig-watertankexample:
 .. figure:: images/wt_example/wt-example.png
     :align: center
 
-    Water Tank Example
+    Water Tank FMUs and ports
 
 .. _getting_started_part1:
 
 Part 1: First MaBL Specification
-------------------------
+--------------------------------
+This part presents a MaBL specification written by hand with descriptive comments.
+
+To follow this part download the :download:`getting started part1 resources <images/wt_example/getting-started-part1.zip>` and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.
 
 The corresponding MaBL code, including descriptive comments, to execute this co-simulation is presented below:
 
@@ -45,10 +56,11 @@ To execute this (one can use the file corresponding wt-example.mabl from the unz
 
 .. code-block:: none
 
-    > java -jar maestro-2.x.x-jar-with-dependencies.jar --interpret wt-example.mabl
-        where --interpret is to interpret a specification
+    java -jar maestro2.jar --interpret wt-example.mabl
 
-The result is available in `outputs.csv`. This can be plotted with `part1pythoncsvplotter.py`, and the result should look like the figure below.
+Where :code:`--interpret` is to interpret a specification
+
+The result is available in `outputs.csv`. This can be plotted with :code:`python part1pythoncsvplotter.py`, and the result should look like the figure below.
 
 .. _fig-watertankexample-result:
 .. figure:: images/wt_example/wt-example-result.png
@@ -60,13 +72,16 @@ The result is available in `outputs.csv`. This can be plotted with `part1pythonc
 
 Part 2: Specification Generation and Expansion
 ----------------------------------------------
-This part also concerns the water tank but uses the capabilities of specification generation and expansion to create the specification. Thus, the user does not have to write MaBL by hand. Specification generation and Expansion are not treated in detail in this guide, but more information is available in :ref:`Specification Generation` and :ref:`Expansion`.
+This part also concerns the water tank but uses the capabilities of specification generation and expansion to create the specification. Thus, the user does not have to write MaBL by hand. Specification generation and Expansion are not treated in detail in this guide, but more information is available in :ref:`sec-specification_generator` and :ref:`sec-expansion`.
 
-The specification generator is based on JSON configuration files with the same structure as the ones used in Maestro1. For this reason, it is also possible to use the `INTO-CPS Application <https://into-cps-association.readthedocs.io/projects/desktop-application/en/latest/>` to create the specification files.
+To follow this part download the :download:`getting started part2 resources <images/wt_example/getting-started-part2.zip>` and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.
+
+The specification generator is based on JSON configuration files with the same structure as the ones used in Maestro1. For this reason, it is also possible to use the `INTO-CPS Application <https://into-cps-association.readthedocs.io/projects/desktop-application/en/latest/>` to create the specification files. These files are available in the folder of the given Multi-Model. This is also mentioned below where the actual terminal command is issued.
 
 Configuration file
 ^^^^^^^^^^^^^^^^^^
-The content of the configuration file is briefly described after the example below. A more detailed description is available at :ref:`sec:legacy_config_format`. The configuration for this example is:
+The content of the configuration file is briefly described after the example below. A more detailed description is available at :ref:`sec-legacy-config-format`.
+The configuration for this example is:
 
 .. literalinclude:: images/wt_example/wt-example-config.json
    :language: json
@@ -83,15 +98,17 @@ The command below generates the specification based on the configuration file ab
 
 .. code-block:: none
 
-    > java -jar maestro-2.x.x-jar-with-dependencies.jar --spec-generate1 wt-example-config.json --dump "./"
-        where
-            --spec-generate1 uses a specification generator build for legacy configuration files (i.e. configuration files for maestro1)
-            --dump describes to dump the final specification at the current directory
+    java -jar maestro2.jar --spec-generate1 wt-example-config.json --dump "./"
+
+Where :code:`--spec-generate1` instructs Maestro2 to use specification generator for legacy configuration files (i.e. configuration files for maestro1) and :code:`--dump` describes to dump the final specification at the current directory.
+
+.. note::
+   The INTO-CPS Application creates two configuration files in JSON format: a multimodel configuration file and a simulate configuration file. These files can both be added to the terminal command, i.e. :code:`--spec-generate1 multimodel.json simulate.json`, and will be merged by Maestro. Thus, one does not have to merge these files manually.
 
 
 Final specification and Execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The final specification is in the file `spec.mabl` and is not presented in detail, but you can see it here: :download:`spec.mabl <images/wt_example/spec.mabl>`.
+The final specification is in the file `spec.mabl` and is not presented here but can be downloaded: :download:`spec.mabl <images/wt_example/spec.mabl>`.
 
 Furthermore, a `spec.runtime.json` file has been produced with information for the runtime DataWriter CSV plugin with information on where to store the csv result:
 
@@ -104,13 +121,13 @@ To execute the specification execute the following command:
 
 .. code-block:: none
 
-    > java -jar maestro-2.x.x-jar-with-dependencies.jar --interpret spec.mabl
-        where
-            --interpret informs maestro to interpret the subsequent specifications
+    > java -jar maestro2.jar --interpret spec.mabl
+
+Where :code:`--interpret` instructs Maestro2 to interpret the subsequent specifications, in this case `spec.mabl`.
 
 The interpreter will automatically look for :code:`*.runtime.json` files within the same directory as the jar file.
 
-Similar to above in :ref:`getting_started_part1`, the results can be viewed and plotted with the accompanying python script: `part2pythoncsvplotter.py`
+Similar to above in :ref:`getting_started_part1`, the results can be viewed and plotted with the accompanying python script: :code:`python part2pythoncsvplotter.py`
 
 
 Extra: Expansion
@@ -121,9 +138,10 @@ Run the command below:
 
 .. code-block:: none
 
-    > java -jar maestro-2.x.x-jar-with-dependencies.jar --spec-generate1 wt-example-config.json --dump-intermediate "./part2mabl-intermediate"
-        where
-            --dump-intermediate describes to dump the specification after every expansion iteration at "./part2mabl-intermediate"
+    > java -jar maestro2.jar --spec-generate1 wt-example-config.json --dump-intermediate "./part2mabl-intermediate"
+
+| where
+| :code:`--dump-intermediate` describes to dump the specification after every expansion iteration at "./part2mabl-intermediate"
 
 The directory `part2mabl-intermediate` now contains files with different numbers in increasing order due to the flag :code:`--dump-intermediate "./part2mabl-intermediate"`. 
 The initial specification, `spec00000.mabl`, refers to the specification generated by the specification generator without any expansions carried out. `spec00001.mabl` is the specification after 1 expansion has been carried out and so forth. The larget number referes to the specification after all expansions has been carried out.

@@ -1,4 +1,4 @@
-.. _specification_generator:
+.. _sec-specification_generator:
 
 Specification Generator
 -----------------------
