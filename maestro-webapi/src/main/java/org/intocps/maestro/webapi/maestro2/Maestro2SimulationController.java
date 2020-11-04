@@ -317,7 +317,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
     public String version() {
-        final String message = "{\"version\":\"2.0.0-alpha\"}";
+        final String message = "{\"version\":\"2.0.1-SNAPSHOT\"}";
         return message;
     }
 

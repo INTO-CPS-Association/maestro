@@ -32,7 +32,7 @@ public class PluginFactory {
     }
 
     public static <T extends IMaestroPlugin> Collection<T> getPlugins(Class<T> type, Framework framework) {
-        Reflections reflections = new Reflections("org.intocps.maestro", new SubTypesScanner());
+        Reflections reflections = new Reflections("org.intocps.maestro", PluginFactory.class.getClassLoader(), new SubTypesScanner());
 
         try {
 
