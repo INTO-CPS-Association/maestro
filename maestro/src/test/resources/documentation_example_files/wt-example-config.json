@@ -1,0 +1,23 @@
+{
+  "fmus": {
+    "{controller}": "src/test/resources/watertankcontroller-c.fmu",
+    "{tank}": "src/test/resources/singlewatertank-20sim.fmu"
+  },
+  "connections": {
+    "{controller}.crtlInstance.valve": [
+      "{tank}.wtInstance.valvecontrol"
+    ],
+    "{tank}.wtInstance.level": [
+      "{controller}.crtlInstance.level"
+    ]
+  },
+  "parameters": {
+    "{controller}.crtlInstance.maxlevel": 2,
+    "{controller}.crtlInstance.minlevel": 1
+  },
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.001
+  },
+  "endTime": 10.0
+}

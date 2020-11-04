@@ -54,7 +54,7 @@ public class CsvDataWriter implements IDataListener {
         data.add(Double.toString(time));
 
         for (Integer i : instances.get(uuid).indicesOfInterest) {
-            Value d = dataPoint.get(i);
+            Value d = dataPoint.get(i).deref();
 
             Object value = null;
             if (d instanceof IntegerValue) {

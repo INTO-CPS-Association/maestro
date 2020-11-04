@@ -8,7 +8,9 @@ By seperating the specification and execution it is possible to verify the speci
 
 Creating a specification
 ------------------------
-A specification can be written completely by hand if so desired, but Maestro2 also features a `TemplateGenerator` that can assist in creating a co-simulation according to a given configuration. For more information on how to use the the `TemplateGenerator` please see :doc:`TemplateGenerator`. Furthermore, Maestro2 also contains a plugin system of `expansion plugins` that can assist in creating a specification. An expansion plugin offers one or more functions that can be invoked in the specification. If a specifiation makes use of expansion plugins, then Maestro2 replaces `expand` function calls to plugins with the behaviour of the function call, which is provided by the expansion plugin. For more information on `expansion plugins`, please see :ref:`Expansion Plugins`.
+A specification can be written completely by hand if so desired, but Maestro2 also features a `Specification Generator` that can assist in creating a co-simulation according to a given configuration. For more information on how to use the `Specification Generator` please see :ref:`sec-specification_generator`.
+
+Maestro2 also contains a plugin system of `expansion plugins` that can assist in creating a specification. An expansion plugin offers one or more functions that can be invoked in the specification. If a specifiation makes use of expansion plugins, then Maestro2 replaces `expand` function calls with the behaviour of the function call, which is provided by a given expansion plugin. For more information on `expansion plugins`, please see :ref:`sec-expansion`.
 
 Expansion of a Specification
 ----------------------------
@@ -30,11 +32,14 @@ Once a specification is free of :code:`expand` statements it is ready for execut
 Executing a specification
 --------------------------
 Maestro2 has an interpreter capable of executing a MaBL specification.
-It is possible to define interpreter plugins that offer functions to be used in a MaBL specification. The interpreter will then invoke these functions during execution of the specification.
+It is possible to define runtime plugins that offer functionality to be used in a MaBL specification. The interpreter will then invoke these functions during execution of the specification.
 One such example is the CSV plugin, which writes values to a CSV file.
 
 Outline of the Co-simulation Process with Maestro2
-------------------------------------------------------
+--------------------------------------------------
+There are two main ways of creating a specification using Maestro2: Write it by hand or use the Specification Generator. However, several of the processes are the same.
+
+
 The sections outlines the process of how Maestro2 generates a MaBL specification and executes it.
 
 .. uml:: 
@@ -44,34 +49,57 @@ The sections outlines the process of how Maestro2 generates a MaBL specification
     
     actor User #red
     participant Maestro
-    participant "MablSpecification\nGenerator" as MablSpecGen
-    participant "InitializePlugin  : \n IMaestroUnfoldPlugin" as InitializePlugin
-    participant "FixedStepPlugin : \n IMaestroUnfoldPlugin" as FixedStepPlugin
+    participant "Specification\nGenerator" as SpecGen
+    participant MaestroExpand
+    participant "ExpansionPlugin : \n IMaestroExpansionPlugin" as expPlugin
+    participant Interpreter
+    participant "RuntimePlugin : \n ModuleValue" as RuntimePlugin
 
 
-    User -> Maestro: PerformCosimulation(environment.json, \nconfiguration.json, spec.mabl)
-    Maestro -> MablSpecGen: GenerateSpecification(\nenvironment, configuration, spec)
-    MablSpecGen -> InitializePlugin: unfold(environment, config, \nfunctionName, functionArguments)
-    InitializePlugin -> MablSpecGen: unfoldedInitializeSpec
-    MablSpecGen -> FixedStepPlugin: unfold(environment, \nfunctionName, functionArguments)
-    FixedStepPlugin -> MablSpecGen: unfoldedFixedStepSpec
-    MablSpecGen -> Maestro: unfoldedSpec
-    Maestro -> Interpreter: Execute(unfoldedSpec)
-    Interpreter -> "CSVPlugin : \n(TBD)\nIMaestroInterpreterPlugin": Log 
-    Interpreter -> User: results
+    alt Using Specification Generator
+
+        User -> Maestro: WithSpecificationGenerator(\nconfiguration.json)
+        Maestro -> SpecGen: GenerateSpecification(\nconfiguration)
+        SpecGen --> Maestro: Specification
+
+    else Provides MaBL specification
+
+        User -> Maestro: WithSpecification(specification.mabl)
+
+    end
 
 
-:environment.json: FMUs to use and the connections between instances of FMUs
-:configuration.json: Configuration for the plugins.
-:spec.mabl: Specification written in Maestro Base Language (MaBL). In this example, it contains two folded statements: :code:`initialize(arguments)` and :code:`fixedStep(arguments)` which are unfolded by plugins. This is furthermore described in the subsequent fields.
-:MablSpecificationGenerator: Controls the process of creating a MaBL Specification from MaBL specifications and plugins.
-:Unfold: Unfold refers to the process of unfolding. Unfolding is where a single statement is converted to multiple statements.
-:IMaestroUnfoldPlugin: A plugin that is executed by the MablSpecificationGenerator during generation of a MaBL Specification. 
-    A plugin that inherits from IMaestroUnfoldPlugin is capable of unfolding one or more MaBL statements.
-:InitializePlugin \: IMaestroUnfoldPlugin: The initialize plugins unfolds the statementment :code:`initialize(arguments)` into MaBL statements that initializes the FMI2 instances passed via arguments
-:FixedStepPlugin \: IMaestroUnfoldPlugin: The FixedStep plugins unfolds the statementment :code:`fixedStep(arguments)` into MaBL statements that creates the simulation statements required to execute a fixed step size algorithm based on the arguments. Note, it does not contain initialization. Initialization is taken care of by the InitializePlugin.
-:UnfoldedSpec: A MaBL Specification that has been fully unfolded. 
+    alt Specification contains expand statements
+
+        Maestro -> MaestroExpand: Expand(Specification)
+
+        loop until all Expand\nstatements has been expanded
+            MaestroExpand -> expPlugin: invoke expPlugin with \n configuration and \nfunctional call with arguments
+            expPlugin --> MaestroExpand: More expanded Specification
+        end
+
+        MaestroExpand --> Maestro: ExpandedSpecification
+
+    end
+
+    Maestro -> Interpreter: Execute(ExpandedSpecification)
+
+    alt Specification contains runtime plugins
+
+        Interpreter -> RuntimePlugin: function(args)
+        RuntimePlugin --> Interpreter: Result
+
+    end
+
+    Interpreter -> User: co-simulation results
+
+
+:configuration.json: Configuration for the co-simulation
+:specification.mabl: Specification written in Maestro Base Language (MaBL).
+:SpecificationGenerator: Controls the process of creating a MaBL Specification from configuration files. For more information, see :ref:`sec-specification_generator`
+:Expand: Expand refers to the process of expansion. Expansion is where a :code:`expand function(args)` statements are replaced by the behaviour of the given function based on an expansion plugin. For more information, see :ref:`sec-expansion`.
+:IMaestroExpansion: A plugin that provides one or more functions that can be used in context of expansion.
+:ExpandedSpecification: A MaBL Specification that is free from :code:`expand` statements.
 :Interpreter: Can execute a MaBL Specification.
-:IMaestroInterpreterPlugin: A plugin that is executed by the interpreter during the interpretation of a MaBL Specification.
-:CSVPlugin \: IMaestroInterpreterPlugin: An interpreter plugin that logs values to a CSV file.
-:results: A fully unfolded MaBL Specification and a CSV results file of the simulation.
+:RuntimePlugin: A plugin that is executed by the interpreter during the interpretation of a MaBL Specification.
+:results: An expanded MaBL specification and other results of the co-simulation efforts, i.e. a CSV file with results of the co-simulation.

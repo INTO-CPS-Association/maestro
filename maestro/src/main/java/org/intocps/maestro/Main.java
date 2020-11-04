@@ -46,7 +46,7 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static boolean argumentHandler(String[] args) throws Exception {
         Option helpOpt = Option.builder("h").longOpt("help").desc("Show this description").build();
         Option verboseOpt = Option.builder("v").longOpt("verbose").desc("Verbose").build();
         Option versionOpt = Option.builder("version").longOpt("version").desc("Version").build();
@@ -58,7 +58,8 @@ public class Main {
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
         Option dumpLocation = Option.builder("d").longOpt("dump").hasArg(true).argName("path")
                 .desc("Path to a directory where the spec and runtime data will be " + "dumped").build();
-        Option dumpIntermediateSpecs = Option.builder("di").longOpt("dump-intermediate").desc("Dump intermediate specs during expansion").build();
+        Option dumpIntermediateSpecs = Option.builder("di").longOpt("dump-intermediate").hasArg(true).argName("path")
+                .desc("Path to a directory " + "where the intermediate specs will be dumped during expansion").build();
         Option expansionLimit = Option.builder("el").longOpt("expand-limit")
                 .desc("Set the expansion limit. E.g. stop after X expansions, default is 0 i.e. no " + "expansion").hasArg(true).argName("limit")
                 .build();
@@ -80,17 +81,17 @@ public class Main {
         } catch (ParseException e1) {
             System.err.println("Parsing failed. Reason: " + e1.getMessage());
             showHelp(options);
-            return;
+            return false;
         }
 
         if (cmd.hasOption(helpOpt.getOpt())) {
             showHelp(options);
-            return;
+            return false;
         }
 
         if (cmd.hasOption(versionOpt.getOpt())) {
             System.out.println(getVersion());
-            return;
+            return false;
         }
 
 
@@ -109,7 +110,8 @@ public class Main {
         File specificationDirectory = new File(".");
         File workingDirectory = new File(".");
 
-        Mabl mabl = new Mabl(specificationDirectory, cmd.hasOption(dumpIntermediateSpecs.getOpt()) ? workingDirectory : null);
+        Mabl mabl = new Mabl(specificationDirectory,
+                cmd.hasOption(dumpIntermediateSpecs.getOpt()) ? new File(cmd.getOptionValue(dumpIntermediateSpecs.getOpt())) : null);
         mabl.setReporter(reporter);
         mabl.setVerbose(verbose);
         mabl.getSettings().dumpIntermediateSpecs = cmd.hasOption(dumpIntermediateSpecs.getOpt());
@@ -136,26 +138,23 @@ public class Main {
                         if (verbose) {
                             reporter.printErrors(new PrintWriter(System.err, true));
                         }
-                        System.exit(1);
+                        return false;
                     }
                 }
 
             } else {
                 System.err.println("Missing configuration file for " + generateSpecificationV1.getLongOpt() + ". Please specify a json file.");
-                System.exit(1);
+                return false;
             }
-
-
         }
 
         sourceFiles = sourceFiles.stream().filter(mableFileFilter).collect(Collectors.toList());
 
         if (!sourceFiles.isEmpty()) {
-
             mabl.parse(sourceFiles);
         } else if (!cmd.hasOption(generateSpecificationV1.getOpt())) {
             System.err.println("Insufficient input data given");
-            System.exit(1);
+            return false;
         }
 
         if (!cmd.hasOption(expansionLimit.getOpt())) {
@@ -169,7 +168,7 @@ public class Main {
             if (verbose) {
                 reporter.printErrors(new PrintWriter(System.err, true));
             }
-            System.exit(1);
+            return false;
         }
 
         if (cmd.hasOption(dumpLocation.getOpt())) {
@@ -181,27 +180,37 @@ public class Main {
             new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
         }
+        return true;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int exitCode = 0;
+        if (!argumentHandler(args)) {
+            exitCode = 1;
+        }
+        System.exit(exitCode);
     }
 
     private static MaBLTemplateConfiguration generateTemplateSpecificationFromV1(MaestroV1SimulationConfiguration simulationConfiguration,
             IErrorReporter reporter) throws Exception {
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder = MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder();
 
-        // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-        Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.logLevels.entrySet().stream().collect(Collectors
-                .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                        Map.Entry::getValue));
+        if (simulationConfiguration.logLevels != null) {
+            // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.logLevels.entrySet().stream().collect(Collectors
+                    .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                            Map.Entry::getValue));
+            builder.setLogLevels(removedFMUKeyFromLogLevels);
+        }
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", simulationConfiguration.parameters);
 
-        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
-                        .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
-                        .setLogLevels(removedFMUKeyFromLogLevels).setVisible(simulationConfiguration.visible)
-                        .setLoggingOn(simulationConfiguration.loggingOn).
-                        setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime,
-                                ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize()));
+        builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
+                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn).
+                setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime,
+                        ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize()));
 
 
         return builder.build();
