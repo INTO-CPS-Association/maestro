@@ -15,6 +15,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.Main;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -317,7 +318,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
     public String version() {
-        final String message = "{\"version\":\"2.0.1-SNAPSHOT\"}";
+        final String message = "{\"version\":\"" + Main.getVersion() + "\"}";
         return message;
     }
 

@@ -32,13 +32,13 @@ public class Main {
 
     private static void showHelp(Options options) {
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("coe", options);
+        formatter.printHelp("maestro", options);
     }
 
-    private static String getVersion() {
+    public static String getVersion() {
         try {
             Properties prop = new Properties();
-            InputStream coeProp = Main.class.getResourceAsStream("/coe.properties");
+            InputStream coeProp = Main.class.getResourceAsStream("maestro.properties");
             prop.load(coeProp);
             return prop.getProperty("version");
         } catch (Exception e) {
@@ -153,7 +153,8 @@ public class Main {
         if (!sourceFiles.isEmpty()) {
             mabl.parse(sourceFiles);
         } else if (!cmd.hasOption(generateSpecificationV1.getOpt())) {
-            System.err.println("Insufficient input data given");
+            System.err.println("Insufficient input data given: Either pass MaBL specification files or other arguments:");
+            showHelp(options);
             return false;
         }
 
