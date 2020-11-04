@@ -23,6 +23,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <log4j2.version>2.13.2</log4j2.version>
         <fmu.api.version>1.0.10</fmu.api.version>
+        <maestro.v1.version>1.0.10</maestro.v1.version>
     </properties>
 
     <repositories>
@@ -285,7 +286,7 @@
             <dependency>
                 <groupId>org.into-cps.orchestration</groupId>
                 <artifactId>coe</artifactId>
-                <version>1.0.10</version>
+                <version>${maestro.v1.version}</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -320,7 +321,7 @@
             <dependency>
                 <groupId>org.into-cps</groupId>
                 <artifactId>modeldefinition</artifactId>
-                <version>${fmu.api.version}</version>
+                <version>${maestro.v1.version}</version>
             </dependency>
 
             <dependency>
