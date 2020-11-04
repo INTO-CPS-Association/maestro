@@ -23,15 +23,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.parser.MablParserUtil.parse;
 
-public class MableSpecificationGenerator {
+public class MablSpecificationGenerator {
 
     //This values is multiplied with the count of plugin function declarations.
-    final static Logger logger = LoggerFactory.getLogger(MableSpecificationGenerator.class);
+    final static Logger logger = LoggerFactory.getLogger(MablSpecificationGenerator.class);
     final boolean verbose;
     final ISimulationEnvironment simulationEnvironment;
     final IntermediateSpecWriter intermediateSpecWriter;
@@ -39,7 +38,7 @@ public class MableSpecificationGenerator {
     private final MaestroConfiguration configuration;
     private final File specificationFolder;
 
-    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment,
+    public MablSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment,
             MaestroConfiguration configuration, File specificationFolder, IntermediateSpecWriter intermediateSpecWriter) {
         this.framework = framework;
         this.verbose = verbose;
@@ -49,7 +48,7 @@ public class MableSpecificationGenerator {
         this.intermediateSpecWriter = intermediateSpecWriter;
     }
 
-    public MableSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment, File specificationFolder,
+    public MablSpecificationGenerator(Framework framework, boolean verbose, ISimulationEnvironment simulationEnvironment, File specificationFolder,
             IntermediateSpecWriter intermediateSpecWriter) {
         this(framework, verbose, simulationEnvironment, new MaestroConfiguration(), specificationFolder, intermediateSpecWriter);
     }
@@ -324,7 +323,11 @@ public class MableSpecificationGenerator {
                 }
 
 
-                logger.trace(ppPrint(unfoldedSimulationModule.toString()));
+                try {
+                    logger.trace("Specification:\n{}", PrettyPrinter.print(unfoldedSimulationModule));
+                } catch (AnalysisException e) {
+                    logger.trace("Pretty printing failed: ", e);
+                }
                 ARootDocument processedDoc =
                         new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
@@ -387,36 +390,6 @@ public class MableSpecificationGenerator {
         }
     }
 
-    private String ppPrint(String string) {
-
-        StringBuilder sb = new StringBuilder();
-
-
-        int indentation = 0;
-        for (char c : string.toCharArray()) {
-            if (c == '{') {
-                indentation++;
-            } else if (c == '}') {
-                indentation--;
-            }
-
-            sb.append(c);
-            if (c == '\n') {
-                sb.append(IntStream.range(0, indentation).mapToObj(t -> "").collect(Collectors.joining("\t")));
-            }
-        }
-
-
-        return sb.toString();
-    }
-
-    //    public ARootDocument generate(List<File> sourceFiles, InputStream contextFile) throws IOException {
-    //        IErrorReporter reporter = new ErrorReporter();
-    //
-    //        List<ARootDocument> documentList = parse(sourceFiles);
-    //        return generateFromDocuments(documentList, contextFile);
-    //
-    //    }
 
     private boolean verify(final ARootDocument doc, final IErrorReporter reporter) {
 

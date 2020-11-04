@@ -23,18 +23,13 @@ public class Application {
 
         CommandLine cmd = MaestroV1CliProxy.parse(args);
 
-        if (cmd.hasOption(MaestroV1CliProxy.oneShotOpt.getOpt()) || cmd.hasOption(MaestroV1CliProxy.portOpt.getOpt()) ||
-                cmd.hasOption(MaestroV1CliProxy.versionOpt.getOpt())) {
-
-            if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
-                SpringApplication app = new SpringApplication(Application.class);
-                app.run("--server.port=" + port);
-            })) {
-                System.exit(1);
-            }
-            return;
+        if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
+            SpringApplication app = new SpringApplication(Application.class);
+            app.run("--server.port=" + port);
+        })) {
+            System.exit(1);
         }
-        SpringApplication.run(Application.class, args);
+
     }
 
     static class MableV1ToV2ProxyRunner implements MaestroV1CliProxy.OneShotRunner {

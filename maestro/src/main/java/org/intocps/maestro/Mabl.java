@@ -136,11 +136,11 @@ public class Mabl {
             throw new Exception("No env found");
         }
 
-        MableSpecificationGenerator mableSpecificationGenerator =
-                new MableSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
+        MablSpecificationGenerator mablSpecificationGenerator =
+                new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
 
 
-        ARootDocument doc = mableSpecificationGenerator.generateFromDocuments(Collections.singletonList(document));
+        ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(Collections.singletonList(document));
         removeFrameworkAnnotations(doc);
         document = doc;
     }
