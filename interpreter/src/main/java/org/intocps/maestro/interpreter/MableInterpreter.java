@@ -1,7 +1,7 @@
 package org.intocps.maestro.interpreter;
 
-import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.node.ARootDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,7 @@
 package org.intocps.maestro.interpreter;
 
-import org.intocps.maestro.ast.AIdentifierExp;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.AIdentifierExp;
 import org.intocps.maestro.interpreter.values.Value;
 
 import java.util.HashMap;

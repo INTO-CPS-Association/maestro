@@ -1,6 +1,10 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.ABlockStm;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStateDesignator;
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 

@@ -1,6 +1,8 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;

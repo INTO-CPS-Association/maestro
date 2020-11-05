@@ -1,8 +1,8 @@
 package org.intocps.maestro.typechecker;
 
-import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
 import java.util.HashMap;

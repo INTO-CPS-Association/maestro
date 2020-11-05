@@ -1,6 +1,6 @@
 package org.intocps.maestro.typechecker;
 
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.node.*;
 
 import java.util.List;
 import java.util.Set;
@@ -25,9 +25,9 @@ public class TypeComparator {
         //TODO expand this to a proper structure
 
         //numbers
-        Set<Class<? extends SPrimitiveTypeBase>> ints = Stream
-                .of(ABooleanPrimitiveType.class, ABooleanPrimitiveType.class, AIntNumericPrimitiveType.class, AUIntNumericPrimitiveType.class)
-                .collect(Collectors.toSet());
+        Set<Class<? extends SPrimitiveTypeBase>> ints =
+                Stream.of(ABooleanPrimitiveType.class, ABooleanPrimitiveType.class, AIntNumericPrimitiveType.class, AUIntNumericPrimitiveType.class)
+                        .collect(Collectors.toSet());
 
         if (ints.contains(to.getClass()) && (ints.contains(from.getClass()) || from instanceof ARealNumericPrimitiveType)) {
             //might truncate

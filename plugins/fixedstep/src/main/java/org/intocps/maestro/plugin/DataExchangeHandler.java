@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;

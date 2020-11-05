@@ -1,8 +1,10 @@
 package org.intocps.maestro.verifiers;
 
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.plugin.IMaestroVerifier;

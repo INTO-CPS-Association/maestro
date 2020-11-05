@@ -1,9 +1,9 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.ABlockStm;
-import org.intocps.maestro.ast.ALocalVariableStm;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.ABlockStm;
+import org.intocps.maestro.ast.node.ALocalVariableStm;
 
 import java.util.Optional;
 

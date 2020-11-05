@@ -1,9 +1,9 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.PExp;
-import org.intocps.maestro.ast.PStateDesignator;
-import org.intocps.maestro.ast.PStm;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStateDesignator;
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
