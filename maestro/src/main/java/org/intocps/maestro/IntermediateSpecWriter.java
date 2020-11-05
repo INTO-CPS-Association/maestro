@@ -1,9 +1,9 @@
 package org.intocps.maestro;
 
 import org.apache.commons.io.FileUtils;
-import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.ast.node.INode;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,9 +1,9 @@
 package org.intocps.maestro.typechecker;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.intocps.maestro.ast.AConfigStm;
 import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.AFunctionType;
+import org.intocps.maestro.ast.node.AConfigStm;
+import org.intocps.maestro.ast.node.AFunctionType;
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 

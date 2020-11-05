@@ -1,6 +1,6 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.ARootDocument;
+import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
 

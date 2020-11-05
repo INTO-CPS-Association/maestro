@@ -1,6 +1,6 @@
 package org.intocps.maestro.plugin;
 
-import org.intocps.maestro.ast.PStm;
+import org.intocps.maestro.ast.node.PStm;
 
 import java.util.List;
 

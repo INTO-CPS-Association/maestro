@@ -2,9 +2,9 @@ package org.intocps.maestro.parser;
 
 
 import org.antlr.v4.runtime.*;
-import org.intocps.maestro.ast.INode;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.ast.node.INode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

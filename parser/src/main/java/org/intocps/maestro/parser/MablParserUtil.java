@@ -1,8 +1,8 @@
 package org.intocps.maestro.parser;
 
 import org.antlr.v4.runtime.*;
-import org.intocps.maestro.ast.ARootDocument;
 import org.intocps.maestro.ast.LexToken;
+import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
