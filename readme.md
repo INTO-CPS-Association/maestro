@@ -5,8 +5,6 @@
 # Maestro 2
 Maestro 2 is the next version of the Maestro Co-simulation Orchestration Engine.
 
-Please see the [docs](https://into-cps-maestro.readthedocs.io/) and the [chat](https://gitter.im/INTO-CPS/maestro2) for more information.
-
 #### Development Environment
 You need Java 11 and maven 3.6 to build the project.
 The project can be built from CLI using the maven commands.
