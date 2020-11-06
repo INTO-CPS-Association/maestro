@@ -7,7 +7,7 @@
 
 User documentation
 ==================
-The Maestro2 approach is to create a specification in the domain specific language MaBL, verifying the specification and finally, executing the specification thereby generating the co-simulation results.
+The Maestro2 approach is to create a specification in the domain specific language MaBL, verify the specification and finally, execute the specification.
 There is a particular focus on making the FMI-commands explicit in the specification, but it is possible to define runtime behaviour that is not limited to MaBL.
 
 The Maestro2 approach to co-simulation is presented and described in :ref:`overview`.
