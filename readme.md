@@ -1,5 +1,6 @@
 ![Build Status](https://github.com/INTO-CPS-Association/maestro/workflows/Maestro2/badge.svg?branch=development)
 ![Documentation Status](https://maestro.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/maestro/badge/?version=latest&style=plastic)](https://into-cps-maestro.readthedocs.io/en/latest/)
 
 
 # Maestro 2
