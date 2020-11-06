@@ -1,3 +1,7 @@
+![Build Status](https://github.com/INTO-CPS-Association/maestro/workflows/Maestro2/badge.svg?branch=development)]
+[![Documentation Status](https://readthedocs.org/projects/pyfmu/badge/?version=latest)](https://maestro.readthedocs.io/en/latest/?badge=latest)
+
+
 # Maestro 2
 Maestro 2 is the next version of the Maestro Co-simulation Orchestration Engine.
 
