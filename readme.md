@@ -1,5 +1,5 @@
-![Build Status](https://github.com/INTO-CPS-Association/maestro/workflows/Maestro2/badge.svg?branch=development)]
-[![Documentation Status](https://readthedocs.org/projects/pyfmu/badge/?version=latest)](https://maestro.readthedocs.io/en/latest/?badge=latest)
+![Build Status](https://github.com/INTO-CPS-Association/maestro/workflows/Maestro2/badge.svg?branch=development)
+![Documentation Status](https://maestro.readthedocs.io/en/latest/?badge=latest)
 
 
 # Maestro 2
