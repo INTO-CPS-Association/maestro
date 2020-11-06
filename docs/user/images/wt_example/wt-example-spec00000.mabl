@@ -1,0 +1,64 @@
+simulation
+import FixedStep;
+import TypeConverter;
+import Initializer;
+import DebugLogging;
+@Framework( "FMI2");
+@FrameworkConfig( "FMI2", "{\"fmus\":{\"{controller}\":\"src/test/resources/watertankcontroller-c.fmu\",\"{tank}\":\"src/test/resources/singlewatertank-20sim.fmu\"},\"connections\":{\"{controller}.crtlInstance.valve\":[\"{tank}.wtInstance.valvecontrol\"],\"{tank}.wtInstance.level\":[\"{controller}.crtlInstance.level\"]},\"parameters\":{\"{controller}.crtlInstance.maxlevel\":2,\"{controller}.crtlInstance.minlevel\":1},\"startTime\":0.0,\"endTime\":0.0,\"loggingOn\":false,\"visible\":false,\"algorithm\":{\"type\":\"fixed-step\",\"size\":0.001}}");
+{
+        bool global_execution_continue = true;
+        Math math = load("Math");
+        Logger logger = load("Logger");
+        DataWriter dataWriter = load("DataWriter");
+        FMI2 tank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "src/test/resources/singlewatertank-20sim.fmu");
+        if( (tank == null) )
+        {
+                global_execution_continue = false;
+        }
+        FMI2 controller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+        if( (controller == null) )
+        {
+                global_execution_continue = false;
+        }
+        @map wtInstance -> "wtInstance";
+        FMI2Component wtInstance = null;
+        if( (global_execution_continue) )
+        {
+                wtInstance = tank.instantiate("wtInstance", false, false);
+                if( (wtInstance == null) )
+                {
+                        global_execution_continue = false;
+                }
+        }
+        @map crtlInstance -> "crtlInstance";
+        FMI2Component crtlInstance = null;
+        if( (global_execution_continue) )
+        {
+                crtlInstance = controller.instantiate("crtlInstance", false, false);
+                if( (crtlInstance == null) )
+                {
+                        global_execution_continue = false;
+                }
+        }
+        FMI2Component[] components[2] = { wtInstance , crtlInstance };
+        real START_TIME = 0.0;
+        real STEP_SIZE = 0.001;
+        real END_TIME = 0.0;
+        // #############################
+        // The configuration for the initialize expansion plugin
+        // followed by invocation of the initialize expansion plugin.
+        // #############################
+        @Config("{\"parameters\":{\"{controller}.crtlInstance.maxlevel\":2,\"{controller}.crtlInstance.minlevel\":1}}");
+        expand initialize(components, START_TIME, END_TIME);
+        // #############################
+        // The fixed step plugin without a configuration.
+        // #############################
+        expand fixedStep(components, STEP_SIZE, START_TIME, END_TIME);
+        tank.freeInstance(wtInstance);
+        controller.freeInstance(crtlInstance);
+        unload(tank);
+        unload(controller);
+        unload(math);
+        unload(logger);
+        unload(dataWriter);
+}

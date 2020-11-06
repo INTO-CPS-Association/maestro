@@ -5,6 +5,8 @@ import org.intocps.maestro.ast.analysis.intf.IAnalysis;
 import org.intocps.maestro.ast.analysis.intf.IAnswer;
 import org.intocps.maestro.ast.analysis.intf.IQuestion;
 import org.intocps.maestro.ast.analysis.intf.IQuestionAnswer;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.Token;
 
 import java.util.Map;
 

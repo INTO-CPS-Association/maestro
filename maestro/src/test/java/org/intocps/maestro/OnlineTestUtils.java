@@ -1,10 +1,12 @@
+package org.intocps.maestro;
+
 import org.apache.commons.io.FileUtils;
-import org.intocps.maestro.ast.ALoadExp;
-import org.intocps.maestro.ast.AStringLiteralExp;
-import org.intocps.maestro.ast.INode;
-import org.intocps.maestro.ast.PExp;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
+import org.intocps.maestro.ast.node.ALoadExp;
+import org.intocps.maestro.ast.node.AStringLiteralExp;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PExp;
 
 import java.io.File;
 import java.io.IOException;

@@ -34,19 +34,13 @@
  */
 package org.intocps.maestro.webapi.controllers;
 
-import org.intocps.orchestration.coe.scala.Coe;
-
 import java.io.File;
 
 /**
  * Created by ctha on 23-02-2016.
  */
 public class ProdSessionLogicFactory implements SessionLogicFactory {
-    @Override
-    public Coe createCoe(File root) {
-        root.mkdirs();
-        return new Coe(root);
-    }
+
 
     @Override
     public SessionLogic createSessionLogic(File root) {

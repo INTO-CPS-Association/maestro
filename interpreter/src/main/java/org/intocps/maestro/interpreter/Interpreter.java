@@ -4,6 +4,7 @@ import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.interpreter.values.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,15 +359,17 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (lv.equals(rv)) {
             new BooleanValue(true);
         } else if (lv instanceof NumericValue && rv instanceof NumericValue) {
-            NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
-            NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
+            NumericValue left = (NumericValue) lv;
+            NumericValue right = (NumericValue) rv;
 
             return new BooleanValue(left.deref().compareTo(right.deref()) == 0);
         } else if (lv instanceof BooleanValue && rv instanceof BooleanValue) {
-            BooleanValue left = (BooleanValue) node.getLeft().apply(this, question).deref();
-            BooleanValue right = (BooleanValue) node.getRight().apply(this, question).deref();
+            BooleanValue left = (BooleanValue) lv;
+            BooleanValue right = (BooleanValue) rv;
 
             return new BooleanValue(left.getValue().compareTo(right.getValue()) == 0);
+        } else if (lv instanceof NullValue && rv instanceof NullValue) {
+            return new BooleanValue(true);
         }
 
         return new BooleanValue(false);

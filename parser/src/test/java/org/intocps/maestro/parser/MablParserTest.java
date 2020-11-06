@@ -1,7 +1,7 @@
 package org.intocps.maestro.parser;
 
 import org.antlr.v4.runtime.*;
-import org.intocps.maestro.ast.INode;
+import org.intocps.maestro.ast.node.INode;
 import org.junit.Before;
 import org.junit.Test;
 

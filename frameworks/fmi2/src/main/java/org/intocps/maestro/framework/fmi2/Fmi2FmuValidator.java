@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Fmi2FmuValidator implements IFmuValidator {
-    
+
     @Override
     public boolean validate(String id, URI path, IErrorReporter reporter) {
         try {
@@ -69,7 +69,8 @@ public class Fmi2FmuValidator implements IFmuValidator {
                         File tmp;
                         try {
                             tmp = File.createTempFile("fmi2Spec", "");
-                            try (OutputStream dest = new FileOutputStream(tmp); InputStream in = ClassLoader.getSystemResourceAsStream(specPath)) {
+                            try (OutputStream dest = new FileOutputStream(tmp); InputStream in = this.getClass().getClassLoader()
+                                    .getResourceAsStream(specPath)) {
                                 if (in != null) {
                                     IOUtils.copy(in, dest);
                                 }

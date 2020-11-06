@@ -1,5 +1,7 @@
 package org.intocps.maestro.ast;
 
+import org.intocps.maestro.ast.node.ExternalNode;
+
 import java.util.Objects;
 
 public class LexIdentifier implements ExternalNode {

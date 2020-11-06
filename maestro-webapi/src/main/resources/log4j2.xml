@@ -72,7 +72,7 @@
         </Logger>
 
 
-        <Root level="DEBUG">
+        <Root level="WARN">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="coeLog"/>
         </Root>

@@ -4,12 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.net.URI;
@@ -39,6 +43,7 @@ public class MaBLTemplateGenerator {
     public static final String IMPORT_FIXEDSTEP = "FixedStep";
     public static final String IMPORT_TYPECONVERTER = "TypeConverter";
     public static final String IMPORT_INITIALIZER = "Initializer";
+    final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
@@ -207,7 +212,16 @@ public class MaBLTemplateGenerator {
             Map<String, List<String>> logLevels) {
         List<PStm> stms = new ArrayList<>();
         for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
-            stms.addAll(createExpandDebugLogging(instaceNameToInstanceLex.get(entry.getKey()), entry.getValue()));
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
+            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+            if (instanceLexName != null) {
+                stms.addAll(createExpandDebugLogging(instanceLexName, entry.getValue()));
+            } else {
+                logger.warn("Could not set log levels for " + entry.getKey());
+            }
+
         }
 
         return stms;

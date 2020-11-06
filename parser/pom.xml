@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.0.1-SNAPSHOT</version>
+        <version>2.0.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>parser</artifactId>
@@ -17,7 +17,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13</version>
             <scope>test</scope>
         </dependency>
 
@@ -29,12 +28,12 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>ast</artifactId>
-            <version>2.0.1-SNAPSHOT</version>
+            <version>2.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>core</artifactId>
-            <version>2.0.1-SNAPSHOT</version>
+            <version>2.0.3-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 

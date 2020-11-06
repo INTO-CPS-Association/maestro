@@ -1,5 +1,5 @@
 Packages
-base org.intocps.maestro.ast;
+base org.intocps.maestro.ast.node;
 analysis org.intocps.maestro.ast.analysis;
 
 Tokens

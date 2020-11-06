@@ -1,6 +1,7 @@
-import org.intocps.maestro.Mabl;
-import org.intocps.maestro.ast.INode;
+package org.intocps.maestro;
+
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.node.INode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

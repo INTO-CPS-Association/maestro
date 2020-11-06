@@ -1,8 +1,8 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.PExp;
-import org.intocps.maestro.ast.PStm;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 

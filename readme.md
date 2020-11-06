@@ -1,7 +1,9 @@
+![Build Status](https://github.com/INTO-CPS-Association/maestro/workflows/Maestro2/badge.svg?branch=development)
+[![Documentation Status](https://readthedocs.org/projects/maestro/badge/?version=latest)](https://into-cps-maestro.readthedocs.io/en/latest/)
+
+
 # Maestro 2
 Maestro 2 is the next version of the Maestro Co-simulation Orchestration Engine.
-
-Please see the [docs](https://into-cps-maestro.readthedocs.io/) and the [chat](https://gitter.im/INTO-CPS/maestro2) for more information.
 
 #### Development Environment
 You need Java 11 and maven 3.6 to build the project.
