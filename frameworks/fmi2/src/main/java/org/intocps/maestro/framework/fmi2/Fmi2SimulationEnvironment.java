@@ -47,8 +47,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
 
     public static Fmi2SimulationEnvironment of(Fmi2SimulationEnvironmentConfiguration msg, IErrorReporter reporter) throws Exception {
 
-        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation()/*, new Fmi2FmuValidator()*/); // Fmi2FmuValidator commented
-        // until fixed by Nick: https://github.com/nickbattle/vdmj/pull/38
+        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
 
         Map<String, Boolean> validated = msg.getFmuFiles().entrySet().stream().collect(
                 Collectors.toMap(map -> map.getKey(), map -> validators.stream().allMatch(v -> v.validate(map.getKey(), map.getValue(), reporter))));
