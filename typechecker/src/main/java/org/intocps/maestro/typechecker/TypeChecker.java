@@ -19,6 +19,7 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
     private final Map<AModuleType, List<PType>> modules = new HashMap<>();
     Map<INode, PType> types = new HashMap<>();
 
+
     public TypeChecker(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;
     }
@@ -30,6 +31,17 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
             errorReporter.report(0, "Break must be enclosed in a while statement", node.getToken());
         }
         types.put(node, VOID_TYPE);
+    }
+
+    @Override
+    public void caseARootDocument(ARootDocument node) throws AnalysisException {
+        super.caseARootDocument(node);
+    }
+
+    @Override
+    public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node) throws AnalysisException {
+        //super.caseASimulationSpecificationCompilationUnit(node);
+
     }
 
 
@@ -57,4 +69,9 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
             rootDoc.apply(this);
         }
     }
+
+    public void typecheck(ARootDocument rootDocument) throws AnalysisException {
+        rootDocument.apply(this);
+    }
+
 }

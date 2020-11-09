@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
+import org.intocps.maestro.ast.node.*;
 
 public class TypecheckerTest extends QuestionAnswerAdaptor<TypeCheckInfo, PType> {
     @Override

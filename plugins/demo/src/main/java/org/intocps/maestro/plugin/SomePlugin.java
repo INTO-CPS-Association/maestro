@@ -45,8 +45,8 @@ public class SomePlugin implements IMaestroExpansionPlugin {
 
         if (config instanceof DemoConfig) {
             return Collections.singletonList(new AWhileStm(
-                    new ALessBinaryExp(new AIntLiteralExp(((DemoConfig) config).repeats), new AIntLiteralExp(((DemoConfig) config).repeats)),
-                    new ABlockStm()));
+                    new ALessBinaryExp(new AIntNumericPrimitiveType(), new AIntLiteralExp(((DemoConfig) config).repeats),
+                            new AIntLiteralExp(((DemoConfig) config).repeats)), new ABlockStm()));
         }
         throw new ExpandException("Bad config type");
     }
