@@ -54,7 +54,6 @@ public class PluginEnvironment extends BaseEnvironment {
         }
     }
 
-
     public static class PluginConfigurationNotFoundException extends Exception {
         public PluginConfigurationNotFoundException() {
         }

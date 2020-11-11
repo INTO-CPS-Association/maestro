@@ -1,5 +1,5 @@
  module FMI2 {
-	FMI2Component instantiate(string name, bool logging);
+	FMI2Component instantiate(string name, bool visible, bool loggingOn);
  	void freeInstance(FMI2Component comp);
 }
 

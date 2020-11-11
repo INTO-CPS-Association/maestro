@@ -359,14 +359,20 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitVariableDeclarator(MablParser.VariableDeclaratorContext ctx) {
         AVariableDeclaration def = new AVariableDeclaration();
 
-        def.setType((PType) this.visit(ctx.typeType()));
+        PType primitiveType = (PType) this.visit(ctx.typeType());
+        def.setType(primitiveType);
         def.setName(convert(ctx.IDENTIFIER()));
 
-        if (ctx.size != null && !ctx.size.isEmpty()) {
-            def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
-        }
 
-        def.setIsArray(ctx.LBRACK() != null);
+        if (ctx.LBRACK() != null) {
+            AArrayType arrayType = new AArrayType();
+            if (ctx.size != null && !ctx.size.isEmpty()) {
+                def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+            }
+            arrayType.setType(primitiveType);
+            def.setType(arrayType);
+            def.setIsArray(true);
+        }
 
 
         MablParser.VariableInitializerContext initializer = ctx.variableInitializer();

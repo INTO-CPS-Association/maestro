@@ -75,4 +75,4 @@ import java.util.stream.Collectors;
 %type->#primitive->string="string"
 %type->#primitive->#numeric->real="real"
 %type->#primitive->#numeric->int="int"
-%type->#primitive->#numeric->uInt="uInt"
+%type->#primitive->#numeric->uInt="uint"

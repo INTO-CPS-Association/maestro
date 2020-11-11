@@ -19,7 +19,7 @@ FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, f
 FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);;
 
 
-IFmuComponent components[2]={wtInstance,crtlInstance};
+FMI2Component components[2]={wtInstance,crtlInstance};
 
 bool global_execution_continue = true;
 

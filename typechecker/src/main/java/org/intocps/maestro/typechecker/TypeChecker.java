@@ -1,13 +1,12 @@
 package org.intocps.maestro.typechecker;
 
-import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +15,18 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
 
     final static PType VOID_TYPE = new AVoidType();
     final IErrorReporter errorReporter;
-    private final Map<AModuleType, List<PType>> modules = new HashMap<>();
+    private final Map<AModuleType, ModuleEnvironment> modules = new HashMap<>();
     Map<INode, PType> types = new HashMap<>();
+    TypeCheckVisitor typeCheckVisitor;
+    TypeCheckInfo typeCheckInfo = new TypeCheckInfo();
 
 
     public TypeChecker(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;
+        this.typeCheckInfo.addModules(modules);
+        typeCheckInfo.addEnvironment(new CTMEnvironment(null));
+        this.typeCheckVisitor = new TypeCheckVisitor(this.errorReporter);
+
     }
 
     @Override
@@ -40,10 +45,21 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
 
     @Override
     public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node) throws AnalysisException {
-        //super.caseASimulationSpecificationCompilationUnit(node);
-
+        super.caseASimulationSpecificationCompilationUnit(node);
     }
 
+    @Override
+    public void caseABlockStm(ABlockStm node) throws AnalysisException {
+        super.caseABlockStm(node);
+    }
+
+    @Override
+    public void caseAVariableDeclaration(AVariableDeclaration node) throws AnalysisException {
+        PType nodeType = node.apply(typeCheckVisitor, typeCheckInfo);
+        this.typeCheckInfo.getCtmEnvironment().addVariable(node.getName(), nodeType);
+
+        // Add the variable and its type to environment.
+    }
 
     @Override
     public void defaultOutPStm(PStm node) throws AnalysisException {
@@ -52,16 +68,10 @@ public class TypeChecker extends DepthFirstAnalysisAdaptor {
 
     @Override
     public void caseAImportedModuleCompilationUnit(AImportedModuleCompilationUnit node) throws AnalysisException {
-        TypeCheckVisitor tc = new TypeCheckVisitor();
         AModuleType moduleType = new AModuleType();
-        // TODO Thule: Should I clone here? Why is it an identifierExp, why not just a LexIdentifier?
-        // TODO Thule: Why does moduleType not have member data?
         moduleType.setName(MableAstFactory.newAIdentifierExp(node.getName()));
-        List<PType> functions = new ArrayList<>();
-        for (AFunctionDeclaration function : node.getFunctions()) {
-            functions.add(function.apply(tc));
-        }
-        modules.put(moduleType, functions);
+        ModuleEnvironment env = new ModuleEnvironment(null, node.getFunctions());
+        modules.put(moduleType, env);
     }
 
     public void addModules(List<ARootDocument> rootDocments) throws AnalysisException {
