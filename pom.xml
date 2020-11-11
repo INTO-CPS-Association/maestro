@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.into-cps.maestro</groupId>
@@ -21,7 +22,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <log4j2.version>2.13.2</log4j2.version>
-        <fmu.api.version>1.0.10</fmu.api.version>
+        <fmu.api.version>1.0.11-SNAPSHOT</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
     </properties>
 
@@ -153,7 +154,7 @@
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
                         <!-- https://stackoverflow.com/questions/55272870/surefire-maven-plugin-corrupted-stdout-by-directly-writing-to-native-stream-in -->
-                        <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
+                        <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
                     </configuration>
                 </plugin>
                 <plugin>
