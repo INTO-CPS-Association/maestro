@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.core;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.messages.IErrorReporter;
 
 import java.util.List;
 import java.util.Map;
@@ -34,4 +35,6 @@ public interface ISimulationEnvironment {
      * @return
      */
     <T extends FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework);
+
+    void check(IErrorReporter reporter) throws Exception;
 }

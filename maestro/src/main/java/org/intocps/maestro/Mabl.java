@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +46,8 @@ public class Mabl {
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
 
+    private ISimulationEnvironment environment;
+
     public Mabl(File specificationFolder, File debugOutputFolder) {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
@@ -64,7 +65,7 @@ public class Mabl {
         this.reporter = reporter;
     }
 
-    public void parse(List<File> sourceFiles) throws IOException {
+    public void parse(List<File> sourceFiles) throws Exception {
         if (sourceFiles.isEmpty()) {
             return;
         }
@@ -77,17 +78,18 @@ public class Mabl {
         return parse.get(0);
     }
 
-    public void parse(CharStream specStreams) throws IOException {
+    public void parse(CharStream specStreams) throws Exception {
         if (reporter.getErrorCount() != 0) {
             throw new IllegalArgumentException("Parsing cannot be called with errors");
         }
+        environment = null;
         document = mergeDocuments(Collections.singletonList(MablParserUtil.parse(specStreams, reporter)));
         if (reporter.getErrorCount() == 0) {
             postProcessParsing();
         }
     }
 
-    private void postProcessParsing() throws IOException {
+    private void postProcessParsing() throws Exception {
         intermediateSpecWriter.write(document);
         if (document != null) {
             NodeCollector.collect(document, ASimulationSpecificationCompilationUnit.class).ifPresent(unit -> unit.forEach(u -> {
@@ -106,6 +108,16 @@ public class Mabl {
                 pair.getValue().getKey().setConfig(data);
             }
             frameworkConfigs.put(pair.getKey(), Map.entry(pair.getValue().getKey(), data));
+        }
+
+        if (environment == null && this.frameworks.contains(Framework.FMI2) && frameworkConfigs.get(Framework.FMI2) != null) {
+            logger.debug("Creating FMI2 simulation environment");
+            environment = Fmi2SimulationEnvironment.of(new ByteArrayInputStream(
+                    StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
+        }
+
+        if (environment != null) {
+            environment.check(reporter);
         }
 
         if (settings.inlineFrameworkConfig) {
@@ -163,6 +175,7 @@ public class Mabl {
         }
 
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
+        environment = configuration.getSimulationEnvironment();
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
         postProcessParsing();
@@ -170,13 +183,7 @@ public class Mabl {
 
     //FIXME should be private
     public ISimulationEnvironment getSimulationEnv() throws Exception {
-        if (this.frameworks.contains(Framework.FMI2) && frameworkConfigs.get(Framework.FMI2) != null) {
-
-            return Fmi2SimulationEnvironment.of(new ByteArrayInputStream(
-                    StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
-        }
-        logger.error("No framework env found");
-        return null;
+        return environment;
     }
 
     public ARootDocument getMainSimulationUnit() {

@@ -46,17 +46,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public static Fmi2SimulationEnvironment of(Fmi2SimulationEnvironmentConfiguration msg, IErrorReporter reporter) throws Exception {
-
-        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
-
-        Map<String, Boolean> validated = msg.getFmuFiles().entrySet().stream().collect(
-                Collectors.toMap(map -> map.getKey(), map -> validators.stream().allMatch(v -> v.validate(map.getKey(), map.getValue(), reporter))));
-
-        if (validated.values().stream().anyMatch(v -> !v)) {
-            throw new Exception("The following FMUs does not respected the standard: " +
-                    validated.entrySet().stream().filter(map -> !map.getValue()).map(map -> map.getKey()).collect(Collectors.joining(",", "[", "]")));
-        }
-
         return new Fmi2SimulationEnvironment(msg);
     }
 
@@ -365,6 +354,20 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     @Override
     public <T extends FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework) {
         return (T) this.instanceNameToInstanceComponentInfo.get(identifier.getText());
+    }
+
+    @Override
+    public void check(IErrorReporter reporter) throws Exception {
+
+        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
+
+        Map<String, Boolean> validated = getFmuToUri().stream().collect(
+                Collectors.toMap(Map.Entry::getKey, map -> validators.stream().allMatch(v -> v.validate(map.getKey(), map.getValue(), reporter))));
+
+        if (validated.values().stream().anyMatch(v -> !v)) {
+            throw new Exception("The following FMUs does not respected the standard: " +
+                    validated.entrySet().stream().filter(map -> !map.getValue()).map(Map.Entry::getKey).collect(Collectors.joining(",", "[", "]")));
+        }
     }
 
 

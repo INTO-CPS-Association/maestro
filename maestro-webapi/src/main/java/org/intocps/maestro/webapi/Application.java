@@ -5,7 +5,8 @@ import org.apache.commons.cli.CommandLine;
 import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.MaestroV1CliProxy;
 import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
-import org.intocps.maestro.webapi.maestro2.Maestro2SimulationController;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -37,14 +38,13 @@ public class Application {
         @Override
         public boolean run(boolean verbose, File configFile, File simulationConfigFile, Double startTime, Double endTime,
                 File outputFile) throws IOException {
-            Maestro2SimulationController.InitializationData initializationData =
-                    mapper.readValue(configFile, Maestro2SimulationController.InitializationData.class);
+            InitializationData initializationData = mapper.readValue(configFile, InitializationData.class);
 
-            Maestro2SimulationController.SimulateRequestBody simulationData = null;
+            SimulateRequestBody simulationData = null;
             if (simulationConfigFile != null && simulationConfigFile.exists()) {
-                simulationData = mapper.readValue(configFile, Maestro2SimulationController.SimulateRequestBody.class);
+                simulationData = mapper.readValue(configFile, SimulateRequestBody.class);
             } else {
-                simulationData = new Maestro2SimulationController.SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
+                simulationData = new SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
             }
 
             //use parent to output as working directory, if no output is specified this will default to execution directory
