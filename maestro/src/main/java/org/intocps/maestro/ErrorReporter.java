@@ -8,6 +8,7 @@ import org.intocps.maestro.core.messages.MableWarning;
 import org.intocps.maestro.typechecker.InternalException;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.Vector;
 
@@ -104,5 +105,14 @@ public class ErrorReporter implements IErrorReporter {
         for (MableWarning w : warnings) {
             out.println(w.toString());
         }
+    }
+
+    @Override
+    public String toString() {
+        StringWriter out = new StringWriter();
+        PrintWriter writer = new PrintWriter(out);
+        printErrors(writer);
+        printWarnings(writer);
+        return out.toString();
     }
 }
