@@ -27,8 +27,9 @@ formalParameterList
     : formalParameter (',' formalParameter)*
     ;
 
+//TODO: Multidimensional arrays
 formalParameter
-    : typeType IDENTIFIER
+    : typeType IDENTIFIER (LBRACK RBRACK )?
     ;
 
 framework
@@ -112,9 +113,9 @@ methodCall
 parExpression
     : '(' expression ')'
     ;
-
+// TODO: Multidimensional arrays - The current way of multi size arrays is a[1,2,3] which does not make sense. It should be: a[1][2][3].
 variableDeclarator
-    : type=typeType varid=IDENTIFIER (LBRACK size+=expression (',' size+=expression )* RBRACK )? ('=' initializer=variableInitializer)?
+    : type=typeType varid=IDENTIFIER (LBRACK (size+=expression (',' size+=expression )*)? RBRACK )? ('=' initializer=variableInitializer)?
     ;
 
 variableInitializer
@@ -127,7 +128,7 @@ arrayInitializer
     ;
 
 typeType
-    : REF? (primitiveType | IDENTIFIER) (arrays+='[' ']')*
+    : REF? (primitiveType | IDENTIFIER)
     ;
 
 primitiveType
@@ -137,6 +138,7 @@ primitiveType
     | STRING            #stringType
     | BOOL              #boolType
     | QUESTION          #unknownType
+    | VOID              #voidType
     ;
 
 literal

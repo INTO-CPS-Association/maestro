@@ -64,13 +64,28 @@ public class TypeComparator {
     }
 
     public synchronized boolean compatible(List<? extends PType> to, List<? extends PType> from) {
-        if (to.size() != from.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < to.size(); i++) {
-            if (!compatible(to.get(i), from.get(i))) {
+        // TODO: If the last type in TO is ?, then it is varargs.
+        if (to.size() > 0 && to.get(to.size() - 1) instanceof AUnknownType) {
+            if (from.size() < to.size() - 1) {
+                // The arguments prior to ? has to match in size.
                 return false;
+            }
+
+            for (int i = 0; i < to.size() - 1; i++) {
+                // The arguments prior to ? has to match in type.
+                if (!compatible(to.get(i), from.get(i))) {
+                    return false;
+                }
+            }
+        } else {
+            if (to.size() != from.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < to.size(); i++) {
+                if (!compatible(to.get(i), from.get(i))) {
+                    return false;
+                }
             }
         }
         return true;

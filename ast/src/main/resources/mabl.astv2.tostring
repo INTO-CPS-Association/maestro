@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+//%declaration->variable = "" + $ org.intocps.maestro.ast.display.PrintVariableDeclaration.VariableDeclarationToString(this) + "" + ( $[initializer]$ ==null?"":" = " +$[initializer]$) $
+
 
 %initializer->exp = [exp]
 %initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(" , ", " ", " "))$ + "}"
@@ -65,7 +67,9 @@ import java.util.stream.Collectors;
 %stateDesignator->array = [target] + "[" + [exp] + "]"
 
 %type->name = [name]
-%type->array = [type] + "[]" //[size]
+//%type->array = [type] + "[]" //[size]
+//TODO: Array tostring does not have support for nested array types
+%type->array = [type] //[size]
 %type->void = "void"
 %type->module = [name]
 %type->unknown = "?"

@@ -61,7 +61,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AFormalParameter parameter = new AFormalParameter();
 
         parameter.setName(convert(ctx.IDENTIFIER()));
-        parameter.setType((PType) this.visit(ctx.typeType()));
+        //        parameter.setType((PType) this.visit(ctx.typeType()));
+        PType primitiveType = (PType) this.visit(ctx.typeType());
+
+        //TODO: Multi dimensional arrays
+        if (ctx.LBRACK() != null) {
+            AArrayType arrayType = new AArrayType();
+            arrayType.setType(primitiveType);
+            parameter.setType(arrayType);
+        } else {
+            parameter.setType(primitiveType);
+        }
+
         return parameter;
     }
 
@@ -363,7 +374,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         def.setType(primitiveType);
         def.setName(convert(ctx.IDENTIFIER()));
 
-
+        //TODO: Multi dimensional arrays
         if (ctx.LBRACK() != null) {
             AArrayType arrayType = new AArrayType();
             if (ctx.size != null && !ctx.size.isEmpty()) {
@@ -472,6 +483,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return new AStringPrimitiveType();
     }
 
+    @Override
+    public INode visitVoidType(MablParser.VoidTypeContext ctx) {
+        return new AVoidType();
+    }
+
     private LexIdentifier convert(Token identifier) {
         return new LexIdentifier(identifier.getText(), convertToLexToken(identifier));
     }
@@ -491,12 +507,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             type = nt;
 
         }
-
-        if (!ctx.arrays.isEmpty()) {
-            AArrayType t = new AArrayType();
-            t.setType(type);
-            type = t;
-        }
+        // The typetype does not contain information on whether it is an array or not.
+        //        if (!ctx.arrays.isEmpty()) {
+        //            AArrayType t = new AArrayType();
+        //            t.setType(type);
+        //            type = t;
+        //        }
 
         if (ctx.REF() == null) {
             return type;

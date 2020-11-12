@@ -10,6 +10,7 @@ REAL:           'real';
 UINT:           'uint';
 BOOL:           'bool';
 INT:            'int';
+VOID:           'void';
 STRING:         'string';
 WHILE:          'while';
 ELSE:               'else';

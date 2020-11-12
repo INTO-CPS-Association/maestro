@@ -77,9 +77,9 @@ public class DataWriterHandler implements GeneratorComponent {
 
 
         Consumer<List<PStm>> declareCsvBuffer = list -> {
-            list.add(newALocalVariableStm(newAVariableDeclaration(newAIdentifier(this.data_valuesIdentifier),
-                    newAArrayType(newAStringPrimitiveType(), variableNames.size()),
-                    newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
+            list.add(newALocalVariableStm(
+                    newAVariableDeclaration(newAIdentifier(this.data_valuesIdentifier), newAArrayType(newAUnknownType(), variableNames.size()),
+                            newAArrayInitializer(csvFields.values().stream().map(PExp::clone).collect(Collectors.toList())))));
         };
 
         declareCsvBuffer.accept(statements);

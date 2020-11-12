@@ -4,6 +4,6 @@
 }
 
 module CSVFile {
- 	void writeHeader( string[] columnTitles);
- 	void writeRow(real time,  ?[] values);
+ 	void writeHeader( string columnTitles[]);
+ 	void writeRow(real time,  ? values[]);
 }

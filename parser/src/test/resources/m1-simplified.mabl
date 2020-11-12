@@ -4,8 +4,8 @@ module FMI2 {
  	int setupExperiment(FMI2Component comp, bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
  	int enterInitializationMode(FMI2Component comp);
  	int exitInitializationMode(FMI2Component comp);
- 	int setReal(FMI2Component comp, UInt[] vr, UInt nvr,real[] values);
- 	int getReal(FMI2Component comp, UInt[] vr, UInt nvr, real[] values);
+ 	int setReal(FMI2Component comp, uint vr[], uint nvr,real values[]);
+ 	int getReal(FMI2Component comp, uint vr[], uint nvr, real values[]);
  	int doStep(FMI2Component comp, real time, real timestep);
  	int terminate(FMI2Component comp);
  	void freeInstance(FMI2Component comp);
@@ -23,7 +23,7 @@ FMI2Component Ba = FMUB.instantiate("B", true);
 
 real ay[1] = {0.0};
 
-UInt byref[1] = {1};
+uint byref[1] = {1};
 real time = 0.0;
 real H = 0.01;
 int status;

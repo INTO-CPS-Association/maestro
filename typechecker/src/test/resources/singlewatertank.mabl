@@ -1,4 +1,4 @@
-simulation 
+simulation
 import FixedStep;
 import TypeConverter;
 import Initializer;
@@ -32,8 +32,8 @@ import Initializer;
 				global_execution_continue = false;
 				break;
 		}
-		real[] realValueSize7[7] = { 9.0 , 1.0 , 1.0 , 9.81 , 1.0 , 0.0 , 0.0 };
-		uint[] valRefsSize7[7] = { 0 , 1 , 2 , 3 , 4 , 5 , 6 };
+		real realValueSize7[7] = { 9.0 , 1.0 , 1.0 , 9.81 , 1.0 , 0.0 , 0.0 };
+		uint valRefsSize7[7] = { 0 , 1 , 2 , 3 , 4 , 5 , 6 };
 		status = wtInstance.setReal(valRefsSize7, 7, realValueSize7);
 		if( (status == 3 || status == 4) )
 		{
@@ -41,8 +41,8 @@ import Initializer;
 				global_execution_continue = false;
 				break;
 		}
-		real[] realValueSize2[2] = { 2.0 , 1.0 };
-		uint[] valRefsSize2[2] = { 0 , 1 };
+		real realValueSize2[2] = { 2.0 , 1.0 };
+		uint valRefsSize2[2] = { 0 , 1 };
 		status = crtlInstance.setReal(valRefsSize2, 2, realValueSize2);
 		if( (status == 3 || status == 4) )
 		{
@@ -52,8 +52,8 @@ import Initializer;
 		}
 		status = wtInstance.enterInitializationMode();
 		status = crtlInstance.enterInitializationMode();
-		bool[] BooleanValueSize1[1];
-		uint[] valRefsSize1[1] = { 4 };
+		bool BooleanValueSize1[1];
+		uint valRefsSize1[1] = { 4 };
 		status = crtlInstance.getBoolean(valRefsSize1, 1, BooleanValueSize1);
 		if( (status == 3 || status == 4) )
 		{
@@ -71,7 +71,7 @@ import Initializer;
 		{
 			wtInstanceSvValRef16Real = 0.0;
 		}
-		real[] realValueSize1[1] = { wtInstanceSvValRef16Real };
+		real realValueSize1[1] = { wtInstanceSvValRef16Real };
 		valRefsSize1[0] = 16;
 		status = wtInstance.setReal(valRefsSize1, 1, realValueSize1);
 		if( (status == 3 || status == 4) )
@@ -134,7 +134,7 @@ import Initializer;
 						logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
 						global_execution_continue = false;
 				}
-				string[] data_headers[2] = { "{x1}.crtlInstance.valve" , "{x2}.wtInstance.level" };
+				string data_headers[2] = { "{x1}.crtlInstance.valve" , "{x2}.wtInstance.level" };
 				DataWriterConfig dataWriter_configuration = dataWriter.writeHeader(data_headers);
 				? data_values[2] = { crtlInstanceBOut[0] , wtInstanceROut[0] };
 				data_values[0] = crtlInstanceBOut[0];
@@ -151,7 +151,6 @@ import Initializer;
 					{
 						fix_stepSize = STEP_SIZE;
 					}
-					crtlInstanceRIn[0] = wtInstanceROut[0];
 					if( (crtlInstanceBOut[0]) )
 					{
 						wtInstanceRIn[0] = 1.0;
@@ -160,6 +159,7 @@ import Initializer;
 					{
 						wtInstanceRIn[0] = 0.0;
 					}
+					crtlInstanceRIn[0] = wtInstanceROut[0];
 					fix_status[0] = wtInstance.setReal(wtInstanceVrefRIn, 1, wtInstanceRIn);
 					if( (fix_status[0] == 3 || fix_status[0] == 4) )
 					{

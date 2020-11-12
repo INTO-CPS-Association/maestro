@@ -18,29 +18,29 @@
  	int exitInitializationMode();
 
     // state exchange
- 	int setReal(UInt[] vr, UInt nvr,real[] values);
- 	int getReal(UInt[] vr, UInt nvr, real[] values);
- 	int setInteger(UInt[] vr, UInt nvr,int[] values);
-    int getInteger(UInt[] vr, UInt nvr, int[] values);
-    int setBoolean(UInt[] vr, UInt nvr,bool[] values);
-    int getBoolean(UInt[] vr, UInt nvr, bool[] values);
-    int setString(UInt[] vr, UInt nvr,string[] values);
-    int getString(UInt[] vr, UInt nvr, string[] values);
+ 	int setReal(uint vr[], uint nvr,real values[]);
+ 	int getReal(uint vr[], uint nvr, real values[]);
+ 	int setInteger(uint vr[], uint nvr,int values[]);
+    int getInteger(uint vr[], uint nvr, int values[]);
+    int setBoolean(uint vr[], uint nvr,bool values[]);
+    int getBoolean(uint vr[], uint nvr, bool values[]);
+    int setString(uint vr[], uint nvr,string values[]);
+    int getString(uint vr[], uint nvr, string values[]);
 
     // derivatives
-    int setRealInputDerivatives(UInt[] scalarValueIndices, int[] order,	real[] derivatives);
-    int getRealOutputDerivatives(long[] scalarValueIndices, int[] order, ref double[] derivatives);
-    int getDirectionalDerivative(long[] vUnknownRef,long[] vKnownRef, double[] dvKnown,ref double[] derivatives);
+    int setRealInputDerivatives(uint scalarValueIndices[], int order[],	real derivatives[]);
+    int getRealOutputDerivatives(uint scalarValueIndices[], int order[], ref real derivatives[]);
+    int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[],ref real derivatives[]);
 
     // logging
- 	int setDebugLogging(boolean loggingOn, string[] categories);
+ 	int setDebugLogging(bool loggingOn, string categories[]);
 
     // status
-    int getStatus(Fmi2StatusKind kind, ref int status);
-    int getBooleanStatus(Fmi2StatusKind kind, ref bool status);
-    int getIntegerStatus(Fmi2StatusKind kind, ref integer status);
-    int getRealStatus(Fmi2StatusKind kind, ref real status);
-    int getStringStatus(Fmi2StatusKind kind, ref string status);
+    int getStatus(int kind, ref int status);
+    int getBooleanStatus(int kind, ref bool status);
+    int getIntegerStatus(int kind, ref integer status);
+    int getRealStatus(int kind, ref real status);
+    int getStringStatus(int kind, ref string status);
 
     //state
     int getState(ref FmiComponentState state);

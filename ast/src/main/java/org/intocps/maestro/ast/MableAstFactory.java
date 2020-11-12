@@ -14,6 +14,11 @@ public class MableAstFactory {
         return new AUIntNumericPrimitiveType();
     }
 
+    public static AModuleType newAModuleType(LexIdentifier name) {
+        AModuleType type = new AModuleType();
+        type.setName(MableAstFactory.newAIdentifierExp(name));
+        return type;
+    }
 
     public static AIdentifierExp newAIdentifierExp(LexIdentifier name) {
         AIdentifierExp identifier = new AIdentifierExp();
@@ -382,11 +387,7 @@ public class MableAstFactory {
         return new ABreakStm();
     }
 
-    public PType newAModuleType(LexIdentifier name) {
-        return new AModuleType();
-    }
-
-    public AUnknownType newAUnknownType() {
+    public static AUnknownType newAUnknownType() {
         return new AUnknownType();
     }
 }

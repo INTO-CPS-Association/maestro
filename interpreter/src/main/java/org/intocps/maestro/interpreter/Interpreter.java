@@ -187,7 +187,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
 
-        if (node.getIsArray()) {
+        if (node.getType() instanceof AArrayType) {
 
             Value val;
             if (node.getInitializer() != null) {

@@ -6,8 +6,10 @@ import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType> {
@@ -38,7 +40,12 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType defaultPType(PType node, TypeCheckInfo question) throws AnalysisException {
-        return node;
+        return node.clone();
+    }
+
+    @Override
+    public PType caseAArrayType(AArrayType node, TypeCheckInfo question) throws AnalysisException {
+        return MableAstFactory.newAArrayType(node.getType().apply(this, question));
     }
 
     @Override
@@ -52,11 +59,11 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         PType type = node.getArray().apply(this, question);
         // Since we a indexeing, we need to step out a level from AArrayType
         if (type instanceof AArrayType) {
-            return ((AArrayType) type).getType();
+            return ((AArrayType) type).getType().clone();
         } else {
             errorReporter.report(-5, "Failed to get inner type of Array at node: " + node, null);
         }
-        return node.getType();
+        return node.getType().clone();
     }
 
     @Override
@@ -100,7 +107,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
             // Ensure that the object is of module type
             PType objectType = node.getObject().apply(this, question);
             if (objectType instanceof AModuleType) {
-                PDeclaration moduleFunction = question.findModuleFunction((AModuleType) objectType, node.getMethodName());
+                PDeclaration moduleFunction = question.findModuleFunction(((AModuleType) objectType).getName().getName(), node.getMethodName());
                 PType moduleFunctionType = moduleFunction.apply(this, question);
                 if (moduleFunctionType instanceof AFunctionType) {
                     PType moduleFunctionReturnType = (((AFunctionType) moduleFunctionType).getResult()).apply(this, question);
@@ -110,7 +117,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
                         callArgs.add(arg.apply(this, question));
                     }
                     if (!typeComparator.compatible(((AFunctionType) moduleFunctionType).getParameters(), callArgs)) {
-                        errorReporter.report(-5, "Function call type does not match with application for node" + node, null);
+                        errorReporter.report(-5, "Function call type does not match with application for node: " + node, null);
                     }
                     return moduleFunctionReturnType;
 
@@ -134,12 +141,12 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType defaultSNumericPrimitiveType(SNumericPrimitiveType node, TypeCheckInfo question) throws AnalysisException {
-        return node;
+        return node.clone();
     }
 
     @Override
     public PType caseABooleanPrimitiveType(ABooleanPrimitiveType node, TypeCheckInfo question) throws AnalysisException {
-        return node;
+        return node.clone();
     }
 
 
@@ -147,7 +154,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     public PType caseAVariableDeclaration(AVariableDeclaration node, TypeCheckInfo question) throws AnalysisException {
         PType variableType = node.getType().apply(this, question);
         // TODO: Fix after https://github.com/INTO-CPS-Association/maestro/issues/157
-        if (node.getIsArray() && !(variableType instanceof AArrayType)) {
+        if ((node.getIsArray() != null && node.getIsArray()) && !(variableType instanceof AArrayType)) {
             AArrayType type = MableAstFactory.newAArrayType(variableType.clone());
             if (node.getSize() != null) {
                 type.setSize(node.getSize().size());
@@ -169,6 +176,16 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
             }
         }
         return variableType;
+    }
+
+    @Override
+    public PType defaultPExp(PExp node, TypeCheckInfo question) throws AnalysisException {
+        throw new InternalException(-5, "Node unknown to typechecker: " + node);
+    }
+
+    @Override
+    public PType defaultPStm(PStm node, TypeCheckInfo question) throws AnalysisException {
+        throw new InternalException(-5, "Node unknown to typechecker: " + node);
     }
 
     @Override
@@ -219,16 +236,290 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     }
 
     @Override
+    public PType caseAImportedModuleCompilationUnit(AImportedModuleCompilationUnit node, TypeCheckInfo question) throws AnalysisException {
+        AModuleType moduleType = new AModuleType();
+        moduleType.setName(MableAstFactory.newAIdentifierExp(node.getName()));
+        ModuleEnvironment env = new ModuleEnvironment(null, node.getFunctions());
+        question.addModule(node.getName(), env);
+        return null;
+    }
+
+    @Override
     public PType caseAIdentifierExp(AIdentifierExp node, TypeCheckInfo question) throws AnalysisException {
-        return question.findName(node.getName());
+        return question.findName(node.getName()).clone();
     }
 
 
     @Override
     public PType caseAFunctionDeclaration(AFunctionDeclaration node, TypeCheckInfo info) throws AnalysisException {
         AFunctionType type = new AFunctionType();
-        type.setResult(node.getReturnType());
-        type.setParameters(node.getFormals().stream().map(x -> x.getType()).collect(Collectors.toList()));
+        PType resultType = node.getReturnType().apply(this, info);
+        type.setResult(resultType);
+        if (node.getFormals() != null && node.getFormals().size() > 0) {
+            List<PType> functionParameters = new ArrayList<>();
+            for (AFormalParameter formalParameter : node.getFormals()) {
+                PType parameterType = formalParameter.getType().apply(this, info);
+                functionParameters.add(parameterType);
+            }
+            type.setParameters(functionParameters);
+        }
         return type;
+    }
+
+    @Override
+    public PType caseARootDocument(ARootDocument node, TypeCheckInfo question) throws AnalysisException {
+        for (INode node_ : node.getContent()) {
+            node_.apply(this, question);
+        }
+
+        return null;
+    }
+
+    @Override
+    public PType caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node,
+            TypeCheckInfo question) throws AnalysisException {
+        node.getBody().apply(this, question);
+        updateModuleInterDependencies(question.getModules(), question);
+        return null;
+    }
+
+    private void updateModuleInterDependencies(Map<LexIdentifier, ModuleEnvironment> modules, TypeCheckInfo question) throws AnalysisException {
+        for (Map.Entry<LexIdentifier, ModuleEnvironment> module : modules.entrySet()) {
+            for (PDeclaration decl : module.getValue().definitions) {
+                PType type = decl.apply(this, question);
+                if (decl instanceof AFunctionDeclaration && type instanceof AFunctionType) {
+                    AFunctionDeclaration functionDecl = ((AFunctionDeclaration) decl);
+                    AFunctionType functionType = (AFunctionType) type;
+                    functionDecl.setReturnType(functionType.getResult());
+                    if (functionType.getParameters() != null) {
+                        for (int i = 0; i < functionType.getParameters().size(); i++) {
+                            PType parameterType = functionType.getParameters().get(i);
+                            functionDecl.getFormals().get(i).setType(parameterType);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public PType caseABlockStm(ABlockStm node, TypeCheckInfo question) throws AnalysisException {
+        for (INode bodyNode : node.getBody()) {
+            bodyNode.apply(this, question);
+        }
+
+        return null;
+    }
+
+    @Override
+    public PType caseALocalVariableStm(ALocalVariableStm node, TypeCheckInfo question) throws AnalysisException {
+        PType type = node.getDeclaration().apply(this, question);
+        question.getCtmEnvironment().addVariable(node.getDeclaration().getName(), type);
+        return null;
+    }
+
+    @Override
+    public PType caseAParExp(AParExp node, TypeCheckInfo question) throws AnalysisException {
+        PType expType = node.getExp().apply(this, question);
+
+        if (node.getType() != null && expType != node.getType()) {
+            errorReporter.report(-5, "Par exp and par type is different: " + node, null);
+        }
+        return expType;
+    }
+
+    @Override
+    public PType caseAWhileStm(AWhileStm node, TypeCheckInfo question) throws AnalysisException {
+        PType testType = node.getTest().apply(this, question);
+        if (!(testType instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "While condition is not of type bool: " + node, null);
+        }
+        node.getBody().apply(this, question);
+
+        return null;
+    }
+
+    @Override
+    public PType caseAAssigmentStm(AAssigmentStm node, TypeCheckInfo question) throws AnalysisException {
+        PType expType = node.getExp().apply(this, question);
+        PType type = node.getTarget().apply(this, question);
+        if (!typeComparator.compatible(type, expType)) {
+            errorReporter.report(-5, "Invalid assignment to: " + node.getTarget() + " from:" + node.getExp(), null);
+
+        }
+        return null;
+    }
+
+    @Override
+    public PType caseAIdentifierStateDesignator(AIdentifierStateDesignator node, TypeCheckInfo question) throws AnalysisException {
+        return question.findName(node.getName());
+    }
+
+    @Override
+    public PType caseAIfStm(AIfStm node, TypeCheckInfo question) throws AnalysisException {
+
+        if (node.getTest() != null) {
+            PType testType = node.getTest().apply(this, question);
+            if (!(testType instanceof ABooleanPrimitiveType)) {
+                errorReporter.report(-5, "If condition is not of type bool: " + node, null);
+            }
+        }
+        if (node.getThen() != null) {
+            node.getThen().apply(this, question);
+        }
+        if (node.getElse() != null) {
+            node.getElse().apply(this, question);
+        }
+        return null;
+    }
+
+    @Override
+    public PType caseAOrBinaryExp(AOrBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        if (!(left instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "Left part of or expression is not of type bool:" + node.getLeft(), null);
+        }
+        PType right = node.getLeft().apply(this, question);
+        if (!(right instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "Right part of or expression is not of type bool:" + node.getRight(), null);
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseAEqualBinaryExp(AEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        PType right = node.getRight().apply(this, question);
+        if (!typeComparator.compatible(left, right)) {
+            errorReporter.report(-5, "Left and right part of == expression are not compatible: " + node, null);
+
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseAExpressionStm(AExpressionStm node, TypeCheckInfo question) throws AnalysisException {
+        node.getExp().apply(this, question);
+        return null;
+    }
+
+    @Override
+    public PType caseABreakStm(ABreakStm node, TypeCheckInfo question) throws AnalysisException {
+        return null;
+    }
+
+    @Override
+    public PType caseAArrayStateDesignator(AArrayStateDesignator node, TypeCheckInfo question) throws AnalysisException {
+        PType indexType = node.getExp().apply(this, question);
+        if (!(indexType instanceof AIntNumericPrimitiveType)) {
+            errorReporter.report(-5, "Index has to be of int type." + node, null);
+        }
+        // Peel of the array type
+        PType targetType = node.getTarget().apply(this, question);
+        if (targetType instanceof AArrayType) {
+            return ((AArrayType) targetType).getType();
+        } else {
+            errorReporter.report(-5, "Attempt to index into a variable of non-array type:" + node, null);
+            return targetType;
+        }
+    }
+
+    @Override
+    public PType caseAAndBinaryExp(AAndBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        if (!(left instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "Left part of And expression is not of type bool:" + node.getLeft(), null);
+        }
+        PType right = node.getLeft().apply(this, question);
+        if (!(right instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "Right part of And expression is not of type bool:" + node.getRight(), null);
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseALessEqualBinaryExp(ALessEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        if (!(left instanceof SNumericPrimitiveType)) {
+            errorReporter.report(-5, "Left part of Less Equal expression is not of numeric type:" + node.getLeft(), null);
+        }
+        PType right = node.getRight().apply(this, question);
+        if (!(right instanceof SNumericPrimitiveType)) {
+            errorReporter.report(-5, "Right part of Less Equal expression is not of numeric type:" + node.getRight(), null);
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseALessBinaryExp(ALessBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        if (!(left instanceof SNumericPrimitiveType)) {
+            errorReporter.report(-5, "Left part of Less expression is not of numeric type:" + node, null);
+        }
+        PType right = node.getRight().apply(this, question);
+        if (!(right instanceof SNumericPrimitiveType)) {
+            errorReporter.report(-5, "Right part of Less expression is not of numeric type:" + node, null);
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseANotEqualBinaryExp(ANotEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType left = node.getLeft().apply(this, question);
+        PType right = node.getRight().apply(this, question);
+        if (!typeComparator.compatible(left, right)) {
+            errorReporter.report(-5, "Left and right part of != expression are not compatible: " + node, null);
+
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseANotUnaryExp(ANotUnaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType expType = node.getExp().apply(this, question);
+        if (!(expType instanceof ABooleanPrimitiveType)) {
+            errorReporter.report(-5, "Expression used with ! has to be of type bool: " + node, null);
+        }
+        return MableAstFactory.newABoleanPrimitiveType();
+    }
+
+    @Override
+    public PType caseAUnloadExp(AUnloadExp node, TypeCheckInfo question) throws AnalysisException {
+        if (node.getArgs() == null || node.getArgs().size() != 1) {
+            errorReporter.report(-5, "Wrong number of arguments to Unload. Unload accepts 1 argument: " + node, null);
+        } else {
+            PType argType = node.getArgs().get(0).apply(this, question);
+            if (!(argType instanceof AModuleType)) {
+                errorReporter.report(-5, "Argument to unload must be a moduletype.: " + node, null);
+
+            }
+        }
+
+        return null;
+    }
+
+    public void typecheck(List<ARootDocument> rootDocuments) throws AnalysisException {
+        TypeCheckInfo info = new TypeCheckInfo();
+        // Find all importedModuleCompilationUnits and typecheck these twice.
+        List<ARootDocument> allModules =
+                rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof AImportedModuleCompilationUnit))
+                        .collect(Collectors.toList());
+        for (ARootDocument module : allModules) {
+            module.apply(this, info);
+        }
+        // Redo the modules due to dependencies to other modules
+        this.updateModuleInterDependencies(info.getModules(), info);
+
+        info.addEnvironment(new CTMEnvironment(null));
+
+        List<ARootDocument> allSimulationSpecifications =
+                rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof ASimulationSpecificationCompilationUnit))
+                        .collect(Collectors.toList());
+
+        if (allSimulationSpecifications.size() != 1) {
+            errorReporter.report(-5, "1 simulation specification is allowed. Found: " + allSimulationSpecifications.size(), null);
+        } else {
+            allSimulationSpecifications.get(0).apply(this, info);
+        }
     }
 }
