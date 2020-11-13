@@ -293,6 +293,10 @@ public class MableAstFactory {
         return type;
     }
 
+    public static ABooleanPrimitiveType newBoleanType() {
+        return newABoleanPrimitiveType();
+    }
+
     public static AVoidType newAVoidType() {
         AVoidType type = new AVoidType();
         return type;
@@ -304,9 +308,18 @@ public class MableAstFactory {
         return type;
     }
 
+    public static ARealNumericPrimitiveType newRealType() {
+
+        return newARealNumericPrimitiveType();
+    }
+
     public static AStringPrimitiveType newAStringPrimitiveType() {
         AStringPrimitiveType type = new AStringPrimitiveType();
         return type;
+    }
+
+    public static AStringPrimitiveType newStringType() {
+        return newAStringPrimitiveType();
     }
 
     public static AIntNumericPrimitiveType newAIntNumericPrimitiveType() {
@@ -314,11 +327,19 @@ public class MableAstFactory {
         return type;
     }
 
+    public static AIntNumericPrimitiveType newIntType() {
+        return newAIntNumericPrimitiveType();
+    }
+
     public static AArrayType newAArrayType(PType arrayType, Integer size) {
         AArrayType type = new AArrayType();
         type.setType(arrayType);
         type.setSize(size);
         return type;
+    }
+
+    public static AUIntNumericPrimitiveType newUIntType() {
+        return newAUIntNumericPrimitiveType();
     }
 
     public static AParExp newPar(PExp exp) {

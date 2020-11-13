@@ -59,9 +59,9 @@ real, 2.2 / 3.3
 
 int, -1
 int, -IcallI(1)
-real, -1
+real, -1.1
 int, +1
-real, +1
+real, +1-1
 
 bool, true && false
 bool, true && true

@@ -57,14 +57,14 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAArrayIndexExp(AArrayIndexExp node, TypeCheckInfo question) throws AnalysisException {
-        PType type = node.getArray().apply(this, question);
-        // Since we a indexeing, we need to step out a level from AArrayType
-        if (type instanceof AArrayType) {
-            return ((AArrayType) type).getType().clone();
-        } else {
-            errorReporter.report(-5, "Failed to get inner type of Array at node: " + node, null);
+
+        for (PExp index : node.getIndices()) {
+            PType type = index.apply(this, question);
+            if (!typeComparator.compatible(AIntNumericPrimitiveType.class, type)) {
+                errorReporter.report(-5, "Array index must be an integer actual: " + type, null);
+            }
         }
-        return MableAstFactory.newAUnknownType();
+        return node.getArray().apply(this, question);
     }
 
     @Override
@@ -74,6 +74,28 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         // Return whatever type, such that variable declaration decides.
         return astFactory.newAUnknownType();
     }
+
+    @Override
+    public PType caseAMinusUnaryExp(AMinusUnaryExp node, TypeCheckInfo question) throws AnalysisException {
+
+        return checkUnaryNumeric(node, question);
+    }
+
+
+    private PType checkUnaryNumeric(SUnaryExp node, TypeCheckInfo question) throws AnalysisException {
+        PType type = node.getExp().apply(this, question);
+
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, type)) {
+            errorReporter.report(-5, "Expected a numeric expression: " + type, null);
+        }
+        return type;
+    }
+
+    @Override
+    public PType caseAPlusUnaryExp(APlusUnaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkUnaryNumeric(node, question);
+    }
+
 
     @Override
     public PType caseAArrayInitializer(AArrayInitializer node, TypeCheckInfo question) throws AnalysisException {
@@ -204,17 +226,38 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType defaultPExp(PExp node, TypeCheckInfo question) throws AnalysisException {
-        throw new InternalException(-5, "Node unknown to typechecker: " + node);
+        throw new InternalException(-5, "Node unknown to typechecker: " + node + " type: " + node.getClass().getSimpleName());
     }
 
     @Override
     public PType defaultPStm(PStm node, TypeCheckInfo question) throws AnalysisException {
-        throw new InternalException(-5, "Node unknown to typechecker: " + node);
+        throw new InternalException(-5, "Node unknown to typechecker: " + node + " type: " + node.getClass().getSimpleName());
     }
 
     @Override
     public PType caseAPlusBinaryExp(APlusBinaryExp node, TypeCheckInfo question) throws AnalysisException {
 
+        return checkNumeric(node, question);
+    }
+
+    @Override
+    public PType caseAGreaterBinaryExp(AGreaterBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkNumeric(node, question);
+    }
+
+    @Override
+    public PType caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkNumeric(node, question);
+    }
+
+
+    @Override
+    public PType caseAMultiplyBinaryExp(AMultiplyBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkNumeric(node, question);
+    }
+
+    @Override
+    public PType caseADivideBinaryExp(ADivideBinaryExp node, TypeCheckInfo question) throws AnalysisException {
         return checkNumeric(node, question);
     }
 
@@ -251,41 +294,63 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAMinusBinaryExp(AMinusBinaryExp node, TypeCheckInfo question) throws AnalysisException {
-        //fixme: need to call type narrow, left + right
-
-        PType leftType = node.getLeft().apply(this, question);
-        PType rightType = node.getRight().apply(this, question);
-        if (!typeComparator.compatible(leftType, rightType)) {
-            errorReporter.report(-5, "Left type: " + node.getLeft() + " - does not align with right type: " + node.getRight(), null);
-        }
-        // Todo: return "higher" type, i.e. real - int is real. int - real is real.
-
-        return node.getLeft().apply(this, question);
+        return checkNumeric(node, question);
     }
 
     @Override
     public PType caseABoolLiteralExp(ABoolLiteralExp node, TypeCheckInfo question) throws AnalysisException {
-        return astFactory.newABoleanPrimitiveType();
+        return MableAstFactory.newABoleanPrimitiveType();
     }
 
     @Override
     public PType caseAStringLiteralExp(AStringLiteralExp node, TypeCheckInfo question) throws AnalysisException {
-        return astFactory.newAStringPrimitiveType();
+        return MableAstFactory.newAStringPrimitiveType();
     }
 
     @Override
     public PType caseARealLiteralExp(ARealLiteralExp node, TypeCheckInfo question) throws AnalysisException {
-        return astFactory.newARealNumericPrimitiveType();
+
+        double value = node.getValue();
+        if (Math.round(value) == value) {
+            if (value < 0) {
+                return MableAstFactory.newIntType();
+            } else if (value == 0) {
+
+                //nat
+                return MableAstFactory.newIntType();
+            } else {
+                //natone
+                return MableAstFactory.newIntType();
+            }
+        } else {
+            return MableAstFactory.newRealType();  // Note, "1.234" is really "1234/1000" (a rat)
+        }
+
     }
 
     @Override
     public PType caseAUIntLiteralExp(AUIntLiteralExp node, TypeCheckInfo question) throws AnalysisException {
-        return astFactory.newAUIntNumericPrimitiveType();
+        long value = node.getValue();
+
+        if (value < 0 || value < Integer.MAX_VALUE) {
+            return MableAstFactory.newIntType();
+        }
+        return MableAstFactory.newUIntType();
+
     }
 
     @Override
     public PType caseAIntLiteralExp(AIntLiteralExp node, TypeCheckInfo question) throws AnalysisException {
-        return astFactory.newAIntNumericPrimitiveType();
+        int value = node.getValue();
+        if (value < 0) {
+            return MableAstFactory.newIntType();
+        } else if (value == 0) {
+            //nat
+            return MableAstFactory.newIntType();
+        } else {
+            //natone
+            return MableAstFactory.newIntType();
+        }
     }
 
     @Override
@@ -423,18 +488,6 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         return MableAstFactory.newAVoidType();
     }
 
-    @Override
-    public PType caseAOrBinaryExp(AOrBinaryExp node, TypeCheckInfo question) throws AnalysisException {
-        PType left = node.getLeft().apply(this, question);
-        if (!(left instanceof ABooleanPrimitiveType)) {
-            errorReporter.report(-5, "Left part of or expression is not of type bool:" + node.getLeft(), null);
-        }
-        PType right = node.getLeft().apply(this, question);
-        if (!(right instanceof ABooleanPrimitiveType)) {
-            errorReporter.report(-5, "Right part of or expression is not of type bool:" + node.getRight(), null);
-        }
-        return MableAstFactory.newABoleanPrimitiveType();
-    }
 
     @Override
     public PType caseAEqualBinaryExp(AEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
@@ -474,18 +527,28 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         }
     }
 
-    @Override
-    public PType caseAAndBinaryExp(AAndBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+    public PType checkLogicialBinary(SBinaryExp node, TypeCheckInfo question) throws AnalysisException {
         PType left = node.getLeft().apply(this, question);
         if (!(left instanceof ABooleanPrimitiveType)) {
-            errorReporter.report(-5, "Left part of And expression is not of type bool:" + node.getLeft(), null);
+            errorReporter.report(-5, "Expected lvalue to be bool actual:" + left, null);
         }
         PType right = node.getLeft().apply(this, question);
         if (!(right instanceof ABooleanPrimitiveType)) {
-            errorReporter.report(-5, "Right part of And expression is not of type bool:" + node.getRight(), null);
+            errorReporter.report(-5, "Expected rvalue to be bool actual:" + right, null);
         }
         return MableAstFactory.newABoleanPrimitiveType();
     }
+
+    @Override
+    public PType caseAAndBinaryExp(AAndBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkLogicialBinary(node, question);
+    }
+
+    @Override
+    public PType caseAOrBinaryExp(AOrBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+        return checkLogicialBinary(node, question);
+    }
+
 
     @Override
     public PType caseALessEqualBinaryExp(ALessEqualBinaryExp node, TypeCheckInfo question) throws AnalysisException {
