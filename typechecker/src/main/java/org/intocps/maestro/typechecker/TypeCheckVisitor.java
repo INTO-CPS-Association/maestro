@@ -4,12 +4,10 @@ import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.core.InternalException;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType> {
@@ -63,7 +61,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         } else {
             errorReporter.report(-5, "Failed to get inner type of Array at node: " + node, null);
         }
-        return node.getType().clone();
+        return MableAstFactory.newAUnknownType();
     }
 
     @Override
@@ -81,12 +79,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         if (node.getExp().size() > 0) {
             PType type = null;
             for (PExp exp : node.getExp()) {
-                PType expType;
-                if (exp.getType() != null) {
-                    expType = exp.getType().apply(this, question);
-                } else {
-                    expType = exp.apply(this, question);
-                }
+                PType expType = exp.apply(this, question);
                 if (type == null) {
                     type = expType;
                 } else {
@@ -107,8 +100,12 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
             // Ensure that the object is of module type
             PType objectType = node.getObject().apply(this, question);
             if (objectType instanceof AModuleType) {
-                PDeclaration moduleFunction = question.findModuleFunction(((AModuleType) objectType).getName().getName(), node.getMethodName());
-                PType moduleFunctionType = moduleFunction.apply(this, question);
+                LexIdentifier moduleName = ((AModuleType) objectType).getName().getName();
+                TypeDefinitionMap moduleDeclarations = question.getTypeCheckerContext().findModuleDeclarations(moduleName);
+                //                PDeclaration moduleFunction = question.findModuleFunction(((AModuleType) objectType).getName().getName(), node.getMethodName());
+
+                //                PType moduleFunctionType = moduleFunction.apply(this, question);
+                PType moduleFunctionType = moduleDeclarations.getType(node.getMethodName());
                 if (moduleFunctionType instanceof AFunctionType) {
                     PType moduleFunctionReturnType = (((AFunctionType) moduleFunctionType).getResult()).apply(this, question);
 
@@ -127,10 +124,9 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         return null;
     }
 
-
     @Override
     public PType caseANameType(ANameType node, TypeCheckInfo question) throws AnalysisException {
-        PType type = question.findModule(node.getName());
+        PType type = question.getTypeCheckerContext().findModuleType(node.getName());
         if (type == null) {
             errorReporter.report(-5, "Use of undeclared identifier: " + node.getName() + ". Did you forgot to include a module?", null);
         } else {
@@ -236,22 +232,13 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     }
 
     @Override
-    public PType caseAImportedModuleCompilationUnit(AImportedModuleCompilationUnit node, TypeCheckInfo question) throws AnalysisException {
-        AModuleType moduleType = new AModuleType();
-        moduleType.setName(MableAstFactory.newAIdentifierExp(node.getName()));
-        ModuleEnvironment env = new ModuleEnvironment(null, node.getFunctions());
-        question.addModule(node.getName(), env);
-        return null;
-    }
-
-    @Override
     public PType caseAIdentifierExp(AIdentifierExp node, TypeCheckInfo question) throws AnalysisException {
-        return question.findName(node.getName()).clone();
+        return question.getTypeCheckerContext().findDefinitionType(node.getName());
     }
-
 
     @Override
     public PType caseAFunctionDeclaration(AFunctionDeclaration node, TypeCheckInfo info) throws AnalysisException {
+        // TODO: Check that function does not already exist
         AFunctionType type = new AFunctionType();
         PType resultType = node.getReturnType().apply(this, info);
         type.setResult(resultType);
@@ -279,7 +266,6 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     public PType caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node,
             TypeCheckInfo question) throws AnalysisException {
         node.getBody().apply(this, question);
-        updateModuleInterDependencies(question.getModules(), question);
         return null;
     }
 
@@ -304,27 +290,35 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseABlockStm(ABlockStm node, TypeCheckInfo question) throws AnalysisException {
+
+        TypeDefinitionMap tdm = new TypeDefinitionMap();
+        TypeCheckInfo info = new TypeCheckInfo(new TypeCheckerContext(tdm, question.getTypeCheckerContext()));
         for (INode bodyNode : node.getBody()) {
-            bodyNode.apply(this, question);
+            if (bodyNode instanceof ALocalVariableStm) {
+                ALocalVariableStm stm = (ALocalVariableStm) bodyNode;
+                if (stm.getDeclaration() != null) {
+                    PType type = stm.getDeclaration().apply(this, info);
+                    tdm.add(stm.getDeclaration(), type);
+                }
+            } else {
+                bodyNode.apply(this, info);
+            }
+
         }
 
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
     public PType caseALocalVariableStm(ALocalVariableStm node, TypeCheckInfo question) throws AnalysisException {
         PType type = node.getDeclaration().apply(this, question);
-        question.getCtmEnvironment().addVariable(node.getDeclaration().getName(), type);
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
     public PType caseAParExp(AParExp node, TypeCheckInfo question) throws AnalysisException {
         PType expType = node.getExp().apply(this, question);
 
-        if (node.getType() != null && expType != node.getType()) {
-            errorReporter.report(-5, "Par exp and par type is different: " + node, null);
-        }
         return expType;
     }
 
@@ -336,7 +330,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         }
         node.getBody().apply(this, question);
 
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
@@ -347,17 +341,16 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
             errorReporter.report(-5, "Invalid assignment to: " + node.getTarget() + " from:" + node.getExp(), null);
 
         }
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
     public PType caseAIdentifierStateDesignator(AIdentifierStateDesignator node, TypeCheckInfo question) throws AnalysisException {
-        return question.findName(node.getName());
+        return question.getTypeCheckerContext().findDefinitionType(node.getName());
     }
 
     @Override
     public PType caseAIfStm(AIfStm node, TypeCheckInfo question) throws AnalysisException {
-
         if (node.getTest() != null) {
             PType testType = node.getTest().apply(this, question);
             if (!(testType instanceof ABooleanPrimitiveType)) {
@@ -370,7 +363,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         if (node.getElse() != null) {
             node.getElse().apply(this, question);
         }
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
@@ -400,12 +393,12 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     @Override
     public PType caseAExpressionStm(AExpressionStm node, TypeCheckInfo question) throws AnalysisException {
         node.getExp().apply(this, question);
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
     public PType caseABreakStm(ABreakStm node, TypeCheckInfo question) throws AnalysisException {
-        return null;
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
@@ -499,18 +492,33 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     }
 
     public void typecheck(List<ARootDocument> rootDocuments) throws AnalysisException {
-        TypeCheckInfo info = new TypeCheckInfo();
+
         // Find all importedModuleCompilationUnits and typecheck these twice.
         List<ARootDocument> allModules =
                 rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof AImportedModuleCompilationUnit))
                         .collect(Collectors.toList());
-        for (ARootDocument module : allModules) {
-            module.apply(this, info);
-        }
-        // Redo the modules due to dependencies to other modules
-        this.updateModuleInterDependencies(info.getModules(), info);
+        final Map<AImportedModuleCompilationUnit, TypeDefinitionMap> modules = new HashMap<>();
 
-        info.addEnvironment(new CTMEnvironment(null));
+        for (ARootDocument module : allModules) {
+            for (PCompilationUnit singleModule : module.getContent()) {
+                AImportedModuleCompilationUnit singleModule_ = (AImportedModuleCompilationUnit) singleModule;
+                modules.put(singleModule_, new TypeDefinitionMap(new ArrayList<>(), new HashMap<>()));
+            }
+        }
+        ModulesContext ctx =
+                new ModulesContext(modules.entrySet().stream().collect(Collectors.toMap(m -> m.getKey().getName(), v -> v.getValue())), null);
+        TypeCheckInfo info = new TypeCheckInfo(ctx);
+        for (Map.Entry<AImportedModuleCompilationUnit, TypeDefinitionMap> moduleEntry : modules.entrySet()) {
+            Map<AFunctionDeclaration, PType> functionDeclarationToType = new HashMap<>();
+            for (AFunctionDeclaration functionDeclaration : moduleEntry.getKey().getFunctions()) {
+                PType type = functionDeclaration.apply(this, info);
+                functionDeclarationToType.put(functionDeclaration, type);
+            }
+            functionDeclarationToType.forEach((def, type) -> {
+                moduleEntry.getValue().add(def, type);
+            });
+        }
+
 
         List<ARootDocument> allSimulationSpecifications =
                 rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof ASimulationSpecificationCompilationUnit))

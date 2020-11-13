@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.Main;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;

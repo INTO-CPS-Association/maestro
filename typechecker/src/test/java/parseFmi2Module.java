@@ -1,6 +1,6 @@
-import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeCheckVisitor;
