@@ -9,6 +9,15 @@ import java.util.stream.Stream;
 
 public class TypeComparator {
 
+    public synchronized boolean compatible(Class<? extends PType> to, PType from) {
+        if (to == AUnknownType.class) {
+            return true;
+        }
+
+        return to.isAssignableFrom(from.getClass());
+
+    }
+
     public synchronized boolean compatible(PType to, PType from) {
         // If they are both array types, then get the inner type
         if (to instanceof AArrayType && from instanceof AArrayType) {

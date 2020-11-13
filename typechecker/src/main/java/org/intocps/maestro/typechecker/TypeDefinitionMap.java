@@ -32,4 +32,8 @@ public class TypeDefinitionMap {
     public PType getType(LexIdentifier name) {
         return this.nameToType.get(name);
     }
+
+    public PType getType(PDeclaration def) {
+        return this.nameToType.get(def.getName());
+    }
 }

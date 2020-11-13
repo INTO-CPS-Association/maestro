@@ -13,6 +13,16 @@ public class TypeCheckerContext extends ATypeCheckerContext {
     }
 
     @Override
+    public PType getType(PDeclaration def) {
+        PType localPType = typedefinitions.getType(def);
+        if (localPType == null) {
+            return super.getType(def);
+        } else {
+            return localPType;
+        }
+    }
+
+    @Override
     public PType findDefinitionType(LexIdentifier name) {
         PType localPType = typedefinitions.getType(name);
         if (localPType == null) {
@@ -24,10 +34,10 @@ public class TypeCheckerContext extends ATypeCheckerContext {
     }
 
     @Override
-    public PDeclaration findDefinitionDeclaration(LexIdentifier name) {
+    public PDeclaration findDefinition(LexIdentifier name) {
         PDeclaration declaration = typedefinitions.getDeclaration(name);
         if (declaration == null) {
-            return super.findDefinitionDeclaration(name);
+            return super.findDefinition(name);
         } else {
             return declaration;
         }

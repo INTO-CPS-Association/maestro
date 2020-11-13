@@ -7,7 +7,10 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.InternalException;
 import org.intocps.maestro.core.messages.IErrorReporter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType> {
@@ -95,38 +98,63 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseACallExp(ACallExp node, TypeCheckInfo question) throws AnalysisException {
+
+        PDeclaration def = null;
+        PType type = MableAstFactory.newAUnknownType();
+
         if (node.getObject() != null) {
             // This is a module
             // Ensure that the object is of module type
             PType objectType = node.getObject().apply(this, question);
             if (objectType instanceof AModuleType) {
                 LexIdentifier moduleName = ((AModuleType) objectType).getName().getName();
-                TypeDefinitionMap moduleDeclarations = question.getTypeCheckerContext().findModuleDeclarations(moduleName);
-                //                PDeclaration moduleFunction = question.findModuleFunction(((AModuleType) objectType).getName().getName(), node.getMethodName());
-
-                //                PType moduleFunctionType = moduleFunction.apply(this, question);
-                PType moduleFunctionType = moduleDeclarations.getType(node.getMethodName());
-                if (moduleFunctionType instanceof AFunctionType) {
-                    PType moduleFunctionReturnType = (((AFunctionType) moduleFunctionType).getResult()).apply(this, question);
-
-                    List<PType> callArgs = new LinkedList<>();
-                    for (PExp arg : node.getArgs()) {
-                        callArgs.add(arg.apply(this, question));
-                    }
-                    if (!typeComparator.compatible(((AFunctionType) moduleFunctionType).getParameters(), callArgs)) {
-                        errorReporter.report(-5, "Function call type does not match with application for node: " + node, null);
-                    }
-                    return moduleFunctionReturnType;
-
+                TypeDefinitionMap moduleDeclarations = question.getContext().findModuleDeclarations(moduleName);
+                def = moduleDeclarations.getDeclaration(node.getMethodName());
+                if (def != null) {
+                    type = moduleDeclarations.getType(def);
                 }
             }
+        } else {
+            def = question.getContext().findDefinition(node.getMethodName());
+            if (def != null) {
+                type = question.getContext().getType(def);
+            }
         }
-        return null;
+
+        if (def == null) {
+            errorReporter.report(0, "Call decleration not found", node.getMethodName().getSymbol());
+        } else {
+            if (type instanceof AFunctionType) {
+                AFunctionType targetType = (AFunctionType) type;
+
+                if (targetType.getParameters().size() != node.getArgs().size()) {
+                    errorReporter.report(0,
+                            "Wrong number of arguments. Expected: " + targetType.getParameters().size() + " found: " + node.getArgs().size(),
+                            node.getMethodName().getSymbol());
+                } else {
+                    for (int i = 0; i < targetType.getParameters().size(); i++) {
+                        PExp arg = node.getArgs().get(i);
+                        PType argType = arg.apply(this, question);
+                        PType argTargetType = targetType.getParameters().get(i);
+                        if (!typeComparator.compatible(argTargetType, argType)) {
+                            errorReporter.report(-5, "Parameter type: " + argType + " not matching expected type: " + argTargetType, null);
+
+                        }
+                    }
+                }
+                return targetType.getResult();
+            } else {
+                errorReporter.report(0, "Expected a function decleration: " + def.getName().getText(), def.getName().getSymbol());
+            }
+        }
+
+        return type;
+
     }
 
     @Override
     public PType caseANameType(ANameType node, TypeCheckInfo question) throws AnalysisException {
-        PType type = question.getTypeCheckerContext().findModuleType(node.getName());
+        PType type = question.getContext().findModuleType(node.getName());
         if (type == null) {
             errorReporter.report(-5, "Use of undeclared identifier: " + node.getName() + ". Did you forgot to include a module?", null);
         } else {
@@ -187,9 +215,38 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     @Override
     public PType caseAPlusBinaryExp(APlusBinaryExp node, TypeCheckInfo question) throws AnalysisException {
 
-        //fixme: need to call type narrow, left + right
+        return checkNumeric(node, question);
+    }
 
-        return node.getLeft().apply(this, question);
+
+    public PType checkNumeric(SBinaryExp node, TypeCheckInfo question) throws AnalysisException {
+
+        PType left = node.getLeft().apply(this, question);
+
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, left)) {
+            errorReporter.report(2, "Type is not numeric: " + node.getLeft() + " - type: " + left, null);
+        }
+
+        PType right = node.getRight().apply(this, question);
+
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, right)) {
+            errorReporter.report(2, "Type is not numeric: " + node + " - type: " + right, null);
+        }
+
+        if (left instanceof ARealNumericPrimitiveType) {
+            return MableAstFactory.newARealNumericPrimitiveType();
+        } else if (right instanceof ARealNumericPrimitiveType) {
+            return MableAstFactory.newARealNumericPrimitiveType();
+        } else if (left instanceof AUIntNumericPrimitiveType) {
+            return MableAstFactory.newAUIntNumericPrimitiveType();
+        } else if (right instanceof AUIntNumericPrimitiveType) {
+            return MableAstFactory.newAUIntNumericPrimitiveType();
+        } else if (left instanceof AIntNumericPrimitiveType) {
+            return MableAstFactory.newAUIntNumericPrimitiveType();
+        } else if (right instanceof AIntNumericPrimitiveType) {
+            return MableAstFactory.newAUIntNumericPrimitiveType();
+        }
+        return null;
     }
 
     @Override
@@ -233,7 +290,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAIdentifierExp(AIdentifierExp node, TypeCheckInfo question) throws AnalysisException {
-        return question.getTypeCheckerContext().findDefinitionType(node.getName());
+        return question.getContext().findDefinitionType(node.getName());
     }
 
     @Override
@@ -292,7 +349,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
     public PType caseABlockStm(ABlockStm node, TypeCheckInfo question) throws AnalysisException {
 
         TypeDefinitionMap tdm = new TypeDefinitionMap();
-        TypeCheckInfo info = new TypeCheckInfo(new TypeCheckerContext(tdm, question.getTypeCheckerContext()));
+        TypeCheckInfo info = new TypeCheckInfo(new TypeCheckerContext(tdm, question.getContext()));
         for (INode bodyNode : node.getBody()) {
             if (bodyNode instanceof ALocalVariableStm) {
                 ALocalVariableStm stm = (ALocalVariableStm) bodyNode;
@@ -346,7 +403,7 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAIdentifierStateDesignator(AIdentifierStateDesignator node, TypeCheckInfo question) throws AnalysisException {
-        return question.getTypeCheckerContext().findDefinitionType(node.getName());
+        return question.getContext().findDefinitionType(node.getName());
     }
 
     @Override

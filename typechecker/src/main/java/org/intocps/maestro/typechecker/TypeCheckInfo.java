@@ -7,7 +7,7 @@ public class TypeCheckInfo {
         this.typeCheckerContext = context;
     }
 
-    public ATypeCheckerContext getTypeCheckerContext() {
+    public ATypeCheckerContext getContext() {
         return typeCheckerContext;
     }
 }

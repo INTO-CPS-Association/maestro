@@ -29,6 +29,13 @@ public abstract class ATypeCheckerContext {
         return outerContext.findModuleDeclarations(module);
     }
 
+    public PType getType(PDeclaration def) {
+        if (outerContext == null) {
+            return null;
+        }
+        return outerContext.getType(def);
+    }
+
 
     public PType findDefinitionType(LexIdentifier name) {
         if (outerContext == null) {
@@ -37,11 +44,11 @@ public abstract class ATypeCheckerContext {
         return outerContext.findDefinitionType(name);
     }
 
-    public PDeclaration findDefinitionDeclaration(LexIdentifier name) {
+    public PDeclaration findDefinition(LexIdentifier name) {
         if (outerContext == null) {
             return null;
         }
-        return outerContext.findDefinitionDeclaration(name);
+        return outerContext.findDefinition(name);
     }
 
 
