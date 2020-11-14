@@ -34,9 +34,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
 
-        unit.setName(convert(ctx.IDENTIFIER()));
+        AModuleDeclaration module = new AModuleDeclaration();
+        unit.setModule(module);
 
-        unit.setFunctions(ctx.functionDeclaration().stream().map(this::visit).map(AFunctionDeclaration.class::cast).collect(Collectors.toList()));
+        module.setName(convert(ctx.IDENTIFIER()));
+
+        module.setFunctions(ctx.functionDeclaration().stream().map(this::visit).map(AFunctionDeclaration.class::cast).collect(Collectors.toList()));
 
 
         return unit;

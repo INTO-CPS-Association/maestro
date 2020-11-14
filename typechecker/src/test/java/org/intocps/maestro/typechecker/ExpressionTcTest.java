@@ -1,10 +1,12 @@
+package org.intocps.maestro.typechecker;
+
 import org.antlr.v4.runtime.*;
 import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.ast.LexToken;
 import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.AFunctionType;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -12,7 +14,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParser;
 import org.intocps.maestro.parser.ParseTree2AstConverter;
-import org.intocps.maestro.typechecker.*;
+import org.intocps.maestro.typechecker.context.LocalContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,10 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -108,37 +107,32 @@ public class ExpressionTcTest {
         PrettyPrinter.printLineNumbers(doc);
         TypeCheckVisitor typeCheckVisitor = new TypeCheckVisitor(errorReporter);
 
-        TypeDefinitionMap defs = new TypeDefinitionMap();
-        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("i"), MableAstFactory.newAIntNumericPrimitiveType()),
-                MableAstFactory.newAIntNumericPrimitiveType());
-        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("r"), MableAstFactory.newARealNumericPrimitiveType()),
-                MableAstFactory.newARealNumericPrimitiveType());
-        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("b"), MableAstFactory.newABoleanPrimitiveType()),
-                MableAstFactory.newABoleanPrimitiveType());
-        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("s"), MableAstFactory.newAStringPrimitiveType()),
-                MableAstFactory.newAStringPrimitiveType());
+        DeclarationList defs = new DeclarationList();
+        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("i"), MableAstFactory.newAIntNumericPrimitiveType()));
+        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("r"), MableAstFactory.newARealNumericPrimitiveType()));
+        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("b"), MableAstFactory.newABoleanPrimitiveType()));
+        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("s"), MableAstFactory.newAStringPrimitiveType()));
 
 
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("ia"),
-                MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType()), 1, null),
-                MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType()));
+                MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType()), 1, null));
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("ra"),
-                MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), 1, null),
-                MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()));
+                MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), 1, null));
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("be"),
-                MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType()), 1, null),
-                MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType()));
+                MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType()), 1, null));
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("sa"),
-                MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), 1, null),
-                MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()));
+                MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), 1, null));
 
-        defs.add(MableAstFactory.newAFunctionDeclaration(MableAstFactory.newAIdentifier("IcallI"), Arrays.asList(
+        defs.add(MableAstFactory.newAFunctionDeclaration(MableAstFactory.newAIdentifier("IcallI"), Collections.singletonList(
                 MableAstFactory.newAFormalParameter(MableAstFactory.newAIntNumericPrimitiveType(), MableAstFactory.newAIdentifier("a"))),
-                MableAstFactory.newAIntNumericPrimitiveType()),
-                new AFunctionType(MableAstFactory.newAIntNumericPrimitiveType(), Arrays.asList(MableAstFactory.newAIntNumericPrimitiveType())));
+                MableAstFactory.newAIntNumericPrimitiveType()));
+
+        for (PDeclaration def : defs) {
+            def.apply(typeCheckVisitor, new LocalContext(defs, null));
+        }
 
 
-        PType type = doc.apply(typeCheckVisitor, new TypeCheckInfo(new TypeCheckerContext(defs, null)));
+        PType type = doc.apply(typeCheckVisitor, new LocalContext(defs, null));
         errorReporter.printErrors(new PrintWriter(System.out, true));
         errorReporter.printWarnings(new PrintWriter(System.out, true));
 

@@ -13,7 +13,7 @@ public class MableAstFactory {
 
     public static AModuleType newAModuleType(LexIdentifier name) {
         AModuleType type = new AModuleType();
-        type.setName(MableAstFactory.newAIdentifierExp(name));
+        type.setName(name);
         return type;
     }
 

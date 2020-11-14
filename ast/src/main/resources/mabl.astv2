@@ -37,7 +37,7 @@ document
 
 
 compilationUnit
-    =   {importedModule} [name]:lex_identifier [functions]:declaration.function*
+    =   {importedModule} [module]:module
     |   {simulationSpecification}
             [body]:stm
             [imports]:lex_identifier*
@@ -54,6 +54,7 @@ declaration {
          | [name]:lex_identifier}
     = {function} [returnType]:type  [formals]:parameter.formal*
     | {variable} [type]:type [size]:exp* [initializer]:initializer
+    | {module} [name]:lex_identifier [functions]:declaration.function*
     ;
 
 initializer
@@ -139,7 +140,7 @@ type
     |   {array} [type]:type
     |   {unknown}
     |   {void}
-    |   {module} [name]:identifier
+    |   {module} [name]:lex_identifier
     |   {reference} [type]:type
     ;
 
