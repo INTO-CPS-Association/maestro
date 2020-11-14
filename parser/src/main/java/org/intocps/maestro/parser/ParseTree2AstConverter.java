@@ -382,7 +382,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             }
             arrayType.setType(primitiveType);
             def.setType(arrayType);
-            def.setIsArray(true);
         }
 
 

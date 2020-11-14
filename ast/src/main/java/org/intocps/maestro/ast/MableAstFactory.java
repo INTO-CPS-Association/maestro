@@ -49,7 +49,6 @@ public class MableAstFactory {
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        vardecl.setIsArray(false);
         return vardecl;
     }
 
@@ -67,8 +66,6 @@ public class MableAstFactory {
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        vardecl.setIsArray(true);
-        AArrayType type_ = (AArrayType) type;
         vardecl.setSize(new ArrayList<>(Collections.singletonList(size)));
         return vardecl;
     }
@@ -134,17 +131,18 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, Boolean isArray,
-            List<PExp> size) {
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, List<PExp> size) {
         AVariableDeclaration vardecl = new AVariableDeclaration();
 
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        vardecl.setIsArray(isArray);
-        if (isArray) {
-            vardecl.setSize(size);
+
+        if (size != null && !size.isEmpty() && !(type instanceof AArrayType)) {
+            throw new IllegalArgumentException("non array  declerations must use overload without size");
         }
+
+        vardecl.setSize(size);
         return vardecl;
     }
 

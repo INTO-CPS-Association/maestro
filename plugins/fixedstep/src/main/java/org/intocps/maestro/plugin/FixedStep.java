@@ -76,7 +76,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
             Optional<AVariableDeclaration> compDecl =
                     containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
                             .map(ALocalVariableStm::getDeclaration)
-                            .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+                            .filter(decl -> decl.getName().equals(name) && !decl.getSize().isEmpty() && decl.getInitializer() != null).findFirst();
 
             if (!compDecl.isPresent()) {
                 throw new ExpandException("Could not find names for comps");

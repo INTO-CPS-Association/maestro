@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + $[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n"))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 
 
 %initializer->exp = [exp]
