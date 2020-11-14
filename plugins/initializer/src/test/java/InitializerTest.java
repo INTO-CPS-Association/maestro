@@ -69,7 +69,7 @@ public class InitializerTest {
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {
         var decl = MableAstFactory.newAVariableDeclaration(new LexIdentifier("components", null), newAArrayType(newANameType("FMI2Component")),
-                MableAstFactory
+                componentInstances.size(), MableAstFactory
                         .newAArrayInitializer(componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
 
         var stm = MableAstFactory.newALocalVariableStm(decl);

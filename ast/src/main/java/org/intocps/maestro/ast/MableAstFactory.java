@@ -54,6 +54,10 @@ public class MableAstFactory {
     }
 
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, int size, PInitializer initializer_) {
+        return newAVariableDeclaration(name, type, MableAstFactory.newAIntLiteralExp(size), initializer_);
+    }
+
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PExp size, PInitializer initializer_) {
         if (!(type instanceof AArrayType)) {
             throw new IllegalArgumentException("non array  declerations must use overload without size");
         }
@@ -65,7 +69,7 @@ public class MableAstFactory {
         vardecl.setInitializer(initializer_);
         vardecl.setIsArray(true);
         AArrayType type_ = (AArrayType) type;
-        vardecl.setSize(new ArrayList<PExp>(Collections.singletonList(MableAstFactory.newAIntLiteralExp(size))));
+        vardecl.setSize(new ArrayList<>(Collections.singletonList(size)));
         return vardecl;
     }
 

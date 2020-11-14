@@ -130,18 +130,18 @@ public class DataExchangeHandler {
 
         //create output buffers
         outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                newAVariableDeclaration(getBufferName(comp, type, UsageType.Out), newAArrayType(convert(type), vars.size()))))));
+                newAVariableDeclaration(getBufferName(comp, type, UsageType.Out), newAArrayType(convert(type)), vars.size(), null)))));
 
         outputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                newAVariableDeclaration(getVrefName(comp, type, UsageType.Out), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                newAVariableDeclaration(getVrefName(comp, type, UsageType.Out), newAArrayType(newAUIntNumericPrimitiveType()), vars.size(),
                         newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
 
         //create input buffers
         inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                newAVariableDeclaration(getBufferName(comp, type, UsageType.In), newAArrayType(convert(type), vars.size()))))));
+                newAVariableDeclaration(getBufferName(comp, type, UsageType.In), newAArrayType(convert(type)), vars.size(), null)))));
 
         inputs.forEach((comp, map) -> map.forEach((type, vars) -> statements.add(newALocalVariableStm(
-                newAVariableDeclaration(getVrefName(comp, type, UsageType.In), newAArrayType(newAUIntNumericPrimitiveType(), vars.size()),
+                newAVariableDeclaration(getVrefName(comp, type, UsageType.In), newAArrayType(newAUIntNumericPrimitiveType()), vars.size(),
                         newAArrayInitializer(vars.stream().map(v -> newAIntLiteralExp((int) v.valueReference)).collect(Collectors.toList())))))));
 
 

@@ -233,7 +233,7 @@ public class MaBLTemplateGenerator {
         List<PExp> stringLiterals = logLevels.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList());
         ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
-                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType(), logLevels.size()),
+                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), logLevels.size(),
                         MableAstFactory.newAArrayInitializer(stringLiterals)));
 
         AExpressionStm expandCall = MableAstFactory.newExpressionStm(MableAstFactory
@@ -263,7 +263,7 @@ public class MaBLTemplateGenerator {
 
     private static PStm createComponentsArray(String lexName, Set<String> keySet) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(lexName),
-                MableAstFactory.newAArrayType(MableAstFactory.newANameType(FMI2COMPONENT_TYPE), keySet.size()),
+                MableAstFactory.newAArrayType(MableAstFactory.newANameType(FMI2COMPONENT_TYPE)), keySet.size(),
                 MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> AIdentifierExpFromString(x)).collect(Collectors.toList()))));
     }
 

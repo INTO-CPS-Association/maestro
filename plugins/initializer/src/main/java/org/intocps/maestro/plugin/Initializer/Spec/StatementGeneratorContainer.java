@@ -213,7 +213,8 @@ public class StatementGeneratorContainer {
             if (variable.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
                 var lexId = createLexIdentifier.apply(variable.scalarVariable.instance + variable.scalarVariable.getScalarVariable().name);
                 LoopStatements.add(newALocalVariableStm(
-                        newAVariableDeclaration(lexId, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type), 1))));
+                        newAVariableDeclaration(lexId, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
+                                null)));
                 loopValueArray.put(variable, lexId);
                 try {
                     LoopStatements.addAll(getValueStm(variable.scalarVariable.instance.getText(), lexId, scalarValueIndices,
@@ -262,7 +263,7 @@ public class StatementGeneratorContainer {
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
         return newALocalVariableStm(
-                newAVariableDeclaration(lexID, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type), 1),
+                newAVariableDeclaration(lexID, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
                         initializer));
     }
 
@@ -338,11 +339,11 @@ public class StatementGeneratorContainer {
         }
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        var arType = MableAstFactory.newAArrayType(FMITypeToMablType(type), args.size());
+        var arType = MableAstFactory.newAArrayType(FMITypeToMablType(type));
         LexIdentifier lexID = createLexIdentifier.apply(arrayName);
-        PStm stm = newALocalVariableStm(newAVariableDeclaration(lexID, arType, initializer));
+        PStm stm = newALocalVariableStm(newAVariableDeclaration(lexID, arType, args.size(), initializer));
         statements.add(stm);
-        array.put(arType.getSize(), lexID);
+        array.put(args.size(), lexID);
 
         return Pair.of(lexID, statements);
     }
@@ -376,10 +377,10 @@ public class StatementGeneratorContainer {
             }
         } else {
             arrayName = createLexIdentifier.apply("valRefsSize" + valRefs.length);
-            var arType = newAArrayType(newAUIntNumericPrimitiveType(), valRefs.length);
-            PStm stm = newALocalVariableStm(newAVariableDeclaration(arrayName, arType,
+            var arType = newAArrayType(newAUIntNumericPrimitiveType());
+            PStm stm = newALocalVariableStm(newAVariableDeclaration(arrayName, arType, valRefs.length,
                     newAArrayInitializer(Arrays.stream(valRefs).mapToObj(valRef -> newAUIntLiteralExp(valRef)).collect(Collectors.toList()))));
-            longArrays.put(arType.getSize(), arrayName);
+            longArrays.put(valRefs.length, arrayName);
             statement.add(stm);
         }
         return Pair.of(arrayName, statement);
@@ -669,11 +670,11 @@ public class StatementGeneratorContainer {
 
         // The array does not exist. Create it
         if (valueArray == null) {
-            var arType = newAArrayType(FMITypeToMablType(type), longs.length);
+            var arType = newAArrayType(FMITypeToMablType(type));
             valueArray = createLexIdentifier.apply(type.name() + "ValueSize" + longs.length);
-            PStm stm = newALocalVariableStm(newAVariableDeclaration(valueArray, arType, null));
+            PStm stm = newALocalVariableStm(newAVariableDeclaration(valueArray, arType, longs.length, null));
             result.add(stm);
-            getArrayMapOfType(type).put(arType.getSize(), valueArray);
+            getArrayMapOfType(type).put(longs.length, valueArray);
         }
 
         // Create the valRefArray

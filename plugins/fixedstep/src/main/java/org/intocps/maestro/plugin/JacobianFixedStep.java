@@ -329,7 +329,7 @@ public class JacobianFixedStep {
         statements.add(newVariable(compIndexVar, newAIntNumericPrimitiveType(), newAIntLiteralExp(0)));
         statements.addAll(dataExchangeHandler.allocate());
         statements.add(newALocalVariableStm(
-                newAVariableDeclaration(newAIdentifier(fixedStepStatus), newAArrayType(newAIntNumericPrimitiveType(), componentNames.size()),
+                newAVariableDeclaration(newAIdentifier(fixedStepStatus), newAArrayType(newAIntNumericPrimitiveType()), componentNames.size(),
                         newAArrayInitializer(
                                 IntStream.range(0, componentNames.size()).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList())))));
         // get prior to entering loop
