@@ -64,7 +64,14 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
                 errorReporter.report(-5, "Array index must be an integer actual: " + type, null);
             }
         }
-        return node.getArray().apply(this, question);
+        PType type = node.getArray().apply(this, question);
+
+        if (!(type instanceof AArrayType)) {
+            errorReporter.report(0, "Canont index none array expression", null);
+            return MableAstFactory.newAUnknownType();
+        } else {
+            return ((AArrayType) type).getType();
+        }
     }
 
     @Override
@@ -99,23 +106,17 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAArrayInitializer(AArrayInitializer node, TypeCheckInfo question) throws AnalysisException {
-        PType arrayType = astFactory.newAUnknownType();
-        // If the type of the elements are not the same, then return unknown type.
         if (node.getExp().size() > 0) {
-            PType type = null;
-            for (PExp exp : node.getExp()) {
-                PType expType = exp.apply(this, question);
-                if (type == null) {
-                    type = expType;
-                } else {
-                    if (!(type instanceof AUnknownType) && !typeComparator.compatible(type, expType)) {
-                        type = astFactory.newAUnknownType();
-                    }
+
+            PType type = node.getExp().get(0).apply(this, question);
+            for (int i = 1; i < node.getExp().size(); i++) {
+                PType elementType = node.getExp().get(i).apply(this, question);
+                if (!typeComparator.compatible(type, elementType)) {
+                    errorReporter.report(0, "Array initializer types mixed. Expected: " + type + " but found: " + elementType, null);
                 }
             }
-            arrayType = MableAstFactory.newAArrayType(type);
         }
-        return arrayType;
+        return MableAstFactory.newAUnknownType();
     }
 
     @Override
@@ -198,30 +199,46 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
 
     @Override
     public PType caseAVariableDeclaration(AVariableDeclaration node, TypeCheckInfo question) throws AnalysisException {
-        PType variableType = node.getType().apply(this, question);
-        // TODO: Fix after https://github.com/INTO-CPS-Association/maestro/issues/157
-        if ((node.getIsArray() != null && node.getIsArray()) && !(variableType instanceof AArrayType)) {
-            AArrayType type = MableAstFactory.newAArrayType(variableType.clone());
-            if (node.getSize() != null) {
-                type.setSize(node.getSize().size());
-            }
-            variableType = type;
-        }
-        if (variableType == null) {
-            errorReporter.report(-5, "Failed to retrieve the type for node: " + node, null);
-        } else {
-            if (node.getInitializer() != null) {
-                PType initializerType = node.getInitializer().apply(this, question);
-                if (initializerType != null) {
-                    if (!typeComparator.compatible(variableType, initializerType)) {
-                        errorReporter.report(-5, "Node type and initializer type does not match for node: " + node, null);
-                    }
-                } else {
-                    errorReporter.report(-5, "Initializer type could not be retrieved for node: " + node, null);
+        PType type = node.getType().apply(this, question);
+
+        if (!node.getSize().isEmpty()) {
+            //only one dimensional arrays for now
+            //type = MableAstFactory.newAArrayType(type);
+
+            for (PExp sizeExp : node.getSize()) {
+                PType sizeType = sizeExp.apply(this, question);
+                if (!typeComparator.compatible(MableAstFactory.newIntType(), sizeType)) {
+                    errorReporter.report(0, "Array size must be int. Actual: " + sizeType, null);
                 }
             }
         }
-        return variableType;
+
+        if (node.getInitializer() != null) {
+            PType initType = node.getInitializer().apply(this, question);
+            if (!typeComparator.compatible(type, initType)) {
+                errorReporter.report(0, type + " array cannot be initialized with type: " + initType, node.getName().getSymbol());
+            }
+
+            //additional check for array initializer, not complete but should do most simple cases
+            if (node.getInitializer() instanceof AArrayInitializer) {
+                AArrayInitializer initializer = (AArrayInitializer) node.getInitializer();
+
+                Integer declaredSize = null;
+                if (!node.getSize().isEmpty() && node.getSize().get(0) instanceof AIntLiteralExp) {
+                    declaredSize = ((AIntLiteralExp) node.getSize().get(0)).getValue();
+                }
+
+                if (!node.getSize().isEmpty() || !initializer.getExp().isEmpty()) {
+                    if (declaredSize == null || declaredSize != initializer.getExp().size()) {
+                        errorReporter.report(0, "Array declared with different size than initializer. Declared " + declaredSize == null ? "unknown" :
+                                declaredSize + " Innitialized " + "with: " + initializer.getExp().size(), null);
+                    }
+
+                }
+            }
+        }
+
+        return type;
     }
 
     @Override
@@ -285,9 +302,9 @@ public class TypeCheckVisitor extends QuestionAnswerAdaptor<TypeCheckInfo, PType
         } else if (right instanceof AUIntNumericPrimitiveType) {
             return MableAstFactory.newAUIntNumericPrimitiveType();
         } else if (left instanceof AIntNumericPrimitiveType) {
-            return MableAstFactory.newAUIntNumericPrimitiveType();
+            return MableAstFactory.newAIntNumericPrimitiveType();
         } else if (right instanceof AIntNumericPrimitiveType) {
-            return MableAstFactory.newAUIntNumericPrimitiveType();
+            return MableAstFactory.newAIntNumericPrimitiveType();
         }
         return null;
     }

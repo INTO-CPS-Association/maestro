@@ -50,7 +50,8 @@ public class TypeComparator {
         }
 
 
-        if (to instanceof ARealNumericPrimitiveType && (ints.contains(from)) || from instanceof ARealNumericPrimitiveType) {
+        if (to instanceof ARealNumericPrimitiveType && (ints.contains(from)) ||
+                (from instanceof ARealNumericPrimitiveType || from instanceof AIntNumericPrimitiveType)) {
             return true;
         }
 

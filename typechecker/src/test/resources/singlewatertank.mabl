@@ -196,7 +196,7 @@ import Initializer;
 							bool discardObserved = false;
 							while( (fix_comp_index < 2) )
 							{
-								logger.log(4, "Fmu index %d, status code %d", fix_comp_index, fix_status[fix_comp_index]);
+								logger.log(4, "Fmu index %d, status code %d", fix_comp_index);
 								if( (fix_status[fix_comp_index] != 0) )
 								{
 										fix_global_status = false;

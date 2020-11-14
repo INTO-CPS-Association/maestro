@@ -120,16 +120,16 @@ public class ExpressionTcTest {
 
 
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("ia"),
-                MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType())),
+                MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType()), 1, null),
                 MableAstFactory.newAArrayType(MableAstFactory.newAIntNumericPrimitiveType()));
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("ra"),
-                MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType())),
+                MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), 1, null),
                 MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()));
-        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("ba"),
-                MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType())),
+        defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("be"),
+                MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType()), 1, null),
                 MableAstFactory.newAArrayType(MableAstFactory.newABoleanPrimitiveType()));
         defs.add(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier("sa"),
-                MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType())),
+                MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), 1, null),
                 MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()));
 
         defs.add(MableAstFactory.newAFunctionDeclaration(MableAstFactory.newAIdentifier("IcallI"), Arrays.asList(

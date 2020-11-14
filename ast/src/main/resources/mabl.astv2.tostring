@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 %type->name = [name]
 //%type->array = [type] + "[]" //[size]
 //TODO: Array tostring does not have support for nested array types
-%type->array = [type] //[size]
+%type->array = [type]+"*" //[size]
 %type->void = "void"
 %type->module = [name]
 %type->unknown = "?"

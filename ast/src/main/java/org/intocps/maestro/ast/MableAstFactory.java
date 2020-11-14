@@ -3,10 +3,7 @@ package org.intocps.maestro.ast;
 import org.intocps.maestro.ast.node.*;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MableAstFactory {
@@ -42,18 +39,33 @@ public class MableAstFactory {
     }
 
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_) {
+
+        if (type instanceof AArrayType) {
+            throw new IllegalArgumentException("array declerations must use overload with size");
+        }
+
         AVariableDeclaration vardecl = new AVariableDeclaration();
 
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        if (type instanceof AArrayType) {
-            vardecl.setIsArray(true);
-            AArrayType type_ = (AArrayType) type;
-            vardecl.setSize(new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAIntLiteralExp(type_.getSize()))));
-        } else {
-            vardecl.setIsArray(false);
+        vardecl.setIsArray(false);
+        return vardecl;
+    }
+
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, int size, PInitializer initializer_) {
+        if (!(type instanceof AArrayType)) {
+            throw new IllegalArgumentException("non array  declerations must use overload without size");
         }
+
+        AVariableDeclaration vardecl = new AVariableDeclaration();
+
+        vardecl.setName(name);
+        vardecl.setType(type);
+        vardecl.setInitializer(initializer_);
+        vardecl.setIsArray(true);
+        AArrayType type_ = (AArrayType) type;
+        vardecl.setSize(new ArrayList<PExp>(Collections.singletonList(MableAstFactory.newAIntLiteralExp(size))));
         return vardecl;
     }
 
@@ -331,12 +343,6 @@ public class MableAstFactory {
         return newAIntNumericPrimitiveType();
     }
 
-    public static AArrayType newAArrayType(PType arrayType, Integer size) {
-        AArrayType type = new AArrayType();
-        type.setType(arrayType);
-        type.setSize(size);
-        return type;
-    }
 
     public static AUIntNumericPrimitiveType newUIntType() {
         return newAUIntNumericPrimitiveType();
@@ -363,7 +369,7 @@ public class MableAstFactory {
     }
 
     public static AArrayType newAArrayType(PType arrayType) {
-        return newAArrayType(arrayType, null);
+        return new AArrayType(arrayType);
     }
 
     public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, PExp exp) {

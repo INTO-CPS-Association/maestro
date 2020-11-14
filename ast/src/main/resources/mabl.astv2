@@ -136,7 +136,7 @@ type
     =   #primitive
     |   {name} [name]:lex_identifier
     |   {function} (result):type (parameters):type*
-    |   {array} [size]:java_Integer [type]:type
+    |   {array} [type]:type
     |   {unknown}
     |   {void}
     |   {module} [name]:identifier

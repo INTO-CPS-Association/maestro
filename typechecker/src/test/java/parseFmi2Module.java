@@ -4,6 +4,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeCheckVisitor;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class parseFmi2Module {
         TypeCheckVisitor typeCheckVisitor = new TypeCheckVisitor(errorReporter);
         typeCheckVisitor.typecheck(allDocuments);
         errorReporter.printErrors(new PrintWriter(System.out, true));
-        assert (errorReporter.getErrorCount() == 0);
+        Assert.assertEquals(0, errorReporter.getErrorCount());
 
     }
 }

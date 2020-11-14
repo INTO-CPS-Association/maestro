@@ -1,5 +1,6 @@
 package org.intocps.maestro.ast.display;
 
+import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAdaptor;
@@ -18,6 +19,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         node.apply(printer, 0);
         return printer.sb.toString();
     }
+
 
     public static String printLineNumbers(INode node) throws AnalysisException {
         PrettyPrinter printer = new PrettyPrinter();
@@ -115,12 +117,53 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     }
 
     @Override
+    public void caseALocalVariableStm(ALocalVariableStm node, Integer question) throws AnalysisException {
+
+        node.getDeclaration().apply(this, question);
+    }
+
+    @Override
+    public void caseAVariableDeclaration(AVariableDeclaration node, Integer question) throws AnalysisException {
+
+        node.getType().apply(this, question);
+        sb.append(" ");
+        sb.append(node.getName().getText());
+        for (PExp s : node.getSize()) {
+            sb.append("[");
+            s.apply(this, question);
+            sb.append("]");
+        }
+        if (node.getInitializer() != null) {
+            sb.append(" = ");
+            node.getInitializer().apply(this, question);
+        }
+
+        sb.append(";");
+
+
+    }
+
+    @Override
     public void defaultPStm(PStm node, Integer question) throws AnalysisException {
         sb.append(indent(question) + (node.toString().endsWith(";") ? node.toString() : node.toString() + ";"));
     }
 
     @Override
     public void defaultPExp(PExp node, Integer question) throws AnalysisException {
+        sb.append(node.toString());
+    }
+
+    @Override
+    public void defaultPType(PType node, Integer question) throws AnalysisException {
+        if (node instanceof AArrayType) {
+            ((AArrayType) node).getType().apply(this, question);
+        } else {
+            sb.append(node.toString());
+        }
+    }
+
+    @Override
+    public void defaultPInitializer(PInitializer node, Integer question) throws AnalysisException {
         sb.append(node.toString());
     }
 
