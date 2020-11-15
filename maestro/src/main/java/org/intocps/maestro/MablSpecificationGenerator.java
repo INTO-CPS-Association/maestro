@@ -17,11 +17,8 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.plugin.*;
-import org.intocps.maestro.typechecker.DeclarationList;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.typechecker.TypeComparator;
-import org.intocps.maestro.typechecker.context.Context;
-import org.intocps.maestro.typechecker.context.LocalContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -455,13 +452,7 @@ public class MablSpecificationGenerator {
         logger.debug("Type checking");
         try {
             TypeChecker typeChecker = new TypeChecker(reporter);
-            Context rootCtxt = null;
-            if (globalFunctions != null && !globalFunctions.isEmpty()) {
-                DeclarationList defsList = new DeclarationList(globalFunctions);
-                rootCtxt = new LocalContext(defsList, null);
-            }
-
-            boolean res = typeChecker.typeCheck(documentList, rootCtxt);
+            boolean res = typeChecker.typeCheck(documentList, globalFunctions);
             return Map.entry(res, typeChecker.getCheckedTypes());
         } catch (AnalysisException e) {
             e.printStackTrace();

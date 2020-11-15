@@ -33,7 +33,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
     @Override
     @Test
     public void test() throws Exception {
-        for (INode spec : parse(getSpecificationFiles())) {
+        for (INode spec : parse(getSpecificationFiles(directory))) {
             OnlineTestUtils.download(OnlineTestUtils.collectFmus(spec, false));
         }
         super.test();

@@ -53,7 +53,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseAArrayType(AArrayType node, Context ctxt) throws AnalysisException {
-        return MableAstFactory.newAArrayType(node.getType().apply(this, ctxt));
+        //FIXME should not need clone
+        return MableAstFactory.newAArrayType(node.getType().apply(this, ctxt).clone());
     }
 
     @Override
@@ -152,6 +153,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             if (type instanceof AFunctionType) {
                 AFunctionType targetType = (AFunctionType) type;
 
+                List<PType> callArgTypes = new Vector<>();
+
                 if (targetType.getParameters().size() != node.getArgs().size()) {
                     errorReporter.report(0,
                             "Wrong number of arguments. Expected: " + targetType.getParameters().size() + " found: " + node.getArgs().size(),
@@ -160,6 +163,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                     for (int i = 0; i < targetType.getParameters().size(); i++) {
                         PExp arg = node.getArgs().get(i);
                         PType argType = arg.apply(this, ctxt);
+                        callArgTypes.add(argType);
                         PType argTargetType = targetType.getParameters().get(i);
                         if (!typeComparator.compatible(argTargetType, argType)) {
                             errorReporter.report(-5, "Parameter type: " + argType + " not matching expected type: " + argTargetType, null);
@@ -167,12 +171,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                         }
                     }
                 }
+
+
+                AFunctionType callType = new AFunctionType();
+                callType.setResult(targetType.getResult().clone());
+                callType.setParameters(callArgTypes);
+                checkedTypes.put(node, callType);
                 return targetType.getResult();
             } else {
                 errorReporter.report(0, "Expected a function decleration: " + def.getName().getText(), def.getName().getSymbol());
             }
         }
-
+        checkedTypes.put(node, newAUnknownType());
         return MableAstFactory.newAUnknownType();
 
     }
@@ -651,7 +661,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return null;
     }
 
-    public void typecheck(List<ARootDocument> rootDocuments) throws AnalysisException {
+    public void typecheck(List<ARootDocument> rootDocuments, List<? extends PDeclaration> globalFunctions) throws AnalysisException {
+
+        if (globalFunctions == null) {
+            globalFunctions = new Vector<>();
+        }
 
         // Find all importedModuleCompilationUnits and typecheck these twice.
         List<ARootDocument> allModules =
@@ -692,6 +706,12 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             });
         }
 
+        for (PDeclaration func : globalFunctions) {
+            func.apply(typeCheckVisitor, ctx);
+        }
+
+        LocalContext globalContext = new LocalContext(globalFunctions, ctx);
+
         List<ARootDocument> allSimulationSpecifications =
                 rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof ASimulationSpecificationCompilationUnit))
                         .collect(Collectors.toList());
@@ -699,7 +719,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         if (allSimulationSpecifications.size() != 1) {
             errorReporter.report(-5, "1 simulation specification is allowed. Found: " + allSimulationSpecifications.size(), null);
         } else {
-            allSimulationSpecifications.get(0).apply(this, ctx);
+            allSimulationSpecifications.get(0).apply(this, globalContext);
         }
     }
 

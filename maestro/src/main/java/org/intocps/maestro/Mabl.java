@@ -28,11 +28,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
@@ -41,6 +39,7 @@ public class Mabl {
     final IntermediateSpecWriter intermediateSpecWriter;
     private final File specificationFolder;
     private final MableSettings settings = new MableSettings();
+    private final Set<ARootDocument> importedDocument = new HashSet<>();
     private boolean verbose;
     private List<Framework> frameworks;
     private ARootDocument document;
@@ -68,13 +67,25 @@ public class Mabl {
         if (sourceFiles.isEmpty()) {
             return;
         }
-        document = mergeDocuments(MablParserUtil.parse(sourceFiles));
+        ARootDocument main = mergeDocuments(MablParserUtil.parse(sourceFiles));
+        this.document = main == null ? document : main;
         postProcessParsing();
     }
 
-    private ARootDocument mergeDocuments(List<ARootDocument> parse) {
-        //FIXME include a merge
-        return parse.get(0);
+    private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
+        ARootDocument main = null;
+        for (ARootDocument doc : documentList) {
+            Optional<List<ASimulationSpecificationCompilationUnit>> collect =
+                    NodeCollector.collect(doc, ASimulationSpecificationCompilationUnit.class);
+            if (collect.isPresent() && !collect.get().isEmpty()) {
+                main = doc;
+            } else {
+                importedDocument.add(doc);
+            }
+        }
+
+
+        return main;
     }
 
     public void parse(CharStream specStreams) throws IOException {
@@ -141,8 +152,9 @@ public class Mabl {
         MablSpecificationGenerator mablSpecificationGenerator =
                 new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
 
+        List<ARootDocument> allDocs = Stream.concat(Stream.of(document), importedDocument.stream()).collect(Collectors.toList());
 
-        ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(Collections.singletonList(document));
+        ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(allDocs);
         removeFrameworkAnnotations(doc);
         document = doc;
     }

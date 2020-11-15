@@ -20,13 +20,16 @@ public class ParseFmi2Module {
     public void parseSpecification() throws IOException, AnalysisException {
         IErrorReporter errorReporter = new ErrorReporter();
         List<ARootDocument> allDocuments = MablParserUtil.parse(Arrays
-                .asList(new File("src/main/resources/FMI2.mabl"), new File("src/main/resources" + "/Math.mabl"),
-                        new File("src/main/resources/CSV.mabl"), new File("src/main/resources/DataWriter.mabl"),
-                        new File("src/main/resources" + "/Logger.mabl"), new File("src/test/resources/singlewatertank.mabl")));
+                .asList(new File("src/main/resources/org/intocps/maestro/typechecker/FMI2.mabl"),
+                        new File("src/main/resources/org/intocps/maestro" + "/typechecker/Math.mabl"),
+                        new File("src/main/resources/org/intocps/maestro/typechecker/CSV.mabl"),
+                        new File("src/main/resources/org/intocps/maestro/typechecker/DataWriter.mabl"),
+                        new File("src/main/resources/org/intocps/maestro/typechecker/Logger.mabl"),
+                        new File("src/test/resources" + "/singlewatertank.mabl")));
 
         TypeChecker typeChecker = new TypeChecker(errorReporter);
         typeChecker.typeCheck(allDocuments, null);
-        
+
         errorReporter.printErrors(new PrintWriter(System.out, true));
         Assert.assertEquals(0, errorReporter.getErrorCount());
 

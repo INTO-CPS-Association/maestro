@@ -1,11 +1,11 @@
 package org.intocps.maestro.typechecker;
 
+import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.INode;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.typechecker.context.Context;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,10 +24,10 @@ public class TypeChecker {
         return checkedTypes;
     }
 
-    public boolean typeCheck(List<ARootDocument> documents, Context rootContext) throws AnalysisException {
+    public boolean typeCheck(List<ARootDocument> documents, List<? extends PDeclaration> globalFunctions) throws AnalysisException {
         TypeCheckVisitor checker = new TypeCheckVisitor(errorReporter);
         checkedTypes.clear();
-        checker.typecheck(documents);
+        checker.typecheck(documents, globalFunctions);
         checkedTypes.putAll(checker.checkedTypes);
         return errorReporter.getErrorCount() == 0;
     }

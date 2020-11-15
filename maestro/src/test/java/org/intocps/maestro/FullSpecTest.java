@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -17,6 +18,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -136,16 +138,29 @@ public class FullSpecTest {
 
         File workingDirectory = getWorkingDirectory(this.directory);
 
+        File specFolder = new File(workingDirectory, "specs");
+        specFolder.mkdirs();
+
         TestJsonObject testJsonObject = getTestJsonObject(directory);
         boolean useTemplate = testJsonObject != null && testJsonObject.autoGenerate;
 
         IErrorReporter reporter = new ErrorReporter();
 
+        for (String lib : Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math")) {
+            FileUtils.copyInputStreamToFile(TypeChecker.class.getResourceAsStream("/org/intocps/maestro/typechecker/" + lib + ".mabl"),
+                    new File(specFolder, lib + ".mabl"));
+        }
+        List<File> inputs = Arrays.stream(Objects.requireNonNull(directory.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+                .collect(Collectors.toList());
+        for (File input : inputs) {
+            FileUtils.copyFile(input, new File(specFolder, input.getName()));
+        }
+
         Mabl mabl = new Mabl(directory, workingDirectory);
         mabl.setReporter(reporter);
         mabl.setVerbose(true);
 
-        mabl.parse(getSpecificationFiles());
+        mabl.parse(getSpecificationFiles(specFolder));
         postParse(mabl);
         if (useTemplate) {
 
@@ -200,8 +215,9 @@ public class FullSpecTest {
 
     }
 
-    protected List<File> getSpecificationFiles() {
-        return Arrays.stream(Objects.requireNonNull(directory.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+    protected List<File> getSpecificationFiles(File specFolder) {
+
+        return Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
                 .collect(Collectors.toList());
     }
 }
