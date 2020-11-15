@@ -1,10 +1,14 @@
- module FMI2 {
+ module FMI2
+ import FMI2Component;
+ {
 	FMI2Component instantiate(string name, bool visible, bool loggingOn);
  	void freeInstance(FMI2Component comp);
 }
 
 
- module FMI2Component {
+module FMI2Component
+import FmiComponentState;
+ {
 
     // control
  	int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);

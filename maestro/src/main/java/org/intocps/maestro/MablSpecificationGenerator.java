@@ -2,10 +2,7 @@ package org.intocps.maestro;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.collections.map.HashedMap;
-import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.NodeCollector;
-import org.intocps.maestro.ast.PDeclaration;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -83,28 +80,35 @@ public class MablSpecificationGenerator {
     }
 
     private ASimulationSpecificationCompilationUnit expandExternals(List<ARootDocument> importedDocumentList, ARootDocument doc,
-            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> env) throws ExpandException {
+            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> plugins) throws ExpandException {
 
         ARootDocument docClone = doc.clone();
 
         intermediateSpecWriter.write(docClone);
-        return expandExternals(importedDocumentList, docClone, reporter, env, 1);
+        return expandExternals(importedDocumentList, docClone, reporter, plugins, 1);
     }
 
     private ASimulationSpecificationCompilationUnit expandExternals(List<ARootDocument> importedDocumentList, ARootDocument simulationModule,
-            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> env, int depth) throws ExpandException {
+            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> plugins, int depth) throws ExpandException {
 
+        //TODO do not add these functions as global but wrap in a module instead
         List<AFunctionDeclaration> globalFunctions =
-                env.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
-        Map.Entry<Boolean, Map<INode, PType>> tcRes =
-                typeCheck(Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList()), globalFunctions,
-                        reporter);
+                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
+        List<ARootDocument> documentList = Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList());
+        //        documentList.addAll(plugins.stream().map(plugin -> new ARootDocument(Collections.singletonList(plugin.getImportModule()))).collect(Collectors.toList())))
+
+        //TODO add the real module of the plugin
+        documentList.addAll(plugins.stream().map(plugin -> new ARootDocument(Collections.singletonList(
+                new AImportedModuleCompilationUnit(new AModuleDeclaration(new LexIdentifier(plugin.getName(), null), new Vector<>()),
+                        new Vector<>())))).collect(Collectors.toList()));
+
+        Map.Entry<Boolean, Map<INode, PType>> tcRes = typeCheck(documentList, globalFunctions, reporter);
         if (!tcRes.getKey()) {
             throw new RuntimeException("Expansion not possible type errors");
         }
 
 
-        //        Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = env.getTypesPlugins();
+        //        Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = plugins.getTypesPlugins();
 
 
         //TODO: It is not necessary to check if it is expand as all CallExps are expand.
@@ -135,7 +139,7 @@ public class MablSpecificationGenerator {
             ACallExp call = callReplacement.getKey();
             AFunctionDeclaration replacement = callReplacement.getValue().get();
             IMaestroExpansionPlugin replacementPlugin =
-                    env.stream().filter(plugin -> plugin.getDeclaredUnfoldFunctions().contains(replacement)).findFirst().get();
+                    plugins.stream().filter(plugin -> plugin.getDeclaredUnfoldFunctions().contains(replacement)).findFirst().get();
 
             logger.debug("Replacing external '{}' with unfoled statement '{}' from plugin: {}", call.getMethodName().getText(),
                     replacement.getName().getText(), replacementPlugin.getName() + " " + replacementPlugin.getVersion());
@@ -144,80 +148,11 @@ public class MablSpecificationGenerator {
             intermediateSpecWriter.write(simulationModule);
         }
 
-
         logger.debug("Externals {}",
                 NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().map(m -> m.getMethodName().toString())
                         .collect(Collectors.joining(" , ", "[ ", " ]")));
 
-        //
-        //        AtomicInteger typeIndex = new AtomicInteger(0);
-        //        externalTypeMap.forEach((node, type) -> {
-        //
-        //            if (type.isPresent()) {
-        //                logger.debug("Unfolding node: {}", node);
-        //
-        //                Predicate<Map.Entry<AFunctionDeclaration, AFunctionType>> typeCompatible =
-        //                        (fmap) -> fmap.getKey().getName().getText().equals(node.getMethodName().toString()) &&
-        //                                fmap.getKey().getFormals().size() == node.getArgs().size() && comparator.compatible(fmap.getValue(), type.get());
-        //
-        //
-        //                Optional<Map.Entry<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>>> pluginMatch =
-        //                        plugins.entrySet().stream().filter(map -> map.getValue().entrySet().stream().anyMatch(typeCompatible)).findFirst();
-        //
-        //                if (pluginMatch.isPresent()) {
-        //                    logger.trace("matched with {}- {}", pluginMatch.get().getKey().getName(),
-        //                            pluginMatch.get().getValue().keySet().iterator().next());
-        //                    pluginMatch.ifPresent(map -> {
-        //                        map.getValue().entrySet().stream().filter(typeCompatible).findFirst().ifPresent(fmap -> {
-        //                            logger.debug("Replacing external '{}' with unfoled statement", node.getMethodName().toString());
-        //
-        //                            List<PStm> unfoled = null;
-        //                            AConfigStm configRightAbove = null;
-        //                            IMaestroExpansionPlugin plugin = map.getKey();
-        //                            try {
-        //                                if (plugin.requireConfig()) {
-        //                                    try {
-        //                                        configRightAbove = findConfig(node);
-        //
-        //                                        if (plugin.requireConfig() && configRightAbove == null) {
-        //                                            throw new ExpandException("Cannot expand no " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_CONFIG) +
-        //                                                    " specified on line: " + (node.getMethodName().getSymbol().getLine() - 1));
-        //                                        }
-        //
-        //                                        IPluginConfiguration config = env.getConfiguration(plugin, configRightAbove, specificationFolder);
-        //                                        unfoled = plugin.expand(fmap.getKey(), node.getArgs(), config, simulationEnvironment, reporter);
-        //                                    } catch (IOException e) {
-        //                                        logger.error("Could not obtain configuration for plugin '{}' at {}: {}", plugin.getName(),
-        //                                                node.getMethodName().toString(), e.getMessage());
-        //                                    }
-        //
-        //                                } else {
-        //                                    unfoled = plugin.expand(fmap.getKey(), node.getArgs(), null, simulationEnvironment, reporter);
-        //                                }
-        //                            } catch (ExpandException e) {
-        //                                logger.error("Internal error in plug-in '{}' at {}. Message: {}", plugin.getName(), node.getMethodName().toString(),
-        //                                        e.getMessage());
-        //                            }
-        //                            if (unfoled == null) {
-        //                                reporter.report(999, String.format("Unfold failure in plugin %s for %s", plugin.getName(), node.getMethodName() + ""),
-        //                                        null);
-        //                            } else {
-        //                                //replace the call and so rounding expression statement
-        //
-        //                                replaceExpandedCall(node, configRightAbove, unfoled);
-        //                                //                                writeIntermediateSpec(depth, typeIndex.getAndAdd(1), simulationModule);
-        //                                intermediateSpecWriter.write(simulationModule);
-        //
-        //                            }
-        //                        });
-        //                    });
-        //                } else {
-        //                    logger.error("No plugin found for: {}", node);
-        //                }
-        //            }
-        //        });
-
-        return expandExternals(importedDocumentList, simulationModule, reporter, env, depth + 1);
+        return expandExternals(importedDocumentList, simulationModule, reporter, plugins, depth + 1);
     }
 
     private void replaceCall(ACallExp callToBeReplaced, AFunctionDeclaration replacement, IMaestroExpansionPlugin replacementPlugin,

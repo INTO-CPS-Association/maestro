@@ -3,7 +3,6 @@ package org.intocps.maestro.typechecker.context;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.PDeclaration;
-import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.typechecker.DeclarationList;
 
 import java.util.List;
@@ -14,10 +13,10 @@ public class ModulesContext extends Context {
     private final Map<LexIdentifier, Map.Entry<AModuleDeclaration, DeclarationList>> modules;
 
 
-    public ModulesContext(List<? extends AImportedModuleCompilationUnit> modules, Context outerContext) {
+    public ModulesContext(List<? extends AModuleDeclaration> modules, Context outerContext) {
         super(outerContext);
-        this.modules = modules.stream().collect(
-                Collectors.toMap(m -> m.getModule().getName(), m -> Map.entry(m.getModule(), new DeclarationList(m.getModule().getFunctions()))));
+        this.modules =
+                modules.stream().collect(Collectors.toMap(AModuleDeclaration::getName, m -> Map.entry(m, new DeclarationList(m.getFunctions()))));
     }
 
 

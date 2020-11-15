@@ -27,4 +27,12 @@ public abstract class Context {
     }
 
 
+    public PDeclaration findGlobalDeclaration(LexIdentifier name) {
+        if (outerContext == null) {
+            return null;
+        }
+        return outerContext.findGlobalDeclaration(name);
+    }
+
+
 }

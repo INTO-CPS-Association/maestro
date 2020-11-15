@@ -1,4 +1,6 @@
- module CSV {
+ module CSV
+ import CSVFile;
+ {
     CSVFile open( string path);
  	CSVFile close(CSVFile file);
 }

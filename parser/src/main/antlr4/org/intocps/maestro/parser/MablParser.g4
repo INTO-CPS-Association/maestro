@@ -12,7 +12,7 @@ compilationUnit
     ;
 
 moduleDeclaration
-    : MODULE IDENTIFIER ('{' functionDeclaration* '}')
+    : MODULE name=IDENTIFIER (IMPORT imports+=IDENTIFIER ';')* ('{' functionDeclaration* '}')
     ;
 
 functionDeclaration

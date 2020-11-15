@@ -37,7 +37,9 @@ document
 
 
 compilationUnit
-    =   {importedModule} [module]:module
+    =   {importedModule}
+            [module]:module
+            [imports]:lex_identifier*
     |   {simulationSpecification}
             [body]:stm
             [imports]:lex_identifier*

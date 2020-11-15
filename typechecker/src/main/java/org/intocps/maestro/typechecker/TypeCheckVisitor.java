@@ -9,14 +9,15 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.InternalException;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.typechecker.context.Context;
+import org.intocps.maestro.typechecker.context.GlobalContext;
 import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.intocps.maestro.ast.MableAstFactory.newAModuleType;
-import static org.intocps.maestro.ast.MableAstFactory.newAUnknownType;
+import static org.intocps.maestro.ast.MableAstFactory.*;
 
 class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     private final IErrorReporter errorReporter;
@@ -440,13 +441,63 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             node_.apply(this, ctxt);
         }
 
-        return null;
+        return newAVoidType();
     }
 
     @Override
     public PType caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node, Context ctxt) throws AnalysisException {
-        node.getBody().apply(this, ctxt);
-        return null;
+
+        ModulesContext visibleModulesContext = new ModulesContext(getAccessibleModulesContext(node.getImports(), ctxt), ctxt);
+        node.getBody().apply(this, visibleModulesContext);
+        return newAVoidType();
+    }
+
+    @Override
+    public PType caseAImportedModuleCompilationUnit(AImportedModuleCompilationUnit node, Context ctxt) throws AnalysisException {
+        ModulesContext visibleModulesContext = new ModulesContext(getAccessibleModulesContext(node.getImports(), ctxt), ctxt);
+        node.getModule().apply(this, visibleModulesContext);
+        return newAVoidType();
+    }
+
+    @Override
+    public PType caseAModuleDeclaration(AModuleDeclaration node, Context ctxt) throws AnalysisException {
+
+        PDeclaration decl = ctxt.findDeclaration(node.getName());
+        if (decl != null) {
+            errorReporter.report(0, "Module dublicates: " + node.getName().getText() + " dublicates: " + decl.getName().getText(),
+                    node.getName().getSymbol());
+        }
+
+        for (AFunctionDeclaration funDecl : node.getFunctions()) {
+            funDecl.apply(this, ctxt);
+        }
+        return newAModuleType((LexIdentifier) node.getName().clone());
+    }
+
+    private List<AModuleDeclaration> getAccessibleModulesContext(List<? extends LexIdentifier> imports, Context ctxt) {
+        List<AModuleDeclaration> importedModules = new Vector<>();
+        for (LexIdentifier importName : imports) {
+            PDeclaration decl = ctxt.findGlobalDeclaration(importName);
+            if (decl == null) {
+                errorReporter.report(0, "Imported decleration: '" + importName.getText() + "' not in scope", importName.getSymbol());
+            } else {
+                if (decl instanceof AModuleDeclaration) {
+                    importedModules.add((AModuleDeclaration) decl);
+
+                    AImportedModuleCompilationUnit importedUnit = decl.getAncestor(AImportedModuleCompilationUnit.class);
+                    if (importedUnit != null) {
+                        //recursive add imports
+                        importedModules.addAll(getAccessibleModulesContext(importedUnit.getImports(), ctxt));
+                    } else {
+                        errorReporter.report(0, "Module is not in a import unit", decl.getName().getSymbol());
+                    }
+                } else {
+                    errorReporter.report(0, "Imported module is not a module", importName.getSymbol());
+                }
+            }
+        }
+
+        return importedModules;
     }
 
     @Override
@@ -668,25 +719,28 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         }
 
         // Find all importedModuleCompilationUnits and typecheck these twice.
-        List<ARootDocument> allModules =
-                rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof AImportedModuleCompilationUnit))
-                        .collect(Collectors.toList());
-        final List<AImportedModuleCompilationUnit> modules = new Vector<>();
+        List<AImportedModuleCompilationUnit> importedModuleUnits = rootDocuments.stream()
+                .map(x -> x.getContent().stream().filter(AImportedModuleCompilationUnit.class::isInstance)
+                        .map(AImportedModuleCompilationUnit.class::cast)).flatMap(Function.identity()).collect(Collectors.toList());
+        //        final List<AImportedModuleCompilationUnit> modules = new Vector<>();
+        //
+        //
+        //        for (ARootDocument module : allModules) {
+        //            for (PCompilationUnit singleModule : module.getContent()) {
+        //                AImportedModuleCompilationUnit importedModule = (AImportedModuleCompilationUnit) singleModule;
+        //                modules.add(importedModule);
+        //            }
+        //        }
 
 
-        for (ARootDocument module : allModules) {
-            for (PCompilationUnit singleModule : module.getContent()) {
-                AImportedModuleCompilationUnit importedModule = (AImportedModuleCompilationUnit) singleModule;
-                modules.add(importedModule);
-            }
-        }
-
-
-        final ModulesContext ctx = new ModulesContext(modules, null);
+        List<AModuleDeclaration> importedModules =
+                importedModuleUnits.stream().map(AImportedModuleCompilationUnit::getModule).collect(Collectors.toList());
+        final GlobalContext ctx = new GlobalContext(importedModules, null);
 
         final QuestionAnswerAdaptor<Context, PType> typeCheckVisitor = this;
 
-        //check all modules
+        //check all modules imported imported
+        //TODO why are we adding this type here?
         for (ARootDocument doc : rootDocuments) {
             doc.apply(new DepthFirstAnalysisAdaptor() {
                 @Override
@@ -696,24 +750,32 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             });
         }
 
-        //first check all declared function signatures. They should only depend in modules thats in the context already
+        //check all imported modules
         for (ARootDocument doc : rootDocuments) {
-            doc.apply(new DepthFirstAnalysisAdaptor() {
-                @Override
-                public void caseAFunctionDeclaration(AFunctionDeclaration node) throws AnalysisException {
-                    checkedTypes.put(node, node.apply(typeCheckVisitor, ctx));
+            for (PCompilationUnit unit : doc.getContent()) {
+                if (unit instanceof AImportedModuleCompilationUnit) {
+                    unit.apply(typeCheckVisitor, ctx);
                 }
-            });
+            }
+            //            for(int )
+            //            doc.apply(new DepthFirstAnalysisAdaptor() {
+            //                @Override
+            //                public void caseAFunctionDeclaration(AFunctionDeclaration node) throws AnalysisException {
+            //                    checkedTypes.put(node, node.apply(typeCheckVisitor, allModulesCtxt));
+            //                }
+            //            });
         }
 
+        ModulesContext allModulesCtxt = new ModulesContext(importedModules, ctx);
         for (PDeclaration func : globalFunctions) {
-            func.apply(typeCheckVisitor, ctx);
+            func.apply(typeCheckVisitor, allModulesCtxt);
         }
 
+        //add all global functions as local functions
         LocalContext globalContext = new LocalContext(globalFunctions, ctx);
 
         List<ARootDocument> allSimulationSpecifications =
-                rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(y -> y instanceof ASimulationSpecificationCompilationUnit))
+                rootDocuments.stream().filter(x -> x.getContent().stream().anyMatch(ASimulationSpecificationCompilationUnit.class::isInstance))
                         .collect(Collectors.toList());
 
         if (allSimulationSpecifications.size() != 1) {
