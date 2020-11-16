@@ -1,9 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -14,10 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,7 +30,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
 
 
-    @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fun).collect(Collectors.toSet());
     }
@@ -127,6 +121,18 @@ public class FixedStep implements IMaestroExpansionPlugin {
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
         return new FixedstepConfig(new ObjectMapper().readValue(is, Integer.class));
+    }
+
+    @Override
+    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
+        AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
+        unit.setImports(
+                Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
+        AModuleDeclaration module = new AModuleDeclaration();
+        module.setName(newAIdentifier(getName()));
+        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
+        unit.setModule(module);
+        return unit;
     }
 
     @Override

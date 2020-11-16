@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -43,8 +40,9 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     final AFunctionDeclaration f1 = MableAstFactory.newAFunctionDeclaration(new LexIdentifier("initialize", null),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), MableAstFactory.newAVoidType());
+                    newAFormalParameter(newRealType(), newAIdentifier("startTime")), newAFormalParameter(newRealType(), newAIdentifier("endTime"))),
+            MableAstFactory.newAVoidType());
+
 
     private final HashMap<ModelConnection.ModelInstance, HashSet<ModelDescription.ScalarVariable>> portsAlreadySet = new HashMap<>();
     private final TopologicalPlugin topologicalPlugin;
@@ -52,12 +50,13 @@ public class Initializer implements IMaestroExpansionPlugin {
 
     Config config;
     List<ModelParameter> modelParameters;
+    AImportedModuleCompilationUnit unit = null;
+
 
     public Initializer() {
         this.initializationPrologQuery = new InitializationPrologQuery();
         this.topologicalPlugin = new TopologicalPlugin();
     }
-
 
     public Initializer(TopologicalPlugin topologicalPlugin, InitializationPrologQuery initializationPrologQuery) {
         this.topologicalPlugin = topologicalPlugin;
@@ -74,7 +73,6 @@ public class Initializer implements IMaestroExpansionPlugin {
         return "0.0.0";
     }
 
-    @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(f1).collect(Collectors.toSet());
     }
@@ -218,7 +216,6 @@ public class Initializer implements IMaestroExpansionPlugin {
         return optimizedOrder;
     }
 
-
     private boolean canBeOptimized(Variable variable1, Variable variable2) {
         return variable1.scalarVariable.getInstance() == variable2.scalarVariable.getInstance() &&
                 variable2.scalarVariable.getScalarVariable().causality == variable1.scalarVariable.getScalarVariable().causality &&
@@ -268,7 +265,6 @@ public class Initializer implements IMaestroExpansionPlugin {
         }
         return stms;
     }
-
 
     private List<PStm> setComponentsVariables(Fmi2SimulationEnvironment env, List<LexIdentifier> knownComponentNames, StatementGeneratorContainer sc,
             Predicate<ModelDescription.ScalarVariable> predicate) {
@@ -364,6 +360,20 @@ public class Initializer implements IMaestroExpansionPlugin {
             e.printStackTrace();
         }
         return conf;
+    }
+
+    @Override
+    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
+        if (unit != null) {
+            return unit;
+        }
+        unit = new AImportedModuleCompilationUnit();
+        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
+        AModuleDeclaration module = new AModuleDeclaration();
+        module.setName(newAIdentifier(getName()));
+        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
+        unit.setModule(module);
+        return unit;
     }
 
     public static class Config implements IPluginConfiguration {

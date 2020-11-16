@@ -19,8 +19,9 @@ real START_TIME = 10.0;
 real END_TIME = 10.0;
 bool global_execution_continue = true;
 @Config("@file: config.json");
-expand initialize(components,START_TIME,END_TIME);
+ Initializer.expand initialize(components,START_TIME,END_TIME);
 unload(tankcontroller);
 unload(SingleWatertank);
 unload(math);
+unload(logger);
 }

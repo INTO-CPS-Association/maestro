@@ -468,7 +468,7 @@ public class StatementGeneratorContainer {
                             }
 
                             // Convert the value
-                            statements.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifier(
+                            statements.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifierExp("TypeConverter"), newAIdentifier(
                                     "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(name), newAIdentifierExp(variable.variableId))))));
 

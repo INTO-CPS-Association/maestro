@@ -203,6 +203,15 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static ACallExp newACallExp(LexToken expand, PExp object, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setObject(object);
+        exp.setExpand(expand);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
     public static ACallExp newACallExp(PExp object, LexIdentifier identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
         exp.setObject(object);

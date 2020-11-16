@@ -19,6 +19,15 @@ public class TypeComparator {
     }
 
     public synchronized boolean compatible(PType to, PType from) {
+
+        if (to instanceof AFunctionType && from instanceof AFunctionType) {
+            return compatible((AFunctionType) to, (AFunctionType) from);
+        }
+
+        if (from instanceof AFunctionType) {
+            return compatible(to, ((AFunctionType) from).getResult());
+        }
+
         // If they are both array types, then get the inner type
         if (to instanceof AArrayType && from instanceof AArrayType) {
             to = ((AArrayType) to).getType();

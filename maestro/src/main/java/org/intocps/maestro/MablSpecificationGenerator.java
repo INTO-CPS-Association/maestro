@@ -2,7 +2,10 @@ package org.intocps.maestro;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.collections.map.HashedMap;
-import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.NodeCollector;
+import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -56,7 +59,7 @@ public class MablSpecificationGenerator {
     }
 
 
-    private static Collection<IMaestroExpansionPlugin> loadExpansionPlugins(Framework framework, List<String> importModules) {
+    public static Collection<IMaestroExpansionPlugin> loadExpansionPlugins(Framework framework, List<String> importModules) {
         Collection<IMaestroExpansionPlugin> plugins = PluginFactory.getPlugins(IMaestroExpansionPlugin.class, framework);
 
         plugins.forEach(p -> logger.debug("Located plugins: {} - {}", p.getName(), p.getVersion()));
@@ -68,8 +71,8 @@ public class MablSpecificationGenerator {
                 pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
 
         logger.debug("Plugins declared functions: {}", pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion() +
-                p.getDeclaredUnfoldFunctions().stream().map(AFunctionDeclaration::toString).collect(Collectors.joining(",\n\t", "\n\t", "")))
-                .collect(Collectors.joining(",\n", "\n[\n", "\n]")));
+                p.getDeclaredImportUnit().getModule().getFunctions().stream().map(AFunctionDeclaration::toString)
+                        .collect(Collectors.joining("," + "\n\t", "\n\t", ""))).collect(Collectors.joining(",\n", "\n[\n", "\n]")));
 
         return pluginsToUnfold;
     }
@@ -79,8 +82,8 @@ public class MablSpecificationGenerator {
         return this.configuration;
     }
 
-    private ASimulationSpecificationCompilationUnit expandExternals(List<ARootDocument> importedDocumentList, ARootDocument doc,
-            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> plugins) throws ExpandException {
+    private ARootDocument expandExternals(List<ARootDocument> importedDocumentList, ARootDocument doc, IErrorReporter reporter,
+            Collection<IMaestroExpansionPlugin> plugins) throws ExpandException {
 
         ARootDocument docClone = doc.clone();
 
@@ -88,23 +91,27 @@ public class MablSpecificationGenerator {
         return expandExternals(importedDocumentList, docClone, reporter, plugins, 1);
     }
 
-    private ASimulationSpecificationCompilationUnit expandExternals(List<ARootDocument> importedDocumentList, ARootDocument simulationModule,
-            IErrorReporter reporter, Collection<IMaestroExpansionPlugin> plugins, int depth) throws ExpandException {
+    private ARootDocument expandExternals(List<ARootDocument> importedDocumentList, ARootDocument simulationModule, IErrorReporter reporter,
+            Collection<IMaestroExpansionPlugin> plugins, int depth) throws ExpandException {
 
         //TODO do not add these functions as global but wrap in a module instead
-        List<AFunctionDeclaration> globalFunctions =
-                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
+        List<AFunctionDeclaration> globalFunctions = new Vector<>();
+
+        List<AImportedModuleCompilationUnit> pluginUnits = plugins.stream().map(unit -> unit.getDeclaredImportUnit()).collect(Collectors.toList());
+        //                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
         List<ARootDocument> documentList = Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList());
-        //        documentList.addAll(plugins.stream().map(plugin -> new ARootDocument(Collections.singletonList(plugin.getImportModule()))).collect(Collectors.toList())))
+        documentList.add(new ARootDocument(pluginUnits));
 
         //TODO add the real module of the plugin
-        documentList.addAll(plugins.stream().map(plugin -> new ARootDocument(Collections.singletonList(
-                new AImportedModuleCompilationUnit(new AModuleDeclaration(new LexIdentifier(plugin.getName(), null), new Vector<>()),
-                        new Vector<>())))).collect(Collectors.toList()));
+        //        documentList.addAll(plugins.stream().map(plugin -> new ARootDocument(Collections.singletonList(
+        //                new AImportedModuleCompilationUnit(new AModuleDeclaration(new LexIdentifier(plugin.getName(), null), new Vector<>()),
+        //                        new Vector<>())))).collect(Collectors.toList()));
 
         Map.Entry<Boolean, Map<INode, PType>> tcRes = typeCheck(documentList, globalFunctions, reporter);
         if (!tcRes.getKey()) {
             throw new RuntimeException("Expansion not possible type errors");
+        } else if (depth > configuration.maximumExpansionDepth) {
+            throw new RuntimeException("Recursive external expansion larger than " + configuration.maximumExpansionDepth);
         }
 
 
@@ -119,12 +126,27 @@ public class MablSpecificationGenerator {
                 NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().filter(call -> call.getExpand() != null)
                         .collect(Collectors.toList());
 
+        if (aExternalStms.isEmpty()) {
+            return simulationModule;
+        }
+
         Map<ACallExp, Optional<AFunctionDeclaration>> replaceWith = aExternalStms.stream().collect(Collectors.toMap(Function.identity(), call -> {
 
             PType callType = tcRes.getValue().get(call);
-            return globalFunctions.stream()
-                    .filter(fun -> fun.getName().equals(call.getMethodName()) && typeComparator.compatible(tcRes.getValue().get(fun), callType))
-                    .findFirst();
+            PType object = tcRes.getValue().get(call.getObject());
+
+            if (object instanceof AModuleType) {
+                String pluginName = ((AModuleType) object).getName().getText();
+                List<AFunctionDeclaration> tmp1 =
+                        pluginUnits.stream().map(AImportedModuleCompilationUnit::getModule).filter(m -> m.getName().getText().equals(pluginName))
+                                .flatMap(m -> m.getFunctions().stream().filter(fun -> fun.getName().equals(call.getMethodName())))
+                                .collect(Collectors.toList());
+
+                Optional<AFunctionDeclaration> tmp2 =
+                        tmp1.stream().filter(fun -> typeComparator.compatible(tcRes.getValue().get(fun), callType)).findFirst();
+                return tmp2;
+            }
+            return Optional.empty();
 
         }));
 
@@ -139,7 +161,8 @@ public class MablSpecificationGenerator {
             ACallExp call = callReplacement.getKey();
             AFunctionDeclaration replacement = callReplacement.getValue().get();
             IMaestroExpansionPlugin replacementPlugin =
-                    plugins.stream().filter(plugin -> plugin.getDeclaredUnfoldFunctions().contains(replacement)).findFirst().get();
+                    plugins.stream().filter(plugin -> plugin.getDeclaredImportUnit().getModule().getFunctions().contains(replacement)).findFirst()
+                            .get();
 
             logger.debug("Replacing external '{}' with unfoled statement '{}' from plugin: {}", call.getMethodName().getText(),
                     replacement.getName().getText(), replacementPlugin.getName() + " " + replacementPlugin.getVersion());
@@ -292,7 +315,7 @@ public class MablSpecificationGenerator {
 
                 ARootDocument simulationDoc = simulationModule.getAncestor(ARootDocument.class);
                 List<ARootDocument> importedDocks = documentList.stream().filter(d -> !d.equals(simulationDoc)).collect(Collectors.toList());
-                ASimulationSpecificationCompilationUnit unfoldedSimulationModule = expandExternals(importedDocks, simulationDoc, reporter, plugins);
+                ARootDocument processedDoc = expandExternals(importedDocks, simulationDoc, reporter, plugins);
 
                 //expansion complete
                 if (reporter.getErrorCount() > 0) {
@@ -302,12 +325,12 @@ public class MablSpecificationGenerator {
 
 
                 try {
-                    logger.trace("Specification:\n{}", PrettyPrinter.print(unfoldedSimulationModule));
+                    logger.trace("Specification:\n{}", PrettyPrinter.print(processedDoc));
                 } catch (AnalysisException e) {
                     logger.trace("Pretty printing failed: ", e);
                 }
-                ARootDocument processedDoc =
-                        new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
+                //                ARootDocument processedDoc =
+                //                        new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
 
                 String printedSpec = null;
@@ -325,9 +348,14 @@ public class MablSpecificationGenerator {
                     specToCheck = processedDoc;
                 }
 
+                List<ARootDocument> allDocuments = new Vector<>();
+                allDocuments.addAll(importedDocks);
+                allDocuments
+                        .add(new ARootDocument(plugins.stream().map(IMaestroExpansionPlugin::getDeclaredImportUnit).collect(Collectors.toList())));
+                allDocuments.add(specToCheck);
 
-                if (typeCheck(Stream.concat(Stream.of(specToCheck), importedDocks.stream()).collect(Collectors.toList()), new Vector<>(), reporter)
-                        .getKey()) {
+
+                if (typeCheck(allDocuments, new Vector<>(), reporter).getKey()) {
                     if (verify(specToCheck, reporter)) {
                         return specToCheck;
                     }

@@ -131,32 +131,35 @@ public class Mabl {
         if (reporter.getErrorCount() != 0) {
             throw new IllegalArgumentException("Expansion cannot be called with errors");
         }
+        if (frameworks != null && frameworkConfigs != null && frameworks.contains(Framework.FMI2) && frameworkConfigs.containsKey(Framework.FMI2)) {
+            //            if (!ShouldExpandAnalysis.shouldExpand(document)) {
+            //                return;
+            //            }
 
-        if (!ShouldExpandAnalysis.shouldExpand(document)) {
-            return;
+
+            if (!frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
+                throw new Exception("Framework annotations required for expansion. Please specify: " +
+                        MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK) + " and " +
+                        MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK_CONFIG));
+            }
+
+            ISimulationEnvironment env = getSimulationEnv();
+
+            if (env == null) {
+                throw new Exception("No env found");
+            }
+
+            MablSpecificationGenerator mablSpecificationGenerator =
+                    new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
+
+            List<ARootDocument> allDocs = Stream.concat(Stream.of(document), importedDocument.stream()).collect(Collectors.toList());
+
+            ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(allDocs);
+            removeFrameworkAnnotations(doc);
+            document = doc;
         }
 
 
-        if (frameworks == null || frameworkConfigs == null || !frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
-            throw new Exception(
-                    "Framework annotations required for expansion. Please specify: " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK) +
-                            " and " + MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK_CONFIG));
-        }
-
-        ISimulationEnvironment env = getSimulationEnv();
-
-        if (env == null) {
-            throw new Exception("No env found");
-        }
-
-        MablSpecificationGenerator mablSpecificationGenerator =
-                new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
-
-        List<ARootDocument> allDocs = Stream.concat(Stream.of(document), importedDocument.stream()).collect(Collectors.toList());
-
-        ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(allDocs);
-        removeFrameworkAnnotations(doc);
-        document = doc;
     }
 
     private void removeFrameworkAnnotations(ARootDocument doc) {

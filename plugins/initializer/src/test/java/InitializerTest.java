@@ -46,7 +46,7 @@ public class InitializerTest {
         var prologGenerator = new PrologGenerator();
         var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
         IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
-        AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
+        AFunctionDeclaration funcDecl = plugin.getDeclaredImportUnit().getModule().getFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
         var components = Arrays.asList("crtlInstance", "wtInstance");
