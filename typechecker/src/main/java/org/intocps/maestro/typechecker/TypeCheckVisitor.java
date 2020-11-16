@@ -256,8 +256,14 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
                 if (!node.getSize().isEmpty() || !initializer.getExp().isEmpty()) {
                     if (declaredSize == null || declaredSize != initializer.getExp().size()) {
-                        errorReporter.report(0, "Array declared with different size than initializer. Declared " + declaredSize == null ? "unknown" :
-                                declaredSize + " Innitialized " + "with: " + initializer.getExp().size(), null);
+                        if (declaredSize == null) {
+                            errorReporter.report(0,
+                                    "Array declared without a size. Please fix by declaring with size: '" + +initializer.getExp().size() + "'", null);
+                        } else {
+                            errorReporter.report(0, "Array declared with different size than initializer. Declared size: '" + declaredSize +
+                                    "'. Size of initializer: " + initializer.getExp().size(), null);
+                        }
+
                     }
 
                 }
