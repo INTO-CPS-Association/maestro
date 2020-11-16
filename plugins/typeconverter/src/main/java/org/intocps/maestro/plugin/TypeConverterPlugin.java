@@ -24,27 +24,27 @@ public class TypeConverterPlugin implements IMaestroExpansionPlugin {
 
     final AFunctionDeclaration convertBoolean2Real = newAFunctionDeclaration(newAIdentifier("convertBoolean2Real"),
             Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     final AFunctionDeclaration convertBoolean2Integer = newAFunctionDeclaration(newAIdentifier("convertBoolean2Integer"),
             Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     final AFunctionDeclaration convertInteger2Boolean = newAFunctionDeclaration(newAIdentifier("convertInteger2Boolean"),
             Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     final AFunctionDeclaration convertReal2Boolean = newAFunctionDeclaration(newAIdentifier("convertReal2Boolean"),
             Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     final AFunctionDeclaration convertInteger2Real = newAFunctionDeclaration(newAIdentifier("convertInteger2Real"),
             Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     final AFunctionDeclaration convertReal2Integer = newAFunctionDeclaration(newAIdentifier("convertReal2Integer"),
             Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from"))), newAVoidType());
 
     @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
