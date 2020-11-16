@@ -14,6 +14,10 @@ public class TypeComparator {
             return true;
         }
 
+        if (from instanceof AFunctionType) {
+            return to.isAssignableFrom(((AFunctionType) from).getResult().getClass());
+        }
+
         return to.isAssignableFrom(from.getClass());
 
     }
