@@ -317,12 +317,12 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseAGreaterBinaryExp(AGreaterBinaryExp node, Context ctxt) throws AnalysisException {
-        return store(node, checkNumeric(node, ctxt));
+        return store(node, checkNumericComparizon(node, ctxt));
     }
 
     @Override
     public PType caseAGreaterEqualBinaryExp(AGreaterEqualBinaryExp node, Context ctxt) throws AnalysisException {
-        return store(node, checkNumeric(node, ctxt));
+        return store(node, checkNumericComparizon(node, ctxt));
     }
 
     @Override
@@ -363,6 +363,23 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             return MableAstFactory.newAIntNumericPrimitiveType();
         }
         return null;
+    }
+
+    public PType checkNumericComparizon(SBinaryExp node, Context ctxt) throws AnalysisException {
+
+        PType left = node.getLeft().apply(this, ctxt);
+
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, left)) {
+            errorReporter.report(2, "Type is not numeric: " + node.getLeft() + " - type: " + left, null);
+        }
+
+        PType right = node.getRight().apply(this, ctxt);
+
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, right)) {
+            errorReporter.report(2, "Type is not numeric: " + node + " - type: " + right, null);
+        }
+
+        return newBoleanType();
     }
 
     @Override
@@ -674,28 +691,13 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseALessEqualBinaryExp(ALessEqualBinaryExp node, Context ctxt) throws AnalysisException {
-        PType left = node.getLeft().apply(this, ctxt);
-        if (!(left instanceof SNumericPrimitiveType)) {
-            errorReporter.report(-5, "Left part of Less Equal expression is not of numeric type:" + node.getLeft(), null);
-        }
-        PType right = node.getRight().apply(this, ctxt);
-        if (!(right instanceof SNumericPrimitiveType)) {
-            errorReporter.report(-5, "Right part of Less Equal expression is not of numeric type:" + node.getRight(), null);
-        }
-        return store(node, MableAstFactory.newABoleanPrimitiveType());
+
+        return store(node, checkNumericComparizon(node, ctxt));
     }
 
     @Override
     public PType caseALessBinaryExp(ALessBinaryExp node, Context ctxt) throws AnalysisException {
-        PType left = node.getLeft().apply(this, ctxt);
-        if (!(left instanceof SNumericPrimitiveType)) {
-            errorReporter.report(-5, "Left part of Less expression is not of numeric type:" + node, null);
-        }
-        PType right = node.getRight().apply(this, ctxt);
-        if (!(right instanceof SNumericPrimitiveType)) {
-            errorReporter.report(-5, "Right part of Less expression is not of numeric type:" + node, null);
-        }
-        return store(node, MableAstFactory.newABoleanPrimitiveType());
+        return store(node, checkNumericComparizon(node, ctxt));
     }
 
     @Override
