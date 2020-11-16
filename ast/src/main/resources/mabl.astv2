@@ -139,7 +139,7 @@ stm
 type
     =   #primitive
     |   {name} [name]:lex_identifier
-    |   {function} (result):type (parameters):type*
+    |   {function} [result]:type [parameters]:type*
     |   {array} [type]:type
     |   {unknown}
     |   {void}

@@ -75,6 +75,7 @@ import java.util.stream.Collectors;
 %type->module = [name]
 %type->unknown = "?"
 %type->reference = "ref " + [type]
+%type->function = "" +$ $[parameters]$.stream().map(t->t+"").collect(Collectors.joining(",","(",")"))+" => "$ + [result]
 
 %type->#primitive->boolean="bool"
 %type->#primitive->string="string"
