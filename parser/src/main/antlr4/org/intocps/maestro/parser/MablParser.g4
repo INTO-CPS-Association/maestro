@@ -78,7 +78,6 @@ expTest : expression EOF;
 expression
     : LPAREN expression RPAREN                          #parenExp
     | literal                                           #literalExp
-    | REF expression                                    #refExpression
     | IDENTIFIER                                        #identifierExp
     | expression '.'
         ( IDENTIFIER
@@ -87,6 +86,7 @@ expression
     | methodCall                                        #plainMetodExp
     |  <assoc=right> op=('+'|'-') expression            #unaryExp
     | op=BANG expression                                #unaryExp
+    | REF expression                                    #refExpression
     | left=expression  bop=('*'|'/') right=expression   #binaryExp
     | left=expression  bop=('+'|'-') right=expression   #binaryExp
     | left=expression
