@@ -474,6 +474,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseARefExp(ARefExp node, Context question) throws AnalysisException {
+        return node.getExp().apply(this, question);
+    }
+
+    @Override
     public Value createNewReturnValue(Object node, Context question) throws AnalysisException {
         logger.debug("Unhandled interpreter object: {}", node.getClass().getSimpleName());
         throw new InterpreterException("Unhandled object: " + node);
