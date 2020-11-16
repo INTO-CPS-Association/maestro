@@ -33,16 +33,15 @@ public class MaBLTemplateGenerator {
     public static final String LOGGER_MODULE_NAME = "Logger";
     public static final String DATAWRITER_MODULE_NAME = "DataWriter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
+    public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
     public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
+    public static final String FIXEDSTEP_EXPANSION_MODULE_NAME = "FixedStep";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
+    public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
-    public static final String IMPORT_DEBUGLOGGING = "DebugLogging";
-    public static final String IMPORT_FIXEDSTEP = "FixedStep";
-    public static final String IMPORT_TYPECONVERTER = "TypeConverter";
-    public static final String IMPORT_INITIALIZER = "Initializer";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -192,8 +191,8 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
 
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(
-                Arrays.asList(newAIdentifier(IMPORT_FIXEDSTEP), newAIdentifier(IMPORT_TYPECONVERTER), newAIdentifier(IMPORT_INITIALIZER),
-                        newAIdentifier(IMPORT_DEBUGLOGGING)), newABlockStm(stmMaintainer.getStatements()));
+                Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
+                        newAIdentifier(DEBUG_LOGGING_MODULE_NAME)), newABlockStm(stmMaintainer.getStatements()));
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 
         unit.setFrameworkConfigs(Arrays.asList(
@@ -237,7 +236,8 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAArrayInitializer(stringLiterals)));
 
         AExpressionStm expandCall = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newExpandToken(), MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME),
+                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME)),
+                        MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifierExp(arrayName),
                                 MableAstFactory.newAUIntLiteralExp(Long.valueOf(logLevels.size())))));
 
@@ -285,14 +285,16 @@ public class MaBLTemplateGenerator {
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
         return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newExpandToken(), MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
+                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(startTimeLexName),
                                 AIdentifierExpFromString(endTimeLexName))));
     }
 
     public static PStm createExpandFixedStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName, String endTimeLexName) {
         return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newExpandToken(), MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_FUNCTION_NAME),
+                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(stepSizeLexName),
                                 AIdentifierExpFromString(startTimeLexName), AIdentifierExpFromString(endTimeLexName))));
     }

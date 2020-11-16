@@ -186,7 +186,7 @@ public class FmiInterpreter {
                     //populate component functions
                     Map<String, Value> componentMembers = new HashMap<>();
 
-                    componentMembers.put("fmi2SetDebugLogging", new FunctionValue.ExternalFunctionValue(fcargs -> {
+                    componentMembers.put("setDebugLogging", new FunctionValue.ExternalFunctionValue(fcargs -> {
 
                         checkArgLength(fcargs, 3);
 

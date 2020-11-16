@@ -18,7 +18,7 @@ FMI2Component sensor2 = sensor2FMU.instantiate("sensor2", false, false);
 FMI2Component body = bodyFMU.instantiate("body", false, false);
 
 
-IFmuComponent components[4] = {controller, sensor1, sensor2, body};
+FMI2Component components[4] = {controller, sensor1, sensor2, body};
 
 expand initialize(components,START_TIME, END_TIME);
 

@@ -32,11 +32,11 @@ public class DebugLogging implements IMaestroExpansionPlugin {
     private final static int FMI_PENDING = 5;
     private final static String CATEGORY_STATUS = "category_status";
     final AFunctionDeclaration funEnable = newAFunctionDeclaration(newAIdentifier("enableDebugLogging"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+            Arrays.asList(newAFormalParameter(newANameType("FMI2Component"), newAIdentifier("component")),
                     newAFormalParameter(newAArrayType(newAStringPrimitiveType()), newAIdentifier("categories")),
                     newAFormalParameter(newAUIntNumericPrimitiveType(), newAIdentifier("categoriesSize"))), newAVoidType());
     final AFunctionDeclaration funDisable = newAFunctionDeclaration(newAIdentifier("disableDebugLogging"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+            Arrays.asList(newAFormalParameter(newANameType("FMI2Component"), newAIdentifier("component")),
                     newAFormalParameter(newAArrayType(newAStringPrimitiveType()), newAIdentifier("categories")),
                     newAFormalParameter(newAUIntNumericPrimitiveType(), newAIdentifier("categoriesSize"))), newAVoidType());
 
@@ -75,7 +75,7 @@ public class DebugLogging implements IMaestroExpansionPlugin {
 
         LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
         statements.add(newALocalVariableStm(MableAstFactory.newAVariableDeclaration(statusIdentifier, MableAstFactory.newAIntNumericPrimitiveType(),
-                MableAstFactory.newAExpInitializer(newACallExp(newAIdentifierExp((LexIdentifier) name.clone()), newAIdentifier("fmi2SetDebugLogging"),
+                MableAstFactory.newAExpInitializer(newACallExp(newAIdentifierExp((LexIdentifier) name.clone()), newAIdentifier("setDebugLogging"),
                         Arrays.asList(newABoolLiteralExp(selectedFun == funEnable), size.clone(), categories.clone()))))));
 
         statements.add(newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
@@ -98,7 +98,7 @@ public class DebugLogging implements IMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(Stream.of("Logger").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
+        unit.setImports(Stream.of("FMI2Component", "Logger").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));
         module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));

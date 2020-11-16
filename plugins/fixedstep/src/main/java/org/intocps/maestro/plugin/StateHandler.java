@@ -54,7 +54,7 @@ public class StateHandler {
             return Collections.emptyList();
         }
 
-        return Collections.singletonList(newVariable(fix_comp_states, newANameType("FmuState"), componentNames.size()));
+        return Collections.singletonList(newVariable(fix_comp_states, newANameType("FmiComponentState"), componentNames.size()));
     }
 
     public List<PStm> getAllStates() {

@@ -37,7 +37,7 @@ import FmiComponentState;
     int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[],ref real derivatives[]);
 
     // logging
- 	int setDebugLogging(bool loggingOn, string categories[]);
+ 	int setDebugLogging(bool loggingOn,uint categories, string categories[]);
 
     // status
     int getStatus(int kind, ref int status);
@@ -49,7 +49,7 @@ import FmiComponentState;
     //state
     int getState(ref FmiComponentState state);
     int setState(FmiComponentState state);
-    int freeState(ref FmiComponentState state);
+    int freeState(FmiComponentState state);
 
 }
 
