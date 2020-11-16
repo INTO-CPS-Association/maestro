@@ -64,6 +64,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     }
 
     @Override
+    public PType caseARefExp(ARefExp node, Context question) throws AnalysisException {
+        PType type = node.getExp().apply(this, question);
+        return store(node, new AReferenceType(type.clone()));
+    }
+
+    @Override
+    public PType caseAReferenceType(AReferenceType node, Context question) throws AnalysisException {
+        PType type = node.getType().apply(this, question);
+        return store(node, new AReferenceType(type.clone()));
+    }
+
+    @Override
     public PType caseAArrayIndexExp(AArrayIndexExp node, Context ctxt) throws AnalysisException {
 
         for (PExp index : node.getIndices()) {

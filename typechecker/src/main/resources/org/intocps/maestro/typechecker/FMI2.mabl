@@ -42,7 +42,7 @@ import FmiComponentState;
     // status
     int getStatus(int kind, ref int status);
     int getBooleanStatus(int kind, ref bool status);
-    int getIntegerStatus(int kind, ref integer status);
+    int getIntegerStatus(int kind, ref int status);
     int getRealStatus(int kind, ref real status);
     int getStringStatus(int kind, ref string status);
 
