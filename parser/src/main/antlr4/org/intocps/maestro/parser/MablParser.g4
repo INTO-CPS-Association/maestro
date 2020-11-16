@@ -78,6 +78,7 @@ expTest : expression EOF;
 expression
     : LPAREN expression RPAREN                          #parenExp
     | literal                                           #literalExp
+    | REF expression                                    #refExpression
     | IDENTIFIER                                        #identifierExp
     | expression '.'
         ( IDENTIFIER

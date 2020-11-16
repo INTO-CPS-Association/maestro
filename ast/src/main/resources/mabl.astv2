@@ -83,6 +83,7 @@ exp
     | {arrayIndex} [array]:exp [indices]:exp*
     | {par} [exp]:exp
     | {null} [token]:parserToken
+    | {ref} [exp]:exp
     ;
 
 #literal
