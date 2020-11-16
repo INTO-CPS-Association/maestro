@@ -156,7 +156,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             if (objectType instanceof AModuleType) {
                 def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
             } else {
-                errorReporter.report(0, "Unknown object type", node.getMethodName().getSymbol());
+                errorReporter.report(0, "Unknown object type: '" + node.getObject() + "'", node.getMethodName().getSymbol());
             }
         } else {
             def = ctxt.findDeclaration(node.getMethodName());
@@ -460,7 +460,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         PDeclaration def = ctxt.findDeclaration(node.getName());
 
         if (def == null) {
-            errorReporter.report(0, "Use of undeclared identifier", node.getName().getSymbol());
+            errorReporter.report(0, "Use of undeclared identifier: '" + node.getName().getText() + "'", node.getName().getSymbol());
             return store(node, newAUnknownType());
         }
 
