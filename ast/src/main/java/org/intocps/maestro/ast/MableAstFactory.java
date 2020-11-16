@@ -11,6 +11,18 @@ public class MableAstFactory {
         return new AUIntNumericPrimitiveType();
     }
 
+    public static ARefExp newARefExp(PExp expression) {
+        ARefExp exp = new ARefExp();
+        exp.setExp(expression);
+        return exp;
+    }
+
+    public static ARefExp newARefExp(LexIdentifier name) {
+        ARefExp exp = new ARefExp();
+        exp.setExp(MableAstFactory.newAIdentifierExp(name));
+        return exp;
+    }
+
     public static AModuleType newAModuleType(LexIdentifier name) {
         AModuleType type = new AModuleType();
         type.setName(name);

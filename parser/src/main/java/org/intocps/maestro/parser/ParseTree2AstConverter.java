@@ -512,12 +512,6 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             type = nt;
 
         }
-        // The typetype does not contain information on whether it is an array or not.
-        //        if (!ctx.arrays.isEmpty()) {
-        //            AArrayType t = new AArrayType();
-        //            t.setType(type);
-        //            type = t;
-        //        }
 
         if (ctx.REF() == null) {
             return type;
@@ -525,5 +519,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             return new AReferenceType(type);
         }
 
+    }
+
+    @Override
+    public INode visitRefExpression(MablParser.RefExpressionContext ctx) {
+        ARefExp exp = new ARefExp();
+        exp.setExp((PExp) this.visit(ctx.expression()));
+        return exp;
     }
 }
