@@ -127,7 +127,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         } else {
             errorReporter.report(0, "Array initializer must not be empty", null);
         }
-        return store(node, newAArrayType(type));
+        return store(node, newAArrayType(type).clone());
     }
 
     @Override
@@ -153,7 +153,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         if (def == null) {
             errorReporter.report(0, "Call decleration not found: " + node.getMethodName(), node.getMethodName().getSymbol());
         } else {
-            PType type = checkedTypes.get(def);
+            PType type = checkedTypes.get(def).clone();
 
 
             if (type instanceof AFunctionType) {
@@ -169,7 +169,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 for (int i = 0; i < node.getArgs().size(); i++) {
                     PExp arg = node.getArgs().get(i);
                     PType argType = arg.apply(this, ctxt);
-                    callArgTypes.add(argType);
+                    callArgTypes.add(argType.clone());
                     //                        PType argTargetType = targetType.getParameters().get(i);
                     //                        if (!typeComparator.compatible(argTargetType, argType)) {
                     //                            errorReporter.report(-5, "Parameter type: " + argType + " not matching expected type: " + argTargetType, null);
@@ -216,7 +216,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         }
 
 
-        PType type = checkedTypes.get(def);
+        PType type = checkedTypes.get(def).clone();
         if (type == null) {
             errorReporter.report(-5, "No type found for decleration " + node.getName(), null);
         } else {
@@ -435,7 +435,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             return store(node, newAUnknownType());
         }
 
-        return store(node, checkedTypes.get(def));
+        return store(node, checkedTypes.get(def).clone());
     }
 
     @Override
@@ -587,7 +587,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         if (def == null) {
             errorReporter.report(0, "Use of undeclared variable", node.getName().getSymbol());
         }
-        return store(node, checkedTypes.get(def));
+        return store(node, checkedTypes.get(def).clone());
     }
 
     @Override
