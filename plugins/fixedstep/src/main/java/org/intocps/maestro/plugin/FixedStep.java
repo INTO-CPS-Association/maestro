@@ -79,9 +79,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
             AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
 
             //clone for local use
-            AVariableDeclaration varDecl =
-                    newAVariableDeclaration(newAIdentifier(componentsIdentifier), compDecl.get().getType().clone(), compDecl.get().getSize().get(0),
-                            compDecl.get().getInitializer().clone());
+            AVariableDeclaration varDecl = newAVariableDeclaration(newAIdentifier(componentsIdentifier), compDecl.get().getType().clone(),
+                    compDecl.get().getSize().get(0).clone(), compDecl.get().getInitializer().clone());
             varDecl.setSize((List<? extends PExp>) compDecl.get().getSize().clone());
             componentDecl = newALocalVariableStm(varDecl);
 
