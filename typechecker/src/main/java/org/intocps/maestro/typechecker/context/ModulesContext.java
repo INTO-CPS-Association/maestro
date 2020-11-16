@@ -7,6 +7,10 @@ import org.intocps.maestro.typechecker.DeclarationList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ModulesContext extends Context {
@@ -15,10 +19,14 @@ public class ModulesContext extends Context {
 
     public ModulesContext(List<? extends AModuleDeclaration> modules, Context outerContext) {
         super(outerContext);
-        this.modules =
-                modules.stream().collect(Collectors.toMap(AModuleDeclaration::getName, m -> Map.entry(m, new DeclarationList(m.getFunctions()))));
+        this.modules = modules.stream().filter(distinctByKey(AModuleDeclaration::getName))
+                .collect(Collectors.toMap(AModuleDeclaration::getName, m -> Map.entry(m, new DeclarationList(m.getFunctions()))));
     }
 
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
 
     @Override
     public PDeclaration findDeclaration(LexIdentifier module, LexIdentifier name) {
