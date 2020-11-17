@@ -32,6 +32,7 @@ public class MaBLTemplateGenerator {
     public static final String MATH_MODULE_NAME = "Math";
     public static final String LOGGER_MODULE_NAME = "Logger";
     public static final String DATAWRITER_MODULE_NAME = "DataWriter";
+    public static final String FMI2_MODULE_NAME = "FMI2";
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
@@ -193,8 +194,8 @@ public class MaBLTemplateGenerator {
 
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(
                 Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
-                        newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME),
-                        newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME)),
+                        newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
+                        newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(LOGGER_MODULE_NAME)),
                 newABlockStm(stmMaintainer.getStatements()));
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 

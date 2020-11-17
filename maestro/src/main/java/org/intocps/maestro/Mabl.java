@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
@@ -27,15 +28,19 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
+    public static final String MABL_MODULES_PATH = "org/intocps/maestro/typechecker/";
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
+    private static Map<String, String> runtimeModules = null;
     final IntermediateSpecWriter intermediateSpecWriter;
     private final File specificationFolder;
     private final MableSettings settings = new MableSettings();
@@ -49,6 +54,27 @@ public class Mabl {
     public Mabl(File specificationFolder, File debugOutputFolder) {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
+
+    }
+
+    public void addRuntimeModules() {
+
+        try {
+            runtimeModules = this.getResourceFiles(MABL_MODULES_PATH).stream().filter(x -> x.endsWith(".mabl"))
+                    .collect(Collectors.toMap(x -> x.substring(0, x.lastIndexOf('.')), x -> this.MABL_MODULES_PATH + x));
+        } catch (IOException e) {
+            if (this.reporter != null) {
+                this.reporter.report(-100, "Failed to retrieve runtime modules: " + e, null);
+            }
+        }
+
+
+    }
+
+    public ARootDocument getModule(String module, ClassLoader classLoader) throws IOException {
+        InputStream resourceAsStream = classLoader.getResourceAsStream(runtimeModules.get(module));
+        ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
+        return parse;
     }
 
     public MableSettings getSettings() {
@@ -70,6 +96,21 @@ public class Mabl {
         ARootDocument main = mergeDocuments(MablParserUtil.parse(sourceFiles));
         this.document = main == null ? document : main;
         postProcessParsing();
+    }
+
+    public List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
+        List<ARootDocument> documents = new ArrayList<>();
+        for (String module : modules) {
+            if (runtimeModules.containsKey(module)) {
+                documents.add(getModule(module, this.getClass().getClassLoader()));
+            }
+
+        }
+        return documents;
+    }
+
+    private List<String> getResourceFiles(String path) throws IOException {
+        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
@@ -177,10 +218,15 @@ public class Mabl {
         if (configuration == null) {
             throw new Exception("No configuration");
         }
-
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+        List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
+        List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(x -> x.getText()).collect(Collectors.toList()));
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
+        moduleDocuments.add(document);
+        document = this.mergeDocuments(moduleDocuments);
+
         postProcessParsing();
     }
 

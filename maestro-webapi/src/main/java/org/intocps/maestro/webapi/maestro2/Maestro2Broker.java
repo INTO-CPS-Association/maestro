@@ -93,6 +93,7 @@ public class Maestro2Broker {
     }
 
     public void generateSpecification(MaBLTemplateConfiguration config) throws Exception {
+        mabl.addRuntimeModules();
         mabl.generateSpec(config);
         mabl.expand();
         mabl.dump(workingDirectory);
