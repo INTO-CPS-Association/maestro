@@ -145,6 +145,7 @@ type
     |   {void}
     |   {module} [name]:lex_identifier
     |   {reference} [type]:type
+    |   {null}
     ;
 
 #primitive

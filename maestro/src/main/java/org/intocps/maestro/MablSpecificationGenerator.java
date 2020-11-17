@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -109,7 +110,11 @@ public class MablSpecificationGenerator {
 
         Map.Entry<Boolean, Map<INode, PType>> tcRes = typeCheck(documentList, globalFunctions, reporter);
         if (!tcRes.getKey()) {
-            throw new RuntimeException("Expansion not possible type errors");
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            reporter.printErrors(printWriter);
+            printWriter.close();
+            throw new RuntimeException("Expansion not possible type errors: " + stringWriter);
         } else if (depth > configuration.maximumExpansionDepth) {
             throw new RuntimeException("Recursive external expansion larger than " + configuration.maximumExpansionDepth);
         }

@@ -440,4 +440,8 @@ public class MableAstFactory {
     public static AUnknownType newAUnknownType() {
         return new AUnknownType();
     }
+
+    public static ANullType newNullType() {
+        return new ANullType();
+    }
 }

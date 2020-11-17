@@ -99,28 +99,29 @@ public class Mabl {
     }
 
     private void postProcessParsing() throws IOException {
-        intermediateSpecWriter.write(document);
+
         if (document != null) {
+            intermediateSpecWriter.write(document);
             NodeCollector.collect(document, ASimulationSpecificationCompilationUnit.class).ifPresent(unit -> unit.forEach(u -> {
                 frameworks = u.getFramework().stream().map(LexIdentifier::getText).map(Framework::valueOf).collect(Collectors.toList());
                 frameworkConfigs = u.getFrameworkConfigs().stream()
                         .collect(Collectors.toMap(c -> Framework.valueOf(c.getName().getText()), c -> Map.entry(c, c.getConfig())));
             }));
-        }
-        logger.debug("Frameworks: " + frameworks.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]")));
+            logger.debug("Frameworks: " + frameworks.stream().map(Object::toString).collect(Collectors.joining(",", "[", "]")));
 
-        for (Map.Entry<Framework, Map.Entry<AConfigFramework, String>> pair : frameworkConfigs.entrySet()) {
+            for (Map.Entry<Framework, Map.Entry<AConfigFramework, String>> pair : frameworkConfigs.entrySet()) {
 
-            String data = StringAnnotationProcessor.processStringAnnotations(specificationFolder, pair.getValue().getValue());
+                String data = StringAnnotationProcessor.processStringAnnotations(specificationFolder, pair.getValue().getValue());
+
+                if (settings.inlineFrameworkConfig) {
+                    pair.getValue().getKey().setConfig(data);
+                }
+                frameworkConfigs.put(pair.getKey(), Map.entry(pair.getValue().getKey(), data));
+            }
 
             if (settings.inlineFrameworkConfig) {
-                pair.getValue().getKey().setConfig(data);
+                this.intermediateSpecWriter.write(document);
             }
-            frameworkConfigs.put(pair.getKey(), Map.entry(pair.getValue().getKey(), data));
-        }
-
-        if (settings.inlineFrameworkConfig) {
-            this.intermediateSpecWriter.write(document);
         }
 
 
