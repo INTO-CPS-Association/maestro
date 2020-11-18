@@ -106,9 +106,43 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseALoadExp(ALoadExp node, Context ctxt) throws AnalysisException {
-        //TODO: Needs work in terms of load type.
+
         // See https://github.com/INTO-CPS-Association/maestro/issues/66
-        // Return whatever type, such that variable declaration decides.
+        if (node.getArgs() == null || node.getArgs().isEmpty()) {
+            errorReporter.report(-5, "Wrong number of arguments to load. At least a type is required: " + node, null);
+        } else {
+            // PType argType = node.getArgs().get(0).apply(this, ctxt);
+
+            PExp typeArg = node.getArgs().get(0);
+            if (!(typeArg instanceof AStringLiteralExp)) {
+                errorReporter.report(-5, "First argument must be a string.: " + node, null);
+            }
+
+            for (int i = 1; i < node.getArgs().size(); i++) {
+                node.getArgs().get(i).apply(this, ctxt);
+            }
+
+            if (typeArg instanceof AStringLiteralExp) {
+
+                String moduleName = ((AStringLiteralExp) typeArg).getValue();
+
+                PDeclaration decl = ctxt.findDeclaration(new LexIdentifier(moduleName, null));
+                if (decl == null) {
+                    errorReporter.report(0, "Decleration not found: " + moduleName, null);
+                } else {
+                    PType moduleType = checkedTypes.get(decl);
+                    if (moduleType instanceof AModuleType) {
+
+                        return store(node, moduleType.clone());
+                    } else {
+                        errorReporter.report(0, "Argument 1 does not refer to a module type: " + moduleName, null);
+                    }
+                }
+
+
+            }
+        }
+
         return store(node, newAUnknownType());
     }
 
@@ -749,11 +783,10 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         } else {
             PType argType = node.getArgs().get(0).apply(this, ctxt);
             if (!(argType instanceof AModuleType)) {
-                errorReporter.report(-5, "Argument to unload must be a moduletype.: " + node, null);
+                errorReporter.report(-5, "Argument to unload must be a module type.: " + node, null);
 
             }
         }
-        //TODO void?
         return store(node, newAVoidType());
     }
 
