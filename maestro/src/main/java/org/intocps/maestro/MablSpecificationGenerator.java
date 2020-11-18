@@ -59,7 +59,6 @@ public class MablSpecificationGenerator {
         this(framework, verbose, simulationEnvironment, new MaestroConfiguration(), specificationFolder, intermediateSpecWriter);
     }
 
-
     public static Collection<IMaestroExpansionPlugin> loadExpansionPlugins(Framework framework, List<String> importModules) {
         Collection<IMaestroExpansionPlugin> plugins = PluginFactory.getPlugins(IMaestroExpansionPlugin.class, framework);
 
@@ -68,16 +67,41 @@ public class MablSpecificationGenerator {
         Collection<IMaestroExpansionPlugin> pluginsToUnfold =
                 plugins.stream().filter(plugin -> importModules.contains(plugin.getName())).collect(Collectors.toList());
 
-        logger.debug("The following plugins will be used for unfolding: {}",
-                pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
+        //load recursive plugin dependencies
 
-        logger.debug("Plugins declared functions: {}", pluginsToUnfold.stream().map(p -> p.getName() + "-" + p.getVersion() +
+        List<IMaestroExpansionPlugin> pluginsToUnfoldWithDependencies = Stream.concat(pluginsToUnfold.stream(),
+                pluginsToUnfold.stream().map(p -> collectPluginDependencies(plugins, p, new Vector<>()).stream()).flatMap(Function.identity()))
+                .distinct().collect(Collectors.toList());
+
+
+        logger.debug("The following plugins will be used for unfolding: {}",
+                pluginsToUnfoldWithDependencies.stream().map(p -> p.getName() + "-" + p.getVersion()).collect(Collectors.joining(",", "[", "]")));
+
+
+        logger.debug("Plugins declared functions: {}", pluginsToUnfoldWithDependencies.stream().map(p -> p.getName() + "-" + p.getVersion() +
                 p.getDeclaredImportUnit().getModule().getFunctions().stream().map(AFunctionDeclaration::toString)
                         .collect(Collectors.joining("," + "\n\t", "\n\t", ""))).collect(Collectors.joining(",\n", "\n[\n", "\n]")));
 
-        return pluginsToUnfold;
+        return pluginsToUnfoldWithDependencies;
     }
 
+    static Collection<IMaestroExpansionPlugin> collectPluginDependencies(Collection<IMaestroExpansionPlugin> plugins, IMaestroExpansionPlugin plugin,
+            List<String> checked) {
+
+        checked.add(plugin.getName());
+        List<IMaestroExpansionPlugin> requiredPlugins = new Vector<>();
+        for (LexIdentifier importName : plugin.getDeclaredImportUnit().getImports()) {
+            if (checked.contains(importName.getText())) {
+                continue;
+            }
+
+            requiredPlugins.addAll(plugins.stream().filter(p -> p.getName().equals(importName.getText())).collect(Collectors.toList()));
+        }
+
+        return Stream.concat(requiredPlugins.stream(),
+                requiredPlugins.stream().map(p -> collectPluginDependencies(plugins, p, checked).stream()).flatMap(Function.identity()))
+                .collect(Collectors.toList());
+    }
 
     public IMaestroConfiguration getConfiguration() {
         return this.configuration;
@@ -98,7 +122,8 @@ public class MablSpecificationGenerator {
         //TODO do not add these functions as global but wrap in a module instead
         List<AFunctionDeclaration> globalFunctions = new Vector<>();
 
-        List<AImportedModuleCompilationUnit> pluginUnits = plugins.stream().map(unit -> unit.getDeclaredImportUnit()).collect(Collectors.toList());
+        List<AImportedModuleCompilationUnit> pluginUnits =
+                plugins.stream().map(IMaestroExpansionPlugin::getDeclaredImportUnit).collect(Collectors.toList());
         //                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
         List<ARootDocument> documentList = Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList());
         documentList.add(new ARootDocument(pluginUnits));
@@ -132,39 +157,53 @@ public class MablSpecificationGenerator {
                         .collect(Collectors.toList());
 
         if (aExternalStms.isEmpty()) {
+            NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
+                    .ifPresent(unit -> NodeCollector.collect(unit, INode.class).ifPresent(nodes -> {
+                        List<LexIdentifier> requiredImports =
+                                tcRes.getValue().entrySet().stream().filter(map -> nodes.contains(map.getKey())).map(Map.Entry::getValue)
+                                        .filter(AModuleType.class::isInstance).map(AModuleType.class::cast).map(AModuleType::getName).distinct()
+                                        .sorted(Comparator.comparing(LexIdentifier::getText)).collect(Collectors.toList());
+
+
+                        unit.setImports(requiredImports);
+                    }));
             return simulationModule;
         }
 
-        Map<ACallExp, Optional<AFunctionDeclaration>> replaceWith = aExternalStms.stream().collect(Collectors.toMap(Function.identity(), call -> {
+        logger.debug("Externals {}", aExternalStms.stream().map(m -> m.getMethodName().toString()).collect(Collectors.joining(" , ", "[ ", " ]")));
 
-            PType callType = tcRes.getValue().get(call);
-            PType object = tcRes.getValue().get(call.getObject());
+        Map<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> replaceWith =
+                aExternalStms.stream().collect(Collectors.toMap(Function.identity(), call -> {
 
-            if (object instanceof AModuleType) {
-                String pluginName = ((AModuleType) object).getName().getText();
-                List<AFunctionDeclaration> tmp1 =
-                        pluginUnits.stream().map(AImportedModuleCompilationUnit::getModule).filter(m -> m.getName().getText().equals(pluginName))
-                                .flatMap(m -> m.getFunctions().stream().filter(fun -> fun.getName().equals(call.getMethodName())))
-                                .collect(Collectors.toList());
+                    PType callType = tcRes.getValue().get(call);
+                    PType object = tcRes.getValue().get(call.getObject());
 
-                Optional<AFunctionDeclaration> tmp2 =
-                        tmp1.stream().filter(fun -> typeComparator.compatible(tcRes.getValue().get(fun), callType)).findFirst();
-                return tmp2;
-            }
-            return Optional.empty();
+                    if (object instanceof AModuleType) {
+                        String pluginName = ((AModuleType) object).getName().getText();
 
-        }));
 
-        if (replaceWith.values().stream().anyMatch(o -> !o.isPresent())) {
+                        List<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>> tmp1 =
+                                pluginUnits.stream().filter(m -> m.getModule().getName().getText().equals(pluginName)).flatMap(
+                                        m -> m.getModule().getFunctions().stream().filter(fun -> fun.getName().equals(call.getMethodName()))
+                                                .map(f -> Map.entry(m, f))).collect(Collectors.toList());
+
+                        return tmp1.stream().filter(fun -> typeComparator.compatible(tcRes.getValue().get(fun.getValue()), callType)).findFirst();
+                    }
+                    return Optional.empty();
+
+                }));
+
+        if (replaceWith.values().stream().anyMatch(Optional::isEmpty)) {
             throw new ExpandException("Unresolved external function: " +
-                    replaceWith.entrySet().stream().filter(map -> !map.getValue().isPresent()).map(map -> map.getKey().getMethodName().getText())
+                    replaceWith.entrySet().stream().filter(map -> map.getValue().isEmpty()).map(map -> map.getKey().getMethodName().getText())
                             .collect(Collectors.joining(",")));
         }
 
 
-        for (Map.Entry<ACallExp, Optional<AFunctionDeclaration>> callReplacement : replaceWith.entrySet()) {
+        for (Map.Entry<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> callReplacement : replaceWith
+                .entrySet()) {
             ACallExp call = callReplacement.getKey();
-            AFunctionDeclaration replacement = callReplacement.getValue().get();
+            AFunctionDeclaration replacement = callReplacement.getValue().get().getValue();
             IMaestroExpansionPlugin replacementPlugin =
                     plugins.stream().filter(plugin -> plugin.getDeclaredImportUnit().getModule().getFunctions().contains(replacement)).findFirst()
                             .get();
@@ -176,9 +215,16 @@ public class MablSpecificationGenerator {
             intermediateSpecWriter.write(simulationModule);
         }
 
-        logger.debug("Externals {}",
-                NodeCollector.collect(simulationModule, ACallExp.class).orElse(new Vector<>()).stream().map(m -> m.getMethodName().toString())
-                        .collect(Collectors.joining(" , ", "[ ", " ]")));
+        //update simulation module unit with required imports
+        NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
+                .ifPresent(unit -> {
+
+                    Stream<? extends LexIdentifier> imports =
+                            replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get).map(p -> p.getKey().getImports().stream())
+                                    .flatMap(Function.identity());
+                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
+                            .collect(Collectors.toList()));
+                });
 
         return expandExternals(importedDocumentList, simulationModule, reporter, plugins, depth + 1);
     }

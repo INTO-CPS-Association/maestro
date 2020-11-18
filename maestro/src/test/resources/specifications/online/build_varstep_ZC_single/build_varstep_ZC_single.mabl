@@ -1,6 +1,8 @@
 simulation
 import FixedStep;
-import TypeConverter;
+import FMI2;
+import Math;
+import Logger;
 import Initializer;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
@@ -21,9 +23,9 @@ IFmuComponent components[2]={pump,sink};
 
 bool global_execution_continue = true;
 @Config("@file: config.json");
-expand initialize(components,START_TIME, END_TIME);
+Initializer.expand initialize(components,START_TIME, END_TIME);
 
-expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+FixedStep.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
 fmu1.freeInstance(pump);
 fmu2.freeInstance(sink);

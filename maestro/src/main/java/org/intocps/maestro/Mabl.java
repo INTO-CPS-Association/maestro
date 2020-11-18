@@ -40,8 +40,8 @@ public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
     public static final String MABL_MODULES_PATH = "org/intocps/maestro/typechecker/";
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
-    private static Map<String, String> runtimeModules = null;
     final IntermediateSpecWriter intermediateSpecWriter;
+    private final Map<String, String> runtimeModuleNameToPath;
     private final File specificationFolder;
     private final MableSettings settings = new MableSettings();
     private final Set<ARootDocument> importedDocument = new HashSet<>();
@@ -51,28 +51,22 @@ public class Mabl {
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
 
-    public Mabl(File specificationFolder, File debugOutputFolder) {
+    public Mabl(File specificationFolder, File debugOutputFolder) throws IOException {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
-
+        runtimeModuleNameToPath = this.getResourceFiles(MABL_MODULES_PATH).stream().filter(x -> x.endsWith(".mabl"))
+                .collect(Collectors.toMap(x -> x.substring(0, x.lastIndexOf('.')), x -> MABL_MODULES_PATH + x));
     }
 
-    public void addRuntimeModules() {
+    private List<String> getResourceFiles(String path) throws IOException {
+        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
+    }
 
-        try {
-            runtimeModules = this.getResourceFiles(MABL_MODULES_PATH).stream().filter(x -> x.endsWith(".mabl"))
-                    .collect(Collectors.toMap(x -> x.substring(0, x.lastIndexOf('.')), x -> this.MABL_MODULES_PATH + x));
-        } catch (IOException e) {
-            if (this.reporter != null) {
-                this.reporter.report(-100, "Failed to retrieve runtime modules: " + e, null);
-            }
+    public ARootDocument getRuntimeModule(String module, ClassLoader classLoader) throws IOException {
+        InputStream resourceAsStream = classLoader.getResourceAsStream(runtimeModuleNameToPath.get(module));
+        if (resourceAsStream == null) {
+            return null;
         }
-
-
-    }
-
-    public ARootDocument getModule(String module, ClassLoader classLoader) throws IOException {
-        InputStream resourceAsStream = classLoader.getResourceAsStream(runtimeModules.get(module));
         ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
         return parse;
     }
@@ -100,18 +94,17 @@ public class Mabl {
 
     public List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
         List<ARootDocument> documents = new ArrayList<>();
-        for (String module : modules) {
-            if (runtimeModules.containsKey(module)) {
-                documents.add(getModule(module, this.getClass().getClassLoader()));
-            }
+        if (modules != null) {
+            for (String module : modules) {
+                if (runtimeModuleNameToPath.containsKey(module)) {
+                    documents.add(getRuntimeModule(module, this.getClass().getClassLoader()));
+                }
 
+            }
         }
         return documents;
     }
 
-    private List<String> getResourceFiles(String path) throws IOException {
-        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
-    }
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
         ARootDocument main = null;
@@ -140,6 +133,9 @@ public class Mabl {
     }
 
     private void postProcessParsing() throws IOException {
+
+        //TODO do we need to import build-in modules. Remember to remove from generateSpec. If imported modules exists from the parser then do
+        // nothing otherwise add runtime modules as needed
 
         if (document != null) {
             intermediateSpecWriter.write(document);
@@ -220,7 +216,7 @@ public class Mabl {
         }
         ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
         List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
-        List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(x -> x.getText()).collect(Collectors.toList()));
+        List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));

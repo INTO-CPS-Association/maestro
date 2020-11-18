@@ -1,7 +1,6 @@
 simulation
 import Initializer;
 import FixedStep;
-import TypeConverter;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {

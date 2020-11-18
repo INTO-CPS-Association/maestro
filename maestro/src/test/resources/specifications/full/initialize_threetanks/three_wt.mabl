@@ -1,9 +1,9 @@
 simulation
-import TypeConverter;
 import Initializer;
 import Math;
 import Logger;
-import DebugLogging;
+import FMI2;
+
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {

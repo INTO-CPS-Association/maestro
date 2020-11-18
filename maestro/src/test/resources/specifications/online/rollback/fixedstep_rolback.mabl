@@ -1,6 +1,9 @@
 simulation
 import FixedStep;
-import TypeConverter;
+import Math;
+import Logger;
+import DataWriter;
+
 import Initializer;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
@@ -23,7 +26,7 @@ bool global_execution_continue = true;
 
 //expand initialize(components,START_TIME, END_TIME);
 
-expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+FixedStep.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
 tankcontroller.freeInstance(roller);
 SingleWatertank.freeInstance(cont);
