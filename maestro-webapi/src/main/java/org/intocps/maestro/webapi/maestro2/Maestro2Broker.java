@@ -33,7 +33,7 @@ public class Maestro2Broker {
     final File workingDirectory;
     final ErrorReporter reporter;
 
-    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
+    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) throws IOException {
         this.workingDirectory = workingDirectory;
         this.mabl = new Mabl(workingDirectory, null);
         this.reporter = reporter;
@@ -93,7 +93,6 @@ public class Maestro2Broker {
     }
 
     public void generateSpecification(MaBLTemplateConfiguration config) throws Exception {
-        mabl.addRuntimeModules();
         mabl.generateSpec(config);
         mabl.expand();
         mabl.dump(workingDirectory);

@@ -33,8 +33,8 @@ import FmiComponentState;
 
     // derivatives
     int setRealInputDerivatives(uint scalarValueIndices[], int order[],	real derivatives[]);
-    int getRealOutputDerivatives(uint scalarValueIndices[], int order[], ref real derivatives[]);
-    int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[],ref real derivatives[]);
+    int getRealOutputDerivatives(uint scalarValueIndices[], uint nvr, int order[], real derivatives[]);
+    int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[], real derivatives[]);
 
     // logging
  	int setDebugLogging(bool loggingOn,uint categories, string categories[]);

@@ -24,10 +24,12 @@ public class FullSpecOnlineTest extends FullSpecTest {
         super(name, directory);
     }
 
+    // TODO: Re-enable build_varstep_ZC_single once derivatives is fixed. See #159
     @Parameterized.Parameters(name = "{index} {0}")
     public static Collection<Object[]> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "online").toFile().listFiles()))
-                .filter(n -> !n.getName().startsWith(".")).map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
+                .filter(n -> !n.getName().startsWith(".") && !n.getName().contains("build_varstep_ZC_single")).map(f -> new Object[]{f.getName(), f})
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -111,8 +111,8 @@ public class JacobianFixedStep {
 
         StateHandler stateHandler = new StateHandler(componentNames, env, getCompStatusDesignator, checkStatus);
 
-
-        DerivativesHandler derivativesHandler = new DerivativesHandler();
+        // TODO: Re-enable derivatives once derivatives is fixed. See #159
+        //        DerivativesHandler derivativesHandler = new DerivativesHandler();
         DataExchangeHandler dataExchangeHandler = new DataExchangeHandler(relations, env, getCompStatusDesignator, checkStatus);
         DataWriterHandler dataWriter = new DataWriterHandler();
         List<PStm> dataWriterAllocateStms =
@@ -292,7 +292,8 @@ public class JacobianFixedStep {
         loopStmts.addAll(dataExchangeHandler.exchangeData());
         //set inputs
         loopStmts.addAll(dataExchangeHandler.setAll());
-        loopStmts.addAll(derivativesHandler.set(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+        // TODO: Re-enable derivatives once derivatives is fixed. See #159
+        //        loopStmts.addAll(derivativesHandler.set(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         //get state
         loopStmts.addAll(stateHandler.getAllStates());
         //do step
@@ -306,7 +307,8 @@ public class JacobianFixedStep {
 
         //get data
         loopStmtsPost.addAll(dataExchangeHandler.getAll(true));
-        loopStmtsPost.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+        // TODO: Re-enable derivatives once derivatives is fixed. See #159
+        //        loopStmtsPost.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
 
         progressTime.accept(loopStmtsPost);
         loopStmtsPost.addAll(dataWriter.write());
@@ -334,8 +336,9 @@ public class JacobianFixedStep {
                                 IntStream.range(0, componentNames.size()).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList())))));
         // get prior to entering loop
         statements.addAll(dataExchangeHandler.getAll(false));
-        statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
-        statements.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+        // TODO: Re-enable derivatives once derivatives is fixed. See #159
+        //        statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
+        //        statements.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         statements.addAll(dataWriterAllocateStms);
         statements.addAll(dataWriter.write());
         //loop
