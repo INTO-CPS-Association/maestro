@@ -5,14 +5,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
-import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.ast.node.AConfigFramework;
+import org.intocps.maestro.ast.node.ARootDocument;
+import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.StringAnnotationProcessor;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -38,10 +37,8 @@ import java.util.stream.Stream;
 public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
-    //    public static final String MABL_MODULES_PATH = "/org/intocps/maestro/typechecker";
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
     final IntermediateSpecWriter intermediateSpecWriter;
-    //    private final Map<String, String> runtimeModuleNameToPath;
     private final File specificationFolder;
     private final MableSettings settings = new MableSettings();
     private final Set<ARootDocument> importedDocument = new HashSet<>();
@@ -56,10 +53,6 @@ public class Mabl {
     public Mabl(File specificationFolder, File debugOutputFolder) {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
-    }
-
-    private List<String> getResourceFiles(String path) throws IOException {
-        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
 
     public ARootDocument getRuntimeModule(String module) throws IOException {
@@ -98,12 +91,7 @@ public class Mabl {
         if (modules != null) {
             for (String module : modules) {
                 if (allModules.contains(module)) {
-
                     documents.add(getRuntimeModule(module));
-                } else {
-                    if (this.reporter != null) {
-                        this.reporter.warning(-10, "Failed to find module: " + module, null);
-                    }
                 }
             }
         }
@@ -186,10 +174,6 @@ public class Mabl {
             throw new IllegalArgumentException("Expansion cannot be called with errors");
         }
         if (frameworks != null && frameworkConfigs != null && frameworks.contains(Framework.FMI2) && frameworkConfigs.containsKey(Framework.FMI2)) {
-            //            if (!ShouldExpandAnalysis.shouldExpand(document)) {
-            //                return;
-            //            }
-
 
             if (!frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
                 throw new Exception("Framework annotations required for expansion. Please specify: " +
@@ -270,23 +254,5 @@ public class Mabl {
         public boolean inlineFrameworkConfig = true;
         public boolean dumpIntermediateSpecs = true;
         public boolean preserveFrameworkAnnotations = false;
-    }
-
-    private static class ShouldExpandAnalysis extends DepthFirstAnalysisAdaptor {
-        boolean shouldExpand = false;
-
-        static boolean shouldExpand(INode node) throws AnalysisException {
-            ShouldExpandAnalysis analysis = new ShouldExpandAnalysis();
-            node.apply(analysis);
-            return analysis.shouldExpand;
-        }
-
-        @Override
-        public void caseACallExp(ACallExp node) throws AnalysisException {
-            super.caseACallExp(node);
-            if (node.getObject() == null) {
-                shouldExpand = true;
-            }
-        }
     }
 }
