@@ -46,7 +46,7 @@ public class InitializerTest {
         var prologGenerator = new PrologGenerator();
         var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
         IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
-        AFunctionDeclaration funcDecl = plugin.getDeclaredUnfoldFunctions().iterator().next();
+        AFunctionDeclaration funcDecl = plugin.getDeclaredImportUnit().getModule().getFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
         var components = Arrays.asList("crtlInstance", "wtInstance");
@@ -69,7 +69,7 @@ public class InitializerTest {
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {
         var decl = MableAstFactory.newAVariableDeclaration(new LexIdentifier("components", null), newAArrayType(newANameType("FMI2Component")),
-                MableAstFactory
+                componentInstances.size(), MableAstFactory
                         .newAArrayInitializer(componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
 
         var stm = MableAstFactory.newALocalVariableStm(decl);

@@ -1,0 +1,90 @@
+//literals
+int, 1
+real, 1.1
+bool, true
+bool, false
+
+
+// binary
+int, 1 +1
+real, 1 + 1.2
+real, 1.1 + 2.2
+real, 1.1 + IcallI(1)
+int, 1 + IcallI(1)
+
+bool, true == false
+bool, 1 == 1
+bool, 1 == IcallI(1)
+bool, 1 == 1.2
+bool, true !=false
+bool, 1 != 1
+bool, 1 != 1.1
+error, 1 != "jj"
+
+bool, 1 < 2
+bool, 1 < IcallI(1)
+bool, 1.1 < 3
+bool, 2 < 4.4
+bool, 2.2 < 3.3
+
+bool, 1 <= 2
+bool, 1 <= IcallI(1)
+bool, 1.1 <= 3
+bool, 2 <= 4.4
+bool, 2.2 <= 3.3
+
+bool, 1 > 2
+bool, 1 > IcallI(1)
+bool, 3 > 1.1
+bool, 4.4 > 2
+bool, 3.3 > 2.2
+
+bool, 1 >= 2
+bool, 1 >= IcallI(1)
+bool, 3 >= 1.1
+bool, 4.4 >= 2
+bool, 3.3 >= 2.2
+
+int, 1 * 2
+int, 1 * IcallI(1)
+real, 1.1 * 3
+real, 2 * 4.4
+real, 2.2 * 3.3
+
+int, 1 / 2
+int, 1 / IcallI(1)
+real, 1.1 / 3
+real, 2 / 4.4
+real, 2.2 / 3.3
+
+int, -1
+int, -IcallI(1)
+real, -1.1
+int, +1
+real, +1-1
+
+bool, true && false
+bool, true && true
+bool, false && false
+bool, true || false
+bool, true || true
+bool, false || false
+
+int, (1)
+int, (IcallI(1))
+real, (1.1)
+bool, (true)
+string, ("jj")
+
+int, ia[0]
+real, ra[0]
+bool, be[0]
+string, sa[0]
+
+bool, !true
+bool, !false
+
+int, IcallI(1)
+
+
+

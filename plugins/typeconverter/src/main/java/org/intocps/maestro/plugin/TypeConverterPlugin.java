@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
@@ -9,10 +10,7 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,30 +21,29 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class TypeConverterPlugin implements IMaestroExpansionPlugin {
 
     final AFunctionDeclaration convertBoolean2Real = newAFunctionDeclaration(newAIdentifier("convertBoolean2Real"),
-            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
     final AFunctionDeclaration convertBoolean2Integer = newAFunctionDeclaration(newAIdentifier("convertBoolean2Integer"),
-            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newABoleanPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
     final AFunctionDeclaration convertInteger2Boolean = newAFunctionDeclaration(newAIdentifier("convertInteger2Boolean"),
-            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
     final AFunctionDeclaration convertReal2Boolean = newAFunctionDeclaration(newAIdentifier("convertReal2Boolean"),
-            Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
     final AFunctionDeclaration convertInteger2Real = newAFunctionDeclaration(newAIdentifier("convertInteger2Real"),
-            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newAIntNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
     final AFunctionDeclaration convertReal2Integer = newAFunctionDeclaration(newAIdentifier("convertReal2Integer"),
-            Arrays.asList(newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to")),
-                    newAFormalParameter(new AReferenceType(newARealNumericPrimitiveType()), newAIdentifier("from"))), newAVoidType());
+            Arrays.asList(newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("from")),
+                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("to"))), newAVoidType());
 
-    @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(convertBoolean2Real, convertBoolean2Integer, convertInteger2Boolean, convertReal2Boolean).collect(Collectors.toSet());
     }
@@ -127,6 +124,17 @@ public class TypeConverterPlugin implements IMaestroExpansionPlugin {
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
         return null;
+    }
+
+    @Override
+    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
+        AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
+        unit.setImports(new Vector<>());
+        AModuleDeclaration module = new AModuleDeclaration();
+        module.setName(newAIdentifier(getName()));
+        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
+        unit.setModule(module);
+        return unit;
     }
 
     @Override

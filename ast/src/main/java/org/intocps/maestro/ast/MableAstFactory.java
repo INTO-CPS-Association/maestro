@@ -3,10 +3,7 @@ package org.intocps.maestro.ast;
 import org.intocps.maestro.ast.node.*;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MableAstFactory {
@@ -14,6 +11,23 @@ public class MableAstFactory {
         return new AUIntNumericPrimitiveType();
     }
 
+    public static ARefExp newARefExp(PExp expression) {
+        ARefExp exp = new ARefExp();
+        exp.setExp(expression);
+        return exp;
+    }
+
+    public static ARefExp newARefExp(LexIdentifier name) {
+        ARefExp exp = new ARefExp();
+        exp.setExp(MableAstFactory.newAIdentifierExp(name));
+        return exp;
+    }
+
+    public static AModuleType newAModuleType(LexIdentifier name) {
+        AModuleType type = new AModuleType();
+        type.setName(name);
+        return type;
+    }
 
     public static AIdentifierExp newAIdentifierExp(LexIdentifier name) {
         AIdentifierExp identifier = new AIdentifierExp();
@@ -37,18 +51,34 @@ public class MableAstFactory {
     }
 
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_) {
+
+        if (type instanceof AArrayType) {
+            throw new IllegalArgumentException("array declerations must use overload with size");
+        }
+
         AVariableDeclaration vardecl = new AVariableDeclaration();
 
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        if (type instanceof AArrayType) {
-            vardecl.setIsArray(true);
-            AArrayType type_ = (AArrayType) type;
-            vardecl.setSize(new ArrayList<PExp>(Arrays.asList(MableAstFactory.newAIntLiteralExp(type_.getSize()))));
-        } else {
-            vardecl.setIsArray(false);
+        return vardecl;
+    }
+
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, int size, PInitializer initializer_) {
+        return newAVariableDeclaration(name, type, MableAstFactory.newAIntLiteralExp(size), initializer_);
+    }
+
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PExp size, PInitializer initializer_) {
+        if (!(type instanceof AArrayType)) {
+            throw new IllegalArgumentException("non array  declerations must use overload without size");
         }
+
+        AVariableDeclaration vardecl = new AVariableDeclaration();
+
+        vardecl.setName(name);
+        vardecl.setType(type);
+        vardecl.setInitializer(initializer_);
+        vardecl.setSize(new ArrayList<>(Collections.singletonList(size)));
         return vardecl;
     }
 
@@ -113,17 +143,18 @@ public class MableAstFactory {
         return exp;
     }
 
-    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, Boolean isArray,
-            List<PExp> size) {
+    public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PInitializer initializer_, List<PExp> size) {
         AVariableDeclaration vardecl = new AVariableDeclaration();
 
         vardecl.setName(name);
         vardecl.setType(type);
         vardecl.setInitializer(initializer_);
-        vardecl.setIsArray(isArray);
-        if (isArray) {
-            vardecl.setSize(size);
+
+        if (size != null && !size.isEmpty() && !(type instanceof AArrayType)) {
+            throw new IllegalArgumentException("non array  declerations must use overload without size");
         }
+
+        vardecl.setSize(size);
         return vardecl;
     }
 
@@ -178,6 +209,15 @@ public class MableAstFactory {
 
     public static ACallExp newACallExp(LexToken expand, LexIdentifier identifier, List<? extends PExp> args_) {
         ACallExp exp = new ACallExp();
+        exp.setExpand(expand);
+        exp.setMethodName(identifier);
+        exp.setArgs(args_);
+        return exp;
+    }
+
+    public static ACallExp newACallExp(LexToken expand, PExp object, LexIdentifier identifier, List<? extends PExp> args_) {
+        ACallExp exp = new ACallExp();
+        exp.setObject(object);
         exp.setExpand(expand);
         exp.setMethodName(identifier);
         exp.setArgs(args_);
@@ -288,6 +328,10 @@ public class MableAstFactory {
         return type;
     }
 
+    public static ABooleanPrimitiveType newBoleanType() {
+        return newABoleanPrimitiveType();
+    }
+
     public static AVoidType newAVoidType() {
         AVoidType type = new AVoidType();
         return type;
@@ -299,9 +343,18 @@ public class MableAstFactory {
         return type;
     }
 
+    public static ARealNumericPrimitiveType newRealType() {
+
+        return newARealNumericPrimitiveType();
+    }
+
     public static AStringPrimitiveType newAStringPrimitiveType() {
         AStringPrimitiveType type = new AStringPrimitiveType();
         return type;
+    }
+
+    public static AStringPrimitiveType newStringType() {
+        return newAStringPrimitiveType();
     }
 
     public static AIntNumericPrimitiveType newAIntNumericPrimitiveType() {
@@ -309,11 +362,13 @@ public class MableAstFactory {
         return type;
     }
 
-    public static AArrayType newAArrayType(PType arrayType, Integer size) {
-        AArrayType type = new AArrayType();
-        type.setType(arrayType);
-        type.setSize(size);
-        return type;
+    public static AIntNumericPrimitiveType newIntType() {
+        return newAIntNumericPrimitiveType();
+    }
+
+
+    public static AUIntNumericPrimitiveType newUIntType() {
+        return newAUIntNumericPrimitiveType();
     }
 
     public static AParExp newPar(PExp exp) {
@@ -337,7 +392,7 @@ public class MableAstFactory {
     }
 
     public static AArrayType newAArrayType(PType arrayType) {
-        return newAArrayType(arrayType, null);
+        return new AArrayType(arrayType);
     }
 
     public static AArrayStateDesignator newAArayStateDesignator(PStateDesignator target, PExp exp) {
@@ -382,11 +437,11 @@ public class MableAstFactory {
         return new ABreakStm();
     }
 
-    public PType newAModuleType(LexIdentifier name) {
-        return new AModuleType();
+    public static AUnknownType newAUnknownType() {
+        return new AUnknownType();
     }
 
-    public AUnknownType newAUnknownType() {
-        return new AUnknownType();
+    public static ANullType newNullType() {
+        return new ANullType();
     }
 }

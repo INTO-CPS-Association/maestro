@@ -28,9 +28,9 @@
     int getString(UInt[] vr, UInt nvr, string[] values);
 
     // derivatives
-    int setRealInputDerivatives(uInt[] scalarValueIndices, int[] order,	real[] derivatives);
-    int getRealOutputDerivatives(uInt[] scalarValueIndices, int[] order, ref double[] derivatives);
-    int getDirectionalDerivative(uInt[] vUnknownRef,uInt[] vKnownRef, double[] dvKnown,ref double[] derivatives);
+    int setRealInputDerivatives(UInt[] scalarValueIndices, int[] order,	real[] derivatives);
+    int getRealOutputDerivatives(long[] scalarValueIndices, int[] order, ref double[] derivatives);
+    int getDirectionalDerivative(long[] vUnknownRef,long[] vKnownRef, double[] dvKnown,ref double[] derivatives);
 
     // logging
  	int setDebugLogging(boolean loggingOn, string[] categories);

@@ -1,11 +1,7 @@
-package org.intocps.maestro;
+package org.intocps.maestro.core.messages;
 
 import org.intocps.maestro.ast.LexToken;
-import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.core.messages.MableError;
-import org.intocps.maestro.core.messages.MableMessage;
-import org.intocps.maestro.core.messages.MableWarning;
-import org.intocps.maestro.typechecker.InternalException;
+import org.intocps.maestro.core.InternalException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

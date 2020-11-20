@@ -1,6 +1,9 @@
 simulation
 import FixedStep;
-import TypeConverter;
+import Math;
+import Logger;
+import DataWriter;
+
 import Initializer;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
@@ -17,13 +20,13 @@ FMI2Component roller = tankcontroller.instantiate("crtlInstance", false, false);
 FMI2Component cont = SingleWatertank.instantiate("wtInstance", false, false);;
 DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
-IFmuComponent components[2]={roller,cont};
+FMI2Component components[2]={roller,cont};
 
 bool global_execution_continue = true;
 
 //expand initialize(components,START_TIME, END_TIME);
 
-expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+FixedStep.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 
 tankcontroller.freeInstance(roller);
 SingleWatertank.freeInstance(cont);

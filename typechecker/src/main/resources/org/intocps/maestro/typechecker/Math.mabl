@@ -1,3 +1,4 @@
 module Math {
     bool isClose(real a, real b, real absoluteTolerance, real relativeTolerance);
+    real min(real a, real b);
 }

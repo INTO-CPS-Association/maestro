@@ -25,13 +25,13 @@ public class MableBuilder {
     }
 
     public static PStm newVariable(String name, PType type, List<PExp> values) {
-        return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone(), values.size()),
+        return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone()), values.size(),
                 newAArrayInitializer(values.stream().map(PExp::clone).collect(Collectors.toList()))));
 
     }
 
     public static PStm newVariable(String name, PType type, int size) {
-        return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone(), size), null));
+        return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), newAArrayType(type.clone()), size, null));
 
     }
 

@@ -1,0 +1,9 @@
+void, int si = 0;
+void, real sr = 1.1;
+void, bool sb = true;
+void, string ss = "jj";
+
+void, int sa[0];
+error, int sa[] = {1,2,3};
+void, int sa[3] = {1,2,3};
+error, int sa[2] = {1,2,3};

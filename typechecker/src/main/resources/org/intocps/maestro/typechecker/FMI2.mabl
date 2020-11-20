@@ -1,0 +1,59 @@
+ module FMI2
+ import FMI2Component;
+ {
+	FMI2Component instantiate(string name, bool visible, bool loggingOn);
+ 	void freeInstance(FMI2Component comp);
+}
+
+
+module FMI2Component
+import FmiComponentState;
+ {
+
+    // control
+ 	int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
+ 	int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
+
+ 	int terminate();
+    int reset();
+
+    //initialization
+ 	int enterInitializationMode();
+ 	int exitInitializationMode();
+
+    // state exchange
+ 	int setReal(uint vr[], uint nvr,real values[]);
+ 	int getReal(uint vr[], uint nvr, real values[]);
+ 	int setInteger(uint vr[], uint nvr,int values[]);
+    int getInteger(uint vr[], uint nvr, int values[]);
+    int setBoolean(uint vr[], uint nvr,bool values[]);
+    int getBoolean(uint vr[], uint nvr, bool values[]);
+    int setString(uint vr[], uint nvr,string values[]);
+    int getString(uint vr[], uint nvr, string values[]);
+
+    // derivatives
+    int setRealInputDerivatives(uint scalarValueIndices[], int order[],	real derivatives[]);
+    int getRealOutputDerivatives(uint scalarValueIndices[], uint nvr, int order[], real derivatives[]);
+    int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[], real derivatives[]);
+
+    // logging
+ 	int setDebugLogging(bool loggingOn,uint categories, string categories[]);
+
+    // status
+    int getStatus(int kind, ref int status);
+    int getBooleanStatus(int kind, ref bool status);
+    int getIntegerStatus(int kind, ref int status);
+    int getRealStatus(int kind, ref real status);
+    int getStringStatus(int kind, ref string status);
+
+    //state
+    int getState(ref FmiComponentState state);
+    int setState(FmiComponentState state);
+    int freeState(FmiComponentState state);
+
+}
+
+module FmiComponentState {}
+
+
+

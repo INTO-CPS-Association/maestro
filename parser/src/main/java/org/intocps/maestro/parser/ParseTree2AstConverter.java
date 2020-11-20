@@ -34,9 +34,15 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
 
-        unit.setName(convert(ctx.IDENTIFIER()));
+        AModuleDeclaration module = new AModuleDeclaration();
+        unit.setModule(module);
 
-        unit.setFunctions(ctx.functionDeclaration().stream().map(this::visit).map(AFunctionDeclaration.class::cast).collect(Collectors.toList()));
+        module.setName(convert(ctx.name));
+        if (ctx.imports != null && !ctx.imports.isEmpty()) {
+            unit.setImports(ctx.imports.stream().map(this::convert).collect(Collectors.toList()));
+        }
+
+        module.setFunctions(ctx.functionDeclaration().stream().map(this::visit).map(AFunctionDeclaration.class::cast).collect(Collectors.toList()));
 
 
         return unit;
@@ -61,7 +67,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AFormalParameter parameter = new AFormalParameter();
 
         parameter.setName(convert(ctx.IDENTIFIER()));
-        parameter.setType((PType) this.visit(ctx.typeType()));
+        //        parameter.setType((PType) this.visit(ctx.typeType()));
+        PType primitiveType = (PType) this.visit(ctx.typeType());
+
+        //TODO: Multi dimensional arrays
+        if (ctx.LBRACK() != null) {
+            AArrayType arrayType = new AArrayType();
+            arrayType.setType(primitiveType);
+            parameter.setType(arrayType);
+        } else {
+            parameter.setType(primitiveType);
+        }
+
         return parameter;
     }
 
@@ -359,14 +376,19 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitVariableDeclarator(MablParser.VariableDeclaratorContext ctx) {
         AVariableDeclaration def = new AVariableDeclaration();
 
-        def.setType((PType) this.visit(ctx.typeType()));
+        PType primitiveType = (PType) this.visit(ctx.typeType());
+        def.setType(primitiveType);
         def.setName(convert(ctx.IDENTIFIER()));
 
-        if (ctx.size != null && !ctx.size.isEmpty()) {
-            def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+        //TODO: Multi dimensional arrays
+        if (ctx.LBRACK() != null) {
+            AArrayType arrayType = new AArrayType();
+            if (ctx.size != null && !ctx.size.isEmpty()) {
+                def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
+            }
+            arrayType.setType(primitiveType);
+            def.setType(arrayType);
         }
-
-        def.setIsArray(ctx.LBRACK() != null);
 
 
         MablParser.VariableInitializerContext initializer = ctx.variableInitializer();
@@ -466,6 +488,11 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         return new AStringPrimitiveType();
     }
 
+    @Override
+    public INode visitVoidType(MablParser.VoidTypeContext ctx) {
+        return new AVoidType();
+    }
+
     private LexIdentifier convert(Token identifier) {
         return new LexIdentifier(identifier.getText(), convertToLexToken(identifier));
     }
@@ -486,17 +513,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         }
 
-        if (!ctx.arrays.isEmpty()) {
-            AArrayType t = new AArrayType();
-            t.setType(type);
-            type = t;
-        }
-
         if (ctx.REF() == null) {
             return type;
         } else {
             return new AReferenceType(type);
         }
 
+    }
+
+    @Override
+    public INode visitRefExpression(MablParser.RefExpressionContext ctx) {
+        ARefExp exp = new ARefExp();
+        exp.setExp((PExp) this.visit(ctx.expression()));
+        return exp;
     }
 }

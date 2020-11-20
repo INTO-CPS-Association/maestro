@@ -25,7 +25,7 @@ public class ExpansionUtilities {
         Optional<AVariableDeclaration> first =
                 containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
                         .map(ALocalVariableStm::getDeclaration)
-                        .filter(decl -> decl.getName().equals(name) && decl.getIsArray() && decl.getInitializer() != null).findFirst();
+                        .filter(decl -> decl.getName().equals(name) && !decl.getSize().isEmpty() && decl.getInitializer() != null).findFirst();
         if (first.isPresent() || maxAncestorLevel == currentAncestorLevel) {
             return first;
         } else {

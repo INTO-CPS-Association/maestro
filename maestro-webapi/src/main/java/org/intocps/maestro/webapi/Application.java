@@ -2,7 +2,7 @@ package org.intocps.maestro.webapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
-import org.intocps.maestro.ErrorReporter;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.MaestroV1CliProxy;
 import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;

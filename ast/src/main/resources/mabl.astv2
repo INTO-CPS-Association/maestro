@@ -37,7 +37,9 @@ document
 
 
 compilationUnit
-    =   {importedModule} [name]:lex_identifier [functions]:declaration.function*
+    =   {importedModule}
+            [module]:module
+            [imports]:lex_identifier*
     |   {simulationSpecification}
             [body]:stm
             [imports]:lex_identifier*
@@ -53,7 +55,8 @@ declaration {
         -> package='org.intocps.maestro.ast'
          | [name]:lex_identifier}
     = {function} [returnType]:type  [formals]:parameter.formal*
-    | {variable} [type]:type [size]:exp* [isArray]:java_Boolean  [initializer]:initializer
+    | {variable} [type]:type [size]:exp* [initializer]:initializer
+    | {module} [name]:lex_identifier [functions]:declaration.function*
     ;
 
 initializer
@@ -80,6 +83,7 @@ exp
     | {arrayIndex} [array]:exp [indices]:exp*
     | {par} [exp]:exp
     | {null} [token]:parserToken
+    | {ref} [exp]:exp
     ;
 
 #literal
@@ -135,12 +139,13 @@ stm
 type
     =   #primitive
     |   {name} [name]:lex_identifier
-    |   {function} (result):type (parameters):type*
-    |   {array} [size]:java_Integer [type]:type
+    |   {function} [result]:type [parameters]:type*
+    |   {array} [type]:type
     |   {unknown}
     |   {void}
-    |   {module} [name]:identifier
+    |   {module} [name]:lex_identifier
     |   {reference} [type]:type
+    |   {null}
     ;
 
 #primitive

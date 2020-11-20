@@ -187,7 +187,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
 
-        if (node.getIsArray()) {
+        if (node.getType() instanceof AArrayType) {
 
             Value val;
             if (node.getInitializer() != null) {
@@ -471,6 +471,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value createNewReturnValue(INode node, Context question) throws AnalysisException {
         logger.debug("Unhandled interpreter node: {}", node.getClass().getSimpleName());
         throw new InterpreterException("Unhandled node: " + node);
+    }
+
+    @Override
+    public Value caseARefExp(ARefExp node, Context question) throws AnalysisException {
+        return node.getExp().apply(this, question);
     }
 
     @Override

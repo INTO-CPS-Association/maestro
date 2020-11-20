@@ -1,0 +1,3 @@
+ module Logger {
+    void log(int level, string message, ? values);
+}

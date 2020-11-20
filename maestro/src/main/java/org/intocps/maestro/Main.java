@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.cli.MaestroV1SimulationConfiguration;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;

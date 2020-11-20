@@ -3,6 +3,7 @@ package org.intocps.maestro.plugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.ALessBinaryExp;
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
@@ -11,12 +12,11 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.intocps.maestro.ast.MableAstFactory.newAIdentifier;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class SomePlugin implements IMaestroExpansionPlugin {
@@ -34,7 +34,6 @@ public class SomePlugin implements IMaestroExpansionPlugin {
         return "0.0.0";
     }
 
-    @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(f1).collect(Collectors.toSet());
     }
@@ -60,6 +59,17 @@ public class SomePlugin implements IMaestroExpansionPlugin {
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
         return new DemoConfig(new ObjectMapper().readValue(is, Integer.class));
+    }
+
+    @Override
+    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
+        AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
+        unit.setImports(new Vector<>());
+        AModuleDeclaration module = new AModuleDeclaration();
+        module.setName(newAIdentifier(getName()));
+        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
+        unit.setModule(module);
+        return unit;
     }
 
 

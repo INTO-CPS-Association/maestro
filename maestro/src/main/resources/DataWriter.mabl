@@ -1,0 +1,7 @@
+ module DataWriter {
+    DataWriterConfig writeHeader(string[] headers);
+ 	void writeDataPoint(DataWriterConfig configuration, real time, ?);
+ 	void close(DataWriterConfig configuration);
+}
+
+module DataWriterConfig {}

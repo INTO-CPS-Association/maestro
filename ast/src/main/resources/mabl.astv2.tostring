@@ -9,11 +9,13 @@ import java.util.stream.Collectors;
 
 %framework->config = "@FrameworkConfig(\"" + [name] + "\", \""+ [config] + "\")"
 
-%compilationUnit->importedModule = "imported "+ $ $[name]$+" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
+%compilationUnit->importedModule = "imported "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [module]
 %compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + $[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n"))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[isArray]$==null || !$[isArray]$?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->module =   [name]+$" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
+
 
 %initializer->exp = [exp]
 %initializer->array = "{" + $ $[exp]$.stream().map(Object::toString).collect(Collectors.joining(" , ", " ", " "))$ + "}"
@@ -47,6 +49,7 @@ import java.util.stream.Collectors;
 %exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
 %exp->par = "("+ [exp] +")"
 %exp->null = "null"
+%exp->ref = "ref "+ [exp]
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
@@ -65,14 +68,18 @@ import java.util.stream.Collectors;
 %stateDesignator->array = [target] + "[" + [exp] + "]"
 
 %type->name = [name]
-%type->array = [type] + "[]" //[size]
+//%type->array = [type] + "[]" //[size]
+//TODO: Array tostring does not have support for nested array types
+%type->array = [type]+"*" //[size]
 %type->void = "void"
 %type->module = [name]
 %type->unknown = "?"
 %type->reference = "ref " + [type]
+%type->function = "" +$ $[parameters]$.stream().map(t->t+"").collect(Collectors.joining(",","(",")"))+" => "$ + [result]
+%type->null = "null"
 
 %type->#primitive->boolean="bool"
 %type->#primitive->string="string"
 %type->#primitive->#numeric->real="real"
 %type->#primitive->#numeric->int="int"
-%type->#primitive->#numeric->uInt="uInt"
+%type->#primitive->#numeric->uInt="uint"

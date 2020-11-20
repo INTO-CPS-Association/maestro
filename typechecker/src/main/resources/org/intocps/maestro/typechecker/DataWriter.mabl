@@ -1,0 +1,9 @@
+ module DataWriter
+ import DataWriterConfig;
+ {
+    DataWriterConfig writeHeader(string headers[]);
+ 	void writeDataPoint(DataWriterConfig configuration, real time, ? values[]);
+ 	void close();
+}
+
+module DataWriterConfig {}

@@ -2,12 +2,10 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.AIdentifierExp;
-import org.intocps.maestro.ast.node.AIntLiteralExp;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
@@ -16,10 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,15 +32,14 @@ public class DebugLogging implements IMaestroExpansionPlugin {
     private final static int FMI_PENDING = 5;
     private final static String CATEGORY_STATUS = "category_status";
     final AFunctionDeclaration funEnable = newAFunctionDeclaration(newAIdentifier("enableDebugLogging"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+            Arrays.asList(newAFormalParameter(newANameType("FMI2Component"), newAIdentifier("component")),
                     newAFormalParameter(newAArrayType(newAStringPrimitiveType()), newAIdentifier("categories")),
                     newAFormalParameter(newAUIntNumericPrimitiveType(), newAIdentifier("categoriesSize"))), newAVoidType());
     final AFunctionDeclaration funDisable = newAFunctionDeclaration(newAIdentifier("disableDebugLogging"),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+            Arrays.asList(newAFormalParameter(newANameType("FMI2Component"), newAIdentifier("component")),
                     newAFormalParameter(newAArrayType(newAStringPrimitiveType()), newAIdentifier("categories")),
                     newAFormalParameter(newAUIntNumericPrimitiveType(), newAIdentifier("categoriesSize"))), newAVoidType());
 
-    @Override
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(funEnable, funDisable).collect(Collectors.toSet());
     }
@@ -81,7 +75,7 @@ public class DebugLogging implements IMaestroExpansionPlugin {
 
         LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
         statements.add(newALocalVariableStm(MableAstFactory.newAVariableDeclaration(statusIdentifier, MableAstFactory.newAIntNumericPrimitiveType(),
-                MableAstFactory.newAExpInitializer(newACallExp(newAIdentifierExp((LexIdentifier) name.clone()), newAIdentifier("fmi2SetDebugLogging"),
+                MableAstFactory.newAExpInitializer(newACallExp(newAIdentifierExp((LexIdentifier) name.clone()), newAIdentifier("setDebugLogging"),
                         Arrays.asList(newABoolLiteralExp(selectedFun == funEnable), size.clone(), categories.clone()))))));
 
         statements.add(newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
@@ -99,6 +93,17 @@ public class DebugLogging implements IMaestroExpansionPlugin {
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
         return new FixedstepConfig(new ObjectMapper().readValue(is, Integer.class));
+    }
+
+    @Override
+    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
+        AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
+        unit.setImports(Stream.of("FMI2Component", "Logger").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
+        AModuleDeclaration module = new AModuleDeclaration();
+        module.setName(newAIdentifier(getName()));
+        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
+        unit.setModule(module);
+        return unit;
     }
 
     @Override

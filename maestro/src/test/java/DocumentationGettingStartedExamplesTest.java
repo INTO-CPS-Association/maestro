@@ -1,9 +1,9 @@
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.intocps.maestro.ErrorReporter;
 import org.intocps.maestro.FullSpecTest;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.Main;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;

@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
@@ -54,7 +55,7 @@ public class StateHandler {
             return Collections.emptyList();
         }
 
-        return Collections.singletonList(newVariable(fix_comp_states, newANameType("FmuState"), componentNames.size()));
+        return Collections.singletonList(newVariable(fix_comp_states, newANameType("FmiComponentState"), componentNames.size()));
     }
 
     public List<PStm> getAllStates() {
@@ -63,8 +64,8 @@ public class StateHandler {
         }
         //get states
         Consumer<List<PStm>> getAllStates = (list) -> componentNames.forEach(comp -> {
-            list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
-                    call(newAIdentifierExp((LexIdentifier) comp.clone()), "getState", getCompStateDesignator.apply(comp))));
+            list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp), call(newAIdentifierExp((LexIdentifier) comp.clone()), "getState",
+                    MableAstFactory.newARefExp(getCompStateDesignator.apply(comp)))));
             checkStatus.accept(Map.entry(true, "get state failed"), Map.entry(comp, list));
         });
 
