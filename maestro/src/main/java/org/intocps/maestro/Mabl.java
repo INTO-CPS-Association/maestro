@@ -97,6 +97,9 @@ public class Mabl {
         if (modules != null) {
             for (String module : modules) {
                 if (runtimeModuleNameToPath.containsKey(module)) {
+                    if (this.reporter != null) {
+                        this.reporter.warning(-10, "Looking for module: " + module + "--" + runtimeModuleNameToPath.get(module), null);
+                    }
                     documents.add(getRuntimeModule(module, this.getClass().getClassLoader()));
                 }
 
