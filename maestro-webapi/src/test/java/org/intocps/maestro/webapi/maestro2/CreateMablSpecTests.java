@@ -3,6 +3,8 @@ package org.intocps.maestro.webapi.maestro2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
+import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,21 +54,21 @@ public class CreateMablSpecTests {
     public void fixedStepSimulation() throws Exception {
 
         ObjectMapper om = new ObjectMapper();
-        Maestro2SimulationController.StatusModel statusModel = om.readValue(
+        StatusModel statusModel = om.readValue(
                 mockMvc.perform(get("/createSession")).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
-                Maestro2SimulationController.StatusModel.class);
-        Maestro2SimulationController.InitializeStatusModel initializeResponse = om.readValue(
+                StatusModel.class);
+        InitializeStatusModel initializeResponse = om.readValue(
                 mockMvc.perform(post("/initialize/" + statusModel.sessionId).content(getWaterTankMMJson()).contentType(MediaType.APPLICATION_JSON))
                         .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
-                Maestro2SimulationController.InitializeStatusModel.class);
+                InitializeStatusModel.class);
         File start_messageFile =
                 new File(Paths.get("src", "test", "resources", "maestro2", "watertankexample", "start_message.json").toAbsolutePath().toString());
         byte[] start_messageContent = FileUtils.readFileToByteArray(start_messageFile);
 
-        Maestro2SimulationController.InitializeStatusModel simulateResponse = om.readValue(
+        InitializeStatusModel simulateResponse = om.readValue(
                 mockMvc.perform(post("/simulate/" + statusModel.sessionId).content(start_messageContent).contentType(MediaType.APPLICATION_JSON))
                         .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
-                Maestro2SimulationController.InitializeStatusModel.class);
+                InitializeStatusModel.class);
 
         byte[] zippedResult =
                 mockMvc.perform(get("/result/" + statusModel.sessionId + "/zip")).andExpect(status().is(HttpStatus.OK.value())).andReturn()

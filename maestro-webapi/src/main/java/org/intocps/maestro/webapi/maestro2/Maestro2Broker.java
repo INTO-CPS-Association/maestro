@@ -12,6 +12,9 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.webapi.maestro2.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,31 +46,42 @@ public class Maestro2Broker {
         mabl.getSettings().inlineFrameworkConfig = true;
     }
 
-    public void buildAndRun(Maestro2SimulationController.InitializationData initializeRequest, Maestro2SimulationController.SimulateRequestBody body,
-            WebSocketSession socket, File csvOutputFile) throws Exception {
+    public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
+            File csvOutputFile) throws Exception {
 
         Map<String, Object> initialize = new HashMap<>();
-        initialize.put("parameters", initializeRequest.parameters);
+        initialize.put("parameters", initializeRequest.getParameters());
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = initializeRequest.getFmus();
+        if (simulationConfiguration.fmus == null) {
+            simulationConfiguration.fmus = new HashMap<>();
+        }
         simulationConfiguration.connections = initializeRequest.getConnections();
+        if (simulationConfiguration.connections == null) {
+            simulationConfiguration.connections = new HashMap<>();
+        }
         simulationConfiguration.logVariables = initializeRequest.getLogVariables();
-        simulationConfiguration.livestream = initializeRequest.livestream;
+        if (simulationConfiguration.logVariables == null) {
+            simulationConfiguration.variablesToLog = new HashMap<>();
+        }
+        simulationConfiguration.livestream = initializeRequest.getLivestream();
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, this.reporter);
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-        Map<String, List<String>> removedFMUKeyFromLogLevels = body.logLevels.entrySet().stream().collect(Collectors
-                .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                        Map.Entry::getValue));
+        Map<String, List<String>> removedFMUKeyFromLogLevels = body.getLogLevels() == null ? new HashMap<>() : body.getLogLevels().entrySet().stream()
+                .collect(Collectors
+                        .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                                Map.Entry::getValue));
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
-                        .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.visible).setLoggingOn(initializeRequest.loggingOn).
-                        setStepAlgorithm(new FixedStepSizeAlgorithm(body.endTime,
-                                ((Maestro2SimulationController.FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
+                        .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
+                        .setLoggingOn(initializeRequest.isLoggingOn()).
+                        setStepAlgorithm(new FixedStepSizeAlgorithm(body.getEndTime(),
+                                ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize()));
 
 
         MaBLTemplateConfiguration configuration = builder.build();
@@ -85,10 +99,10 @@ public class Maestro2Broker {
 
 
         executeInterpreter(socket, Stream.concat(connectedOutputs.stream(),
-                (initializeRequest.logVariables == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.logVariables)).stream())
-                        .collect(Collectors.toList()),
-                initializeRequest.livestream == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.livestream), body.liveLogInterval,
-                csvOutputFile);
+                (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
+                        .stream()).collect(Collectors.toList()),
+                initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
+                body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile);
 
     }
 

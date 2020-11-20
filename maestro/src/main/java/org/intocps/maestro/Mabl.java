@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -35,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
@@ -52,7 +51,9 @@ public class Mabl {
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
 
-    public Mabl(File specificationFolder, File debugOutputFolder) throws IOException {
+    private ISimulationEnvironment environment;
+
+    public Mabl(File specificationFolder, File debugOutputFolder) {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
     }
@@ -82,7 +83,7 @@ public class Mabl {
         this.reporter = reporter;
     }
 
-    public void parse(List<File> sourceFiles) throws IOException {
+    public void parse(List<File> sourceFiles) throws Exception {
         if (sourceFiles.isEmpty()) {
             return;
         }
@@ -113,6 +114,9 @@ public class Mabl {
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
         ARootDocument main = null;
         for (ARootDocument doc : documentList) {
+            if (doc == null) {
+                continue;
+            }
             Optional<List<ASimulationSpecificationCompilationUnit>> collect =
                     NodeCollector.collect(doc, ASimulationSpecificationCompilationUnit.class);
             if (collect.isPresent() && !collect.get().isEmpty()) {
@@ -126,21 +130,18 @@ public class Mabl {
         return main;
     }
 
-    public void parse(CharStream specStreams) throws IOException {
+    public void parse(CharStream specStreams) throws Exception {
         if (reporter.getErrorCount() != 0) {
             throw new IllegalArgumentException("Parsing cannot be called with errors");
         }
+        environment = null;
         document = mergeDocuments(Collections.singletonList(MablParserUtil.parse(specStreams, reporter)));
         if (reporter.getErrorCount() == 0) {
             postProcessParsing();
         }
     }
 
-    private void postProcessParsing() throws IOException {
-
-        //TODO do we need to import build-in modules. Remember to remove from generateSpec. If imported modules exists from the parser then do
-        // nothing otherwise add runtime modules as needed
-
+    private void postProcessParsing() throws Exception {
         if (document != null) {
             intermediateSpecWriter.write(document);
             NodeCollector.collect(document, ASimulationSpecificationCompilationUnit.class).ifPresent(unit -> unit.forEach(u -> {
@@ -163,6 +164,17 @@ public class Mabl {
             if (settings.inlineFrameworkConfig) {
                 this.intermediateSpecWriter.write(document);
             }
+        }
+
+        if (environment == null && this.frameworks != null && this.frameworks.contains(Framework.FMI2) && frameworkConfigs != null &&
+                frameworkConfigs.get(Framework.FMI2) != null) {
+            logger.debug("Creating FMI2 simulation environment");
+            environment = Fmi2SimulationEnvironment.of(new ByteArrayInputStream(
+                    StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
+        }
+
+        if (environment != null) {
+            environment.check(reporter);
         }
 
 
@@ -222,6 +234,7 @@ public class Mabl {
         List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
         List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
         String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
+        environment = configuration.getSimulationEnvironment();
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
         moduleDocuments.add(document);
@@ -232,13 +245,7 @@ public class Mabl {
 
     //FIXME should be private
     public ISimulationEnvironment getSimulationEnv() throws Exception {
-        if (this.frameworks.contains(Framework.FMI2) && frameworkConfigs.get(Framework.FMI2) != null) {
-
-            return Fmi2SimulationEnvironment.of(new ByteArrayInputStream(
-                    StringEscapeUtils.unescapeJava(frameworkConfigs.get(Framework.FMI2).getValue()).getBytes(StandardCharsets.UTF_8)), reporter);
-        }
-        logger.error("No framework env found");
-        return null;
+        return environment;
     }
 
     public ARootDocument getMainSimulationUnit() {
