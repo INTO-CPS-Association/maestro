@@ -22,6 +22,7 @@ import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +39,10 @@ import java.util.stream.Stream;
 public class Mabl {
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
-    public static final String MABL_MODULES_PATH = "org/intocps/maestro/typechecker/";
+    //    public static final String MABL_MODULES_PATH = "/org/intocps/maestro/typechecker";
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
     final IntermediateSpecWriter intermediateSpecWriter;
-    private final Map<String, String> runtimeModuleNameToPath;
+    //    private final Map<String, String> runtimeModuleNameToPath;
     private final File specificationFolder;
     private final MableSettings settings = new MableSettings();
     private final Set<ARootDocument> importedDocument = new HashSet<>();
@@ -54,16 +55,14 @@ public class Mabl {
     public Mabl(File specificationFolder, File debugOutputFolder) throws IOException {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
-        runtimeModuleNameToPath = this.getResourceFiles(MABL_MODULES_PATH).stream().filter(x -> x.endsWith(".mabl"))
-                .collect(Collectors.toMap(x -> x.substring(0, x.lastIndexOf('.')), x -> MABL_MODULES_PATH + x));
     }
 
     private List<String> getResourceFiles(String path) throws IOException {
         return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
 
-    public ARootDocument getRuntimeModule(String module, ClassLoader classLoader) throws IOException {
-        InputStream resourceAsStream = classLoader.getResourceAsStream(runtimeModuleNameToPath.get(module));
+    public ARootDocument getRuntimeModule(String module) throws IOException {
+        InputStream resourceAsStream = TypeChecker.getRuntimeModule(module);
         if (resourceAsStream == null) {
             return null;
         }
@@ -93,16 +92,18 @@ public class Mabl {
     }
 
     public List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
+        List<String> allModules = TypeChecker.getRuntimeModules();
         List<ARootDocument> documents = new ArrayList<>();
         if (modules != null) {
             for (String module : modules) {
-                if (runtimeModuleNameToPath.containsKey(module)) {
-                    if (this.reporter != null) {
-                        this.reporter.warning(-10, "Looking for module: " + module + "--" + runtimeModuleNameToPath.get(module), null);
-                    }
-                    documents.add(getRuntimeModule(module, this.getClass().getClassLoader()));
-                }
+                if (allModules.contains(module)) {
 
+                    documents.add(getRuntimeModule(module));
+                } else {
+                    if (this.reporter != null) {
+                        this.reporter.warning(-10, "Failed to find module: " + module, null);
+                    }
+                }
             }
         }
         return documents;
