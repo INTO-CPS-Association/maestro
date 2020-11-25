@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
+
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
@@ -38,6 +39,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
     }
+
 
     public static Fmi2SimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
         try (InputStream is = new FileInputStream(file)) {
@@ -54,6 +56,49 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         Fmi2SimulationEnvironmentConfiguration msg = null;
         msg = mapper.readValue(inputStream, Fmi2SimulationEnvironmentConfiguration.class);
         return of(msg, reporter);
+    }
+
+    public static String replaceInstanceInVariable(Map<String, String> instanceRemapping, String variableString) throws EnvironmentException {
+        int indexofInstanceBegin = variableString.indexOf("}") + 2; // {fmukey}.instancename.variable
+        if (indexofInstanceBegin == -1) {
+            throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '}'");
+        }
+        String key = variableString.substring(0, indexofInstanceBegin);
+        String variableStringWithoutKey = variableString.substring(indexofInstanceBegin);
+        int indexOfEndInstance = variableStringWithoutKey.indexOf('.');
+        if (indexOfEndInstance == -1) {
+            throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '.'");
+        }
+        String instance = variableStringWithoutKey.substring(0, indexOfEndInstance);
+        String variable = variableStringWithoutKey.substring(indexOfEndInstance); // +1 due to '.'
+        String newInstance = instanceRemapping.get(instance);
+        if (newInstance == null) {
+            return variableString;
+        } else {
+            String rebuiltVariable = key + newInstance + variable;
+            return rebuiltVariable;
+        }
+
+    }
+
+    // Calculate all the difference {key}.instance
+
+    public static Map<String, String> instanceRemapping(Map<String, List<String>> connections) throws EnvironmentException {
+        HashMap<String, String> instanceRemapping = new HashMap<>();
+        // Get all key instances pairs
+        Set<KeyInstance> uniqueStrings = new HashSet<>();
+        for (Map.Entry<String, List<String>> entry : connections.entrySet()) {
+            uniqueStrings.add(KeyInstance.ofVariable(entry.getKey()));
+            for (String entry_ : entry.getValue()) {
+                uniqueStrings.add(KeyInstance.ofVariable(entry_));
+            }
+        }
+
+        // Find the cases where key and instance are the same
+        // Rename the instance
+        // Ensure that is does not overlap with other pairs
+        // Add the renaming to the instanceRemapping map
+        List<KeyInstance> sameKeyInstance = uniqueStrings.stream().filter(x -> x.instance.equals(x.key)).colle ct(Collectors.toList());
     }
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
@@ -270,7 +315,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-
     public Map<String, List<String>> getLogLevels() {
         return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
@@ -317,7 +361,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     @Override
     public Set<Relation> getRelations(List<LexIdentifier> identifiers) {
 
-
+        // All the
         /*
          * use mapping of a.#1 -> b.#4 and produce a relation for these
          *
@@ -370,6 +414,40 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
+    static class KeyInstance {
+        public String key;
+        public String instance;
+
+        public KeyInstance(String key, String instance) {
+            this.key = key;
+            this.instance = instance;
+        }
+
+        public static KeyInstance ofVariable(String variableString) throws EnvironmentException {
+            int indexOfKeyEnd = variableString.indexOf("}"); // {fmukey}.instancename.variable
+            if (indexOfKeyEnd == -1) {
+                throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '}'");
+            }
+            String key = variableString.substring(0, indexOfKeyEnd);
+            String variableStringWithoutKey = variableString.substring(indexOfKeyEnd + 2);
+            int indexOfEndInstance = variableStringWithoutKey.indexOf('.');
+            if (indexOfEndInstance == -1) {
+                throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '.'");
+            }
+            String instance = variableStringWithoutKey.substring(0, indexOfEndInstance);
+            return new KeyInstance(key, instance);
+        }
+
+        @Override
+        public int hashCode() {
+            return key.hashCode() ^ instance.hashCode(); //https://stackoverflow.com/questions/6187294/java-set-collection-override-equals-method
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof KeyInstance) && (((KeyInstance) obj).key.equals(this.key)) && (((KeyInstance) obj).instance.equals(this.instance));
+        }
+    }
 
     public static class Relation implements FrameworkVariableInfo {
 
