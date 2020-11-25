@@ -1,0 +1,4 @@
+ module ArrayUtil
+ {
+    void copyRealArray(real[] source, int fromIndex, int count,out real[] destination, int destinationStart );
+}

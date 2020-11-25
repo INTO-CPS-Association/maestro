@@ -4,6 +4,7 @@ lexer grammar MablLexer;
   //  package org.intocps.maestro.ast;
 }
 
+OUT:           'out';
 REF:           'ref';
 
 REAL:           'real';

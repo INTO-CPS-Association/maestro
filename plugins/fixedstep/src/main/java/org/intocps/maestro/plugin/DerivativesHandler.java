@@ -24,9 +24,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableBuilder.*;
+import static org.intocps.maestro.ast.MableBuilder.call;
+import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 class DerivativesHandler {
+
     final static Logger logger = LoggerFactory.getLogger(DerivativesHandler.class);
     final BiPredicate<Fmi2SimulationEnvironment, Fmi2SimulationEnvironment.Variable> canInterpolateInputsFilter = (env, v) -> {
         try {
@@ -35,7 +37,6 @@ class DerivativesHandler {
             return false;
         }
     };
-
     final BiFunction<Fmi2SimulationEnvironment, LexIdentifier, Integer> maxOutputDerivativeOrder = (env, id) -> {
         try {
             return ((ComponentInfo) env.getUnitInfo(id, Framework.FMI2)).modelDescription.getMaxOutputDerivativeOrder();
@@ -46,14 +47,15 @@ class DerivativesHandler {
     };
     String globalCacheName = "derivatives";
     String globalDerInputBuffer = "der_input_buffer";
-    //  Map<LexIdentifier, List<UnitRelationship.Variable>> vars = null;
-
     Map<LexIdentifier, GetDerivativesInfo> derivativesGetInfo = new HashMap<>();
+    private boolean allocated = false;
+    private boolean requireArrayUtilUnload = false;
     private Map<Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Relation>>, LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>>>
             resolvedInputData;
 
     public List<PStm> allocateMemory(List<LexIdentifier> componentNames, Set<Fmi2SimulationEnvironment.Relation> inputRelations,
             Fmi2SimulationEnvironment env) {
+        allocated = true;
 
 
         Set<Map<LexIdentifier, Fmi2SimulationEnvironment.Variable>> tmp =
@@ -78,7 +80,8 @@ class DerivativesHandler {
         }
 
         List<PStm> statements = new Vector<>();
-        statements.add(newVariable(globalCacheName, newARealNumericPrimitiveType(), componentNames.size()));
+        List<Integer> perInstanceSizes = new Vector<>();
+
 
         for (LexIdentifier name : componentNames) {
             vars.entrySet().stream().filter(f -> f.getKey().getText().equals(name.getText())).findFirst().ifPresent(f -> {
@@ -95,30 +98,27 @@ class DerivativesHandler {
 
 
                 int size = f.getValue().size() * order;
-
-                List<PStm> scope = new Vector<>();
-                scope.add(newVariable("tmp", newARealNumericPrimitiveType(), size));
+                perInstanceSizes.add(size);
 
                 varDerInfo.valueDestIdentifier = newAArrayIndexExp(newAIdentifierExp(newAIdentifier(globalCacheName)),
                         Arrays.asList(newAIntLiteralExp(componentNames.indexOf(name))));
-                scope.add(arraySet(globalCacheName, componentNames.indexOf(name), newAIdentifierExp("tmp")));
                 String orderArrayName = id.getText() + "_der_order";
                 statements.add(newVariable(orderArrayName, newAIntNumericPrimitiveType(), IntStream.range(0, f.getValue().size())
                         .mapToObj(v -> IntStream.range(1, order + 1).mapToObj(MableAstFactory::newAIntLiteralExp)).flatMap(Function.identity())
                         .collect(Collectors.toList())));
                 varDerInfo.orderArrayId = orderArrayName;
                 String varSelectName = id.getText() + "_der_select";
-                statements.add(newVariable(varSelectName, newAIntNumericPrimitiveType(), f.getValue().stream().flatMap(
-                        v -> IntStream.range(1, order + 1)
-                                .mapToObj(o -> newAIntLiteralExp((int) v.getScalarVariable().getScalarVariable().valueReference)))
+                statements.add(newVariable(varSelectName, newUIntType(), f.getValue().stream().flatMap(v -> IntStream.range(1, order + 1)
+                        .mapToObj(o -> newAIntLiteralExp((int) v.getScalarVariable().getScalarVariable().valueReference)))
                         .collect(Collectors.toList())));
                 varDerInfo.valueSelectArrayId = varSelectName;
                 derivativesGetInfo.put(id, varDerInfo);
 
-                statements.add(newABlockStm(scope));
-
             });
         }
+
+        statements.add(0, newVariable(globalCacheName, newARealNumericPrimitiveType(), componentNames.size() - 1,
+                perInstanceSizes.stream().mapToInt(i -> i).max().orElse(0)));
 
 
         //allocate for input
@@ -158,19 +158,19 @@ class DerivativesHandler {
                 .sum();
 
 
-        return Stream.concat(Stream.of(newVariable("der_input_buffer", newARealNumericPrimitiveType(), size)),
-                resolvedInputData.entrySet().stream().map(map -> {
+        List<PStm> allocationStatements = Stream.concat(Stream.of(newVariable("der_input_buffer", newARealNumericPrimitiveType(), size)),
+                resolvedInputData.entrySet().stream().flatMap(map -> {
 
                     LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>> resolved =
                             map.getValue();
 
-                    List<Integer> inputSelectIndices = resolved.entrySet().stream()
-                            .map(m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1)
+                    List<Integer> inputSelectIndices = resolved.entrySet().stream().flatMap(
+                            m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1)
                                     .mapToObj(i -> Long.valueOf(m.getKey().getScalarVariable().scalarVariable.valueReference).intValue()))
-                            .flatMap(Function.identity()).collect(Collectors.toList());
+                            .collect(Collectors.toList());
                     List<Integer> inputOrders =
-                            resolved.entrySet().stream().map(m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1).mapToObj(i -> i))
-                                    .flatMap(Function.identity()).collect(Collectors.toList());
+                            resolved.entrySet().stream().flatMap(m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1).mapToObj(i -> i))
+                                    .collect(Collectors.toList());
 
                     LexIdentifier name = map.getKey().getKey();
 
@@ -180,12 +180,23 @@ class DerivativesHandler {
                             newVariable("der_input_order" + "_" + name.getText(), newAIntNumericPrimitiveType(),
                                     inputOrders.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())));
 
-                }).flatMap(Function.identity())).collect(Collectors.toList());
-
-
+                })).collect(Collectors.toList());
+        requireArrayUtilUnload = true;
+        allocationStatements.add(0, newVariable("util", newANameType("ArrayUtil"), newALoadExp(Arrays.asList(newAStringLiteralExp("ArrayUtil")))));
+        return allocationStatements;
     }
 
-    public List<PStm> get(String errorStateLocation) {
+    public List<PStm> deallocate() {
+        if (requireArrayUtilUnload) {
+            return Collections.singletonList(newExpressionStm(newUnloadExp(Collections.singletonList(newAIdentifierExp("util")))));
+        }
+        return Collections.emptyList();
+    }
+
+    public List<PStm> get(String errorStateLocation) throws InstantiationException {
+        if (!allocated) {
+            throw new InstantiationException("Must be allocated first");
+        }
         return this.get(errorStateLocation, null);
     }
 
@@ -194,7 +205,10 @@ class DerivativesHandler {
      * @param componentNamesFilter null for all otherwise filter to only get from these
      * @return
      */
-    public List<PStm> get(String errorStateLocation, List<LexIdentifier> componentNamesFilter) {
+    public List<PStm> get(String errorStateLocation, List<LexIdentifier> componentNamesFilter) throws InstantiationException {
+        if (!allocated) {
+            throw new InstantiationException("Must be allocated first");
+        }
         if (derivativesGetInfo == null) {
             return new Vector<>();
         }
@@ -212,23 +226,26 @@ class DerivativesHandler {
             AIdentifierExp object = newAIdentifierExp((LexIdentifier) id.clone());
             stmts.add(newExpressionStm(call(object, "getRealOutputDerivatives", newAIdentifierExp(info.valueSelectArrayId),
                     newAIntLiteralExp(info.varStartIndex.size() * info.varMaxOrder), newAIdentifierExp(info.orderArrayId),
-                    (PExp) info.valueDestIdentifier.clone())));
+                    info.valueDestIdentifier.clone())));
         }
 
         return stmts;
     }
 
-    public List<PStm> set(String errorStateLocation) {
+    public List<PStm> set(String errorStateLocation) throws InstantiationException {
         return set(errorStateLocation, null);
     }
 
-    public List<PStm> set(String errorStateLocation, List<LexIdentifier> componentNamesFilter) {
+    public List<PStm> set(String errorStateLocation, List<LexIdentifier> componentNamesFilter) throws InstantiationException {
+        if (!allocated) {
+            throw new InstantiationException("Must be allocated first");
+        }
         if (resolvedInputData == null) {
             return new Vector<>();
         }
 
         return resolvedInputData.entrySet().stream().filter(m -> componentNamesFilter == null || componentNamesFilter.contains(m.getKey().getKey()))
-                .map(map -> {
+                .flatMap(map -> {
 
                     AtomicInteger inputOffset = new AtomicInteger(0);
                     LexIdentifier name = map.getKey().getKey();
@@ -244,8 +261,9 @@ class DerivativesHandler {
                         //copy from der[0],start, count
                         Integer index = from.varStartIndex.get(pair.getValue().getKey());
                         logger.debug("Copying {} from index {} in ders", pair.getValue().getKey(), index);
-                        PExp c = call("copy", from.valueDestIdentifier, newAIntLiteralExp(index), newAIntLiteralExp(from.varMaxOrder),
-                                newAIdentifierExp(globalDerInputBuffer), newAIntLiteralExp(inputOffset.getAndAdd(from.varMaxOrder)));
+                        PExp c = call(newAIdentifierExp("util"), "copyRealArray", from.valueDestIdentifier, newAIntLiteralExp(index),
+                                newAIntLiteralExp(from.varMaxOrder), newARefExp(newAIdentifierExp(globalDerInputBuffer)),
+                                newAIntLiteralExp(inputOffset.getAndAdd(from.varMaxOrder)));
                         logger.debug("{}", c);
                         return newExpressionStm(c);
                     });
@@ -255,7 +273,7 @@ class DerivativesHandler {
                             newAIdentifierExp("der_input_order_" + name.getText()), newAIdentifierExp(globalDerInputBuffer));
                     return Stream.concat(copyStatements, Stream.of(newExpressionStm(set)));
 
-                }).flatMap(Function.identity()).collect(Collectors.toList());
+                }).collect(Collectors.toList());
 
 
     }

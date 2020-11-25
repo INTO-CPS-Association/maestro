@@ -32,7 +32,7 @@ import FmiComponentState;
     int getString(uint vr[], uint nvr, string values[]);
 
     // derivatives
-    int setRealInputDerivatives(uint scalarValueIndices[], int order[],	real derivatives[]);
+    int setRealInputDerivatives(uint scalarValueIndices[], uint nvr, int order[], real derivatives[]);
     int getRealOutputDerivatives(uint scalarValueIndices[], uint nvr, int order[], real derivatives[]);
     int getDirectionalDerivative(uint vUnknownRef[], uint vKnownRef[], real dvKnown[], real derivatives[]);
 
@@ -40,14 +40,14 @@ import FmiComponentState;
  	int setDebugLogging(bool loggingOn,uint categories, string categories[]);
 
     // status
-    int getStatus(int kind, ref int status);
-    int getBooleanStatus(int kind, ref bool status);
-    int getIntegerStatus(int kind, ref int status);
-    int getRealStatus(int kind, ref real status);
-    int getStringStatus(int kind, ref string status);
+    int getStatus(int kind, out int status);
+    int getBooleanStatus(int kind, out bool status);
+    int getIntegerStatus(int kind, out int status);
+    int getRealStatus(int kind, out real status);
+    int getStringStatus(int kind, out string status);
 
     //state
-    int getState(ref FmiComponentState state);
+    int getState(out FmiComponentState state);
     int setState(FmiComponentState state);
     int freeState(FmiComponentState state);
 

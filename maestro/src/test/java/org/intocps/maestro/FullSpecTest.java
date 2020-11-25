@@ -146,7 +146,7 @@ public class FullSpecTest {
 
         IErrorReporter reporter = new ErrorReporter();
 
-        for (String lib : Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math")) {
+        for (String lib : Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math", "ArrayUtil")) {
             FileUtils.copyInputStreamToFile(TypeChecker.class.getResourceAsStream("/org/intocps/maestro/typechecker/" + lib + ".mabl"),
                     new File(specFolder, lib + ".mabl"));
         }
