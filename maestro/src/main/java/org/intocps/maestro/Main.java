@@ -65,6 +65,10 @@ public class Main {
                 .desc("Set the expansion limit. E.g. stop after X expansions, default is 0 i.e. no " + "expansion").hasArg(true).argName("limit")
                 .build();
 
+        Option verifyOpt = Option.builder("vi").longOpt("verify").hasArg(true).argName("framework")
+                .desc("The framework to use for verification: " + Arrays.stream(Framework.values()).map(Enum::name).collect(Collectors.joining(", ")))
+                .build();
+
         Options options = new Options();
         options.addOption(helpOpt);
         options.addOption(verboseOpt);
@@ -74,6 +78,7 @@ public class Main {
         options.addOption(dumpLocation);
         options.addOption(dumpIntermediateSpecs);
         options.addOption(expansionLimit);
+        options.addOption(verifyOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -175,6 +180,29 @@ public class Main {
 
         if (cmd.hasOption(dumpLocation.getOpt())) {
             mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
+        }
+
+        if (!mabl.typeCheck().getKey()) {
+            if (reporter.getErrorCount() > 0) {
+                if (verbose) {
+                    reporter.printErrors(new PrintWriter(System.err, true));
+                }
+                return false;
+            }
+            return false;
+        }
+        if (cmd.hasOption(verifyOpt.getOpt())) {
+            Framework framework = Framework.valueOf(cmd.getOptionValue(verifyOpt.getOpt()));
+
+            if (!mabl.verify(framework)) {
+                if (reporter.getErrorCount() > 0) {
+                    if (verbose) {
+                        reporter.printErrors(new PrintWriter(System.err, true));
+                    }
+                    return false;
+                }
+                return false;
+            }
         }
 
 

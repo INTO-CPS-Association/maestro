@@ -359,7 +359,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     @Override
     public void check(IErrorReporter reporter) throws Exception {
 
-        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation(), new Fmi2FmuValidator());
+        List<IFmuValidator> validators = Arrays.asList(new MaestroV1FmuValidation());
 
         Map<String, Boolean> validated = getFmuToUri().stream().collect(
                 Collectors.toMap(Map.Entry::getKey, map -> validators.stream().allMatch(v -> v.validate(map.getKey(), map.getValue(), reporter))));

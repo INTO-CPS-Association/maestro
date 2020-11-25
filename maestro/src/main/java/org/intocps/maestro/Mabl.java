@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
+import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -20,6 +22,8 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
+import org.intocps.maestro.plugin.IMaestroVerifier;
+import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.intocps.maestro.typechecker.TypeChecker;
@@ -56,6 +60,19 @@ public class Mabl {
     public Mabl(File specificationFolder, File debugOutputFolder) {
         this.specificationFolder = specificationFolder;
         this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
+    }
+
+    static Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
+            final IErrorReporter reporter) {
+
+        try {
+            TypeChecker typeChecker = new TypeChecker(reporter);
+            boolean res = typeChecker.typeCheck(documentList, globalFunctions);
+            return Map.entry(res, typeChecker.getCheckedTypes());
+        } catch (AnalysisException e) {
+            e.printStackTrace();
+        }
+        return Map.entry(reporter.getErrorCount() == 0, new HashedMap());
     }
 
     private List<String> getResourceFiles(String path) throws IOException {
@@ -109,7 +126,6 @@ public class Mabl {
         }
         return documents;
     }
-
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
         ARootDocument main = null;
@@ -214,6 +230,32 @@ public class Mabl {
         }
 
 
+    }
+
+    public Map.Entry<Boolean, Map<INode, PType>> typeCheck() {
+        logger.debug("Type checking");
+        List<ARootDocument> docs = new Vector<>();
+        docs.addAll(importedDocument);
+        docs.add(document);
+        return typeCheck(docs, new Vector<>(), reporter);
+    }
+
+    public boolean verify(Framework framework) {
+
+        return verify(document, framework, reporter);
+
+    }
+
+    private boolean verify(final ARootDocument doc, Framework framework, final IErrorReporter reporter) {
+
+        Collection<IMaestroVerifier> verifiers = PluginFactory.getPlugins(IMaestroVerifier.class, framework);
+
+        verifiers.forEach(p -> logger.debug("Loaded verifiers: {} - {}", p.getName(), p.getVersion()));
+
+        return verifiers.stream().allMatch(verifier -> {
+            logger.info("Verifying with {} - {}", verifier.getName(), verifier.getVersion());
+            return verifier.verify(doc, reporter);
+        });
     }
 
     private void removeFrameworkAnnotations(ARootDocument doc) {

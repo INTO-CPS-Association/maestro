@@ -1,11 +1,9 @@
 package org.intocps.maestro;
 
 import org.antlr.v4.runtime.CharStreams;
-import org.apache.commons.collections.map.HashedMap;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
-import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -17,7 +15,6 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.plugin.*;
-import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.typechecker.TypeComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +130,7 @@ public class MablSpecificationGenerator {
         //                new AImportedModuleCompilationUnit(new AModuleDeclaration(new LexIdentifier(plugin.getName(), null), new Vector<>()),
         //                        new Vector<>())))).collect(Collectors.toList()));
 
-        Map.Entry<Boolean, Map<INode, PType>> tcRes = typeCheck(documentList, globalFunctions, reporter);
+        Map.Entry<Boolean, Map<INode, PType>> tcRes = Mabl.typeCheck(documentList, globalFunctions, reporter);
         if (!tcRes.getKey()) {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -380,40 +377,15 @@ public class MablSpecificationGenerator {
                 } catch (AnalysisException e) {
                     logger.trace("Pretty printing failed: ", e);
                 }
-                //                ARootDocument processedDoc =
-                //                        new ARootDocument(Stream.concat(importedModules.stream(), Stream.of(unfoldedSimulationModule)).collect(Collectors.toList()));
 
-
-                String printedSpec = null;
-                try {
-                    printedSpec = PrettyPrinter.printLineNumbers(processedDoc);
-                } catch (AnalysisException e) {
-                    printedSpec = processedDoc + "";
-                }
-
-
-                ARootDocument specToCheck = null;
+                ARootDocument specToCheck;
                 try {
                     specToCheck = parse(CharStreams.fromString(PrettyPrinter.print(processedDoc)), reporter);
                 } catch (AnalysisException | IllegalStateException e) {
                     specToCheck = processedDoc;
                 }
 
-                List<ARootDocument> allDocuments = new Vector<>();
-                allDocuments.addAll(importedDocks);
-                allDocuments
-                        .add(new ARootDocument(plugins.stream().map(IMaestroExpansionPlugin::getDeclaredImportUnit).collect(Collectors.toList())));
-                allDocuments.add(specToCheck);
-
-
-                if (typeCheck(allDocuments, new Vector<>(), reporter).getKey()) {
-                    if (verify(specToCheck, reporter)) {
-                        return specToCheck;
-                    }
-                }
-
-
-                throw new RuntimeException("No valid spec prod.\n" + printedSpec);
+                return specToCheck;
 
             } finally {
                 if (verbose) {
@@ -459,19 +431,6 @@ public class MablSpecificationGenerator {
             logger.info("Verifying with {} - {}", verifier.getName(), verifier.getVersion());
             return verifier.verify(doc, reporter);
         });
-    }
-
-    private Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
-            final IErrorReporter reporter) {
-        logger.debug("Type checking");
-        try {
-            TypeChecker typeChecker = new TypeChecker(reporter);
-            boolean res = typeChecker.typeCheck(documentList, globalFunctions);
-            return Map.entry(res, typeChecker.getCheckedTypes());
-        } catch (AnalysisException e) {
-            e.printStackTrace();
-        }
-        return Map.entry(reporter.getErrorCount() == 0, new HashedMap());
     }
 
 
