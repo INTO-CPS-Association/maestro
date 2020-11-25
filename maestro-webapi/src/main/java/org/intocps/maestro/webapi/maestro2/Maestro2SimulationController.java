@@ -10,8 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.Main;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
@@ -260,14 +260,15 @@ public class Maestro2SimulationController {
         mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
 
         if (reporter.getErrorCount() > 0) {
-            reporter.printWarnings(new PrintWriter(System.out, true));
+            reporter.getErrors().forEach(x -> logger.error(x.toString()));
             StringWriter out = new StringWriter();
             PrintWriter writer = new PrintWriter(out);
             reporter.printWarnings(writer);
             reporter.printErrors(writer);
             throw new Exception(out.toString());
         }
-        reporter.printWarnings(new PrintWriter(System.out, true));
+
+        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
 
         return new StatusModel("Simulation completed", sessionId, 0,
                 reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),

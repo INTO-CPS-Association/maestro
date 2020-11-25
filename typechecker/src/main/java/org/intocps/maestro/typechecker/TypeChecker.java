@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class TypeChecker {
 
-    public static final String MABL_MODULES_PATH = "/org/intocps/maestro/typechecker/";
+    public static final String MABL_MODULES_PATH = "org/intocps/maestro/typechecker/";
     final IErrorReporter errorReporter;
     Map<INode, PType> checkedTypes = new HashMap<>();
 

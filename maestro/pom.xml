@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.0.3-SNAPSHOT</version>
+        <version>2.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>maestro</artifactId>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>api</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -38,49 +38,49 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>parser</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>typechecker</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>demo</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>fixedstep</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>typeconverter</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>initializer</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>debuglogging</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>interpreter</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
 
         </dependency>
         <dependency>
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>fmi2</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
