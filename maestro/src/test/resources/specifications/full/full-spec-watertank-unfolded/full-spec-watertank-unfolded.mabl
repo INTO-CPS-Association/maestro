@@ -107,7 +107,7 @@ import Logger;
 	{
 			FMI2Component fix_components[2] = { wtInstance , crtlInstance };
 			{
- 				int end = END_TIME - STEP_SIZE;
+ 				real end = END_TIME - STEP_SIZE;
 				real time = START_TIME;
 				real fix_stepSize = 0.0;
 				real fix_recoveryStepSize = 0.0;
