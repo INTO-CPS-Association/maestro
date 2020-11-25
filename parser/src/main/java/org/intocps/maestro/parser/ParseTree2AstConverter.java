@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.node.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -67,16 +66,23 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         AFormalParameter parameter = new AFormalParameter();
 
         parameter.setName(convert(ctx.IDENTIFIER()));
-        //        parameter.setType((PType) this.visit(ctx.typeType()));
-        PType primitiveType = (PType) this.visit(ctx.typeType());
 
-        //TODO: Multi dimensional arrays
-        if (ctx.LBRACK() != null) {
-            AArrayType arrayType = new AArrayType();
-            arrayType.setType(primitiveType);
-            parameter.setType(arrayType);
+        PType type = (PType) this.visit(ctx.typeType());
+        if (!(type instanceof AArrayType)) {
+
+            for (int i = 0; i < ctx.dimentions.size(); i++) {
+                type = new AArrayType(type);
+            }
         } else {
-            parameter.setType(primitiveType);
+            //todo warn we have double decleration of array. either use C style or Java not both
+        }
+
+        if (ctx.direction != null && ctx.direction.getType() == MablParser.OUT) {
+            AReferenceType refType = new AReferenceType();
+            refType.setType(type);
+            parameter.setType(refType);
+        } else {
+            parameter.setType(type);
         }
 
         return parameter;
@@ -292,7 +298,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         apply.setArray((PExp) this.visit(ctx.array));
 
         if (ctx.index != null) {
-            apply.setIndices(Collections.singletonList((PExp) this.visit(ctx.index)));
+            apply.setIndices(ctx.index.stream().map(e -> (PExp) this.visit(e)).collect(Collectors.toList()));
         }
         return apply;
     }
@@ -380,16 +386,30 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         def.setType(primitiveType);
         def.setName(convert(ctx.IDENTIFIER()));
 
-        //TODO: Multi dimensional arrays
-        if (ctx.LBRACK() != null) {
-            AArrayType arrayType = new AArrayType();
-            if (ctx.size != null && !ctx.size.isEmpty()) {
-                def.setSize(ctx.size.stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList()));
-            }
-            arrayType.setType(primitiveType);
-            def.setType(arrayType);
-        }
 
+        //build
+        //            PType arrayType = primitiveType;
+        if (ctx.size != null && !ctx.size.isEmpty()) {
+            List<PExp> sizes = new Vector<>();
+
+
+            for (int i = 0; i < ctx.size.size(); i++) {
+
+                PExp elementSize = (PExp) this.visit(ctx.size.get(i));
+                if (elementSize != null) {
+                    sizes.add(elementSize);
+                }
+
+                //                arrayType = new AArrayType(arrayType);
+
+            }
+            def.setSize(sizes);
+            //            if (def.getType() == null) {
+            //                def.setType(arrayType);
+            //            } else {
+            //            }
+            //        }
+        }
 
         MablParser.VariableInitializerContext initializer = ctx.variableInitializer();
         if (initializer != null) {
@@ -503,22 +523,22 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
 
     @Override
-    public INode visitTypeType(MablParser.TypeTypeContext ctx) {
-        PType type = ctx.primitiveType() == null ? null : (PType) super.visit(ctx.primitiveType());
-
-        if (ctx.IDENTIFIER() != null) {
-            ANameType nt = new ANameType();
-            nt.setName(convert(ctx.IDENTIFIER()));
-            type = nt;
-
+    public INode visitArrayTypeType(MablParser.ArrayTypeTypeContext ctx) {
+        PType type = (PType) this.visit(ctx.type);
+        for (int i = 0; i < ctx.dimentions.size(); i++) {
+            type = new AArrayType(type);
         }
+        return type;
+    }
 
-        if (ctx.REF() == null) {
-            return type;
-        } else {
-            return new AReferenceType(type);
-        }
+    @Override
+    public INode visitIdentifierTypeType(MablParser.IdentifierTypeTypeContext ctx) {
+        return new ANameType(convert(ctx.type));
+    }
 
+    @Override
+    public INode visitPrimitiveTypeType(MablParser.PrimitiveTypeTypeContext ctx) {
+        return this.visit(ctx.type);
     }
 
     @Override
@@ -526,5 +546,10 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         ARefExp exp = new ARefExp();
         exp.setExp((PExp) this.visit(ctx.expression()));
         return exp;
+    }
+
+    @Override
+    public INode visitAndmedOrPrimitiveTypeType(MablParser.AndmedOrPrimitiveTypeTypeContext ctx) {
+        return visit(ctx.type);
     }
 }

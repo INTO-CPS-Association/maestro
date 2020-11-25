@@ -1,0 +1,41 @@
+module Global {
+ 	int identityInt( int a);
+ 	int[] identityIntArrCStyle( int a[]);
+ 	int[] identityIntArr( int[] a);
+ 	int identityIntArrOut(out int a[]);
+
+ 	bool identityBool( bool a);
+ 	bool[] identityBoolArr( bool a[]);
+    bool identityBoolArrOut(out bool a[]);
+
+
+    real identityReal( real a);
+    real[] identityRealArr( real a[]);
+    real identityRealArrOut(out real a[]);
+
+    string identityString( string a);
+    string[] identityStringArr( string a[]);
+    string identityStringArrOut(out string a[]);
+
+
+
+
+}
+
+simulation
+import Global;
+{
+Global g = load("Global");
+
+int r = g.identityInt(1);
+
+int i[1] = {1};
+//must fail int rr =g.identityIntArr(i);
+int[] rr =g.identityIntArrCStyle(i);
+int[] rr =g.identityIntArr(i);
+int res = g.identityIntArrOut(ref i);
+
+unload(g);
+
+
+}

@@ -55,7 +55,7 @@ public class JacobianFixedStep {
 
     public static List<PStm> generate(Fmi2SimulationEnvironment env, IErrorReporter errorReporter, final List<LexIdentifier> componentNames,
             String componentsIdentifier, PExp stepSize, PExp startTime, PExp endTime,
-            Set<Fmi2SimulationEnvironment.Relation> relations) throws ExpandException {
+            Set<Fmi2SimulationEnvironment.Relation> relations) throws ExpandException, InstantiationException {
         Fmi2SimulationEnvironment unitRelationShip = (Fmi2SimulationEnvironment) env;
         Function<LexIdentifier, PStateDesignator> getCompStatusDesignator =
                 comp -> newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)),
@@ -111,8 +111,8 @@ public class JacobianFixedStep {
 
         StateHandler stateHandler = new StateHandler(componentNames, env, getCompStatusDesignator, checkStatus);
 
-        // TODO: Re-enable derivatives once derivatives is fixed. See #159
-        //        DerivativesHandler derivativesHandler = new DerivativesHandler();
+        DerivativesHandler derivativesHandler = new DerivativesHandler();
+
         DataExchangeHandler dataExchangeHandler = new DataExchangeHandler(relations, env, getCompStatusDesignator, checkStatus);
         DataWriterHandler dataWriter = new DataWriterHandler();
         List<PStm> dataWriterAllocateStms =
@@ -247,7 +247,7 @@ public class JacobianFixedStep {
                                                                 call(arrayGet(componentsIdentifier,
                                                                         newAIdentifierExp((LexIdentifier) compIndexVar.clone())), "getRealStatus",
                                                                         newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
-                                                                        newAIdentifierExp("fix_recover_real_status"))),
+                                                                        newARefExp(newAIdentifierExp("fix_recover_real_status")))),
                                                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
                                                                 call("Math", "min", newAIdentifierExp(fix_recoveryStepSize),
                                                                         newMinusExp(newAIdentifierExp("fix_recover_real_status"),
@@ -278,6 +278,8 @@ public class JacobianFixedStep {
             //check for possible reduced stepping
 
         };
+        List<PStm> statements = new Vector<>();
+        statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
 
 
         List<PStm> loopStmts = new Vector<>();
@@ -292,8 +294,7 @@ public class JacobianFixedStep {
         loopStmts.addAll(dataExchangeHandler.exchangeData());
         //set inputs
         loopStmts.addAll(dataExchangeHandler.setAll());
-        // TODO: Re-enable derivatives once derivatives is fixed. See #159
-        //        loopStmts.addAll(derivativesHandler.set(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+        loopStmts.addAll(derivativesHandler.set(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         //get state
         loopStmts.addAll(stateHandler.getAllStates());
         //do step
@@ -307,8 +308,7 @@ public class JacobianFixedStep {
 
         //get data
         loopStmtsPost.addAll(dataExchangeHandler.getAll(true));
-        // TODO: Re-enable derivatives once derivatives is fixed. See #159
-        //        loopStmtsPost.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+        loopStmtsPost.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
 
         progressTime.accept(loopStmtsPost);
         loopStmtsPost.addAll(dataWriter.write());
@@ -319,9 +319,8 @@ public class JacobianFixedStep {
                 newABlockStm(loopStmtsPost), null));
 
 
-        List<PStm> statements = new Vector<>();
         //pre allocation
-        statements.add(newVariable(end, newAIntNumericPrimitiveType(), newMinusExp(endTime, stepSize)));
+        statements.add(newVariable(end, newARealNumericPrimitiveType(), newMinusExp(endTime, stepSize)));
         statements.add(newVariable(time, newARealNumericPrimitiveType(), startTime));
         statements.add(newVariable(fix_stepSize, newARealNumericPrimitiveType(), newARealLiteralExp(0d)));
         statements.add(newVariable(fix_recoveryStepSize, newARealNumericPrimitiveType(), newARealLiteralExp(0d)));
@@ -336,9 +335,8 @@ public class JacobianFixedStep {
                                 IntStream.range(0, componentNames.size()).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList())))));
         // get prior to entering loop
         statements.addAll(dataExchangeHandler.getAll(false));
-        // TODO: Re-enable derivatives once derivatives is fixed. See #159
-        //        statements.addAll(derivativesHandler.allocateMemory(componentNames, dataExchangeHandler.getInputRelations(), unitRelationShip));
-        //        statements.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
+
+        statements.addAll(derivativesHandler.get(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE));
         statements.addAll(dataWriterAllocateStms);
         statements.addAll(dataWriter.write());
         //loop
@@ -347,6 +345,7 @@ public class JacobianFixedStep {
         //post simulation
         terminate.accept(statements);
         statements.addAll(dataWriter.deallocate());
+        statements.addAll(derivativesHandler.deallocate());
         //statements.add(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp("logger")))));
         return Collections.singletonList(newABlockStm(statements));
     }

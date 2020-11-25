@@ -9,6 +9,7 @@ import org.intocps.maestro.interpreter.values.csv.CSVValue;
 import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
+import org.intocps.maestro.interpreter.values.utilities.ArrayUtilValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,6 +75,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 return Either.right(new FmiInterpreter(workingDirectory).createFmiValue(path, guid));
             });
             put("CSV", args -> Either.right(new CSVValue()));
+            put("ArrayUtil", args -> Either.right(new ArrayUtilValue()));
             put("Logger", args -> Either.right(new LoggerValue()));
             put(DATA_WRITER_TYPE_NAME, args -> Either.right(new DataWriterValue(Collections.singletonList(new CsvDataWriter(
                     workingDirectory == null ? new File(dataWriterFileNameFinal) : new File(workingDirectory, dataWriterFileNameFinal),
@@ -108,6 +110,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         } else if (value instanceof DataWriterValue) {
             return new VoidValue();
         } else if (value instanceof MathValue) {
+            return new VoidValue();
+        } else if (value instanceof ArrayUtilValue) {
             return new VoidValue();
         }
 

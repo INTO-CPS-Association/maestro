@@ -27,9 +27,9 @@ formalParameterList
     : formalParameter (',' formalParameter)*
     ;
 
-//TODO: Multidimensional arrays
 formalParameter
-    : typeType IDENTIFIER (LBRACK RBRACK )?
+    //java style only for array otherwise use: (dimentions+=LBRACK RBRACK )* after identifier
+    : direction=OUT? typeType IDENTIFIER (dimentions+=LBRACK RBRACK )*
     ;
 
 framework
@@ -82,7 +82,7 @@ expression
     | expression '.'
         ( IDENTIFIER
         | methodCall)                                   #dotPrefixExp
-    | array=expression LBRACK index=expression  RBRACK  #arrayIndex
+    | array=expression (LBRACK index+=expression  RBRACK)+  #arrayIndex
     | methodCall                                        #plainMetodExp
     |  <assoc=right> op=('+'|'-') expression            #unaryExp
     | op=BANG expression                                #unaryExp
@@ -114,13 +114,15 @@ methodCall
 parExpression
     : '(' expression ')'
     ;
-// TODO: Multidimensional arrays - The current way of multi size arrays is a[1,2,3] which does not make sense. It should be: a[1][2][3].
+
+
 variableDeclarator
-    : type=typeType varid=IDENTIFIER (LBRACK (size+=expression (',' size+=expression )*)? RBRACK )? ('=' initializer=variableInitializer)?
+    : type=typeType varid=IDENTIFIER  (LBRACK size+=expression RBRACK)*  ('=' initializer=variableInitializer)?
     ;
 
 variableInitializer
     : arrayInitializer  #arrayInit
+    | '{' elementInitializer+= variableInitializer (','  elementInitializer+=variableInitializer)* '}' #arrayMultidimentionalInit
     | expression        #expInit
     ;
 
@@ -128,18 +130,26 @@ arrayInitializer
     : '{' (init+=expression (',' init+=expression)* (',')? )? '}'
     ;
 
+
+
 typeType
-    : REF? (primitiveType | IDENTIFIER)
+    : type=namedOrPrimitiveType                    #andmedOrPrimitiveTypeType
+    | type=typeType (dimentions+=LBRACK RBRACK)+    #arrayTypeType
+    ;
+
+namedOrPrimitiveType
+    :  type=IDENTIFIER                              #identifierTypeType
+    |  type=primitiveType                           #primitiveTypeType
     ;
 
 primitiveType
-    : REAL              #realType
-    | UINT              #uintType
-    | INT               #intType
-    | STRING            #stringType
-    | BOOL              #boolType
-    | QUESTION          #unknownType
-    | VOID              #voidType
+    : REAL                              #realType
+    | UINT                              #uintType
+    | INT                               #intType
+    | STRING                            #stringType
+    | BOOL                              #boolType
+    | QUESTION                          #unknownType
+    | VOID                              #voidType
     ;
 
 literal

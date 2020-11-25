@@ -6,6 +6,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,7 +15,8 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
-public class ParseFmi2Module {
+@Ignore
+public class ParseFmi2ModuleTest {
 
     @Test
     public void parseSpecification() throws IOException, AnalysisException {

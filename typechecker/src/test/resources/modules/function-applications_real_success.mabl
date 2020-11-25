@@ -1,0 +1,23 @@
+module Global {
+    real identityReal( real a);
+    real[] identityRealArrCStyle( real a[]);
+    real[] identityRealArr( real a[]);
+    real identityRealArrOut(out real a[]);
+}
+
+simulation
+import Global;
+{
+Global g = load("Global");
+
+real r = g.identityReal(1.1);
+
+real i[1] = {1.2};
+real[] rr =g.identityRealArrCStyle(i);
+real[] rr =g.identityRealArr(i);
+real res = g.identityRealArrOut(ref i);
+
+unload(g);
+
+
+}
