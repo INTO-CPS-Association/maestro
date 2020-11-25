@@ -192,6 +192,8 @@ public class FullSpecTest {
         }
 
         mabl.expand();
+        mabl.typeCheck();
+        mabl.verify(Framework.FMI2);
 
 
         if (reporter.getErrorCount() > 0) {

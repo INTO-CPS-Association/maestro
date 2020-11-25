@@ -87,6 +87,15 @@ public class Maestro2Broker {
         MaBLTemplateConfiguration configuration = builder.build();
         generateSpecification(configuration);
 
+        if (!mabl.typeCheck().getKey()) {
+            throw new Exception("Specification did not type check");
+        }
+
+
+        if (!mabl.verify(Framework.FMI2)) {
+            throw new Exception("Specification did not verify");
+        }
+
         Function<Map<String, List<String>>, List<String>> flattenFmuIds =
                 map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
                         .collect(Collectors.toList());
