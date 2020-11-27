@@ -38,6 +38,7 @@ public class MaBLTemplateGenerator {
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
     public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
     public static final String FIXEDSTEP_EXPANSION_MODULE_NAME = "FixedStep";
+    public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
@@ -195,8 +196,8 @@ public class MaBLTemplateGenerator {
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(
                 Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
-                        newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(LOGGER_MODULE_NAME)),
-                newABlockStm(stmMaintainer.getStatements()));
+                        newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
+                        newAIdentifier(LOGGER_MODULE_NAME)), newABlockStm(stmMaintainer.getStatements()));
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 
         unit.setFrameworkConfigs(Arrays.asList(
