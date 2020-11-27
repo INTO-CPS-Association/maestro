@@ -129,7 +129,7 @@ simulation
         // Write the valve state and the water level to the results
         // #############################
         time = time + STEP_SIZE;
-        dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, crtlValveStateOutput[0], wtLevelOutputValue[0]);
+        dataWriter.writeDataPoint(dataWriterConfiguration, time, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
     }
     

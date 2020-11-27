@@ -66,7 +66,7 @@ public class DataWriterValue extends ModuleValue {
             if (id instanceof DataWriterConfigValue) {
 
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
-                List<Value> arrayValue = fcargs.stream().skip(1).map(Value::deref).collect(Collectors.toList());
+                List<Value> arrayValue = fcargs.stream().skip(2).map(Value::deref).collect(Collectors.toList());
                 IDataListeners.forEach(dataListener -> dataListener.writeDataPoint(((DataWriterConfigValue) id).getUuid(), time, arrayValue));
             }
 
