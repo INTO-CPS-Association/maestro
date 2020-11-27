@@ -137,10 +137,8 @@ import Logger;
 				}
 				string data_headers[2] = { "{x1}.crtlInstance.valve" , "{x2}.wtInstance.level" };
 				DataWriterConfig dataWriter_configuration = dataWriter.writeHeader(data_headers);
-				? data_values[2] = { crtlInstanceBOut[0] , wtInstanceROut[0] };
-				data_values[0] = crtlInstanceBOut[0];
-				data_values[1] = wtInstanceROut[0];
-				dataWriter.writeDataPoint(dataWriter_configuration, time, data_values);
+
+				dataWriter.writeDataPoint(dataWriter_configuration, time, crtlInstanceBOut[0],wtInstanceROut[0]);
 				while( (global_execution_continue && time <= end) )
 				{
 					if( (fix_recovering) )
@@ -244,9 +242,8 @@ import Logger;
 									break;
 							}
 							time = time + fix_stepSize;
-							data_values[0] = crtlInstanceBOut[0];
-							data_values[1] = wtInstanceROut[0];
-							dataWriter.writeDataPoint(dataWriter_configuration, time, data_values);
+
+							dataWriter.writeDataPoint(dataWriter_configuration, time, crtlInstanceBOut[0],wtInstanceROut[0]);
 					}
 				}
 				wtInstance.terminate();

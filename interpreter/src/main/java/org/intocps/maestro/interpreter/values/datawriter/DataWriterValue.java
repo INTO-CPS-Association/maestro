@@ -4,6 +4,7 @@ import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DataWriterValue extends ModuleValue {
 
@@ -65,14 +66,14 @@ public class DataWriterValue extends ModuleValue {
             if (id instanceof DataWriterConfigValue) {
 
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
-                List<Value> arrayValue = ((ArrayValue<Value>) fcargs.get(2).deref()).getValues();
+                List<Value> arrayValue = fcargs.stream().skip(1).map(Value::deref).collect(Collectors.toList());
                 IDataListeners.forEach(dataListener -> dataListener.writeDataPoint(((DataWriterConfigValue) id).getUuid(), time, arrayValue));
             }
 
             return new VoidValue();
         }));
         componentMembers.put("close", new FunctionValue.ExternalFunctionValue(fcargs -> {
-            IDataListeners.forEach(x -> x.close());
+            IDataListeners.forEach(IDataListener::close);
 
             return new VoidValue();
         }));
