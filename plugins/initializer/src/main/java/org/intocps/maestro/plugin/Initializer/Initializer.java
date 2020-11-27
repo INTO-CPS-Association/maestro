@@ -295,7 +295,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         return variables.stream().map(o -> o.getValueReference()).map(Long.class::cast).collect(LongUtils.TO_LONG_ARRAY);
     }
 
-    private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments, Fmi2SimulationEnvironment env) throws ExpandException {
+    private List<LexIdentifier> extractComponentNames(List<PExp> formalArguments) throws ExpandException {
         List<LexIdentifier> knownComponentNames = null;
         if (formalArguments.get(0) instanceof AIdentifierExp) {
             LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
@@ -305,9 +305,7 @@ public class Initializer implements IMaestroExpansionPlugin {
                     containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
                             .map(ALocalVariableStm::getDeclaration).filter(decl -> decl.getName().equals(name) && decl.getInitializer() != null)
                             .findFirst();
-
-            //            ComponentInfo dummy = env.getInstanceByLexName(name.getText());
-            //            System.out.println(dummy);
+            
             if (compDecl.isEmpty()) {
                 throw new ExpandException("Could not find names for comps");
             }
