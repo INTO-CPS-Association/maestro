@@ -85,7 +85,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
 
         verifyArguments(formalArguments, env);
-        final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments, env);
+        final List<LexIdentifier> knownComponentNames = extractComponentNames(formalArguments);
         StatementGeneratorContainer.reset();
         var sc = StatementGeneratorContainer.getInstance();
 
