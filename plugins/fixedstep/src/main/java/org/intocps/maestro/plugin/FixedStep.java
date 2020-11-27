@@ -25,9 +25,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     final AFunctionDeclaration fun = newAFunctionDeclaration(newAIdentifier("fixedStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("stepSize")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newAIntNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
 
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
@@ -103,9 +103,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
         PExp startTime = formalArguments.get(2).clone();
         PExp endTime = formalArguments.get(3).clone();
 
-        return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(Stream.concat(Stream.of(componentDecl),
-                JacobianFixedStep.generate(env, errorReporter, componentNames, componentsIdentifier, stepSize, startTime, endTime, relations)
-                        .stream()).collect(Collectors.toList())), null));
+        try {
+            return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(
+                    Stream.concat(Stream.of(componentDecl), JacobianFixedStep
+                            .generate(env, errorReporter, componentNames, componentsIdentifier, stepSize, startTime, endTime, relations).stream())
+                            .collect(Collectors.toList())), null));
+        } catch (InstantiationException e) {
+            throw new ExpandException("Internal error", e);
+        }
     }
 
     LexIdentifier getStateName(LexIdentifier comp) {
@@ -125,8 +130,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(
-                Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter").map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
+        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil").map(MableAstFactory::newAIdentifier)
+                .collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));
         module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));

@@ -94,7 +94,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 return valueE.getRight();
             }
         }
-        throw new AnalysisException("Load of unknown type");
+        throw new AnalysisException("Load of unknown type: " + type);
     }
 
     @Override
@@ -187,7 +187,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
 
-        if (node.getType() instanceof AArrayType) {
+        if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
             Value val;
             if (node.getInitializer() != null) {

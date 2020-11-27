@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + $[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n"))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining(",","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 %declaration->module =   [name]+$" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
 
 
@@ -68,9 +68,7 @@ import java.util.stream.Collectors;
 %stateDesignator->array = [target] + "[" + [exp] + "]"
 
 %type->name = [name]
-//%type->array = [type] + "[]" //[size]
-//TODO: Array tostring does not have support for nested array types
-%type->array = [type]+"*" //[size]
+%type->array = [type]+ "[]"
 %type->void = "void"
 %type->module = [name]
 %type->unknown = "?"

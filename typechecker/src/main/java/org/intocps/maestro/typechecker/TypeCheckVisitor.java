@@ -14,7 +14,6 @@ import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -173,11 +172,23 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         if (node.getExp().size() > 0) {
 
-            type = node.getExp().get(0).apply(this, ctxt);
-            for (int i = 1; i < node.getExp().size(); i++) {
+            List<PType> types = new Vector<>();
+            for (PExp exp : node.getExp()) {
+                types.add(exp.apply(this, ctxt));
+            }
+
+            type = narrow(types);
+
+            if (type == null) {
+                return newAUnknownType();
+            }
+
+            for (int i = 0; i < node.getExp().size(); i++) {
                 PType elementType = node.getExp().get(i).apply(this, ctxt);
                 if (!typeComparator.compatible(type, elementType)) {
-                    errorReporter.report(0, "Array initializer types mixed. Expected: " + type + " but found: " + elementType, null);
+                    //is ok
+                    errorReporter.warning(0, "Array initializer types mixed. Expected: " + type + " but found: " + elementType, null);
+                    type = newAUnknownType();
                 }
             }
         } else {
@@ -186,9 +197,29 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return store(node, newAArrayType(type).clone());
     }
 
+    PType narrow(List<PType> types) {
+        if (types.isEmpty()) {
+            return null;
+        }
+
+        boolean isNumeric = types.stream().allMatch(t -> t instanceof SNumericPrimitiveType);
+        if (!isNumeric) {
+            return types.get(0);
+        }
+        PType type = types.get(0);
+        for (int i = 1; i < types.size(); i++) {
+            PType from = types.get(i);
+            if (!typeComparator.compatible(type, from)) {
+                type = from;
+            }
+        }
+        return type;
+    }
+
     @Override
     public PType caseACallExp(ACallExp node, Context ctxt) throws AnalysisException {
 
+        String functionDisplayName = (node.getObject() == null ? "" : node.getObject() + ".") + node.getMethodName();
         PDeclaration def = null;
 
 
@@ -200,14 +231,15 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             if (objectType instanceof AModuleType) {
                 def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
             } else {
-                errorReporter.report(0, "Unknown object type: '" + node.getObject() + "'", node.getMethodName().getSymbol());
+                errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+                        node.getMethodName().getSymbol());
             }
         } else {
             def = ctxt.findDeclaration(node.getMethodName());
         }
 
         if (def == null) {
-            errorReporter.report(0, "Call decleration not found: " + node.getMethodName(), node.getMethodName().getSymbol());
+            errorReporter.report(0, "Call decleration not found: " + functionDisplayName, node.getMethodName().getSymbol());
         } else {
             PType type = checkedTypes.get(def).clone();
 
@@ -242,14 +274,16 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 callType.setParameters(callArgTypes);
 
                 if (!typeComparator.compatible(targetType, callType)) {
-                    errorReporter.report(0, "Function applied with wrong argument types. Expected: " + targetType + " Actual: " + callType,
-                            node.getMethodName().getSymbol());
+                    errorReporter.report(0,
+                            "Function '" + functionDisplayName + "' applied with wrong argument types. Expected: " + targetType + " " + "Actual: " +
+                                    callType, node.getMethodName().getSymbol());
                 }
 
 
                 return store(node, callType);
             } else {
-                errorReporter.report(0, "Expected a function decleration: " + def.getName().getText(), def.getName().getSymbol());
+                errorReporter.report(0, "Expected a function decleration for '" + functionDisplayName + "' : " + def.getName().getText(),
+                        def.getName().getSymbol());
             }
         }
         return store(node, newAUnknownType());
@@ -295,6 +329,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType caseAVariableDeclaration(AVariableDeclaration node, Context ctxt) throws AnalysisException {
         PType type = node.getType().apply(this, ctxt);
 
+
+        if (node.getSize() != null && !node.getSize().isEmpty()) {
+            if (type instanceof AArrayType) {
+                errorReporter.report(0, "Either declare a new array using C-style brackets or use Java style for declaring an array type.", null);
+            } else {
+                //using C style for initializer so we need to convert the simple type into an array
+                for (int i = 0; i < node.getSize().size(); i++) {
+                    type = new AArrayType(type);
+                }
+            }
+        }
+
         if (!node.getSize().isEmpty()) {
             //only one dimensional arrays for now
             //type = MableAstFactory.newAArrayType(type);
@@ -310,7 +356,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         if (node.getInitializer() != null) {
             PType initType = node.getInitializer().apply(this, ctxt);
             if (!typeComparator.compatible(type, initType)) {
-                errorReporter.report(0, type + " array cannot be initialized with type: " + initType, node.getName().getSymbol());
+                errorReporter.report(0, type + " cannot be initialized with type: " + initType, node.getName().getSymbol());
             }
 
             //additional check for array initializer, not complete but should do most simple cases
@@ -646,7 +692,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         PType expType = node.getExp().apply(this, ctxt);
         PType type = node.getTarget().apply(this, ctxt);
         if (!typeComparator.compatible(type, expType)) {
-            errorReporter.report(-5, "Invalid assignment to: " + node.getTarget() + " from:" + node.getExp(), null);
+            errorReporter.report(-5, "Invalid assignment to cannot assign: '" + expType + "' to '" + type + "' in: " + node, null);
 
         }
         return store(node, MableAstFactory.newAVoidType());
@@ -684,8 +730,20 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType caseAEqualBinaryExp(AEqualBinaryExp node, Context ctxt) throws AnalysisException {
         PType left = node.getLeft().apply(this, ctxt);
         PType right = node.getRight().apply(this, ctxt);
-        if (!typeComparator.compatible(left, right)) {
-            errorReporter.report(-5, "Left and right part of == expression are not compatible: " + node, null);
+        return checkEquality(node, left, right);
+    }
+
+    @Override
+    public PType caseANotEqualBinaryExp(ANotEqualBinaryExp node, Context ctxt) throws AnalysisException {
+        PType left = node.getLeft().apply(this, ctxt);
+        PType right = node.getRight().apply(this, ctxt);
+        return checkEquality(node, left, right);
+    }
+
+    private ABooleanPrimitiveType checkEquality(INode node, PType left, PType right) {
+        //Commutative
+        if (!typeComparator.compatible(left, right) && !typeComparator.compatible(right, left)) {
+            errorReporter.report(-5, "Left and right part of expression are not compatible: " + node, null);
 
         }
         return store(node, MableAstFactory.newABoleanPrimitiveType());
@@ -756,16 +814,6 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return store(node, checkNumericComparizon(node, ctxt));
     }
 
-    @Override
-    public PType caseANotEqualBinaryExp(ANotEqualBinaryExp node, Context ctxt) throws AnalysisException {
-        PType left = node.getLeft().apply(this, ctxt);
-        PType right = node.getRight().apply(this, ctxt);
-        if (!typeComparator.compatible(left, right)) {
-            errorReporter.report(-5, "Left and right part of != expression are not compatible: " + node, null);
-
-        }
-        return store(node, MableAstFactory.newABoleanPrimitiveType());
-    }
 
     @Override
     public PType caseANotUnaryExp(ANotUnaryExp node, Context ctxt) throws AnalysisException {
@@ -797,18 +845,9 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         }
 
         // Find all importedModuleCompilationUnits and typecheck these twice.
-        List<AImportedModuleCompilationUnit> importedModuleUnits = rootDocuments.stream()
-                .map(x -> x.getContent().stream().filter(AImportedModuleCompilationUnit.class::isInstance)
-                        .map(AImportedModuleCompilationUnit.class::cast)).flatMap(Function.identity()).collect(Collectors.toList());
-        //        final List<AImportedModuleCompilationUnit> modules = new Vector<>();
-        //
-        //
-        //        for (ARootDocument module : allModules) {
-        //            for (PCompilationUnit singleModule : module.getContent()) {
-        //                AImportedModuleCompilationUnit importedModule = (AImportedModuleCompilationUnit) singleModule;
-        //                modules.add(importedModule);
-        //            }
-        //        }
+        List<AImportedModuleCompilationUnit> importedModuleUnits = rootDocuments.stream().flatMap(
+                x -> x.getContent().stream().filter(AImportedModuleCompilationUnit.class::isInstance).map(AImportedModuleCompilationUnit.class::cast))
+                .collect(Collectors.toList());
 
 
         List<AModuleDeclaration> importedModules =
@@ -835,13 +874,6 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                     unit.apply(typeCheckVisitor, ctx);
                 }
             }
-            //            for(int )
-            //            doc.apply(new DepthFirstAnalysisAdaptor() {
-            //                @Override
-            //                public void caseAFunctionDeclaration(AFunctionDeclaration node) throws AnalysisException {
-            //                    checkedTypes.put(node, node.apply(typeCheckVisitor, allModulesCtxt));
-            //                }
-            //            });
         }
 
         ModulesContext allModulesCtxt = new ModulesContext(importedModules, ctx);

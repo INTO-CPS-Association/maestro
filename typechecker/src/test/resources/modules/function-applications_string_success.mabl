@@ -1,0 +1,28 @@
+module Global {
+
+    string identityString( string a);
+     string[] identityStringArrCStyle( string a[]);
+    string[] identityStringArr( string a[]);
+    string identityStringArrOut(out string a[]);
+
+
+
+
+}
+
+simulation
+import Global;
+{
+Global g = load("Global");
+
+string r = g.identityString("string");
+
+string i[1] = {"1"};
+string[] rr =g.identityStringArrCStyle(i);
+string[] rr =g.identityStringArr(i);
+string res = g.identityStringArrOut(ref i);
+
+unload(g);
+
+
+}

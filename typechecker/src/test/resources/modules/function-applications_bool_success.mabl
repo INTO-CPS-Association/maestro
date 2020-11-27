@@ -1,0 +1,23 @@
+module Global {
+ 	bool identityBool( bool a);
+ 	bool[] identityBoolArrCStyle( bool a[]);
+ 	bool[] identityBoolArr( bool a[]);
+    bool identityBoolArrOut(out bool a[]);
+}
+
+simulation
+import Global;
+{
+Global g = load("Global");
+
+bool r = g.identityBool(true);
+
+bool i[1] = {true};
+bool[] rr =g.identityBoolArrCStyle(i);
+bool[] rr =g.identityBoolArr(i);
+bool res = g.identityBoolArrOut(ref i);
+
+unload(g);
+
+
+}
