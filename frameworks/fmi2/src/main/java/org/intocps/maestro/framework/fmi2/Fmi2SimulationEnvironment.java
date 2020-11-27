@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
-
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
@@ -39,7 +38,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
     }
-
 
     public static Fmi2SimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
         try (InputStream is = new FileInputStream(file)) {
@@ -327,10 +325,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
          *
          * not sure if we need to return all permutations
          * */
-
-
         //construct relational information with the framework relevant attributes
-
         /*
          * user of this for stepping will first look for all outputs from here and collect these or directly set or use these outputs + others and
          * then use the relation to set these*/
@@ -372,7 +367,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public static class Relation implements FrameworkVariableInfo {
-
         Variable source;
         InternalOrExternal origin;
         Direction direction;
