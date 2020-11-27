@@ -58,49 +58,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         return of(msg, reporter);
     }
 
-    public static String replaceInstanceInVariable(Map<String, String> instanceRemapping, String variableString) throws EnvironmentException {
-        int indexofInstanceBegin = variableString.indexOf("}") + 2; // {fmukey}.instancename.variable
-        if (indexofInstanceBegin == -1) {
-            throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '}'");
-        }
-        String key = variableString.substring(0, indexofInstanceBegin);
-        String variableStringWithoutKey = variableString.substring(indexofInstanceBegin);
-        int indexOfEndInstance = variableStringWithoutKey.indexOf('.');
-        if (indexOfEndInstance == -1) {
-            throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '.'");
-        }
-        String instance = variableStringWithoutKey.substring(0, indexOfEndInstance);
-        String variable = variableStringWithoutKey.substring(indexOfEndInstance); // +1 due to '.'
-        String newInstance = instanceRemapping.get(instance);
-        if (newInstance == null) {
-            return variableString;
-        } else {
-            String rebuiltVariable = key + newInstance + variable;
-            return rebuiltVariable;
-        }
-
-    }
-
-    // Calculate all the difference {key}.instance
-
-    public static Map<String, String> instanceRemapping(Map<String, List<String>> connections) throws EnvironmentException {
-        HashMap<String, String> instanceRemapping = new HashMap<>();
-        // Get all key instances pairs
-        Set<KeyInstance> uniqueStrings = new HashSet<>();
-        for (Map.Entry<String, List<String>> entry : connections.entrySet()) {
-            uniqueStrings.add(KeyInstance.ofVariable(entry.getKey()));
-            for (String entry_ : entry.getValue()) {
-                uniqueStrings.add(KeyInstance.ofVariable(entry_));
-            }
-        }
-
-        // Find the cases where key and instance are the same
-        // Rename the instance
-        // Ensure that is does not overlap with other pairs
-        // Add the renaming to the instanceRemapping map
-        List<KeyInstance> sameKeyInstance = uniqueStrings.stream().filter(x -> x.instance.equals(x.key)).colle ct(Collectors.toList());
-    }
-
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
         List<ModelConnection> list = new Vector<>();
 
@@ -411,41 +368,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         if (validated.values().stream().anyMatch(v -> !v)) {
             throw new Exception("The following FMUs does not respected the standard: " +
                     validated.entrySet().stream().filter(map -> !map.getValue()).map(Map.Entry::getKey).collect(Collectors.joining(",", "[", "]")));
-        }
-    }
-
-    static class KeyInstance {
-        public String key;
-        public String instance;
-
-        public KeyInstance(String key, String instance) {
-            this.key = key;
-            this.instance = instance;
-        }
-
-        public static KeyInstance ofVariable(String variableString) throws EnvironmentException {
-            int indexOfKeyEnd = variableString.indexOf("}"); // {fmukey}.instancename.variable
-            if (indexOfKeyEnd == -1) {
-                throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '}'");
-            }
-            String key = variableString.substring(0, indexOfKeyEnd);
-            String variableStringWithoutKey = variableString.substring(indexOfKeyEnd + 2);
-            int indexOfEndInstance = variableStringWithoutKey.indexOf('.');
-            if (indexOfEndInstance == -1) {
-                throw new EnvironmentException("Failed to replace instance in variable: " + variableString + " due to missing index of '.'");
-            }
-            String instance = variableStringWithoutKey.substring(0, indexOfEndInstance);
-            return new KeyInstance(key, instance);
-        }
-
-        @Override
-        public int hashCode() {
-            return key.hashCode() ^ instance.hashCode(); //https://stackoverflow.com/questions/6187294/java-set-collection-override-equals-method
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return (obj instanceof KeyInstance) && (((KeyInstance) obj).key.equals(this.key)) && (((KeyInstance) obj).instance.equals(this.instance));
         }
     }
 

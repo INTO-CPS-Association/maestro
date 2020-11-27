@@ -10,6 +10,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.webapi.maestro2.dto.FixedStepAlgorithmConfig;
@@ -49,9 +50,6 @@ public class Maestro2Broker {
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
             File csvOutputFile) throws Exception {
 
-        Map<String, Object> initialize = new HashMap<>();
-        initialize.put("parameters", initializeRequest.getParameters());
-
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = initializeRequest.getFmus();
         if (simulationConfiguration.fmus == null) {
@@ -66,6 +64,19 @@ public class Maestro2Broker {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
         simulationConfiguration.livestream = initializeRequest.getLivestream();
+
+        Map<String, String> instanceRemapping = LegacyMMSupport.AdjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
+
+        Map<String, Object> initialize = new HashMap<>();
+        Map<String, Object> parameters = initializeRequest.getParameters();
+
+        if (parameters != null) {
+            initialize.put("parameters", parameters);
+            if (instanceRemapping != null && instanceRemapping.size() > 0) {
+                LegacyMMSupport.fixVariableToXMap(instanceRemapping, parameters);
+            }
+        }
+
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, this.reporter);
 
