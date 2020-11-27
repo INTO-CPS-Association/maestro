@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.cli.MaestroV1SimulationConfiguration;
+import org.intocps.maestro.codegen.mabl2cpp.MablCppCodeGenerator;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -69,6 +72,9 @@ public class Main {
                 .desc("The framework to use for verification: " + Arrays.stream(Framework.values()).map(Enum::name).collect(Collectors.joining(", ")))
                 .build();
 
+        Option cgOpt =
+                Option.builder("cg").longOpt("codegen").hasArg(true).argName("name").desc("One of the code generators supported: [cpp]").build();
+
         Options options = new Options();
         options.addOption(helpOpt);
         options.addOption(verboseOpt);
@@ -79,6 +85,7 @@ public class Main {
         options.addOption(dumpIntermediateSpecs);
         options.addOption(expansionLimit);
         options.addOption(verifyOpt);
+        options.addOption(cgOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -182,7 +189,8 @@ public class Main {
             mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
         }
 
-        if (!mabl.typeCheck().getKey()) {
+        Map.Entry<Boolean, Map<INode, PType>> typeCheckResult = mabl.typeCheck();
+        if (!typeCheckResult.getKey()) {
             if (reporter.getErrorCount() > 0) {
                 if (verbose) {
                     reporter.printErrors(new PrintWriter(System.err, true));
@@ -202,6 +210,12 @@ public class Main {
                     return false;
                 }
                 return false;
+            }
+        }
+
+        if (cmd.hasOption(cgOpt.getOpt())) {
+            if (cmd.getOptionValue(cgOpt.getOpt()).equals("cpp")) {
+                new MablCppCodeGenerator(new File(".")).generate(mabl.getMainSimulationUnit(), typeCheckResult.getValue());
             }
         }
 
