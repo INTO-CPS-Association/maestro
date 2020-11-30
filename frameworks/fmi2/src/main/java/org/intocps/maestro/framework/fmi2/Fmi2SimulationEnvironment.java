@@ -270,7 +270,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-
     public Map<String, List<String>> getLogLevels() {
         return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
@@ -317,7 +316,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     @Override
     public Set<Relation> getRelations(List<LexIdentifier> identifiers) {
 
-
+        // All the
         /*
          * use mapping of a.#1 -> b.#4 and produce a relation for these
          *
@@ -326,10 +325,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
          *
          * not sure if we need to return all permutations
          * */
-
-
         //construct relational information with the framework relevant attributes
-
         /*
          * user of this for stepping will first look for all outputs from here and collect these or directly set or use these outputs + others and
          * then use the relation to set these*/
@@ -370,9 +366,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-
     public static class Relation implements FrameworkVariableInfo {
-
         Variable source;
         InternalOrExternal origin;
         Direction direction;
