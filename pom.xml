@@ -49,6 +49,7 @@
         <module>plugins</module>
         <module>frameworks</module>
         <module>maestro-webapi</module>
+	<module>codegen</module>
     </modules>
 
     <build>

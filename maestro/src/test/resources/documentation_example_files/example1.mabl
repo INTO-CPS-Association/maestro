@@ -10,7 +10,7 @@ simulation
     DataWriter dataWriter = load("DataWriter");
     string data_headers[2] = {"crtlValveState","wtLevel"};
     DataWriterConfig dataWriterConfiguration = dataWriter.writeHeader(data_headers);
-    string data_values[2];
+
 
     // #############################
     // Load the FMUs and instantiate instances
@@ -82,9 +82,7 @@ simulation
     // #############################
     crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
     wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
-    data_values[0] = crtlValveStateOutput[0];
-    data_values[1] = wtLevelOutputValue[0];
-    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, data_values);
+    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
 
     real time = START_TIME;
@@ -131,9 +129,7 @@ simulation
         // Write the valve state and the water level to the results
         // #############################
         time = time + STEP_SIZE;
-        data_values[0] = crtlValveStateOutput[0];
-        data_values[1] = wtLevelOutputValue[0];
-        dataWriter.writeDataPoint(dataWriterConfiguration, time, data_values);
+        dataWriter.writeDataPoint(dataWriterConfiguration, time, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
     }
     

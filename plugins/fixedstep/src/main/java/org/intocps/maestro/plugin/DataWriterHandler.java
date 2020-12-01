@@ -2,7 +2,6 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.AArrayStateDesignator;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
@@ -90,18 +89,10 @@ public class DataWriterHandler implements GeneratorComponent {
 
     public List<PStm> write() {
         Consumer<List<PStm>> logCsvValues = list -> {
-            List<PExp> values = new ArrayList<>(csvFields.values());
-            //values.add(0, newAIdentifierExp("time"));
-            for (int i = 0; i < values.size(); i++) {
-                AArrayStateDesignator to =
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(this.data_valuesIdentifier)), newAIntLiteralExp(i));
-                list.add(newAAssignmentStm(to, values.get(i).clone()));
-            }
-
-            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"),
-                    Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time"),
-                            newAIdentifierExp(this.data_valuesIdentifier)))));
-
+            List<PExp> args = new Vector<>();
+            args.addAll(Arrays.asList(newAIdentifierExp(this.data_configuration), newAIdentifierExp("time")));
+            csvFields.values().forEach(v -> args.add(v.clone()));
+            list.add(newExpressionStm(newACallExp(newAIdentifierExp(this.dataWriter), newAIdentifier("writeDataPoint"), args)));
         };
 
         List<PStm> statements = new Vector<>();
