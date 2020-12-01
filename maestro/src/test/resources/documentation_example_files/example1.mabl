@@ -1,4 +1,8 @@
 simulation
+import FMI2;
+import DataWriter;
+import Logger;
+import Math;
 {
     real START_TIME = 0.0;
     real END_TIME = 10.0;
