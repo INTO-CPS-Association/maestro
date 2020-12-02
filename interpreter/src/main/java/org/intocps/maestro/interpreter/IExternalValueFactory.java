@@ -15,7 +15,7 @@ public interface IExternalValueFactory {
      * @param type
      * @return true if the type is supported by {@link #create(String, List)}
      */
-    boolean supports(String type);
+    boolean supports(String type) throws Exception;
 
     /**
      * Creates a new interpreter value for the specified type using the supplied arguments

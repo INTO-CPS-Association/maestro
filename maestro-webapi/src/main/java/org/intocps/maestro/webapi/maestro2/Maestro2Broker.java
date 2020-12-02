@@ -22,6 +22,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +124,7 @@ public class Maestro2Broker {
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,
-            File csvOutputFile) throws IOException, AnalysisException {
+            File csvOutputFile) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
