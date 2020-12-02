@@ -35,6 +35,10 @@ int decompress_one_file(const char *infilename, const char *outfilename) {
 }*/
 
 FMI2 load_FMI2(const char *guid, const char *path) {
+  using namespace std;
+    using namespace chrono;
+    auto t1 = std::chrono::high_resolution_clock::now();
+
 
     std::string fmuDest = "/tmp/";
     fmuDest.append(guid);
@@ -59,7 +63,10 @@ FMI2 load_FMI2(const char *guid, const char *path) {
     auto fmu = new Fmi2Impl();
     fmu->guid = guid;
     loadDll(firstFile.c_str(), &fmu->fmu);
+auto t2 = std::chrono::high_resolution_clock::now();
 
+    auto dur = t2-t1;
+        std::cout << "Load in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
 
     return fmu;
 

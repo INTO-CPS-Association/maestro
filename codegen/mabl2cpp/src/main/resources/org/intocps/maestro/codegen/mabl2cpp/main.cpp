@@ -27,12 +27,7 @@ int main () {
               << us.count() << " [microseconds] "
               << ns.count() << " [nanoseconds] " << std::endl;
 
-    std::cout << "Executed1 in " << hrs.count() << ":"
-                << mins.count() << ":"
-                << secs.count() << ":"
-                << ms.count() << ":"
-                << us.count() << ":"
-                << ns.count() << ":" << std::endl;
+    std::cout << "Total in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
 
     return 0;
  }
