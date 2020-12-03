@@ -86,13 +86,17 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         List<Value> args = evaluate(node.getArgs(), question);
 
         String type = ((StringValue) args.get(0)).getValue();
-        if (this.loadFactory.supports(type)) {
-            Either<Exception, Value> valueE = this.loadFactory.create(type, args.subList(1, args.size()));
-            if (valueE.isLeft()) {
-                throw new AnalysisException(valueE.getLeft());
-            } else {
-                return valueE.getRight();
+        try {
+            if (this.loadFactory.supports(type)) {
+                Either<Exception, Value> valueE = this.loadFactory.create(type, args.subList(1, args.size()));
+                if (valueE.isLeft()) {
+                    throw new AnalysisException(valueE.getLeft());
+                } else {
+                    return valueE.getRight();
+                }
             }
+        } catch (Exception e) {
+            throw new AnalysisException("Load failed", e);
         }
         throw new AnalysisException("Load of unknown type: " + type);
     }
