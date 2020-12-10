@@ -11,6 +11,7 @@ initializationConfigurationPath = "wt/mm.json"
 simulationConfigurationPath = "wt/start_message.json"
 mablExample = "wt/example1.mabl"
 folderWithModuleDefinitions =  "../typechecker/src/main/resources/org/intocps/maestro/typechecker/"
+mablExpansionExample="wt/expansion_example.mabl"
 
 # Update paths to FMUs
 def retrieveConfiguration():

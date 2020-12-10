@@ -59,11 +59,32 @@ try:
         else:
             print("SUCCESS")
             testutils.checkMablSpecExists(temporary.mablSpecPath)
-            return testutils.compare("CSV", "wt/result.csv", outputs)
+            if not testutils.compare("CSV", "wt/result.csv", outputs):
+                tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+                print("Copying outputs file to temporary directory: " + tempActualOutputs)
+                shutil.copyfile(outputs, tempActualOutputs)
 
-    if cliRaw():
-        deleteOutputsFile(outputs)
+    cliRaw()
+    deleteOutputsFile(outputs)
 
+    def cliExpansion():
+        testutils.printSection("CLI Expansion")
+        temporary=testutils.createAndPrepareTempDirectory()
+        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+        print("Cmd: " + cmd)
+        p = subprocess.run(cmd, shell=True)
+        if p.returncode != 0:
+            print("ERROR: In Executing %s" % cmd)
+        else:
+            print("SUCCESS")
+            testutils.checkMablSpecExists(temporary.mablSpecPath)
+            if not testutils.compare("CSV", "wt/result.csv", outputs):
+                tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+                print("Copying outputs file to temporary directory: " + tempActualOutputs)
+                shutil.copyfile(outputs, tempActualOutputs)
+
+    cliExpansion()
+    deleteOutputsFile(outputs)
 
 except Exception as x:
     print("ERROR: Exception: " + str(x))
