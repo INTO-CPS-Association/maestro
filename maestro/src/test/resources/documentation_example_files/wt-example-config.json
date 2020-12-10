@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{controller}": "src/test/resources/watertankcontroller-c.fmu",
-    "{tank}": "src/test/resources/singlewatertank-20sim.fmu"
+    "{controller}": "file:///Users/au443759/source/into-cps-association/maestro/maestro/src/test/resources/watertankcontroller-c.fmu",
+    "{tank}": "file:///Users/au443759/source/into-cps-association/maestro/maestro/src/test/resources/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{controller}.crtlInstance.valve": [

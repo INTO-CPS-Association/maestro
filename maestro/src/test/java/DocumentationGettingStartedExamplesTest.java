@@ -60,9 +60,10 @@ public class DocumentationGettingStartedExamplesTest {
 
         FileUtils.deleteDirectory(targetDirectory);
 
-        assert (Main.argumentHandler(new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump-intermediate",
-                intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
-                interpretSpecification.getAbsolutePath()}));
+        assert (Main.argumentHandler(
+                new String[]{"--verify", "FMI2", "--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump" + "-intermediate",
+                        intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
+                        interpretSpecification.getAbsolutePath()}));
 
 
     }

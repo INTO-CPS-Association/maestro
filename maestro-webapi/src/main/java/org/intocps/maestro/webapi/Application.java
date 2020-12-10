@@ -2,8 +2,8 @@ package org.intocps.maestro.webapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
-import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.MaestroV1CliProxy;
+import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
@@ -42,7 +42,7 @@ public class Application {
 
             SimulateRequestBody simulationData = null;
             if (simulationConfigFile != null && simulationConfigFile.exists()) {
-                simulationData = mapper.readValue(configFile, SimulateRequestBody.class);
+                simulationData = mapper.readValue(simulationConfigFile, SimulateRequestBody.class);
             } else {
                 simulationData = new SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
             }
