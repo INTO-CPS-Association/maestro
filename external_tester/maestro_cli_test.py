@@ -70,7 +70,7 @@ try:
     def cliExpansion():
         testutils.printSection("CLI Expansion")
         temporary=testutils.createAndPrepareTempDirectory()
-        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
         print("Cmd: " + cmd)
         p = subprocess.run(cmd, shell=True)
         if p.returncode != 0:

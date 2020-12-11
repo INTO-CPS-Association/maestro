@@ -39,6 +39,7 @@ public class DocumentationGettingStartedExamplesTest {
         mabl.setVerbose(true);
 
         mabl.parse(sourceFiles);
+        mabl.typeCheck();
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             assert (false);
@@ -48,6 +49,7 @@ public class DocumentationGettingStartedExamplesTest {
             FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
         }
     }
+
 
     @Test
     @Ignore("Ignored due to storing outputs.csv in non-target place")
