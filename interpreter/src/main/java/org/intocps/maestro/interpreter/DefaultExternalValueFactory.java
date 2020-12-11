@@ -143,6 +143,11 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         public void destroy(Value value) {
 
         }
+
+        @Override
+        public InputStream getMablModule() {
+            return null;
+        }
     }
 
     @IValueLifecycleHandler.ValueLifecycle(name = "Logger")
