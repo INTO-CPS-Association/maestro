@@ -24,11 +24,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FmiInterpreter {
+public class Fmi2Interpreter {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final File workingDirectory;
 
-    public FmiInterpreter(File workingDirectory) {
+    public Fmi2Interpreter(File workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 

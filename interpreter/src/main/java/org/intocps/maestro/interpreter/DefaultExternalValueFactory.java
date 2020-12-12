@@ -256,7 +256,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             } catch (URISyntaxException e) {
                 return Either.left(new AnalysisException("The path passed to load is not a URI", e));
             }
-            return Either.right(new FmiInterpreter(workingDirectory).createFmiValue(path, guid));
+            return Either.right(new Fmi2Interpreter(workingDirectory).createFmiValue(path, guid));
         }
     }
 
