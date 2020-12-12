@@ -36,7 +36,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
     final static List<Class<? extends IValueLifecycleHandler>> defaultHandlers =
             Arrays.asList(LoggerLifecycleHandler.class, CsvLifecycleHandler.class, ArrayUtilLifecycleHandler.class,
-                    JavaClasspathLoaderLifecycleHandler.class, MathLifecycleHandler.class);
+                    JavaClasspathLoaderLifecycleHandler.class, MathLifecycleHandler.class, Fmi2LifecycleHandler.class);
     protected Map<String, IValueLifecycleHandler> lifecycleHandlers;
     protected Map<Value, IValueLifecycleHandler> values = new HashMap<>();
 
@@ -48,12 +48,17 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         lifecycleHandlers = new HashMap<>();
 
         for (Class<? extends IValueLifecycleHandler> handler : defaultHandlers) {
-            lifecycleHandlers
-                    .put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), handler.getDeclaredConstructor().newInstance());
-        }
+            IValueLifecycleHandler value;
 
-        lifecycleHandlers.put(Fmi2LifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
-                new Fmi2LifecycleHandler(workingDirectory));
+            try {
+                //found constructor with a File argument. This is for the working directory
+                value = handler.getDeclaredConstructor(File.class).newInstance(workingDirectory);
+            } catch (NoSuchMethodException e) {
+                value = handler.getDeclaredConstructor().newInstance();
+            }
+
+            lifecycleHandlers.put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), value);
+        }
 
         lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new DataWriterLifecycleHandler(workingDirectory, config));
