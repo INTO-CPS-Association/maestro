@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public abstract class Value {
 
-    protected static void checkArgLength(List<Value> values, int size) {
+    public static void checkArgLength(List<Value> values, int size) {
         if (values == null) {
             throw new InterpreterException("No values passed");
         }
