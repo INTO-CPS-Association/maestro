@@ -37,33 +37,42 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
     final static List<Class<? extends IValueLifecycleHandler>> defaultHandlers =
             Arrays.asList(LoggerLifecycleHandler.class, CsvLifecycleHandler.class, ArrayUtilLifecycleHandler.class,
                     JavaClasspathLoaderLifecycleHandler.class, MathLifecycleHandler.class, Fmi2LifecycleHandler.class);
+    private final File workingDirectory;
     protected Map<String, IValueLifecycleHandler> lifecycleHandlers;
     protected Map<Value, IValueLifecycleHandler> values = new HashMap<>();
 
 
     public DefaultExternalValueFactory(File workingDirectory,
             InputStream config) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-
+        this.workingDirectory = workingDirectory;
 
         lifecycleHandlers = new HashMap<>();
 
         for (Class<? extends IValueLifecycleHandler> handler : defaultHandlers) {
-            IValueLifecycleHandler value;
-
-            try {
-                //found constructor with a File argument. This is for the working directory
-                value = handler.getDeclaredConstructor(File.class).newInstance(workingDirectory);
-            } catch (NoSuchMethodException e) {
-                value = handler.getDeclaredConstructor().newInstance();
-            }
-
-            lifecycleHandlers.put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), value);
+            lifecycleHandlers
+                    .put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), instantiateHandler(workingDirectory, handler));
         }
 
         lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new DataWriterLifecycleHandler(workingDirectory, config));
 
 
+    }
+
+    private IValueLifecycleHandler instantiateHandler(File workingDirectory,
+            Class<? extends IValueLifecycleHandler> handler) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        IValueLifecycleHandler value;
+        try {
+            //found constructor with a File argument. This is for the working directory
+            value = handler.getDeclaredConstructor(File.class).newInstance(workingDirectory);
+        } catch (NoSuchMethodException e) {
+            try {
+                value = handler.getDeclaredConstructor().newInstance();
+            } catch (NoSuchMethodException e2) {
+                return null;
+            }
+        }
+        return value;
     }
 
 
@@ -80,9 +89,15 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         } else {
             List<Class<? extends IValueLifecycleHandler>> handlers = scanForLifecucleHandlers(IValueLifecycleHandler.class);
 
-            for (Class<? extends IValueLifecycleHandler> handler : handlers) {
-                this.lifecycleHandlers.putIfAbsent(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
-                        handler.getDeclaredConstructor().newInstance());
+            for (Class<? extends IValueLifecycleHandler> handler : handlers.stream()
+                    .filter(h -> !this.lifecycleHandlers.containsKey(h.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name()))
+                    .collect(Collectors.toList())) {
+
+                IValueLifecycleHandler value = instantiateHandler(workingDirectory, handler);
+
+                if (value != null) {
+                    this.lifecycleHandlers.putIfAbsent(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), value);
+                }
             }
 
             if (this.lifecycleHandlers.containsKey(type)) {
