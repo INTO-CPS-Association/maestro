@@ -310,12 +310,6 @@ public class MablSpecificationGenerator {
         return null;
     }
 
-
-    //    public ARootDocument generateFromStreams(List<CharStream> sourceStreams, InputStream contextFile) throws IOException {
-    //        List<ARootDocument> documentList = parseStreams(sourceStreams);
-    //        return generateFromDocuments(documentList, contextFile);
-    //    }
-
     public ARootDocument generateFromDocuments(List<ARootDocument> documentList) throws IOException, ExpandException {
         IErrorReporter reporter = new ErrorReporter();
 

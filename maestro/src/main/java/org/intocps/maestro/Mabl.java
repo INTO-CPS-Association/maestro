@@ -8,6 +8,7 @@ import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
 import org.intocps.maestro.ast.PDeclaration;
@@ -72,17 +73,60 @@ public class Mabl {
         return Map.entry(reporter.getErrorCount() == 0, new HashedMap());
     }
 
-    private List<String> getResourceFiles(String path) throws IOException {
-        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
+    public static List<String> extractModuleNames(List<ARootDocument> rootDocuments) {
+        List<String> existingModules = new ArrayList<>();
+        for (ARootDocument doc : rootDocuments) {
+            Optional<List<AModuleDeclaration>> moduleDeclarations = NodeCollector.collect(doc, AModuleDeclaration.class);
+            if (moduleDeclarations.isPresent()) {
+                List<AModuleDeclaration> moduleDeclaration_ = moduleDeclarations.get();
+                existingModules.addAll(moduleDeclaration_.stream().map(x -> x.getName().getText()).collect(Collectors.toList()));
+            }
+        }
+        return existingModules;
     }
 
-    public ARootDocument getRuntimeModule(String module) throws IOException {
+    public static ARootDocument createDocumentWithMissingModules(List<ARootDocument> existingDocuments) throws IOException {
+        // Get the modules passed as arguments
+        List<String> existingModules = extractModuleNames(existingDocuments);
+
+        // Already added modules take priority over typechecker modules.
+        // Therefore, remove existing modules from typechecker modules.
+        List<AImportedModuleCompilationUnit> maestro2EmbeddedModules =
+                getModuleDocuments(TypeChecker.getRuntimeModules()).stream().map(x -> NodeCollector.collect(x, AImportedModuleCompilationUnit.class))
+                        .filter(x -> x.isPresent()).flatMap(x -> x.get().stream())
+                        .filter(x -> existingModules.contains(x.getModule().getName().getText()) == false).collect(Collectors.toList());
+        if (!maestro2EmbeddedModules.isEmpty()) {
+            ARootDocument defaultModules = new ARootDocument();
+            defaultModules.setContent(maestro2EmbeddedModules);
+            return defaultModules;
+        }
+        return null;
+    }
+
+    public static ARootDocument getRuntimeModule(String module) throws IOException {
         InputStream resourceAsStream = TypeChecker.getRuntimeModule(module);
         if (resourceAsStream == null) {
             return null;
         }
         ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
         return parse;
+    }
+
+    public static List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
+        List<String> allModules = TypeChecker.getRuntimeModules();
+        List<ARootDocument> documents = new ArrayList<>();
+        if (modules != null) {
+            for (String module : modules) {
+                if (allModules.contains(module)) {
+                    documents.add(getRuntimeModule(module));
+                }
+            }
+        }
+        return documents;
+    }
+
+    private List<String> getResourceFiles(String path) throws IOException {
+        return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
 
     public MableSettings getSettings() {
@@ -104,19 +148,6 @@ public class Mabl {
         ARootDocument main = mergeDocuments(MablParserUtil.parse(sourceFiles));
         this.document = main == null ? document : main;
         postProcessParsing();
-    }
-
-    public List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
-        List<String> allModules = TypeChecker.getRuntimeModules();
-        List<ARootDocument> documents = new ArrayList<>();
-        if (modules != null) {
-            for (String module : modules) {
-                if (allModules.contains(module)) {
-                    documents.add(getRuntimeModule(module));
-                }
-            }
-        }
-        return documents;
     }
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
@@ -151,7 +182,12 @@ public class Mabl {
 
     private void postProcessParsing() throws Exception {
         if (document != null) {
-            intermediateSpecWriter.write(document);
+            List<ARootDocument> existingModules = new ArrayList<>(this.importedDocument);
+            existingModules.add(document);
+            ARootDocument docWithMissingModules = createDocumentWithMissingModules(existingModules);
+            if (docWithMissingModules != null) {
+                importedDocument.add(docWithMissingModules);
+            }
             NodeCollector.collect(document, ASimulationSpecificationCompilationUnit.class).ifPresent(unit -> unit.forEach(u -> {
                 frameworks = u.getFramework().stream().map(LexIdentifier::getText).map(Framework::valueOf).collect(Collectors.toList());
                 frameworkConfigs = u.getFrameworkConfigs().stream()
@@ -185,7 +221,6 @@ public class Mabl {
             environment.check(reporter);
         }
 
-
     }
 
     public void expand() throws Exception {
@@ -212,12 +247,15 @@ public class Mabl {
 
             List<ARootDocument> allDocs = Stream.concat(Stream.of(document), importedDocument.stream()).collect(Collectors.toList());
 
+            ARootDocument missingModules = createDocumentWithMissingModules(allDocs);
+            if (missingModules != null) {
+                allDocs.add(missingModules);
+            }
+
             ARootDocument doc = mablSpecificationGenerator.generateFromDocuments(allDocs);
             removeFrameworkAnnotations(doc);
             document = doc;
         }
-
-
     }
 
     public Map.Entry<Boolean, Map<INode, PType>> typeCheck() {

@@ -39,6 +39,7 @@ public class DocumentationGettingStartedExamplesTest {
         mabl.setVerbose(true);
 
         mabl.parse(sourceFiles);
+        mabl.typeCheck();
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             assert (false);
@@ -48,6 +49,7 @@ public class DocumentationGettingStartedExamplesTest {
             FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
         }
     }
+
 
     @Test
     @Ignore("Ignored due to storing outputs.csv in non-target place")
@@ -60,9 +62,10 @@ public class DocumentationGettingStartedExamplesTest {
 
         FileUtils.deleteDirectory(targetDirectory);
 
-        assert (Main.argumentHandler(new String[]{"--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump-intermediate",
-                intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
-                interpretSpecification.getAbsolutePath()}));
+        assert (Main.argumentHandler(
+                new String[]{"--verify", "FMI2", "--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump" + "-intermediate",
+                        intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
+                        interpretSpecification.getAbsolutePath()}));
 
 
     }
