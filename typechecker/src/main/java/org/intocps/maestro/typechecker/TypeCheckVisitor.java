@@ -131,8 +131,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 } else {
                     PType moduleType = checkedTypes.get(decl);
                     if (moduleType instanceof AModuleType) {
-
-                        return store(node, moduleType.clone());
+                        //allow assignment to any type
+                        //return store(node, moduleType.clone());
                     } else {
                         errorReporter.report(0, "Argument 1 does not refer to a module type: " + moduleName, null);
                     }
@@ -703,10 +703,14 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType caseAIdentifierStateDesignator(AIdentifierStateDesignator node, Context ctxt) throws AnalysisException {
         PDeclaration def = ctxt.findDeclaration(node.getName());
 
+        PType type;
         if (def == null) {
             errorReporter.report(0, "Use of undeclared variable", node.getName().getSymbol());
+            type = newAUnknownType();
+        } else {
+            type = checkedTypes.get(def).clone();
         }
-        return store(node, checkedTypes.get(def).clone());
+        return store(node, type);
     }
 
     @Override
