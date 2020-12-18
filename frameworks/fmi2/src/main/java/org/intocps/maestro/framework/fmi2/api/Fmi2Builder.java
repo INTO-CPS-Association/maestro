@@ -6,17 +6,51 @@ import java.util.Map;
 
 public abstract class Fmi2Builder {
 
+    /**
+     * Generates a handle to a loaded fmu
+     *
+     * @param path
+     * @return
+     */
     public abstract Fmu2Api createFmu(File path);
 
     //    public abstract void popScope();
 
+    /**
+     * Gets the default scope
+     *
+     * @return
+     */
     public abstract Scope getDefaultScope();
     //    public abstract void pushScope(Scope scope);
 
+    /**
+     * Get handle to the current time
+     *
+     * @return
+     */
     public abstract Time getCurrentTime();
 
+    /**
+     * Gets a specific time from a number
+     *
+     * @param time
+     * @return
+     */
     public abstract Time getTime(double time);
 
+    /**
+     * Gets a tag to the last value obtained for the given port
+     *
+     * @param port
+     * @return
+     */
+    public abstract TimeTaggedValue getCurrentLinkedValue(Port port);
+
+
+    /**
+     * Scoping functions
+     */
     public interface Scoping {
         WhileScope enterWhile(LogicBuilder.Predicate predicate);
 
@@ -25,21 +59,64 @@ public abstract class Fmi2Builder {
         Scope leave();
     }
 
+    /**
+     * Basic scope. Allows a value to be stored or override a tag
+     */
     public interface Scope extends Scoping {
+        /**
+         * Store a given value
+         *
+         * @param value
+         * @return
+         */
+        TimeTaggedValue store(double value);
+
+        /**
+         * Store the given value and get a tag for it. Copy
+         *
+         * @param tag
+         * @return
+         */
+        TimeTaggedValue store(TimeTaggedValue tag);
+
+        /**
+         * Override a tags value from an existing value. Copy
+         *
+         * @param tag
+         * @param value
+         * @return
+         */
+        TimeTaggedValue store(TimeTaggedValue tag, TimeTaggedValue value);
     }
 
+    /**
+     * If scope, default scope is then
+     */
     public interface IfScope extends Scope {
-
-        // void test(LogicBuilder.Predicate predicate);
+        /**
+         * Switch to then scope
+         *
+         * @return
+         */
         Scope enterThen();
 
+        /**
+         * Switch to else scope
+         *
+         * @return
+         */
         Scope enterElse();
     }
 
+    /**
+     * While
+     */
     public interface WhileScope extends Scope {
-        void condition(LogicBuilder.Predicate p);
     }
 
+    /**
+     * Handle for an fmu for the creation of component
+     */
     public interface Fmu2Api {
         Fmi2ComponentApi create();
     }
@@ -54,6 +131,10 @@ public abstract class Fmi2Builder {
         Predicate isLess(Time a, Time b);
 
         Predicate isGreater(TimeTaggedValue a, double b);
+
+        Predicate fromValue(TimeTaggedValue value);
+
+        Predicate fromExternalFunction(String name, TimeTaggedValue... args);
 
 
         interface Predicate {
@@ -78,47 +159,199 @@ public abstract class Fmi2Builder {
     public interface TimeValue extends Time {
     }
 
+    /**
+     * Delta value for a time
+     */
+    public interface TimeDeltaValue extends Time {
+    }
+
+    /**
+     * Interface for an fmi compoennt
+     */
     public interface Fmi2ComponentApi {
 
+        /**
+         * Get ports by name
+         *
+         * @param names
+         * @return
+         */
         List<Port> getPorts(String... names);
 
+        /**
+         * Get ports by ref val
+         *
+         * @param valueReferences
+         * @return
+         */
         List<Port> getPorts(int... valueReferences);
 
+        /**
+         * Get port by name
+         *
+         * @param name
+         * @return
+         */
         Port getPort(String name);
 
+        /**
+         * Get port by ref val
+         *
+         * @param valueReference
+         * @return
+         */
         Port getPort(int valueReference);
 
+        /**
+         * Get port values aka fmiGet
+         *
+         * @param ports
+         * @return
+         */
         Map<Port, TimeTaggedValue> get(Port... ports);
 
+        /**
+         * Get all (linked) port values
+         *
+         * @return
+         */
         Map<Port, TimeTaggedValue> get();
 
+        /**
+         * get filter by value reference
+         *
+         * @param valueReferences
+         * @return
+         */
         Map<Port, TimeTaggedValue> get(int... valueReferences);
 
+        /**
+         * Get filter by names
+         *
+         * @param names
+         * @return
+         */
         Map<Port, TimeTaggedValue> get(String... names);
 
-        TimeTaggedValue getSingle(String names);
+        /**
+         * Get the value of a single port
+         *
+         * @param name
+         * @return
+         */
+        TimeTaggedValue getSingle(String name);
 
+        /**
+         * Set port values (if ports is not from this fmu then the links are used to remap)
+         *
+         * @param value
+         */
+        void set(Map<Port, TimeTaggedValue> value);
+
+        /**
+         * Set all linked values for the linked ports
+         */
+        void set();
+
+        /**
+         * Set this fmu ports by val ref
+         *
+         * @param values
+         */
+        void setInt(Map<Integer, TimeTaggedValue> values);
+
+        /**
+         * Set this fmy ports by name
+         *
+         * @param value
+         */
+        void setString(Map<String, TimeTaggedValue> value);
+
+        /**
+         * Makes the values publicly available to all linked connections. On next set these ports will be resolved to the values given for
+         * other fmu
+         *
+         * @param values
+         */
         void share(Map<Port, TimeTaggedValue> values);
 
+        /**
+         * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
+         * other fmu
+         *
+         * @param value
+         */
         void share(Port port, TimeTaggedValue value);
 
-        void step(double step);
+        /**
+         * Step the fmu for the given time
+         *
+         * @param deltaTime
+         * @return
+         */
+        TimeDeltaValue step(TimeDeltaValue deltaTime);
 
+        /**
+         * Step the fmu for the given time
+         *
+         * @param deltaTime
+         * @return
+         */
+        TimeDeltaValue step(double deltaTime);
+
+        /**
+         * Get the current state
+         *
+         * @return
+         */
         TimeTaggedState getState();
+
+        /**
+         * Sets the current state
+         *
+         * @param state
+         * @return
+         */
+        Time setState(TimeTaggedState state);
     }
 
     public interface TimeTaggedState {
-        //        public void release();
+        public void release();
     }
 
     public interface Port {
+        /**
+         * Get the port name
+         *
+         * @return
+         */
         String getName();
 
+        /**
+         * Get the port reference value
+         *
+         * @return
+         */
+        int getPortReferenceValue();
+
+        /**
+         * Link the current port to the receiving port. After this the receiving port will resolve its linked value to the value of this port
+         *
+         * @param receiver
+         */
         void linkTo(Port... receiver);
 
+        /**
+         * Break the link from the receivers or all if none is given
+         *
+         * @param receiver
+         */
         void breakLink(Port... receiver);
     }
 
     public interface TimeTaggedValue {
+        static TimeTaggedValue of(double a) {
+            return null;
+        }
     }
 }

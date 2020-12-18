@@ -3,6 +3,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Map;
 
 import static org.intocps.maestro.framework.fmi2.api.Fmi2Builder.*;
 
@@ -51,6 +52,10 @@ public class Fmi2ApiTest {
         //back in loop;
         tank.share(tank.getPort("level"), levelVal);
 
+        //        controller.set(controller.getPort("valve"), valveValue);
+        //        controller.set();
+        //        controller.set(controller.getPort("valve"));
+
         tank.step(1);
         tank.step(1);
 
@@ -70,15 +75,58 @@ public class Fmi2ApiTest {
         tank2.share(tank2.get());
         controller.share(controller.get());
 
-        tank.step(1);
-        tank2.step(1);
-        controller.step(1);
+        TimeDeltaValue deltaT = tank.step(1);
+        tank2.step(deltaT);
+        controller.step(deltaT);
 
 
         ifSwitchFmuScope.leave();
 
 
         whileScope.leave();
+
+        tank.share(tank.get());
+        controller.share(controller.get());
+        tank.set();
+        controller.set();
+
+
+        TimeTaggedValue searchForConverged = null;//false
+        //        TimeTaggedValue vOld = tank.getSingle("v");//get from linked data
+        //
+        //        TimeTaggedValue v = tank.getSingle("v");
+
+
+        TimeTaggedState ts = tank.getState();
+        TimeTaggedState cs = controller.getState();
+
+        WhileScope convergeScppe = builder.getDefaultScope().enterWhile(logic.fromValue(searchForConverged).not());
+        TimeTaggedValue vOld = builder.getCurrentLinkedValue(tank.getPort("v"));
+
+        tank.set();
+        controller.set();
+
+        tank.step(1);
+        controller.step(1);
+
+
+        Map<Port, TimeTaggedValue> tankValues = tank.get();
+        Map<Port, TimeTaggedValue> controllerValues = controller.get();
+        TimeTaggedValue v = tank.getSingle("v");//actually find this on in tankValues
+
+
+        IfScope ifConvergeScope = convergeScppe.enterIf(logic.fromExternalFunction("doesConverge", v, vOld, TimeTaggedValue.of(0.0111)));
+        ifConvergeScope.enterElse();
+
+        tank.setState(ts);
+        controller.setState(cs);
+
+        ifConvergeScope.leave();
+
+        tank.share(tankValues);
+        controller.share(controllerValues);
+
+
 
         /*
 
