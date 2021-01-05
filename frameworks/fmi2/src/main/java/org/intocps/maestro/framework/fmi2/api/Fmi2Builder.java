@@ -47,6 +47,16 @@ public abstract class Fmi2Builder {
      */
     public abstract TimeTaggedValue getCurrentLinkedValue(Port port);
 
+    /**
+     * New boolean that can be used as a predicate
+     *
+     * @param s
+     * @return
+     */
+    public abstract MBoolean createBoolean(String s);
+
+    public abstract PrimitivesCreator primitivesCreator();
+
 
     /**
      * Scoping functions
@@ -130,6 +140,8 @@ public abstract class Fmi2Builder {
 
         Predicate isLess(Time a, Time b);
 
+        <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
+
         Predicate isGreater(TimeTaggedValue a, double b);
 
         Predicate fromValue(TimeTaggedValue value);
@@ -145,6 +157,18 @@ public abstract class Fmi2Builder {
             Predicate not();
         }
 
+    }
+
+    public interface Numeric<A> {
+        void set(A value);
+
+        A get();
+    }
+
+    public interface MBoolean extends LogicBuilder.Predicate {
+        void set(Boolean value);
+
+        Boolean get();
     }
 
     /**
@@ -254,6 +278,11 @@ public abstract class Fmi2Builder {
         void set();
 
         /**
+         * Set this fmu port by name and link
+         */
+        void setSingle(String name);
+
+        /**
          * Set this fmu ports by val ref
          *
          * @param values
@@ -313,6 +342,14 @@ public abstract class Fmi2Builder {
          * @return
          */
         Time setState(TimeTaggedState state);
+
+        /**
+         * Sets the current state based on the last retrieved state
+         *
+         * @return
+         */
+
+        Time setState();
     }
 
     public interface TimeTaggedState {
@@ -353,5 +390,14 @@ public abstract class Fmi2Builder {
         static TimeTaggedValue of(double a) {
             return null;
         }
+    }
+
+    public interface PrimitivesCreator {
+        MInt createMInt(Integer Value);
+    }
+
+    public interface MInt extends Numeric<Integer> {
+        void decrement();
+
     }
 }

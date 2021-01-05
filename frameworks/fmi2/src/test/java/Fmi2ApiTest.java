@@ -1,13 +1,105 @@
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.Fmi2Builder.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Map;
 
-import static org.intocps.maestro.framework.fmi2.api.Fmi2Builder.*;
-
 public class Fmi2ApiTest {
+
+    @Test
+    @Ignore
+    public void testLoop_Within_loop() {
+        Fmi2Builder builder = null;
+        LogicBuilder logic = null;
+        Fmu2Api msd1Fmu = builder.createFmu(new File("."));
+        Fmu2Api msd2Fmu = builder.createFmu(new File("."));
+        Fmu2Api msd3Fmu = builder.createFmu(new File("."));
+
+        Fmi2ComponentApi msd1 = msd1Fmu.create();
+        Fmi2ComponentApi msd2 = msd2Fmu.create();
+        Fmi2ComponentApi msd3 = msd3Fmu.create();
+
+
+        msd1.getPort("x1").linkTo(msd2.getPort("x1"));
+        msd1.getPort("v1").linkTo(msd2.getPort("v1"));
+        msd2.getPort("fk").linkTo(msd1.getPort("fk"));
+        msd2.getPort("z").linkTo(msd3.getPort("z"));
+        msd3.getPort("G").linkTo(msd2.getPort("G"));
+
+        // Initialization
+        msd1.getSingle("x1");
+        msd2.setSingle("x1");
+        msd1.getSingle("v1");
+        msd2.setSingle("v1");
+        msd2.getSingle("fk");
+        msd1.setSingle("fk");
+        msd2.getSingle("z");
+        msd3.setSingle("z");
+        msd3.getSingle("G");
+        msd2.setSingle("G");
+
+        // Stepping
+        msd1.getState();
+        msd2.getState();
+        msd3.getState();
+
+        MBoolean until_step_accept = builder.createBoolean("until-step-accept");
+        MInt maxStepAcceptAttempts = builder.createInteger("max_step_accept_attempts");
+        maxStepAcceptAttempts.set(5);
+        Scope while_step_scope = builder.getDefaultScope()
+                .enterWhile(until_step_accept.and(logic.isLess(builder.primitivesCreator().createMInt(0), maxStepAcceptAttempts)));
+        // Todo: What does iterate mean?
+        MBoolean until_converged = builder.createBoolean("until-converged");
+        MInt maxConvergeAttempts = builder.createInteger("max_converge_attempts");
+        maxConvergeAttempts.set(5);
+        Scope while_converged_scope =
+                while_step_scope.enterWhile(until_converged.and(logic.isLess(builder.primitivesCreator().createMInt(0), maxConvergeAttempts)));
+
+        TimeTaggedValue msd1_x1_old = builder.getCurrentLinkedValue(msd1.getPort("x1"));
+        TimeTaggedValue msd1_v1_old = builder.getCurrentLinkedValue(msd1.getPort("v1"));
+        TimeTaggedValue msd2_fk_old = builder.getCurrentLinkedValue(msd2.getPort("fk"));
+        TimeTaggedValue msd2_z_old = builder.getCurrentLinkedValue(msd2.getPort("z"));
+        TimeTaggedValue msd3_G_old = builder.getCurrentLinkedValue(msd3.getPort("G"));
+
+        msd1.setSingle("fk");
+        msd2.setSingle("v1");
+        msd2.setSingle("G");
+        TimeDeltaValue msd1StepTime = msd1.step(1.0);
+        TimeDeltaValue msd2StepTime = msd2.step(1.0);
+        TimeDeltaValue msd3StepTime = msd3.step(1.0);
+        msd1.getSingle("x1");
+        msd2.setSingle("x1");
+        msd2.getSingle("fk");
+        msd2.getSingle("z");
+        msd3.getSingle("G");
+        LogicBuilder.Predicate x1Pred = logic.fromExternalFunction("doesConverge", msd1_x1_old, msd1.getSingle("x1"));
+        LogicBuilder.Predicate v1Pred = logic.fromExternalFunction("doesConverge", msd1_v1_old, msd1.getSingle("v1"));
+        LogicBuilder.Predicate fkPred = logic.fromExternalFunction("doesConverge", msd2_fk_old, msd2.getSingle("fk"));
+        LogicBuilder.Predicate zPred = logic.fromExternalFunction("doesConverge", msd2_z_old, msd2.getSingle("z"));
+        LogicBuilder.Predicate gPred = logic.fromExternalFunction("doesConverge", msd3_G_old, msd3.getSingle("G"));
+
+        IfScope convergenceIfScope = while_converged_scope.enterIf(x1Pred.and(v1Pred.and(fkPred.and(zPred.and(gPred)))).not());
+        msd1.setState();
+        msd2.setState();
+        msd3.setState();
+        convergenceIfScope.enterElse();
+        // TODO: Set until_converged to True
+        convergenceIfScope.leave();
+        while_converged_scope.leave();
+
+        IfScope equalStepIfScope =
+                while_step_scope.enterIf(logic.isEqual(msd1StepTime, msd2StepTime).and(logic.isEqual(msd2StepTime, msd3StepTime)).not());
+        msd1.setState();
+        msd2.setState();
+        msd3.setState();
+        maxStepAcceptAttempts.decrement();
+        equalStepIfScope.leave();
+        while_step_scope.leave();
+
+
+    }
 
     @Test
     @Ignore
@@ -125,13 +217,8 @@ public class Fmi2ApiTest {
 
         tank.share(tankValues);
         controller.share(controllerValues);
-
-
-
         /*
-
         v = tank.get("v")
-
         while(diff(v,tank.peak("v")) > 0.001)
         {
             controller.share(controller.get());
@@ -140,12 +227,6 @@ public class Fmi2ApiTest {
             tank.step(1);
             scope.v = tank.get("v")
         }
-
-
-
-
         * */
-
     }
-
 }
