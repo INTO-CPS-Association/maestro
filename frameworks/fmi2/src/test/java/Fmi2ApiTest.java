@@ -29,51 +29,61 @@ public class Fmi2ApiTest {
         msd3.getPort("G").linkTo(msd2.getPort("G"));
 
         // Initialization
-        msd1.getSingle("x1");
-        msd2.setSingle("x1");
-        msd1.getSingle("v1");
-        msd2.setSingle("v1");
-        msd2.getSingle("fk");
-        msd1.setSingle("fk");
-        msd2.getSingle("z");
-        msd3.setSingle("z");
-        msd3.getSingle("G");
-        msd2.setSingle("G");
+        msd1.getAndShare("x1");
+        msd2.set("x1");
+        msd1.share(msd1.get("v1"));
+        msd2.set("v1");
+        msd2.share(msd2.get("fk"));
+        msd1.set("fk");
+        msd2.getAndShare("z");
+        msd3.set("z");
+        msd3.getAndShare("G");
+        msd2.set("G");
 
         // Stepping
         msd1.getState();
         msd2.getState();
         msd3.getState();
 
-        Variable<MBoolean> until_step_accept = builder.variableCreator().createBoolean("until-step-accept");
-        Variable<MInt> maxStepAcceptAttempts = builder.variableCreator().createInteger("max_step_accept_attempts");
-        maxStepAcceptAttempts.setValue(builder.rawValueCreator().createMInt(5));
-        Scope while_step_scope = builder.getDefaultScope().enterWhile(
-                until_step_accept.getValue().and(logic.isLess(builder.rawValueCreator().createMInt(0), maxStepAcceptAttempts.getValue())));
+
+        Variable<MBoolean> until_step_accept = builder.getDefaultScope().variableCreator().createBoolean("until-step-accept");
+        Variable<MInt> maxStepAcceptAttempts = builder.getDefaultScope().variableCreator().createInteger("max_step_accept_attempts");
+        maxStepAcceptAttempts.setValue(builder.getDefaultScope().literalCreator().createMInt(5));
+        Scope while_step_scope = builder.getDefaultScope().enterWhile(until_step_accept.getValue()
+                .and(logic.isLess(builder.getDefaultScope().literalCreator().createMInt(0), maxStepAcceptAttempts.getValue())));
         // Todo: What does iterate mean?
-        Variable<MBoolean> until_converged = builder.variableCreator().createBoolean("until-converged");
-        Variable<MInt> maxConvergeAttempts = builder.variableCreator().createInteger("max_converge_attempts");
-        maxConvergeAttempts.setValue(builder.rawValueCreator().createMInt(5));
-        Scope while_converged_scope = while_step_scope
-                .enterWhile(until_converged.getValue().and(logic.isLess(builder.rawValueCreator().createMInt(0), maxConvergeAttempts.getValue())));
+        Variable<MBoolean> until_converged = while_step_scope.variableCreator().createBoolean("until-converged");
+        Variable<MInt> maxConvergeAttempts = while_step_scope.variableCreator().createInteger("max_converge_attempts");
+        maxConvergeAttempts.setValue(while_step_scope.literalCreator().createMInt(5));
+        Scope while_converged_scope = while_step_scope.enterWhile(
+                until_converged.getValue().and(logic.isLess(while_step_scope.literalCreator().createMInt(0), maxConvergeAttempts.getValue())));
 
-        TimeTaggedValue msd1_x1_old = builder.getCurrentLinkedValue(msd1.getPort("x1"));
-        TimeTaggedValue msd1_v1_old = builder.getCurrentLinkedValue(msd1.getPort("v1"));
-        TimeTaggedValue msd2_fk_old = builder.getCurrentLinkedValue(msd2.getPort("fk"));
-        TimeTaggedValue msd2_z_old = builder.getCurrentLinkedValue(msd2.getPort("z"));
-        TimeTaggedValue msd3_G_old = builder.getCurrentLinkedValue(msd3.getPort("G"));
+        Value msd1_x1_old = builder.getCurrentLinkedValue(msd1.getPort("x1"));
+        Value msd1_v1_old = builder.getCurrentLinkedValue(msd1.getPort("v1"));
+        Value msd2_fk_old = builder.getCurrentLinkedValue(msd2.getPort("fk"));
+        Value msd2_z_old = builder.getCurrentLinkedValue(msd2.getPort("z"));
+        Value msd3_G_old = builder.getCurrentLinkedValue(msd3.getPort("G"));
 
-        msd1.setSingle("fk");
-        msd2.setSingle("v1");
-        msd2.setSingle("G");
+        msd1.set("fk");
+        msd2.set("v1");
+        msd2.set("G");
+        // Todo: Get minimum step
         TimeDeltaValue msd1StepTime = msd1.step(1.0);
+        Variable<TimeDeltaValue> msd1StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd1StepDelta");
+        msd1StepTime_.setValue(msd1StepTime);
         TimeDeltaValue msd2StepTime = msd2.step(1.0);
-        TimeDeltaValue msd3StepTime = msd3.step(1.0);
-        msd1.getSingle("x1");
-        msd2.setSingle("x1");
-        msd2.getSingle("fk");
-        msd2.getSingle("z");
-        msd3.getSingle("G");
+        Variable<TimeDeltaValue> msd2StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd2StepDelta");
+        msd2StepTime_.setValue(msd2StepTime);
+        TimeDeltaValue msd3StepTime = msd3.step(1.0); // TODO: Create utility function such that storing this outside loop is not necessary
+        Variable<TimeDeltaValue> msd3StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd3StepDelta");
+        msd3StepTime_.setValue(msd3StepTime);
+
+
+        msd1.getAndShare("x1");
+        msd2.set("x1");
+        msd2.share(msd2.get("fk", "z"));// Collapsed 2 gets into 1. It is a filter
+        msd3.set("z");
+        msd3.share(msd3.get("G"));
         LogicBuilder.Predicate x1Pred = logic.fromExternalFunction("doesConverge", msd1_x1_old, msd1.getSingle("x1"));
         LogicBuilder.Predicate v1Pred = logic.fromExternalFunction("doesConverge", msd1_v1_old, msd1.getSingle("v1"));
         LogicBuilder.Predicate fkPred = logic.fromExternalFunction("doesConverge", msd2_fk_old, msd2.getSingle("fk"));
@@ -84,13 +94,14 @@ public class Fmi2ApiTest {
         msd1.setState();
         msd2.setState();
         msd3.setState();
+        maxConvergeAttempts.getValue().decrement();
         convergenceIfScope.enterElse();
         // TODO: Set until_converged to True
         convergenceIfScope.leave();
         while_converged_scope.leave();
 
-        IfScope equalStepIfScope =
-                while_step_scope.enterIf(logic.isEqual(msd1StepTime, msd2StepTime).and(logic.isEqual(msd2StepTime, msd3StepTime)).not());
+        IfScope equalStepIfScope = while_step_scope.enterIf(logic.isEqual(msd1StepTime_.getValue(), msd2StepTime_.getValue())
+                .and(logic.isEqual(msd2StepTime_.getValue(), msd3StepTime_.getValue())).not());
         msd1.setState();
         msd2.setState();
         msd3.setState();
@@ -131,7 +142,7 @@ public class Fmi2ApiTest {
         //get and share the values with every one linked
         controller.share(controller.get());
 
-        TimeTaggedValue levelVal = tank.getSingle("level");
+        Value levelVal = tank.getSingle("level");
 
         //just to try an if lets alter a value at this point, we will not use it for this but for the stabilization where we check something and do
         // changes with state accordingly
@@ -183,7 +194,7 @@ public class Fmi2ApiTest {
         controller.set();
 
 
-        TimeTaggedValue searchForConverged = null;//false
+        Value searchForConverged = null;//false
         //        TimeTaggedValue vOld = tank.getSingle("v");//get from linked data
         //
         //        TimeTaggedValue v = tank.getSingle("v");
@@ -193,7 +204,7 @@ public class Fmi2ApiTest {
         TimeTaggedState cs = controller.getState();
 
         WhileScope convergeScppe = builder.getDefaultScope().enterWhile(logic.fromValue(searchForConverged).not());
-        TimeTaggedValue vOld = builder.getCurrentLinkedValue(tank.getPort("v"));
+        Value vOld = builder.getCurrentLinkedValue(tank.getPort("v"));
 
         tank.set();
         controller.set();
@@ -202,12 +213,12 @@ public class Fmi2ApiTest {
         controller.step(1);
 
 
-        Map<Port, TimeTaggedValue> tankValues = tank.get();
-        Map<Port, TimeTaggedValue> controllerValues = controller.get();
-        TimeTaggedValue v = tank.getSingle("v");//actually find this on in tankValues
+        Map<Port, Value> tankValues = tank.get();
+        Map<Port, Value> controllerValues = controller.get();
+        Value v = tank.getSingle("v");//actually find this on in tankValues
 
 
-        IfScope ifConvergeScope = convergeScppe.enterIf(logic.fromExternalFunction("doesConverge", v, vOld, TimeTaggedValue.of(0.0111)));
+        IfScope ifConvergeScope = convergeScppe.enterIf(logic.fromExternalFunction("doesConverge", v, vOld, Value.of(0.0111)));
         ifConvergeScope.enterElse();
 
         tank.setState(ts);

@@ -45,7 +45,7 @@ public abstract class Fmi2Builder {
      * @param port
      * @return
      */
-    public abstract TimeTaggedValue getCurrentLinkedValue(Port port);
+    public abstract Value getCurrentLinkedValue(Port port);
 
     /**
      * New boolean that can be used as a predicate
@@ -53,12 +53,6 @@ public abstract class Fmi2Builder {
      * @param
      * @return
      */
-
-
-    public abstract LiteralCreator rawValueCreator();
-
-    public abstract VariableCreator variableCreator();
-
 
     /**
      * Scoping functions
@@ -69,6 +63,10 @@ public abstract class Fmi2Builder {
         IfScope enterIf(LogicBuilder.Predicate predicate);
 
         Scope leave();
+
+        public abstract LiteralCreator literalCreator();
+
+        public abstract VariableCreator variableCreator();
     }
 
     /**
@@ -81,7 +79,7 @@ public abstract class Fmi2Builder {
          * @param value
          * @return
          */
-        TimeTaggedValue store(double value);
+        Value store(double value);
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -89,7 +87,7 @@ public abstract class Fmi2Builder {
          * @param tag
          * @return
          */
-        TimeTaggedValue store(TimeTaggedValue tag);
+        Value store(Value tag);
 
         /**
          * Override a tags value from an existing value. Copy
@@ -98,7 +96,7 @@ public abstract class Fmi2Builder {
          * @param value
          * @return
          */
-        TimeTaggedValue store(TimeTaggedValue tag, TimeTaggedValue value);
+        Value store(Value tag, Value value);
     }
 
     /**
@@ -144,11 +142,11 @@ public abstract class Fmi2Builder {
 
         <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
 
-        Predicate isGreater(TimeTaggedValue a, double b);
+        Predicate isGreater(Value a, double b);
 
-        Predicate fromValue(TimeTaggedValue value);
+        Predicate fromValue(Value value);
 
-        Predicate fromExternalFunction(String name, TimeTaggedValue... args);
+        Predicate fromExternalFunction(String name, Value... args);
 
 
         interface Predicate {
@@ -188,7 +186,7 @@ public abstract class Fmi2Builder {
     /**
      * Delta value for a time
      */
-    public interface TimeDeltaValue extends Time {
+    public interface TimeDeltaValue extends Time, MDouble {
     }
 
     /**
@@ -234,14 +232,14 @@ public abstract class Fmi2Builder {
          * @param ports
          * @return
          */
-        Map<Port, TimeTaggedValue> get(Port... ports);
+        Map<Port, Value> get(Port... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        Map<Port, TimeTaggedValue> get();
+        Map<Port, Value> get();
 
         /**
          * get filter by value reference
@@ -249,7 +247,7 @@ public abstract class Fmi2Builder {
          * @param valueReferences
          * @return
          */
-        Map<Port, TimeTaggedValue> get(int... valueReferences);
+        Map<Port, Value> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -257,7 +255,9 @@ public abstract class Fmi2Builder {
          * @param names
          * @return
          */
-        Map<Port, TimeTaggedValue> get(String... names);
+        Map<Port, Value> get(String... names);
+
+        Map<Port, Value> getAndShare(String... names);
 
         /**
          * Get the value of a single port
@@ -265,38 +265,35 @@ public abstract class Fmi2Builder {
          * @param name
          * @return
          */
-        TimeTaggedValue getSingle(String name);
+        Value getSingle(String name);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
          *
          * @param value
          */
-        void set(Map<Port, TimeTaggedValue> value);
+        void set(Map<Port, Value> value);
 
-        /**
-         * Set all linked values for the linked ports
-         */
-        void set();
 
         /**
          * Set this fmu port by name and link
          */
-        void setSingle(String name);
+        void set(String... names);
+
 
         /**
          * Set this fmu ports by val ref
          *
          * @param values
          */
-        void setInt(Map<Integer, TimeTaggedValue> values);
+        void setInt(Map<Integer, Value> values);
 
         /**
          * Set this fmy ports by name
          *
          * @param value
          */
-        void setString(Map<String, TimeTaggedValue> value);
+        void setString(Map<String, Value> value);
 
         /**
          * Makes the values publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -304,7 +301,7 @@ public abstract class Fmi2Builder {
          *
          * @param values
          */
-        void share(Map<Port, TimeTaggedValue> values);
+        void share(Map<Port, Value> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -312,7 +309,7 @@ public abstract class Fmi2Builder {
          *
          * @param value
          */
-        void share(Port port, TimeTaggedValue value);
+        void share(Port port, Value value);
 
         /**
          * Step the fmu for the given time
@@ -388,8 +385,8 @@ public abstract class Fmi2Builder {
         void breakLink(Port... receiver);
     }
 
-    public interface TimeTaggedValue {
-        static TimeTaggedValue of(double a) {
+    public interface Value {
+        static Value of(double a) {
             return null;
         }
     }
@@ -398,10 +395,17 @@ public abstract class Fmi2Builder {
         Variable<MBoolean> createBoolean(String label);
 
         Variable<MInt> createInteger(String label);
+
+        Variable<TimeDeltaValue> createTimeDeltaValue(String label);
+
+        Variable<MDouble> createDouble(String label);
     }
 
     public interface LiteralCreator {
         MInt createMInt(Integer value);
+    }
+
+    public interface MDouble extends Numeric<Double> {
     }
 
     public interface MInt extends Numeric<Integer> {
