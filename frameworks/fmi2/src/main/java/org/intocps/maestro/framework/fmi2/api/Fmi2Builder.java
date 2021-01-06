@@ -24,6 +24,8 @@ public abstract class Fmi2Builder {
     public abstract Scope getDefaultScope();
     //    public abstract void pushScope(Scope scope);
 
+    public abstract Scope getCurrentScope();
+
     /**
      * Get handle to the current time
      *
@@ -97,6 +99,12 @@ public abstract class Fmi2Builder {
          * @return
          */
         Value store(Value tag, Value value);
+
+        MDouble doubleFromExternalFunction(String functionName, Value... arguments);
+
+        MInt intFromExternalFunction(String functionName, Value... arguments);
+
+        MBoolean booleanFromExternalFunction(String functionName, Value... arguments);
     }
 
     /**
@@ -159,13 +167,13 @@ public abstract class Fmi2Builder {
 
     }
 
-    public interface Numeric<A> {
+    public interface Numeric<A> extends Value {
         void set(A value);
 
         A get();
     }
 
-    public interface MBoolean extends LogicBuilder.Predicate {
+    public interface MBoolean extends LogicBuilder.Predicate, Value {
         void set(Boolean value);
 
         Boolean get();
@@ -187,6 +195,7 @@ public abstract class Fmi2Builder {
      * Delta value for a time
      */
     public interface TimeDeltaValue extends Time, MDouble {
+        
     }
 
     /**
@@ -319,6 +328,8 @@ public abstract class Fmi2Builder {
          */
         TimeDeltaValue step(TimeDeltaValue deltaTime);
 
+        TimeDeltaValue step(Variable<TimeDeltaValue> deltaTime);
+
         /**
          * Step the fmu for the given time
          *
@@ -389,6 +400,10 @@ public abstract class Fmi2Builder {
         static Value of(double a) {
             return null;
         }
+
+        static Value of(Variable var) {
+            return null;
+        }
     }
 
     public interface VariableCreator {
@@ -407,16 +422,19 @@ public abstract class Fmi2Builder {
         MInt createMInt(Integer value);
 
         Time createTime(Double value);
+
+        TimeDeltaValue createTimeDelta(double v);
     }
 
     public interface MDouble extends Numeric<Double> {
+        TimeDeltaValue toTimeDelta();
     }
 
     public interface MInt extends Numeric<Integer> {
         void decrement();
     }
 
-    public interface Variable<T> {
+    public interface Variable<T> extends Value {
         void setName();
 
         T getValue();
