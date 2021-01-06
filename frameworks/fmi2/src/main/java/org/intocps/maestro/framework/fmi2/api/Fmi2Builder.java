@@ -328,7 +328,7 @@ public abstract class Fmi2Builder {
          */
         TimeDeltaValue step(TimeDeltaValue deltaTime);
 
-        TimeDeltaValue step(Variable<?, TimeDeltaValue> deltaTime);
+        TimeDeltaValue step(Variable<MDouble, TimeDeltaValue> deltaTime);
 
         /**
          * Step the fmu for the given time
@@ -434,7 +434,7 @@ public abstract class Fmi2Builder {
         void decrement();
     }
 
-    public interface Variable<Z, T> extends Value {
+    public interface Variable<Z, T extends Z> extends Value {
         void setName();
 
         T getValue();
