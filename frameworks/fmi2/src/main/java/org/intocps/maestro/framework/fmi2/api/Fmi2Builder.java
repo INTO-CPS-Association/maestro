@@ -49,6 +49,8 @@ public abstract class Fmi2Builder {
      */
     public abstract Value getCurrentLinkedValue(Port port);
 
+    public abstract TimeDeltaValue createTimeDeltaValue(MDouble getMinimum);
+
     /**
      * New boolean that can be used as a predicate
      *
@@ -328,7 +330,7 @@ public abstract class Fmi2Builder {
          */
         TimeDeltaValue step(TimeDeltaValue deltaTime);
 
-        TimeDeltaValue step(Variable<MDouble, TimeDeltaValue> deltaTime);
+        TimeDeltaValue step(Variable<TimeDeltaValue> deltaTime);
 
         /**
          * Step the fmu for the given time
@@ -407,15 +409,15 @@ public abstract class Fmi2Builder {
     }
 
     public interface VariableCreator {
-        Variable<MBoolean, MBoolean> createBoolean(String label);
+        Variable<MBoolean> createBoolean(String label);
 
-        Variable<MInt, MInt> createInteger(String label);
+        Variable<MInt> createInteger(String label);
 
-        Variable<MDouble, TimeDeltaValue> createTimeDeltaValue(String label);
+        Variable<TimeDeltaValue> createTimeDeltaValue(String label);
 
-        Variable<MDouble, MDouble> createDouble(String label);
+        Variable<MDouble> createDouble(String label);
 
-        Variable<MDouble, Time> createTimeValue(String step_size);
+        Variable<Time> createTimeValue(String step_size);
     }
 
     public interface LiteralCreator {
@@ -434,11 +436,11 @@ public abstract class Fmi2Builder {
         void decrement();
     }
 
-    public interface Variable<Z, T extends Z> extends Value {
+    public interface Variable<T> extends Value {
         void setName();
 
         T getValue();
 
-        void setValue(Z value);
+        void setValue(T value);
     }
 }
