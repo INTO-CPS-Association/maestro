@@ -13,6 +13,10 @@ public class Fmi2ApiTest {
     public void testLoop_Within_loop() {
         Fmi2Builder builder = null;
         LogicBuilder logic = null;
+
+        Variable<Time> step_size = builder.getDefaultScope().variableCreator().createTimeValue("step_size");
+        step_size.setValue(builder.getDefaultScope().literalCreator().createTime(1.0));
+
         Fmu2Api msd1Fmu = builder.createFmu(new File("."));
         Fmu2Api msd2Fmu = builder.createFmu(new File("."));
         Fmu2Api msd3Fmu = builder.createFmu(new File("."));

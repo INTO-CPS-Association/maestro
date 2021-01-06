@@ -399,10 +399,14 @@ public abstract class Fmi2Builder {
         Variable<TimeDeltaValue> createTimeDeltaValue(String label);
 
         Variable<MDouble> createDouble(String label);
+
+        Variable<Time> createTimeValue(String step_size);
     }
 
     public interface LiteralCreator {
         MInt createMInt(Integer value);
+
+        Time createTime(Double value);
     }
 
     public interface MDouble extends Numeric<Double> {
