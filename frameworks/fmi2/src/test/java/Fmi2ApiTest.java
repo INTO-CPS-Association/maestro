@@ -45,17 +45,17 @@ public class Fmi2ApiTest {
         msd2.getState();
         msd3.getState();
 
-        MBoolean until_step_accept = builder.createBoolean("until-step-accept");
-        MInt maxStepAcceptAttempts = builder.createInteger("max_step_accept_attempts");
-        maxStepAcceptAttempts.set(5);
-        Scope while_step_scope = builder.getDefaultScope()
-                .enterWhile(until_step_accept.and(logic.isLess(builder.primitivesCreator().createMInt(0), maxStepAcceptAttempts)));
+        Variable<MBoolean> until_step_accept = builder.variableCreator().createBoolean("until-step-accept");
+        Variable<MInt> maxStepAcceptAttempts = builder.variableCreator().createInteger("max_step_accept_attempts");
+        maxStepAcceptAttempts.setValue(builder.rawValueCreator().createMInt(5));
+        Scope while_step_scope = builder.getDefaultScope().enterWhile(
+                until_step_accept.getValue().and(logic.isLess(builder.rawValueCreator().createMInt(0), maxStepAcceptAttempts.getValue())));
         // Todo: What does iterate mean?
-        MBoolean until_converged = builder.createBoolean("until-converged");
-        MInt maxConvergeAttempts = builder.createInteger("max_converge_attempts");
-        maxConvergeAttempts.set(5);
-        Scope while_converged_scope =
-                while_step_scope.enterWhile(until_converged.and(logic.isLess(builder.primitivesCreator().createMInt(0), maxConvergeAttempts)));
+        Variable<MBoolean> until_converged = builder.variableCreator().createBoolean("until-converged");
+        Variable<MInt> maxConvergeAttempts = builder.variableCreator().createInteger("max_converge_attempts");
+        maxConvergeAttempts.setValue(builder.rawValueCreator().createMInt(5));
+        Scope while_converged_scope = while_step_scope
+                .enterWhile(until_converged.getValue().and(logic.isLess(builder.rawValueCreator().createMInt(0), maxConvergeAttempts.getValue())));
 
         TimeTaggedValue msd1_x1_old = builder.getCurrentLinkedValue(msd1.getPort("x1"));
         TimeTaggedValue msd1_v1_old = builder.getCurrentLinkedValue(msd1.getPort("v1"));
@@ -94,7 +94,7 @@ public class Fmi2ApiTest {
         msd1.setState();
         msd2.setState();
         msd3.setState();
-        maxStepAcceptAttempts.decrement();
+        maxStepAcceptAttempts.getValue().decrement();
         equalStepIfScope.leave();
         while_step_scope.leave();
 

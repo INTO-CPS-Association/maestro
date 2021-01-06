@@ -50,12 +50,14 @@ public abstract class Fmi2Builder {
     /**
      * New boolean that can be used as a predicate
      *
-     * @param s
+     * @param
      * @return
      */
-    public abstract MBoolean createBoolean(String s);
 
-    public abstract PrimitivesCreator primitivesCreator();
+
+    public abstract LiteralCreator rawValueCreator();
+
+    public abstract VariableCreator variableCreator();
 
 
     /**
@@ -392,12 +394,25 @@ public abstract class Fmi2Builder {
         }
     }
 
-    public interface PrimitivesCreator {
-        MInt createMInt(Integer Value);
+    public interface VariableCreator {
+        Variable<MBoolean> createBoolean(String label);
+
+        Variable<MInt> createInteger(String label);
+    }
+
+    public interface LiteralCreator {
+        MInt createMInt(Integer value);
     }
 
     public interface MInt extends Numeric<Integer> {
         void decrement();
+    }
 
+    public interface Variable<T> {
+        void setName();
+
+        T getValue();
+
+        void setValue(T value);
     }
 }
