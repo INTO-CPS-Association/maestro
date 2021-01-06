@@ -182,7 +182,7 @@ public abstract class Fmi2Builder {
     /**
      * Current time
      */
-    public interface Time {
+    public interface Time extends MDouble {
     }
 
     /**
@@ -194,7 +194,7 @@ public abstract class Fmi2Builder {
     /**
      * Delta value for a time
      */
-    public interface TimeDeltaValue extends Time, MDouble {
+    public interface TimeDeltaValue extends Time {
 
     }
 
