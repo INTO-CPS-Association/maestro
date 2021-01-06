@@ -14,7 +14,7 @@ public class Fmi2ApiTest {
         Fmi2Builder builder = null;
         LogicBuilder logic = null;
 
-        Variable<TimeDeltaValue> step_size = builder.getDefaultScope().variableCreator().createTimeDeltaValue("step_size");
+        Variable<MDouble, TimeDeltaValue> step_size = builder.getDefaultScope().variableCreator().createTimeDeltaValue("step_size");
         step_size.setValue(builder.getDefaultScope().literalCreator().createTimeDelta(1.0));
 
         Fmu2Api msd1Fmu = builder.createFmu(new File("."));
@@ -50,16 +50,16 @@ public class Fmi2ApiTest {
         msd3.getState();
 
 
-        Variable<MBoolean> until_step_accept = builder.getDefaultScope().variableCreator().createBoolean("until-step-accept");
-        Variable<MInt> maxStepAcceptAttempts = builder.getDefaultScope().variableCreator().createInteger("max_step_accept_attempts");
+        Variable<MBoolean, MBoolean> until_step_accept = builder.getDefaultScope().variableCreator().createBoolean("until-step-accept");
+        Variable<MInt, MInt> maxStepAcceptAttempts = builder.getDefaultScope().variableCreator().createInteger("max_step_accept_attempts");
         maxStepAcceptAttempts.setValue(builder.getDefaultScope().literalCreator().createMInt(5));
-        Variable<TimeDeltaValue> minimumStepSize = builder.getCurrentScope().variableCreator().createTimeDeltaValue("minimum_step");
+        Variable<MDouble, TimeDeltaValue> minimumStepSize = builder.getCurrentScope().variableCreator().createTimeDeltaValue("minimum_step");
 
         Scope while_step_scope = builder.getDefaultScope().enterWhile(until_step_accept.getValue()
                 .and(logic.isLess(builder.getDefaultScope().literalCreator().createMInt(0), maxStepAcceptAttempts.getValue())));
 
-        Variable<MBoolean> until_converged = while_step_scope.variableCreator().createBoolean("until-converged");
-        Variable<MInt> maxConvergeAttempts = while_step_scope.variableCreator().createInteger("max_converge_attempts");
+        Variable<MBoolean, MBoolean> until_converged = while_step_scope.variableCreator().createBoolean("until-converged");
+        Variable<MInt, MInt> maxConvergeAttempts = while_step_scope.variableCreator().createInteger("max_converge_attempts");
         maxConvergeAttempts.setValue(while_step_scope.literalCreator().createMInt(5));
         Scope while_converged_scope = while_step_scope.enterWhile(
                 until_converged.getValue().and(logic.isLess(while_step_scope.literalCreator().createMInt(0), maxConvergeAttempts.getValue())));
@@ -75,14 +75,14 @@ public class Fmi2ApiTest {
         msd2.set("G");
         // Todo: Get minimum step
         TimeDeltaValue msd1StepTime = msd1.step(minimumStepSize);
-        Variable<TimeDeltaValue> msd1StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd1StepDelta");
+        Variable<MDouble, TimeDeltaValue> msd1StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd1StepDelta");
         msd1StepTime_.setValue(msd1StepTime);
         TimeDeltaValue msd2StepTime = msd2.step(minimumStepSize);
-        Variable<TimeDeltaValue> msd2StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd2StepDelta");
+        Variable<MDouble, TimeDeltaValue> msd2StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd2StepDelta");
         msd2StepTime_.setValue(msd2StepTime);
         TimeDeltaValue msd3StepTime =
                 msd3.step(minimumStepSize); // TODO: Create utility function such that storing this outside loop is not necessary
-        Variable<TimeDeltaValue> msd3StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd3StepDelta");
+        Variable<MDouble, TimeDeltaValue> msd3StepTime_ = builder.getDefaultScope().variableCreator().createTimeDeltaValue("msd3StepDelta");
         msd3StepTime_.setValue(msd3StepTime);
         minimumStepSize.setValue(
                 builder.getCurrentScope().doubleFromExternalFunction("getMinimum", msd1StepTime_, msd2StepTime_, msd3StepTime_).toTimeDelta());

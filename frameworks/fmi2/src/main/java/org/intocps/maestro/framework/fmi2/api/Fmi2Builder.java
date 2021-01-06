@@ -195,7 +195,7 @@ public abstract class Fmi2Builder {
      * Delta value for a time
      */
     public interface TimeDeltaValue extends Time, MDouble {
-        
+
     }
 
     /**
@@ -328,7 +328,7 @@ public abstract class Fmi2Builder {
          */
         TimeDeltaValue step(TimeDeltaValue deltaTime);
 
-        TimeDeltaValue step(Variable<TimeDeltaValue> deltaTime);
+        TimeDeltaValue step(Variable<?, TimeDeltaValue> deltaTime);
 
         /**
          * Step the fmu for the given time
@@ -407,15 +407,15 @@ public abstract class Fmi2Builder {
     }
 
     public interface VariableCreator {
-        Variable<MBoolean> createBoolean(String label);
+        Variable<MBoolean, MBoolean> createBoolean(String label);
 
-        Variable<MInt> createInteger(String label);
+        Variable<MInt, MInt> createInteger(String label);
 
-        Variable<TimeDeltaValue> createTimeDeltaValue(String label);
+        Variable<MDouble, TimeDeltaValue> createTimeDeltaValue(String label);
 
-        Variable<MDouble> createDouble(String label);
+        Variable<MDouble, MDouble> createDouble(String label);
 
-        Variable<Time> createTimeValue(String step_size);
+        Variable<MDouble, Time> createTimeValue(String step_size);
     }
 
     public interface LiteralCreator {
@@ -434,11 +434,11 @@ public abstract class Fmi2Builder {
         void decrement();
     }
 
-    public interface Variable<T> extends Value {
+    public interface Variable<Z, T> extends Value {
         void setName();
 
         T getValue();
 
-        void setValue(T value);
+        void setValue(Z value);
     }
 }
