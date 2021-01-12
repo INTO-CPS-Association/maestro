@@ -366,6 +366,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
+    public ModelDescription getModelDescription(String name) {
+        return this.fmuKeyToModelDescription.get(name);
+    }
+
     public static class Relation implements FrameworkVariableInfo {
         Variable source;
         InternalOrExternal origin;

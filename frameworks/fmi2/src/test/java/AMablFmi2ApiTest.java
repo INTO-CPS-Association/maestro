@@ -1,12 +1,55 @@
+//import Fmi2AMaBLBuilder.AMaBLVariableCreator;
+//import Fmi2AMaBLBuilder.AMablBuilder;
+//import Fmi2AMaBLBuilder.AMablFmi2ComponentAPI;
+//import Fmi2AMaBLBuilder.AMablFmu2Api;
+//import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+//import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 //import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 //import org.intocps.maestro.framework.fmi2.api.Fmi2Builder.*;
 //import org.junit.Ignore;
 //import org.junit.Test;
 //
+//import javax.xml.xpath.XPathExpressionException;
 //import java.io.File;
+//import java.lang.reflect.InvocationTargetException;
+//import java.net.URI;
+//import java.net.URISyntaxException;
 //import java.util.Map;
 //
-//public class Fmi2ApiTest {
+//public class AMablFmi2ApiTest {
+//
+//    @Test
+//    public void watertankExample() {
+//        Fmi2SimulationEnvironmentConfiguration config = new Fmi2SimulationEnvironmentConfiguration();
+//        config.
+//                Fmi2SimulationEnvironment simEnv = new Fmi2SimulationEnvironment()
+//    }
+//
+//    @Test
+//    @Ignore
+//    public void dummyTest() throws URISyntaxException, XPathExpressionException, InvocationTargetException, IllegalAccessException {
+//        Fmi2SimulationEnvironment simEnv = null;
+//        AMablBuilder builder = new AMablBuilder(simEnv);
+//
+//        // This returns a variableCreator that always follows the current scope.
+//        AMaBLVariableCreator variableCreator = builder.variableCreator();
+//        variableCreator.createTimeDeltaValue("step_size", 1.0);
+//        AMablFmu2Api msd1Fmu = variableCreator.createFMU("msd1Fmu", new URI(""));
+//        AMablFmu2Api msd2Fmu = variableCreator.createFMU("msd2Fmu", new URI(""));
+//        AMablFmu2Api msd3Fmu = variableCreator.createFMU("msd3Fmu", new URI(""));
+//        AMablFmi2ComponentAPI msd1 = msd1Fmu.create("msd1");
+//        AMablFmi2ComponentAPI msd2 = msd2Fmu.create("msd2");
+//        AMablFmi2ComponentAPI msd3 = msd3Fmu.create("msd3");
+//
+//        msd1.getPort("x1").linkTo(msd2.getPort("x1"));
+//        msd1.getPort("v1").linkTo(msd2.getPort("v1"));
+//        msd2.getPort("fk").linkTo(msd1.getPort("fk"));
+//        msd2.getPort("z").linkTo(msd3.getPort("z"));
+//        msd3.getPort("G").linkTo(msd2.getPort("G"));
+//        msd1.getAndShare("x1");
+//
+//
+//    }
 //
 //    @Test
 //    @Ignore

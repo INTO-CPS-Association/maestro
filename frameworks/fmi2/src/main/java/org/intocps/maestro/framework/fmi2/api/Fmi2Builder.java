@@ -1,19 +1,14 @@
 package org.intocps.maestro.framework.fmi2.api;
 
-import java.io.File;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+
+import javax.xml.xpath.XPathExpressionException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 public abstract class Fmi2Builder {
-
-    /**
-     * Generates a handle to a loaded fmu
-     *
-     * @param path
-     * @return
-     */
-    public abstract Fmu2Api createFmu(File path);
-
     //    public abstract void popScope();
 
     /**
@@ -21,7 +16,7 @@ public abstract class Fmi2Builder {
      *
      * @return
      */
-    public abstract Scope getDefaultScope();
+    public abstract Scope getRootScope();
     //    public abstract void pushScope(Scope scope);
 
     public abstract Scope getCurrentScope();
@@ -50,6 +45,8 @@ public abstract class Fmi2Builder {
     public abstract Value getCurrentLinkedValue(Port port);
 
     public abstract TimeDeltaValue createTimeDeltaValue(MDouble getMinimum);
+
+    public abstract VariableCreator variableCreator();
 
     /**
      * New boolean that can be used as a predicate
@@ -138,7 +135,9 @@ public abstract class Fmi2Builder {
      * Handle for an fmu for the creation of component
      */
     public interface Fmu2Api {
-        Fmi2ComponentApi create();
+        Fmi2ComponentApi create(String name);
+
+        Fmi2ComponentApi create(String name, Scope scope);
     }
 
 
@@ -169,7 +168,10 @@ public abstract class Fmi2Builder {
 
     }
 
-    public interface Numeric<A> extends Value {
+    public interface Type {
+    }
+
+    public interface Numeric<A> extends Value, Type {
         void set(A value);
 
         A get();
@@ -245,6 +247,8 @@ public abstract class Fmi2Builder {
          */
         Map<Port, Value> get(Port... ports);
 
+        Map<Port, Value> get(Scope scope, Port... ports);
+
         /**
          * Get all (linked) port values
          *
@@ -277,6 +281,8 @@ public abstract class Fmi2Builder {
          * @return
          */
         Value getSingle(String name);
+
+        void set(Scope scope, Map<Port, Value> value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
@@ -381,7 +387,7 @@ public abstract class Fmi2Builder {
          *
          * @return
          */
-        int getPortReferenceValue();
+        Long getPortReferenceValue();
 
         /**
          * Link the current port to the receiving port. After this the receiving port will resolve its linked value to the value of this port
@@ -418,6 +424,11 @@ public abstract class Fmi2Builder {
         Variable<MDouble> createDouble(String label);
 
         Variable<Time> createTimeValue(String step_size);
+
+        Fmu2Api createFMU(String name, ModelDescription modelDescription,
+                URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
+
+        Fmu2Api createFMU(String msd1Fmu, URI uri) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
     }
 
     public interface LiteralCreator {
@@ -437,10 +448,12 @@ public abstract class Fmi2Builder {
     }
 
     public interface Variable<T> extends Value {
-        void setName();
+        String getName();
 
         T getValue();
 
         void setValue(T value);
+
+        Scope getScope();
     }
 }
