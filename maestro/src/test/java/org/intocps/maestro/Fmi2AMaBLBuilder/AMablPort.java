@@ -12,7 +12,7 @@ public class AMablPort implements Fmi2Builder.Port {
     public final ModelDescription.ScalarVariable scalarVariable;
     public AMablVariable relatedVariable;
     private List<AMablPort> companionInputPorts;
-    private AMablPort companionOutputPort;
+    private AMablPort sourcePort;
 
     public AMablPort(AMablFmi2ComponentAPI aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
 
@@ -34,15 +34,14 @@ public class AMablPort implements Fmi2Builder.Port {
     public void linkTo(Fmi2Builder.Port... receiver) {
         this.companionInputPorts = Arrays.stream(receiver).map(x -> (AMablPort) x).collect(Collectors.toList());
         this.companionInputPorts.forEach(x -> x.addCompanionPort(this));
-
     }
 
     private void addCompanionPort(AMablPort aMablPort) {
         if (this.scalarVariable.causality == ModelDescription.Causality.Input) {
-            if (this.companionOutputPort != null && this.companionOutputPort != aMablPort) {
-                aMablPort.removeCompanionPort(this);
+            if (this.sourcePort != null && this.sourcePort != aMablPort) {
+                this.sourcePort.removeCompanionPort(this);
             }
-            this.companionOutputPort = aMablPort;
+            this.sourcePort = aMablPort;
         }
         if (this.scalarVariable.causality == ModelDescription.Causality.Output) {
             if (!this.companionInputPorts.stream().anyMatch(x -> x == aMablPort)) {
@@ -51,8 +50,8 @@ public class AMablPort implements Fmi2Builder.Port {
         }
     }
 
-    public AMablPort getCompanionOutputPort() {
-        return this.companionOutputPort;
+    public AMablPort getSourcePort() {
+        return this.sourcePort;
     }
 
     private void removeCompanionPort(AMablPort aMablPort) {
@@ -60,7 +59,7 @@ public class AMablPort implements Fmi2Builder.Port {
             this.companionInputPorts.removeIf(x -> x == aMablPort);
         }
         if (this.scalarVariable.causality == ModelDescription.Causality.Input) {
-            this.companionOutputPort = null;
+            this.sourcePort = null;
         }
 
     }
