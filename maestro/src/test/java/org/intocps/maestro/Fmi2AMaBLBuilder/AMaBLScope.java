@@ -37,7 +37,7 @@ public class AMaBLScope implements Fmi2Builder.Scope {
     public AMaBLScope(IScopeBundle scopeBundle, Fmi2SimulationEnvironment simulationEnvironment) {
         this.scopeBundle = scopeBundle;
         this.simulationEnvironment = simulationEnvironment;
-        this.variableCreator = new AMaBLSpecificVariableCreator(this.simulationEnvironment, this);
+        this.variableCreator = AMaBLVariableCreatorFactory.CreateScopeSpecificVariableCreator(scopeBundle, () -> this, simulationEnvironment);
     }
 
     public static void addStatementBefore(BiFunction<Integer, LinkedList<AMaBLStatement>, Boolean> predicate, LinkedList<AMaBLStatement> statements,

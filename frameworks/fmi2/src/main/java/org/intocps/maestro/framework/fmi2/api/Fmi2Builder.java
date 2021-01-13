@@ -427,8 +427,6 @@ public abstract class Fmi2Builder {
 
         Fmu2Api createFMU(String name, ModelDescription modelDescription,
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
-
-        Fmu2Api createFMU(String msd1Fmu, URI uri) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
     }
 
     public interface LiteralCreator {

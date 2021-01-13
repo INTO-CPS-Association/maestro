@@ -21,7 +21,7 @@ public class AMablBuilder extends Fmi2Builder {
     static Map<String, AMablVariable> specialVariables = new HashMap<>();
     static Map<AMablPort, AMablPort> inputToOutputMapping = new HashMap<>();
     private final Fmi2SimulationEnvironment simulationEnvironment;
-    private final AMablCurrentVariableCreator currentVariableCreator;
+    private final AMaBLVariableCreator currentVariableCreator;
     AMaBLScope currentScope;
     ScopeBundle scopeBundle;
 
@@ -31,8 +31,7 @@ public class AMablBuilder extends Fmi2Builder {
         scopeBundle = new ScopeBundle((x) -> this.currentScope = x, currentScopeSupplier, () -> this.rootScope);
         rootScope = new AMaBLScope(scopeBundle, simulationEnvironment);
         this.currentScope = rootScope;
-
-        this.currentVariableCreator = new AMablCurrentVariableCreator(simulationEnvironment, currentScopeSupplier);
+        this.currentVariableCreator = AMaBLVariableCreatorFactory.CreateCurrentScopeVariableCreator(scopeBundle, simulationEnvironment);
 
         this.specialVariables.put("status", this.getRootScope().variableCreator.createBoolean("status"));
 

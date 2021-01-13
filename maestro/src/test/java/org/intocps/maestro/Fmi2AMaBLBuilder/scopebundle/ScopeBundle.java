@@ -24,19 +24,18 @@ public class ScopeBundle implements IScopeBundle {
         this(null, scopeGetter, null);
     }
 
+    @Override
+    public AMaBLScope getRootScope() {
+        return this.rootScopeGetter.get();
+    }
+
+    @Override
+    public AMaBLScope getCurrentScope() {
+        return scopeGetter.get();
+    }
 
     @Override
     public void setCurrentScope(AMaBLScope scope) {
         this.currentScopeSetter.accept(scope);
-    }
-
-    @Override
-    public AMaBLScope getScope() {
-        return this.scopeGetter.get();
-    }
-
-    @Override
-    public AMaBLScope getRootScope() {
-        return this.rootScopeGetter.get();
     }
 }

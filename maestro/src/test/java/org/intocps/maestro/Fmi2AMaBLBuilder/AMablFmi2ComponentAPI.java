@@ -171,7 +171,7 @@ public class AMablFmi2ComponentAPI implements Fmi2Builder.Fmi2ComponentApi {
             AMablPort companionPort = p_.getCompanionOutputPort();
             // Create valuereference set array
             Pair<LexIdentifier, List<PStm>> valRefArray =
-                    scopeBundle.getScope().findOrCreateValueReferenceArrayAndAssign(new long[]{p.getPortReferenceValue()});
+                    scopeBundle.getCurrentScope().findOrCreateValueReferenceArrayAndAssign(new long[]{p.getPortReferenceValue()});
             // TODO: Create the value set array
             //AMablBuilder.rootScope.findOrCreateArrayOfSize(p_);
 
