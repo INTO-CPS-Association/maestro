@@ -31,36 +31,71 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
         this.simEnv = simEnv;
     }
 
-    // CreateFMU is a root-level function and therefore located in the VariableCreator.
-    @Override
-    public AMablFmu2Api createFMU(String name, ModelDescription modelDescription,
-            URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+    public static AMablVariable<Fmi2Builder.MBoolean> createBoolean(String label, AMaBLScope scope) {
+        var name = label;
+        var type = newABoleanPrimitiveType();
+
+        scope.addStatement(newVariable(label, type));
+        AMablVariable var = new AMablVariable(name, type, scope, new AMaBLVariableLocation.BasicPosition());
+        scope.addVariable(var);
+        return var;
+    }
+
+    public static PType FMITypeToMablType(ModelDescription.Types type) {
+        switch (type) {
+            case Boolean:
+                return newABoleanPrimitiveType();
+            case Real:
+                return newARealNumericPrimitiveType();
+            case Integer:
+                return newAIntNumericPrimitiveType();
+            case String:
+                return newAStringPrimitiveType();
+            default:
+                throw new UnsupportedOperationException("Converting fmi type: " + type + " to mabl type is not supported.");
+        }
+    }
+
+    public static AMablVariable createVariableForPort(AMablPort port, AMaBLScope scope) {
+        var name = port.toLexName();
+        var type = MableAstFactory.newAArrayType(FMITypeToMablType(port.scalarVariable.type.type));
+        var size = 1;
+        PStm stm = MableBuilder.newVariable(name, type, size);
+        scope.addStatement(stm);
+        AMablVariable variable = new AMablVariable(name, type, scope, new AMaBLVariableLocation.ArrayPosition(0));
+        return variable;
+    }
+
+    public static AMablFmu2Api createFMU(String name, ModelDescription modelDescription, URI uriPath,
+            AMaBLScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
         if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
             path = uriPath.getPath();
         }
-        AMablFmu2Api aMablFmu2Api = new AMablFmu2Api(name, this.simEnv, new ModelDescriptionContext(modelDescription), scopeBundle);
+        AMablFmu2Api aMablFmu2Api =
+                new AMablFmu2Api(name, scope.getSimulationEnvironment(), new ModelDescriptionContext(modelDescription), scope.getScopeBundle());
 
         AMablVariable<AMablFmu2Api> variable =
-                new AMablVariable<>(name, MableAstFactory.newANameType("FMI2"), scopeSupplier.get(), new AMaBLVariableLocation.BasicPosition());
+                new AMablVariable<>(name, MableAstFactory.newANameType("FMI2"), scope, new AMaBLVariableLocation.BasicPosition());
 
         aMablFmu2Api.setVariable(variable);
         PStm pStm = newVariable(name, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
-        scopeSupplier.get().addStatement(pStm);
-        scopeSupplier.get().addVariable(aMablFmu2Api, variable);
+        scope.addStatement(pStm);
+        scope.addVariable(aMablFmu2Api, variable);
         return aMablFmu2Api;
+    }
+
+    // CreateFMU is a root-level function and therefore located in the VariableCreator.
+    @Override
+    public AMablFmu2Api createFMU(String name, ModelDescription modelDescription,
+            URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        return createFMU(name, modelDescription, uriPath, scopeSupplier.get());
     }
 
     @Override
     public AMablVariable<Fmi2Builder.MBoolean> createBoolean(String label) {
-        var name = label;
-        var type = newABoleanPrimitiveType();
-
-        scopeSupplier.get().addStatement(newVariable(label, type));
-        AMablVariable var = new AMablVariable(name, type, scopeSupplier.get(), new AMaBLVariableLocation.BasicPosition());
-        scopeSupplier.get().addVariable(var);
-        return var;
+        return createBoolean(label, scopeSupplier.get());
     }
 
     @Override
@@ -87,34 +122,8 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
         return null;
     }
 
-    public PType FMITypeToMablType(ModelDescription.Types type) {
-        switch (type) {
-            case Boolean:
-                return newABoleanPrimitiveType();
-            case Real:
-                return newARealNumericPrimitiveType();
-            case Integer:
-                return newAIntNumericPrimitiveType();
-            case String:
-                return newAStringPrimitiveType();
-            default:
-                throw new UnsupportedOperationException("Converting fmi type: " + type + " to mabl type is not supported.");
-        }
-    }
-
     //
     public AMablVariable createVariableForPort(AMablPort port) {
-        var name = port.toLexName();
-        var type = MableAstFactory.newAArrayType(FMITypeToMablType(port.scalarVariable.type.type));
-        var size = 1;
-        PStm stm = MableBuilder.newVariable(name, type, size);
-        scopeSupplier.get().addStatement(stm);
-        AMablVariable variable = new AMablVariable(name, type, scopeSupplier.get(), new AMaBLVariableLocation.ArrayPosition(0));
-        return variable;
-
+        return createVariableForPort(port, scopeSupplier.get());
     }
-    //
-    //    //    public <T> T create(Function<AMaBLScope, T> controller) {
-    //    //        return controller.apply(this.scopeBundle.getScope());
-    //    //    }
 }

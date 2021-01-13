@@ -29,15 +29,15 @@ public class BuilderTester {
         AMablBuilder builder = new AMablBuilder(env);
         AMaBLVariableCreator variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
 
+
         // Create the two FMUs
         AMablFmu2Api controllerFMU = variableCreator.createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), new URI(""));
         AMablFmu2Api tankFMU = variableCreator.createFMU("tankFMU", env.getModelDescription("{tankFMU}"), new URI(""));
 
         // Create the controller and tank instanes
         AMablFmi2ComponentAPI controller = controllerFMU.create("controller");
-        //                AMablFmi2ComponentAPI controller = variableCreator.create(tankFMU.create("controller")); //(scope) ->
-        //        AMablFmi2ComponentAPI tank = variableCreator.create(controllerFMU.create("tank"));
         AMablFmi2ComponentAPI tank = tankFMU.create("tank");
+
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));
 
@@ -47,7 +47,5 @@ public class BuilderTester {
 
         String test = PrettyPrinter.print(program);
         System.out.println(test);
-
-
     }
 }

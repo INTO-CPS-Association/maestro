@@ -111,10 +111,10 @@ public class AMablFmi2ComponentAPI implements Fmi2Builder.Fmi2ComponentApi {
         Map<Fmi2Builder.Port, Fmi2Builder.Value> returnMap = new HashMap<>();
         Arrays.stream(ports).forEach(p -> {
             if (p.relatedVariable == null) {
-                AMablVariable variableForPort = AMablBuilder.rootScope.variableCreator.createVariableForPort(p);
+                AMablVariable variableForPort = this.scopeBundle.getCurrentScope().variableCreator.createVariableForPort(p);
                 p.relatedVariable = variableForPort;
             }
-            createGetStm(AMablBuilder.rootScope, p);
+            createGetStm(this.scopeBundle.getCurrentScope(), p);
             returnMap.put(p, null);
         });
         return returnMap;

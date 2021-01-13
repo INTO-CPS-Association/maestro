@@ -1,6 +1,7 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IBasicScopeBundle;
 import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IScopeBundle;
 import org.intocps.maestro.Fmi2AMaBLBuilder.statements.AMaBLStatement;
 import org.intocps.maestro.Fmi2AMaBLBuilder.statements.LabelStatement;
@@ -225,6 +226,14 @@ public class AMaBLScope implements Fmi2Builder.Scope {
         }
 
         return null;
+    }
+
+    public Fmi2SimulationEnvironment getSimulationEnvironment() {
+        return this.simulationEnvironment;
+    }
+
+    public IBasicScopeBundle getScopeBundle() {
+        return this.scopeBundle;
     }
 
     public static class ScopeVariables {
