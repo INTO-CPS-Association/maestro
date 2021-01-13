@@ -1,5 +1,6 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.ScopeBundle;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -10,9 +11,7 @@ public class AMaBLSpecificVariableCreator extends AMaBLVariableCreator {
     private final AMaBLScope scope;
 
     public AMaBLSpecificVariableCreator(Fmi2SimulationEnvironment simEnv, AMaBLScope scope) {
-        super(simEnv, () -> {
-            return scope;
-        });
+        super(simEnv, new ScopeBundle(() -> scope));
         this.scope = scope;
     }
 

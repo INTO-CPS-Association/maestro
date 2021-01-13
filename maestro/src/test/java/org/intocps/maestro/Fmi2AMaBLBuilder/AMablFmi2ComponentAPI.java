@@ -1,6 +1,7 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IBasicScopeBundle;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
@@ -10,6 +11,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -20,22 +22,17 @@ public class AMablFmi2ComponentAPI implements Fmi2Builder.Fmi2ComponentApi {
 
     private final AMablFmu2Api parent;
     private final String name;
+    private final IBasicScopeBundle scopeBundle;
     ModelDescriptionContext modelDescriptionContext;
     AMablVariable<AMablFmi2ComponentAPI> variable;
 
     public AMablFmi2ComponentAPI(AMablFmu2Api parent, String name, AMablVariable<AMablFmi2ComponentAPI> variable,
-            ModelDescriptionContext modelDescriptionContext) {
+            ModelDescriptionContext modelDescriptionContext, IBasicScopeBundle scopeBundle) {
         this.parent = parent;
         this.name = name;
         this.variable = variable;
         this.modelDescriptionContext = modelDescriptionContext;
-    }
-
-    private void getAndShare(AMablPort port) {
-        if (port.relatedVariable != null) {
-            AMablVariable variableForPort = AMablBuilder.rootScope.variableCreator.createVariableForPort(port);
-            port.relatedVariable = variableForPort;
-        }
+        this.scopeBundle = scopeBundle;
     }
 
     @Override
@@ -100,21 +97,27 @@ public class AMablFmi2ComponentAPI implements Fmi2Builder.Fmi2ComponentApi {
         // 1.1: Otherwise create it
         // 2. Locally create the data necessary to retrieve the get
         // 2.1 Store the result in the global variable.
+        Map<Fmi2Builder.Port, Fmi2Builder.Value> returnMap = new HashMap<>();
         List<Fmi2Builder.Port> ports = this.getPorts(names);
         ports.forEach(p -> {
             AMablPort p_ = (AMablPort) p;
-            if (p_.relatedVariable == null) {
-                AMablVariable variableForPort = AMablBuilder.rootScope.variableCreator.createVariableForPort(p_);
-                p_.relatedVariable = variableForPort;
-            }
-            createGetStm(AMablBuilder.rootScope, p_);
+            returnMap.putAll(getAndShare(p_));
         });
 
-        return null;
+        return returnMap;
     }
 
-    public Map<Fmi2Builder.Port, Fmi2Builder.Value> getAndShare(Fmi2Builder.Port... ports) {
-        return null;
+    public Map<Fmi2Builder.Port, Fmi2Builder.Value> getAndShare(AMablPort... ports) {
+        Map<Fmi2Builder.Port, Fmi2Builder.Value> returnMap = new HashMap<>();
+        Arrays.stream(ports).forEach(p -> {
+            if (p.relatedVariable == null) {
+                AMablVariable variableForPort = AMablBuilder.rootScope.variableCreator.createVariableForPort(p);
+                p.relatedVariable = variableForPort;
+            }
+            createGetStm(AMablBuilder.rootScope, p);
+            returnMap.put(p, null);
+        });
+        return returnMap;
     }
 
     private void createGetStm(AMaBLScope scope, AMablPort p) {
@@ -160,6 +163,21 @@ public class AMablFmi2ComponentAPI implements Fmi2Builder.Fmi2ComponentApi {
 
     @Override
     public void set(String... names) {
+
+        List<Fmi2Builder.Port> ports = this.getPorts(names);
+        ports.forEach(p -> {
+            // Find the port that is the source of the given value
+            AMablPort p_ = (AMablPort) p;
+            AMablPort companionPort = p_.getCompanionOutputPort();
+            // Create valuereference set array
+            Pair<LexIdentifier, List<PStm>> valRefArray =
+                    scopeBundle.getScope().findOrCreateValueReferenceArrayAndAssign(new long[]{p.getPortReferenceValue()});
+            // TODO: Create the value set array
+            //AMablBuilder.rootScope.findOrCreateArrayOfSize(p_);
+
+
+        });
+
 
     }
 

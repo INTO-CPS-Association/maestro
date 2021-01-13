@@ -1,35 +1,51 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IScopeBundle;
+import org.intocps.maestro.Fmi2AMaBLBuilder.statements.AMaBLStatement;
+import org.intocps.maestro.Fmi2AMaBLBuilder.statements.LabelStatement;
+import org.intocps.maestro.Fmi2AMaBLBuilder.statements.ScopeStatement;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static org.intocps.maestro.Fmi2AMaBLBuilder.statements.AMaBLStatementFactory.createSingleStatement;
+import static org.intocps.maestro.Fmi2AMaBLBuilder.statements.AMaBLStatementFactory.createSingleStatements;
 import static org.intocps.maestro.ast.MableAstFactory.*;
+
 
 public class AMaBLScope implements Fmi2Builder.Scope {
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
+    public final LinkedList<AMaBLStatement> aMaBLStatements = new LinkedList<>();
     private final Map<Integer, LexIdentifier> longArrays = new HashMap<>();
-    private final List<PStm> statements = new ArrayList<>();
-    private final Consumer<AMaBLScope> currentScopeSetter;
-    private final Supplier<AMaBLScope> currentScopeGetter;
+    private final Map<Integer, LexIdentifier> booleanArrays = new HashMap<>();
+    //private final Consumer<AMaBLScope> currentScopeSetter;
+    //    private final Supplier<AMaBLScope> currentScopeGetter;
     private final Fmi2SimulationEnvironment simulationEnvironment;
+    private final IScopeBundle scopeBundle;
     ScopeVariables variables = new ScopeVariables();
-    List<AMaBLScope> childrenScopes = new ArrayList<>();
     AMaBLVariableCreator variableCreator;
 
-    public AMaBLScope(Consumer<AMaBLScope> scopeSetter, Supplier<AMaBLScope> currentScopeGetter, Fmi2SimulationEnvironment simulationEnvironment) {
-        this.currentScopeSetter = scopeSetter;
-        this.currentScopeGetter = currentScopeGetter;
+    public AMaBLScope(IScopeBundle scopeBundle, Fmi2SimulationEnvironment simulationEnvironment) {
+        this.scopeBundle = scopeBundle;
         this.simulationEnvironment = simulationEnvironment;
         this.variableCreator = new AMaBLSpecificVariableCreator(this.simulationEnvironment, this);
+    }
+
+    public static void addStatementBefore(BiFunction<Integer, LinkedList<AMaBLStatement>, Boolean> predicate, LinkedList<AMaBLStatement> statements,
+            PStm... stm) {
+        OptionalInt index = IntStream.range(0, statements.size()).filter(x -> predicate.apply(x, statements)).findFirst();
+        if (index.isPresent()) {
+            statements.addAll(index.getAsInt(), Arrays.stream(stm).map(x -> createSingleStatement(x)).collect(Collectors.toList()));
+        }
     }
 
     @Override
@@ -91,8 +107,23 @@ public class AMaBLScope implements Fmi2Builder.Scope {
         return this.variables.getVariable(obj);
     }
 
-    public void addStatement(PStm pStm) {
-        this.statements.add(pStm);
+    public void addStatement(PStm... pStm) {
+        this.aMaBLStatements.addAll(Arrays.stream(pStm).map(x -> createSingleStatement(x)).collect(Collectors.toList()));
+    }
+
+    public void addStatementBeforeScope(AMaBLScope scope, PStm... stm) {
+        addStatementBefore((x, stmList) -> {
+            AMaBLStatement curStm = stmList.get(x);
+            return curStm instanceof AMaBLScope && ((ScopeStatement) curStm).scope == scope;
+        }, this.aMaBLStatements, stm);
+    }
+
+    public void addStatementBeforeLabel(String label, PStm... stm) {
+        addStatementBefore((x, stmList) -> {
+            AMaBLStatement curStm = stmList.get(x);
+            return curStm instanceof LabelStatement && ((LabelStatement) curStm).labelName == label;
+        }, this.aMaBLStatements, stm);
+
     }
 
     public void addVariable(Object value, AMablVariable fmu) {
@@ -126,6 +157,7 @@ public class AMaBLScope implements Fmi2Builder.Scope {
         return this.variables.getVariable(port);
     }
 
+
     public Pair<LexIdentifier, List<PStm>> findOrCreateValueReferenceArrayAndAssign(long[] valRefs) {
         LexIdentifier arrayName = findArrayOfSize(longArrays, valRefs.length);
         List<PStm> statement = new Vector<>();
@@ -151,17 +183,48 @@ public class AMaBLScope implements Fmi2Builder.Scope {
     }
 
     public void addStatements(List<PStm> stms) {
-        this.statements.addAll(stms);
+        this.aMaBLStatements.addAll(createSingleStatements(stms));
+
+
     }
 
-    public List<PStm> getStatements() {
-        return this.statements;
+    public PStm getStatement() {
+        List<PStm> statements = new ArrayList<>();
+        this.aMaBLStatements.forEach(x -> {
+            if (!x.isMeta()) {
+                statements.add(x.getStatement());
+            }
+        });
+        return newABlockStm(statements);
     }
 
-    public List<PStm> getStatementsRecursive() {
-        List<PStm> allStatments = new ArrayList<>();
-        allStatments.addAll(this.statements);
-        return allStatments;
+
+    /**
+     * Find an array in the given scope or create an array in the given scope of type and size.
+     * TODO Work in progress. Look in StatementGenerator for similar functionality.
+     * TODO See the function findOrCreateValueReferenceArrayAndAssign above as well.
+     *
+     * @param scope
+     * @param type
+     * @param size
+     * @return TODO: The LexIdentifier of the Array OR AMablVariable?
+     */
+    public Object findOrCreateArrayOfSize(AMaBLScope scope, ModelDescription.Types type, int size) {
+        LexIdentifier arrayName;
+        switch (type) {
+            case Boolean:
+                break;
+            case Real:
+                break;
+            case Integer:
+                break;
+            case String:
+                break;
+            case Enumeration:
+                break;
+        }
+
+        return null;
     }
 
     public static class ScopeVariables {

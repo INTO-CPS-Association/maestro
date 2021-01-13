@@ -5,9 +5,7 @@ import org.intocps.maestro.Fmi2AMaBLBuilder.AMaBLVariableCreator;
 import org.intocps.maestro.Fmi2AMaBLBuilder.AMablBuilder;
 import org.intocps.maestro.Fmi2AMaBLBuilder.AMablFmi2ComponentAPI;
 import org.intocps.maestro.Fmi2AMaBLBuilder.AMablFmu2Api;
-import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.ABlockStm;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -16,7 +14,6 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.List;
 
 public class BuilderTester {
 
@@ -39,10 +36,9 @@ public class BuilderTester {
         tank.getPort("level").linkTo(controller.getPort("level"));
         controller.getAndShare("valve");
         tank.set("valvecontrol");
-        List<PStm> pstms = builder.build();
-        ABlockStm blockStm = MableAstFactory.newABlockStm(pstms);
+        PStm program = builder.build();
 
-        String test = PrettyPrinter.print(blockStm);
+        String test = PrettyPrinter.print(program);
         System.out.println(test);
 
 

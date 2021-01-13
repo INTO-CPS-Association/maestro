@@ -1,5 +1,7 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IBasicRootScopeBundle;
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IScopeBundle;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -13,7 +15,6 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.function.Supplier;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
@@ -21,14 +22,12 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public abstract class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
     private final Fmi2SimulationEnvironment simEnv;
-    private final Supplier<AMaBLScope> scopeSupplier;
-    AMaBLScope.ScopeVariables scopeVariables;
+    private final IBasicRootScopeBundle scopeBundle;
 
 
-    public AMaBLVariableCreator(Fmi2SimulationEnvironment simEnv, Supplier<AMaBLScope> scopeSupplier) {
+    public AMaBLVariableCreator(Fmi2SimulationEnvironment simEnv, IScopeBundle basicScopeBundle) {
         this.simEnv = simEnv;
-        this.scopeSupplier = scopeSupplier;
-
+        this.scopeBundle = basicScopeBundle;
     }
 
     @Override
@@ -36,9 +35,9 @@ public abstract class AMaBLVariableCreator implements Fmi2Builder.VariableCreato
         var name = label;
         var type = newABoleanPrimitiveType();
 
-        scopeSupplier.get().addStatement(newVariable(label, type));
-        AMablVariable var = new AMablVariable(name, type, scopeSupplier.get(), new AMaBLVariableLocation.BasicPosition());
-        scopeSupplier.get().addVariable(var);
+        scopeBundle.getScope().addStatement(newVariable(label, type));
+        AMablVariable var = new AMablVariable(name, type, scopeBundle.getScope(), new AMaBLVariableLocation.BasicPosition());
+        scopeBundle.getScope().addVariable(var);
         return var;
     }
 
@@ -73,16 +72,16 @@ public abstract class AMaBLVariableCreator implements Fmi2Builder.VariableCreato
         if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
             path = uriPath.getPath();
         }
-        AMablFmu2Api aMablFmu2Api = new AMablFmu2Api(name, this.simEnv, new ModelDescriptionContext(modelDescription));
+        AMablFmu2Api aMablFmu2Api = new AMablFmu2Api(name, this.simEnv, new ModelDescriptionContext(modelDescription), scopeBundle);
 
         AMablVariable<AMablFmu2Api> variable =
-                new AMablVariable<>(name, MableAstFactory.newANameType("FMI2"), this.scopeSupplier.get(), new AMaBLVariableLocation.BasicPosition());
+                new AMablVariable<>(name, MableAstFactory.newANameType("FMI2"), scopeBundle.getScope(), new AMaBLVariableLocation.BasicPosition());
 
         aMablFmu2Api.setVariable(variable);
         PStm pStm = newVariable(name, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
-        this.scopeSupplier.get().addStatement(pStm);
-        this.scopeSupplier.get().addVariable(aMablFmu2Api, variable);
+        scopeBundle.getScope().addStatement(pStm);
+        scopeBundle.getScope().addVariable(aMablFmu2Api, variable);
         return aMablFmu2Api;
     }
 
@@ -151,8 +150,8 @@ public abstract class AMaBLVariableCreator implements Fmi2Builder.VariableCreato
         var type = MableAstFactory.newAArrayType(FMITypeToMablType(port.scalarVariable.type.type));
         var size = 1;
         PStm stm = MableBuilder.newVariable(name, type, size);
-        scopeSupplier.get().addStatement(stm);
-        AMablVariable variable = new AMablVariable(name, type, scopeSupplier.get(), new AMaBLVariableLocation.ArrayPosition(0));
+        scopeBundle.getScope().addStatement(stm);
+        AMablVariable variable = new AMablVariable(name, type, scopeBundle.getScope(), new AMaBLVariableLocation.ArrayPosition(0));
         return variable;
 
     }

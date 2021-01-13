@@ -1,5 +1,6 @@
 package org.intocps.maestro.Fmi2AMaBLBuilder;
 
+import org.intocps.maestro.Fmi2AMaBLBuilder.scopebundle.IBasicScopeBundle;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -14,17 +15,20 @@ public class AMablFmu2Api implements Fmi2Builder.Fmu2Api {
     private final Fmi2SimulationEnvironment simulationEnvironment;
     private final ModelDescriptionContext modelDescriptionContext;
     private final String name;
+    private final IBasicScopeBundle scopeBundle;
     private AMablVariable<AMablFmu2Api> variable;
 
-    public AMablFmu2Api(String name, Fmi2SimulationEnvironment simulationEnvironment, ModelDescriptionContext modelDescriptionContext) {
+    public AMablFmu2Api(String name, Fmi2SimulationEnvironment simulationEnvironment, ModelDescriptionContext modelDescriptionContext,
+            IBasicScopeBundle scopeBundle) {
         this.name = name;
         this.simulationEnvironment = simulationEnvironment;
         this.modelDescriptionContext = modelDescriptionContext;
+        this.scopeBundle = scopeBundle;
     }
 
     @Override
     public AMablFmi2ComponentAPI create(String name) {
-        return this.create(name, AMablBuilder.aMaBLScopeSupplier.get());
+        return this.create(name, scopeBundle.getScope());
     }
 
     @Override
@@ -41,7 +45,7 @@ public class AMablFmu2Api implements Fmi2Builder.Fmu2Api {
                 MableBuilder.call(name, "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(true)));
         AMablFmi2ComponentAPI aMablFmi2ComponentAPI = null;
         AMablVariable fmuComponent = new AMablVariable(name, newANameType("FMI2Component"), scope, new AMaBLVariableLocation.BasicPosition());
-        aMablFmi2ComponentAPI = new AMablFmi2ComponentAPI(this, name, fmuComponent, this.modelDescriptionContext);
+        aMablFmi2ComponentAPI = new AMablFmi2ComponentAPI(this, name, fmuComponent, this.modelDescriptionContext, scopeBundle);
         scope.addStatement(var);
         scope.addVariable(fmuComponent.getValue(), fmuComponent);
 
