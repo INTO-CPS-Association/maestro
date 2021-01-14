@@ -19,7 +19,7 @@ public abstract class Fmi2Builder {
     public abstract Scope getRootScope();
     //    public abstract void pushScope(Scope scope);
 
-    public abstract Scope getCurrentScope();
+    public abstract DynamicActiveScope getDynamicScope();
 
     /**
      * Get handle to the current time
@@ -58,29 +58,40 @@ public abstract class Fmi2Builder {
     /**
      * Scoping functions
      */
-    public interface Scoping {
-        WhileScope enterWhile(LogicBuilder.Predicate predicate);
+    public interface Scoping<T> {
+        WhileScope<T> enterWhile(LogicBuilder.Predicate predicate);
 
-        IfScope enterIf(LogicBuilder.Predicate predicate);
+        IfScope<T> enterIf(LogicBuilder.Predicate predicate);
 
-        Scope leave();
+        Scope<T> leave();
 
         public abstract LiteralCreator literalCreator();
 
-        public abstract VariableCreator variableCreator();
+        public abstract VariableCreator getVariableCreator();
+
+        void add(T... commands);
+
+        void addBefore(T item, T... commands);
+
+        void addAfter(T item, T... commands);
+
+        Scoping<T> activate();
     }
 
     /**
      * Basic scope. Allows a value to be stored or override a tag
      */
-    public interface Scope extends Scoping {
+    public interface Scope<T> extends Scoping<T> {
+        @Override
+        Scope<T> activate();
+
         /**
          * Store a given value
          *
          * @param value
          * @return
          */
-        Value store(double value);
+        DoubleVariable<T> store(double value);
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -88,16 +99,19 @@ public abstract class Fmi2Builder {
          * @param tag
          * @return
          */
-        Value store(Value tag);
+        @Deprecated
+        <V> Variable<T, V> store(Value<V> tag);
 
-        /**
-         * Override a tags value from an existing value. Copy
-         *
-         * @param tag
-         * @param value
-         * @return
-         */
-        Value store(Value tag, Value value);
+
+        //   /**
+        //   * Override a tags value from an existing value. Copy
+        //   *
+        //   * @param tag
+        //   * @param value
+        //   * @return
+        //   */
+        // <V extends Value> Variable<T, V> store(V tag, V value);
+        //TODO add overload with name prefix, tag override is done through variable and not the scope
 
         MDouble doubleFromExternalFunction(String functionName, Value... arguments);
 
@@ -107,37 +121,44 @@ public abstract class Fmi2Builder {
     }
 
     /**
+     * Dynamic scope which always reflects the current active scope of the builder
+     */
+    public interface DynamicActiveScope<T> extends Scope<T> {
+
+    }
+
+    /**
      * If scope, default scope is then
      */
-    public interface IfScope extends Scope {
+    public interface IfScope<T> {
         /**
          * Switch to then scope
          *
          * @return
          */
-        Scope enterThen();
+        Scope<T> enterThen();
 
         /**
          * Switch to else scope
          *
          * @return
          */
-        Scope enterElse();
+        Scope<T> enterElse();
     }
 
     /**
      * While
      */
-    public interface WhileScope extends Scope {
+    public interface WhileScope<T> extends Scope<T> {
     }
 
     /**
      * Handle for an fmu for the creation of component
      */
-    public interface Fmu2Api {
-        Fmi2ComponentApi create(String name);
+    public interface Fmu2Api<S> {
+        Fmi2ComponentApi<S> create(String name);
 
-        Fmi2ComponentApi create(String name, Scope scope);
+        Fmi2ComponentApi<S> create(String name, Scope<S> scope);
     }
 
 
@@ -151,7 +172,7 @@ public abstract class Fmi2Builder {
 
         <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
 
-        Predicate isGreater(Value a, double b);
+        Predicate isGreater(Value<Double> a, double b);
 
         Predicate fromValue(Value value);
 
@@ -174,12 +195,14 @@ public abstract class Fmi2Builder {
     public interface Numeric<A> extends Value, Type {
         void set(A value);
 
+        @Override
         A get();
     }
 
     public interface MBoolean extends LogicBuilder.Predicate, Value {
         void set(Boolean value);
 
+        @Override
         Boolean get();
     }
 
@@ -205,7 +228,9 @@ public abstract class Fmi2Builder {
     /**
      * Interface for an fmi compoennt
      */
-    public interface Fmi2ComponentApi {
+    public interface Fmi2ComponentApi<T> {
+
+        List<? extends Port> getPorts();
 
         /**
          * Get ports by name
@@ -213,7 +238,7 @@ public abstract class Fmi2Builder {
          * @param names
          * @return
          */
-        List<Port> getPorts(String... names);
+        List<? extends Port> getPorts(String... names);
 
         /**
          * Get ports by ref val
@@ -221,7 +246,7 @@ public abstract class Fmi2Builder {
          * @param valueReferences
          * @return
          */
-        List<Port> getPorts(int... valueReferences);
+        List<? extends Port> getPorts(int... valueReferences);
 
         /**
          * Get port by name
@@ -245,16 +270,16 @@ public abstract class Fmi2Builder {
          * @param ports
          * @return
          */
-        Map<Port, Value> get(Port... ports);
+        Map<Port, Variable> get(Port... ports);
 
-        Map<Port, Value> get(Scope scope, Port... ports);
+        Map<Port, Variable> get(Scope<T> scope, Port... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        Map<Port, Value> get();
+        Map<Port, Variable> get();
 
         /**
          * get filter by value reference
@@ -262,7 +287,7 @@ public abstract class Fmi2Builder {
          * @param valueReferences
          * @return
          */
-        Map<Port, Value> get(int... valueReferences);
+        Map<Port, Variable> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -270,9 +295,9 @@ public abstract class Fmi2Builder {
          * @param names
          * @return
          */
-        Map<Port, Value> get(String... names);
+        Map<Port, Variable> get(String... names);
 
-        Map<Port, Value> getAndShare(String... names);
+        Map<Port, Variable> getAndShare(String... names);
 
         /**
          * Get the value of a single port
@@ -282,35 +307,40 @@ public abstract class Fmi2Builder {
          */
         Value getSingle(String name);
 
-        void set(Scope scope, Map<Port, Value> value);
+        void set(Scope<T> scope, PortValueMap value);
+
+
+        void set(Scope<T> scope, PortVariableMap value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
          *
          * @param value
          */
-        void set(Map<Port, Value> value);
+        void set(PortValueMap value);
 
+        void set(Port port, Value value);
+
+        void set(PortVariableMap value);
 
         /**
          * Set this fmu port by name and link
          */
         void set(String... names);
 
-
         /**
          * Set this fmu ports by val ref
          *
          * @param values
          */
-        void setInt(Map<Integer, Value> values);
+        void setInt(Map<Integer, Value<Integer>> values);
 
         /**
          * Set this fmy ports by name
          *
          * @param value
          */
-        void setString(Map<String, Value> value);
+        void setString(Map<String, Value<String>> value);
 
         /**
          * Makes the values publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -318,7 +348,7 @@ public abstract class Fmi2Builder {
          *
          * @param values
          */
-        void share(Map<Port, Value> values);
+        void share(Map<Port, Variable> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -326,7 +356,7 @@ public abstract class Fmi2Builder {
          *
          * @param value
          */
-        void share(Port port, Value value);
+        void share(Port port, Variable value);
 
         /**
          * Step the fmu for the given time
@@ -336,7 +366,7 @@ public abstract class Fmi2Builder {
          */
         TimeDeltaValue step(TimeDeltaValue deltaTime);
 
-        TimeDeltaValue step(Variable<TimeDeltaValue> deltaTime);
+        TimeDeltaValue step(Variable<T, TimeDeltaValue> deltaTime);
 
         /**
          * Step the fmu for the given time
@@ -368,6 +398,12 @@ public abstract class Fmi2Builder {
          */
 
         Time setState();
+
+        public interface PortVariableMap extends Map<Port, Variable> {
+        }
+
+        public interface PortValueMap extends Map<Port, Value> {
+        }
     }
 
     public interface TimeTaggedState {
@@ -375,6 +411,7 @@ public abstract class Fmi2Builder {
     }
 
     public interface Port {
+
         /**
          * Get the port name
          *
@@ -394,36 +431,61 @@ public abstract class Fmi2Builder {
          *
          * @param receiver
          */
-        void linkTo(Port... receiver);
+        void linkTo(Port... receiver) throws PortLinkException;
 
         /**
-         * Break the link from the receivers or all if none is given
-         *
-         * @param receiver
+         * Break the source link
          */
-        void breakLink(Port... receiver);
+        void breakLink() throws PortLinkException;
+
+        class PortLinkException extends Exception {
+            Port port;
+
+            public PortLinkException(String message, Port port) {
+                super(message);
+                this.port = port;
+            }
+        }
     }
 
-    public interface Value {
-        static Value of(double a) {
+    public interface Value<V> {
+        static Value<Double> of(double a) {
             return null;
         }
 
-        static Value of(Variable var) {
+       /* static Value of(Variable var) {
             return null;
-        }
+        }*/
+
+        V get();
     }
 
-    public interface VariableCreator {
-        Variable<MBoolean> createBoolean(String label);
+    public interface IntValue extends Value<Integer> {
+    }
 
-        Variable<MInt> createInteger(String label);
+    public interface BoolValue extends Value<Boolean> {
+    }
 
-        Variable<TimeDeltaValue> createTimeDeltaValue(String label);
+    public interface DoubleValue extends Value<Double> {
+    }
 
-        Variable<MDouble> createDouble(String label);
+    public interface StringValue extends Value<String> {
+    }
 
-        Variable<Time> createTimeValue(String step_size);
+    public interface NamedValue extends Value<Object> {
+    }
+
+
+    public interface VariableCreator<T> {
+        //  BoolVariable<T> createBoolean(String label);
+
+        //  IntVariable<T> createInteger(String label);
+
+        // Variable<T, TimeDeltaValue> createTimeDeltaValue(String label);
+
+        // DoubleVariable<T> createDouble(String label);
+
+        // Variable<T, Time> createTimeValue(String step_size);
 
         Fmu2Api createFMU(String name, ModelDescription modelDescription,
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
@@ -437,21 +499,51 @@ public abstract class Fmi2Builder {
         TimeDeltaValue createTimeDelta(double v);
     }
 
+    @Deprecated
     public interface MDouble extends Numeric<Double> {
         TimeDeltaValue toTimeDelta();
     }
 
+    @Deprecated
     public interface MInt extends Numeric<Integer> {
         void decrement();
     }
 
-    public interface Variable<T> extends Value {
+
+    public interface IntVariable<T> extends Variable<T, IntValue> {
+        void decrement();
+
+        void increment();
+
+        //void set(int value);
+    }
+
+    public interface DoubleVariable<T> extends Variable<T, DoubleValue> {
+        TimeDeltaValue toTimeDelta();
+
+        void set(Double value);
+    }
+
+    public interface BoolVariable<T> extends Variable<T, BoolValue> {
+        //void set(Boolean value);
+    }
+
+    public interface StringVariable<T> extends Variable<T, StringValue> {
+        //void set(String value);
+    }
+
+    public interface NamedVariable<T> extends Variable<T, NamedValue> {
+    }
+
+    public interface Variable<T, V> {
         String getName();
 
-        T getValue();
+        // T getValue();
 
-        void setValue(T value);
+        void setValue(V value);
 
-        Scope getScope();
+        void setValue(V value, Scope<T> scope);
+
+        Scope<T> getDeclaredScope();
     }
 }

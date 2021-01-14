@@ -397,6 +397,10 @@ public class MableAstFactory {
         return arrayStateDesignator;
     }
 
+    public static AIdentifierStateDesignator newAIdentifierStateDesignator(String name) {
+        return newAIdentifierStateDesignator(newAIdentifier(name));
+    }
+
     public static AIdentifierStateDesignator newAIdentifierStateDesignator(LexIdentifier name) {
         AIdentifierStateDesignator identifierStateDesignator = new AIdentifierStateDesignator();
         identifierStateDesignator.setName(name);
