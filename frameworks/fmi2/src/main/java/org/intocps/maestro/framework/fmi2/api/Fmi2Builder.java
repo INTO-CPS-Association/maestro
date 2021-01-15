@@ -44,7 +44,7 @@ public interface Fmi2Builder<S> {
      */
     Value getCurrentLinkedValue(Port port);
 
-    TimeDeltaValue createTimeDeltaValue(MDouble getMinimum);
+    TimeDeltaValue createTimeDeltaValue(double getMinimum);
 
     VariableCreator variableCreator();
 
@@ -113,9 +113,9 @@ public interface Fmi2Builder<S> {
         // <V extends Value> Variable<T, V> store(V tag, V value);
         //TODO add overload with name prefix, tag override is done through variable and not the scope
 
-        MDouble doubleFromExternalFunction(String functionName, Value... arguments);
+        DoubleVariable<T> doubleFromExternalFunction(String functionName, Value... arguments);
 
-        MInt intFromExternalFunction(String functionName, Value... arguments);
+        IntVariable<T> intFromExternalFunction(String functionName, Value... arguments);
 
         MBoolean booleanFromExternalFunction(String functionName, Value... arguments);
     }
@@ -150,15 +150,6 @@ public interface Fmi2Builder<S> {
      * While
      */
     interface WhileScope<T> extends Scope<T> {
-    }
-
-    /**
-     * Handle for an fmu for the creation of component
-     */
-    interface Fmu2Api<S> {
-        Fmi2ComponentApi<S> create(String name);
-
-        Fmi2ComponentApi<S> create(String name, Scope<S> scope);
     }
 
 
@@ -209,7 +200,7 @@ public interface Fmi2Builder<S> {
     /**
      * Current time
      */
-    interface Time extends MDouble {
+    interface Time {
     }
 
     /**
@@ -225,10 +216,143 @@ public interface Fmi2Builder<S> {
 
     }
 
+
+    interface TimeTaggedState {
+        void release();
+    }
+
+    interface Port {
+
+        /**
+         * Get the port name
+         *
+         * @return
+         */
+        String getName();
+
+        /**
+         * Get the port reference value
+         *
+         * @return
+         */
+        Long getPortReferenceValue();
+
+        /**
+         * Link the current port to the receiving port. After this the receiving port will resolve its linked value to the value of this port
+         *
+         * @param receiver
+         */
+        void linkTo(Port... receiver) throws PortLinkException;
+
+        /**
+         * Break the source link
+         */
+        void breakLink() throws PortLinkException;
+
+        class PortLinkException extends Exception {
+            Port port;
+
+            public PortLinkException(String message, Port port) {
+                super(message);
+                this.port = port;
+            }
+        }
+    }
+
+    interface Value<V> {
+        static Value<Double> of(double a) {
+            return null;
+        }
+
+       /* static Value of(Variable var) {
+            return null;
+        }*/
+
+        V get();
+    }
+
+    interface IntValue extends Value<Integer> {
+    }
+
+    interface BoolValue extends Value<Boolean> {
+    }
+
+    interface DoubleValue extends Value<Double> {
+    }
+
+    interface StringValue extends Value<String> {
+    }
+
+    interface NamedValue extends Value<Object> {
+    }
+
+
+    interface VariableCreator<T> {
+        //  BoolVariable<T> createBoolean(String label);
+
+        //  IntVariable<T> createInteger(String label);
+
+        // Variable<T, TimeDeltaValue> createTimeDeltaValue(String label);
+
+        // DoubleVariable<T> createDouble(String label);
+
+        // Variable<T, Time> createTimeValue(String step_size);
+
+        Fmu2Variable<T> createFMU(String name, ModelDescription modelDescription,
+                URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
+    }
+
+    interface LiteralCreator {
+
+        Time createTime(Double value);
+
+        TimeDeltaValue createTimeDelta(double v);
+    }
+
+
+    interface IntVariable<T> extends Variable<T, IntValue> {
+        void decrement();
+
+        void increment();
+
+        //void set(int value);
+    }
+
+    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
+        TimeDeltaValue toTimeDelta();
+
+        void set(Double value);
+    }
+
+    interface BoolVariable<T> extends Variable<T, BoolValue> {
+        //void set(Boolean value);
+    }
+
+    interface StringVariable<T> extends Variable<T, StringValue> {
+        //void set(String value);
+    }
+
+    interface NamedVariable<T> extends Variable<T, NamedValue> {
+    }
+
+
+    /**
+     * Handle for an fmu for the creation of component
+     */
+    interface Fmu2Variable<S> extends Variable<S, NamedVariable<S>> {
+        Fmi2ComponentVariable<S> instantiate(String name);
+
+        Fmi2ComponentVariable<S> instantiate(String name, Scope<S> scope);
+
+        void unload();
+
+        void unload(Scope<S> scope);
+    }
+
     /**
      * Interface for an fmi compoennt
      */
-    interface Fmi2ComponentApi<T> {
+    interface Fmi2ComponentVariable<T> extends Variable<T, NamedVariable<T>> {
 
         List<? extends Port> getPorts();
 
@@ -404,135 +528,6 @@ public interface Fmi2Builder<S> {
 
         public interface PortValueMap extends Map<Port, Value> {
         }
-    }
-
-    interface TimeTaggedState {
-        void release();
-    }
-
-    interface Port {
-
-        /**
-         * Get the port name
-         *
-         * @return
-         */
-        String getName();
-
-        /**
-         * Get the port reference value
-         *
-         * @return
-         */
-        Long getPortReferenceValue();
-
-        /**
-         * Link the current port to the receiving port. After this the receiving port will resolve its linked value to the value of this port
-         *
-         * @param receiver
-         */
-        void linkTo(Port... receiver) throws PortLinkException;
-
-        /**
-         * Break the source link
-         */
-        void breakLink() throws PortLinkException;
-
-        class PortLinkException extends Exception {
-            Port port;
-
-            public PortLinkException(String message, Port port) {
-                super(message);
-                this.port = port;
-            }
-        }
-    }
-
-    interface Value<V> {
-        static Value<Double> of(double a) {
-            return null;
-        }
-
-       /* static Value of(Variable var) {
-            return null;
-        }*/
-
-        V get();
-    }
-
-    interface IntValue extends Value<Integer> {
-    }
-
-    interface BoolValue extends Value<Boolean> {
-    }
-
-    interface DoubleValue extends Value<Double> {
-    }
-
-    interface StringValue extends Value<String> {
-    }
-
-    interface NamedValue extends Value<Object> {
-    }
-
-
-    interface VariableCreator<T> {
-        //  BoolVariable<T> createBoolean(String label);
-
-        //  IntVariable<T> createInteger(String label);
-
-        // Variable<T, TimeDeltaValue> createTimeDeltaValue(String label);
-
-        // DoubleVariable<T> createDouble(String label);
-
-        // Variable<T, Time> createTimeValue(String step_size);
-
-        Fmu2Api createFMU(String name, ModelDescription modelDescription,
-                URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
-    }
-
-    interface LiteralCreator {
-        MInt createMInt(Integer value);
-
-        Time createTime(Double value);
-
-        TimeDeltaValue createTimeDelta(double v);
-    }
-
-    @Deprecated
-    interface MDouble extends Numeric<Double> {
-        TimeDeltaValue toTimeDelta();
-    }
-
-    @Deprecated
-    interface MInt extends Numeric<Integer> {
-        void decrement();
-    }
-
-
-    interface IntVariable<T> extends Variable<T, IntValue> {
-        void decrement();
-
-        void increment();
-
-        //void set(int value);
-    }
-
-    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
-        TimeDeltaValue toTimeDelta();
-
-        void set(Double value);
-    }
-
-    interface BoolVariable<T> extends Variable<T, BoolValue> {
-        //void set(Boolean value);
-    }
-
-    interface StringVariable<T> extends Variable<T, StringValue> {
-        //void set(String value);
-    }
-
-    interface NamedVariable<T> extends Variable<T, NamedValue> {
     }
 
     interface Variable<T, V> {

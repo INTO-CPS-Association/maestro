@@ -8,7 +8,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Variable;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -61,8 +61,8 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
         return variable;
     }
 
-    public static AMablFmu2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope, String name,
-            ModelDescription modelDescription, URI uriPath, IMablScope scope,
+    public static AMablFmu2Variable createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
+            String name, ModelDescription modelDescription, URI uriPath, IMablScope scope,
             Fmi2SimulationEnvironment simulationEnvironment) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
         if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
@@ -71,23 +71,20 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
 
         String uniqueName = nameGenerator.getName(name);
 
-        AMablFmu2Api aMablFmu2Api = new AMablFmu2Api(uniqueName, builder, new ModelDescriptionContext(modelDescription));
-
-
         PStm var = newVariable(uniqueName, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
         scope.add(var);
 
-        AMablVariable<AMablFmu2Api> variable = new AMablVariable<>(var, MableAstFactory.newANameType("FMI2"), scope, dynamicScope,
-                newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
-        aMablFmu2Api.setVariable(variable);
+        AMablFmu2Variable fmuVar =
+                new AMablFmu2Variable(builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
+                        dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
 
-        return aMablFmu2Api;
+        return fmuVar;
     }
 
     // CreateFMU is a root-level function and therefore located in the VariableCreator.
     @Override
-    public AMablFmu2Api createFMU(String name, ModelDescription modelDescription,
+    public AMablFmu2Variable createFMU(String name, ModelDescription modelDescription,
             URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
         return createFMU(builder, builder.nameGenerator, builder.getDynamicScope(), name, modelDescription, uriPath, scope,
                 builder.getSimulationEnvironment());

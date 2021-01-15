@@ -5,7 +5,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PortVariableMapImpl extends HashMap<Fmi2Builder.Port, Fmi2Builder.Variable> implements Fmi2Builder.Fmi2ComponentApi.PortVariableMap {
+public class PortVariableMapImpl extends HashMap<Fmi2Builder.Port, Fmi2Builder.Variable> implements Fmi2Builder.Fmi2ComponentVariable.PortVariableMap {
     public PortVariableMapImpl(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
     }

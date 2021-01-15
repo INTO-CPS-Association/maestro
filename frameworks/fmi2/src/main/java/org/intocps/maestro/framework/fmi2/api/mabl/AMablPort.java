@@ -2,7 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentAPI;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -10,12 +10,12 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class AMablPort implements Fmi2Builder.Port {
 
-    public final AMablFmi2ComponentAPI aMablFmi2ComponentAPI;
+    public final AMablFmi2ComponentVariable aMablFmi2ComponentAPI;
     public final ModelDescription.ScalarVariable scalarVariable;
     private AMablVariable sharedAsVariable;
     private AMablPort sourcePort;
 
-    public AMablPort(AMablFmi2ComponentAPI aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
+    public AMablPort(AMablFmi2ComponentVariable aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
 
         this.aMablFmi2ComponentAPI = aMablFmi2ComponentAPI;
         this.scalarVariable = scalarVariable;
@@ -97,6 +97,6 @@ public class AMablPort implements Fmi2Builder.Port {
     }
 
     public String toLexName() {
-        return this.aMablFmi2ComponentAPI.getParent().getName() + "_" + this.aMablFmi2ComponentAPI.getName() + "_" + this.getName();
+        return this.aMablFmi2ComponentAPI.getOwner().getName() + "_" + this.aMablFmi2ComponentAPI.getName() + "_" + this.getName();
     }
 }

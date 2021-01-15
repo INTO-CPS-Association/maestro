@@ -16,13 +16,13 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 
 
-public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue> implements Fmi2Builder.Fmi2ComponentApi<PStm> {
+public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
 
 
     final List<AMablPort> outputPorts;
     final List<AMablPort> inputPorts;
     final List<AMablPort> ports;
-    private final AMablFmu2Api parent;
+    private final AMablFmu2Variable owner;
     private final String name;
     private final MablApiBuilder builder;
     private final Map<PType, ArrayVariable<Object>> ioBuffer = new HashMap<>();
@@ -30,10 +30,10 @@ public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue>
     ModelDescriptionContext modelDescriptionContext;
     private ArrayVariable<Object> valueRefBuffer;
 
-    public AMablFmi2ComponentAPI(PStm declaration, AMablFmu2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
+    public AMablFmi2ComponentVariable(PStm declaration, AMablFmu2Variable parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
         super(declaration, newANameType("FMI2Component"), declaringScope, builder.getDynamicScope(), designator, referenceExp);
-        this.parent = parent;
+        this.owner = parent;
         this.name = name;
 
         this.modelDescriptionContext = modelDescriptionContext;
@@ -64,17 +64,33 @@ public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue>
     }
 
     private ArrayVariable<Object> getSharedBuffer(PType type) {
-        if (!this.ioBuffer.containsKey(type)) {
-            this.ioBuffer.put(type, createBuffer(type, "Share", 0));
+        if (!this.sharedBuffer.containsKey(type)) {
+            this.sharedBuffer.put(type, createBuffer(type, "Share", 0));
         }
-        return this.ioBuffer.get(type);
+        return this.sharedBuffer.get(type);
     }
 
     private ArrayVariable<Object> createBuffer(PType type, String prefixPostfix, int length) {
 
         //lets find a good place to store the buffer.
         String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefixPostfix);
-        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, null));
+        PInitializer initializer = null;
+        if (length > 0) {
+            //Bug in the interpreter it relies on values being there
+            if (type instanceof ARealNumericPrimitiveType) {
+                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newARealLiteralExp(0d)).collect(Collectors.toList()));
+            } else if (type instanceof AIntNumericPrimitiveType || type instanceof AUIntNumericPrimitiveType) {
+                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList()));
+
+            } else if (type instanceof ABooleanPrimitiveType) {
+                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newABoolLiteralExp(false)).collect(Collectors.toList()));
+
+            } else if (type instanceof AStringPrimitiveType) {
+                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAStringLiteralExp("")).collect(Collectors.toList()));
+
+            }
+        }
+        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, initializer));
 
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
@@ -141,12 +157,11 @@ public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue>
             scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
         }
 
-        String statusName = builder.getNameGenerator().getName("status");
         PType type = sortedPorts.get(0).getType();
         ArrayVariable<Object> valBuf = getIOBuffer(type);
-        AAssigmentStm stm = newAAssignmentStm(newAIdentifierStateDesignator(statusName),
-                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, (AMablPort) sortedPorts.get(0)),
-                        vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
+        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
+                        newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
 
         Map<Fmi2Builder.Port, Fmi2Builder.Variable> results = new HashMap<>();
@@ -288,9 +303,9 @@ public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue>
             scope.add(newAAssignmentStm(designator.clone(), portToValue.apply(p).clone()));
         }
 
-        String statusName = builder.getNameGenerator().getName("status");
+        //String statusName = builder.getNameGenerator().getName("status");
 
-        AAssigmentStm stm = newAAssignmentStm(newAIdentifierStateDesignator(statusName),
+        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
@@ -460,8 +475,8 @@ public class AMablFmi2ComponentAPI extends AMablVariable<Fmi2Builder.NamedValue>
         return null;
     }
 
-    public AMablFmu2Api getParent() {
-        return this.parent;
+    public AMablFmu2Variable getOwner() {
+        return this.owner;
     }
 
     @Override

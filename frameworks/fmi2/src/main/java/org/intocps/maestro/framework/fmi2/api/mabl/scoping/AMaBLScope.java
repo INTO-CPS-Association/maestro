@@ -199,6 +199,16 @@ public class AMaBLScope implements IMablScope {
         return variable;
     }
 
+    @Override
+    public Fmi2Builder.DoubleVariable<PStm> doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
+        return null;
+    }
+
+    @Override
+    public Fmi2Builder.IntVariable<PStm> intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
+        return null;
+    }
+
  /*   public LexIdentifier getIdentifier() {
         return MableAstFactory.newAIdentifier(this.lexName);
     }
@@ -211,16 +221,6 @@ public class AMaBLScope implements IMablScope {
         return null;
     }*/
 
-
-    @Override
-    public Fmi2Builder.MDouble doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.MInt intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
 
     @Override
     public Fmi2Builder.MBoolean booleanFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {

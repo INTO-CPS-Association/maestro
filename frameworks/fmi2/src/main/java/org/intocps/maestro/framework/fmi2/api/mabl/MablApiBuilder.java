@@ -67,6 +67,14 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
         return specialVariables.get("status");
     }
 
+    public AMablBooleanVariable getGlobalExecutionContinue() {
+        return globalExecutionContinue;
+    }
+
+    public AMablIntVariable getGlobalFmiStatus() {
+        return globalFmiStatus;
+    }
+
     private Variable createVariable(IMablScope scope, PType type, PExp initialValue, String... prefixes) {
         String name = nameGenerator.getName(prefixes);
         PStm var = newVariable(name, type, initialValue);
@@ -119,9 +127,10 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
     }
 
     @Override
-    public TimeDeltaValue createTimeDeltaValue(MDouble getMinimum) {
+    public TimeDeltaValue createTimeDeltaValue(double getMinimum) {
         return null;
     }
+
 
     @Override
     public AMaBLVariableCreator variableCreator() {
