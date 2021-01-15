@@ -6,8 +6,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentA
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.List;
-
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class AMablPort implements Fmi2Builder.Port {
@@ -15,7 +13,6 @@ public class AMablPort implements Fmi2Builder.Port {
     public final AMablFmi2ComponentAPI aMablFmi2ComponentAPI;
     public final ModelDescription.ScalarVariable scalarVariable;
     private AMablVariable sharedAsVariable;
-    private List<AMablPort> companionInputPorts;
     private AMablPort sourcePort;
 
     public AMablPort(AMablFmi2ComponentAPI aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
@@ -88,41 +85,14 @@ public class AMablPort implements Fmi2Builder.Port {
             }
             receiverPort.sourcePort = this;
         }
-        // this.companionInputPorts = Arrays.stream(receiver).map(x -> (AMablPort) x).collect(Collectors.toList());
-        // this.companionInputPorts.forEach(x -> x.addCompanionPort(this));
-    }
-
-    private void addCompanionPort(AMablPort aMablPort) {
-        if (this.scalarVariable.causality == ModelDescription.Causality.Input) {
-            if (this.sourcePort != null && this.sourcePort != aMablPort) {
-                this.sourcePort.removeCompanionPort(this);
-            }
-            this.sourcePort = aMablPort;
-        }
-        if (this.scalarVariable.causality == ModelDescription.Causality.Output) {
-            if (!this.companionInputPorts.stream().anyMatch(x -> x == aMablPort)) {
-                this.companionInputPorts.add(aMablPort);
-            }
-        }
     }
 
     public AMablPort getSourcePort() {
         return this.sourcePort;
     }
 
-    private void removeCompanionPort(AMablPort aMablPort) {
-        if (this.scalarVariable.causality == ModelDescription.Causality.Output) {
-            this.companionInputPorts.removeIf(x -> x == aMablPort);
-        }
-        if (this.scalarVariable.causality == ModelDescription.Causality.Input) {
-            this.sourcePort = null;
-        }
-
-    }
-
     @Override
     public void breakLink() {
-        // MablApiBuilder.breakLink(this, receiver);
         sourcePort = null;
     }
 

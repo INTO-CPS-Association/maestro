@@ -4,15 +4,27 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TagNameGenerator {
-
-    // class variable
-    final String lexicon = "ABCDEFGHIJKLMNOPQRSTUVWXYZ12345674890";
-    final java.util.Random rand = new java.util.Random();
-    // consider using a Map<String,Boolean> to say whether the identifier is being used or not
     final Set<String> identifiers = new HashSet<>();
 
     public String getName() {
         return getName("tmp");
+    }
+
+    public String getName(String... prefixComponents) {
+        if (prefixComponents == null || prefixComponents.length == 0) {
+            return getName();
+        }
+
+        StringBuilder s = new StringBuilder(prefixComponents[0].toLowerCase());
+        for (int i = 1; i < prefixComponents.length; i++) {
+            String part = prefixComponents[i].toLowerCase();
+            if (part.length() > 1) {
+                part = part.substring(0, 1).toUpperCase() + part.substring(1);
+            }
+            s.append(part);
+        }
+        return s.toString();
+
     }
 
     public String getName(String prefix) {
@@ -28,25 +40,5 @@ public class TagNameGenerator {
         String name = prefix + postFix;
         identifiers.add(name);
         return name;
-
-/*        StringBuilder builder = new StringBuilder(prefix != null ? prefix : "");
-        while (builder.toString().length() == 0) {
-            int length = rand.nextInt(5) + 5;
-            for (int i = 0; i < length; i++) {
-                builder.append(lexicon.charAt(rand.nextInt(lexicon.length())));
-            }
-            if (identifiers.contains(builder.toString())) {
-                builder = new StringBuilder(prefix != null ? prefix : "");
-            }
-        }
-
-        String name = builder.toString();
-
-        identifiers.add(name);
-        return name;
-        */
-
     }
-
-
 }

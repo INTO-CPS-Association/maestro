@@ -24,31 +24,13 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
 
-    //private final IBasicScopeBundle scopeBundle;
-    //private final Fmi2SimulationEnvironment simEnv;
     private final IMablScope scope;
     private final MablApiBuilder builder;
-    // Supplier<AMaBLScope> scopeSupplier; // In some cases this is parent scope, in other cases it is current.
 
     public AMaBLVariableCreator(IMablScope scope, MablApiBuilder builder) {
-        //  this.scopeBundle = bundle;
-        // this.scopeSupplier = scopeSupplier;
         this.scope = scope;
         this.builder = builder;
-        // this.simEnv = simEnv;
     }
-
-    //  public static AMablBooleanVariable createBoolean(String label, IMablScope scope) {
-       /* var name = label;
-        var type = newABoleanPrimitiveType();
-
-        scope.add(newVariable(label, type));
-        AMablVariable var = new AMablVariable(name, type, scope, new AMaBLVariableLocation.BasicPosition());
-        scope.addVariable(var);
-
-        scope.s return var;*/
-    //    return (AMablBooleanVariable)scope.store(new AMablValue<>(newABoleanPrimitiveType(), null));
-    //}
 
 
     public static PType FMITypeToMablType(ModelDescription.Types type) {
@@ -100,7 +82,6 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
                 newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
         aMablFmu2Api.setVariable(variable);
 
-        //scope.addVariable(aMablFmu2Api, variable);
         return aMablFmu2Api;
     }
 
@@ -112,13 +93,7 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
                 builder.getSimulationEnvironment());
     }
 
-   /* @Override
-    public AMablBooleanVariable createBoolean(String label) {
-        return createBoolean(label, scope);
-    }*/
 
-
-    //
     public AMablVariable createVariableForPort(AMablPort port) {
         return createVariableForPort(builder.nameGenerator, port, scope, builder.getDynamicScope());
     }

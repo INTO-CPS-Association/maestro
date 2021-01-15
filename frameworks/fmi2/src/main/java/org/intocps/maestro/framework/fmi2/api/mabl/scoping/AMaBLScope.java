@@ -9,20 +9,16 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMablValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.statements.AMaBLStatement;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablDoubleVariable;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
-import static org.intocps.maestro.framework.fmi2.api.mabl.statements.AMaBLStatementFactory.createSingleStatement;
 
 public class AMaBLScope implements IMablScope {
     private static final Function<String, LexIdentifier> createLexIdentifier = s -> new LexIdentifier(s.replace("-", ""), null);
@@ -54,14 +50,6 @@ public class AMaBLScope implements IMablScope {
         this.block = block;
         this.simulationEnvironment = simulationEnvironment;
         this.variableCreator = new AMaBLVariableCreator(this, builder);
-    }
-
-    public static void addStatementBefore(BiFunction<Integer, LinkedList<AMaBLStatement>, Boolean> predicate, LinkedList<AMaBLStatement> statements,
-            PStm... stm) {
-        OptionalInt index = IntStream.range(0, statements.size()).filter(x -> predicate.apply(x, statements)).findFirst();
-        if (index.isPresent()) {
-            statements.addAll(index.getAsInt(), Arrays.stream(stm).map(x -> createSingleStatement(x)).collect(Collectors.toList()));
-        }
     }
 
     public ABlockStm getBlock() {

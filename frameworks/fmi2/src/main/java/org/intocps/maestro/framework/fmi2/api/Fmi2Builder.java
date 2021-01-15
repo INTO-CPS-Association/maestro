@@ -8,25 +8,25 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-public abstract class Fmi2Builder {
-    //    public abstract void popScope();
+public interface Fmi2Builder<S> {
+    S build() throws Exception;
 
     /**
      * Gets the default scope
      *
      * @return
      */
-    public abstract Scope getRootScope();
+    Scope getRootScope();
     //    public abstract void pushScope(Scope scope);
 
-    public abstract DynamicActiveScope getDynamicScope();
+    DynamicActiveScope getDynamicScope();
 
     /**
      * Get handle to the current time
      *
      * @return
      */
-    public abstract Time getCurrentTime();
+    Time getCurrentTime();
 
     /**
      * Gets a specific time from a number
@@ -34,7 +34,7 @@ public abstract class Fmi2Builder {
      * @param time
      * @return
      */
-    public abstract Time getTime(double time);
+    Time getTime(double time);
 
     /**
      * Gets a tag to the last value obtained for the given port
@@ -42,11 +42,11 @@ public abstract class Fmi2Builder {
      * @param port
      * @return
      */
-    public abstract Value getCurrentLinkedValue(Port port);
+    Value getCurrentLinkedValue(Port port);
 
-    public abstract TimeDeltaValue createTimeDeltaValue(MDouble getMinimum);
+    TimeDeltaValue createTimeDeltaValue(MDouble getMinimum);
 
-    public abstract VariableCreator variableCreator();
+    VariableCreator variableCreator();
 
     /**
      * New boolean that can be used as a predicate
@@ -58,16 +58,16 @@ public abstract class Fmi2Builder {
     /**
      * Scoping functions
      */
-    public interface Scoping<T> {
+    interface Scoping<T> {
         WhileScope<T> enterWhile(LogicBuilder.Predicate predicate);
 
         IfScope<T> enterIf(LogicBuilder.Predicate predicate);
 
         Scope<T> leave();
 
-        public abstract LiteralCreator literalCreator();
+        LiteralCreator literalCreator();
 
-        public abstract VariableCreator getVariableCreator();
+        VariableCreator getVariableCreator();
 
         void add(T... commands);
 
@@ -81,7 +81,7 @@ public abstract class Fmi2Builder {
     /**
      * Basic scope. Allows a value to be stored or override a tag
      */
-    public interface Scope<T> extends Scoping<T> {
+    interface Scope<T> extends Scoping<T> {
         @Override
         Scope<T> activate();
 
@@ -123,14 +123,14 @@ public abstract class Fmi2Builder {
     /**
      * Dynamic scope which always reflects the current active scope of the builder
      */
-    public interface DynamicActiveScope<T> extends Scope<T> {
+    interface DynamicActiveScope<T> extends Scope<T> {
 
     }
 
     /**
      * If scope, default scope is then
      */
-    public interface IfScope<T> {
+    interface IfScope<T> {
         /**
          * Switch to then scope
          *
@@ -149,20 +149,20 @@ public abstract class Fmi2Builder {
     /**
      * While
      */
-    public interface WhileScope<T> extends Scope<T> {
+    interface WhileScope<T> extends Scope<T> {
     }
 
     /**
      * Handle for an fmu for the creation of component
      */
-    public interface Fmu2Api<S> {
+    interface Fmu2Api<S> {
         Fmi2ComponentApi<S> create(String name);
 
         Fmi2ComponentApi<S> create(String name, Scope<S> scope);
     }
 
 
-    public interface LogicBuilder {
+    interface LogicBuilder {
 
         Predicate isEqual(Port a, Port b);
 
@@ -189,17 +189,17 @@ public abstract class Fmi2Builder {
 
     }
 
-    public interface Type {
+    interface Type {
     }
 
-    public interface Numeric<A> extends Value, Type {
+    interface Numeric<A> extends Value, Type {
         void set(A value);
 
         @Override
         A get();
     }
 
-    public interface MBoolean extends LogicBuilder.Predicate, Value {
+    interface MBoolean extends LogicBuilder.Predicate, Value {
         void set(Boolean value);
 
         @Override
@@ -209,26 +209,26 @@ public abstract class Fmi2Builder {
     /**
      * Current time
      */
-    public interface Time extends MDouble {
+    interface Time extends MDouble {
     }
 
     /**
      * time value from number
      */
-    public interface TimeValue extends Time {
+    interface TimeValue extends Time {
     }
 
     /**
      * Delta value for a time
      */
-    public interface TimeDeltaValue extends Time {
+    interface TimeDeltaValue extends Time {
 
     }
 
     /**
      * Interface for an fmi compoennt
      */
-    public interface Fmi2ComponentApi<T> {
+    interface Fmi2ComponentApi<T> {
 
         List<? extends Port> getPorts();
 
@@ -406,11 +406,11 @@ public abstract class Fmi2Builder {
         }
     }
 
-    public interface TimeTaggedState {
-        public void release();
+    interface TimeTaggedState {
+        void release();
     }
 
-    public interface Port {
+    interface Port {
 
         /**
          * Get the port name
@@ -448,7 +448,7 @@ public abstract class Fmi2Builder {
         }
     }
 
-    public interface Value<V> {
+    interface Value<V> {
         static Value<Double> of(double a) {
             return null;
         }
@@ -460,23 +460,23 @@ public abstract class Fmi2Builder {
         V get();
     }
 
-    public interface IntValue extends Value<Integer> {
+    interface IntValue extends Value<Integer> {
     }
 
-    public interface BoolValue extends Value<Boolean> {
+    interface BoolValue extends Value<Boolean> {
     }
 
-    public interface DoubleValue extends Value<Double> {
+    interface DoubleValue extends Value<Double> {
     }
 
-    public interface StringValue extends Value<String> {
+    interface StringValue extends Value<String> {
     }
 
-    public interface NamedValue extends Value<Object> {
+    interface NamedValue extends Value<Object> {
     }
 
 
-    public interface VariableCreator<T> {
+    interface VariableCreator<T> {
         //  BoolVariable<T> createBoolean(String label);
 
         //  IntVariable<T> createInteger(String label);
@@ -491,7 +491,7 @@ public abstract class Fmi2Builder {
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
     }
 
-    public interface LiteralCreator {
+    interface LiteralCreator {
         MInt createMInt(Integer value);
 
         Time createTime(Double value);
@@ -500,17 +500,17 @@ public abstract class Fmi2Builder {
     }
 
     @Deprecated
-    public interface MDouble extends Numeric<Double> {
+    interface MDouble extends Numeric<Double> {
         TimeDeltaValue toTimeDelta();
     }
 
     @Deprecated
-    public interface MInt extends Numeric<Integer> {
+    interface MInt extends Numeric<Integer> {
         void decrement();
     }
 
 
-    public interface IntVariable<T> extends Variable<T, IntValue> {
+    interface IntVariable<T> extends Variable<T, IntValue> {
         void decrement();
 
         void increment();
@@ -518,24 +518,24 @@ public abstract class Fmi2Builder {
         //void set(int value);
     }
 
-    public interface DoubleVariable<T> extends Variable<T, DoubleValue> {
+    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
         TimeDeltaValue toTimeDelta();
 
         void set(Double value);
     }
 
-    public interface BoolVariable<T> extends Variable<T, BoolValue> {
+    interface BoolVariable<T> extends Variable<T, BoolValue> {
         //void set(Boolean value);
     }
 
-    public interface StringVariable<T> extends Variable<T, StringValue> {
+    interface StringVariable<T> extends Variable<T, StringValue> {
         //void set(String value);
     }
 
-    public interface NamedVariable<T> extends Variable<T, NamedValue> {
+    interface NamedVariable<T> extends Variable<T, NamedValue> {
     }
 
-    public interface Variable<T, V> {
+    interface Variable<T, V> {
         String getName();
 
         // T getValue();
