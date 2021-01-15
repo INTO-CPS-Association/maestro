@@ -4,7 +4,6 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -62,8 +61,8 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
     }
 
     public static AMablFmu2Variable createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
-            String name, ModelDescription modelDescription, URI uriPath, IMablScope scope,
-            Fmi2SimulationEnvironment simulationEnvironment) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+            String name, ModelDescription modelDescription, URI uriPath,
+            IMablScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
         if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
             path = uriPath.getPath();
@@ -86,8 +85,7 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
     @Override
     public AMablFmu2Variable createFMU(String name, ModelDescription modelDescription,
             URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
-        return createFMU(builder, builder.nameGenerator, builder.getDynamicScope(), name, modelDescription, uriPath, scope,
-                builder.getSimulationEnvironment());
+        return createFMU(builder, builder.nameGenerator, builder.getDynamicScope(), name, modelDescription, uriPath, scope);
     }
 
 

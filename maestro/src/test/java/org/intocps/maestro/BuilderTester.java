@@ -40,7 +40,7 @@ public class BuilderTester {
                 mapper.readValue(is, Fmi2SimulationEnvironmentConfiguration.class);
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
 
-        MablApiBuilder builder = new MablApiBuilder(env);
+        MablApiBuilder builder = new MablApiBuilder();
         AMaBLVariableCreator variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
 
 

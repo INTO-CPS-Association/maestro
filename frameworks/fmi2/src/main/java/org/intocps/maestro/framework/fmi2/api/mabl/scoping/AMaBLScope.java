@@ -4,7 +4,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
@@ -27,7 +26,6 @@ public class AMaBLScope implements IMablScope {
     private final Map<Integer, LexIdentifier> booleanArrays = new HashMap<>();
     //private final Consumer<AMaBLScope> currentScopeSetter;
     //    private final Supplier<AMaBLScope> currentScopeGetter;
-    private final Fmi2SimulationEnvironment simulationEnvironment;
     private final MablApiBuilder builder;
     // public final LinkedList<AMaBLStatement> statements = new LinkedList<>();
     //public final LinkedList<PStm> statements;
@@ -35,20 +33,18 @@ public class AMaBLScope implements IMablScope {
     // ScopeVariables variables = new ScopeVariables();
     AMaBLVariableCreator variableCreator;
 
-    public AMaBLScope(MablApiBuilder builder, Fmi2SimulationEnvironment simulationEnvironment) {
+    public AMaBLScope(MablApiBuilder builder) {
         this.builder = builder;
         this.parent = null;
         this.block = new ABlockStm();
-        this.simulationEnvironment = simulationEnvironment;
         this.variableCreator = new AMaBLVariableCreator(this, builder);
 
     }
 
-    public AMaBLScope(MablApiBuilder builder, IMablScope parent, ABlockStm block, Fmi2SimulationEnvironment simulationEnvironment) {
+    public AMaBLScope(MablApiBuilder builder, IMablScope parent, ABlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
-        this.simulationEnvironment = simulationEnvironment;
         this.variableCreator = new AMaBLVariableCreator(this, builder);
     }
 
@@ -74,8 +70,8 @@ public class AMaBLScope implements IMablScope {
 
         AIfStm ifStm = newIf(newABoolLiteralExp(true), thenStm, elseStm);
         add(ifStm);
-        AMaBLScope thenScope = new AMaBLScope(builder, this, thenStm, this.simulationEnvironment);
-        AMaBLScope elseScope = new AMaBLScope(builder, this, elseStm, this.simulationEnvironment);
+        AMaBLScope thenScope = new AMaBLScope(builder, this, thenStm);
+        AMaBLScope elseScope = new AMaBLScope(builder, this, elseStm);
         return new IfMaBlScope(builder, ifStm, this, thenScope, elseScope);
     }
 
@@ -357,10 +353,6 @@ public class AMaBLScope implements IMablScope {
         }
 
         return null;
-    }
-
-    public Fmi2SimulationEnvironment getSimulationEnvironment() {
-        return this.simulationEnvironment;
     }
 
 

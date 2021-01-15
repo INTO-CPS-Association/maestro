@@ -3,7 +3,6 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.AMaBLScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -25,15 +24,13 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
     static Map<String, AMablVariable> specialVariables = new HashMap<>();
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
-    private final Fmi2SimulationEnvironment simulationEnvironment;
     private final AMaBLVariableCreator currentVariableCreator;
 
     private final AMablBooleanVariable globalExecutionContinue;
     private final AMablIntVariable globalFmiStatus;
 
-    public MablApiBuilder(Fmi2SimulationEnvironment simulationEnvironment) {
-        this.simulationEnvironment = simulationEnvironment;
-        rootScope = new AMaBLScope(this, simulationEnvironment);
+    public MablApiBuilder() {
+        rootScope = new AMaBLScope(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
         this.currentVariableCreator = new AMaBLVariableCreator(dynamicScope, this);
 
@@ -80,9 +77,6 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
         return nameGenerator;
     }
 
-    public Fmi2SimulationEnvironment getSimulationEnvironment() {
-        return simulationEnvironment;
-    }
 
     @Override
     public IMablScope getRootScope() {
