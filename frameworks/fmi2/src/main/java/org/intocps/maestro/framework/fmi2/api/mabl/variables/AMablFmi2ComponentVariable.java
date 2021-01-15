@@ -5,14 +5,15 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.PortIdentifier;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -21,8 +22,7 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 
 
 public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
-
-
+    final static Logger logger = LoggerFactory.getLogger(AMablFmi2ComponentVariable.class);
     final List<AMablPort> outputPorts;
     final List<AMablPort> inputPorts;
     final List<AMablPort> ports;
@@ -31,6 +31,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     private final MablApiBuilder builder;
     private final Map<PType, ArrayVariable<Object>> ioBuffer = new HashMap<>();
     private final Map<PType, ArrayVariable<Object>> sharedBuffer = new HashMap<>();
+    Predicate<Fmi2Builder.Port> isLinked = p -> ((AMablPort) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
     private ArrayVariable<Object> valueRefBuffer;
 
@@ -43,7 +44,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         this.modelDescriptionContext = modelDescriptionContext;
         this.builder = builder;
 
-        ports = modelDescriptionContext.nameToSv.values().stream().map(this::createPort)
+        ports = modelDescriptionContext.nameToSv.values().stream().map(sv -> new AMablPort(this, sv))
                 .sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
         outputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Output)
@@ -197,11 +198,6 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     }
 
-    private AMablPort createPort(ModelDescription.ScalarVariable sv) {
-        Supplier<AMablPort> portCreator = () -> new AMablPort(this, sv);
-        PortIdentifier pi = PortIdentifier.of(this, sv);
-        return MablApiBuilder.getOrCreatePort(pi, portCreator);
-    }
 
     /**
      * Stores the final value in rootScope
@@ -276,8 +272,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
         List<AMablPort> selectedPorts;
         if (value == null || value.isEmpty()) {
-            selectedPorts = inputPorts;
-            value = findSourceValues(selectedPorts);
+            return;
         } else {
             selectedPorts = value.keySet().stream().map(AMablPort.class::cast).collect(Collectors.toList());
         }
@@ -307,32 +302,12 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
             scope.add(newAAssignmentStm(designator.clone(), portToValue.apply(p).clone()));
         }
 
-        //String statusName = builder.getNameGenerator().getName("status");
-
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
     }
 
-    private PortVariableMap findSourceValues(List<AMablPort> selectedPorts) {
-        //FIXME we need to figure out where the port's source is
-        for (AMablPort port : selectedPorts) {
-            if (port.getSourcePort() == null) {
-                throw new RuntimeException(
-                        "Attempting to obtain shared value from a port that is not linked. This port is missing a required " + "link: " + port);
-            }
-
-            if (port.getSourcePort().getSharedAsVariable() == null) {
-                throw new RuntimeException(
-                        "Attempting to obtain shared values from a port that is linked but has no value shared. Share a value " + "first. " + port);
-
-            }
-        }
-
-        return new PortVariableMapImpl(selectedPorts.stream()
-                .collect(Collectors.toMap(java.util.function.Function.identity(), port -> port.getSourcePort().getSharedAsVariable())));
-    }
 
     @Override
     public void set(PortValueMap value) {
@@ -351,36 +326,66 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         set(builder.getDynamicScope(), value);
     }
 
-
     @Override
-    public void set(String... names) {
+    public void setLinked(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... filterPorts) {
+
+        List<AMablPort> selectedPorts = ports.stream().filter(isLinked).collect(Collectors.toList());
+        if (filterPorts != null && filterPorts.length != 0) {
+
+            List<Fmi2Builder.Port> filterList = Arrays.asList(filterPorts);
+
+            for (Fmi2Builder.Port p : filterList) {
+                if (!isLinked.test(p)) {
+                    logger.warn("Filter for setLinked contains unlined port. Its ignored. {}", p);
+                }
+            }
+
+            selectedPorts = selectedPorts.stream().filter(p -> filterList.contains(p)).collect(Collectors.toList());
+        }
 
 
-        //FIXME get shared
-        PortVariableMap value = null;
+        for (AMablPort port : selectedPorts) {
+            if (port.getSourcePort() == null) {
+                throw new RuntimeException(
+                        "Attempting to obtain shared value from a port that is not linked. This port is missing a required " + "link: " + port);
+            }
 
-        set(value);
+            if (port.getSourcePort().getSharedAsVariable() == null) {
+                throw new RuntimeException(
+                        "Attempting to obtain shared values from a port that is linked but has no value shared. Share a value " + "first. " + port);
 
-        /*
-        List<Fmi2Builder.Port> ports = this.getPorts(names);
-        ports.forEach(p -> {
-            // Find the port that is the source of the given value
-            AMablPort p_ = (AMablPort) p;
-            AMablPort companionPort = p_.getSourcePort();
-            // Create valuereference set array
-            Pair<LexIdentifier, List<PStm>> valRefArray =
-                    this.builder.getDynamicScope().findOrCreateValueReferenceArrayAndAssign(new long[]{p.getPortReferenceValue()});
+            }
+        }
 
-
-
-            //AMablBuilder.rootScope.findOrCreateArrayOfSize(p_);
-
-
-        });
-*/
-
+        set(scope, selectedPorts, port -> port.getSourcePort().getSharedAsVariable().getReferenceExp().clone());
 
     }
+
+    @Override
+    public void setLinked() {
+        this.setLinked(dynamicScope, null);
+    }
+
+    @Override
+    public void setLinked(Fmi2Builder.Port... filterPorts) {
+
+        this.setLinked(dynamicScope, filterPorts);
+    }
+
+    @Override
+    public void setLinked(String... filterNames) {
+        List<String> accept = Arrays.asList(filterNames);
+        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
+
+    }
+
+    @Override
+    public void setLinked(long... filterValueReferences) {
+        List<Long> accept = Arrays.stream(filterValueReferences).boxed().collect(Collectors.toList());
+        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getPortReferenceValue())).toArray(Fmi2Builder.Port[]::new));
+
+    }
+
 
     @Override
     public void setInt(Map<Integer, Fmi2Builder.Value<Integer>> values) {

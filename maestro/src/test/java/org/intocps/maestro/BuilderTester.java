@@ -53,6 +53,8 @@ public class BuilderTester {
         AMablFmi2ComponentVariable controller = controllerFMU.instantiate("controller");
         AMablFmi2ComponentVariable tank = tankFMU.instantiate("tank");
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
+
+
  /*
         IMablScope scope1 = dynamicScope.getActiveScope();
         for (int i = 0; i < 4; i++) {
@@ -72,8 +74,10 @@ public class BuilderTester {
 
         controller.getAndShare("valve");
         controller.getAndShare();
+        tank.setLinked();
         // tank.set();
         Fmi2Builder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
+
 
         //no this will not stay this way
         // tank.set(tank.getPort("valvecontrol"), new AMablValue(newBoleanType(), true));

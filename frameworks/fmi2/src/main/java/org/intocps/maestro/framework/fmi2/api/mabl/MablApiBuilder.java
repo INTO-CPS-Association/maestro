@@ -13,10 +13,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -24,8 +21,6 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompilationUnit> {
 
-    public static final Map<AMablPort, List<AMablPort>> outputToInputMapping = new HashMap<>();
-    private static final Map<PortIdentifier, AMablPort> portIDToPort = new HashMap<>();
     static AMaBLScope rootScope;
     static Map<String, AMablVariable> specialVariables = new HashMap<>();
     final DynamicActiveBuilderScope dynamicScope;
@@ -51,18 +46,6 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
     }
 
-    public static AMablPort getOrCreatePort(PortIdentifier pi, Supplier<AMablPort> portCreator) {
-        AMablPort port = portIDToPort.get(pi);
-        if (port == null) {
-            port = portCreator.get();
-            portIDToPort.put(pi, port);
-        }
-        return port;
-    }
-
-    public static void breakLink(AMablPort aMablPort, Port[] receiver) {
-        outputToInputMapping.get(aMablPort).removeAll(Arrays.asList(receiver).stream().map(x -> (AMablPort) x).collect(Collectors.toList()));
-    }
 
     public static AMablVariable getStatus() {
         return specialVariables.get("status");

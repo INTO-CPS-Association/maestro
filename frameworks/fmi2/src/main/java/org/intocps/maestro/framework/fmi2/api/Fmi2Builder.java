@@ -450,7 +450,15 @@ public interface Fmi2Builder<S> {
         /**
          * Set this fmu port by name and link
          */
-        void set(String... names);
+        void setLinked(Scope<T> scope, Port... filterPorts);
+
+        void setLinked();
+
+        void setLinked(Port... filterPorts);
+
+        void setLinked(String... filterNames);
+
+        void setLinked(long... filterValueReferences);
 
         /**
          * Set this fmu ports by val ref
