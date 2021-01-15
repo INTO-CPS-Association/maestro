@@ -1,4 +1,4 @@
-package org.intocps.maestro.framework.fmi2.api.mabl;
+package org.intocps.maestro.framework.fmi2.api.mabl.values;
 
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 

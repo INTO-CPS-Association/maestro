@@ -3,8 +3,8 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMablValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
