@@ -3,6 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
+import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -157,7 +158,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         ArrayVariable<Object> vrefBuf = getValueReferenceBuffer();
 
         for (int i = 0; i < sortedPorts.size(); i++) {
-            Fmi2Builder.Port p = sortedPorts.get(i);
+            AMablPort p = sortedPorts.get(i);
             PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
             scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
         }
@@ -167,6 +168,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
+
+
         scope.add(stm);
 
         Map<Fmi2Builder.Port, Fmi2Builder.Variable> results = new HashMap<>();
@@ -299,7 +302,10 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         for (int i = 0; i < sortedPorts.size(); i++) {
             AMablPort p = sortedPorts.get(i);
             PStateDesignator designator = valBuf.items().get(i).getDesignator();
-            scope.add(newAAssignmentStm(designator.clone(), portToValue.apply(p).clone()));
+
+
+            scope.addAll(BuilderUtil
+                    .createTypeConvertingAssignment(builder, scope, designator.clone(), portToValue.apply(p).clone(), p.getType(), valBuf.type));
         }
 
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),

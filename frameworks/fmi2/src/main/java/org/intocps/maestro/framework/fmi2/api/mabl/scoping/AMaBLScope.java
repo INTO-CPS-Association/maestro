@@ -10,6 +10,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablDoubleVariable
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -75,7 +76,12 @@ public class AMaBLScope implements IMablScope {
 
     @Override
     public void add(PStm... commands) {
-        block.getBody().addAll(Arrays.asList(commands));
+        addAll(Arrays.asList(commands));
+    }
+
+    @Override
+    public void addAll(Collection<PStm> commands) {
+        block.getBody().addAll(commands);
     }
 
     @Override

@@ -4,6 +4,8 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
 
+import java.util.Collection;
+
 public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.DynamicActiveScope<PStm> {
 
     final private IMablScope root;
@@ -56,6 +58,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public void add(PStm... commands) {
         activeScope.add(commands);
+    }
+
+    @Override
+    public void addAll(Collection<PStm> commands) {
+        activeScope.addAll(commands);
     }
 
     @Override

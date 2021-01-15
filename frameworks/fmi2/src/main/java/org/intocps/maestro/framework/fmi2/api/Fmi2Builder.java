@@ -5,6 +5,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +71,8 @@ public interface Fmi2Builder<S> {
         VariableCreator getVariableCreator();
 
         void add(T... commands);
+
+        void addAll(Collection<T> commands);
 
         void addBefore(T item, T... commands);
 
