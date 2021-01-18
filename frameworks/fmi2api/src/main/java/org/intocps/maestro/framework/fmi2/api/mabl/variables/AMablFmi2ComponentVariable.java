@@ -346,19 +346,19 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         set(scope, selectedPorts, port -> {
             Object val = (value.get(port)).get();
             if (val instanceof Double) {
-                return newARealLiteralExp((Double) val);
+                return Map.entry(newARealLiteralExp((Double) val), newRealType());
             }
             if (val instanceof Long) {
-                return newAUIntLiteralExp((Long) val);
+                return Map.entry(newAUIntLiteralExp((Long) val), newUIntType());
             }
             if (val instanceof Integer) {
-                return newAIntLiteralExp((Integer) val);
+                return Map.entry(newAIntLiteralExp((Integer) val), newIntType());
             }
             if (val instanceof Boolean) {
-                return newABoolLiteralExp((Boolean) val);
+                return Map.entry(newABoolLiteralExp((Boolean) val), newBoleanType());
             }
             if (val instanceof String) {
-                return newAStringLiteralExp((String) val);
+                return Map.entry(newAStringLiteralExp((String) val), newStringType());
             }
             return null;
         });
@@ -375,10 +375,11 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         }
 
         final PortVariableMap valueFinal = value;
-        set(scope, selectedPorts, port -> ((AMablVariable) valueFinal.get(port)).getReferenceExp().clone());
+        set(scope, selectedPorts,
+                port -> Map.entry(((AMablVariable) valueFinal.get(port)).getReferenceExp().clone(), ((AMablVariable) valueFinal.get(port)).type));
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, List<AMablPort> selectedPorts, Function<AMablPort, PExp> portToValue) {
+    public void set(Fmi2Builder.Scope<PStm> scope, List<AMablPort> selectedPorts, Function<AMablPort, Map.Entry<PExp, PType>> portToValue) {
 
         List<AMablPort> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
@@ -398,8 +399,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
             PStateDesignator designator = valBuf.items().get(i).getDesignator();
 
 
-            scope.addAll(BuilderUtil
-                    .createTypeConvertingAssignment(builder, scope, designator.clone(), portToValue.apply(p).clone(), p.getType(), valBuf.type));
+            scope.addAll(BuilderUtil.createTypeConvertingAssignment(builder, scope, designator.clone(), portToValue.apply(p).getKey().clone(),
+                    portToValue.apply(p).getValue(), valBuf.type));
         }
 
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
@@ -457,7 +458,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
             }
         }
 
-        set(scope, selectedPorts, port -> port.getSourcePort().getSharedAsVariable().getReferenceExp().clone());
+        set(scope, selectedPorts,
+                k -> Map.entry(k.getSourcePort().getSharedAsVariable().getReferenceExp().clone(), k.getSourcePort().getSharedAsVariable().type));
 
     }
 
@@ -517,7 +519,9 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
                 }
 
                 PStateDesignator designator = port.getSharedAsVariable().getDesignator();
-                builder.getDynamicScope().add(newAAssignmentStm(designator.clone(), ((AMablVariable) data.get(port)).getReferenceExp().clone()));
+                builder.getDynamicScope().addAll(BuilderUtil.createTypeConvertingAssignment(builder, dynamicScope, designator.clone(),
+                        ((AMablVariable) data.get(port)).getReferenceExp().clone(), port.getType(),
+                        ((AMablVariable) ((AMablVariable<?>) data.get(port))).type));
             });
 
         });
@@ -534,7 +538,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         // getDeclaredScope().addAfter(getDeclaringStm(), var);
 
         List<AMablVariable<Object>> items = IntStream.range(buffer.size(), length).mapToObj(
-                i -> new AMablVariable<>(var, type, this.getDeclaredScope(), builder.getDynamicScope(),
+                i -> new AMablVariable<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
                         newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
                         newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
                 .collect(Collectors.toList());

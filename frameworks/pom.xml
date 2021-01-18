@@ -18,5 +18,6 @@
     <modules>
         <module>core</module>
         <module>fmi2</module>
+				<module>fmi2api</module>
     </modules>
 </project>

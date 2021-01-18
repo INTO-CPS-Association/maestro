@@ -14,7 +14,7 @@
     <groupId>org.into-cps.maestro.frameworks</groupId>
     <artifactId>fmi2</artifactId>
     <version>2.0.4-SNAPSHOT</version>
-    <name>Fmi frameworks</name>
+    <name>Fmi2 framework</name>
 
     <repositories>
         <repository>
