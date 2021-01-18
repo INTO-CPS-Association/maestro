@@ -357,6 +357,24 @@ public interface Fmi2Builder<S> {
      */
     interface Fmi2ComponentVariable<T> extends Variable<T, NamedVariable<T>> {
 
+        void setupExperiment(boolean toleranceDefined, double tolerance, DoubleVariable<T> startTime, boolean endTimeDefined,
+                DoubleVariable<T> endTime);
+
+        void setupExperiment(boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime);
+
+        void enterInitializationMode();
+
+        void exitInitializationMode();
+
+        void setupExperiment(Scope<T> scope, boolean toleranceDefined, double tolerance, DoubleVariable<T> startTime, boolean endTimeDefined,
+                DoubleVariable<T> endTime);
+
+        void setupExperiment(Scope<T> scope, boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime);
+
+        void enterInitializationMode(Scope<T> scope);
+
+        void exitInitializationMode(Scope<T> scope);
+
         List<? extends Port> getPorts();
 
         /**

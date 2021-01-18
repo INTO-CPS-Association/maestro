@@ -6,6 +6,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -112,6 +113,85 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
+    public void setupExperiment(boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime, boolean endTimeDefined,
+            Fmi2Builder.DoubleVariable<PStm> endTime) {
+        this.setupExperiment(toleranceDefined, tolerance, ((AMablDoubleVariable) startTime).getReferenceExp().clone(), endTimeDefined,
+                ((AMablDoubleVariable) endTime).getReferenceExp().clone());
+    }
+
+    @Override
+    public void setupExperiment(boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime) {
+        this.setupExperiment(toleranceDefined, tolerance, newARealLiteralExp(startTime), endTimeDefined, newARealLiteralExp(endTime));
+    }
+
+    private void setupExperiment(boolean toleranceDefined, double tolerance, PExp startTime, boolean endTimeDefined, PExp endTime) {
+        DynamicActiveBuilderScope scope = builder.getDynamicScope();
+        this.setupExperiment(scope, toleranceDefined, tolerance, startTime, endTimeDefined, endTime);
+    }
+
+    private void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, PExp startTime, boolean endTimeDefined,
+            PExp endTime) {
+        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETUPEXPERIMENT), new ArrayList<>(
+                        Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance), startTime,
+                                newABoolLiteralExp(endTimeDefined), endTime))));
+        scope.add(stm);
+    }
+
+
+    @Override
+    public void enterInitializationMode() {
+        this.enterInitializationMode(builder.getDynamicScope());
+    }
+
+    @Override
+    public void exitInitializationMode() {
+        this.exitInitializationMode(builder.getDynamicScope());
+    }
+
+    @Override
+    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime,
+            boolean endTimeDefined, Fmi2Builder.DoubleVariable<PStm> endTime) {
+        this.setupExperiment(scope, toleranceDefined, tolerance, ((AMablDoubleVariable) startTime).getReferenceExp().clone(), endTimeDefined,
+                ((AMablDoubleVariable) endTime).getReferenceExp().clone());
+    }
+
+    @Override
+    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined,
+            double endTime) {
+        this.setupExperiment(scope, toleranceDefined, tolerance, newARealLiteralExp(startTime), endTimeDefined, newARealLiteralExp(endTime));
+    }
+
+    @Override
+    public void enterInitializationMode(Fmi2Builder.Scope<PStm> scope) {
+        PStm stm = stateTransitionFunction(FmiFunctionType.ENTERINITIALIZATIONMODE);
+        scope.add(stm);
+
+    }
+
+    @Override
+    public void exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
+        PStm stm = stateTransitionFunction(FmiFunctionType.EXITINITIALIZATIONMODE);
+        scope.add(stm);
+    }
+
+
+    private PStm stateTransitionFunction(FmiFunctionType type) {
+        switch (type) {
+            case ENTERINITIALIZATIONMODE:
+                break;
+            case EXITINITIALIZATIONMODE:
+                break;
+            default:
+                throw new RuntimeException("Attempting to call state transition function with non-state transition function type: " + type);
+        }
+
+        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                call(this.getReferenceExp().clone(), createFunctionName(type)));
+        return stm;
+    }
+
+    @Override
     public List<? extends Fmi2Builder.Port> getPorts() {
         return ports;
     }
@@ -215,6 +295,18 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
 
+    private String createFunctionName(FmiFunctionType fun) {
+        switch (fun) {
+            case ENTERINITIALIZATIONMODE:
+                return "enterInitializationMode";
+            case EXITINITIALIZATIONMODE:
+                return "exitInitializationMode";
+            default:
+                throw new RuntimeException("Attempting to call function that is type dependant without specifying type: " + fun);
+        }
+
+    }
+
     private String createFunctionName(FmiFunctionType fun, AMablPort p) {
         return createFunctionName(fun, p.scalarVariable.getType().type);
     }
@@ -228,6 +320,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
             case SET:
                 functionName += "set";
                 break;
+            default:
+                throw new RuntimeException("Attempting to call non type-dependant function with type: " + type);
         }
         functionName += type.name();
         return functionName;
@@ -501,7 +595,10 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     public enum FmiFunctionType {
         GET,
-        SET
+        SET,
+        ENTERINITIALIZATIONMODE,
+        EXITINITIALIZATIONMODE,
+        SETUPEXPERIMENT
     }
 
 

@@ -153,4 +153,12 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
         return unit;
     }
+
+    public PExp getStartTime() {
+        return null;
+    }
+
+    public PExp getEndTime() {
+        return null;
+    }
 }
