@@ -27,7 +27,7 @@ public interface Fmi2Builder<S> {
      *
      * @return
      */
-    Time getCurrentTime();
+    //Time getCurrentTime();
 
     /**
      * Gets a specific time from a number
@@ -35,7 +35,7 @@ public interface Fmi2Builder<S> {
      * @param time
      * @return
      */
-    Time getTime(double time);
+    //Time getTime(double time);
 
     /**
      * Gets a tag to the last value obtained for the given port
@@ -43,7 +43,7 @@ public interface Fmi2Builder<S> {
      * @param port
      * @return
      */
-    Value getCurrentLinkedValue(Port port);
+    <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
 
     TimeDeltaValue createTimeDeltaValue(double getMinimum);
 
@@ -291,15 +291,6 @@ public interface Fmi2Builder<S> {
 
 
     interface VariableCreator<T> {
-        //  BoolVariable<T> createBoolean(String label);
-
-        //  IntVariable<T> createInteger(String label);
-
-        // Variable<T, TimeDeltaValue> createTimeDeltaValue(String label);
-
-        // DoubleVariable<T> createDouble(String label);
-
-        // Variable<T, Time> createTimeValue(String step_size);
 
         Fmu2Variable<T> createFMU(String name, ModelDescription modelDescription,
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
@@ -336,6 +327,28 @@ public interface Fmi2Builder<S> {
     }
 
     interface NamedVariable<T> extends Variable<T, NamedValue> {
+    }
+
+    interface StateVariable<T> extends Variable<T, Object> {
+        /**
+         * Sets this state on the owning component in the active scope
+         */
+        void set() throws IllegalStateException;
+
+        /**
+         * Sets this state on the owning component in the given scope
+         */
+        void set(Scope<T> scope) throws IllegalStateException;
+
+        /**
+         * Destroys the state in the active scope. After this no other operation on the state is allowed
+         */
+        void destroy() throws IllegalStateException;
+
+        /**
+         * Destroys the state in the active scope. After this no other operation on the state is allowed
+         */
+        void destroy(Scope<T> scope) throws IllegalStateException;
     }
 
 
@@ -555,7 +568,9 @@ public interface Fmi2Builder<S> {
          *
          * @return
          */
-        TimeTaggedState getState();
+        StateVariable<T> getState();
+
+        StateVariable<T> getState(Scope<T> scope);
 
         /**
          * Sets the current state
@@ -563,7 +578,7 @@ public interface Fmi2Builder<S> {
          * @param state
          * @return
          */
-        Time setState(TimeTaggedState state);
+        //Time setState(TimeTaggedState state);
 
         /**
          * Sets the current state based on the last retrieved state
@@ -571,7 +586,7 @@ public interface Fmi2Builder<S> {
          * @return
          */
 
-        Time setState();
+        //Time setState();
 
         public interface PortVariableMap extends Map<Port, Variable> {
         }

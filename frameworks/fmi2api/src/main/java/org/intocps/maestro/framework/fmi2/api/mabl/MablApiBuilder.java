@@ -10,9 +10,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -21,7 +19,6 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompilationUnit> {
 
     static AMaBLScope rootScope;
-    static Map<String, AMablVariable> specialVariables = new HashMap<>();
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
     private final AMaBLVariableCreator currentVariableCreator;
@@ -44,10 +41,6 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
     }
 
 
-    public static AMablVariable getStatus() {
-        return specialVariables.get("status");
-    }
-
     public AMablBooleanVariable getGlobalExecutionContinue() {
         return globalExecutionContinue;
     }
@@ -56,6 +49,7 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
         return globalFmiStatus;
     }
 
+    @SuppressWarnings("rawtypes")
     private Variable createVariable(IMablScope scope, PType type, PExp initialValue, String... prefixes) {
         String name = nameGenerator.getName(prefixes);
         PStm var = newVariable(name, type, initialValue);
@@ -90,18 +84,12 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
 
     @Override
-    public Time getCurrentTime() {
-        return null;
-    }
-
-    @Override
-    public Time getTime(double time) {
-        return null;
-    }
-
-    @Override
-    public Value getCurrentLinkedValue(Port port) {
-        return null;
+    public <V, T> Variable<T, V> getCurrentLinkedValue(Port port) {
+        AMablPort mp = (AMablPort) port;
+        if (mp.getSharedAsVariable() == null) {
+            return null;
+        }
+        return mp.getSharedAsVariable();
     }
 
     @Override
@@ -143,13 +131,13 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
         ASimulationSpecificationCompilationUnit unit = new ASimulationSpecificationCompilationUnit();
         unit.setBody(block);
-        unit.setFramework(Arrays.asList(newAIdentifier("FMI2")));
+        unit.setFramework(Collections.singletonList(newAIdentifier("FMI2")));
 
         AConfigFramework config = new AConfigFramework();
         config.setName(newAIdentifier("FMI2"));
         //config.setConfig(StringEscapeUtils.escapeJava(simulationEnvironment.));
         // unit.setFrameworkConfigs(Arrays.asList(config));
-        unit.setImports(Arrays.asList(newAIdentifier("FMI2")));
+        unit.setImports(Collections.singletonList(newAIdentifier("FMI2")));
 
         return unit;
     }
