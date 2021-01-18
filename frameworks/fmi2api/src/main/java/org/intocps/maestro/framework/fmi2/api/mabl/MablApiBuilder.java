@@ -4,13 +4,12 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.AMaBLScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -19,35 +18,34 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompilationUnit> {
 
-    static AMaBLScope rootScope;
+    static ScopeFmi2Api rootScope;
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
-    private final AMaBLVariableCreator currentVariableCreator;
+    private final VariableCreatorFmi2Api currentVariableCreator;
 
-    private final AMablBooleanVariable globalExecutionContinue;
-    private final AMablIntVariable globalFmiStatus;
+    private final BooleanVariableFmi2Api globalExecutionContinue;
+    private final IntVariableFmi2Api globalFmiStatus;
 
-    public MablApiBuilder(String... existingIdentifiers) {
-        rootScope = new AMaBLScope(this);
+    public MablApiBuilder() {
+        rootScope = new ScopeFmi2Api(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
-        this.currentVariableCreator = new AMaBLVariableCreator(dynamicScope, this);
+        this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
 
-        this.getDynamicScope().store(new AMablValue<>(newABoleanPrimitiveType(), false));
-        if (existingIdentifiers.length > 0) {
-            this.nameGenerator.identifiers.addAll(Arrays.asList(existingIdentifiers));
-        }
+        this.getDynamicScope().store(new ValueFmi2Api<>(newABoleanPrimitiveType(), false));
+
         //create global variables
         globalExecutionContinue =
-                (AMablBooleanVariable) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
-        globalFmiStatus = (AMablIntVariable) createVariable(rootScope, newIntType(), null, "status");
+                (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
+        globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
 
     }
 
-    public AMablBooleanVariable getGlobalExecutionContinue() {
+
+    public BooleanVariableFmi2Api getGlobalExecutionContinue() {
         return globalExecutionContinue;
     }
 
-    public AMablIntVariable getGlobalFmiStatus() {
+    public IntVariableFmi2Api getGlobalFmiStatus() {
         return globalFmiStatus;
     }
 
@@ -57,16 +55,16 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
         PStm var = newVariable(name, type, initialValue);
         scope.add(var);
         if (type instanceof ARealNumericPrimitiveType) {
-            return new AMablDoubleVariable(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new DoubleVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof ABooleanPrimitiveType) {
-            return new AMablBooleanVariable(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new BooleanVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof AIntNumericPrimitiveType) {
-            return new AMablIntVariable(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new IntVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof AStringPrimitiveType) {
-            return new AMablStringVariable(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new StringVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         }
 
-        return new AMablVariable(var, type, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+        return new VariableFmi2Api(var, type, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
     }
 
     public TagNameGenerator getNameGenerator() {
@@ -87,7 +85,7 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
     @Override
     public <V, T> Variable<T, V> getCurrentLinkedValue(Port port) {
-        AMablPort mp = (AMablPort) port;
+        PortFmi2Api mp = (PortFmi2Api) port;
         if (mp.getSharedAsVariable() == null) {
             return null;
         }
@@ -101,7 +99,7 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
 
 
     @Override
-    public AMaBLVariableCreator variableCreator() {
+    public VariableCreatorFmi2Api variableCreator() {
         return this.currentVariableCreator;
     }
 

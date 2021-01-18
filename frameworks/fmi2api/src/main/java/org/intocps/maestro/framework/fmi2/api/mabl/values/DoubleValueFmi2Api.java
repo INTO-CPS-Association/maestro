@@ -4,9 +4,9 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 
 import static org.intocps.maestro.ast.MableAstFactory.newRealType;
 
-public class MablDoubleValue extends AMablValue<Double> implements Fmi2Builder.DoubleValue {
+public class DoubleValueFmi2Api extends ValueFmi2Api<Double> implements Fmi2Builder.DoubleValue {
 
-    public MablDoubleValue(Double value) {
+    public DoubleValueFmi2Api(Double value) {
         super(newRealType(), value);
     }
 }

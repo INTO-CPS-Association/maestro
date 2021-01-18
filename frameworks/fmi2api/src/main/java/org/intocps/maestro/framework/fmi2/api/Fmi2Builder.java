@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public interface Fmi2Builder<S> {
     S build() throws Exception;
 
@@ -401,16 +402,16 @@ public interface Fmi2Builder<S> {
          * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
          * @return
          */
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
                 DoubleVariable<T> communicationStepSize, BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
                 DoubleVariable<T> communicationStepSize);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
                 BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
 
 
         List<? extends Port> getPorts();
@@ -453,16 +454,16 @@ public interface Fmi2Builder<S> {
          * @param ports
          * @return
          */
-        Map<Port, Variable> get(Port... ports);
+        <V> Map<Port, Variable<T, V>> get(Port... ports);
 
-        Map<Port, Variable> get(Scope<T> scope, Port... ports);
+        <V> Map<Port, Variable<T, V>> get(Scope<T> scope, Port... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        Map<Port, Variable> get();
+        <V> Map<Port, Variable<T, V>> get();
 
         /**
          * get filter by value reference
@@ -470,7 +471,7 @@ public interface Fmi2Builder<S> {
          * @param valueReferences
          * @return
          */
-        Map<Port, Variable> get(int... valueReferences);
+        <V> Map<Port, Variable<T, V>> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -478,9 +479,9 @@ public interface Fmi2Builder<S> {
          * @param names
          * @return
          */
-        Map<Port, Variable> get(String... names);
+        <V> Map<Port, Variable<T, V>> get(String... names);
 
-        Map<Port, Variable> getAndShare(String... names);
+        <V> Map<Port, Variable<T, V>> getAndShare(String... names);
 
         /**
          * Get the value of a single port
@@ -488,23 +489,23 @@ public interface Fmi2Builder<S> {
          * @param name
          * @return
          */
-        Value getSingle(String name);
+        <V> Value<V> getSingle(String name);
 
-        void set(Scope<T> scope, PortValueMap value);
+        <V> void set(Scope<T> scope, PortValueMap<V> value);
 
 
-        void set(Scope<T> scope, PortVariableMap value);
+        <V> void set(Scope<T> scope, PortVariableMap<T, V> value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
          *
          * @param value
          */
-        void set(PortValueMap value);
+        <V> void set(PortValueMap<V> value);
 
-        void set(Port port, Value value);
+        <V> void set(Port port, Value<V> value);
 
-        void set(PortVariableMap value);
+        <V> void set(PortVariableMap<T, V> value);
 
         /**
          * Set this fmu port by name and link
@@ -539,7 +540,7 @@ public interface Fmi2Builder<S> {
          *
          * @param values
          */
-        void share(Map<Port, Variable> values);
+        <V> void share(Map<Port, Variable<T, V>> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -547,25 +548,7 @@ public interface Fmi2Builder<S> {
          *
          * @param value
          */
-        void share(Port port, Variable value);
-
-        /**
-         * Step the fmu for the given time
-         *
-         * @param deltaTime
-         * @return
-         */
-        // TimeDeltaValue step(TimeDeltaValue deltaTime);
-
-        //  TimeDeltaValue step(Variable<T, TimeDeltaValue> deltaTime);
-
-        /**
-         * Step the fmu for the given time
-         *
-         * @param deltaTime
-         * @return
-         */
-        // TimeDeltaValue step(double deltaTime);
+        <V> void share(Port port, Variable<T, V> value);
 
         /**
          * Get the current state
@@ -574,35 +557,23 @@ public interface Fmi2Builder<S> {
          */
         StateVariable<T> getState();
 
+        /**
+         * Get the current state
+         *
+         * @return
+         */
         StateVariable<T> getState(Scope<T> scope);
 
-        /**
-         * Sets the current state
-         *
-         * @param state
-         * @return
-         */
-        //Time setState(TimeTaggedState state);
 
-        /**
-         * Sets the current state based on the last retrieved state
-         *
-         * @return
-         */
-
-        //Time setState();
-
-        public interface PortVariableMap extends Map<Port, Variable> {
+        interface PortVariableMap<S, V> extends Map<Port, Variable<S, V>> {
         }
 
-        public interface PortValueMap extends Map<Port, Value> {
+        interface PortValueMap<V> extends Map<Port, Value<V>> {
         }
     }
 
     interface Variable<T, V> {
         String getName();
-
-        // T getValue();
 
         void setValue(V value);
 

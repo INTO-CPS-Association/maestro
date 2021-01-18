@@ -3,11 +3,11 @@ package org.intocps.maestro.framework.fmi2.api.mabl.values;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 
-public class AMablValue<V> implements Fmi2Builder.Value<V> {
+public class ValueFmi2Api<V> implements Fmi2Builder.Value<V> {
     final V value;
     final PType type;
 
-    public AMablValue(PType type, V value) {
+    public ValueFmi2Api(PType type, V value) {
         this.value = value;
         this.type = type;
     }

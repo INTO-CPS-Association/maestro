@@ -10,13 +10,13 @@ import java.util.Collections;
 import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 import static org.intocps.maestro.ast.MableBuilder.call;
 
-public class StateMablVariable extends AMablVariable<Object> implements Fmi2Builder.StateVariable<PStm> {
-    private final AMablFmi2ComponentVariable owner;
+public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements Fmi2Builder.StateVariable<PStm> {
+    private final ComponentVariableFmi2Api owner;
     private final MablApiBuilder builder;
     private boolean valid = true;
 
-    public StateMablVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
-            PStateDesignator designator, PExp referenceExp, MablApiBuilder builder, AMablFmi2ComponentVariable owner) {
+    public StateMablVariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+            PStateDesignator designator, PExp referenceExp, MablApiBuilder builder, ComponentVariableFmi2Api owner) {
         super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.owner = owner;
         this.builder = builder;

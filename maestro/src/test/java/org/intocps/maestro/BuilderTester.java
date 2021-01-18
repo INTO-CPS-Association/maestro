@@ -12,11 +12,12 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Variable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.PortVariableMapImpl;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -41,17 +42,17 @@ public class BuilderTester {
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
 
         MablApiBuilder builder = new MablApiBuilder();
-        AMaBLVariableCreator variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
+        VariableCreatorFmi2Api variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
 
 
         // Create the two FMUs
-        AMablFmu2Variable controllerFMU =
+        FmuVariableFmi2Api controllerFMU =
                 variableCreator.createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
-        AMablFmu2Variable tankFMU = variableCreator.createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+        FmuVariableFmi2Api tankFMU = variableCreator.createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
-        AMablFmi2ComponentVariable controller = controllerFMU.instantiate("controller");
-        AMablFmi2ComponentVariable tank = tankFMU.instantiate("tank");
+        ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");
+        ComponentVariableFmi2Api tank = tankFMU.instantiate("tank");
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
 
@@ -62,13 +63,13 @@ public class BuilderTester {
             AMablFmi2ComponentAPI tank2 = tankFMU.create("tank");
         }
         scope1.activate();*/
-        AMablFmi2ComponentVariable tank2 = tankFMU.instantiate("tank");
+        ComponentVariableFmi2Api tank2 = tankFMU.instantiate("tank");
 
 
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable> allVars = tank.get();
+        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> allVars = tank.get();
         tank.share(allVars);
 
 
@@ -87,7 +88,8 @@ public class BuilderTester {
         // tank.set(tank.getPort("valvecontrol"), new AMablValue(newBoleanType(), true));
 
         var.set(456.678);
-        allVars.put(allVars.keySet().iterator().next(), var);
+        PortVariableMapImpl<Fmi2Builder.DoubleValue> allVars2 = new PortVariableMapImpl<>();
+        allVars2.put(allVars.keySet().iterator().next(), var);
         //tank.set(allVars);
 
         controllerFMU.unload();

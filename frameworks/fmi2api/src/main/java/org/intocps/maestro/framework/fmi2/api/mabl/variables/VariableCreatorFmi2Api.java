@@ -1,14 +1,16 @@
-package org.intocps.maestro.framework.fmi2.api.mabl;
+package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.TagNameGenerator;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Variable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -21,12 +23,12 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
+public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator {
 
     private final IMablScope scope;
     private final MablApiBuilder builder;
 
-    public AMaBLVariableCreator(IMablScope scope, MablApiBuilder builder) {
+    public VariableCreatorFmi2Api(IMablScope scope, MablApiBuilder builder) {
         this.scope = scope;
         this.builder = builder;
     }
@@ -47,20 +49,20 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
         }
     }
 
-    public static AMablVariable createVariableForPort(TagNameGenerator nameGenerator, AMablPort port, IMablScope scope,
+    public static VariableFmi2Api createVariableForPort(TagNameGenerator nameGenerator, PortFmi2Api port, IMablScope scope,
             Fmi2Builder.DynamicActiveScope<PStm> dynamicScope) {
         var name = nameGenerator.getName(port.toLexName());
         var type = MableAstFactory.newAArrayType(FMITypeToMablType(port.scalarVariable.type.type));
         var size = 1;
         PStm stm = MableBuilder.newVariable(name, type, size);
         scope.add(stm);
-        AMablVariable variable = new AMablVariable(stm, type, scope, dynamicScope,
+        VariableFmi2Api variable = new VariableFmi2Api(stm, type, scope, dynamicScope,
                 newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(0)),
                 newAArrayIndexExp(newAIdentifierExp(name), Arrays.asList(newAIntLiteralExp(0))));
         return variable;
     }
 
-    public static AMablFmu2Variable createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
+    public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
             String name, ModelDescription modelDescription, URI uriPath,
             IMablScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
@@ -74,8 +76,8 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
         scope.add(var);
 
-        AMablFmu2Variable fmuVar =
-                new AMablFmu2Variable(builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
+        FmuVariableFmi2Api fmuVar =
+                new FmuVariableFmi2Api(builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
                         dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
 
         return fmuVar;
@@ -83,13 +85,13 @@ public class AMaBLVariableCreator implements Fmi2Builder.VariableCreator {
 
     // CreateFMU is a root-level function and therefore located in the VariableCreator.
     @Override
-    public AMablFmu2Variable createFMU(String name, ModelDescription modelDescription,
+    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription,
             URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
-        return createFMU(builder, builder.nameGenerator, builder.getDynamicScope(), name, modelDescription, uriPath, scope);
+        return createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, modelDescription, uriPath, scope);
     }
 
 
-    public AMablVariable createVariableForPort(AMablPort port) {
-        return createVariableForPort(builder.nameGenerator, port, scope, builder.getDynamicScope());
+    public VariableFmi2Api createVariableForPort(PortFmi2Api port) {
+        return createVariableForPort(builder.getNameGenerator(), port, scope, builder.getDynamicScope());
     }
 }

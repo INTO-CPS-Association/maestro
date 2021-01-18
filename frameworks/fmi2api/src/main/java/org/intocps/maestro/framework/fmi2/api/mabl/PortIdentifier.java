@@ -1,6 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 public class PortIdentifier {
@@ -14,7 +14,7 @@ public class PortIdentifier {
         this.scalarVariableName = scalarVariableName;
     }
 
-    public static PortIdentifier of(AMablFmi2ComponentVariable component, ModelDescription.ScalarVariable sv) {
+    public static PortIdentifier of(ComponentVariableFmi2Api component, ModelDescription.ScalarVariable sv) {
         return new PortIdentifier(component.getOwner().getName(), component.getName(), sv.getName());
     }
 

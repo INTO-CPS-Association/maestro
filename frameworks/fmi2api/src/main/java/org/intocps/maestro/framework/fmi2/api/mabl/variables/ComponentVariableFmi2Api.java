@@ -2,10 +2,10 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
@@ -23,9 +23,10 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
+
 @SuppressWarnings("rawtypes")
-public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
-    final static Logger logger = LoggerFactory.getLogger(AMablFmi2ComponentVariable.class);
+public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
+    final static Logger logger = LoggerFactory.getLogger(ComponentVariableFmi2Api.class);
     private final static int FMI_OK = 0;
     private final static int FMI_WARNING = 1;
     private final static int FMI_DISCARD = 2;
@@ -33,21 +34,21 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     private final static int FMI_FATAL = 4;
     private final static int FMI_PENDING = 5;
     private final static int FMI_STATUS_LAST_SUCCESSFUL = 2;
-    final List<AMablPort> outputPorts;
-    final List<AMablPort> inputPorts;
-    final List<AMablPort> ports;
-    private final AMablFmu2Variable owner;
+    final List<PortFmi2Api> outputPorts;
+    final List<PortFmi2Api> inputPorts;
+    final List<PortFmi2Api> ports;
+    private final FmuVariableFmi2Api owner;
     private final String name;
     private final MablApiBuilder builder;
-    private final Map<PType, ArrayVariable<Object>> ioBuffer = new HashMap<>();
-    private final Map<PType, ArrayVariable<Object>> sharedBuffer = new HashMap<>();
-    Predicate<Fmi2Builder.Port> isLinked = p -> ((AMablPort) p).getSourcePort() != null;
+    private final Map<PType, ArrayVariableFmi2Api<Object>> ioBuffer = new HashMap<>();
+    private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
+    Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi2Api) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
-    private AMablDoubleVariable currentTimeVar = null;
-    private AMablBooleanVariable currentTimeStepFullStepVar = null;
-    private ArrayVariable<Object> valueRefBuffer;
+    private DoubleVariableFmi2Api currentTimeVar = null;
+    private BooleanVariableFmi2Api currentTimeStepFullStepVar = null;
+    private ArrayVariableFmi2Api<Object> valueRefBuffer;
 
-    public AMablFmi2ComponentVariable(PStm declaration, AMablFmu2Variable parent, String name, ModelDescriptionContext modelDescriptionContext,
+    public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
         super(declaration, newANameType("FMI2Component"), declaringScope, builder.getDynamicScope(), designator, referenceExp);
         this.owner = parent;
@@ -56,61 +57,67 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         this.modelDescriptionContext = modelDescriptionContext;
         this.builder = builder;
 
-        ports = modelDescriptionContext.nameToSv.values().stream().map(sv -> new AMablPort(this, sv))
-                .sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+        ports = modelDescriptionContext.nameToSv.values().stream().map(sv -> new PortFmi2Api(this, sv))
+                .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
         outputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Output)
-                .sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+                .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
         inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Input)
-                .sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+                .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
     }
 
-    private AMablDoubleVariable getCurrentTimeVar() {
+    @Override
+    public <V> void share(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
+        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> map = new HashMap<>();
+        map.put(port, value);
+        share(map);
+    }
+
+    private DoubleVariableFmi2Api getCurrentTimeVar() {
         if (currentTimeVar == null) {
             String name = builder.getNameGenerator().getName(this.name, "current", "time");
             PStm var = newVariable(name, newRealType());
             this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
-            currentTimeVar =
-                    new AMablDoubleVariable(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            currentTimeVar = new DoubleVariableFmi2Api(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
+                    newAIdentifierExp(name));
         }
         return currentTimeVar;
     }
 
-    private AMablBooleanVariable getCurrentTimeFullStepVar() {
+    private BooleanVariableFmi2Api getCurrentTimeFullStepVar() {
         if (currentTimeStepFullStepVar == null) {
             String name = builder.getNameGenerator().getName(this.name, "current", "time", "full", "step");
             PStm var = newVariable(name, newBoleanType());
             this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
-            currentTimeStepFullStepVar = new AMablBooleanVariable(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
+            currentTimeStepFullStepVar = new BooleanVariableFmi2Api(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
                     newAIdentifierExp(name));
         }
         return currentTimeStepFullStepVar;
     }
 
-
-    private ArrayVariable<Object> getValueReferenceBuffer() {
+    private ArrayVariableFmi2Api<Object> getValueReferenceBuffer() {
         if (this.valueRefBuffer == null) {
             this.valueRefBuffer = createBuffer(newUIntType(), "VRef", modelDescriptionContext.valRefToSv.size());
         }
         return this.valueRefBuffer;
     }
 
-    private ArrayVariable<Object> getIOBuffer(PType type) {
+    private ArrayVariableFmi2Api<Object> getIOBuffer(PType type) {
         if (!this.ioBuffer.containsKey(type)) {
             this.ioBuffer.put(type, createBuffer(type, "IO", modelDescriptionContext.valRefToSv.size()));
         }
         return this.ioBuffer.get(type);
     }
 
-    private ArrayVariable<Object> getSharedBuffer(PType type) {
+    private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type) {
         if (!this.sharedBuffer.containsKey(type)) {
             this.sharedBuffer.put(type, createBuffer(type, "Share", 0));
         }
         return this.sharedBuffer.get(type);
     }
 
-    private ArrayVariable<Object> createBuffer(PType type, String prefixPostfix, int length) {
+    private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefixPostfix, int length) {
 
         //lets find a good place to store the buffer.
         String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefixPostfix);
@@ -134,22 +141,22 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
-        List<AMablVariable<Object>> items = IntStream.range(0, length).mapToObj(
-                i -> new AMablVariable<>(var, type, this.getDeclaredScope(), builder.getDynamicScope(),
+        List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
+                i -> new VariableFmi2Api<>(var, type, this.getDeclaredScope(), builder.getDynamicScope(),
                         newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
                         newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
                 .collect(Collectors.toList());
 
-        return new ArrayVariable<>(var, type, getDeclaredScope(), builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(ioBufName)),
-                newAIdentifierExp(ioBufName), items);
+        return new ArrayVariableFmi2Api<>(var, type, getDeclaredScope(), builder.getDynamicScope(),
+                newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
 
     }
 
     @Override
     public void setupExperiment(boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime, boolean endTimeDefined,
             Fmi2Builder.DoubleVariable<PStm> endTime) {
-        this.setupExperiment(toleranceDefined, tolerance, ((AMablDoubleVariable) startTime).getReferenceExp().clone(), endTimeDefined,
-                ((AMablDoubleVariable) endTime).getReferenceExp().clone());
+        this.setupExperiment(toleranceDefined, tolerance, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(), endTimeDefined,
+                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone());
     }
 
     @Override
@@ -184,8 +191,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     @Override
     public void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime,
             boolean endTimeDefined, Fmi2Builder.DoubleVariable<PStm> endTime) {
-        this.setupExperiment(scope, toleranceDefined, tolerance, ((AMablDoubleVariable) startTime).getReferenceExp().clone(), endTimeDefined,
-                ((AMablDoubleVariable) endTime).getReferenceExp().clone());
+        this.setupExperiment(scope, toleranceDefined, tolerance, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(), endTimeDefined,
+                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone());
     }
 
     @Override
@@ -208,38 +215,39 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
             Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
             Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
-        return step(scope, currentCommunicationPoint, communicationStepSize, ((AMablVariable) noSetFMUStatePriorToCurrentPoint).getReferenceExp());
+        return step(scope, currentCommunicationPoint, communicationStepSize, ((VariableFmi2Api) noSetFMUStatePriorToCurrentPoint).getReferenceExp());
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
             Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
         return step(scope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint,
-            Fmi2Builder.DoubleVariable<PStm> communicationStepSize, Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
+    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
+            Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
         return step(dynamicScope, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint,
-            Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
+    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
         return step(dynamicScope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
     }
 
-    private Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+    private Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
             Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
             PExp noSetFMUStatePriorToCurrentPoint) {
 
         scope.add(newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 newACallExp(this.getReferenceExp().clone(), newAIdentifier("doStep"),
-                        Arrays.asList(((AMablVariable) currentCommunicationPoint).getReferenceExp().clone(),
-                                ((AMablVariable) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
+                        Arrays.asList(((VariableFmi2Api) currentCommunicationPoint).getReferenceExp().clone(),
+                                ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
 
         scope.add(newIf(newNotEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_OK)), newABlockStm(
                 newIf(newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_DISCARD)), newABlockStm(
@@ -249,14 +257,13 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
                                                 newARefExp(getCurrentTimeVar().getReferenceExp().clone())))),
                         newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(false))), null)), newABlockStm(
                 newAAssignmentStm(this.getCurrentTimeVar().getDesignator().clone(),
-                        newPlusExp(((AMablVariable<?>) currentCommunicationPoint).getReferenceExp().clone(),
-                                ((AMablVariable<?>) communicationStepSize).getReferenceExp().clone())),
+                        newPlusExp(((VariableFmi2Api<?>) currentCommunicationPoint).getReferenceExp().clone(),
+                                ((VariableFmi2Api<?>) communicationStepSize).getReferenceExp().clone())),
                 newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(true)))));
 
 
         return Map.entry(getCurrentTimeFullStepVar(), getCurrentTimeVar());
     }
-
 
     private PStm stateTransitionFunction(FmiFunctionType type) {
         switch (type) {
@@ -291,42 +298,42 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public AMablPort getPort(String name) {
-        return (AMablPort) this.getPorts(name).get(0);
+    public PortFmi2Api getPort(String name) {
+        return (PortFmi2Api) this.getPorts(name).get(0);
     }
 
     @Override
-    public AMablPort getPort(int valueReference) {
-        return (AMablPort) this.getPorts(valueReference).get(0);
+    public PortFmi2Api getPort(int valueReference) {
+        return (PortFmi2Api) this.getPorts(valueReference).get(0);
     }
 
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get(Fmi2Builder.Port... ports) {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(Fmi2Builder.Port... ports) {
         return get(builder.getDynamicScope(), ports);
     }
 
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... ports) {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... ports) {
 
-        List<AMablPort> selectedPorts;
+        List<PortFmi2Api> selectedPorts;
         if (ports == null || ports.length == 0) {
             selectedPorts = outputPorts;
         } else {
-            selectedPorts = Arrays.stream(ports).map(AMablPort.class::cast).collect(Collectors.toList());
+            selectedPorts = Arrays.stream(ports).map(PortFmi2Api.class::cast).collect(Collectors.toList());
         }
 
-        List<AMablPort> sortedPorts =
+        List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
-        ArrayVariable<Object> vrefBuf = getValueReferenceBuffer();
+        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
         for (int i = 0; i < sortedPorts.size(); i++) {
-            AMablPort p = sortedPorts.get(i);
+            PortFmi2Api p = sortedPorts.get(i);
             PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
             scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
         }
 
         PType type = sortedPorts.get(0).getType();
-        ArrayVariable<Object> valBuf = getIOBuffer(type);
+        ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
@@ -334,48 +341,45 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
         scope.add(stm);
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable> results = new HashMap<>();
+        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> results = new HashMap<>();
 
         for (int i = 0; i < sortedPorts.size(); i++) {
-            results.put(sortedPorts.get(i), valBuf.items().get(i));
+            results.put(sortedPorts.get(i), (Fmi2Builder.Variable<PStm, V>) valBuf.items().get(i));
         }
 
         return results;
     }
 
-
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get() {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get() {
         return get(builder.getDynamicScope(), outputPorts.toArray(Fmi2Builder.Port[]::new));
     }
 
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get(int... valueReferences) {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(int... valueReferences) {
         List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
         return get(builder.getDynamicScope(),
                 outputPorts.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).toArray(Fmi2Builder.Port[]::new));
     }
 
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get(String... names) {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
         return get(builder.getDynamicScope(), outputPorts.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
 
     }
-
 
     /**
      * Stores the final value in rootScope
      * Uses the rootScope for valueReferences
      */
     @Override
-    public Map<Fmi2Builder.Port, Fmi2Builder.Variable> getAndShare(String... names) {
+    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> getAndShare(String... names) {
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable> values = get(names);
+        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> values = get(names);
         share(values);
         return values;
     }
-
 
     private String createFunctionName(FmiFunctionType fun) {
         switch (fun) {
@@ -389,7 +393,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     }
 
-    private String createFunctionName(FmiFunctionType fun, AMablPort p) {
+    private String createFunctionName(FmiFunctionType fun, PortFmi2Api p) {
         return createFunctionName(fun, p.scalarVariable.getType().type);
     }
 
@@ -415,14 +419,14 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public void set(Fmi2Builder.Scope<PStm> scope, PortValueMap value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortValueMap<V> value) {
 
 
         if (value == null || value.isEmpty()) {
             return;
         }
 
-        List<AMablPort> selectedPorts = value.keySet().stream().map(AMablPort.class::cast).collect(Collectors.toList());
+        List<PortFmi2Api> selectedPorts = value.keySet().stream().map(PortFmi2Api.class::cast).collect(Collectors.toList());
 
 
         set(scope, selectedPorts, port -> {
@@ -447,25 +451,25 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public void set(Fmi2Builder.Scope<PStm> scope, PortVariableMap value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortVariableMap<PStm, V> value) {
 
-        List<AMablPort> selectedPorts;
+        List<PortFmi2Api> selectedPorts;
         if (value == null || value.isEmpty()) {
             return;
         } else {
-            selectedPorts = value.keySet().stream().map(AMablPort.class::cast).collect(Collectors.toList());
+            selectedPorts = value.keySet().stream().map(PortFmi2Api.class::cast).collect(Collectors.toList());
         }
 
         final PortVariableMap valueFinal = value;
         set(scope, selectedPorts,
-                port -> Map.entry(((AMablVariable) valueFinal.get(port)).getReferenceExp().clone(), ((AMablVariable) valueFinal.get(port)).type));
+                port -> Map.entry(((VariableFmi2Api) valueFinal.get(port)).getReferenceExp().clone(), ((VariableFmi2Api) valueFinal.get(port)).type));
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, List<AMablPort> selectedPorts, Function<AMablPort, Map.Entry<PExp, PType>> portToValue) {
+    public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
 
-        List<AMablPort> sortedPorts =
+        List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
-        ArrayVariable<Object> vrefBuf = getValueReferenceBuffer();
+        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
 
         for (int i = 0; i < sortedPorts.size(); i++) {
@@ -475,9 +479,9 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         }
 
         PType type = sortedPorts.get(0).getType();
-        ArrayVariable<Object> valBuf = getIOBuffer(type);
+        ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
         for (int i = 0; i < sortedPorts.size(); i++) {
-            AMablPort p = sortedPorts.get(i);
+            PortFmi2Api p = sortedPorts.get(i);
             PStateDesignator designator = valBuf.items().get(i).getDesignator();
 
 
@@ -491,9 +495,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         scope.add(stm);
     }
 
-
     @Override
-    public void set(PortValueMap value) {
+    public <V> void set(PortValueMap<V> value) {
         set(builder.getDynamicScope(), value);
     }
 
@@ -505,14 +508,14 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public void set(PortVariableMap value) {
+    public <V> void set(PortVariableMap<PStm, V> value) {
         set(builder.getDynamicScope(), value);
     }
 
     @Override
     public void setLinked(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... filterPorts) {
 
-        List<AMablPort> selectedPorts = ports.stream().filter(isLinked).collect(Collectors.toList());
+        List<PortFmi2Api> selectedPorts = ports.stream().filter(isLinked).collect(Collectors.toList());
         if (filterPorts != null && filterPorts.length != 0) {
 
             List<Fmi2Builder.Port> filterList = Arrays.asList(filterPorts);
@@ -527,7 +530,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         }
 
 
-        for (AMablPort port : selectedPorts) {
+        for (PortFmi2Api port : selectedPorts) {
             if (port.getSourcePort() == null) {
                 throw new RuntimeException(
                         "Attempting to obtain shared value from a port that is not linked. This port is missing a required " + "link: " + port);
@@ -570,7 +573,6 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     }
 
-
     @Override
     public void setInt(Map<Integer, Fmi2Builder.Value<Integer>> values) {
 
@@ -582,34 +584,33 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     }
 
     @Override
-    public void share(Map<Fmi2Builder.Port, Fmi2Builder.Variable> values) {
-        //TODO share
-        values.entrySet().stream().collect(Collectors.groupingBy(map -> ((AMablPort) map.getKey()).getType())).entrySet().stream().forEach(map -> {
+    public <V> void share(Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> values) {
+        values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType())).entrySet().stream().forEach(map -> {
             PType type = map.getKey();
             Map<Fmi2Builder.Port, Fmi2Builder.Variable> data =
                     map.getValue().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            ArrayVariable<Object> buffer = getSharedBuffer(type);
+            ArrayVariableFmi2Api<Object> buffer = getSharedBuffer(type);
 
-            data.keySet().stream().map(AMablPort.class::cast).sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).forEach(port -> {
+            data.keySet().stream().map(PortFmi2Api.class::cast).sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).forEach(port -> {
                 //this is the sorted set of assignments, these can be replaced by a memcopy later
 
                 if (port.getSharedAsVariable() == null) {
-                    ArrayVariable<Object> newBuf = growBuffer(buffer, 1);
-                    AMablVariable<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
+                    ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
+                    VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                     port.setSharedAsVariable(newShared);
                 }
 
                 PStateDesignator designator = port.getSharedAsVariable().getDesignator();
                 builder.getDynamicScope().addAll(BuilderUtil.createTypeConvertingAssignment(builder, dynamicScope, designator.clone(),
-                        ((AMablVariable) data.get(port)).getReferenceExp().clone(), port.getType(),
-                        ((AMablVariable) ((AMablVariable<?>) data.get(port))).type));
+                        ((VariableFmi2Api) data.get(port)).getReferenceExp().clone(), port.getType(),
+                        ((VariableFmi2Api) ((VariableFmi2Api<?>) data.get(port))).type));
             });
 
         });
     }
 
-    private ArrayVariable<Object> growBuffer(ArrayVariable<Object> buffer, int increaseByCount) {
+    private ArrayVariableFmi2Api<Object> growBuffer(ArrayVariableFmi2Api<Object> buffer, int increaseByCount) {
 
         String ioBufName = ((AIdentifierExp) buffer.getReferenceExp()).getName().getText();
 
@@ -619,8 +620,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         buffer.getDeclaringStm().parent().replaceChild(buffer.getDeclaringStm(), var);
         // getDeclaredScope().addAfter(getDeclaringStm(), var);
 
-        List<AMablVariable<Object>> items = IntStream.range(buffer.size(), length).mapToObj(
-                i -> new AMablVariable<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
+        List<VariableFmi2Api<Object>> items = IntStream.range(buffer.size(), length).mapToObj(
+                i -> new VariableFmi2Api<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
                         newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
                         newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
                 .collect(Collectors.toList());
@@ -628,16 +629,9 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         //we can not replace these as some of them may be used and could potential have reference problems (they should not but just to be sure)
         items.addAll(0, buffer.items());
 
-        return new ArrayVariable<>(var, type, getDeclaredScope(), builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(ioBufName)),
-                newAIdentifierExp(ioBufName), items);
+        return new ArrayVariableFmi2Api<>(var, type, getDeclaredScope(), builder.getDynamicScope(),
+                newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
 
-    }
-
-    @Override
-    public void share(Fmi2Builder.Port port, Fmi2Builder.Variable value) {
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable> map = new HashMap<>();
-        map.put(port, value);
-        share(map);
     }
 
     @Override
@@ -654,8 +648,9 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         PStm stateVar = newVariable(stateName, newANameType("FmiComponentState"));
         scope.add(stateVar);
 
-        StateMablVariable state = new StateMablVariable(stateVar, newANameType("FmiComponentState"), (IMablScope) scope, builder.getDynamicScope(),
-                newAIdentifierStateDesignator(stateName), newAIdentifierExp(stateName), builder, this);
+        StateMablVariableFmi2Api state =
+                new StateMablVariableFmi2Api(stateVar, newANameType("FmiComponentState"), (IMablScope) scope, builder.getDynamicScope(),
+                        newAIdentifierStateDesignator(stateName), newAIdentifierExp(stateName), builder, this);
 
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
@@ -664,8 +659,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         return state;
     }
 
-
-    public AMablFmu2Variable getOwner() {
+    public FmuVariableFmi2Api getOwner() {
         return this.owner;
     }
 

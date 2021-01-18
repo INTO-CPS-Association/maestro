@@ -2,20 +2,20 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class AMablPort implements Fmi2Builder.Port {
+public class PortFmi2Api implements Fmi2Builder.Port {
 
-    public final AMablFmi2ComponentVariable aMablFmi2ComponentAPI;
+    public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
     public final ModelDescription.ScalarVariable scalarVariable;
-    private AMablVariable sharedAsVariable;
-    private AMablPort sourcePort;
+    private VariableFmi2Api sharedAsVariable;
+    private PortFmi2Api sourcePort;
 
-    public AMablPort(AMablFmi2ComponentVariable aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
+    public PortFmi2Api(ComponentVariableFmi2Api aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
 
         this.aMablFmi2ComponentAPI = aMablFmi2ComponentAPI;
         this.scalarVariable = scalarVariable;
@@ -26,11 +26,11 @@ public class AMablPort implements Fmi2Builder.Port {
         return "Port( '" + aMablFmi2ComponentAPI.getName() + "." + scalarVariable.getName() + "' , '" + scalarVariable.getType().type + "')";
     }
 
-    public AMablVariable getSharedAsVariable() {
+    public VariableFmi2Api getSharedAsVariable() {
         return sharedAsVariable;
     }
 
-    public void setSharedAsVariable(AMablVariable sharedAsVariable) {
+    public void setSharedAsVariable(VariableFmi2Api sharedAsVariable) {
         this.sharedAsVariable = sharedAsVariable;
     }
 
@@ -73,7 +73,7 @@ public class AMablPort implements Fmi2Builder.Port {
         }
 
         for (Fmi2Builder.Port receiver : receivers) {
-            AMablPort receiverPort = (AMablPort) receiver;
+            PortFmi2Api receiverPort = (PortFmi2Api) receiver;
 
             if (receiverPort.scalarVariable.causality != ModelDescription.Causality.Input) {
                 throw new PortLinkException("Receivers must be input ports. This receiver is: " + receiverPort.scalarVariable.causality,
@@ -87,7 +87,7 @@ public class AMablPort implements Fmi2Builder.Port {
         }
     }
 
-    public AMablPort getSourcePort() {
+    public PortFmi2Api getSourcePort() {
         return this.sourcePort;
     }
 
