@@ -23,7 +23,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-
+@SuppressWarnings("rawtypes")
 public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
     final static Logger logger = LoggerFactory.getLogger(AMablFmi2ComponentVariable.class);
     private final static int FMI_OK = 0;
@@ -346,7 +346,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     @Override
     public Map<Fmi2Builder.Port, Fmi2Builder.Variable> get() {
-        return get(builder.getDynamicScope(), outputPorts.stream().toArray(Fmi2Builder.Port[]::new));
+        return get(builder.getDynamicScope(), outputPorts.toArray(Fmi2Builder.Port[]::new));
     }
 
     @Override
@@ -523,7 +523,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
                 }
             }
 
-            selectedPorts = selectedPorts.stream().filter(p -> filterList.contains(p)).collect(Collectors.toList());
+            selectedPorts = selectedPorts.stream().filter(filterList::contains).collect(Collectors.toList());
         }
 
 
@@ -547,7 +547,7 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
 
     @Override
     public void setLinked() {
-        this.setLinked(dynamicScope, null);
+        this.setLinked(dynamicScope, (Fmi2Builder.Port[]) null);
     }
 
     @Override
@@ -640,21 +640,30 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         share(map);
     }
 
-
     @Override
-    public Fmi2Builder.TimeTaggedState getState() {
-        return null;
+    public Fmi2Builder.StateVariable<PStm> getState() {
+
+        return getState(builder.getDynamicScope());
+
     }
 
     @Override
-    public Fmi2Builder.Time setState(Fmi2Builder.TimeTaggedState state) {
-        return null;
+    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) {
+
+        String stateName = builder.getNameGenerator().getName(name, "state");
+        PStm stateVar = newVariable(stateName, newANameType("FmiComponentState"));
+        scope.add(stateVar);
+
+        StateMablVariable state = new StateMablVariable(stateVar, newANameType("FmiComponentState"), (IMablScope) scope, builder.getDynamicScope(),
+                newAIdentifierStateDesignator(stateName), newAIdentifierExp(stateName), builder, this);
+
+        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
+        scope.add(stm);
+
+        return state;
     }
 
-    @Override
-    public Fmi2Builder.Time setState() {
-        return null;
-    }
 
     public AMablFmu2Variable getOwner() {
         return this.owner;
