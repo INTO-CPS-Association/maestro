@@ -50,6 +50,11 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
     }
 
     @Override
+    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
+        throw new RuntimeException("setValue has not been implemented");
+    }
+
+    @Override
     public void setValue(V value, Fmi2Builder.Scope<PStm> scope) {
         if (!(value instanceof AMablValue) || ((AMablValue<?>) value).get() == null) {
             throw new IllegalArgumentException();

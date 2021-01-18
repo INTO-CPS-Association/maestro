@@ -166,6 +166,8 @@ public interface Fmi2Builder<S> {
 
         <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
 
+        <T> Predicate isLessOrEqualTo(Numeric<T> a, Numeric<T> b);
+
         Predicate isGreater(Value<Double> a, double b);
 
         Predicate fromValue(Value value);
@@ -321,10 +323,12 @@ public interface Fmi2Builder<S> {
         //void set(int value);
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
+    interface DoubleVariable<T> extends Variable<T, DoubleValue>, Numeric<T> {
         TimeDeltaValue toTimeDelta();
 
         void set(Double value);
+
+        DoubleValue plus(DoubleVariable<T> stepSizeVar);
     }
 
     interface BoolVariable<T> extends Variable<T, BoolValue> {
@@ -586,6 +590,8 @@ public interface Fmi2Builder<S> {
         // T getValue();
 
         void setValue(V value);
+
+        void setValue(Variable<T, V> variable);
 
         void setValue(V value, Scope<T> scope);
 

@@ -29,20 +29,21 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
     private final AMablBooleanVariable globalExecutionContinue;
     private final AMablIntVariable globalFmiStatus;
 
-    public MablApiBuilder() {
+    public MablApiBuilder(String... existingIdentifiers) {
         rootScope = new AMaBLScope(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
         this.currentVariableCreator = new AMaBLVariableCreator(dynamicScope, this);
 
         this.getDynamicScope().store(new AMablValue<>(newABoleanPrimitiveType(), false));
-
+        if (existingIdentifiers.length > 0) {
+            this.nameGenerator.identifiers.addAll(Arrays.asList(existingIdentifiers));
+        }
         //create global variables
         globalExecutionContinue =
                 (AMablBooleanVariable) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
         globalFmiStatus = (AMablIntVariable) createVariable(rootScope, newIntType(), null, "status");
 
     }
-
 
     public static AMablVariable getStatus() {
         return specialVariables.get("status");

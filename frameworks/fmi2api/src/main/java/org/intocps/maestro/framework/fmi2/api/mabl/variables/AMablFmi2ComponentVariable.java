@@ -665,6 +665,11 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         return this.name;
     }
 
+    @Override
+    public void setValue(Fmi2Builder.Variable<PStm, Fmi2Builder.NamedVariable<PStm>> variable) {
+        throw new RuntimeException("setValue has not been implemented");
+    }
+
     public enum FmiFunctionType {
         GET,
         SET,

@@ -17,7 +17,7 @@ public class AMablDoubleVariable extends AMablVariable<Fmi2Builder.DoubleValue> 
 
     @Override
     public Fmi2Builder.TimeDeltaValue toTimeDelta() {
-        return null;
+        throw new RuntimeException("toTimeDelta has not been implemented");
     }
 
     @Override
@@ -26,12 +26,32 @@ public class AMablDoubleVariable extends AMablVariable<Fmi2Builder.DoubleValue> 
     }
 
     @Override
+    public Fmi2Builder.DoubleValue plus(Fmi2Builder.DoubleVariable<PStm> stepSizeVar) {
+        throw new RuntimeException("plus has not been implemented");
+    }
+
+    @Override
     public void setValue(Fmi2Builder.DoubleValue value) {
         super.setValue(value);
     }
 
     @Override
+    public void setValue(Fmi2Builder.Variable<PStm, Fmi2Builder.DoubleValue> variable) {
+        throw new RuntimeException("setValue has not been implemented");
+    }
+
+    @Override
     public void setValue(Fmi2Builder.DoubleValue value, Fmi2Builder.Scope<PStm> scope) {
         super.setValue(value, scope);
+    }
+
+    @Override
+    public void set(PStm value) {
+        throw new RuntimeException("set has not been implemented");
+    }
+
+    @Override
+    public PStm get() {
+        throw new RuntimeException("get has not been implemented");
     }
 }

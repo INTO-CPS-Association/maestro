@@ -6,7 +6,16 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
+import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablDoubleVariable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +37,15 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+    final AFunctionDeclaration funWithBuilder = newAFunctionDeclaration(newAIdentifier("fixedStepWithBuilder"),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
 
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(fun).collect(Collectors.toSet());
+        return Stream.of(fun, funWithBuilder).collect(Collectors.toSet());
     }
 
 
@@ -41,10 +55,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
 
+
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
         }
-
         AFunctionDeclaration selectedFun = fun;
 
         if (formalArguments == null || formalArguments.size() != selectedFun.getFormals().size()) {
@@ -102,15 +116,89 @@ public class FixedStep implements IMaestroExpansionPlugin {
         PExp stepSize = formalArguments.get(1).clone();
         PExp startTime = formalArguments.get(2).clone();
         PExp endTime = formalArguments.get(3).clone();
+        if (declaredFunction.equals(fun)) {
+            try {
+                return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(
+                        Stream.concat(Stream.of(componentDecl), JacobianFixedStep
+                                .generate(env, errorReporter, componentNames, componentsIdentifier, stepSize, startTime, endTime, relations).stream())
+                                .collect(Collectors.toList())), null));
+            } catch (InstantiationException e) {
+                throw new ExpandException("Internal error", e);
+            }
+        } else {
 
-        try {
-            return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                    Stream.concat(Stream.of(componentDecl), JacobianFixedStep
-                            .generate(env, errorReporter, componentNames, componentsIdentifier, stepSize, startTime, endTime, relations).stream())
-                            .collect(Collectors.toList())), null));
-        } catch (InstantiationException e) {
-            throw new ExpandException("Internal error", e);
+
+            // Selected fun now matches funWithBuilder
+            MablApiBuilder builder = new MablApiBuilder("status", "global_execution_continue");
+            DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
+
+            // Convert raw MaBL to API
+            AMablDoubleVariable externalStepSize = new AMablDoubleVariable(null, null, null, null, stepSize);
+            Fmi2Builder.DoubleVariable<PStm> stepSizeVar = dynamicScope.store(0.0);
+            stepSizeVar.setValue(externalStepSize);
+
+            AMablDoubleVariable externalStartTime = new AMablDoubleVariable(null, null, null, null, startTime);
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationTime = dynamicScope.store(0.0);
+            currentCommunicationTime.setValue(externalStartTime);
+
+            AMablDoubleVariable externalEndTime = new AMablDoubleVariable(null, null, null, null, endTime);
+            Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store(0.0);
+            currentCommunicationTime.setValue(externalEndTime);
+
+            HashMap<LexIdentifier, AMablFmi2ComponentVariable> componentVariables = new HashMap<>();
+            try {
+                for (LexIdentifier componentName : componentNames) {
+                    ComponentInfo instance = env.getInstanceByLexName(componentName.getText());
+                    AMablFmu2Variable fmu =
+                            new AMablFmu2Variable(builder, null, null, null, null, null, null, newAStringLiteralExp(instance.fmuIdentifier));
+
+                    ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
+
+                    AMablFmi2ComponentVariable a =
+                            new AMablFmi2ComponentVariable(null, fmu, componentName.getText(), modelDescriptionContext, builder,
+                                    builder.getDynamicScope(), null, newAStringLiteralExp(componentName.getText()));
+                    componentVariables.put(componentName, a);
+                }
+
+                // Create bindings
+                for (Map.Entry<LexIdentifier, AMablFmi2ComponentVariable> entry : componentVariables.entrySet()) {
+                    for (Fmi2SimulationEnvironment.Relation relation : env.getRelations(entry.getKey()).stream()
+                            .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
+                                    x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
+                        AMablPort[] targets = relation.getTargets().entrySet().stream().map(x -> {
+                            AMablFmi2ComponentVariable instance = componentVariables.get(x.getValue().getScalarVariable().instance);
+                            return instance.getPort(x.getKey().getText());
+                        }).toArray(AMablPort[]::new);
+                        entry.getValue().getPort(relation.getSource().scalarVariable.scalarVariable.getName()).linkTo(targets);
+                    }
+                }
+
+
+                // Create the iteration predicate
+                Fmi2Builder.LogicBuilder logicBuilder = null;
+                Fmi2Builder.LogicBuilder.Predicate loopPredicate =
+                        logicBuilder.isLessOrEqualTo(currentCommunicationTime, endTimeVar).and(builder.getGlobalExecutionContinue());
+                // Create the iteration loop
+                dynamicScope.enterWhile(loopPredicate);
+                // Perform a step for all
+                componentVariables.forEach((x, y) -> {
+                    y.step(currentCommunicationTime, stepSizeVar);
+                });
+                // Perform get Outputs for all
+                componentVariables.forEach((x, y) -> y.get());
+
+                // Perform setLinked for all
+                componentVariables.forEach((x, y) -> y.setLinked());
+
+                // Update currentCommunicationTime
+                currentCommunicationTime.setValue(currentCommunicationTime.plus(stepSizeVar));
+
+            } catch (Exception e) {
+            }
+
+            return null;
         }
+
     }
 
     LexIdentifier getStateName(LexIdentifier comp) {
