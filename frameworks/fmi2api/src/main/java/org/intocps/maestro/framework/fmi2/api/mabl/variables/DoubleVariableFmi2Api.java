@@ -15,10 +15,6 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
         super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
     }
 
-    @Override
-    public Fmi2Builder.TimeDeltaValue toTimeDelta() {
-        throw new RuntimeException("toTimeDelta has not been implemented");
-    }
 
     @Override
     public void set(Double value) {
@@ -45,13 +41,5 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
         super.setValue(value, scope);
     }
 
-    @Override
-    public void set(PStm value) {
-        throw new RuntimeException("set has not been implemented");
-    }
 
-    @Override
-    public PStm get() {
-        throw new RuntimeException("get has not been implemented");
-    }
 }

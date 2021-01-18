@@ -23,7 +23,7 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator {
+public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator<PStm> {
 
     private final IMablScope scope;
     private final MablApiBuilder builder;

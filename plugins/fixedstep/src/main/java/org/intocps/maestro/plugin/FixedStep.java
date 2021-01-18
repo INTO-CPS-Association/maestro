@@ -9,13 +9,13 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMablPort;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablDoubleVariable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmi2ComponentVariable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablFmu2Variable;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,46 +129,45 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
             // Selected fun now matches funWithBuilder
-            MablApiBuilder builder = new MablApiBuilder("status", "global_execution_continue");
+            MablApiBuilder builder = new MablApiBuilder();
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
             // Convert raw MaBL to API
-            AMablDoubleVariable externalStepSize = new AMablDoubleVariable(null, null, null, null, stepSize);
+            DoubleVariableFmi2Api externalStepSize = new DoubleVariableFmi2Api(null, null, null, null, stepSize);
             Fmi2Builder.DoubleVariable<PStm> stepSizeVar = dynamicScope.store(0.0);
             stepSizeVar.setValue(externalStepSize);
 
-            AMablDoubleVariable externalStartTime = new AMablDoubleVariable(null, null, null, null, startTime);
+            DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
             Fmi2Builder.DoubleVariable<PStm> currentCommunicationTime = dynamicScope.store(0.0);
             currentCommunicationTime.setValue(externalStartTime);
 
-            AMablDoubleVariable externalEndTime = new AMablDoubleVariable(null, null, null, null, endTime);
+            DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
             Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store(0.0);
             currentCommunicationTime.setValue(externalEndTime);
 
-            HashMap<LexIdentifier, AMablFmi2ComponentVariable> componentVariables = new HashMap<>();
+            HashMap<LexIdentifier, ComponentVariableFmi2Api> componentVariables = new HashMap<>();
             try {
                 for (LexIdentifier componentName : componentNames) {
                     ComponentInfo instance = env.getInstanceByLexName(componentName.getText());
-                    AMablFmu2Variable fmu =
-                            new AMablFmu2Variable(builder, null, null, null, null, null, null, newAStringLiteralExp(instance.fmuIdentifier));
+                    FmuVariableFmi2Api fmu =
+                            new FmuVariableFmi2Api(builder, null, null, null, null, null, null, newAStringLiteralExp(instance.fmuIdentifier));
 
                     ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
-                    AMablFmi2ComponentVariable a =
-                            new AMablFmi2ComponentVariable(null, fmu, componentName.getText(), modelDescriptionContext, builder,
-                                    builder.getDynamicScope(), null, newAStringLiteralExp(componentName.getText()));
+                    ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(null, fmu, componentName.getText(), modelDescriptionContext, builder,
+                            builder.getDynamicScope(), null, newAStringLiteralExp(componentName.getText()));
                     componentVariables.put(componentName, a);
                 }
 
                 // Create bindings
-                for (Map.Entry<LexIdentifier, AMablFmi2ComponentVariable> entry : componentVariables.entrySet()) {
+                for (Map.Entry<LexIdentifier, ComponentVariableFmi2Api> entry : componentVariables.entrySet()) {
                     for (Fmi2SimulationEnvironment.Relation relation : env.getRelations(entry.getKey()).stream()
                             .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                                     x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
-                        AMablPort[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                            AMablFmi2ComponentVariable instance = componentVariables.get(x.getValue().getScalarVariable().instance);
+                        PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
+                            ComponentVariableFmi2Api instance = componentVariables.get(x.getValue().getScalarVariable().instance);
                             return instance.getPort(x.getKey().getText());
-                        }).toArray(AMablPort[]::new);
+                        }).toArray(PortFmi2Api[]::new);
                         entry.getValue().getPort(relation.getSource().scalarVariable.scalarVariable.getName()).linkTo(targets);
                     }
                 }
@@ -176,10 +175,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 // Create the iteration predicate
                 Fmi2Builder.LogicBuilder logicBuilder = null;
-                Fmi2Builder.LogicBuilder.Predicate loopPredicate =
-                        logicBuilder.isLessOrEqualTo(currentCommunicationTime, endTimeVar).and(builder.getGlobalExecutionContinue());
+                // Fmi2Builder.LogicBuilder.Predicate loopPredicate =
+                //       logicBuilder.isLessOrEqualTo(currentCommunicationTime, endTimeVar).and(builder.getGlobalExecutionContinue());
                 // Create the iteration loop
-                dynamicScope.enterWhile(loopPredicate);
+                //dynamicScope.enterWhile(loopPredicate);
                 // Perform a step for all
                 componentVariables.forEach((x, y) -> {
                     y.step(currentCommunicationTime, stepSizeVar);

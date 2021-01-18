@@ -14,7 +14,7 @@ public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValu
         super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
     }
 
-
+/*
     @Override
     public Fmi2Builder.LogicBuilder.Predicate and(Fmi2Builder.LogicBuilder.Predicate p) {
         throw new RuntimeException("and has not been implemented");
@@ -29,7 +29,7 @@ public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValu
     public Fmi2Builder.LogicBuilder.Predicate not() {
         throw new RuntimeException("not has not been implemented");
 
-    }
+    }*/
 
     @Override
     public void setValue(Fmi2Builder.Variable<PStm, Fmi2Builder.BoolValue> variable) {

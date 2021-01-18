@@ -16,7 +16,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompilationUnit> {
+public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit> {
 
     static ScopeFmi2Api rootScope;
     final DynamicActiveBuilderScope dynamicScope;
@@ -90,11 +90,6 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
             return null;
         }
         return mp.getSharedAsVariable();
-    }
-
-    @Override
-    public TimeDeltaValue createTimeDeltaValue(double getMinimum) {
-        return null;
     }
 
 

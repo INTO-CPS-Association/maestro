@@ -68,11 +68,6 @@ public class ScopeFmi2Api implements IMablScope {
         return null;
     }
 
-    @Override
-    public Fmi2Builder.LiteralCreator literalCreator() {
-        return null;
-    }
-
 
     @Override
     public void add(PStm... commands) {
@@ -173,19 +168,5 @@ public class ScopeFmi2Api implements IMablScope {
         return variable;
     }
 
-    @Override
-    public Fmi2Builder.DoubleVariable<PStm> doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.IntVariable<PStm> intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.MBoolean booleanFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
 
 }

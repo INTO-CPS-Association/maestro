@@ -10,18 +10,18 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public interface Fmi2Builder<S> {
-    S build() throws Exception;
+public interface Fmi2Builder<S, B> {
+    B build() throws Exception;
 
     /**
      * Gets the default scope
      *
      * @return
      */
-    Scope getRootScope();
+    Scope<S> getRootScope();
     //    public abstract void pushScope(Scope scope);
 
-    DynamicActiveScope getDynamicScope();
+    DynamicActiveScope<S> getDynamicScope();
 
     /**
      * Get handle to the current time
@@ -46,9 +46,8 @@ public interface Fmi2Builder<S> {
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
 
-    TimeDeltaValue createTimeDeltaValue(double getMinimum);
 
-    VariableCreator variableCreator();
+    VariableCreator<S> variableCreator();
 
     /**
      * New boolean that can be used as a predicate
@@ -67,9 +66,8 @@ public interface Fmi2Builder<S> {
 
         Scope<T> leave();
 
-        LiteralCreator literalCreator();
 
-        VariableCreator getVariableCreator();
+        VariableCreator<T> getVariableCreator();
 
         void add(T... commands);
 
@@ -117,11 +115,7 @@ public interface Fmi2Builder<S> {
         // <V extends Value> Variable<T, V> store(V tag, V value);
         //TODO add overload with name prefix, tag override is done through variable and not the scope
 
-        DoubleVariable<T> doubleFromExternalFunction(String functionName, Value... arguments);
 
-        IntVariable<T> intFromExternalFunction(String functionName, Value... arguments);
-
-        MBoolean booleanFromExternalFunction(String functionName, Value... arguments);
     }
 
     /**
@@ -161,19 +155,16 @@ public interface Fmi2Builder<S> {
 
         Predicate isEqual(Port a, Port b);
 
-        Predicate isEqual(Time a, Time b);
 
-        Predicate isLess(Time a, Time b);
+        <T> Predicate isLess(T a, T b);
 
-        <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
-
-        <T> Predicate isLessOrEqualTo(Numeric<T> a, Numeric<T> b);
+        <T> Predicate isLessOrEqualTo(T a, T b);
 
         Predicate isGreater(Value<Double> a, double b);
 
-        Predicate fromValue(Value value);
+        <T> Predicate fromValue(Value<T> value);
 
-        Predicate fromExternalFunction(String name, Value... args);
+        // Predicate fromExternalFunction(String name, Value... args);
 
 
         interface Predicate {
@@ -189,43 +180,13 @@ public interface Fmi2Builder<S> {
     interface Type {
     }
 
-    interface Numeric<A> extends Value, Type {
+    interface Numeric<A extends Number> extends Value<Number>, Type {
         void set(A value);
 
         @Override
         A get();
     }
 
-    interface MBoolean extends LogicBuilder.Predicate, Value {
-        void set(Boolean value);
-
-        @Override
-        Boolean get();
-    }
-
-    /**
-     * Current time
-     */
-    interface Time {
-    }
-
-    /**
-     * time value from number
-     */
-    interface TimeValue extends Time {
-    }
-
-    /**
-     * Delta value for a time
-     */
-    interface TimeDeltaValue extends Time {
-
-    }
-
-
-    interface TimeTaggedState {
-        void release();
-    }
 
     interface Port {
 
@@ -299,13 +260,6 @@ public interface Fmi2Builder<S> {
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
     }
 
-    interface LiteralCreator {
-
-        Time createTime(Double value);
-
-        TimeDeltaValue createTimeDelta(double v);
-    }
-
 
     interface IntVariable<T> extends Variable<T, IntValue> {
         void decrement();
@@ -315,8 +269,7 @@ public interface Fmi2Builder<S> {
         //void set(int value);
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, Numeric<T> {
-        TimeDeltaValue toTimeDelta();
+    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
 
         void set(Double value);
 

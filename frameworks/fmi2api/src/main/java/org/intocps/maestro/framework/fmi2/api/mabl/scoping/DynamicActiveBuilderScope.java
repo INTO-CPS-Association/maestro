@@ -45,10 +45,6 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.leave();
     }
 
-    @Override
-    public Fmi2Builder.LiteralCreator literalCreator() {
-        return activeScope.literalCreator();
-    }
 
     @Override
     public VariableCreatorFmi2Api getVariableCreator() {
@@ -89,22 +85,6 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
         return activeScope.store(tag);
-    }
-
-    @Override
-    public Fmi2Builder.DoubleVariable<PStm> doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.doubleFromExternalFunction(functionName, arguments);
-    }
-
-    @Override
-    public Fmi2Builder.IntVariable<PStm> intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.intFromExternalFunction(functionName, arguments);
-    }
-
-
-    @Override
-    public Fmi2Builder.MBoolean booleanFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.booleanFromExternalFunction(functionName, arguments);
     }
 
 
