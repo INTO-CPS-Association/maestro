@@ -21,10 +21,18 @@ import java.util.stream.IntStream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
+import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
 public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
     final static Logger logger = LoggerFactory.getLogger(AMablFmi2ComponentVariable.class);
+    private final static int FMI_OK = 0;
+    private final static int FMI_WARNING = 1;
+    private final static int FMI_DISCARD = 2;
+    private final static int FMI_ERROR = 3;
+    private final static int FMI_FATAL = 4;
+    private final static int FMI_PENDING = 5;
+    private final static int FMI_STATUS_LAST_SUCCESSFUL = 2;
     final List<AMablPort> outputPorts;
     final List<AMablPort> inputPorts;
     final List<AMablPort> ports;
@@ -35,6 +43,8 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     private final Map<PType, ArrayVariable<Object>> sharedBuffer = new HashMap<>();
     Predicate<Fmi2Builder.Port> isLinked = p -> ((AMablPort) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
+    private AMablDoubleVariable currentTimeVar = null;
+    private AMablBooleanVariable currentTimeStepFullStepVar = null;
     private ArrayVariable<Object> valueRefBuffer;
 
     public AMablFmi2ComponentVariable(PStm declaration, AMablFmu2Variable parent, String name, ModelDescriptionContext modelDescriptionContext,
@@ -55,6 +65,29 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Input)
                 .sorted(Comparator.comparing(AMablPort::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
     }
+
+    private AMablDoubleVariable getCurrentTimeVar() {
+        if (currentTimeVar == null) {
+            String name = builder.getNameGenerator().getName(this.name, "current", "time");
+            PStm var = newVariable(name, newRealType());
+            this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
+            currentTimeVar =
+                    new AMablDoubleVariable(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+        }
+        return currentTimeVar;
+    }
+
+    private AMablBooleanVariable getCurrentTimeFullStepVar() {
+        if (currentTimeStepFullStepVar == null) {
+            String name = builder.getNameGenerator().getName(this.name, "current", "time", "full", "step");
+            PStm var = newVariable(name, newBoleanType());
+            this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
+            currentTimeStepFullStepVar = new AMablBooleanVariable(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
+                    newAIdentifierExp(name));
+        }
+        return currentTimeStepFullStepVar;
+    }
+
 
     private ArrayVariable<Object> getValueReferenceBuffer() {
         if (this.valueRefBuffer == null) {
@@ -138,7 +171,6 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         scope.add(stm);
     }
 
-
     @Override
     public void enterInitializationMode() {
         this.enterInitializationMode(builder.getDynamicScope());
@@ -173,6 +205,56 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
     public void exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.EXITINITIALIZATIONMODE);
         scope.add(stm);
+    }
+
+    @Override
+    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
+            Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
+        return step(scope, currentCommunicationPoint, communicationStepSize, ((AMablVariable) noSetFMUStatePriorToCurrentPoint).getReferenceExp());
+    }
+
+    @Override
+    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
+        return step(scope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
+    }
+
+    @Override
+    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint,
+            Fmi2Builder.DoubleVariable<PStm> communicationStepSize, Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
+        return step(dynamicScope, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
+    }
+
+    @Override
+    public Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint,
+            Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
+        return step(dynamicScope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
+    }
+
+    private Map.Entry<Fmi2Builder.BoolVariable, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
+            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
+            PExp noSetFMUStatePriorToCurrentPoint) {
+
+        scope.add(newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                newACallExp(this.getReferenceExp().clone(), newAIdentifier("doStep"),
+                        Arrays.asList(((AMablVariable) currentCommunicationPoint).getReferenceExp().clone(),
+                                ((AMablVariable) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
+
+        scope.add(newIf(newNotEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_OK)), newABlockStm(
+                newIf(newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_DISCARD)), newABlockStm(
+                        newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                                newACallExp(this.getReferenceExp().clone(), newAIdentifier("getRealStatus"),
+                                        Arrays.asList(newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
+                                                newARefExp(getCurrentTimeVar().getReferenceExp().clone())))),
+                        newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(false))), null)), newABlockStm(
+                newAAssignmentStm(this.getCurrentTimeVar().getDesignator().clone(),
+                        newPlusExp(((AMablVariable<?>) currentCommunicationPoint).getReferenceExp().clone(),
+                                ((AMablVariable<?>) communicationStepSize).getReferenceExp().clone())),
+                newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(true)))));
+
+
+        return Map.entry(getCurrentTimeFullStepVar(), getCurrentTimeVar());
     }
 
 
@@ -558,20 +640,6 @@ public class AMablFmi2ComponentVariable extends AMablVariable<Fmi2Builder.NamedV
         share(map);
     }
 
-    @Override
-    public Fmi2Builder.TimeDeltaValue step(Fmi2Builder.TimeDeltaValue deltaTime) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.TimeDeltaValue step(Fmi2Builder.Variable<PStm, Fmi2Builder.TimeDeltaValue> deltaTime) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.TimeDeltaValue step(double deltaTime) {
-        return null;
-    }
 
     @Override
     public Fmi2Builder.TimeTaggedState getState() {

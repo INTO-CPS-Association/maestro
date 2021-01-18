@@ -77,6 +77,8 @@ public class BuilderTester {
         tank.setLinked();
         // tank.set();
         Fmi2Builder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
+        Fmi2Builder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
+        tank.step(var, step);
 
 
         //no this will not stay this way

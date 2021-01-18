@@ -353,7 +353,9 @@ public interface Fmi2Builder<S> {
     }
 
     /**
-     * Interface for an fmi compoennt
+     * Interface for an fmi compoennt.
+     * <p>
+     * Note that all methods that do not take a scope uses the builders dynamic scope and adds the underlying instructions int he active scope.
      */
     interface Fmi2ComponentVariable<T> extends Variable<T, NamedVariable<T>> {
 
@@ -374,6 +376,25 @@ public interface Fmi2Builder<S> {
         void enterInitializationMode(Scope<T> scope);
 
         void exitInitializationMode(Scope<T> scope);
+
+        /**
+         * @param scope
+         * @param currentCommunicationPoint
+         * @param communicationStepSize
+         * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
+         * @return
+         */
+        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+                DoubleVariable<T> communicationStepSize, BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+                DoubleVariable<T> communicationStepSize);
+
+        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
+                BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
+
 
         List<? extends Port> getPorts();
 
@@ -517,9 +538,9 @@ public interface Fmi2Builder<S> {
          * @param deltaTime
          * @return
          */
-        TimeDeltaValue step(TimeDeltaValue deltaTime);
+        // TimeDeltaValue step(TimeDeltaValue deltaTime);
 
-        TimeDeltaValue step(Variable<T, TimeDeltaValue> deltaTime);
+        //  TimeDeltaValue step(Variable<T, TimeDeltaValue> deltaTime);
 
         /**
          * Step the fmu for the given time
@@ -527,7 +548,7 @@ public interface Fmi2Builder<S> {
          * @param deltaTime
          * @return
          */
-        TimeDeltaValue step(double deltaTime);
+        // TimeDeltaValue step(double deltaTime);
 
         /**
          * Get the current state
