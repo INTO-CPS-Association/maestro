@@ -10,6 +10,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -40,10 +41,6 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
                 (AMablBooleanVariable) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
         globalFmiStatus = (AMablIntVariable) createVariable(rootScope, newIntType(), null, "status");
 
-    }
-
-    public static AMablVariable getStatus() {
-        return specialVariables.get("status");
     }
 
     public AMablBooleanVariable getGlobalExecutionContinue() {
