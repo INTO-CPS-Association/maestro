@@ -129,6 +129,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 MablApiBuilder builder = new MablApiBuilder();
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
+                Fmi2Builder.BoolVariable<PStm> b = dynamicScope.store(false);
+
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStepSize = new DoubleVariableFmi2Api(null, null, null, null, stepSize);
@@ -143,27 +145,27 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
 
-                HashMap<LexIdentifier, ComponentVariableFmi2Api> componentVariables = new HashMap<>();
+                HashMap<LexIdentifier, ComponentVariableFmi2Api> fmuInstances = new HashMap<>();
 
                 for (LexIdentifier componentName : componentNames) {
                     ComponentInfo instance = env.getInstanceByLexName(componentName.getText());
                     FmuVariableFmi2Api fmu =
-                            new FmuVariableFmi2Api(builder, null, null, null, null, null, null, newAStringLiteralExp(instance.fmuIdentifier));
+                            new FmuVariableFmi2Api(builder, null, null, null, null, null, null, newAIdentifierExp(instance.fmuIdentifier));
 
                     ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
                     ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(null, fmu, componentName.getText(), modelDescriptionContext, builder,
                             builder.getDynamicScope(), null, newAIdentifierExp(componentName.getText()));
-                    componentVariables.put(componentName, a);
+                    fmuInstances.put(componentName, a);
                 }
 
                 // Create bindings
-                for (Map.Entry<LexIdentifier, ComponentVariableFmi2Api> entry : componentVariables.entrySet()) {
+                for (Map.Entry<LexIdentifier, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                     for (Fmi2SimulationEnvironment.Relation relation : env.getRelations(entry.getKey()).stream()
                             .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                                     x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
                         PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                            ComponentVariableFmi2Api instance = componentVariables.get(x.getValue().getScalarVariable().instance);
+                            ComponentVariableFmi2Api instance = fmuInstances.get(x.getValue().getScalarVariable().instance);
                             return instance.getPort(x.getValue().scalarVariable.scalarVariable.getName());
                         }).toArray(PortFmi2Api[]::new);
                         entry.getValue().getPort(relation.getSource().scalarVariable.scalarVariable.getName()).linkTo(targets);
@@ -175,20 +177,24 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 PredicateFmi2Api loopPredicate =
                         LogicBuilderFmi2Api.isLessOrEqualTo(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar), endTimeVar)
                                 .and(builder.getGlobalExecutionContinue());
-                dynamicScope.enterWhile(loopPredicate);
-                {               // Perform a step for all
-                    componentVariables.forEach((x, y) -> {
+                Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
+                {
+                    // Perform a step for all
+                    fmuInstances.forEach((x, y) -> {
                         y.step(currentCommunicationTime, stepSizeVar);
                     });
+
+                    builder.getRootScope().store(true);
                     // Perform get Outputs for all
-                    componentVariables.forEach((x, y) -> y.share(y.get()));
+                    fmuInstances.forEach((x, y) -> y.share(y.get()));
 
                     // Perform setLinked for all
-                    componentVariables.forEach((x, y) -> y.setLinked());
+                    fmuInstances.forEach((x, y) -> y.setLinked());
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
                 }
+
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();
                 algorithm.apply(new ToParExp());
 

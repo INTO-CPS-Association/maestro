@@ -5,6 +5,7 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
@@ -125,8 +126,18 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
+    public Fmi2Builder.BoolVariable<PStm> store(boolean value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
     public Fmi2Builder.DoubleVariable<PStm> store(String prefix, double value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
+    }
+
+    @Override
+    public Fmi2Builder.BoolVariable<PStm> store(String name, boolean value) {
+        return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
     protected Fmi2Builder.DoubleVariable<PStm> store(Supplier<String> nameProvider, double value) {
@@ -136,7 +147,15 @@ public class ScopeFmi2Api implements IMablScope {
         add(var);
         return new DoubleVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
+    }
 
+    protected Fmi2Builder.BoolVariable<PStm> store(Supplier<String> nameProvider, boolean value) {
+        String name = nameProvider.get();
+        ABoolLiteralExp initial = newABoolLiteralExp(value);
+        PStm var = newVariable(name, newABoleanPrimitiveType(), initial);
+        add(var);
+        return new BooleanVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
     }
 
     @Override

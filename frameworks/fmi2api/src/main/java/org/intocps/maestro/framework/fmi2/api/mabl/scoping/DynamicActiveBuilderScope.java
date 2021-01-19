@@ -83,7 +83,17 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public Fmi2Builder.BoolVariable<PStm> store(boolean value) {
+        return activeScope.store(value);
+    }
+
+    @Override
     public Fmi2Builder.DoubleVariable<PStm> store(String name, double value) {
+        return activeScope.store(name, value);
+    }
+
+    @Override
+    public Fmi2Builder.BoolVariable<PStm> store(String name, boolean value) {
         return activeScope.store(name, value);
     }
 
