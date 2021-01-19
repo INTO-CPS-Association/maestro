@@ -189,7 +189,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
                 }
-                return ((ABlockStm) builder.buildRaw()).getBody();
+                ABlockStm algorithm = (ABlockStm) builder.buildRaw();
+                algorithm.apply(new ToParExp());
+
+                return algorithm.getBody();
             } catch (Exception e) {
                 throw new ExpandException("Internal error: ", e);
             }
