@@ -29,17 +29,19 @@ public class TagNameGenerator {
 
     public String getName(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
-            if (!identifiers.contains(prefix)) {
-                identifiers.add(prefix);
-                return prefix;
-            }
+            // TODO: Throw warning. Probably not meant to call this function.
+            return this.getName();
         }
 
-        int postFix = 0;
-        while (identifiers.contains(prefix + postFix)) {
-            postFix++;
+        String name = prefix;
+        if (identifiers.contains(prefix)) {
+            int postFix = 1;
+            while (identifiers.contains(prefix + postFix)) {
+                postFix++;
+            }
+            name = prefix + postFix;
         }
-        String name = prefix + postFix;
+
         identifiers.add(name);
         return name;
     }
