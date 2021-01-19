@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api;
 
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface Fmi2Builder<S> {
+    PStm buildRaw();
+
     S build() throws Exception;
 
     /**

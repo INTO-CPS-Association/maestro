@@ -106,10 +106,15 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
     }
 
     @Override
+    public PStm buildRaw() {
+        return rootScope.getBlock().clone();
+    }
+
+    @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
-        //run post cleaning
+        //Post cleaning: Remove empty block statements
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
             public void caseABlockStm(ABlockStm node) throws AnalysisException {
@@ -142,6 +147,7 @@ public class MablApiBuilder implements Fmi2Builder<ASimulationSpecificationCompi
         unit.setImports(Collections.singletonList(newAIdentifier("FMI2")));
 
         return unit;
+
     }
 
     public PExp getStartTime() {

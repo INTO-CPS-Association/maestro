@@ -37,6 +37,11 @@ public class AMablDoubleVariable extends AMablVariable<Fmi2Builder.DoubleValue> 
 
     @Override
     public void setValue(Fmi2Builder.Variable<PStm, Fmi2Builder.DoubleValue> variable) {
+        AMablDoubleVariable a = (AMablDoubleVariable) variable;
+        a.
+                // From a variable you have to construct a value.
+
+                super.setValue(variable);
         throw new RuntimeException("setValue has not been implemented");
     }
 
@@ -54,4 +59,6 @@ public class AMablDoubleVariable extends AMablVariable<Fmi2Builder.DoubleValue> 
     public PStm get() {
         throw new RuntimeException("get has not been implemented");
     }
+
+
 }

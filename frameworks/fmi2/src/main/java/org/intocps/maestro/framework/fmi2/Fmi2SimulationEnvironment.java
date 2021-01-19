@@ -97,7 +97,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public ComponentInfo getInstanceByLexName(String lexName) {
-        return this.instanceNameToInstanceComponentInfo.get(this.instanceLexToInstanceName.get(lexName));
+        return this.instanceNameToInstanceComponentInfo.get(lexName);
     }
 
     @Override

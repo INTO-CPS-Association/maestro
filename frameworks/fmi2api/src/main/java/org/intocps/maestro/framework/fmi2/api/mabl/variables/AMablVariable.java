@@ -51,7 +51,7 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
 
     @Override
     public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
-        throw new RuntimeException("setValue has not been implemented");
+        ((AMablVariable) variable) throw new RuntimeException("setValue has not been implemented");
     }
 
     @Override

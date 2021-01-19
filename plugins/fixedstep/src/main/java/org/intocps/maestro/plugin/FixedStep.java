@@ -2,6 +2,7 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -156,7 +157,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                     AMablFmi2ComponentVariable a =
                             new AMablFmi2ComponentVariable(null, fmu, componentName.getText(), modelDescriptionContext, builder,
-                                    builder.getDynamicScope(), null, newAStringLiteralExp(componentName.getText()));
+                                    builder.getDynamicScope(), null, newAIdentifierExp(componentName.getText()));
                     componentVariables.put(componentName, a);
                 }
 
@@ -167,33 +168,37 @@ public class FixedStep implements IMaestroExpansionPlugin {
                                     x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
                         AMablPort[] targets = relation.getTargets().entrySet().stream().map(x -> {
                             AMablFmi2ComponentVariable instance = componentVariables.get(x.getValue().getScalarVariable().instance);
-                            return instance.getPort(x.getKey().getText());
+                            return instance.getPort(x.getValue().scalarVariable.scalarVariable.getName());
                         }).toArray(AMablPort[]::new);
                         entry.getValue().getPort(relation.getSource().scalarVariable.scalarVariable.getName()).linkTo(targets);
                     }
                 }
 
 
-                // Create the iteration predicate
-                Fmi2Builder.LogicBuilder logicBuilder = null;
-                Fmi2Builder.LogicBuilder.Predicate loopPredicate =
-                        logicBuilder.isLessOrEqualTo(currentCommunicationTime, endTimeVar).and(builder.getGlobalExecutionContinue());
-                // Create the iteration loop
-                dynamicScope.enterWhile(loopPredicate);
+                //                // Create the iteration predicate
+                //                Fmi2Builder.LogicBuilder logicBuilder = null;
+                //                Fmi2Builder.LogicBuilder.Predicate loopPredicate =
+                //                        logicBuilder.isLessOrEqualTo(currentCommunicationTime, endTimeVar).and(builder.getGlobalExecutionContinue());
+                //                // Create the iteration loop
+                //                dynamicScope.enterWhile(loopPredicate);
                 // Perform a step for all
                 componentVariables.forEach((x, y) -> {
                     y.step(currentCommunicationTime, stepSizeVar);
                 });
                 // Perform get Outputs for all
-                componentVariables.forEach((x, y) -> y.get());
+                componentVariables.forEach((x, y) -> y.share(y.get()));
 
                 // Perform setLinked for all
                 componentVariables.forEach((x, y) -> y.setLinked());
 
-                // Update currentCommunicationTime
-                currentCommunicationTime.setValue(currentCommunicationTime.plus(stepSizeVar));
-
+                //                // Update currentCommunicationTime
+                //                currentCommunicationTime.setValue(currentCommunicationTime.plus(stepSizeVar));
+                System.out.println(PrettyPrinter.print(builder.build()));
+                System.out.println(PrettyPrinter.print(builder.buildRaw()));
+                return ((ABlockStm) builder.buildRaw()).getBody();
             } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println(e);
             }
 
             return null;
