@@ -102,6 +102,8 @@ public interface Fmi2Builder<S, B> {
          */
         DoubleVariable<T> store(double value);
 
+        UIntVariable<T> store(long value);
+
         BoolVariable<T> store(boolean value);
 
         IntVariable<T> store(int value);
@@ -113,6 +115,8 @@ public interface Fmi2Builder<S, B> {
          * @return
          */
         DoubleVariable<T> store(String name, double value);
+
+        UIntVariable<T> store(String name, long value);
 
         BoolVariable<T> store(String name, boolean value);
 
@@ -265,6 +269,9 @@ public interface Fmi2Builder<S, B> {
         V get();
     }
 
+    interface UIntValue extends Value<Long> {
+    }
+
     interface IntValue extends Value<Integer> {
     }
 
@@ -312,11 +319,14 @@ public interface Fmi2Builder<S, B> {
 
     interface BoolVariable<T> extends Variable<T, BoolValue> {
         LogicBuilder.Predicate getPredicate();
-        //void set(Boolean value);
     }
 
     interface StringVariable<T> extends Variable<T, StringValue> {
-        //void set(String value);
+
+    }
+
+    interface UIntVariable<T> extends Variable<T, UIntValue> {
+
     }
 
     interface NamedVariable<T> extends Variable<T, NamedValue> {
