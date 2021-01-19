@@ -5,10 +5,7 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -131,12 +128,22 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
+    public Fmi2Builder.IntVariable<PStm> store(int value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
     public Fmi2Builder.DoubleVariable<PStm> store(String prefix, double value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
     @Override
     public Fmi2Builder.BoolVariable<PStm> store(String name, boolean value) {
+        return store(() -> builder.getNameGenerator().getName(name), value);
+    }
+
+    @Override
+    public Fmi2Builder.IntVariable<PStm> store(String name, int value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
@@ -155,6 +162,15 @@ public class ScopeFmi2Api implements IMablScope {
         PStm var = newVariable(name, newABoleanPrimitiveType(), initial);
         add(var);
         return new BooleanVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
+    protected Fmi2Builder.IntVariable<PStm> store(Supplier<String> nameProvider, int value) {
+        String name = nameProvider.get();
+        AIntLiteralExp initial = newAIntLiteralExp(value);
+        PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
+        add(var);
+        return new IntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
     }
 

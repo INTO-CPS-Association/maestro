@@ -130,6 +130,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
                 Fmi2Builder.BoolVariable<PStm> b = dynamicScope.store(false);
+                Fmi2Builder.IntVariable<PStm> c = dynamicScope.store(1);
 
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type

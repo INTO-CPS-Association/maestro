@@ -104,6 +104,8 @@ public interface Fmi2Builder<S, B> {
 
         BoolVariable<T> store(boolean value);
 
+        IntVariable<T> store(int value);
+
         /**
          * Store a given value with a prefix name
          *
@@ -113,6 +115,8 @@ public interface Fmi2Builder<S, B> {
         DoubleVariable<T> store(String name, double value);
 
         BoolVariable<T> store(String name, boolean value);
+
+        IntVariable<T> store(String name, int value);
 
         /**
          * Store the given value and get a tag for it. Copy
