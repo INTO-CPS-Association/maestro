@@ -2,7 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
 
 import java.util.Collection;
 
@@ -45,13 +45,9 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.leave();
     }
 
-    @Override
-    public Fmi2Builder.LiteralCreator literalCreator() {
-        return activeScope.literalCreator();
-    }
 
     @Override
-    public AMaBLVariableCreator getVariableCreator() {
+    public VariableCreatorFmi2Api getVariableCreator() {
         return activeScope.getVariableCreator();
     }
 
@@ -87,24 +83,13 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public Fmi2Builder.DoubleVariable<PStm> store(String name, double value) {
+        return activeScope.store(name, value);
+    }
+
+    @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
         return activeScope.store(tag);
-    }
-
-    @Override
-    public Fmi2Builder.DoubleVariable<PStm> doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.doubleFromExternalFunction(functionName, arguments);
-    }
-
-    @Override
-    public Fmi2Builder.IntVariable<PStm> intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.intFromExternalFunction(functionName, arguments);
-    }
-
-
-    @Override
-    public Fmi2Builder.MBoolean booleanFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return activeScope.booleanFromExternalFunction(functionName, arguments);
     }
 
 

@@ -118,6 +118,7 @@ public class MableAstFactory {
 
     public static ALessEqualBinaryExp newALessEqualBinaryExp(PExp left, PExp right) {
         ALessEqualBinaryExp exp = new ALessEqualBinaryExp();
+
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
@@ -317,6 +318,11 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static PExp newAParExp(PExp exp) {
+        AParExp parExp = new AParExp();
+        parExp.setExp(exp);
+        return parExp;
+    }
 
     public static ABooleanPrimitiveType newABoleanPrimitiveType() {
         ABooleanPrimitiveType type = new ABooleanPrimitiveType();

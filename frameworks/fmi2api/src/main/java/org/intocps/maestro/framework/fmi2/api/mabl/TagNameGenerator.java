@@ -28,9 +28,11 @@ public class TagNameGenerator {
     }
 
     public String getName(String prefix) {
-        if (!identifiers.contains(prefix)) {
-            identifiers.add(prefix);
-            return prefix;
+        if (prefix == null || prefix.isEmpty()) {
+            if (!identifiers.contains(prefix)) {
+                identifiers.add(prefix);
+                return prefix;
+            }
         }
 
         int postFix = 0;

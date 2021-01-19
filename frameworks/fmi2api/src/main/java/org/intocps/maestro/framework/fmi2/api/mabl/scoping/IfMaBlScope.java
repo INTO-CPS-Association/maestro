@@ -7,11 +7,11 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     private final MablApiBuilder builder;
     private final PStm declaration;
-    private final AMaBLScope declaringScope;
+    private final ScopeFmi2Api declaringScope;
     private final IMablScope thenScope;
     private final IMablScope elseScope;
 
-    public IfMaBlScope(MablApiBuilder builder, PStm declaration, AMaBLScope declaringScope, IMablScope thenScope, IMablScope elseScope) {
+    public IfMaBlScope(MablApiBuilder builder, PStm declaration, ScopeFmi2Api declaringScope, IMablScope thenScope, IMablScope elseScope) {
         this.builder = builder;
         this.declaration = declaration;
         this.declaringScope = declaringScope;

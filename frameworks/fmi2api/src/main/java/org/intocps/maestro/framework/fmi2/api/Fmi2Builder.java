@@ -1,6 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api;
 
+import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -10,20 +13,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface Fmi2Builder<S> {
+@SuppressWarnings("unused")
+public interface Fmi2Builder<S, B> {
+    B build() throws Exception;
+
     PStm buildRaw();
 
-    S build() throws Exception;
 
     /**
      * Gets the default scope
      *
      * @return
      */
-    Scope getRootScope();
+    Scope<S> getRootScope();
     //    public abstract void pushScope(Scope scope);
 
-    DynamicActiveScope getDynamicScope();
+    DynamicActiveScope<S> getDynamicScope();
 
     /**
      * Get handle to the current time
@@ -48,9 +53,8 @@ public interface Fmi2Builder<S> {
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
 
-    TimeDeltaValue createTimeDeltaValue(double getMinimum);
 
-    VariableCreator variableCreator();
+    VariableCreator<S> variableCreator();
 
     /**
      * New boolean that can be used as a predicate
@@ -69,9 +73,8 @@ public interface Fmi2Builder<S> {
 
         Scope<T> leave();
 
-        LiteralCreator literalCreator();
 
-        VariableCreator getVariableCreator();
+        VariableCreator<T> getVariableCreator();
 
         void add(T... commands);
 
@@ -100,6 +103,14 @@ public interface Fmi2Builder<S> {
         DoubleVariable<T> store(double value);
 
         /**
+         * Store a given value with a prefix name
+         *
+         * @param value
+         * @return
+         */
+        DoubleVariable<T> store(String name, double value);
+
+        /**
          * Store the given value and get a tag for it. Copy
          *
          * @param tag
@@ -119,11 +130,7 @@ public interface Fmi2Builder<S> {
         // <V extends Value> Variable<T, V> store(V tag, V value);
         //TODO add overload with name prefix, tag override is done through variable and not the scope
 
-        DoubleVariable<T> doubleFromExternalFunction(String functionName, Value... arguments);
 
-        IntVariable<T> intFromExternalFunction(String functionName, Value... arguments);
-
-        MBoolean booleanFromExternalFunction(String functionName, Value... arguments);
     }
 
     /**
@@ -155,7 +162,7 @@ public interface Fmi2Builder<S> {
     /**
      * While
      */
-    interface WhileScope<T> extends Scope<T> {
+    interface WhileScope<T> {
     }
 
 
@@ -163,19 +170,16 @@ public interface Fmi2Builder<S> {
 
         Predicate isEqual(Port a, Port b);
 
-        Predicate isEqual(Time a, Time b);
 
-        Predicate isLess(Time a, Time b);
+        <T> Predicate isLess(T a, T b);
 
-        <T> Predicate isLess(Numeric<T> a, Numeric<T> b);
-
-        <T> Predicate isLessOrEqualTo(Numeric<T> a, Numeric<T> b);
+        <T> Predicate isLessOrEqualTo(ProvidesReferenceExp a, ProvidesReferenceExp b);
 
         Predicate isGreater(Value<Double> a, double b);
 
-        Predicate fromValue(Value value);
+        <T> Predicate fromValue(Value<T> value);
 
-        Predicate fromExternalFunction(String name, Value... args);
+        // Predicate fromExternalFunction(String name, Value... args);
 
 
         interface Predicate {
@@ -184,6 +188,10 @@ public interface Fmi2Builder<S> {
             Predicate or(Predicate p);
 
             Predicate not();
+
+            PExp getExp();
+
+            PredicateFmi2Api and(BooleanVariableFmi2Api booleanVariable);
         }
 
     }
@@ -191,43 +199,13 @@ public interface Fmi2Builder<S> {
     interface Type {
     }
 
-    interface Numeric<A> extends Value, Type {
+    interface Numeric<A extends Number> extends Value<Number>, Type {
         void set(A value);
 
         @Override
         A get();
     }
 
-    interface MBoolean extends LogicBuilder.Predicate, Value {
-        void set(Boolean value);
-
-        @Override
-        Boolean get();
-    }
-
-    /**
-     * Current time
-     */
-    interface Time {
-    }
-
-    /**
-     * time value from number
-     */
-    interface TimeValue extends Time {
-    }
-
-    /**
-     * Delta value for a time
-     */
-    interface TimeDeltaValue extends Time {
-
-    }
-
-
-    interface TimeTaggedState {
-        void release();
-    }
 
     interface Port {
 
@@ -291,6 +269,9 @@ public interface Fmi2Builder<S> {
     interface StringValue extends Value<String> {
     }
 
+    interface ReferenceValue extends Value<PExp> {
+    }
+
     interface NamedValue extends Value<Object> {
     }
 
@@ -299,13 +280,6 @@ public interface Fmi2Builder<S> {
 
         Fmu2Variable<T> createFMU(String name, ModelDescription modelDescription,
                 URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
-    }
-
-    interface LiteralCreator {
-
-        Time createTime(Double value);
-
-        TimeDeltaValue createTimeDelta(double v);
     }
 
 
@@ -317,8 +291,11 @@ public interface Fmi2Builder<S> {
         //void set(int value);
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, Numeric<T> {
-        TimeDeltaValue toTimeDelta();
+    interface ProvidesReferenceExp {
+        PExp getReferenceExp();
+    }
+
+    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesReferenceExp {
 
         void set(Double value);
 
@@ -326,6 +303,7 @@ public interface Fmi2Builder<S> {
     }
 
     interface BoolVariable<T> extends Variable<T, BoolValue> {
+        LogicBuilder.Predicate getPredicate();
         //void set(Boolean value);
     }
 
@@ -404,16 +382,16 @@ public interface Fmi2Builder<S> {
          * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
          * @return
          */
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
                 DoubleVariable<T> communicationStepSize, BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
                 DoubleVariable<T> communicationStepSize);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
                 BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
 
 
         List<? extends Port> getPorts();
@@ -456,16 +434,16 @@ public interface Fmi2Builder<S> {
          * @param ports
          * @return
          */
-        Map<Port, Variable> get(Port... ports);
+        <V> Map<Port, Variable<T, V>> get(Port... ports);
 
-        Map<Port, Variable> get(Scope<T> scope, Port... ports);
+        <V> Map<Port, Variable<T, V>> get(Scope<T> scope, Port... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        Map<Port, Variable> get();
+        <V> Map<Port, Variable<T, V>> get();
 
         /**
          * get filter by value reference
@@ -473,7 +451,7 @@ public interface Fmi2Builder<S> {
          * @param valueReferences
          * @return
          */
-        Map<Port, Variable> get(int... valueReferences);
+        <V> Map<Port, Variable<T, V>> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -481,9 +459,9 @@ public interface Fmi2Builder<S> {
          * @param names
          * @return
          */
-        Map<Port, Variable> get(String... names);
+        <V> Map<Port, Variable<T, V>> get(String... names);
 
-        Map<Port, Variable> getAndShare(String... names);
+        <V> Map<Port, Variable<T, V>> getAndShare(String... names);
 
         /**
          * Get the value of a single port
@@ -491,23 +469,23 @@ public interface Fmi2Builder<S> {
          * @param name
          * @return
          */
-        Value getSingle(String name);
+        <V> Value<V> getSingle(String name);
 
-        void set(Scope<T> scope, PortValueMap value);
+        <V> void set(Scope<T> scope, PortValueMap<V> value);
 
 
-        void set(Scope<T> scope, PortVariableMap value);
+        <V> void set(Scope<T> scope, PortVariableMap<T, V> value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
          *
          * @param value
          */
-        void set(PortValueMap value);
+        <V> void set(PortValueMap<V> value);
 
-        void set(Port port, Value value);
+        <V> void set(Port port, Value<V> value);
 
-        void set(PortVariableMap value);
+        <V> void set(PortVariableMap<T, V> value);
 
         /**
          * Set this fmu port by name and link
@@ -542,7 +520,7 @@ public interface Fmi2Builder<S> {
          *
          * @param values
          */
-        void share(Map<Port, Variable> values);
+        <V> void share(Map<Port, Variable<T, V>> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -550,25 +528,7 @@ public interface Fmi2Builder<S> {
          *
          * @param value
          */
-        void share(Port port, Variable value);
-
-        /**
-         * Step the fmu for the given time
-         *
-         * @param deltaTime
-         * @return
-         */
-        // TimeDeltaValue step(TimeDeltaValue deltaTime);
-
-        //  TimeDeltaValue step(Variable<T, TimeDeltaValue> deltaTime);
-
-        /**
-         * Step the fmu for the given time
-         *
-         * @param deltaTime
-         * @return
-         */
-        // TimeDeltaValue step(double deltaTime);
+        <V> void share(Port port, Variable<T, V> value);
 
         /**
          * Get the current state
@@ -577,41 +537,35 @@ public interface Fmi2Builder<S> {
          */
         StateVariable<T> getState();
 
+        /**
+         * Get the current state
+         *
+         * @return
+         */
         StateVariable<T> getState(Scope<T> scope);
 
-        /**
-         * Sets the current state
-         *
-         * @param state
-         * @return
-         */
-        //Time setState(TimeTaggedState state);
 
-        /**
-         * Sets the current state based on the last retrieved state
-         *
-         * @return
-         */
-
-        //Time setState();
-
-        public interface PortVariableMap extends Map<Port, Variable> {
+        interface PortVariableMap<S, V> extends Map<Port, Variable<S, V>> {
         }
 
-        public interface PortValueMap extends Map<Port, Value> {
+        interface PortValueMap<V> extends Map<Port, Value<V>> {
         }
     }
 
     interface Variable<T, V> {
         String getName();
 
-        // T getValue();
-
         void setValue(V value);
 
-        void setValue(Variable<T, V> variable);
+        //        void setValue(Variable<T, V> variable);
+
+        //        void setValue(Variable<PStm, V> variable, Scope<PStm> scope);
 
         void setValue(V value, Scope<T> scope);
+
+        void setValue(ProvidesReferenceExp add);
+
+        void setValue(ProvidesReferenceExp add, Scope<PStm> scope);
 
         Scope<T> getDeclaredScope();
     }

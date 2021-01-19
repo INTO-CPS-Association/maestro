@@ -4,11 +4,11 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariable<V> {
+public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, Fmi2Builder.ProvidesReferenceExp {
 
     private final PStateDesignator designator;
     private final PExp referenceExp;
@@ -20,7 +20,7 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
     Fmi2Builder.DynamicActiveScope<PStm> dynamicScope;
     IMablScope declaredScope;
 
-    public AMablVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+    public VariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
         this.declaration = declaration;
         this.declaredScope = declaredScope;
@@ -35,7 +35,7 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
         return designator;
     }
 
-    protected PExp getReferenceExp() {
+    protected PExp _getReferenceExp() {
         return referenceExp;
     }
 
@@ -49,18 +49,18 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
         setValue(value, dynamicScope);
     }
 
-    @Override
-    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
-        ((AMablVariable) variable) throw new RuntimeException("setValue has not been implemented");
-    }
+    //    @Override
+    //    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
+    //        setValue(variable, dynamicScope);
+    //    }
 
     @Override
     public void setValue(V value, Fmi2Builder.Scope<PStm> scope) {
-        if (!(value instanceof AMablValue) || ((AMablValue<?>) value).get() == null) {
+        if (!(value instanceof ValueFmi2Api) || ((ValueFmi2Api<?>) value).get() == null) {
             throw new IllegalArgumentException();
         }
 
-        AMablValue<V> v = (AMablValue<V>) value;
+        ValueFmi2Api<V> v = (ValueFmi2Api<V>) value;
 
         PExp exp = null;
 
@@ -87,5 +87,20 @@ public class AMablVariable<V> implements Fmi2Builder.Variable<PStm, V>, IndexedV
     @Override
     public PStm getDeclaringStm() {
         return declaration;
+    }
+
+    @Override
+    public PExp getReferenceExp() {
+        return this._getReferenceExp().clone();
+    }
+
+    @Override
+    public void setValue(Fmi2Builder.ProvidesReferenceExp exp) {
+        this.setValue(exp, dynamicScope);
+    }
+
+    @Override
+    public void setValue(Fmi2Builder.ProvidesReferenceExp add, Fmi2Builder.Scope<PStm> scope) {
+        scope.add(newAAssignmentStm(this.designator.clone(), add.getReferenceExp()));
     }
 }

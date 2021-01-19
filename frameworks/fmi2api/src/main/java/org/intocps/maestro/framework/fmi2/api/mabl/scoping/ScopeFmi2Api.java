@@ -3,37 +3,38 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.AMaBLVariableCreator;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.AMablValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablDoubleVariable;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.AMablVariable;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-public class AMaBLScope implements IMablScope {
+public class ScopeFmi2Api implements IMablScope {
     final IMablScope parent;
     private final MablApiBuilder builder;
     private final ABlockStm block;
-    AMaBLVariableCreator variableCreator;
+    VariableCreatorFmi2Api variableCreator;
 
-    public AMaBLScope(MablApiBuilder builder) {
+    public ScopeFmi2Api(MablApiBuilder builder) {
         this.builder = builder;
         this.parent = null;
         this.block = new ABlockStm();
-        this.variableCreator = new AMaBLVariableCreator(this, builder);
+        this.variableCreator = new VariableCreatorFmi2Api(this, builder);
 
     }
 
-    public AMaBLScope(MablApiBuilder builder, IMablScope parent, ABlockStm block) {
+    public ScopeFmi2Api(MablApiBuilder builder, IMablScope parent, ABlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
-        this.variableCreator = new AMaBLVariableCreator(this, builder);
+        this.variableCreator = new VariableCreatorFmi2Api(this, builder);
     }
 
     public ABlockStm getBlock() {
@@ -41,13 +42,19 @@ public class AMaBLScope implements IMablScope {
     }
 
     @Override
-    public AMaBLVariableCreator getVariableCreator() {
+    public VariableCreatorFmi2Api getVariableCreator() {
         return variableCreator;
     }
 
     @Override
     public Fmi2Builder.WhileScope<PStm> enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
-        return null;
+
+        ABlockStm whileBlock = new ABlockStm();
+        AWhileStm whileStm = newWhile(predicate.getExp(), whileBlock);
+        add(whileStm);
+        WhileMaBLScope scope = new WhileMaBLScope(builder, whileStm, this, whileBlock);
+        scope.activate();
+        return scope;
     }
 
     @Override
@@ -58,8 +65,8 @@ public class AMaBLScope implements IMablScope {
 
         AIfStm ifStm = newIf(newABoolLiteralExp(true), thenStm, elseStm);
         add(ifStm);
-        AMaBLScope thenScope = new AMaBLScope(builder, this, thenStm);
-        AMaBLScope elseScope = new AMaBLScope(builder, this, elseStm);
+        ScopeFmi2Api thenScope = new ScopeFmi2Api(builder, this, thenStm);
+        ScopeFmi2Api elseScope = new ScopeFmi2Api(builder, this, elseStm);
         return new IfMaBlScope(builder, ifStm, this, thenScope, elseScope);
     }
 
@@ -67,12 +74,6 @@ public class AMaBLScope implements IMablScope {
     public Fmi2Builder.Scope<PStm> leave() {
         return null;
     }
-
-    @Override
-    public Fmi2Builder.LiteralCreator literalCreator() {
-        return null;
-    }
-
 
     @Override
     public void add(PStm... commands) {
@@ -113,19 +114,27 @@ public class AMaBLScope implements IMablScope {
         }
     }
 
-
     @Override
     public Fmi2Builder.Scope<PStm> activate() {
         return builder.getDynamicScope().activate(this);
     }
 
     @Override
-    public AMablDoubleVariable store(double value) {
-        String name = builder.getNameGenerator().getName();
+    public Fmi2Builder.DoubleVariable<PStm> store(double value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
+    public Fmi2Builder.DoubleVariable<PStm> store(String prefix, double value) {
+        return store(() -> builder.getNameGenerator().getName(prefix), value);
+    }
+
+    protected Fmi2Builder.DoubleVariable<PStm> store(Supplier<String> nameProvider, double value) {
+        String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
         PStm var = newVariable(name, newARealNumericPrimitiveType(), initial);
         add(var);
-        return new AMablDoubleVariable(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+        return new DoubleVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
 
     }
@@ -133,11 +142,11 @@ public class AMaBLScope implements IMablScope {
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
 
-        if (!(tag instanceof AMablValue)) {
+        if (!(tag instanceof ValueFmi2Api)) {
             throw new IllegalArgumentException();
         }
 
-        AMablValue<V> v = (AMablValue<V>) tag;
+        ValueFmi2Api<V> v = (ValueFmi2Api<V>) tag;
 
         String name = builder.getNameGenerator().getName();
 
@@ -167,25 +176,11 @@ public class AMaBLScope implements IMablScope {
 
         PStm var = newVariable(name, v.getType(), initial);
         add(var);
-        variable = new AMablVariable<>(var, v.getType(), this, builder.getDynamicScope(),
+        variable = new VariableFmi2Api<>(var, v.getType(), this, builder.getDynamicScope(),
                 newAIdentifierStateDesignator(MableAstFactory.newAIdentifier(name)), MableAstFactory.newAIdentifierExp(name));
 
         return variable;
     }
 
-    @Override
-    public Fmi2Builder.DoubleVariable<PStm> doubleFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.IntVariable<PStm> intFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
-
-    @Override
-    public Fmi2Builder.MBoolean booleanFromExternalFunction(String functionName, Fmi2Builder.Value... arguments) {
-        return null;
-    }
 
 }
