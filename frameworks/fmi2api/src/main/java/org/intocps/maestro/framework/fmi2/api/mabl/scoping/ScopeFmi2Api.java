@@ -123,11 +123,6 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
-    public Fmi2Builder.UIntVariable<PStm> store(long value) {
-        return store(() -> builder.getNameGenerator().getName(), value);
-    }
-
-    @Override
     public Fmi2Builder.BoolVariable<PStm> store(boolean value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
@@ -139,11 +134,6 @@ public class ScopeFmi2Api implements IMablScope {
 
     @Override
     public Fmi2Builder.DoubleVariable<PStm> store(String prefix, double value) {
-        return store(() -> builder.getNameGenerator().getName(prefix), value);
-    }
-
-    @Override
-    public Fmi2Builder.UIntVariable<PStm> store(String prefix, long value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
@@ -163,15 +153,6 @@ public class ScopeFmi2Api implements IMablScope {
         PStm var = newVariable(name, newARealNumericPrimitiveType(), initial);
         add(var);
         return new DoubleVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
-                newAIdentifierExp(name));
-    }
-
-    protected Fmi2Builder.UIntVariable<PStm> store(Supplier<String> nameProvider, long value) {
-        String name = nameProvider.get();
-        AUIntLiteralExp initial = newAUIntLiteralExp(value);
-        PStm var = newVariable(name, newAUIntNumericPrimitiveType(), initial);
-        add(var);
-        return new UIntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
     }
 
