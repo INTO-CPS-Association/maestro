@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
@@ -16,7 +17,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit> {
+public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp> {
 
     static ScopeFmi2Api rootScope;
     final DynamicActiveBuilderScope dynamicScope;
@@ -103,6 +104,50 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     @Override
     public VariableCreatorFmi2Api variableCreator() {
         return this.currentVariableCreator;
+    }
+
+    Pair<PStateDesignator, PExp> getDesignatorAndReferenceExp(PExp exp) {
+        if (exp instanceof AArrayIndexExp) {
+            AArrayIndexExp exp_ = (AArrayIndexExp) exp;
+            // TODO
+        } else if (exp instanceof AIdentifierExp) {
+            AIdentifierExp exp_ = (AIdentifierExp) exp;
+            return Pair.of(newAIdentifierStateDesignator(exp_.getName()), exp_);
+        }
+
+        throw new RuntimeException("Invalid expression of class: " + exp.getClass());
+    }
+
+    @Override
+    public DoubleVariableFmi2Api getDoubleVariableFrom(PExp exp) {
+        Pair<PStateDesignator, PExp> t = getDesignatorAndReferenceExp(exp);
+        return new DoubleVariableFmi2Api(null, rootScope, this.dynamicScope, t.getLeft(), t.getRight());
+
+    }
+
+    @Override
+    public IntVariableFmi2Api getIntVariableFrom(PExp exp) {
+        return null;
+    }
+
+    @Override
+    public StringVariableFmi2Api getStringVariableFrom(PExp exp) {
+        return null;
+    }
+
+    @Override
+    public BooleanVariableFmi2Api getBooleanVariableFrom(PExp exp) {
+        return null;
+    }
+
+    @Override
+    public ComponentVariableFmi2Api getComponentVariableFrom(PExp exp) {
+        return null;
+    }
+
+    @Override
+    public FmuVariableFmi2Api getFmuVariableFrom(PExp exp) {
+        return null;
     }
 
     @Override

@@ -25,7 +25,6 @@ public class MathBuilderFmi2Api {
         return new ExpFmi2Api(newPlusExp(left.getReferenceExp(), right.getReferenceExp()));
     }
 
-
     public Fmi2Builder.BoolVariable checkConvergence(VariableFmi2Api a, VariableFmi2Api b, VariableFmi2Api absoluteTolerance,
             VariableFmi2Api relativeTolerance) {
         String variableName = dynamicScope.getName("convergence");

@@ -11,6 +11,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
@@ -128,6 +129,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
             try {
                 // Selected fun now matches funWithBuilder
                 MablApiBuilder builder = new MablApiBuilder();
+
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
                 MathBuilderFmi2Api math = builder.getMathBuilder();
 
@@ -136,7 +138,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type
-                DoubleVariableFmi2Api externalStepSize = new DoubleVariableFmi2Api(null, null, null, null, stepSize);
+                DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
                 Fmi2Builder.DoubleVariable<PStm> stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
                 stepSizeVar.setValue(externalStepSize);
                 // TODO: Create a reference value type
@@ -183,15 +185,16 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 // Convergence related variables
                 Fmi2Builder.DoubleVariable<PStm> absoluteTolerance = dynamicScope.store("absoluteTolerance", 1.0);
                 Fmi2Builder.DoubleVariable<PStm> relativeTolerance = dynamicScope.store("relativeTolerance", 1.0);
-                
+
+                IMablScope sc = dynamicScope.getActiveScope();
                 Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
                 {
                     // Perform a step for all
                     fmuInstances.forEach((x, y) -> {
-                        y.step(currentCommunicationTime, stepSizeVar);
+                        Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> a = y.step(currentCommunicationTime, stepSizeVar);
                     });
 
-                    builder.getRootScope().store(true);
+                    Fmi2Builder.BoolVariable<PStm> a = builder.getRootScope().store(true);
                     // Perform get Outputs for all
                     fmuInstances.forEach((x, y) -> y.share(y.get()));
 
@@ -203,8 +206,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
                     Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
                     math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
-
-
                     // Perform setLinked for all
                     fmuInstances.forEach((x, y) -> y.setLinked());
 

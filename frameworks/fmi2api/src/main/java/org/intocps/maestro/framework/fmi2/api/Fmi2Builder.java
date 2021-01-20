@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public interface Fmi2Builder<S, B> {
+public interface Fmi2Builder<S, B, E> {
     B build() throws Exception;
 
     PStm buildRaw();
@@ -55,6 +55,18 @@ public interface Fmi2Builder<S, B> {
 
 
     VariableCreator<S> variableCreator();
+
+    DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
+
+    IntVariableFmi2Api getIntVariableFrom(E exp);
+
+    StringVariableFmi2Api getStringVariableFrom(E exp);
+
+    BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
+
+    ComponentVariableFmi2Api getComponentVariableFrom(E exp);
+
+    FmuVariableFmi2Api getFmuVariableFrom(E exp);
 
     /**
      * New boolean that can be used as a predicate
