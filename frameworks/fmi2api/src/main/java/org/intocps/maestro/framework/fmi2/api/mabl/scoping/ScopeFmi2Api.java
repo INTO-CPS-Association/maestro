@@ -175,6 +175,11 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
+    public String getName(String prefix) {
+        return builder.getNameGenerator().getName(prefix);
+    }
+
+    @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
 
         if (!(tag instanceof ValueFmi2Api)) {

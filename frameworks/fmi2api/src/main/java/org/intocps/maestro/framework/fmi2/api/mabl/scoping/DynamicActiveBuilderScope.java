@@ -52,6 +52,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public String getName(String prefix) {
+        return activeScope.getName(prefix);
+    }
+
+    @Override
     public void add(PStm... commands) {
         activeScope.add(commands);
     }

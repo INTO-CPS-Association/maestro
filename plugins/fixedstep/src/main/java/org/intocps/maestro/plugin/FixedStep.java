@@ -14,6 +14,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderS
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +129,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 // Selected fun now matches funWithBuilder
                 MablApiBuilder builder = new MablApiBuilder();
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
+                MathBuilderFmi2Api math = builder.getMathBuilder();
 
                 Fmi2Builder.BoolVariable<PStm> b = dynamicScope.store(false);
                 Fmi2Builder.IntVariable<PStm> c = dynamicScope.store(1);
@@ -173,11 +175,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     }
                 }
 
-
                 // Create the iteration predicate
                 PredicateFmi2Api loopPredicate =
                         LogicBuilderFmi2Api.isLessOrEqualTo(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar), endTimeVar)
                                 .and(builder.getGlobalExecutionContinue());
+                Fmi2Builder.DoubleVariable<PStm> absoluteTolerance = dynamicScope.store("absoluteTolerance", 1.0);
+                Fmi2Builder.DoubleVariable<PStm> relativeTolerance = dynamicScope.store("relativeTolerance", 1.0);
                 Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
                 {
                     // Perform a step for all
@@ -188,6 +191,18 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     builder.getRootScope().store(true);
                     // Perform get Outputs for all
                     fmuInstances.forEach((x, y) -> y.share(y.get()));
+
+                    // find msd1
+                    ComponentVariableFmi2Api m1 =
+                            fmuInstances.entrySet().stream().filter(x -> x.getKey().getText().equals("i2")).findFirst().get().getValue();
+
+                    PortFmi2Api fkPort = m1.getPort("fk");
+                    VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
+                    Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
+
+
+                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
+
 
                     // Perform setLinked for all
                     fmuInstances.forEach((x, y) -> y.setLinked());

@@ -9,4 +9,6 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     VariableCreatorFmi2Api getVariableCreator();
+
+    String getName(String prefix);
 }

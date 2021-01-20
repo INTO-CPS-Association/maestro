@@ -25,11 +25,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
+    private final MathBuilderFmi2Api mathBuilderApi;
+
 
     public MablApiBuilder() {
         rootScope = new ScopeFmi2Api(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
+        this.mathBuilderApi = new MathBuilderFmi2Api(dynamicScope, this);
 
         this.getDynamicScope().store(new ValueFmi2Api<>(newABoleanPrimitiveType(), false));
 
@@ -71,6 +74,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return nameGenerator;
     }
 
+    public MathBuilderFmi2Api getMathBuilder() {
+        return this.mathBuilderApi;
+
+    }
 
     @Override
     public IMablScope getRootScope() {
