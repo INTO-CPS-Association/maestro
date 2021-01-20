@@ -6,7 +6,6 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -14,7 +13,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderS
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,34 +148,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
 
-                //                Map<String, ComponentVariableFmi2Api> fmuInstances = builder.getComponentVariablesFrom(formalArguments.get(0), env);
-                HashMap<LexIdentifier, ComponentVariableFmi2Api> fmuInstances = new HashMap<>();
-
-                for (LexIdentifier componentName : componentNames) {
-                    ComponentInfo instance = env.getInstanceByLexName(componentName.getText());
-                    FmuVariableFmi2Api fmu =
-                            new FmuVariableFmi2Api(builder, null, null, null, null, null, null, newAIdentifierExp(instance.fmuIdentifier));
-
-                    ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
-
-                    ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(null, fmu, componentName.getText(), modelDescriptionContext, builder,
-                            builder.getDynamicScope(), null, newAIdentifierExp(componentName.getText()));
-                    fmuInstances.put(componentName, a);
-                }
+                // Import the external components into Fmi2API
+                Map<String, ComponentVariableFmi2Api> fmuInstances = builder.getComponentVariablesFrom(formalArguments.get(0), env);
 
                 // Create bindings
-                // builder.createBindings(fmuInstances, env);
-                for (Map.Entry<LexIdentifier, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
-                    for (Fmi2SimulationEnvironment.Relation relation : env.getRelations(entry.getKey()).stream()
-                            .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
-                                    x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
-                        PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                            ComponentVariableFmi2Api instance = fmuInstances.get(x.getValue().getScalarVariable().instance);
-                            return instance.getPort(x.getValue().scalarVariable.scalarVariable.getName());
-                        }).toArray(PortFmi2Api[]::new);
-                        entry.getValue().getPort(relation.getSource().scalarVariable.scalarVariable.getName()).linkTo(targets);
-                    }
-                }
+                builder.createBindings(fmuInstances, env);
 
                 // Create the iteration predicate
                 PredicateFmi2Api loopPredicate =
@@ -202,8 +177,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
                     // Convergence example
-                    ComponentVariableFmi2Api m1 =
-                            fmuInstances.entrySet().stream().filter(x -> x.getKey().getText().equals("i2")).findFirst().get().getValue();
+                    ComponentVariableFmi2Api m1 = fmuInstances.entrySet().stream().filter(x -> x.getKey().equals("i2")).findFirst().get().getValue();
                     PortFmi2Api fkPort = m1.getPort("fk");
                     VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
                     Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);

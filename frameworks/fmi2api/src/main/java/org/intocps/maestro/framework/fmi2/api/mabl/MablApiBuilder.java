@@ -149,7 +149,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
-    //TODO: NOT WORKING YET
     public Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(PExp exp,
             Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
@@ -157,8 +156,12 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             ComponentInfo instance = env.getInstanceByLexName(componentName);
             ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
+            //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
+            PStm dummyStm = newABlockStm();
+            this.getRootScope().add(dummyStm);
+
             ComponentVariableFmi2Api a =
-                    new ComponentVariableFmi2Api(null, null, componentName, modelDescriptionContext, this, this.getRootScope(), null,
+                    new ComponentVariableFmi2Api(dummyStm, null, componentName, modelDescriptionContext, this, this.getRootScope(), null,
                             newAIdentifierExp(componentName));
             return Map.entry(componentName, a);
         } else {
