@@ -109,6 +109,11 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static LexIdentifier newLexIdentifier(String identifier) {
+        LexIdentifier lexIdentifier = new LexIdentifier(identifier, null);
+        return lexIdentifier;
+    }
+
     public static ALessBinaryExp newALessBinaryExp(PExp left, PExp right) {
         ALessBinaryExp exp = new ALessBinaryExp();
         exp.setLeft(left);

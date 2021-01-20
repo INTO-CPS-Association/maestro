@@ -150,6 +150,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
 
+                //                Map<String, ComponentVariableFmi2Api> fmuInstances = builder.getComponentVariablesFrom(formalArguments.get(0), env);
                 HashMap<LexIdentifier, ComponentVariableFmi2Api> fmuInstances = new HashMap<>();
 
                 for (LexIdentifier componentName : componentNames) {
@@ -165,6 +166,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 }
 
                 // Create bindings
+                // builder.createBindings(fmuInstances, env);
                 for (Map.Entry<LexIdentifier, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                     for (Fmi2SimulationEnvironment.Relation relation : env.getRelations(entry.getKey()).stream()
                             .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&

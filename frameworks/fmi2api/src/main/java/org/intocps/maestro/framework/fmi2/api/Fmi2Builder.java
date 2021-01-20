@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api;
 
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -63,8 +64,12 @@ public interface Fmi2Builder<S, B, E> {
     StringVariableFmi2Api getStringVariableFrom(E exp);
 
     BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
+    
+    Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(E exp,
+            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException;
 
-    ComponentVariableFmi2Api getComponentVariableFrom(E exp);
+    Map<String, ComponentVariableFmi2Api> getComponentVariablesFrom(E exp,
+            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException;
 
     FmuVariableFmi2Api getFmuVariableFrom(E exp);
 
