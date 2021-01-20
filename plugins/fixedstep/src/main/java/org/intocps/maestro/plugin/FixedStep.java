@@ -179,8 +179,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 PredicateFmi2Api loopPredicate =
                         LogicBuilderFmi2Api.isLessOrEqualTo(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar), endTimeVar)
                                 .and(builder.getGlobalExecutionContinue());
+
+                // Convergence related variables
                 Fmi2Builder.DoubleVariable<PStm> absoluteTolerance = dynamicScope.store("absoluteTolerance", 1.0);
                 Fmi2Builder.DoubleVariable<PStm> relativeTolerance = dynamicScope.store("relativeTolerance", 1.0);
+                
                 Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
                 {
                     // Perform a step for all
@@ -192,15 +195,13 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     // Perform get Outputs for all
                     fmuInstances.forEach((x, y) -> y.share(y.get()));
 
-                    // find msd1
+
+                    // Convergence example
                     ComponentVariableFmi2Api m1 =
                             fmuInstances.entrySet().stream().filter(x -> x.getKey().getText().equals("i2")).findFirst().get().getValue();
-
                     PortFmi2Api fkPort = m1.getPort("fk");
                     VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
                     Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
-
-
                     math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
 
 
