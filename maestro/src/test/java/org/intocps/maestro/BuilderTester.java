@@ -54,12 +54,12 @@ public class BuilderTester {
         Fmi2Builder.RuntimeFunction func2 =
                 builder.getFunctionBuilder().setName("log").addArgument("msg", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
                         .addArgument("code", Fmi2Builder.RuntimeFunction.FunctionType.Type.Int)
-                        .addArgument("other", Fmi2Builder.RuntimeFunction.FunctionType.Type.Double)
+                        .addArgument("other", Fmi2Builder.RuntimeFunction.FunctionType.Type.Int)
                         .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Int).build();
 
         logger.initialize(func, func2);
         logger.call(func, "ddd");
-        Fmi2Builder.DoubleVariable<PStm> v8 = builder.getDynamicScope().store(6);
+        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().store(6);
         Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs

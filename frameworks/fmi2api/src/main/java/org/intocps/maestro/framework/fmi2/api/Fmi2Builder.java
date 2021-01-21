@@ -51,6 +51,16 @@ public interface Fmi2Builder<S, B, E> {
      */
     //Time getCurrentTime();
 
+    DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
+
+    IntVariableFmi2Api getIntVariableFrom(E exp);
+
+    StringVariableFmi2Api getStringVariableFrom(E exp);
+
+    BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
+
+    FmuVariableFmi2Api getFmuVariableFrom(E exp);
+
     /**
      * Gets a specific time from a number
      *
@@ -77,7 +87,6 @@ public interface Fmi2Builder<S, B, E> {
 
         void destroy(Scope<S> scope);
     }
-
 
     interface RuntimeFunction {
         String getName();
@@ -130,16 +139,6 @@ public interface Fmi2Builder<S, B, E> {
 
 
     }
-
-    DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
-
-    IntVariableFmi2Api getIntVariableFrom(E exp);
-
-    StringVariableFmi2Api getStringVariableFrom(E exp);
-
-    BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
-
-    FmuVariableFmi2Api getFmuVariableFrom(E exp);
 
     /**
      * New boolean that can be used as a predicate
@@ -267,7 +266,7 @@ public interface Fmi2Builder<S, B, E> {
 
         <T> Predicate isLess(T a, T b);
 
-        <T> Predicate isLessOrEqualTo(ProvidesReferenceExp a, ProvidesReferenceExp b);
+        <T> Predicate isLessOrEqualTo(Variable a, Variable b);
 
         Predicate isGreater(Value<Double> a, double b);
 
@@ -383,11 +382,8 @@ public interface Fmi2Builder<S, B, E> {
         void increment();
     }
 
-    interface ProvidesReferenceExp {
-        PExp getReferenceExp();
-    }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesReferenceExp {
+    interface DoubleVariable<T> extends Variable<T, DoubleValue> {
 
         void set(Double value);
 
@@ -649,15 +645,12 @@ public interface Fmi2Builder<S, B, E> {
 
         void setValue(V value);
 
-        //        void setValue(Variable<T, V> variable);
+        void setValue(Variable<T, V> variable);
 
-        //        void setValue(Variable<PStm, V> variable, Scope<PStm> scope);
+        void setValue(Scope<PStm> scope, Variable<PStm, V> variable);
 
-        void setValue(V value, Scope<T> scope);
+        void setValue(Scope<T> scope, V value);
 
-        void setValue(ProvidesReferenceExp add);
-
-        void setValue(ProvidesReferenceExp add, Scope<PStm> scope);
 
         Scope<T> getDeclaredScope();
     }

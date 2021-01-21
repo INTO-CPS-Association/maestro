@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -29,9 +30,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private final VariableCreatorFmi2Api currentVariableCreator;
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
+    private final MathBuilderFmi2Api mathBuilderApi;
     List<String> importedModules = new Vector<>();
- private final MathBuilderFmi2Api mathBuilderApi;
- 
+
     public MablApiBuilder() {
         rootScope = new ScopeFmi2Api(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);

@@ -1,14 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
-import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
-
-import java.util.Arrays;
-
-import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class MathBuilderFmi2Api {
 
@@ -20,11 +12,11 @@ public class MathBuilderFmi2Api {
         this.builder = mablApiBuilder;
 
     }
-
+/*
     public static Fmi2Builder.ProvidesReferenceExp add(Fmi2Builder.ProvidesReferenceExp left, Fmi2Builder.ProvidesReferenceExp right) {
         return new ExpFmi2Api(newPlusExp(left.getReferenceExp(), right.getReferenceExp()));
-    }
-
+    }*/
+/*
     public Fmi2Builder.BoolVariable checkConvergence(VariableFmi2Api a, VariableFmi2Api b, VariableFmi2Api absoluteTolerance,
             VariableFmi2Api relativeTolerance) {
         String variableName = dynamicScope.getName("convergence");
@@ -48,5 +40,5 @@ public class MathBuilderFmi2Api {
                     (VariableFmi2Api) relativeTolerance);
         }
         throw new RuntimeException("Invalid arguments to checkConvergence");
-    }
+    }*/
 }

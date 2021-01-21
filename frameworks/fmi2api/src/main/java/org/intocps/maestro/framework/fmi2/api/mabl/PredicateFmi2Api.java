@@ -3,6 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableUtil;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAnd;
 
@@ -40,6 +41,6 @@ public class PredicateFmi2Api implements Fmi2Builder.LogicBuilder.Predicate {
 
     @Override
     public PredicateFmi2Api and(BooleanVariableFmi2Api booleanVariable) {
-        return this.and(booleanVariable.getReferenceExp());
+        return this.and(VariableUtil.getAsExp(booleanVariable));
     }
 }

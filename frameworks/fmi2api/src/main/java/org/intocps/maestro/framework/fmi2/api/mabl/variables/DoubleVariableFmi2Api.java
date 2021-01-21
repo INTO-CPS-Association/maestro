@@ -26,15 +26,5 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
         throw new RuntimeException("plus has not been implemented");
     }
 
-    @Override
-    public void setValue(Fmi2Builder.DoubleValue value) {
-        super.setValue(value);
-    }
-
-    @Override
-    public void setValue(Fmi2Builder.DoubleValue value, Fmi2Builder.Scope<PStm> scope) {
-        super.setValue(value, scope);
-    }
-
 
 }

@@ -9,7 +9,10 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.*;
+import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
+import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.MathBuilderFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
@@ -157,16 +160,16 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
 
                 // Create the iteration predicate
-                PredicateFmi2Api loopPredicate =
+               /* PredicateFmi2Api loopPredicate =
                         LogicBuilderFmi2Api.isLessOrEqualTo(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar), endTimeVar)
                                 .and(builder.getGlobalExecutionContinue());
-
+*/
                 // Convergence related variables
                 Fmi2Builder.DoubleVariable<PStm> absoluteTolerance = dynamicScope.store("absoluteTolerance", 1.0);
                 Fmi2Builder.DoubleVariable<PStm> relativeTolerance = dynamicScope.store("relativeTolerance", 1.0);
 
                 IMablScope sc = dynamicScope.getActiveScope();
-                Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
+                Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(/*loopPredicate*/null);
                 {
                     // Perform a step for all
                     fmuInstances.forEach((x, y) -> {
@@ -186,12 +189,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     PortFmi2Api fkPort = m1.getPort("fk");
                     VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
                     Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
-                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
+                    //math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
                     // Perform setLinked for all
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
                     // Update currentCommunicationTime
-                    currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
+                    //currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
                 }
 
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();
