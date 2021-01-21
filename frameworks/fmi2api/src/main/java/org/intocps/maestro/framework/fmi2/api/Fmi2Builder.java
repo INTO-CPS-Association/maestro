@@ -2,7 +2,9 @@ package org.intocps.maestro.framework.fmi2.api;
 
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -264,6 +266,7 @@ public interface Fmi2Builder<S, B, E> {
         }
     }
 
+
     interface Value<V> {
         static Value<Double> of(double a) {
             return null;
@@ -274,6 +277,10 @@ public interface Fmi2Builder<S, B, E> {
         }*/
 
         V get();
+    }
+
+
+    interface NumericExpressionValue extends ProvidesTypedReferenceExp {
     }
 
     interface IntValue extends Value<Integer> {
@@ -302,28 +309,35 @@ public interface Fmi2Builder<S, B, E> {
     }
 
 
-    interface IntVariable<T> extends Variable<T, IntValue> {
+    interface IntVariable<T> extends Variable<T, IntValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
         void decrement();
 
         void increment();
+
+        DoubleExpressionValue addition(int i);
     }
 
     interface ProvidesReferenceExp {
         PExp getReferenceExp();
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesReferenceExp {
+    interface ProvidesTypedReferenceExp extends ProvidesReferenceExp {
+        PType getType();
+
+    }
+
+    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
 
         void set(Double value);
 
-        DoubleValue plus(DoubleVariable<T> stepSizeVar);
+        DoubleExpressionValue addition(DoubleVariable<T> stepSizeVar);
     }
 
-    interface BoolVariable<T> extends Variable<T, BoolValue> {
+    interface BoolVariable<T> extends Variable<T, BoolValue>, ProvidesTypedReferenceExp {
         LogicBuilder.Predicate getPredicate();
     }
 
-    interface StringVariable<T> extends Variable<T, StringValue> {
+    interface StringVariable<T> extends Variable<T, StringValue>, ProvidesTypedReferenceExp {
 
     }
 

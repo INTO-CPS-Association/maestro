@@ -192,6 +192,12 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
+
+                    Fmi2Builder.IntVariable<PStm> d = dynamicScope.store(1);
+                    d.setValue(d.addition(1).subtraction(1).addition(d).divide(1).multiply(1));
+                    currentCommunicationTime.setValue(
+                            currentCommunicationTime.addition(stepSizeVar).subtraction(1.0).addition(1.0).divide(1.0).multiply(1.0)
+                                    .addition(currentCommunicationTime).addition(d));
                 }
 
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();

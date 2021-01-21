@@ -429,6 +429,20 @@ public class MableAstFactory {
         return new LexIdentifier(identifier, null);
     }
 
+    public static ADivideBinaryExp newDivideExp(PExp left, PExp right) {
+        ADivideBinaryExp exp = new ADivideBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AMultiplyBinaryExp newMultiplyExp(PExp left, PExp right) {
+        AMultiplyBinaryExp exp = new AMultiplyBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static AMinusBinaryExp newMinusExp(PExp left, PExp right) {
         AMinusBinaryExp exp = new AMinusBinaryExp();
         exp.setLeft(left);

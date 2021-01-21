@@ -1,8 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStateDesignator;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 
@@ -31,5 +29,10 @@ public class IntVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.IntValue> im
 
     public void increment(Fmi2Builder.Scope<PStm> scope) {
         scope.add(newAAssignmentStm(this.getDesignator(), newPlusExp(this.getReferenceExp(), newAIntLiteralExp(1))));
+    }
+
+    @Override
+    public PType getType() {
+        return new AIntNumericPrimitiveType();
     }
 }
