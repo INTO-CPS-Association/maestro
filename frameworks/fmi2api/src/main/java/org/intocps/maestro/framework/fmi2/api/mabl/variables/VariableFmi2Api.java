@@ -35,7 +35,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         return designator;
     }
 
-    protected PExp _getReferenceExp() {
+    protected PExp getReferenceExp() {
         return referenceExp;
     }
 
@@ -49,10 +49,10 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         setValue(value, dynamicScope);
     }
 
-    //    @Override
-    //    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
-    //        setValue(variable, dynamicScope);
-    //    }
+    @Override
+    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
+        throw new RuntimeException("setValue has not been implemented");
+    }
 
     @Override
     public void setValue(V value, Fmi2Builder.Scope<PStm> scope) {

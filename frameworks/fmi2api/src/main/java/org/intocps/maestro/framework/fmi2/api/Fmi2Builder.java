@@ -19,6 +19,10 @@ public interface Fmi2Builder<S, B, E> {
 
     PStm buildRaw();
 
+    RuntimeModule<S> loadRuntimeModule(String name, Object... args);
+
+    RuntimeModule<S> loadRuntimeModule(Scope<S> scope, String name, Object... args);
+
 
     /**
      * Gets the default scope
@@ -26,9 +30,19 @@ public interface Fmi2Builder<S, B, E> {
      * @return
      */
     Scope<S> getRootScope();
-    //    public abstract void pushScope(Scope scope);
 
     DynamicActiveScope<S> getDynamicScope();
+
+    /**
+     * Gets a tag to the last value obtained for the given port
+     *
+     * @param port
+     * @return
+     */
+    <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
+    //    public abstract void pushScope(Scope scope);
+
+    VariableCreator<S> variableCreator();
 
     /**
      * Get handle to the current time
@@ -45,16 +59,77 @@ public interface Fmi2Builder<S, B, E> {
      */
     //Time getTime(double time);
 
-    /**
-     * Gets a tag to the last value obtained for the given port
-     *
-     * @param port
-     * @return
-     */
-    <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
+    interface RuntimeModule<S> extends Fmi2Builder.Variable<S, NamedVariable<S>> {
+        void initialize(List<RuntimeFunction> declaredFuncs);
+
+        void initialize(RuntimeFunction... declaredFuncs);
+
+        //not sure how to allow a mix of double, int and var except for object
+        void callVoid(RuntimeFunction functionId, Object... args);
+
+        void callVoid(Scope<S> scope, RuntimeFunction functionId, Object... args);
+
+        <V> Variable<S, V> call(Scope<S> scope, RuntimeFunction functionId, Object... args);
+
+        <V> Variable<S, V> call(RuntimeFunction functionId, Object... args);
+
+        void destroy();
+
+        void destroy(Scope<S> scope);
+    }
 
 
-    VariableCreator<S> variableCreator();
+    interface RuntimeFunction {
+        String getName();
+
+        /**
+         * List of arg (name,class) pairs
+         *
+         * @return
+         */
+        List<Map.Entry<String, FunctionType>> getArgs();
+
+        FunctionType getReturnType();
+
+
+        static public class FunctionType {
+            final Type nativeType;
+            final String namedType;
+
+            public FunctionType(Type type) {
+                this.nativeType = type;
+                this.namedType = null;
+            }
+
+            public FunctionType(String name) {
+                this.nativeType = null;
+                this.namedType = name;
+            }
+
+            public Type getNativeType() {
+                return nativeType;
+            }
+
+            public String getNamedType() {
+                return namedType;
+            }
+
+            public boolean isNative() {
+                return nativeType != null;
+            }
+
+            static public enum Type {
+                Void,
+                Int,
+                UInt,
+                Double,
+                String,
+                Boolean
+            }
+        }
+
+
+    }
 
     DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
 
