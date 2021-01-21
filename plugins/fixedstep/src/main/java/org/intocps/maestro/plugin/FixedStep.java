@@ -7,6 +7,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -67,54 +68,54 @@ public class FixedStep implements IMaestroExpansionPlugin {
             throw new ExpandException("Simulation environment must not be null");
         }
 
-
         Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
-
-        PStm componentDecl = null;
-        String componentsIdentifier = "fix_components";
-
-        List<LexIdentifier> knownComponentNames = null;
-
-        if (formalArguments.get(0) instanceof AIdentifierExp) {
-            LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
-            ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
-
-            Optional<AVariableDeclaration> compDecl =
-                    containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
-                            .map(ALocalVariableStm::getDeclaration)
-                            .filter(decl -> decl.getName().equals(name) && !decl.getSize().isEmpty() && decl.getInitializer() != null).findFirst();
-
-            if (!compDecl.isPresent()) {
-                throw new ExpandException("Could not find names for comps");
-            }
-
-            AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
-
-            //clone for local use
-            AVariableDeclaration varDecl = newAVariableDeclaration(newAIdentifier(componentsIdentifier), compDecl.get().getType().clone(),
-                    compDecl.get().getSize().get(0).clone(), compDecl.get().getInitializer().clone());
-            varDecl.setSize((List<? extends PExp>) compDecl.get().getSize().clone());
-            componentDecl = newALocalVariableStm(varDecl);
-
-
-            knownComponentNames = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
-                    .map(AIdentifierExp::getName).collect(Collectors.toList());
-        }
-
-        if (knownComponentNames == null || knownComponentNames.isEmpty()) {
-            throw new ExpandException("No components found cannot fixed step with 0 components");
-        }
-
-        final List<LexIdentifier> componentNames = knownComponentNames;
-
-        Set<Fmi2SimulationEnvironment.Relation> relations =
-                env.getRelations(componentNames).stream().filter(r -> r.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External)
-                        .collect(Collectors.toSet());
 
         PExp stepSize = formalArguments.get(1).clone();
         PExp startTime = formalArguments.get(2).clone();
         PExp endTime = formalArguments.get(3).clone();
         if (declaredFunction.equals(fun)) {
+            PStm componentDecl = null;
+            String componentsIdentifier = "fix_components";
+
+            List<LexIdentifier> knownComponentNames = null;
+
+            if (formalArguments.get(0) instanceof AIdentifierExp) {
+                LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
+                ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
+
+                Optional<AVariableDeclaration> compDecl =
+                        containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
+                                .map(ALocalVariableStm::getDeclaration)
+                                .filter(decl -> decl.getName().equals(name) && !decl.getSize().isEmpty() && decl.getInitializer() != null)
+                                .findFirst();
+
+                if (!compDecl.isPresent()) {
+                    throw new ExpandException("Could not find names for comps");
+                }
+
+                AArrayInitializer initializer = (AArrayInitializer) compDecl.get().getInitializer();
+
+                //clone for local use
+                AVariableDeclaration varDecl = newAVariableDeclaration(newAIdentifier(componentsIdentifier), compDecl.get().getType().clone(),
+                        compDecl.get().getSize().get(0).clone(), compDecl.get().getInitializer().clone());
+                varDecl.setSize((List<? extends PExp>) compDecl.get().getSize().clone());
+                componentDecl = newALocalVariableStm(varDecl);
+
+
+                knownComponentNames = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
+                        .map(AIdentifierExp::getName).collect(Collectors.toList());
+            }
+
+            if (knownComponentNames == null || knownComponentNames.isEmpty()) {
+                throw new ExpandException("No components found cannot fixed step with 0 components");
+            }
+
+            final List<LexIdentifier> componentNames = knownComponentNames;
+
+            Set<Fmi2SimulationEnvironment.Relation> relations = env.getRelations(componentNames).stream()
+                    .filter(r -> r.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toSet());
+
+
             try {
                 return Arrays.asList(newIf(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE), newABlockStm(
                         Stream.concat(Stream.of(componentDecl), JacobianFixedStep
@@ -149,10 +150,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 endTimeVar.setValue(externalEndTime);
 
                 // Import the external components into Fmi2API
-                Map<String, ComponentVariableFmi2Api> fmuInstances = builder.getComponentVariablesFrom(formalArguments.get(0), env);
+                Map<String, ComponentVariableFmi2Api> fmuInstances =
+                        FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments.get(0), env);
 
                 // Create bindings
-                builder.createBindings(fmuInstances, env);
+                FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
 
                 // Create the iteration predicate
                 PredicateFmi2Api loopPredicate =
@@ -173,7 +175,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                     Fmi2Builder.BoolVariable<PStm> a = builder.getRootScope().store(true);
                     // Perform get Outputs for all
-                    fmuInstances.forEach((x, y) -> y.share(y.get()));
+                    fmuInstances.forEach((x, y) -> {
+                        List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
+                        y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
+                    });
 
 
                     // Convergence example

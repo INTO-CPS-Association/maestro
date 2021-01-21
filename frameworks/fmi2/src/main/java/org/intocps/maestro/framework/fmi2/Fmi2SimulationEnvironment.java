@@ -99,6 +99,12 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         return this.instanceNameToInstanceComponentInfo.get(lexName);
     }
 
+    /**
+     * Retrieves all variables that should be logged for the given instance. This is a combination of specified logvariables and connected outputs
+     *
+     * @param instanceName
+     * @return
+     */
     @Override
     public List<org.intocps.maestro.framework.fmi2.RelationVariable> getVariablesToLog(String instanceName) {
         List<org.intocps.maestro.framework.fmi2.RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);

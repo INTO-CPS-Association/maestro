@@ -6,12 +6,16 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFm
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class PortFmi2Api implements Fmi2Builder.Port {
 
     public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
     public final ModelDescription.ScalarVariable scalarVariable;
+    private final List<PortFmi2Api> targetPorts = new ArrayList<>();
     private VariableFmi2Api sharedAsVariable;
     private PortFmi2Api sourcePort;
 
@@ -64,6 +68,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
 
     @Override
     public void linkTo(Fmi2Builder.Port... receivers) throws PortLinkException {
+
         if (receivers == null || receivers.length == 0) {
             return;
         }
@@ -84,6 +89,9 @@ public class PortFmi2Api implements Fmi2Builder.Port {
                 throw new PortLinkException("Cannot port already linked please break link first", receiver);
             }
             receiverPort.sourcePort = this;
+            if (!this.targetPorts.contains(receiverPort)) {
+                this.targetPorts.add(receiverPort);
+            }
         }
     }
 

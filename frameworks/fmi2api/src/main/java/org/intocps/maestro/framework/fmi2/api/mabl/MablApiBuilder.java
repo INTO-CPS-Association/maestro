@@ -1,15 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.core.IRelation;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -17,10 +11,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import javax.xml.xpath.XPathExpressionException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -147,78 +138,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         Pair<PStateDesignator, PExp> t = getDesignatorAndReferenceExp(exp);
         return new BooleanVariableFmi2Api(null, rootScope, this.dynamicScope, t.getLeft(), t.getRight());
     }
-
-    @Override
-    public Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(PExp exp,
-            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
-        if (exp instanceof AIdentifierExp) {
-            String componentName = ((AIdentifierExp) exp).getName().getText();
-            ComponentInfo instance = env.getInstanceByLexName(componentName);
-            ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
-
-            //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
-            PStm dummyStm = newABlockStm();
-            this.getRootScope().add(dummyStm);
-
-            ComponentVariableFmi2Api a =
-                    new ComponentVariableFmi2Api(dummyStm, null, componentName, modelDescriptionContext, this, this.getRootScope(), null,
-                            newAIdentifierExp(componentName));
-            return Map.entry(componentName, a);
-        } else {
-            throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
-        }
-    }
-
-    // TODO: NOT WORKING YET
-    public void createBindings(Map<String, ComponentVariableFmi2Api> instances, ISimulationEnvironment env) throws Port.PortLinkException {
-        if (env instanceof Fmi2SimulationEnvironment) {
-            //            Fmi2SimulationEnvironment env_ = (Fmi2SimulationEnvironment)env;
-            for (Map.Entry<String, ComponentVariableFmi2Api> entry : instances.entrySet()) {
-                for (IRelation relation : env.getRelations(entry.getKey()).stream()
-                        .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
-                                x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
-                    PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                        ComponentVariableFmi2Api instance = instances.get(x.getValue().getScalarVariable().getInstance().getText());
-                        return instance.getPort(x.getValue().getScalarVariable().getScalarVariable().getName());
-                    }).toArray(PortFmi2Api[]::new);
-                    entry.getValue().getPort(relation.getSource().getScalarVariable().getScalarVariable().getName()).linkTo(targets);
-                }
-            }
-        }
-    }
-
-    // TODO: NOT WORKING YET
-    @Override
-    public Map<String, ComponentVariableFmi2Api> getComponentVariablesFrom(PExp exp,
-            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
-        LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
-        ABlockStm containingBlock = exp.getAncestor(ABlockStm.class);
-        Optional<AVariableDeclaration> componentDeclaration =
-                containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
-                        .map(ALocalVariableStm::getDeclaration)
-                        .filter(decl -> decl.getName().equals(componentsArrayName) && !decl.getSize().isEmpty() && decl.getInitializer() != null)
-                        .findFirst();
-
-        if (!componentDeclaration.isPresent()) {
-            throw new RuntimeException("Could not find names for components");
-        }
-
-        AArrayInitializer initializer = (AArrayInitializer) componentDeclaration.get().getInitializer();
-
-
-        List<PExp> componentIdentifiers =
-                initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast).collect(Collectors.toList());
-
-        HashMap<String, ComponentVariableFmi2Api> fmuInstances = new HashMap<>();
-
-        for (PExp componentName : componentIdentifiers) {
-            Map.Entry<String, ComponentVariableFmi2Api> component = getComponentVariableFrom(componentName, env);
-            fmuInstances.put(component.getKey(), component.getValue());
-        }
-
-        return fmuInstances;
-    }
-
 
     @Override
     public FmuVariableFmi2Api getFmuVariableFrom(PExp exp) {
