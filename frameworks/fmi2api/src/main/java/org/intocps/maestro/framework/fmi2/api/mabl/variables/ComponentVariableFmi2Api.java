@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -590,14 +591,15 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             Map<Fmi2Builder.Port, Fmi2Builder.Variable> data =
                     map.getValue().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            ArrayVariableFmi2Api<Object> buffer = getSharedBuffer(type);
+            AtomicReference<ArrayVariableFmi2Api<Object>> buffer = new AtomicReference<>(getSharedBuffer(type));
 
             data.keySet().stream().map(PortFmi2Api.class::cast).sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).forEach(port -> {
                 //this is the sorted set of assignments, these can be replaced by a memcopy later
 
                 if (port.getSharedAsVariable() == null) {
-                    ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
+                    ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer.get(), 1);
                     this.setSharedBuffer(newBuf, type);
+                    buffer.set(newBuf);
                     // TODO: Variable is not being added to buffer items.
 
                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
@@ -635,7 +637,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 .collect(Collectors.toList());
 
         //we can not replace these as some of them may be used and could potential have reference problems (they should not but just to be sure)
-        items.addAll(0, items);
+        items.addAll(buffer.size(), items);
 
         return new ArrayVariableFmi2Api<>(var, type, getDeclaredScope(), builder.getDynamicScope(),
                 newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
