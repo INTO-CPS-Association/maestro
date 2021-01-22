@@ -598,6 +598,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 if (port.getSharedAsVariable() == null) {
                     ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
                     this.setSharedBuffer(newBuf, type);
+                    // TODO: Variable is not being added to buffer items.
+
                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                     port.setSharedAsVariable(newShared);
                 }
@@ -633,7 +635,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 .collect(Collectors.toList());
 
         //we can not replace these as some of them may be used and could potential have reference problems (they should not but just to be sure)
-        items.addAll(0, buffer.items());
+        items.addAll(0, items);
 
         return new ArrayVariableFmi2Api<>(var, type, getDeclaredScope(), builder.getDynamicScope(),
                 newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
