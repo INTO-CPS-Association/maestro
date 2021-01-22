@@ -20,7 +20,7 @@ public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValu
     }
 
     @Override
-    public Fmi2Builder.LogicBuilder.Predicate getPredicate() {
+    public PredicateFmi2Api toPredicate() {
         return this.predicate;
     }
 }

@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.Map;
 
 public class BuilderTester {
+    public <T extends Ext> T loadModule(String name, Fmi2Builder.Variable args) {
+        return null;
+    }
 
     @Test
     public void wt() throws Exception {
@@ -44,6 +47,20 @@ public class BuilderTester {
         MablApiBuilder builder = new MablApiBuilder();
         VariableCreatorFmi2Api variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
 
+        Fmi2Builder.RuntimeModule<PStm> logger = builder.loadRuntimeModule("Logger");
+        Fmi2Builder.RuntimeFunction func =
+                builder.getFunctionBuilder().setName("log").addArgument("msg", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
+                        .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Void).build();
+        Fmi2Builder.RuntimeFunction func2 =
+                builder.getFunctionBuilder().setName("log").addArgument("msg", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
+                        .addArgument("code", Fmi2Builder.RuntimeFunction.FunctionType.Type.Int)
+                        .addArgument("other", Fmi2Builder.RuntimeFunction.FunctionType.Type.Int)
+                        .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Int).build();
+
+        logger.initialize(func, func2);
+        logger.call(func, "ddd");
+        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().store(6);
+        Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU =
@@ -92,9 +109,10 @@ public class BuilderTester {
         allVars2.put(allVars.keySet().iterator().next(), var);
         //tank.set(allVars);
 
+
         controllerFMU.unload();
         tankFMU.unload();
-
+        logger.destroy();
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         String test = PrettyPrinter.print(program);
@@ -123,5 +141,55 @@ public class BuilderTester {
                 new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
                 .execute(mabl.getMainSimulationUnit());
 
+    }
+
+    public interface Ext {
+        //void initialize(Fmi2Builder.Variable owner, List<ExtFunc> declaredFuncs);
+
+        //not sure how to allow a mix of double, int and var except for object
+        void callVoid(ExtFunc func, Object... args);
+
+        void call(ExtFunc func, Object... args);
+
+        void destroy();
+    }
+
+    public interface ExtFunc {
+        String getName();
+
+        String getArgNames();
+
+        Class<Object> getArgTypes();
+    }
+
+    static class Logger extends ExternalVariable {
+        final ExtFunc logFunc = null;
+
+        void log(Level level, String message, Fmi2Builder.IntVariable<PStm> errorCode) {
+            this.callVoid(logFunc, level == Level.Debug ? 1 : 0, message, errorCode);
+        }
+
+        enum Level {
+            Info,
+            Debug
+        }
+    }
+
+    static class ExternalVariable implements Ext {
+
+        @Override
+        public void callVoid(ExtFunc func, Object... args) {
+
+        }
+
+        @Override
+        public void call(ExtFunc func, Object... args) {
+
+        }
+
+        @Override
+        public void destroy() {
+
+        }
     }
 }

@@ -8,7 +8,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, Fmi2Builder.ProvidesReferenceExp {
+public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, Fmi2Builder.ProvidesTypedReferenceExp {
 
     private final PStateDesignator designator;
     private final PExp referenceExp;
@@ -35,7 +35,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         return designator;
     }
 
-    protected PExp _getReferenceExp() {
+    protected PExp getReferenceExp() {
         return referenceExp;
     }
 
@@ -46,16 +46,22 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     @Override
     public void setValue(V value) {
-        setValue(value, dynamicScope);
+        setValue(dynamicScope, value);
     }
 
-    //    @Override
-    //    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
-    //        setValue(variable, dynamicScope);
-    //    }
+    @Override
+    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
+        setValue(dynamicScope, variable);
+    }
 
     @Override
-    public void setValue(V value, Fmi2Builder.Scope<PStm> scope) {
+    public void setValue(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Variable<PStm, V> variable) {
+        //TODO use  BuilderUtil.createTypeConvertingAssignment(bui)
+        scope.add(newAAssignmentStm(this.designator.clone(), ((VariableFmi2Api<V>) variable).getReferenceExp()));
+    }
+
+    @Override
+    public void setValue(Fmi2Builder.Scope<PStm> scope, V value) {
         if (!(value instanceof ValueFmi2Api) || ((ValueFmi2Api<?>) value).get() == null) {
             throw new IllegalArgumentException();
         }
@@ -89,18 +95,23 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         return declaration;
     }
 
-    @Override
-    public PExp getReferenceExp() {
-        return this._getReferenceExp().clone();
-    }
 
     @Override
-    public void setValue(Fmi2Builder.ProvidesReferenceExp exp) {
-        this.setValue(exp, dynamicScope);
+    public PType getType() {
+        return this.type;
     }
 
+
     @Override
-    public void setValue(Fmi2Builder.ProvidesReferenceExp add, Fmi2Builder.Scope<PStm> scope) {
-        scope.add(newAAssignmentStm(this.designator.clone(), add.getReferenceExp()));
+    public PExp getExp() {
+        return this.referenceExp;
+    }
+
+    protected void setValue(Fmi2Builder.Scope<PStm> scope, PExp exp) {
+        scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), exp));
+    }
+
+    protected void setValue(PExp exp) {
+        this.setValue(dynamicScope, exp);
     }
 }

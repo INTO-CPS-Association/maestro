@@ -23,19 +23,14 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
         super.setValue(new DoubleValueFmi2Api(value));
     }
 
-    @Override
-    public DoubleExpressionValue addition(Fmi2Builder.DoubleVariable<PStm> stepSizeVar) {
-        return null;
+
+    public void setValue(DoubleExpressionValue addition) {
+        super.setValue(addition.getExp());
     }
 
-    @Override
-    public void setValue(Fmi2Builder.DoubleValue value) {
-        super.setValue(value);
-    }
 
-    @Override
-    public void setValue(Fmi2Builder.DoubleValue value, Fmi2Builder.Scope<PStm> scope) {
-        super.setValue(value, scope);
+    public DoubleExpressionValue toMath() {
+        return new DoubleExpressionValue(this.getExp());
     }
 
 

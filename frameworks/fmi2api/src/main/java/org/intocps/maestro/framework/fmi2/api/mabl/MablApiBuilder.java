@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
@@ -12,6 +13,10 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -23,10 +28,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
     private final VariableCreatorFmi2Api currentVariableCreator;
-
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
     private final MathBuilderFmi2Api mathBuilderApi;
+    List<String> importedModules = new Vector<>();
 
     public MablApiBuilder() {
         rootScope = new ScopeFmi2Api(this);
@@ -150,6 +155,25 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
+    public RuntimeModule<PStm> loadRuntimeModule(String name, Object... args) {
+        return loadRuntimeModule(dynamicScope.getActiveScope(), name, args);
+    }
+
+    @Override
+    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+        String varName = getNameGenerator().getName(name);
+        List<PExp> argList = BuilderUtil.toExp(args);
+        argList.add(0, newAStringLiteralExp(name));
+        PStm var = newVariable(varName, newANameType(name), newALoadExp(argList));
+        scope.add(var);
+        RuntimeModuleVariable module =
+                new RuntimeModuleVariable(var, newANameType(name), (IMablScope) scope, dynamicScope, this, newAIdentifierStateDesignator(varName),
+                        newAIdentifierExp(varName));
+        importedModules.add(name);
+        return module;
+    }
+
+    @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
@@ -183,17 +207,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         config.setName(newAIdentifier("FMI2"));
         //config.setConfig(StringEscapeUtils.escapeJava(simulationEnvironment.));
         // unit.setFrameworkConfigs(Arrays.asList(config));
-        unit.setImports(Collections.singletonList(newAIdentifier("FMI2")));
+        unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")), importedModules.stream().map(MableAstFactory::newAIdentifier))
+                .collect(Collectors.toList()));
 
         return unit;
 
     }
 
-    public PExp getStartTime() {
-        return null;
-    }
-
-    public PExp getEndTime() {
-        return null;
+    public FunctionBuilder getFunctionBuilder() {
+        return new FunctionBuilder();
     }
 }

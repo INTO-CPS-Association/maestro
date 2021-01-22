@@ -184,6 +184,14 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AUnloadExp newUnloadExp(PExp... args) {
+        AUnloadExp exp = new AUnloadExp();
+        if (args != null && args.length > 0) {
+            exp.setArgs(Arrays.asList(args));
+        }
+        return exp;
+    }
+
 
     public static AExpressionStm newExpressionStm(PExp exp) {
         AExpressionStm stm = new AExpressionStm();

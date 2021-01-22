@@ -597,6 +597,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                 if (port.getSharedAsVariable() == null) {
                     ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
+                    this.setSharedBuffer(newBuf, type);
                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                     port.setSharedAsVariable(newShared);
                 }
@@ -608,6 +609,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             });
 
         });
+    }
+
+    private void setSharedBuffer(ArrayVariableFmi2Api<Object> newBuf, PType type) {
+        this.sharedBuffer.put(type, newBuf);
+
     }
 
     private ArrayVariableFmi2Api<Object> growBuffer(ArrayVariableFmi2Api<Object> buffer, int increaseByCount) {

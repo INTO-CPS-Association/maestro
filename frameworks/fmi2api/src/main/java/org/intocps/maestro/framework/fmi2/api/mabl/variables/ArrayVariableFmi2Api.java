@@ -21,6 +21,7 @@ public class ArrayVariableFmi2Api<T> extends VariableFmi2Api<Fmi2Builder.NamedVa
 
     public int size() {
         return items.size();
+
     }
 
     public List<VariableFmi2Api<T>> items() {

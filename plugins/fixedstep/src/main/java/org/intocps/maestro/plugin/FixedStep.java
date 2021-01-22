@@ -2,6 +2,7 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -12,6 +13,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
@@ -138,15 +140,15 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
-                Fmi2Builder.DoubleVariable<PStm> stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
+                DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
                 stepSizeVar.setValue(externalStepSize);
                 // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
-                Fmi2Builder.DoubleVariable<PStm> currentCommunicationTime = dynamicScope.store("fixed_current_communication_point", 0.0);
+                DoubleVariableFmi2Api currentCommunicationTime = (DoubleVariableFmi2Api) dynamicScope.store("fixed_current_communication_point", 0.0);
                 currentCommunicationTime.setValue(externalStartTime);
                 // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
-                Fmi2Builder.DoubleVariable<PStm> endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
+                DoubleVariableFmi2Api endTimeVar = (DoubleVariableFmi2Api) dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
 
                 // Import the external components into Fmi2API
@@ -157,16 +159,14 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
 
                 // Create the iteration predicate
-                PredicateFmi2Api loopPredicate =
-                        LogicBuilderFmi2Api.isLessOrEqualTo(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar), endTimeVar)
-                                .and(builder.getGlobalExecutionContinue());
+                PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
 
                 // Convergence related variables
                 Fmi2Builder.DoubleVariable<PStm> absoluteTolerance = dynamicScope.store("absoluteTolerance", 1.0);
                 Fmi2Builder.DoubleVariable<PStm> relativeTolerance = dynamicScope.store("relativeTolerance", 1.0);
 
                 IMablScope sc = dynamicScope.getActiveScope();
-                Fmi2Builder.WhileScope<PStm> scope = dynamicScope.enterWhile(loopPredicate);
+                ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
                     // Perform a step for all
                     fmuInstances.forEach((x, y) -> {
@@ -186,22 +186,18 @@ public class FixedStep implements IMaestroExpansionPlugin {
                     PortFmi2Api fkPort = m1.getPort("fk");
                     VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
                     Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
-                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
+                    //                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
                     // Perform setLinked for all
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
                     // Update currentCommunicationTime
-                    currentCommunicationTime.setValue(MathBuilderFmi2Api.add(currentCommunicationTime, stepSizeVar));
-
-                    Fmi2Builder.IntVariable<PStm> d = dynamicScope.store(1);
-                    d.setValue(d.addition(1).subtraction(1).addition(d).divide(1).multiply(1));
-                    currentCommunicationTime.setValue(
-                            currentCommunicationTime.addition(stepSizeVar).subtraction(1.0).addition(1.0).divide(1.0).multiply(1.0)
-                                    .addition(currentCommunicationTime).addition(d));
+                    currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
                 }
 
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();
+
                 algorithm.apply(new ToParExp());
+                System.out.println(PrettyPrinter.print(algorithm));
 
                 return algorithm.getBody();
             } catch (Exception e) {

@@ -56,7 +56,7 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
     }
 
     @Override
-    public void setValue(Object value, Fmi2Builder.Scope<PStm> scope) {
+    public void setValue(Fmi2Builder.Scope<PStm> scope, Object value) {
         throw new IllegalStateException();
     }
 

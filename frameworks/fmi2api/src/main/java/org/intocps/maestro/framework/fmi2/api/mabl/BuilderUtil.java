@@ -5,6 +5,8 @@ import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableUtil;
 import org.intocps.maestro.typechecker.TypeComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,5 +63,28 @@ public class BuilderUtil {
 
         }
         return statements;
+    }
+
+    public static List<PExp> toExp(Object... args) {
+        if (args == null || args.length == 0) {
+            return new Vector<>();
+        }
+        List<PExp> expressions = new Vector<>();
+        for (Object obj : args) {
+            if (obj instanceof Double) {
+                expressions.add(newARealLiteralExp((Double) obj));
+            } else if (obj instanceof Integer) {
+                expressions.add(newAIntLiteralExp((Integer) obj));
+            } else if (obj instanceof Long) {
+                expressions.add(newAUIntLiteralExp((Long) obj));
+            } else if (obj instanceof Boolean) {
+                expressions.add(newABoolLiteralExp((Boolean) obj));
+            } else if (obj instanceof String) {
+                expressions.add(newAStringLiteralExp((String) obj));
+            } else if (obj instanceof VariableFmi2Api) {
+                expressions.add(VariableUtil.getAsExp((VariableFmi2Api) obj));
+            }
+        }
+        return expressions;
     }
 }

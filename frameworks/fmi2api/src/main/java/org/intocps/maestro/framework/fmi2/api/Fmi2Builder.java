@@ -3,8 +3,6 @@ package org.intocps.maestro.framework.fmi2.api;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -21,6 +19,10 @@ public interface Fmi2Builder<S, B, E> {
 
     PStm buildRaw();
 
+    RuntimeModule<S> loadRuntimeModule(String name, Object... args);
+
+    RuntimeModule<S> loadRuntimeModule(Scope<S> scope, String name, Object... args);
+
 
     /**
      * Gets the default scope
@@ -28,24 +30,8 @@ public interface Fmi2Builder<S, B, E> {
      * @return
      */
     Scope<S> getRootScope();
-    //    public abstract void pushScope(Scope scope);
 
     DynamicActiveScope<S> getDynamicScope();
-
-    /**
-     * Get handle to the current time
-     *
-     * @return
-     */
-    //Time getCurrentTime();
-
-    /**
-     * Gets a specific time from a number
-     *
-     * @param time
-     * @return
-     */
-    //Time getTime(double time);
 
     /**
      * Gets a tag to the last value obtained for the given port
@@ -54,9 +40,16 @@ public interface Fmi2Builder<S, B, E> {
      * @return
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
-
+    //    public abstract void pushScope(Scope scope);
 
     VariableCreator<S> variableCreator();
+
+    /**
+     * Get handle to the current time
+     *
+     * @return
+     */
+    //Time getCurrentTime();
 
     DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
 
@@ -67,6 +60,88 @@ public interface Fmi2Builder<S, B, E> {
     BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
 
     FmuVariableFmi2Api getFmuVariableFrom(E exp);
+
+    /**
+     * Gets a specific time from a number
+     *
+     * @param time
+     * @return
+     */
+    //Time getTime(double time);
+
+    interface RuntimeModule<S> extends Fmi2Builder.Variable<S, NamedVariable<S>> {
+        void initialize(List<RuntimeFunction> declaredFuncs);
+
+        void initialize(RuntimeFunction... declaredFuncs);
+
+        //not sure how to allow a mix of double, int and var except for object
+        void callVoid(RuntimeFunction functionId, Object... args);
+
+        void callVoid(Scope<S> scope, RuntimeFunction functionId, Object... args);
+
+        <V> Variable<S, V> call(Scope<S> scope, RuntimeFunction functionId, Object... args);
+
+        <V> Variable<S, V> call(RuntimeFunction functionId, Object... args);
+
+        void destroy();
+
+        void destroy(Scope<S> scope);
+    }
+
+    interface NumericValue {
+    }
+
+    interface RuntimeFunction {
+        String getName();
+
+        /**
+         * List of arg (name,class) pairs
+         *
+         * @return
+         */
+        List<Map.Entry<String, FunctionType>> getArgs();
+
+        FunctionType getReturnType();
+
+
+        static public class FunctionType {
+            final Type nativeType;
+            final String namedType;
+
+            public FunctionType(Type type) {
+                this.nativeType = type;
+                this.namedType = null;
+            }
+
+            public FunctionType(String name) {
+                this.nativeType = null;
+                this.namedType = name;
+            }
+
+            public Type getNativeType() {
+                return nativeType;
+            }
+
+            public String getNamedType() {
+                return namedType;
+            }
+
+            public boolean isNative() {
+                return nativeType != null;
+            }
+
+            static public enum Type {
+                Void,
+                Int,
+                UInt,
+                Double,
+                String,
+                Boolean
+            }
+        }
+
+
+    }
 
     /**
      * New boolean that can be used as a predicate
@@ -194,7 +269,7 @@ public interface Fmi2Builder<S, B, E> {
 
         <T> Predicate isLess(T a, T b);
 
-        <T> Predicate isLessOrEqualTo(ProvidesReferenceExp a, ProvidesReferenceExp b);
+        <T> Predicate isLessOrEqualTo(Variable a, Variable b);
 
         Predicate isGreater(Value<Double> a, double b);
 
@@ -209,10 +284,6 @@ public interface Fmi2Builder<S, B, E> {
             Predicate or(Predicate p);
 
             Predicate not();
-
-            PExp getExp();
-
-            PredicateFmi2Api and(BooleanVariableFmi2Api booleanVariable);
         }
 
     }
@@ -279,17 +350,13 @@ public interface Fmi2Builder<S, B, E> {
         V get();
     }
 
-
-    interface NumericExpressionValue extends ProvidesTypedReferenceExp {
-    }
-
-    interface IntValue extends Value<Integer> {
+    interface IntValue extends Value<Integer>, NumericExpressionValue {
     }
 
     interface BoolValue extends Value<Boolean> {
     }
 
-    interface DoubleValue extends Value<Double> {
+    interface DoubleValue extends Value<Double>, NumericExpressionValue {
     }
 
     interface StringValue extends Value<String> {
@@ -313,28 +380,23 @@ public interface Fmi2Builder<S, B, E> {
         void decrement();
 
         void increment();
-
-        DoubleExpressionValue addition(int i);
     }
 
-    interface ProvidesReferenceExp {
-        PExp getReferenceExp();
-    }
 
-    interface ProvidesTypedReferenceExp extends ProvidesReferenceExp {
+    interface ProvidesTypedReferenceExp {
         PType getType();
+
+        PExp getExp();
 
     }
 
     interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
 
         void set(Double value);
-
-        DoubleExpressionValue addition(DoubleVariable<T> stepSizeVar);
     }
 
     interface BoolVariable<T> extends Variable<T, BoolValue>, ProvidesTypedReferenceExp {
-        LogicBuilder.Predicate getPredicate();
+        LogicBuilder.Predicate toPredicate();
     }
 
     interface StringVariable<T> extends Variable<T, StringValue>, ProvidesTypedReferenceExp {
@@ -588,16 +650,16 @@ public interface Fmi2Builder<S, B, E> {
 
         void setValue(V value);
 
-        //        void setValue(Variable<T, V> variable);
+        void setValue(Variable<T, V> variable);
 
-        //        void setValue(Variable<PStm, V> variable, Scope<PStm> scope);
+        void setValue(Scope<PStm> scope, Variable<PStm, V> variable);
 
-        void setValue(V value, Scope<T> scope);
+        void setValue(Scope<T> scope, V value);
 
-        void setValue(ProvidesReferenceExp add);
-
-        void setValue(ProvidesReferenceExp add, Scope<PStm> scope);
 
         Scope<T> getDeclaredScope();
+    }
+
+    public interface NumericExpressionValue extends ProvidesTypedReferenceExp {
     }
 }

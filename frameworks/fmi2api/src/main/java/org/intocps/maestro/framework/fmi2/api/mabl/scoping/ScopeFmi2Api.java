@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
@@ -14,8 +15,8 @@ import java.util.function.Supplier;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-public class ScopeFmi2Api implements IMablScope {
-    final IMablScope parent;
+public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
+    final ScopeFmi2Api parent;
     private final MablApiBuilder builder;
     private final ABlockStm block;
     VariableCreatorFmi2Api variableCreator;
@@ -28,7 +29,7 @@ public class ScopeFmi2Api implements IMablScope {
 
     }
 
-    public ScopeFmi2Api(MablApiBuilder builder, IMablScope parent, ABlockStm block) {
+    public ScopeFmi2Api(MablApiBuilder builder, ScopeFmi2Api parent, ABlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
@@ -45,31 +46,41 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
-    public Fmi2Builder.WhileScope<PStm> enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
-
-        ABlockStm whileBlock = new ABlockStm();
-        AWhileStm whileStm = newWhile(predicate.getExp(), whileBlock);
-        add(whileStm);
-        WhileMaBLScope scope = new WhileMaBLScope(builder, whileStm, this, whileBlock);
-        scope.activate();
-        return scope;
+    public ScopeFmi2Api enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
+        if (predicate instanceof PredicateFmi2Api) {
+            PredicateFmi2Api predicate_ = (PredicateFmi2Api) predicate;
+            ABlockStm whileBlock = new ABlockStm();
+            AWhileStm whileStm = newWhile(predicate_.getExp(), whileBlock);
+            add(whileStm);
+            WhileMaBLScope scope = new WhileMaBLScope(builder, whileStm, this, whileBlock);
+            scope.activate();
+            return scope;
+        }
+        throw new RuntimeException("Predicate has to be of type PredicateFmi2Api. Unknown predicate: " + predicate.getClass());
     }
 
     @Override
-    public Fmi2Builder.IfScope<PStm> enterIf(Fmi2Builder.LogicBuilder.Predicate predicate) {
-        //todo
-        ABlockStm thenStm = newABlockStm();
-        ABlockStm elseStm = newABlockStm();
+    public IfMaBlScope enterIf(Fmi2Builder.LogicBuilder.Predicate predicate) {
 
-        AIfStm ifStm = newIf(newABoolLiteralExp(true), thenStm, elseStm);
-        add(ifStm);
-        ScopeFmi2Api thenScope = new ScopeFmi2Api(builder, this, thenStm);
-        ScopeFmi2Api elseScope = new ScopeFmi2Api(builder, this, elseStm);
-        return new IfMaBlScope(builder, ifStm, this, thenScope, elseScope);
+        if (predicate instanceof PredicateFmi2Api) {
+            PredicateFmi2Api predicate_ = (PredicateFmi2Api) predicate;
+
+            ABlockStm thenStm = newABlockStm();
+            ABlockStm elseStm = newABlockStm();
+
+            AIfStm ifStm = newIf(predicate_.getExp(), thenStm, elseStm);
+            add(ifStm);
+            ScopeFmi2Api thenScope = new ScopeFmi2Api(builder, this, thenStm);
+            ScopeFmi2Api elseScope = new ScopeFmi2Api(builder, this, elseStm);
+            return new IfMaBlScope(builder, ifStm, this, thenScope, elseScope);
+        }
+
+        throw new RuntimeException("Predicate has to be of type PredicateFmi2Api. Unknown predicate: " + predicate.getClass());
+
     }
 
     @Override
-    public Fmi2Builder.Scope<PStm> leave() {
+    public ScopeFmi2Api leave() {
         return null;
     }
 
@@ -113,41 +124,41 @@ public class ScopeFmi2Api implements IMablScope {
     }
 
     @Override
-    public Fmi2Builder.Scope<PStm> activate() {
-        return builder.getDynamicScope().activate(this);
+    public ScopeFmi2Api activate() {
+        return (ScopeFmi2Api) builder.getDynamicScope().activate(this);
     }
 
     @Override
-    public Fmi2Builder.DoubleVariable<PStm> store(double value) {
+    public DoubleVariableFmi2Api store(double value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
 
     @Override
-    public Fmi2Builder.BoolVariable<PStm> store(boolean value) {
+    public BooleanVariableFmi2Api store(boolean value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
 
     @Override
-    public Fmi2Builder.IntVariable<PStm> store(int value) {
+    public IntVariableFmi2Api store(int value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
 
     @Override
-    public Fmi2Builder.DoubleVariable<PStm> store(String prefix, double value) {
+    public DoubleVariableFmi2Api store(String prefix, double value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
     @Override
-    public Fmi2Builder.BoolVariable<PStm> store(String name, boolean value) {
+    public BooleanVariableFmi2Api store(String name, boolean value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
     @Override
-    public Fmi2Builder.IntVariable<PStm> store(String name, int value) {
+    public IntVariableFmi2Api store(String name, int value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
-    protected Fmi2Builder.DoubleVariable<PStm> store(Supplier<String> nameProvider, double value) {
+    protected DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
         PStm var = newVariable(name, newARealNumericPrimitiveType(), initial);
@@ -156,7 +167,7 @@ public class ScopeFmi2Api implements IMablScope {
                 newAIdentifierExp(name));
     }
 
-    protected Fmi2Builder.BoolVariable<PStm> store(Supplier<String> nameProvider, boolean value) {
+    protected BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
         String name = nameProvider.get();
         ABoolLiteralExp initial = newABoolLiteralExp(value);
         PStm var = newVariable(name, newABoleanPrimitiveType(), initial);
@@ -165,7 +176,7 @@ public class ScopeFmi2Api implements IMablScope {
                 newAIdentifierExp(name));
     }
 
-    protected Fmi2Builder.IntVariable<PStm> store(Supplier<String> nameProvider, int value) {
+    protected IntVariableFmi2Api store(Supplier<String> nameProvider, int value) {
         String name = nameProvider.get();
         AIntLiteralExp initial = newAIntLiteralExp(value);
         PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
@@ -221,6 +232,4 @@ public class ScopeFmi2Api implements IMablScope {
 
         return variable;
     }
-
-
 }
