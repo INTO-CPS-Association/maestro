@@ -107,4 +107,8 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     public String toLexName() {
         return this.aMablFmi2ComponentAPI.getOwner().getName() + "_" + this.aMablFmi2ComponentAPI.getName() + "_" + this.getName();
     }
+
+    public String getLogScalarVariableName() {
+        return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getName() + "." + this.getName();
+    }
 }

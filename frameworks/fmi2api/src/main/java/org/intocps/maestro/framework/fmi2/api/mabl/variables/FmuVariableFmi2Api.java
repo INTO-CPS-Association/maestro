@@ -20,6 +20,13 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     private final ModelDescriptionContext modelDescriptionContext;
     private final MablApiBuilder builder;
+    private String fmuIdentifier;
+
+    public FmuVariableFmi2Api(String fmuIdentifier, MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration,
+            PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
+        this(builder, modelDescriptionContext, declaration, type, declaredScope, dynamicScope, designator, referenceExp);
+        this.fmuIdentifier = fmuIdentifier;
+    }
 
     public FmuVariableFmi2Api(MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration, PType type,
             IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
@@ -57,4 +64,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         return aMablFmi2ComponentAPI;
     }
 
+    public String getFmuIdentifier() {
+        return fmuIdentifier;
+    }
 }

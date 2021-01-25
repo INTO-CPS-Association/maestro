@@ -65,11 +65,14 @@ public class FullSpecTest {
         return testJsonObject;
     }
 
-    static File getWorkingDirectory(File base) {
+    static File getWorkingDirectory(File base) throws IOException {
         String s = "target/" + base.getAbsolutePath().substring(
                 base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
 
         File workingDir = new File(s.replace('/', File.separatorChar));
+        if (workingDir.exists()) {
+            FileUtils.deleteDirectory(workingDir);
+        }
         if (!workingDir.exists()) {
             workingDir.mkdirs();
         }

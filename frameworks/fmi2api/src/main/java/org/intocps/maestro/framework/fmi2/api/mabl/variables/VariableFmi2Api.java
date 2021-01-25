@@ -35,7 +35,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         return designator;
     }
 
-    protected PExp getReferenceExp() {
+    public PExp getReferenceExp() {
         return referenceExp;
     }
 

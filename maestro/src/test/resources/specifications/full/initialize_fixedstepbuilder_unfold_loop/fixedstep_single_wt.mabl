@@ -26,7 +26,7 @@ bool global_execution_continue = true;
 Initializer.expand initialize(components,START_TIME, END_TIME);
 
 FixedStep.expand fixedStepWithBuilder(components,STEP_SIZE,START_TIME,END_TIME);
-
+dataWriter.close();
 tankcontroller.freeInstance(crtlInstance);
 SingleWatertank.freeInstance(wtInstance);
 

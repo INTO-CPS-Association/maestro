@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
@@ -47,6 +48,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private DoubleVariableFmi2Api currentTimeVar = null;
     private BooleanVariableFmi2Api currentTimeStepFullStepVar = null;
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
+    private List<String> variabesToLog;
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
@@ -65,6 +67,14 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Input)
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+    }
+
+    public List<PortFmi2Api> getVariablesToLog() {
+        return this.getPorts(this.variabesToLog.toArray(new String[0]));
+    }
+
+    public void setVariablesToLog(List<RelationVariable> variablesToLog) {
+        this.variabesToLog = variablesToLog.stream().map(x -> x.scalarVariable.getName()).collect(Collectors.toList());
     }
 
     @Override
@@ -291,7 +301,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public List<Fmi2Builder.Port> getPorts(String... names) {
+    public List<PortFmi2Api> getPorts(String... names) {
         List<String> accept = Arrays.asList(names);
         return ports.stream().filter(p -> accept.contains(p.getName())).collect(Collectors.toList());
     }
@@ -681,6 +691,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     public String getName() {
         return this.name;
     }
+
 
     public enum FmiFunctionType {
         GET,

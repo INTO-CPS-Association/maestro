@@ -7,8 +7,10 @@ import org.intocps.maestro.framework.core.IRelation;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -18,8 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.intocps.maestro.ast.MableAstFactory.newABlockStm;
-import static org.intocps.maestro.ast.MableAstFactory.newAIdentifierExp;
+import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class FromMaBLToMaBLAPI {
 
@@ -34,9 +35,15 @@ public class FromMaBLToMaBLAPI {
             PStm dummyStm = newABlockStm();
             builder.getRootScope().add(dummyStm);
 
+            FmuVariableFmi2Api fmu = new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
+                    builder.getRootScope(), builder.getDynamicScope(), null, null);
+
             ComponentVariableFmi2Api a =
-                    new ComponentVariableFmi2Api(dummyStm, null, componentName, modelDescriptionContext, builder, builder.getRootScope(), null,
+                    new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder, builder.getRootScope(), null,
                             newAIdentifierExp(componentName));
+            List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
+            a.setVariablesToLog(variablesToLog);
+
             return Map.entry(componentName, a);
         } else {
             throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
@@ -86,6 +93,7 @@ public class FromMaBLToMaBLAPI {
             Map.Entry<String, ComponentVariableFmi2Api> component = getComponentVariableFrom(builder, componentName, env);
             fmuInstances.put(component.getKey(), component.getValue());
         }
+
 
         return fmuInstances;
     }
