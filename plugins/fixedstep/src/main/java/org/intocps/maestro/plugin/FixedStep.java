@@ -10,13 +10,15 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.*;
+import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
+import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.MathBuilderFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,10 +184,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
                     // Convergence example
-                    ComponentVariableFmi2Api m1 = fmuInstances.entrySet().stream().filter(x -> x.getKey().equals("i2")).findFirst().get().getValue();
-                    PortFmi2Api fkPort = m1.getPort("fk");
-                    VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
-                    Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
+                    //                    ComponentVariableFmi2Api m1 = fmuInstances.entrySet().stream().filter(x -> x.getKey().equals("i2")).findFirst().get().getValue();
+                    //                    PortFmi2Api fkPort = m1.getPort("fk");
+                    //                    VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
+                    //                    Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
                     //                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
                     // Perform setLinked for all
                     fmuInstances.forEach((x, y) -> y.setLinked());
