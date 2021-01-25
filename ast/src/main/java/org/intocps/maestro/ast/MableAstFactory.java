@@ -121,6 +121,27 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AGreaterBinaryExp newAGreaterBinaryExp(PExp left, PExp right) {
+        AGreaterBinaryExp exp = new AGreaterBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AGreaterEqualBinaryExp newAGreaterEqualBinaryExp(PExp left, PExp right) {
+        AGreaterEqualBinaryExp exp = new AGreaterEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AEqualBinaryExp newAEqualBinaryExp(PExp left, PExp right) {
+        AEqualBinaryExp exp = new AEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static ALessEqualBinaryExp newALessEqualBinaryExp(PExp left, PExp right) {
         ALessEqualBinaryExp exp = new ALessEqualBinaryExp();
 

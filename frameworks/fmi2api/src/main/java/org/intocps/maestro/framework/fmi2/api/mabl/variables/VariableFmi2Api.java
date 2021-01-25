@@ -3,7 +3,10 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -113,5 +116,16 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     protected void setValue(PExp exp) {
         this.setValue(dynamicScope, exp);
+    }
+
+
+    public NumericExpressionValueFmi2Api toMath() {
+        if (this instanceof DoubleVariableFmi2Api) {
+            return new DoubleExpressionValue(this.getExp());
+        } else if (this instanceof IntVariableFmi2Api) {
+            return new IntExpressionValue(this.getExp());
+        } else {
+            throw new RuntimeException("Variable is not of Numeric Type but of type: " + this.getClass());
+        }
     }
 }

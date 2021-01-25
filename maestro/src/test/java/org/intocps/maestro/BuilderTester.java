@@ -13,11 +13,9 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.PortVariableMapImpl;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -86,7 +84,7 @@ public class BuilderTester {
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> allVars = tank.get();
+        Map<PortFmi2Api, VariableFmi2Api<Object>> allVars = tank.get();
         tank.share(allVars);
 
 

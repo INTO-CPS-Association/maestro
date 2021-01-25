@@ -16,6 +16,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,6 +185,10 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
 
                     fmuInstances.forEach((x, y) -> y.setLinked());
+
+                    Map<PortFmi2Api, VariableFmi2Api<Object>> x = fmuInstances.entrySet().iterator().next().getValue().get("x");
+                    // Predicate example
+                    fmuInstances.get("msd1").get("fk").entrySet().iterator().next();
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));

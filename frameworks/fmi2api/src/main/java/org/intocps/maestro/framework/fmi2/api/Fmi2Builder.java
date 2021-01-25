@@ -527,16 +527,16 @@ public interface Fmi2Builder<S, B, E> {
          * @param ports
          * @return
          */
-        <V> Map<Port, Variable<T, V>> get(Port... ports);
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(Port... ports);
 
-        <V> Map<Port, Variable<T, V>> get(Scope<T> scope, Port... ports);
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(Scope<T> scope, Port... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        <V> Map<Port, Variable<T, V>> get();
+        <V> Map<? extends Port, ? extends Variable<T, V>> get();
 
         /**
          * get filter by value reference
@@ -544,7 +544,7 @@ public interface Fmi2Builder<S, B, E> {
          * @param valueReferences
          * @return
          */
-        <V> Map<Port, Variable<T, V>> get(int... valueReferences);
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -552,9 +552,9 @@ public interface Fmi2Builder<S, B, E> {
          * @param names
          * @return
          */
-        <V> Map<Port, Variable<T, V>> get(String... names);
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(String... names);
 
-        <V> Map<Port, Variable<T, V>> getAndShare(String... names);
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare(String... names);
 
         /**
          * Get the value of a single port
@@ -562,7 +562,7 @@ public interface Fmi2Builder<S, B, E> {
          * @param name
          * @return
          */
-        <V> Value<V> getSingle(String name);
+        <V> Variable<T, V> getSingle(String name);
 
         <V> void set(Scope<T> scope, PortValueMap<V> value);
 
@@ -598,14 +598,14 @@ public interface Fmi2Builder<S, B, E> {
          *
          * @param values
          */
-        void setInt(Map<Integer, Value<Integer>> values);
+        void setInt(Map<? extends Integer, ? extends Value<Integer>> values);
 
         /**
          * Set this fmy ports by name
          *
          * @param value
          */
-        void setString(Map<String, Value<String>> value);
+        void setString(Map<? extends String, ? extends Value<String>> value);
 
         /**
          * Makes the values publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -613,7 +613,7 @@ public interface Fmi2Builder<S, B, E> {
          *
          * @param values
          */
-        <V> void share(Map<Port, Variable<T, V>> values);
+        <V> void share(Map<? extends Port, ? extends Variable<T, V>> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -661,5 +661,6 @@ public interface Fmi2Builder<S, B, E> {
     }
 
     public interface NumericExpressionValue extends ProvidesTypedReferenceExp {
+
     }
 }

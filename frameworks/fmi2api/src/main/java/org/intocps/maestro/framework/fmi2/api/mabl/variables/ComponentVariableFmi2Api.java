@@ -296,7 +296,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public List<? extends Fmi2Builder.Port> getPorts() {
+    public List<PortFmi2Api> getPorts() {
         return ports;
     }
 
@@ -307,7 +307,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public List<Fmi2Builder.Port> getPorts(int... valueReferences) {
+    public List<PortFmi2Api> getPorts(int... valueReferences) {
         List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
         return ports.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).collect(Collectors.toList());
     }
@@ -323,12 +323,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(Fmi2Builder.Port... ports) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Port... ports) {
         return get(builder.getDynamicScope(), ports);
     }
 
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... ports) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... ports) {
 
         List<PortFmi2Api> selectedPorts;
         if (ports == null || ports.length == 0) {
@@ -356,29 +356,29 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         scope.add(stm);
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> results = new HashMap<>();
+        Map<PortFmi2Api, VariableFmi2Api<V>> results = new HashMap<>();
 
         for (int i = 0; i < sortedPorts.size(); i++) {
-            results.put(sortedPorts.get(i), (Fmi2Builder.Variable<PStm, V>) valBuf.items().get(i));
+            results.put(sortedPorts.get(i), (VariableFmi2Api<V>) valBuf.items().get(i));
         }
 
         return results;
     }
 
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get() {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get() {
         return get(builder.getDynamicScope(), outputPorts.toArray(Fmi2Builder.Port[]::new));
     }
 
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(int... valueReferences) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(int... valueReferences) {
         List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
         return get(builder.getDynamicScope(),
                 outputPorts.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).toArray(Fmi2Builder.Port[]::new));
     }
 
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> get(String... names) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
         return get(builder.getDynamicScope(), outputPorts.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
 
@@ -389,9 +389,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
      * Uses the rootScope for valueReferences
      */
     @Override
-    public <V> Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> getAndShare(String... names) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> getAndShare(String... names) {
 
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> values = get(names);
+        Map<PortFmi2Api, VariableFmi2Api<V>> values = get(names);
         share(values);
         return values;
     }
@@ -429,8 +429,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public Fmi2Builder.Value getSingle(String name) {
-        return null;
+    public VariableFmi2Api getSingle(String name) {
+        return (VariableFmi2Api) this.get(name).entrySet().iterator().next().getValue();
     }
 
     @Override
@@ -589,17 +589,17 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public void setInt(Map<Integer, Fmi2Builder.Value<Integer>> values) {
+    public void setInt(Map<? extends Integer, ? extends Fmi2Builder.Value<Integer>> values) {
 
     }
 
     @Override
-    public void setString(Map<String, Fmi2Builder.Value<String>> value) {
+    public void setString(Map<? extends String, ? extends Fmi2Builder.Value<String>> value) {
 
     }
 
     @Override
-    public <V> void share(Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> values) {
+    public <V> void share(Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> values) {
         values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType())).entrySet().stream().forEach(map -> {
             PType type = map.getKey();
             Map<Fmi2Builder.Port, Fmi2Builder.Variable> data =
