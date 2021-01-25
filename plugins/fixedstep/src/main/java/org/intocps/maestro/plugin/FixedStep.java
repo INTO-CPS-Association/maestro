@@ -181,15 +181,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                         List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
                         y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
                     });
-
-
-                    // Convergence example
-                    //                    ComponentVariableFmi2Api m1 = fmuInstances.entrySet().stream().filter(x -> x.getKey().equals("i2")).findFirst().get().getValue();
-                    //                    PortFmi2Api fkPort = m1.getPort("fk");
-                    //                    VariableFmi2Api fkShared = fkPort.getSharedAsVariable();
-                    //                    Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, Object>> fkNonShared = m1.get(fkPort);
-                    //                    math.checkConvergence(fkNonShared.get(fkPort), fkShared, absoluteTolerance, relativeTolerance);
-                    // Perform setLinked for all
+                    
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
                     // Update currentCommunicationTime
