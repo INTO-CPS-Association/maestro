@@ -131,6 +131,7 @@ try:
     if not r.status_code == 200:
         print("ERROR: Could not simulate: " + r.text)
         terminate(p)
+        assert(False)
 
     print ("Simulate response code '%d, data=%s'" % (r.status_code, r.text))
     wsThread.join()
@@ -145,6 +146,7 @@ try:
     if not r.status_code == 200:
         print("ERROR: Could not receive plain results: " + r.text)
         terminate(p)
+        assert (False)
 
     print ("Result response code '%d" % (r.status_code))
     result_csv_path = "actual_result.csv"
@@ -162,6 +164,7 @@ try:
     if not r.status_code == 200:
         print("ERROR: Could not receive zip results: " + r.text)
         terminate(p)
+        assert (False)
     print ("Result response code '%d" % (r.status_code))
     result_zip_path = "actual_zip_result.zip"
     zipFilePath = tempDirectory + "/" + result_zip_path
@@ -174,6 +177,7 @@ try:
         filesInZipCount = len(archive.infolist())
     if filesInZipCount < 2:
         print("Error: Less than 2 files in result zip. Actually there was: " + str(filesInZipCount))
+        assert (False)
     else:
         print("2 or more files in result zip. Actually: " + str(filesInZipCount))
 
@@ -183,10 +187,12 @@ try:
     if not r.status_code == 200:
         print("ERROR: Could not destory: " + r.text)
         terminate(p)
+        assert (False)
     print ("Result response code '%d" % (r.status_code))
 
 
 except Exception as x:
     print("ERROR: Exception: " + str(x))
+    assert (False)
 finally:
     terminate(p)
