@@ -20,7 +20,7 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
       - name: Get Working Dir
-        run: echo '::set-output name=workingdir::pwd'
+        run: echo ::set-output name=workingdir::$(pwd)
       - name: Test
         run: echo ${{ steps.Maestro2.outputs.workingdir }}/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - uses: actions/checkout@v2
