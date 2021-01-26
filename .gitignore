@@ -111,3 +111,4 @@ docs/build
 __pycache__/
 *.py[cod]
 *$py.class
+/external_tester/venv/
