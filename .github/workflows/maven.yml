@@ -19,33 +19,42 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
-      - name: Get Working Dir
-        run: echo ::set-output name=WORKING_DIR::$(pwd/)
-        id: working
-      - name: Test
-        run: echo ${{steps.working.outputs.WORKING_DIR}}../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
-#      - uses: actions/checkout@v2
-#      - name: Set up Java
-#        uses: actions/setup-java@v1.4.3
-#        with:
-#          java-version: ${{ env.JAVA_VERSION }}
-#      - name: Maven Build
-#        run: mvn -B package --file pom.xml -DskipTests
-#
-#      - name: Setup Python
-#        uses: actions/setup-python@v2
-#        with:
-#          setup-python: ${{ env.PYTHON_VERISON }}
-#      - name: Install Python Dependencies
-#        run: |
-#          python -m pip install --upgrade pip
-#          cd external_tester
-#          pip install -r requirements.txt
-#      - name: CLI Test
-#        run: |
-#          cd external_tester
-#          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
-#      - name: Web API Test
-#        run: |
-#          cd external_tester
-#          python maestro_cli_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
+      - uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1.4.3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Maven Build
+        run: mvn -B package --file pom.xml -DskipTests
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          setup-python: ${{ env.PYTHON_VERISON }}
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd external_tester
+          pip install -r requirements.txt
+
+      - if: matrix.os == 'windows-latest'
+        name: CLI Test
+        run: |
+          cd external_tester
+          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+      - if: matrix.os == 'windows-latest'
+        name: Web API Test
+        run: |
+          cd external_tester
+          python maestro_cli_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
+
+      - if: matrix.os != 'windows-latest'
+        name: CLI Test
+        run: |
+          cd external_tester
+          python maestro_cli_test.py --path `pwd`/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+      - if: matrix.os != 'windows-latest'
+        name: Web API Test
+        run: |
+          cd external_tester
+          python maestro_cli_test.py --path `pwd`/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
