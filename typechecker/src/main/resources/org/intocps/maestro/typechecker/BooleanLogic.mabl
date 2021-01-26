@@ -1,0 +1,4 @@
+module BooleanLogic {
+    bool allTrue(? booleanValue)
+    bool allFalse(? booleanValue)
+}
