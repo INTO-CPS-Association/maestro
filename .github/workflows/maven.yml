@@ -19,10 +19,11 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
-      - name: Test
       - if: ${{ matrix.os == windows-latest }}
+        name: Test Windows
         run: echo $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - if: false == ${{ matrix.os == windows-latest }}
+        name: Test Not Windows
         run: echo `pwd`/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - uses: actions/checkout@v2
       - name: Set up Java
