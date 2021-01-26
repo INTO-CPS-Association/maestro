@@ -7,8 +7,7 @@ on: [workflow_dispatch, push, pull_request]
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
-
-
+  PYTHON_VERISON: '3.9'
 
 jobs:
   build:
@@ -17,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ windows-latest ]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Java
@@ -28,6 +27,32 @@ jobs:
         run: mvn -B package --file pom.xml -DskipTests
       - name: Maven Test
         run: mvn test
+
+  PythonTests:
+    needs: build
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          setup-python: ${{ env.PYTHON_VERISON }}
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd external_tester
+          pip -r requirements.txt
+      - name: CLI Test
+        run: |
+          cd external_tester
+          python maestro_cli_test.py --path ../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies
+
 
   deploy:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
