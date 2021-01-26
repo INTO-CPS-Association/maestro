@@ -76,7 +76,7 @@ try:
             r = requests.get(basicUrl+"/version")
             if r.status_code == 200:
                 print("Version: " + r.text)
-                break;
+                break
         except requests.exceptions.ConnectionError as x:
             print("Failed to connect: " + x.__class__.__name__)
             time.sleep(1)

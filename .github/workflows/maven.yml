@@ -19,8 +19,6 @@ jobs:
       matrix:
         os: [ windows-latest ]
     steps:
-      - name: Test
-        run: echo $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - uses: actions/checkout@v2
       - name: Set up Java
         uses: actions/setup-java@v1.4.3
@@ -29,6 +27,15 @@ jobs:
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests
 
+  PythonTests:
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ]
+    steps:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -45,4 +52,4 @@ jobs:
       - name: Web API Test
         run: |
           cd external_tester
-          python maestro_cli_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}-jar-with-dependencies.jar
+          python maestro_cli_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
