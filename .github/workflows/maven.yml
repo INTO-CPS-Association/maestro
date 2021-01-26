@@ -39,22 +39,26 @@ jobs:
 
       - if: matrix.os == 'windows-latest'
         name: CLI Test
+        timeout-minutes: 2
         run: |
           cd external_tester
           python maestro_cli_test.py --path $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - if: matrix.os == 'windows-latest'
         name: Web API Test
+        timeout-minutes: 2
         run: |
           cd external_tester
           python webapi_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
 
       - if: matrix.os != 'windows-latest'
         name: CLI Test
+        timeout-minutes: 2
         run: |
           cd external_tester
           python maestro_cli_test.py --path `pwd`/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - if: matrix.os != 'windows-latest'
         name: Web API Test
+        timeout-minutes: 2
         run: |
           cd external_tester
           python webapi_test.py --path `pwd`/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
