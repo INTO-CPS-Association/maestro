@@ -23,42 +23,21 @@ jobs:
         uses: actions/setup-java@v1.4.3
         with:
           java-version: ${{ env.JAVA_VERSION }}
-      - name: Maven Build
-        run: mvn -B package --file pom.xml -DskipTests
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          setup-python: ${{ env.PYTHON_VERISON }}
-      - name: Install Python Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          cd external_tester
-          pip install -r requirements.txt
-      - name: CLI Test
-        run: |
-          cd external_tester
-          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies.jar
-
-
-  deploy:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
-
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Environment variables
-        run: echo ${{ env.SERVER_ID }}
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          server-id: ${{ env.SERVER_ID }}
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-      - name: Deploy
-        run: mvn -B -X deploy
-        env:
-          MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      - name: Build Version
+        run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+#      - name: Maven Build
+#        run: mvn -B package --file pom.xml -DskipTests
+#
+#      - name: Setup Python
+#        uses: actions/setup-python@v2
+#        with:
+#          setup-python: ${{ env.PYTHON_VERISON }}
+#      - name: Install Python Dependencies
+#        run: |
+#          python -m pip install --upgrade pip
+#          cd external_tester
+#          pip install -r requirements.txt
+#      - name: CLI Test
+#        run: |
+#          cd external_tester
+#          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies.jar
