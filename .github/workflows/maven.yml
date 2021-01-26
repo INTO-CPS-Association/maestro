@@ -39,8 +39,9 @@ jobs:
           pip install -r requirements.txt
       - name: CLI Test
         run: |
+          echo $pwd/hello
           cd external_tester
-          python maestro_cli_test.py --path ../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies
+          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies
 
 
   deploy:

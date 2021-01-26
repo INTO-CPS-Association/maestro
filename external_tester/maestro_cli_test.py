@@ -26,65 +26,72 @@ def deleteOutputsFile(outputsFile):
 
 
 print("Testing CLI with specification generation of: " + path)
-try:
-    deleteOutputsFile(outputs)
-    def cliSpecGen():
-        testutils.printSection("CLI with Specification Generation")
-        temporary=testutils.createAndPrepareTempDirectory()
-        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
-        print("Cmd: " + cmd)
-        p = subprocess.run(cmd, shell=True)
-        if p.returncode != 0:
-            print("ERROR: In Executing %s" % cmd)
-            return False
-        else:
-            print("SUCCESS")
-            testutils.checkMablSpecExists(temporary.mablSpecPath)
-            if not testutils.compare("CSV", "wt/result.csv", outputs):
-                tempActualOutputs=temporary.dirPath + "/actual_" + outputs
-                print("Copying outputs file to temporary directory: " + tempActualOutputs)
-                shutil.copyfile(outputs, tempActualOutputs)
 
-    cliSpecGen()
-    deleteOutputsFile(outputs)
+deleteOutputsFile(outputs)
 
-    def cliRaw():
-        testutils.printSection("CLI Raw")
-        temporary=testutils.createAndPrepareTempDirectory()
-        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
-        print("Cmd: " + cmd)
-        p = subprocess.run(cmd, shell=True)
-        if p.returncode != 0:
-            print("ERROR: In Executing %s" % cmd)
-        else:
-            print("SUCCESS")
-            testutils.checkMablSpecExists(temporary.mablSpecPath)
-            if not testutils.compare("CSV", "wt/result.csv", outputs):
-                tempActualOutputs=temporary.dirPath + "/actual_" + outputs
-                print("Copying outputs file to temporary directory: " + tempActualOutputs)
-                shutil.copyfile(outputs, tempActualOutputs)
+def cliSpecGen():
+    testutils.printSection("CLI with Specification Generation")
+    temporary=testutils.createAndPrepareTempDirectory()
+    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        print("ERROR: In Executing %s" % cmd)
+        return False
+    else:
+        print("SUCCESS")
+        testutils.checkMablSpecExists(temporary.mablSpecPath)
+        if not testutils.compare("CSV", "wt/result.csv", outputs):
+            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(outputs, tempActualOutputs)
+    return True
 
-    cliRaw()
-    deleteOutputsFile(outputs)
 
-    def cliExpansion():
-        testutils.printSection("CLI Expansion")
-        temporary=testutils.createAndPrepareTempDirectory()
-        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
-        print("Cmd: " + cmd)
-        p = subprocess.run(cmd, shell=True)
-        if p.returncode != 0:
-            print("ERROR: In Executing %s" % cmd)
-        else:
-            print("SUCCESS")
-            testutils.checkMablSpecExists(temporary.mablSpecPath)
-            if not testutils.compare("CSV", "wt/result.csv", outputs):
-                tempActualOutputs=temporary.dirPath + "/actual_" + outputs
-                print("Copying outputs file to temporary directory: " + tempActualOutputs)
-                shutil.copyfile(outputs, tempActualOutputs)
+assert(cliSpecGen())
+deleteOutputsFile(outputs)
 
-    cliExpansion()
-    deleteOutputsFile(outputs)
+def cliRaw():
+    testutils.printSection("CLI Raw")
+    temporary=testutils.createAndPrepareTempDirectory()
+    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        print("ERROR: In Executing %s" % cmd)
+        return False
+    else:
+        print("SUCCESS")
+        testutils.checkMablSpecExists(temporary.mablSpecPath)
+        if not testutils.compare("CSV", "wt/result.csv", outputs):
+            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(outputs, tempActualOutputs)
+        return True
 
-except Exception as x:
-    print("ERROR: Exception: " + str(x))
+
+assert(cliRaw())
+deleteOutputsFile(outputs)
+
+def cliExpansion():
+    testutils.printSection("CLI Expansion")
+    temporary=testutils.createAndPrepareTempDirectory()
+    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        print("ERROR: In Executing %s" % cmd)
+        return False
+    else:
+        print("SUCCESS")
+        testutils.checkMablSpecExists(temporary.mablSpecPath)
+        if not testutils.compare("CSV", "wt/result.csv", outputs):
+            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(outputs, tempActualOutputs)
+
+        return True
+
+
+assert(cliExpansion())
+deleteOutputsFile(outputs)
