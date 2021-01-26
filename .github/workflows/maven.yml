@@ -38,8 +38,7 @@ jobs:
       - name: CLI Test
         run: |
           cd external_tester
-          echo $pwd/../maestro/target/
-          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies
+          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies.jar
 
 
   deploy:
