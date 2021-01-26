@@ -17,12 +17,14 @@ public class RelationVariable implements org.intocps.maestro.framework.core.Rela
         this.instance = instance;
     }
 
-    public ModelDescription.ScalarVariable getScalarVariable() {
-        return scalarVariable;
+    @Override
+    public LexIdentifier getInstance() {
+        return this.instance;
     }
 
-    public LexIdentifier getInstance() {
-        return instance;
+    @Override
+    public ModelDescription.ScalarVariable getScalarVariable() {
+        return scalarVariable;
     }
 
     @Override

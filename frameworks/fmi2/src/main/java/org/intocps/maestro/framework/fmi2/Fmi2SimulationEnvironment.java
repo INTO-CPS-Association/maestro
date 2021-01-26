@@ -5,10 +5,7 @@ import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.core.EnvironmentException;
-import org.intocps.maestro.framework.core.FrameworkUnitInfo;
-import org.intocps.maestro.framework.core.FrameworkVariableInfo;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.*;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -23,6 +20,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.intocps.maestro.ast.MableAstFactory.newLexIdentifier;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
@@ -97,9 +96,15 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public ComponentInfo getInstanceByLexName(String lexName) {
-        return this.instanceNameToInstanceComponentInfo.get(this.instanceLexToInstanceName.get(lexName));
+        return this.instanceNameToInstanceComponentInfo.get(lexName);
     }
 
+    /**
+     * Retrieves all variables that should be logged for the given instance. This is a combination of specified logvariables and connected outputs
+     *
+     * @param instanceName
+     * @return
+     */
     @Override
     public List<org.intocps.maestro.framework.fmi2.RelationVariable> getVariablesToLog(String instanceName) {
         List<org.intocps.maestro.framework.fmi2.RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
@@ -348,6 +353,14 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     @Override
+    public Set<Relation> getRelations(String... identifiers) {
+        if (identifiers == null) {
+            return Collections.emptySet();
+        }
+        return this.getRelations(Arrays.stream(identifiers).map(x -> newLexIdentifier(x)).collect(Collectors.toList()));
+    }
+
+    @Override
     public <T extends FrameworkUnitInfo> T getUnitInfo(LexIdentifier identifier, Framework framework) {
         return (T) this.instanceNameToInstanceComponentInfo.get(identifier.getText());
     }
@@ -370,24 +383,28 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         return this.fmuKeyToModelDescription.get(name);
     }
 
-    public static class Relation implements FrameworkVariableInfo {
+    public static class Relation implements FrameworkVariableInfo, IRelation {
         Variable source;
         InternalOrExternal origin;
         Direction direction;
         Map<LexIdentifier, Variable> targets;
 
+        @Override
         public InternalOrExternal getOrigin() {
             return origin;
         }
 
+        @Override
         public Variable getSource() {
             return source;
         }
 
+        @Override
         public Direction getDirection() {
             return direction;
         }
 
+        @Override
         public Map<LexIdentifier, Variable> getTargets() {
             return targets;
         }
@@ -398,15 +415,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
                     " " + targets.entrySet().stream().map(map -> map.getValue().toString()).collect(Collectors.joining(",", "[", "]"));
         }
 
-        public enum InternalOrExternal {
-            Internal,
-            External
-        }
-
-        public enum Direction {
-            OutputToInput,
-            InputToOutput
-        }
 
         public static class RelationBuilder {
 
@@ -441,13 +449,14 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-    public static class Variable {
+    public static class Variable implements IVariable {
         public final org.intocps.maestro.framework.fmi2.RelationVariable scalarVariable;
 
         public Variable(org.intocps.maestro.framework.fmi2.RelationVariable scalarVariable) {
             this.scalarVariable = scalarVariable;
         }
 
+        @Override
         public org.intocps.maestro.framework.fmi2.RelationVariable getScalarVariable() {
             return scalarVariable;
         }

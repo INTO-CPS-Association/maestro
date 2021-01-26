@@ -16,7 +16,8 @@ public class MableBuilder {
     }
 
     public static PStm newVariable(String name, PType type, PExp value) {
-        return newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type.clone(), newAExpInitializer(value.clone())));
+        return newALocalVariableStm(
+                newAVariableDeclaration(newAIdentifier(name), type.clone(), value == null ? null : newAExpInitializer(value.clone())));
     }
 
     public static PStm newVariable(LexIdentifier name, PType type, List<PExp> values) {

@@ -109,6 +109,11 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static LexIdentifier newLexIdentifier(String identifier) {
+        LexIdentifier lexIdentifier = new LexIdentifier(identifier, null);
+        return lexIdentifier;
+    }
+
     public static ALessBinaryExp newALessBinaryExp(PExp left, PExp right) {
         ALessBinaryExp exp = new ALessBinaryExp();
         exp.setLeft(left);
@@ -116,8 +121,30 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AGreaterBinaryExp newAGreaterBinaryExp(PExp left, PExp right) {
+        AGreaterBinaryExp exp = new AGreaterBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AGreaterEqualBinaryExp newAGreaterEqualBinaryExp(PExp left, PExp right) {
+        AGreaterEqualBinaryExp exp = new AGreaterEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AEqualBinaryExp newAEqualBinaryExp(PExp left, PExp right) {
+        AEqualBinaryExp exp = new AEqualBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
     public static ALessEqualBinaryExp newALessEqualBinaryExp(PExp left, PExp right) {
         ALessEqualBinaryExp exp = new ALessEqualBinaryExp();
+
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
@@ -175,6 +202,14 @@ public class MableAstFactory {
     public static AUnloadExp newUnloadExp(List<? extends PExp> args) {
         AUnloadExp exp = new AUnloadExp();
         exp.setArgs(args);
+        return exp;
+    }
+
+    public static AUnloadExp newUnloadExp(PExp... args) {
+        AUnloadExp exp = new AUnloadExp();
+        if (args != null && args.length > 0) {
+            exp.setArgs(Arrays.asList(args));
+        }
         return exp;
     }
 
@@ -317,6 +352,11 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static PExp newAParExp(PExp exp) {
+        AParExp parExp = new AParExp();
+        parExp.setExp(exp);
+        return parExp;
+    }
 
     public static ABooleanPrimitiveType newABoleanPrimitiveType() {
         ABooleanPrimitiveType type = new ABooleanPrimitiveType();
@@ -397,6 +437,10 @@ public class MableAstFactory {
         return arrayStateDesignator;
     }
 
+    public static AIdentifierStateDesignator newAIdentifierStateDesignator(String name) {
+        return newAIdentifierStateDesignator(newAIdentifier(name));
+    }
+
     public static AIdentifierStateDesignator newAIdentifierStateDesignator(LexIdentifier name) {
         AIdentifierStateDesignator identifierStateDesignator = new AIdentifierStateDesignator();
         identifierStateDesignator.setName(name);
@@ -412,6 +456,20 @@ public class MableAstFactory {
 
     public static LexIdentifier newAIdentifier(String identifier) {
         return new LexIdentifier(identifier, null);
+    }
+
+    public static ADivideBinaryExp newDivideExp(PExp left, PExp right) {
+        ADivideBinaryExp exp = new ADivideBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
+    }
+
+    public static AMultiplyBinaryExp newMultiplyExp(PExp left, PExp right) {
+        AMultiplyBinaryExp exp = new AMultiplyBinaryExp();
+        exp.setLeft(left);
+        exp.setRight(right);
+        return exp;
     }
 
     public static AMinusBinaryExp newMinusExp(PExp left, PExp right) {
