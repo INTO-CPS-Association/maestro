@@ -3,6 +3,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.FullSpecTest;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.Main;
+import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
@@ -40,10 +41,12 @@ public class DocumentationGettingStartedExamplesTest {
 
         mabl.parse(sourceFiles);
         mabl.typeCheck();
+        mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             assert (false);
         } else {
+            reporter.printWarnings(new PrintWriter(System.out, true));
             new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
             FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
