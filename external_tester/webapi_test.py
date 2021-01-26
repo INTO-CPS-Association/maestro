@@ -1,24 +1,21 @@
 import argparse
-import csv
-import http.client
 import json
 import sys
 import os
 import time
 import subprocess
 import requests
-import urllib.request
-import requests
 import tempfile
-import filecmp
 from contextlib import closing
 from zipfile import ZipFile
-import asyncio
-import websockets
 import threading
 import websocket
 import testutils
 
+print(requests.__file__)
+print("bla")
+print(sys.prefix, sys.base_prefix, sys.executable)
+print("bla2")
 websocketopen = False
 
 def printSection(section):
