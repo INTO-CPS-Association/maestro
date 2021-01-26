@@ -19,8 +19,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
-      - name: Get Working Dir
-        run: echo '::set-output name=WORKING_DIR::$(pwd)'
+      - if: matrix.os != 'windows-latest'
+        name: Get Working Dir
+        run: echo ::set-output name=WORKING_DIR::$(pwd)
+        id: working
+      - if: matrix.os == 'windows-latest'
+        name: Get Working Dir
+        run: echo ::set-output name=WORKING_DIR::%cd%
         id: working
       - name: Test
         run: echo ${{steps.working.outputs.WORKING_DIR}}/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
