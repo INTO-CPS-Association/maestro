@@ -25,8 +25,6 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests
-      - name: Maven Test
-        run: mvn test
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -39,8 +37,8 @@ jobs:
           pip install -r requirements.txt
       - name: CLI Test
         run: |
-          echo $pwd/hello
           cd external_tester
+          echo $pwd/../maestro/target/
           python maestro_cli_test.py --path $pwd/../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies
 
 
