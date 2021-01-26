@@ -20,9 +20,10 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
       - name: Get Working Dir
-        run: echo ::set-env name=FOO::$(pwd)
+        run: echo ::set-output name=WORKING_DIR::$(pwd)
+        id: working
       - name: Test
-        run: echo ${{env.FOO}}/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+        run: echo ${{steps.working.outputs.WORKING_DIR}}/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
 #      - uses: actions/checkout@v2
 #      - name: Set up Java
 #        uses: actions/setup-java@v1.4.3
