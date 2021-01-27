@@ -30,4 +30,9 @@ public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     public ScopeFmi2Api enterElse() {
         return elseScope.activate();
     }
+
+    @Override
+    public ScopeFmi2Api leave() {
+        return declaringScope.activate();
+    }
 }

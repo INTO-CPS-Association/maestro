@@ -108,10 +108,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return mp.getSharedAsVariable();
     }
 
-    @Override
-    public VariableCreatorFmi2Api variableCreator() {
-        return this.currentVariableCreator;
-    }
 
     Pair<PStateDesignator, PExp> getDesignatorAndReferenceExp(PExp exp) {
         if (exp instanceof AArrayIndexExp) {

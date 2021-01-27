@@ -28,6 +28,7 @@ public class IntVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.IntValue> im
         this.increment(dynamicScope);
     }
 
+    @Override
     public IntExpressionValue toMath() {
         return new IntExpressionValue(this.getReferenceExp().clone());
     }
@@ -48,5 +49,10 @@ public class IntVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.IntValue> im
     @Override
     public PExp getExp() {
         return this.getReferenceExp();
+    }
+
+    @Override
+    public IntVariableFmi2Api clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new IntVariableFmi2Api(declaration, declaredScope, dynamicScope, designator, referenceExp);
     }
 }

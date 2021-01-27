@@ -14,5 +14,8 @@ public class StringVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.StringVal
         super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
     }
 
-
+    @Override
+    public StringVariableFmi2Api clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new StringVariableFmi2Api(declaration, declaredScope, dynamicScope, designator, referenceExp);
+    }
 }

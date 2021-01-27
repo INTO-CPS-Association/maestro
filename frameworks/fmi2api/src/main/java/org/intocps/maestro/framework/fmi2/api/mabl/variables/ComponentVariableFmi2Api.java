@@ -168,28 +168,26 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public void setupExperiment(boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime, boolean endTimeDefined,
-            Fmi2Builder.DoubleVariable<PStm> endTime) {
-        this.setupExperiment(toleranceDefined, tolerance, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(), endTimeDefined,
-                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone());
+    public void setupExperiment(Fmi2Builder.DoubleVariable<PStm> startTime, Fmi2Builder.DoubleVariable<PStm> endTime, Double tolerance) {
+        this.setupExperiment(((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(),
+                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone(), tolerance);
     }
 
     @Override
-    public void setupExperiment(boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime) {
-        this.setupExperiment(toleranceDefined, tolerance, newARealLiteralExp(startTime), endTimeDefined, newARealLiteralExp(endTime));
+    public void setupExperiment(double startTime, Double endTime, Double tolerance) {
+        this.setupExperiment(newARealLiteralExp(startTime), newARealLiteralExp(endTime), tolerance);
     }
 
-    private void setupExperiment(boolean toleranceDefined, double tolerance, PExp startTime, boolean endTimeDefined, PExp endTime) {
+    private void setupExperiment(PExp startTime, PExp endTime, Double tolerance) {
         DynamicActiveBuilderScope scope = builder.getDynamicScope();
-        this.setupExperiment(scope, toleranceDefined, tolerance, startTime, endTimeDefined, endTime);
+        this.setupExperiment(scope, startTime, endTime, tolerance);
     }
 
-    private void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, PExp startTime, boolean endTimeDefined,
-            PExp endTime) {
+    private void setupExperiment(Fmi2Builder.Scope<PStm> scope, PExp startTime, PExp endTime, Double tolerance) {
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETUPEXPERIMENT), new ArrayList<>(
-                        Arrays.asList(newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance), startTime,
-                                newABoolLiteralExp(endTimeDefined), endTime))));
+                        Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance), startTime,
+                                newABoolLiteralExp(endTime != null), endTime))));
         scope.add(stm);
     }
 
@@ -204,16 +202,15 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, Fmi2Builder.DoubleVariable<PStm> startTime,
-            boolean endTimeDefined, Fmi2Builder.DoubleVariable<PStm> endTime) {
-        this.setupExperiment(scope, toleranceDefined, tolerance, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(), endTimeDefined,
-                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone());
+    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.DoubleVariable<PStm> startTime, Fmi2Builder.DoubleVariable<PStm> endTime,
+            Double tolerance) {
+        this.setupExperiment(scope, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(),
+                ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone(), tolerance);
     }
 
     @Override
-    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined,
-            double endTime) {
-        this.setupExperiment(scope, toleranceDefined, tolerance, newARealLiteralExp(startTime), endTimeDefined, newARealLiteralExp(endTime));
+    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, double startTime, Double endTime, Double tolerance) {
+        this.setupExperiment(scope, newARealLiteralExp(startTime), newARealLiteralExp(endTime), tolerance);
     }
 
     @Override

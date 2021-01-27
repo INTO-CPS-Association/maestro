@@ -19,8 +19,8 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
      * The declaration which is added in the scope block
      */
     private final PStm declaration;
-    PType type;
-    Fmi2Builder.DynamicActiveScope<PStm> dynamicScope;
+    protected PType type;
+    protected Fmi2Builder.DynamicActiveScope<PStm> dynamicScope;
     IMablScope declaredScope;
 
     public VariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
@@ -116,6 +116,10 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     protected void setValue(PExp exp) {
         this.setValue(dynamicScope, exp);
+    }
+
+    public VariableFmi2Api<V> clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new VariableFmi2Api<>(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
     }
 
 

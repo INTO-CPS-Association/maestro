@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
+import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
@@ -11,6 +12,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.TagNameGenerator;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -23,7 +25,7 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator<PStm> {
+public class VariableCreatorFmi2Api {
 
     private final IMablScope scope;
     private final MablApiBuilder builder;
@@ -63,6 +65,20 @@ public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator<PStm>
     }
 
     public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
+            String name, URI uriPath, IMablScope scope) throws Exception {
+        String path = uriPath.toString();
+        if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
+            path = uriPath.getPath();
+        }
+
+        IFmu fmu = FmuFactory.create(null, URI.create(path));
+        //check schema. The constructor checks the schema
+        ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
+
+        return createFMU(builder, nameGenerator, dynamicScope, name, modelDescription, uriPath, scope);
+    }
+
+    public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
             String name, ModelDescription modelDescription, URI uriPath,
             IMablScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
@@ -84,14 +100,10 @@ public class VariableCreatorFmi2Api implements Fmi2Builder.VariableCreator<PStm>
     }
 
     // CreateFMU is a root-level function and therefore located in the VariableCreator.
-    @Override
-    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription,
-            URI uriPath) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
-        return createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, modelDescription, uriPath, scope);
-    }
 
 
-    public VariableFmi2Api createVariableForPort(PortFmi2Api port) {
+
+   /* public VariableFmi2Api createVariableForPort(PortFmi2Api port) {
         return createVariableForPort(builder.getNameGenerator(), port, scope, builder.getDynamicScope());
-    }
+    }*/
 }

@@ -4,10 +4,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import javax.xml.xpath.XPathExpressionException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -42,7 +39,6 @@ public interface Fmi2Builder<S, B, E> {
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
     //    public abstract void pushScope(Scope scope);
 
-    VariableCreator<S> variableCreator();
 
     /**
      * Get handle to the current time
@@ -61,13 +57,6 @@ public interface Fmi2Builder<S, B, E> {
 
     FmuVariableFmi2Api getFmuVariableFrom(E exp);
 
-    /**
-     * Gets a specific time from a number
-     *
-     * @param time
-     * @return
-     */
-    //Time getTime(double time);
 
     interface RuntimeModule<S> extends Fmi2Builder.Variable<S, NamedVariable<S>> {
         void initialize(List<RuntimeFunction> declaredFuncs);
@@ -161,8 +150,6 @@ public interface Fmi2Builder<S, B, E> {
         Scope<T> leave();
 
 
-        VariableCreator<T> getVariableCreator();
-
         void add(T... commands);
 
         void addAll(Collection<T> commands);
@@ -206,6 +193,10 @@ public interface Fmi2Builder<S, B, E> {
 
         IntVariable<T> store(String name, int value);
 
+        <ValType extends Object, Val extends Value<ValType>, Var extends Variable<T, Val>> Var store(String name, Var value);
+
+        <ValType extends Object, Val extends Value<ValType>, Var extends Variable<T, Val>> Var copy(String name, Var value);
+
         /**
          * Store the given value and get a tag for it. Copy
          *
@@ -227,6 +218,7 @@ public interface Fmi2Builder<S, B, E> {
         //TODO add overload with name prefix, tag override is done through variable and not the scope
 
 
+        Fmu2Variable<T> createFMU(String name, URI path) throws Exception;
     }
 
     /**
@@ -253,12 +245,15 @@ public interface Fmi2Builder<S, B, E> {
          * @return
          */
         Scope<T> enterElse();
+
+        Scope<T> leave();
     }
 
     /**
      * While
      */
     interface WhileScope<T> extends Scope<T> {
+
     }
 
 
@@ -369,13 +364,6 @@ public interface Fmi2Builder<S, B, E> {
     }
 
 
-    interface VariableCreator<T> {
-
-        Fmu2Variable<T> createFMU(String name, ModelDescription modelDescription,
-                URI path) throws XPathExpressionException, InvocationTargetException, IllegalAccessException;
-    }
-
-
     interface IntVariable<T> extends Variable<T, IntValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
         void decrement();
 
@@ -383,6 +371,8 @@ public interface Fmi2Builder<S, B, E> {
     }
 
 
+    //FIXME why is this still here this is mable expression is very specific its not needed to should be deleted
+    @Deprecated
     interface ProvidesTypedReferenceExp {
         PType getType();
 
@@ -450,19 +440,18 @@ public interface Fmi2Builder<S, B, E> {
      */
     interface Fmi2ComponentVariable<T> extends Variable<T, NamedVariable<T>> {
 
-        void setupExperiment(boolean toleranceDefined, double tolerance, DoubleVariable<T> startTime, boolean endTimeDefined,
-                DoubleVariable<T> endTime);
 
-        void setupExperiment(boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime);
+        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, Double tolerance);
+
+        void setupExperiment(double startTime, Double endTime, Double tolerance);
 
         void enterInitializationMode();
 
         void exitInitializationMode();
 
-        void setupExperiment(Scope<T> scope, boolean toleranceDefined, double tolerance, DoubleVariable<T> startTime, boolean endTimeDefined,
-                DoubleVariable<T> endTime);
+        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, Double tolerance);
 
-        void setupExperiment(Scope<T> scope, boolean toleranceDefined, double tolerance, double startTime, boolean endTimeDefined, double endTime);
+        void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
 
         void enterInitializationMode(Scope<T> scope);
 
