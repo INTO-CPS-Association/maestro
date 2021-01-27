@@ -9,7 +9,6 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Collections;
@@ -43,7 +42,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this.mathBuilderApi = new MathBuilderFmi2Api(dynamicScope, this);
         this.booleanBuilderApi = new BooleanBuilderFmi2Api(dynamicScope, this);
         this.dataWriter = new DataWriter(dynamicScope, this);
-        this.getDynamicScope().store(new ValueFmi2Api<>(newABoleanPrimitiveType(), false));
 
         //create global variables
         globalExecutionContinue =

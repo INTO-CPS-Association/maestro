@@ -193,13 +193,21 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
 
+        return storePrivate(builder.getNameGenerator().getName(), tag);
+    }
+
+    @Override
+    public IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations) {
+        return null;
+    }
+
+    private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {
+
         if (!(tag instanceof ValueFmi2Api)) {
             throw new IllegalArgumentException();
         }
 
         ValueFmi2Api<V> v = (ValueFmi2Api<V>) tag;
-
-        String name = builder.getNameGenerator().getName();
 
         PExp initial = null;
         Fmi2Builder.Variable<PStm, V> variable;

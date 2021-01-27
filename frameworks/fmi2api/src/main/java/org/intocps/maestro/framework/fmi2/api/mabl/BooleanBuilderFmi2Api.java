@@ -22,15 +22,16 @@ public class BooleanBuilderFmi2Api {
         this.builder = mablApiBuilder;
     }
 
-    public BooleanVariableFmi2Api allTrue(String variablePrefix, List<Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
+    public BooleanVariableFmi2Api allTrue(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
         return allTrueFalse(variablePrefix, parameters, ALL_TRUE_FUNCTION_NAME);
     }
 
-    public BooleanVariableFmi2Api allFalse(String variablePrefix, List<Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
+    public BooleanVariableFmi2Api allFalse(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
         return allTrueFalse(variablePrefix, parameters, ALL_FALSE_FUNCTION_NAME);
     }
 
-    private BooleanVariableFmi2Api allTrueFalse(String variablePrefix, List<Fmi2Builder.ProvidesTypedReferenceExp> parameters, String function) {
+    private BooleanVariableFmi2Api allTrueFalse(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters,
+            String function) {
         String variableName = dynamicScope.getName(variablePrefix);
 
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(

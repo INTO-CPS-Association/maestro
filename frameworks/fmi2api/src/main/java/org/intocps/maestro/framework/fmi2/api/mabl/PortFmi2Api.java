@@ -111,4 +111,8 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     public String getLogScalarVariableName() {
         return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getName() + "." + this.getName();
     }
+
+    public List<PortFmi2Api> getTargetPorts() {
+        return this.targetPorts;
+    }
 }

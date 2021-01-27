@@ -18,6 +18,10 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         this.exp = exp;
     }
 
+    public static Fmi2Builder.NumericExpressionValue of(int i) {
+        return new IntExpressionValue(newAIntLiteralExp(i));
+    }
+
     @Override
     public PExp getExp() {
         return this.exp.clone();

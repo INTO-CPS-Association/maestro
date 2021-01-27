@@ -14,8 +14,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +26,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+
+enum ExecutionPhase {
+    PreSimulationAllocation,
+    SimulationLoopStage1,
+    SimulationLoopStage2,
+    SimulationLoopStage3,
+    PostTimeSync,
+    PostSimulationDeAllocation
+}
 
 @SimulationFramework(framework = Framework.FMI2)
 public class FixedStep implements IMaestroExpansionPlugin {
@@ -54,7 +63,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
-
+        FixedstepConfig fixedstepConfig = (FixedstepConfig) config;
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
@@ -132,6 +141,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
                 MathBuilderFmi2Api math = builder.getMathBuilder();
+                BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
 
                 Fmi2Builder.BoolVariable<PStm> b = dynamicScope.store(false);
                 Fmi2Builder.IntVariable<PStm> c = dynamicScope.store(1);
@@ -166,27 +176,76 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 // Create the iteration predicate
                 PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
-
+                DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 1.0);
+                DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 1.0);
                 IMablScope sc = dynamicScope.getActiveScope();
+                // Store the state for all
+                Stream<Fmi2Builder.StateVariable<PStm>> fmuStates = fmuInstances.values().stream().map(x -> x.getState());
+
+                // Get and share all variables related to outputs or logging.
+                fmuInstances.forEach((x, y) -> {
+                    List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
+                    y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
+                });
+
+                IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
+
+
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
-                    // Perform a step for all
+                    ScopeFmi2Api stabilisationScope = null;
+                    IntVariableFmi2Api stabilisation_loop = null;
+                    if (fixedstepConfig.stabilisation) {
+                        stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
+                        stabilisationScope = dynamicScope.enterWhile(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0)));
+                    }
+                    // STEP ALL
                     fmuInstances.forEach((x, y) -> {
                         Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> a = y.step(currentCommunicationTime, stepSizeVar);
                     });
 
-                    Fmi2Builder.BoolVariable<PStm> a = builder.getRootScope().store(true);
-                    // Perform get Outputs for all
-                    fmuInstances.forEach((x, y) -> {
-                        List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
-                        y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
-                    });
+                    // GET ALL OUTPUTS
+                    Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> retrievedValues =
+                            fmuInstances.entrySet().stream().collect(Collectors.toMap(entry -> entry.getValue(), entry -> {
+                                List<RelationVariable> variablesToLog = env.getVariablesToLog(entry.getKey());
+                                return entry.getValue().get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new));
+                            }));
 
+                    // CONVERGENCE
+                    if (fixedstepConfig.stabilisation) {
+                        // For each instance ->
+                        //      For each retrieved variable
+                        //          compare with previous in terms of convergence
+                        //              If all converge, set retrieved values and continue
+                        //              else reset to previous state, set retrieved values and continue
+                        List<BooleanVariableFmi2Api> convergenceVariables = retrievedValues.entrySet().stream().flatMap(comptoPortAndVariable -> {
 
+                            Stream<BooleanVariableFmi2Api> converged = comptoPortAndVariable.getValue().entrySet().stream().map(portAndVariable -> {
+                                VariableFmi2Api oldVariable = portAndVariable.getKey().getSharedAsVariable();
+                                VariableFmi2Api<Object> newVariable = portAndVariable.getValue();
+                                return math.checkConvergence(oldVariable, newVariable, absTol, relTol);
+                            });
+                            return converged;
+                        }).collect(Collectors.toList());
+                        BooleanVariableFmi2Api convergence = booleanLogic.allTrue("convergence", convergenceVariables);
+                        ScopeFmi2Api ifScope = dynamicScope.enterIf(convergence.toPredicate().not()).enterThen();
+                        {
+                            fmuStates.forEach(x -> x.set());
+                            if (stabilisation_loop != null) {
+                                stabilisation_loop.decrement();
+                            } else {
+                                throw new RuntimeException("NO STABILISATION LOOP FOUND");
+                            }
+                        }
+                        stabilisationScope.activate();
+                    }
+                    retrievedValues.forEach((k, v) -> k.share(v));
                     fmuInstances.forEach((x, y) -> y.setLinked());
+
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
+
                     // Call log
                     dataWriterInstance.Log(currentCommunicationTime);
                 }
@@ -201,6 +260,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 throw new ExpandException("Internal error: ", e);
             }
         }
+
     }
 
 
@@ -215,7 +275,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return new FixedstepConfig(new ObjectMapper().readValue(is, Integer.class));
+        return (new ObjectMapper().readValue(is, FixedstepConfig.class));
     }
 
     @Override
@@ -238,15 +298,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.0.1";
-    }
-
-    enum ExecutionPhase {
-        PreSimulationAllocation,
-        SimulationLoopStage1,
-        SimulationLoopStage2,
-        SimulationLoopStage3,
-        PostTimeSync,
-        PostSimulationDeAllocation
     }
 
 

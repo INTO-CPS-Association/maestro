@@ -687,6 +687,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.owner;
     }
 
+    public List<PortFmi2Api> getAllConnectedOutputs() {
+        return this.ports.stream().filter(x -> x.scalarVariable.causality == ModelDescription.Causality.Output && x.getTargetPorts().size() > 0)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public String getName() {
         return this.name;

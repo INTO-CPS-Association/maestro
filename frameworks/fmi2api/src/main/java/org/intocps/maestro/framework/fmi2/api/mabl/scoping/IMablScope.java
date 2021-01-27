@@ -62,4 +62,6 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);
+
+    IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
 }

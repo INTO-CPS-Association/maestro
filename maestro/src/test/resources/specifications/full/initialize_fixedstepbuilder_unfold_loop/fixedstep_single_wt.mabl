@@ -24,7 +24,7 @@ bool global_execution_continue = true;
 
 @Config("@file: config.json");
 Initializer.expand initialize(components,START_TIME, END_TIME);
-
+@Config("@file: fixedstepconfig.json");
 FixedStep.expand fixedStepWithBuilder(components,STEP_SIZE,START_TIME,END_TIME);
 dataWriter.close();
 tankcontroller.freeInstance(crtlInstance);

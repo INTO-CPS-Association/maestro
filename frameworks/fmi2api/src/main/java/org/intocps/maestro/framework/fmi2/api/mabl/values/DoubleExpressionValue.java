@@ -15,8 +15,16 @@ public class DoubleExpressionValue extends NumericExpressionValueFmi2Api {
     final PType type = new ARealNumericPrimitiveType();
     final PExp exp;
 
+    public DoubleExpressionValue(double value) {
+        this.exp = newARealLiteralExp(value);
+    }
+
     public DoubleExpressionValue(PExp exp) {
         this.exp = exp;
+    }
+
+    public static DoubleExpressionValue of(double value) {
+        return new DoubleExpressionValue(value);
     }
 
     @Override

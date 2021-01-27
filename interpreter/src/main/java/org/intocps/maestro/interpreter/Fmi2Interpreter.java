@@ -179,7 +179,6 @@ public class Fmi2Interpreter {
             }
         }));
         componentMembers.put("setReal", new FunctionValue.ExternalFunctionValue(fcargs -> {
-
             checkArgLength(fcargs, 3);
             long elementsToUse = getUint(fcargs.get(1));
             long[] scalarValueIndices =
