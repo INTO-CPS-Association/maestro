@@ -11,7 +11,7 @@ import subprocess
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Legacy CLI', usage='%(prog)s [options]')
 parser.add_argument('file', type=str, help="Filename of .jar")
-parser.add_argument('--path', type=str, default=r"../maestro/target", help='Relative path to the folder containing Maestro Web API jar')
+parser.add_argument('--path', type=str, default=r"../maestro-webapi/target", help='Relative path to the folder containing Maestro Web API jar')
 
 args = parser.parse_args()
 
