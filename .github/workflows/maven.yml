@@ -42,7 +42,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py --file maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+          python maestro_cli_test.py maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - name: Web API Test
         timeout-minutes: 2
         run: |
