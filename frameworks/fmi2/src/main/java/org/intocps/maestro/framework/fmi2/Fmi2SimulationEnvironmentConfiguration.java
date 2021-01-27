@@ -3,6 +3,7 @@ package org.intocps.maestro.framework.fmi2;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -20,6 +21,9 @@ public class Fmi2SimulationEnvironmentConfiguration {
     public Map<String, List<String>> livestream;
 
     public Map<String, List<String>> variablesToLog;
+
+    @JsonProperty("faultInjectInstances")
+    public Map<String, String> faultInjectInstances;
 
     @JsonIgnore
     public static String extractInstanceFromKeyInstance(String tuple) {

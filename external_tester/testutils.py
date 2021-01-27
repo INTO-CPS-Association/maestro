@@ -27,6 +27,8 @@ def retrieveSimulationConfiguration():
 
 def compare(strPrefix, expected, actual):
     if os.path.exists(expected):
+        convert(expected)
+
         compareResult = filecmp.cmp(expected, actual)
         if not compareResult:
             print("ERROR: {}: Files {} and {} do not match".format(strPrefix, expected, actual))
@@ -37,6 +39,14 @@ def compare(strPrefix, expected, actual):
     else:
         print("%s: No results file exists within wt. Results are not compared." % strPrefix)
 
+def convert(expected):
+    # Converts the expected results.csv to the current OS line ending format as COE outputs using current OS line endings
+    with open(expected, 'r') as f:
+        content = f.read()
+
+    with open(expected, 'w+') as f:
+        f.write(content)
+        
 def printSection(section):
     hashes = "###############################"
     print("\n" + hashes)
