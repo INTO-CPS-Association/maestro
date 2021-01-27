@@ -10,12 +10,15 @@ import subprocess
 
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Legacy CLI', usage='%(prog)s [options]')
-parser.add_argument('--path', required=True, type=str, help ='Path to the maestro2 web api jar')
+parser.add_argument('file', type=str, help="Filename of .jar")
+parser.add_argument('--path', type=str, default=r"../maestro/target", help='Relative path to the folder containing Maestro Web API jar')
 
 args = parser.parse_args()
 
-path = args.path
+# cd to run everything relative to this file
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
+path = os.path.abspath(os.path.join(args.path, args.file))
 
 if not os.path.isfile(path):
     print('The path does not exist')

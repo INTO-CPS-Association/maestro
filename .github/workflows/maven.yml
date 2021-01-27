@@ -38,32 +38,21 @@ jobs:
           python -m pip install --upgrade pip
           cd external_tester
           pip install -r requirements.txt
-
-      - if: matrix.os == 'windows-latest'
-        name: CLI Test
+      - name: CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py --path $pwd/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
-      - if: matrix.os == 'windows-latest'
-        name: Web API Test
+          python maestro_cli_test.py --file maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+      - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python webapi_test.py --path $pwd/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
-
-      - if: matrix.os != 'windows-latest'
-        name: CLI Test
+          python webapi_test.py maestro-webapi-${{env.COE_VERSION}}.jar
+      - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py --path `pwd`/../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
-      - if: matrix.os != 'windows-latest'
-        name: Web API Test
-        timeout-minutes: 2
-        run: |
-          cd external_tester
-          python webapi_test.py --path `pwd`/../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
+          python cli_legacy_test.py maestro-webapi-${{env.COE_VERSION}}.jar
 
   deploy:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
