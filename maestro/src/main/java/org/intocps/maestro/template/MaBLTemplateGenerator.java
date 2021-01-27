@@ -9,6 +9,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
+import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -45,6 +46,7 @@ public class MaBLTemplateGenerator {
     public static final String COMPONENTS_ARRAY_NAME = "components";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
+    public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -90,15 +92,42 @@ public class MaBLTemplateGenerator {
 
     public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
             boolean loggingOn) {
-        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
-        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
+        return createFMUInstantiateStatement(instanceLexName, instanceEnvironmentKey, fmuLexName, visible, loggingOn, Optional.empty());
+    }
 
+    public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
+            boolean loggingOn, Optional<FaultInject> faultInject) {
+        List<PStm> statements = new ArrayList<>();
+        String instanceLexName_ = instanceLexName;
+        if (faultInject.isPresent()) {
 
+            instanceLexName_ = instanceLexName + "_original";
+        }
+
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName_), instanceEnvironmentKey);
+        statements.add(mapping);
+        PStm var = newVariable(instanceLexName_, newANameType("FMI2Component"), newNullExp());
+        statements.add(var);
         AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName_)),
                         call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
-                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName)), null);
-        return Arrays.asList(mapping, var, ifAssign);
+                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName_)), null);
+        statements.add(ifAssign);
+
+        if (faultInject.isPresent()) {
+            String faultInjectLexName = instanceLexName;
+            PStm ficomp = newVariable(faultInjectLexName, newANameType("FMI2Component"), newNullExp());
+            statements.add(ficomp);
+            AIfStm stm = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
+                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInjectLexName)),
+                            newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_NAME), newAIdentifier("faultInject"),
+                                    Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
+                                            newAStringLiteralExp(faultInject.get().constraintId)))), checkNullAndStop(faultInjectLexName)), null);
+            statements.add(stm);
+        }
+
+
+        return statements;
     }
 
     public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
@@ -125,6 +154,11 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement));
 
         Fmi2SimulationEnvironment unitRelationShip = templateConfiguration.getUnitRelationship();
+        boolean faultInject =
+                unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
+        if (faultInject) {
+            stmMaintainer.add(createLoadStatement(FAULT_INJECT_MODULE_NAME));
+        }
 
         // Create FMU load statements
         List<PStm> unloadFmuStatements = new ArrayList<>();
@@ -154,8 +188,8 @@ public class MaBLTemplateGenerator {
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
             stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
-                    templateConfiguration.getLoggingOn()));
-            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
+                    templateConfiguration.getLoggingOn(), entry.getValue().getFaultInject()));
+            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex, entry.getValue().getFaultInject()));
         });
 
 
@@ -196,12 +230,21 @@ public class MaBLTemplateGenerator {
         // Unload the FMUs
         stmMaintainer.addAllCleanup(unloadFmuStatements);
         stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
-
-        ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(
+        if (faultInject) {
+            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_NAME)));
+        }
+        // Create the toplevel
+        List<LexIdentifier> imports = new ArrayList<>(
                 Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
-                        newAIdentifier(LOGGER_MODULE_NAME)), newABlockStm(stmMaintainer.getStatements()));
+                        newAIdentifier(LOGGER_MODULE_NAME)));
+        if (faultInject) {
+            imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
+        }
+
+        ASimulationSpecificationCompilationUnit unit =
+                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 
         unit.setFrameworkConfigs(Arrays.asList(
@@ -261,6 +304,15 @@ public class MaBLTemplateGenerator {
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
+                        Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));
+    }
+
+    private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName, Optional<FaultInject> faultInject) {
+        if (faultInject.isPresent()) {
+            instanceLexName = instanceLexName + "_original";
+        }
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));
