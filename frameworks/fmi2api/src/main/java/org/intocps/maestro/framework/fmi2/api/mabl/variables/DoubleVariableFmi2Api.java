@@ -29,6 +29,7 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
     }
 
 
+    @Override
     public DoubleExpressionValue toMath() {
         return new DoubleExpressionValue(this.getExp());
     }
@@ -37,5 +38,10 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
     @Override
     public PType getType() {
         return newARealNumericPrimitiveType();
+    }
+
+    @Override
+    public DoubleVariableFmi2Api clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new DoubleVariableFmi2Api(declaration, declaredScope, dynamicScope, designator, referenceExp);
     }
 }

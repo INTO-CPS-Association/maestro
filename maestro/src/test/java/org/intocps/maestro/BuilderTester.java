@@ -15,7 +15,10 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.PortVariableMapImpl;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -43,7 +46,6 @@ public class BuilderTester {
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
 
         MablApiBuilder builder = new MablApiBuilder();
-        VariableCreatorFmi2Api variableCreator = builder.variableCreator(); // CurrentScopeVariableCreator
 
         Fmi2Builder.RuntimeModule<PStm> logger = builder.loadRuntimeModule("Logger");
         Fmi2Builder.RuntimeFunction func =
@@ -61,9 +63,10 @@ public class BuilderTester {
         Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs
-        FmuVariableFmi2Api controllerFMU =
-                variableCreator.createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
-        FmuVariableFmi2Api tankFMU = variableCreator.createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+        FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
+                .createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
+        FmuVariableFmi2Api tankFMU = builder.getDynamicScope().
+                createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");

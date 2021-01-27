@@ -23,4 +23,9 @@ public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValu
     public PredicateFmi2Api toPredicate() {
         return this.predicate;
     }
+
+    @Override
+    public BooleanVariableFmi2Api clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new BooleanVariableFmi2Api(declaration, declaredScope, dynamicScope, designator, referenceExp);
+    }
 }

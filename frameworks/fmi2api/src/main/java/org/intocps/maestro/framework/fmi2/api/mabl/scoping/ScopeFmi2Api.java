@@ -7,7 +7,9 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -19,13 +21,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     final ScopeFmi2Api parent;
     private final MablApiBuilder builder;
     private final ABlockStm block;
-    VariableCreatorFmi2Api variableCreator;
 
     public ScopeFmi2Api(MablApiBuilder builder) {
         this.builder = builder;
         this.parent = null;
         this.block = new ABlockStm();
-        this.variableCreator = new VariableCreatorFmi2Api(this, builder);
 
     }
 
@@ -33,20 +33,15 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
-        this.variableCreator = new VariableCreatorFmi2Api(this, builder);
     }
 
     public ABlockStm getBlock() {
         return block;
     }
 
-    @Override
-    public VariableCreatorFmi2Api getVariableCreator() {
-        return variableCreator;
-    }
 
     @Override
-    public ScopeFmi2Api enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
+    public WhileMaBLScope enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
         if (predicate instanceof PredicateFmi2Api) {
             PredicateFmi2Api predicate_ = (PredicateFmi2Api) predicate;
             ABlockStm whileBlock = new ABlockStm();
@@ -158,6 +153,22 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
+    @Override
+    public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
+        return copy(name, value);
+    }
+
+    @Override
+    public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, Var value) {
+
+        String varName = builder.getNameGenerator().getName(name);
+        PStm var = newVariable(varName, newARealNumericPrimitiveType(), ((VariableFmi2Api) value).getReferenceExp().clone());
+        add(var);
+
+        return (Var) ((VariableFmi2Api<?>) value)
+                .clone(var, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
+    }
+
     protected DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
@@ -231,5 +242,15 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierStateDesignator(MableAstFactory.newAIdentifier(name)), MableAstFactory.newAIdentifierExp(name));
 
         return variable;
+    }
+
+    @Override
+    public FmuVariableFmi2Api createFMU(String name, URI path) throws Exception {
+        return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, path, this);
+    }
+
+    @Override
+    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception {
+        return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, modelDescription, path, this);
     }
 }

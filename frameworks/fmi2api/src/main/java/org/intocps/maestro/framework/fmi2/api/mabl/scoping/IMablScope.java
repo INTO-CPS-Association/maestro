@@ -4,16 +4,15 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.net.URI;
 import java.util.Collection;
 
 public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
-
-    @Override
-    VariableCreatorFmi2Api getVariableCreator();
 
     String getName(String prefix);
 
@@ -22,7 +21,7 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     public BooleanVariableFmi2Api store(boolean value);
 
     @Override
-    ScopeFmi2Api enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate);
+    WhileMaBLScope enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate);
 
     @Override
     IfMaBlScope enterIf(Fmi2Builder.LogicBuilder.Predicate predicate);
@@ -62,4 +61,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);
+
+    FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
+
+    @Override
+    FmuVariableFmi2Api createFMU(String name, URI path) throws Exception;
 }

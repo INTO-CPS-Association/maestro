@@ -4,9 +4,11 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableCreatorFmi2Api;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import java.net.URI;
 import java.util.Collection;
 
 public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.DynamicActiveScope<PStm> {
@@ -34,7 +36,7 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
 
     @Override
-    public ScopeFmi2Api enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
+    public WhileMaBLScope enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
         return activeScope.enterWhile(predicate);
     }
 
@@ -48,11 +50,6 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.leave();
     }
 
-
-    @Override
-    public VariableCreatorFmi2Api getVariableCreator() {
-        return activeScope.getVariableCreator();
-    }
 
     @Override
     public String getName(String prefix) {
@@ -118,51 +115,29 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
+        return activeScope.store(name, value);
+    }
+
+    @Override
+    public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, Var value) {
+        return activeScope.copy(name, value);
+    }
+
+    @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
         return activeScope.store(tag);
     }
 
-    //
-    //    @Override
-    //    public IMablScope activate() {
-    //        return activeScope;
-    //    }
-    //
-    //    @Override
-    //    public Fmi2Builder.IntVariable<PStm> store(int value) {
-    //        return activeScope.store(value);
-    //    }
-    //
-    //    @Override
-    //    public Fmi2Builder.DoubleVariable<PStm> store(double value) {
-    //        return activeScope.store(value);
-    //    }
-    //
-    //    @Override
-    //    public Fmi2Builder.BoolVariable<PStm> store(boolean value) {
-    //        return activeScope.store(value);
-    //    }
-    //
-    //    @Override
-    //    public Fmi2Builder.DoubleVariable<PStm> store(String name, double value) {
-    //        return activeScope.store(name, value);
-    //    }
-    //
-    //
-    //    @Override
-    //    public Fmi2Builder.BoolVariable<PStm> store(String name, boolean value) {
-    //        return activeScope.store(name, value);
-    //    }
-    //
-    //    @Override
-    //    public Fmi2Builder.IntVariable<PStm> store(String name, int value) {
-    //        return activeScope.store(name, value);
-    //    }
-    //
-    //    @Override
-    //    public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
-    //        return activeScope.store(tag);
-    //    }
+    @Override
+    public FmuVariableFmi2Api createFMU(String name, URI path) throws Exception {
+        return activeScope.createFMU(name, path);
+    }
+
+    @Override
+    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception {
+        return activeScope.createFMU(name, modelDescription, path);
+    }
 
 
 }
