@@ -59,7 +59,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
             synchronized (VDMJ.class) {
                 synchronized (Settings.class) {
                     System.setProperty("vdmj.annotations", annotationsSearchClassPath);
-                    System.setProperty("vdmj.mappingpath", "/maestro/fmi2/vdm");
+                    System.setProperty("vdmj.mappingpath", String.format("%smaestro%sfmi2%svdm", File.separator, File.separator, File.separator));
                     VDMJ controller = new VDMSL();
                     controller.setQuiet(true);
                     Settings.dialect = Dialect.VDM_SL;
