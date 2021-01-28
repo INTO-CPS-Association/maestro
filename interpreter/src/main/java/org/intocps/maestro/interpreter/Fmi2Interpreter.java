@@ -12,14 +12,18 @@ import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -734,6 +738,27 @@ public class Fmi2Interpreter {
             return new FmuValue(functions, fmu);
 
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {
+
+            e.printStackTrace();
+            return new NullValue();
+        }
+    }
+
+    public Value createFmiValue(Class<?> clz) {
+        try {
+            long startExecTime = System.nanoTime();
+            final IFmu fmu = (IFmu) clz.getDeclaredConstructor().newInstance();
+
+            fmu.load();
+            ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            Map<String, Value> functions = createFmuMembers(workingDirectory, md.getGuid(), fmu);
+
+            long stopTime = System.nanoTime();
+
+            System.out.println("Interpretation load took: " + (stopTime - startExecTime));
+            return new FmuValue(functions, fmu);
+
+        } catch (IOException | FmuInvocationException | FmuMissingLibraryException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException | ParserConfigurationException | SAXException | XPathExpressionException e) {
 
             e.printStackTrace();
             return new NullValue();

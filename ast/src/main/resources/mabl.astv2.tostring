@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 %exp->identifier = [name]
 %exp->#literal->string = "\"" + [value] +"\""
 %exp->#literal->bool =  [value]
+%exp->#literal->real =  [value]
+%exp->#literal->int =  [value]
 //%exp->#literal->numeric =  [value]
 %exp->load = "load("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %exp->unload = "unload("+$ $[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"

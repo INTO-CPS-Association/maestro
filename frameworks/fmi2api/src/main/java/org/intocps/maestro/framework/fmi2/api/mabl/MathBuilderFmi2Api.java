@@ -19,7 +19,6 @@ public class MathBuilderFmi2Api {
     public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder) {
         this.dynamicScope = dynamicScope;
         this.builder = mablApiBuilder;
-
     }
 /*
     public static Fmi2Builder.ProvidesReferenceExp add(Fmi2Builder.ProvidesReferenceExp left, Fmi2Builder.ProvidesReferenceExp right) {

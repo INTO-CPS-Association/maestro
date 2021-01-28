@@ -85,10 +85,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         List<Value> args = evaluate(node.getArgs(), question);
 
-        String type = ((StringValue) args.get(0)).getValue();
+        String loaderName = ((StringValue) args.get(0)).getValue();
         try {
-            if (this.loadFactory.supports(type)) {
-                Either<Exception, Value> valueE = this.loadFactory.create(type, args.subList(1, args.size()));
+            if (this.loadFactory.supports(loaderName)) {
+                Either<Exception, Value> valueE = this.loadFactory.create(loaderName, args.subList(1, args.size()));
                 if (valueE.isLeft()) {
                     throw new AnalysisException(valueE.getLeft());
                 } else {
@@ -98,7 +98,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         } catch (Exception e) {
             throw new AnalysisException("Load failed", e);
         }
-        throw new AnalysisException("Load of unknown type: " + type);
+        throw new AnalysisException("Load of unknown type: " + loaderName);
     }
 
     @Override

@@ -140,8 +140,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 MablApiBuilder builder = new MablApiBuilder();
 
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-                MathBuilderFmi2Api math = builder.getMathBuilder();
-                BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
+                MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
+                BooleanBuilderFmi2Api booleanLogic = builder.getMablToMablAPI().getBooleanBuilder();
 
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type
@@ -165,7 +165,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
 
                 // Create the logging
-                DataWriter dataWriter = builder.getDataWriter();
+                DataWriter dataWriter = builder.getMablToMablAPI().getDataWriter();
                 DataWriter.DataWriterInstance dataWriterInstance = dataWriter.CreateDataWriterInstance();
                 dataWriterInstance
                         .initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));

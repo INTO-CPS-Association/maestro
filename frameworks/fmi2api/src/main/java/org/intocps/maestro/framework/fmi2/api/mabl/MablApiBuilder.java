@@ -29,19 +29,21 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private final VariableCreatorFmi2Api currentVariableCreator;
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
+    private final MablToMablAPI mablToMablAPI;
     private final MathBuilderFmi2Api mathBuilderApi;
-    private final DataWriter dataWriter;
     private final BooleanBuilderFmi2Api booleanBuilderApi;
-
     List<String> importedModules = new Vector<>();
+    private DataWriter dataWriter;
 
     public MablApiBuilder() {
         rootScope = new ScopeFmi2Api(this);
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
+        this.mablToMablAPI = new MablToMablAPI(this);
         this.mathBuilderApi = new MathBuilderFmi2Api(dynamicScope, this);
         this.booleanBuilderApi = new BooleanBuilderFmi2Api(dynamicScope, this);
-        this.dataWriter = new DataWriter(dynamicScope, this);
+        //        this.dataWriter = new DataWriter(dynamicScope, this);
+        //        this.
 
         //create global variables
         globalExecutionContinue =
@@ -50,7 +52,16 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     }
 
+    public MablToMablAPI getMablToMablAPI() {
+        return this.mablToMablAPI;
+    }
+
     public DataWriter getDataWriter() {
+        if (this.dataWriter == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("DataWriter");
+            this.dataWriter = new DataWriter(this.dynamicScope, this, runtimeModule);
+        }
+
         return this.dataWriter;
     }
 
