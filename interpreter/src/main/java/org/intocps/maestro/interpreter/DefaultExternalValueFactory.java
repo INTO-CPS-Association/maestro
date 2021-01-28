@@ -245,6 +245,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         }
     }
 
+    @IValueLifecycleHandler.ValueLifecycle(name = "BooleanLogic")
+    public static class BooleanLogicLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new BooleanLogicValue());
+        }
+    }
+
     @IValueLifecycleHandler.ValueLifecycle(name = "FMI2")
     public static class Fmi2LifecycleHandler extends BaseLifecycleHandler {
         final private File workingDirectory;

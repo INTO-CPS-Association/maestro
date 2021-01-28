@@ -53,7 +53,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
             String annotationsSearchClassPath = System.getProperty("vdmj.annotations",
                     "com.fujitsu.vdmj.ast.annotations");//"org.intocps.maestro.framework.fmi2.vdm.annotations.ast")
             if (!annotationsSearchClassPath.contains(ASTOnFailAnnotation.class.getPackage().getName())) {
-                annotationsSearchClassPath = annotationsSearchClassPath + ";" + ASTOnFailAnnotation.class.getPackage().getName();
+                annotationsSearchClassPath = annotationsSearchClassPath + File.pathSeparator + ASTOnFailAnnotation.class.getPackage().getName();
             }
             //We need to lock on VDMJ as it uses lots of static references and thus cannot run in parallel
             synchronized (VDMJ.class) {
@@ -111,8 +111,8 @@ public class Fmi2FmuValidator implements IFmuValidator {
 
                                 boolean hasAnnotations = !INOnFailAnnotation.failures.isEmpty();
                                 logger.trace("Specification for id '{}', compliant = {}, annotation = {}", id, success, hasAnnotations);
-                                INOnFailAnnotation.failures
-                                        .forEach(msg -> reporter.warning(0, msg, new LexToken(path.toString() + "/modelDescription" + ".xml", 0, 0)));
+                                INOnFailAnnotation.failures.forEach(msg -> reporter
+                                        .warning(0, msg, new LexToken(path.toString() + File.separator + "modelDescription" + ".xml", 0, 0)));
 
                                 //clean up
                                 INOnFailAnnotation.failures.clear();

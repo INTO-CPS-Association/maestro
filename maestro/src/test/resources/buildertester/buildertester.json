@@ -1,0 +1,14 @@
+{
+  "fmus": {
+    "{controllerFMU}": "target/test-classes/watertankcontroller-c.fmu",
+    "{tankFMU}": "target/test-classes/singlewatertank-20sim.fmu"
+  },
+  "connections": {
+    "{controllerFMU}.controller.valve": [
+      "{tankFMU}.tank.valvecontrol"
+    ],
+    "{tankFMU}.tank.level": [
+      "{controllerFMU}.controller.level"
+    ]
+  }
+}
