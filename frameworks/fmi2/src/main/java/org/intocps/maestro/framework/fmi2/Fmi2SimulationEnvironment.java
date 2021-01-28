@@ -148,12 +148,20 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName,
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key));
+                ComponentInfo instanceComponentInfo =
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key);
+                if (msg.faultInjectInstances != null && msg.faultInjectInstances.containsKey(instance.from.instance.instanceName)) {
+                    instanceComponentInfo.setFaultInject(msg.faultInjectInstances.get(instance.from.instance.instanceName));
+                }
+                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName, instanceComponentInfo);
             }
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
-                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName,
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key));
+                ComponentInfo instanceComponentInfo =
+                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key);
+                if (msg.faultInjectInstances != null && msg.faultInjectInstances.containsKey(instance.to.instance.instanceName)) {
+                    instanceComponentInfo.setFaultInject(msg.faultInjectInstances.get(instance.to.instance.instanceName));
+                }
+                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, instanceComponentInfo);
             }
         }
 
