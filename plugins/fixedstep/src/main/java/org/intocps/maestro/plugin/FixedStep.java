@@ -12,10 +12,10 @@ import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,9 +143,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 MathBuilderFmi2Api math = builder.getMathBuilder();
                 BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
 
-                Fmi2Builder.BoolVariable<PStm> b = dynamicScope.store(false);
-                Fmi2Builder.IntVariable<PStm> c = dynamicScope.store(1);
-
                 // Convert raw MaBL to API
                 // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
@@ -178,9 +175,9 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
                 DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 1.0);
                 DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 1.0);
-                IMablScope sc = dynamicScope.getActiveScope();
+
                 // Store the state for all
-                Stream<Fmi2Builder.StateVariable<PStm>> fmuStates = fmuInstances.values().stream().map(x -> x.getState());
+                List<Fmi2Builder.StateVariable<PStm>> fmuStates = fmuInstances.values().stream().map(x -> x.getState()).collect(Collectors.toList());
 
                 // Get and share all variables related to outputs or logging.
                 fmuInstances.forEach((x, y) -> {
@@ -190,41 +187,55 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
 
+                // SET ALL LINKED VARIABLES
+                Runnable setLinkedVariables = () -> {
+                    fmuInstances.forEach((x, y) -> y.setLinked());
+                };
+
 
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
                     ScopeFmi2Api stabilisationScope = null;
                     IntVariableFmi2Api stabilisation_loop = null;
+
                     if (fixedstepConfig.stabilisation) {
                         stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
                         stabilisationScope = dynamicScope.enterWhile(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0)));
+
                     }
+                    // This has to be carried out regardless of stabilisation or not.
+                    setLinkedVariables.run();
+
                     // STEP ALL
                     fmuInstances.forEach((x, y) -> {
                         Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> a = y.step(currentCommunicationTime, stepSizeVar);
                     });
 
-                    // GET ALL OUTPUTS
+                    // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
                     Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> retrievedValues =
                             fmuInstances.entrySet().stream().collect(Collectors.toMap(entry -> entry.getValue(), entry -> {
                                 List<RelationVariable> variablesToLog = env.getVariablesToLog(entry.getKey());
-                                return entry.getValue().get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new));
+                                String[] variablesToGet = variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new);
+                                return entry.getValue().get(variablesToGet);
                             }));
+                    Runnable share_outputs = () -> {
+                        retrievedValues.forEach((k, v) -> k.share(v));
+                    };
 
                     // CONVERGENCE
                     if (fixedstepConfig.stabilisation) {
                         // For each instance ->
                         //      For each retrieved variable
                         //          compare with previous in terms of convergence
-                        //              If all converge, set retrieved values and continue
-                        //              else reset to previous state, set retrieved values and continue
+                        //  If all converge, set retrieved values and continue
+                        //  else reset to previous state, set retrieved values and continue
                         List<BooleanVariableFmi2Api> convergenceVariables = retrievedValues.entrySet().stream().flatMap(comptoPortAndVariable -> {
-
-                            Stream<BooleanVariableFmi2Api> converged = comptoPortAndVariable.getValue().entrySet().stream().map(portAndVariable -> {
-                                VariableFmi2Api oldVariable = portAndVariable.getKey().getSharedAsVariable();
-                                VariableFmi2Api<Object> newVariable = portAndVariable.getValue();
-                                return math.checkConvergence(oldVariable, newVariable, absTol, relTol);
-                            });
+                            Stream<BooleanVariableFmi2Api> converged = comptoPortAndVariable.getValue().entrySet().stream()
+                                    .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).map(portAndVariable -> {
+                                        VariableFmi2Api oldVariable = portAndVariable.getKey().getSharedAsVariable();
+                                        VariableFmi2Api<Object> newVariable = portAndVariable.getValue();
+                                        return math.checkConvergence(oldVariable, newVariable, absTol, relTol);
+                                    });
                             return converged;
                         }).collect(Collectors.toList());
                         BooleanVariableFmi2Api convergence = booleanLogic.allTrue("convergence", convergenceVariables);
@@ -238,9 +249,13 @@ public class FixedStep implements IMaestroExpansionPlugin {
                             }
                         }
                         stabilisationScope.activate();
+                        share_outputs.run();
+                        //                        retrievedValues.forEach((k, v) -> k.share(v));
                     }
-                    retrievedValues.forEach((k, v) -> k.share(v));
-                    fmuInstances.forEach((x, y) -> y.setLinked());
+                    scopeFmi2Api.activate();
+                    if (!fixedstepConfig.stabilisation) {
+                        share_outputs.run();
+                    }
 
 
                     // Update currentCommunicationTime
@@ -270,7 +285,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     @Override
     public boolean requireConfig() {
-        return false;
+        return true;
     }
 
     @Override

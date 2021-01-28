@@ -131,8 +131,10 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
     @Override
     public IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations) {
-        throw new RuntimeException("Not implemented yet");
+        return activeScope.store(stabilisation_loop, stabilisation_loop_max_iterations);
     }
+
+    @Override
     public FmuVariableFmi2Api createFMU(String name, URI path) throws Exception {
         return activeScope.createFMU(name, path);
     }

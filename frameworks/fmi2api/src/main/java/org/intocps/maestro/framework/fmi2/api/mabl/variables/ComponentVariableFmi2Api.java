@@ -329,7 +329,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         List<PortFmi2Api> selectedPorts;
         if (ports == null || ports.length == 0) {
-            selectedPorts = outputPorts;
+            return Map.of();
         } else {
             selectedPorts = Arrays.stream(ports).map(PortFmi2Api.class::cast).collect(Collectors.toList());
         }

@@ -107,7 +107,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     @Override
     public PExp getExp() {
-        return this.referenceExp;
+        return this.referenceExp.clone();
     }
 
     protected void setValue(Fmi2Builder.Scope<PStm> scope, PExp exp) {

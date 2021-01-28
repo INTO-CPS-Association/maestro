@@ -221,6 +221,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public BooleanBuilderFmi2Api getBooleanBuilder() {
-        return null;
+        return new BooleanBuilderFmi2Api(this.dynamicScope, this);
     }
 }

@@ -208,8 +208,12 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations) {
-        return null;
+    public IntVariableFmi2Api store(String namePrefix, IntVariableFmi2Api variable) {
+        String name = getName(namePrefix);
+        PStm var = newVariable(name, newAIntNumericPrimitiveType(), variable.getReferenceExp());
+        add(var);
+        return new IntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
     }
 
     private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {

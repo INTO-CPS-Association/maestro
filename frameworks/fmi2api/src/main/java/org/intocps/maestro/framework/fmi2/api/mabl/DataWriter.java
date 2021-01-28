@@ -35,6 +35,7 @@ public class DataWriter {
         return moduleIdentifier;
     }
 
+    // TODO: Only works for shared variables. Fixed this.
     public class DataWriterInstance {
         private final DynamicActiveBuilderScope dynamicScope;
         private final MablApiBuilder mablApiBuilder;

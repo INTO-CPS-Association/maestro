@@ -49,7 +49,7 @@ public class FullSpecTest {
     @Parameterized.Parameters(name = "{index} {0}")
     public static Collection<Object[]> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
-                .filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop")).map(f -> new Object[]{f.getName(), f})
+                /*.filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop"))*/.map(f -> new Object[]{f.getName(), f})
                 .collect(Collectors.toList());
     }
 
