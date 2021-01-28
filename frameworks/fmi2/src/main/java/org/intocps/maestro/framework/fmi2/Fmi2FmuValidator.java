@@ -53,7 +53,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
             String annotationsSearchClassPath = System.getProperty("vdmj.annotations",
                     "com.fujitsu.vdmj.ast.annotations");//"org.intocps.maestro.framework.fmi2.vdm.annotations.ast")
             if (!annotationsSearchClassPath.contains(ASTOnFailAnnotation.class.getPackage().getName())) {
-                annotationsSearchClassPath = annotationsSearchClassPath + ";" + ASTOnFailAnnotation.class.getPackage().getName();
+                annotationsSearchClassPath = annotationsSearchClassPath + File.pathSeparator + ASTOnFailAnnotation.class.getPackage().getName();
             }
             //We need to lock on VDMJ as it uses lots of static references and thus cannot run in parallel
             synchronized (VDMJ.class) {
