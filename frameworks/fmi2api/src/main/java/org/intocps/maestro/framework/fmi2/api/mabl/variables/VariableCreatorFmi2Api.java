@@ -93,8 +93,7 @@ public class VariableCreatorFmi2Api {
             String name, String className, IMablScope scope) throws Exception {
         String uniqueName = nameGenerator.getName(name);
 
-        PStm var = newVariable(uniqueName, newANameType("FMI2"),
-                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp("JFMI2"), newAStringLiteralExp(className)));
+        PStm var = newVariable(uniqueName, newANameType("FMI2"), call("load", newAStringLiteralExp("JFMI2"), newAStringLiteralExp(className)));
         scope.add(var);
 
         IFmu fmu = (IFmu) VariableCreatorFmi2Api.class.getClassLoader().loadClass(className).getConstructor().newInstance();
@@ -117,8 +116,7 @@ public class VariableCreatorFmi2Api {
         String uniqueName = nameGenerator.getName(name);
 
         PStm var = newVariable(uniqueName, newANameType("FMI2"),
-                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()),
-                        newAStringLiteralExp(path)));
+                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
         scope.add(var);
 
         FmuVariableFmi2Api fmuVar =

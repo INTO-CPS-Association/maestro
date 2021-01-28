@@ -126,7 +126,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
     }
 
     @Override
-    public Either<Exception, Value> create(String type, String loaderName, List<Value> args) {
+    public Either<Exception, Value> create(String loaderName, List<Value> args) {
         IValueLifecycleHandler handler = null;
         try {
             handler = this.lazyGet(loaderName);
