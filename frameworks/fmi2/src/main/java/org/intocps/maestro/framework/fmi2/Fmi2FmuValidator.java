@@ -111,8 +111,8 @@ public class Fmi2FmuValidator implements IFmuValidator {
 
                                 boolean hasAnnotations = !INOnFailAnnotation.failures.isEmpty();
                                 logger.trace("Specification for id '{}', compliant = {}, annotation = {}", id, success, hasAnnotations);
-                                INOnFailAnnotation.failures
-                                        .forEach(msg -> reporter.warning(0, msg, new LexToken(path.toString() + "/modelDescription" + ".xml", 0, 0)));
+                                INOnFailAnnotation.failures.forEach(msg -> reporter
+                                        .warning(0, msg, new LexToken(path.toString() + File.separator + "modelDescription" + ".xml", 0, 0)));
 
                                 //clean up
                                 INOnFailAnnotation.failures.clear();
