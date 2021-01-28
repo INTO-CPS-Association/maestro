@@ -31,6 +31,7 @@ public class MaBLTemplateGenerator {
     public static final String END_TIME_NAME = "END_TIME";
     public static final String STEP_SIZE_NAME = "STEP_SIZE";
     public static final String MATH_MODULE_NAME = "Math";
+    public static final String BOOLEANLOGIC_MODULE_NAME = "BooleanLogic";
     public static final String LOGGER_MODULE_NAME = "Logger";
     public static final String DATAWRITER_MODULE_NAME = "DataWriter";
     public static final String FMI2_MODULE_NAME = "FMI2";
@@ -238,7 +239,7 @@ public class MaBLTemplateGenerator {
                 Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
-                        newAIdentifier(LOGGER_MODULE_NAME)));
+                        newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME)));
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
@@ -333,8 +334,8 @@ public class MaBLTemplateGenerator {
     }
 
     private static Collection<? extends PStm> generateLoadUnloadStms(Function<String, PStm> function) {
-        return Arrays.asList(MATH_MODULE_NAME, LOGGER_MODULE_NAME, DATAWRITER_MODULE_NAME).stream().map(x -> function.apply(x))
-                .collect(Collectors.toList());
+        return Arrays.asList(MATH_MODULE_NAME, LOGGER_MODULE_NAME, DATAWRITER_MODULE_NAME, BOOLEANLOGIC_MODULE_NAME).stream()
+                .map(x -> function.apply(x)).collect(Collectors.toList());
     }
 
     private static PStm createLoadStatement(String moduleName) {

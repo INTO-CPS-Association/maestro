@@ -188,23 +188,25 @@ public class FixedStep implements IMaestroExpansionPlugin {
                 IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
 
                 // SET ALL LINKED VARIABLES
-                Runnable setLinkedVariables = () -> {
-                    fmuInstances.forEach((x, y) -> y.setLinked());
-                };
 
 
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
                     ScopeFmi2Api stabilisationScope = null;
                     IntVariableFmi2Api stabilisation_loop = null;
-
+                    BooleanVariableFmi2Api convergenceReached = null;
                     if (fixedstepConfig.stabilisation) {
                         stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
-                        stabilisationScope = dynamicScope.enterWhile(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0)));
+                        convergenceReached = dynamicScope.store("hasConverged", false);
+                        stabilisationScope = dynamicScope
+                                .enterWhile(convergenceReached.toPredicate().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
+
 
                     }
+
+                    // SET ALL LINKED VARIABLES
                     // This has to be carried out regardless of stabilisation or not.
-                    setLinkedVariables.run();
+                    fmuInstances.forEach((x, y) -> y.setLinked());
 
                     // STEP ALL
                     fmuInstances.forEach((x, y) -> {
@@ -218,9 +220,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
                                 String[] variablesToGet = variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new);
                                 return entry.getValue().get(variablesToGet);
                             }));
-                    Runnable share_outputs = () -> {
-                        retrievedValues.forEach((k, v) -> k.share(v));
-                    };
 
                     // CONVERGENCE
                     if (fixedstepConfig.stabilisation) {
@@ -238,8 +237,8 @@ public class FixedStep implements IMaestroExpansionPlugin {
                                     });
                             return converged;
                         }).collect(Collectors.toList());
-                        BooleanVariableFmi2Api convergence = booleanLogic.allTrue("convergence", convergenceVariables);
-                        ScopeFmi2Api ifScope = dynamicScope.enterIf(convergence.toPredicate().not()).enterThen();
+                        convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
+                        ScopeFmi2Api ifScope = dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
                         {
                             fmuStates.forEach(x -> x.set());
                             if (stabilisation_loop != null) {
@@ -249,12 +248,11 @@ public class FixedStep implements IMaestroExpansionPlugin {
                             }
                         }
                         stabilisationScope.activate();
-                        share_outputs.run();
-                        //                        retrievedValues.forEach((k, v) -> k.share(v));
+                        retrievedValues.forEach((k, v) -> k.share(v));
                     }
                     scopeFmi2Api.activate();
                     if (!fixedstepConfig.stabilisation) {
-                        share_outputs.run();
+                        retrievedValues.forEach((k, v) -> k.share(v));
                     }
 
 
@@ -285,7 +283,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
     @Override
     public boolean requireConfig() {
-        return true;
+        return false;
     }
 
     @Override
