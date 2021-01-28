@@ -5,7 +5,6 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -218,7 +217,7 @@ public interface Fmi2Builder<S, B, E> {
         //TODO add overload with name prefix, tag override is done through variable and not the scope
 
 
-        Fmu2Variable<T> createFMU(String name, URI path) throws Exception;
+        Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
     }
 
     /**
@@ -545,6 +544,14 @@ public interface Fmi2Builder<S, B, E> {
 
         <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare(String... names);
 
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare(Port... ports);
+
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare();
+
+        <V> Variable<T, V> getShared(String name);
+
+        <V> Variable<T, V> getShared(Port port);
+
         /**
          * Get the value of a single port
          *
@@ -552,6 +559,8 @@ public interface Fmi2Builder<S, B, E> {
          * @return
          */
         <V> Variable<T, V> getSingle(String name);
+
+        <V> Variable<T, V> getSingle(Port port);
 
         <V> void set(Scope<T> scope, PortValueMap<V> value);
 
