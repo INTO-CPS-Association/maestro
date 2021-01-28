@@ -102,24 +102,4 @@ public class DoubleExpressionValue extends NumericExpressionValueFmi2Api {
     public PredicateFmi2Api lessThan(Fmi2Builder.NumericExpressionValue endTimeVar) {
         return new PredicateFmi2Api(newALessBinaryExp(getExp(), endTimeVar.getExp()));
     }
-
-    @Override
-    public PredicateFmi2Api greaterThan(Fmi2Builder.NumericExpressionValue endTimeVar) {
-        return null;
-    }
-
-    @Override
-    public PredicateFmi2Api equalTo(Fmi2Builder.NumericExpressionValue endTimeVar) {
-        return null;
-    }
-
-    @Override
-    public PredicateFmi2Api lessEqualTo(Fmi2Builder.NumericExpressionValue endTimeVar) {
-        return null;
-    }
-
-    @Override
-    public PredicateFmi2Api greaterEqualTo(Fmi2Builder.NumericExpressionValue endTimeVar) {
-        return null;
-    }
 }
