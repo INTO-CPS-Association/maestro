@@ -126,15 +126,15 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
     }
 
     @Override
-    public Either<Exception, Value> create(String type, List<Value> args) {
+    public Either<Exception, Value> create(String type, String loaderName, List<Value> args) {
         IValueLifecycleHandler handler = null;
         try {
-            handler = this.lazyGet(type);
+            handler = this.lazyGet(loaderName);
         } catch (Exception e) {
             return Either.left(e);
         }
         if (handler == null) {
-            throw new InterpreterException("Could not construct type: " + type);
+            throw new InterpreterException("Could not construct type: " + loaderName);
         }
 
         Either<Exception, Value> value = handler.instantiate(args);
@@ -280,6 +280,36 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 return Either.left(new AnalysisException("The path passed to load is not a URI", e));
             }
             return Either.right(new Fmi2Interpreter(workingDirectory).createFmiValue(path, guid));
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "JFMI2")
+    public static class JFmi2LifecycleHandler extends BaseLifecycleHandler {
+        final private File workingDirectory;
+
+        public JFmi2LifecycleHandler(File workingDirectory) {
+            this.workingDirectory = workingDirectory;
+        }
+
+        @Override
+        public void destroy(Value value) {
+            if (value instanceof FmuValue) {
+                FmuValue fmuVal = (FmuValue) value;
+                FunctionValue unloadFunction = (FunctionValue) fmuVal.lookup("unload");
+                unloadFunction.evaluate(Collections.emptyList());
+            }
+        }
+
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            String className = ((StringValue) args.get(0)).getValue();
+            try {
+                Class<?> clz = this.getClass().getClassLoader().loadClass(className);
+
+                return Either.right(new Fmi2Interpreter(workingDirectory).createFmiValue(clz));
+            } catch (ClassNotFoundException e) {
+                return Either.left(new AnalysisException("The path passed to load is not a URI", e));
+            }
         }
     }
 

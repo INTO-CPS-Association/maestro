@@ -162,7 +162,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, Var value) {
 
         String varName = builder.getNameGenerator().getName(name);
-        PStm var = newVariable(varName, newARealNumericPrimitiveType(), ((VariableFmi2Api) value).getReferenceExp().clone());
+        PStm var = newVariable(varName, ((VariableFmi2Api) value).getType(), ((VariableFmi2Api) value).getReferenceExp().clone());
         add(var);
 
         return (Var) ((VariableFmi2Api<?>) value)
@@ -257,8 +257,8 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public FmuVariableFmi2Api createFMU(String name, URI path) throws Exception {
-        return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, path, this);
+    public FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception {
+        return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, loaderName, args, this);
     }
 
     @Override

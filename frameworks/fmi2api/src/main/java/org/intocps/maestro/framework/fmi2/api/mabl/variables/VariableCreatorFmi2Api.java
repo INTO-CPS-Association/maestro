@@ -79,6 +79,34 @@ public class VariableCreatorFmi2Api {
     }
 
     public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
+            String name, String loaderName, String[] args, IMablScope scope) throws Exception {
+
+        if (loaderName.equals("FMI2")) {
+            return createFMU(builder, nameGenerator, dynamicScope, name, URI.create(args[0]), scope);
+        } else if (loaderName.equals("JFMI2")) {
+            return createFMU(builder, nameGenerator, dynamicScope, name, args[0], scope);
+        }
+        return null;
+    }
+
+    public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
+            String name, String className, IMablScope scope) throws Exception {
+        String uniqueName = nameGenerator.getName(name);
+
+        PStm var = newVariable(uniqueName, newANameType("FMI2"),
+                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp("JFMI2"), newAStringLiteralExp(className)));
+        scope.add(var);
+
+        IFmu fmu = (IFmu) VariableCreatorFmi2Api.class.getClassLoader().loadClass(className).getConstructor().newInstance();
+
+        FmuVariableFmi2Api fmuVar = new FmuVariableFmi2Api(builder, new ModelDescriptionContext(new ModelDescription(fmu.getModelDescription())), var,
+                MableAstFactory.newANameType("FMI2"), scope, dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)),
+                newAIdentifierExp(uniqueName));
+
+        return fmuVar;
+    }
+
+    public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
             String name, ModelDescription modelDescription, URI uriPath,
             IMablScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
@@ -89,7 +117,8 @@ public class VariableCreatorFmi2Api {
         String uniqueName = nameGenerator.getName(name);
 
         PStm var = newVariable(uniqueName, newANameType("FMI2"),
-                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
+                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()),
+                        newAStringLiteralExp(path)));
         scope.add(var);
 
         FmuVariableFmi2Api fmuVar =

@@ -24,7 +24,7 @@ public interface IExternalValueFactory {
      * @param args the arguments used to create the value
      * @return the value or an exception if creation fails
      */
-    Either<Exception, Value> create(String type, List<Value> args);
+    Either<Exception, Value> create(String type, String loaderName, List<Value> args);
 
     /**
      * Destruction of values created by the factory. Destruction must make sure all resources hold by this value is freed

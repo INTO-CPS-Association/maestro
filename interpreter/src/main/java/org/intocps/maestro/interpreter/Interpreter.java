@@ -79,16 +79,17 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseALoadExp(ALoadExp node, Context question) throws AnalysisException {
 
-        if (node.getArgs().size() < 1) {
+        if (node.getArgs().size() < 2) {
             throw new AnalysisException("load contains too few arguments. At least a type is required");
         }
 
         List<Value> args = evaluate(node.getArgs(), question);
 
         String type = ((StringValue) args.get(0)).getValue();
+        String loaderName = ((StringValue) args.get(1)).getValue();
         try {
             if (this.loadFactory.supports(type)) {
-                Either<Exception, Value> valueE = this.loadFactory.create(type, args.subList(1, args.size()));
+                Either<Exception, Value> valueE = this.loadFactory.create(type, loaderName, args.subList(1, args.size()));
                 if (valueE.isLeft()) {
                     throw new AnalysisException(valueE.getLeft());
                 } else {

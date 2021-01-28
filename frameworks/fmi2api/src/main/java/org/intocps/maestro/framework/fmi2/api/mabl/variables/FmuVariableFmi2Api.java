@@ -37,7 +37,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     @Override
     public ComponentVariableFmi2Api instantiate(String name) {
-        return instantiate(name, builder.getDynamicScope());
+        return instantiate(name, builder.getDynamicScope().getActiveScope());
     }
 
     @Override

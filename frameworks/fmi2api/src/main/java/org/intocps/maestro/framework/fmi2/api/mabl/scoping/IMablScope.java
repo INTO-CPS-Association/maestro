@@ -63,8 +63,14 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
+
     FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
 
     @Override
-    FmuVariableFmi2Api createFMU(String name, URI path) throws Exception;
+    FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
+
+    //    @Override
+    //    <ValType extends Object, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>, RetVar extends VariableFmi2Api<Val>> RetVar copy(
+    //            String name, Var value);
+
 }

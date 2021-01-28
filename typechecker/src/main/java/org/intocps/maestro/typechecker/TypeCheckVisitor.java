@@ -107,7 +107,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType caseALoadExp(ALoadExp node, Context ctxt) throws AnalysisException {
 
         // See https://github.com/INTO-CPS-Association/maestro/issues/66
-        if (node.getArgs() == null || node.getArgs().isEmpty()) {
+        if (node.getArgs() == null || node.getArgs().isEmpty() || node.getArgs().size() < 2) {
             errorReporter.report(-5, "Wrong number of arguments to load. At least a type is required: " + node, null);
         } else {
             // PType argType = node.getArgs().get(0).apply(this, ctxt);
@@ -115,6 +115,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             PExp typeArg = node.getArgs().get(0);
             if (!(typeArg instanceof AStringLiteralExp)) {
                 errorReporter.report(-5, "First argument must be a string.: " + node, null);
+            }
+
+            PExp loaderNameArg = node.getArgs().get(1);
+            if (!(loaderNameArg instanceof AStringLiteralExp)) {
+                errorReporter.report(-5, "Second argument must be a string representing a loader.: " + node, null);
             }
 
             for (int i = 1; i < node.getArgs().size(); i++) {

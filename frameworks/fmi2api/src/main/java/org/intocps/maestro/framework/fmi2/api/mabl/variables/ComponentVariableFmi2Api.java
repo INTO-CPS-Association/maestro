@@ -87,7 +87,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private DoubleVariableFmi2Api getCurrentTimeVar() {
         if (currentTimeVar == null) {
             String name = builder.getNameGenerator().getName(this.name, "current", "time");
-            PStm var = newVariable(name, newRealType());
+            PStm var = newVariable(name, newRealType(), newARealLiteralExp(0d));
             this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
             currentTimeVar = new DoubleVariableFmi2Api(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
                     newAIdentifierExp(name));
@@ -98,8 +98,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private BooleanVariableFmi2Api getCurrentTimeFullStepVar() {
         if (currentTimeStepFullStepVar == null) {
             String name = builder.getNameGenerator().getName(this.name, "current", "time", "full", "step");
-            PStm var = newVariable(name, newBoleanType());
+            PStm var = newVariable(name, newBoleanType(), newABoolLiteralExp(true));
             this.getDeclaredScope().addAfter(this.getDeclaringStm(), var);
+
             currentTimeStepFullStepVar = new BooleanVariableFmi2Api(var, this.getDeclaredScope(), dynamicScope, newAIdentifierStateDesignator(name),
                     newAIdentifierExp(name));
         }
@@ -186,8 +187,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private void setupExperiment(Fmi2Builder.Scope<PStm> scope, PExp startTime, PExp endTime, Double tolerance) {
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETUPEXPERIMENT), new ArrayList<>(
-                        Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance), startTime,
-                                newABoolLiteralExp(endTime != null), endTime))));
+                        Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance != null ? tolerance : 0d),
+                                startTime.clone(), newABoolLiteralExp(endTime != null),
+                                endTime != null ? endTime.clone() : newARealLiteralExp(0d)))));
         scope.add(stm);
     }
 
@@ -393,12 +395,43 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return values;
     }
 
+    @Override
+    public <V> Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare(Fmi2Builder.Port... ports) {
+        Map<PortFmi2Api, VariableFmi2Api<V>> values = get(ports);
+        share(values);
+        return values;
+    }
+
+    @Override
+    public <V> Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare() {
+        Map<PortFmi2Api, VariableFmi2Api<V>> values = get();
+        share(values);
+        return values;
+    }
+
+    @Override
+    public VariableFmi2Api getShared(String name) {
+        return this.getPort(name).getSharedAsVariable();
+    }
+
+    @Override
+    public VariableFmi2Api getShared(Fmi2Builder.Port port) {
+        return ((PortFmi2Api) port).getSharedAsVariable();
+    }
+
+    @Override
+    public <V> VariableFmi2Api<V> getSingle(Fmi2Builder.Port port) {
+        return (VariableFmi2Api) this.get(port).entrySet().iterator().next().getValue();
+    }
+
     private String createFunctionName(FmiFunctionType fun) {
         switch (fun) {
             case ENTERINITIALIZATIONMODE:
                 return "enterInitializationMode";
             case EXITINITIALIZATIONMODE:
                 return "exitInitializationMode";
+            case SETUPEXPERIMENT:
+                return "setupExperiment";
             default:
                 throw new RuntimeException("Attempting to call function that is type dependant without specifying type: " + fun);
         }
