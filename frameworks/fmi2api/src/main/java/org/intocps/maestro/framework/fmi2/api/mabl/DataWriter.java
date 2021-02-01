@@ -18,6 +18,7 @@ public class DataWriter {
 
     private final DynamicActiveBuilderScope dynamicScope;
     private final MablApiBuilder mablApiBuilder;
+    private final String FUNCTION_CLOSE = "close";
     private String moduleIdentifier;
     private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
     private boolean runtimeModuleMode = false;
@@ -59,18 +60,32 @@ public class DataWriter {
 
     // TODO: Only works for shared variables. Fixed this.
     public class DataWriterInstance {
-        private final String writeHeaderFunctionName = "writeHeader";
-        private final String writeDataPointFunctionName = "writeDataPoint";
+        private final String FUNCTION_WRITEHEADER = "writeHeader";
+        private final String FUNCTION_WRITEDATAPOINT = "writeDataPoint";
+        private final String TYPE_DATAWRITERCONFIG = "DataWriterConfig";
         private final DynamicActiveBuilderScope dynamicScope;
         private final MablApiBuilder mablApiBuilder;
         private final DataWriter dataWriter;
         private boolean runtimeModuleMode;
         private List<PortFmi2Api> portsToLog;
+        /**
+         * A String Array of the names of the variables to log
+         */
         private ALocalVariableStm logHeadersStm;
+        /**
+         * The name of the variable containing the array of the names of the variables to log.
+         */
         private String logHeadersVariableName;
+        /**
+         * The statement with the writeHeader function call on the datawriter.
+         * This function call returns an instance configuration, which is to be used for subsequent calls to the datawriter
+         */
         private ALocalVariableStm writeHeadersStm;
         private boolean initialized;
-        private String logConfigurationVariableName;
+        /**
+         * The name of the variable with the data writer instance configuration
+         */
+        private String dataWriterInstanceConfigurationVariableName;
         private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
 
         public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, DataWriter dataWriter) {
@@ -96,7 +111,8 @@ public class DataWriter {
             this.portsToLog = portsToLog;
 
             this.logHeadersVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_headers");
-            this.logConfigurationVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_configuration");
+            this.dataWriterInstanceConfigurationVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_configuration");
+
             List<AStringLiteralExp> variablesNamesToLog =
                     this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getLogScalarVariableName()))
                             .collect(Collectors.toList());
@@ -104,14 +120,15 @@ public class DataWriter {
                     .newAVariableDeclaration(MableAstFactory.newAIdentifier(logHeadersVariableName),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), variablesNamesToLog.size(),
                             MableAstFactory.newAArrayInitializer(variablesNamesToLog));
+
             this.logHeadersStm = MableAstFactory.newALocalVariableStm(datawriter_configuration);
 
 
             this.writeHeadersStm = MableAstFactory.newALocalVariableStm(MableAstFactory
-                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(this.logConfigurationVariableName),
-                            MableAstFactory.newANameType("DataWriterConfig"), MableAstFactory.newAExpInitializer(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(this.dataWriterInstanceConfigurationVariableName),
+                            MableAstFactory.newANameType(TYPE_DATAWRITERCONFIG), MableAstFactory.newAExpInitializer(MableAstFactory
                                     .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
-                                            MableAstFactory.newAIdentifier(writeHeaderFunctionName),
+                                            MableAstFactory.newAIdentifier(FUNCTION_WRITEHEADER),
                                             Arrays.asList(MableAstFactory.newAIdentifierExp(logHeadersVariableName))))));
 
             if (this.runtimeModuleMode) {
@@ -123,18 +140,27 @@ public class DataWriter {
             this.initialized = true;
         }
 
-        public void Log(DoubleVariableFmi2Api time) {
+        public void log(DoubleVariableFmi2Api time) {
             if (!initialized) {
                 throw new RuntimeException("DataWriter has not been initialized!");
             }
             AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
                     .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
-                            MableAstFactory.newAIdentifier(this.writeDataPointFunctionName), Stream.concat(
-                                    Arrays.asList(MableAstFactory.newAIdentifierExp(this.logConfigurationVariableName),
+                            MableAstFactory.newAIdentifier(this.FUNCTION_WRITEDATAPOINT), Stream.concat(
+                                    Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName),
                                             time.getReferenceExp().clone()).stream(),
                                     portsToLog.stream().map(x -> x.getSharedAsVariable().getReferenceExp().clone())).collect(Collectors.toList())));
             this.dynamicScope.add(stm);
 
         }
+
+        public void close() {
+            AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
+                            MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE),
+                            Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName))));
+            this.dynamicScope.add(stm);
+        }
+
     }
 }

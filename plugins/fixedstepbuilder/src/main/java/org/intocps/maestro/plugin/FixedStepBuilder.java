@@ -201,7 +201,7 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
 
                     // Call log
-                    dataWriterInstance.Log(currentCommunicationTime);
+                    dataWriterInstance.log(currentCommunicationTime);
                 }
 
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();
