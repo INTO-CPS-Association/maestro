@@ -38,7 +38,7 @@ public class DataWriter {
         this.moduleIdentifier = runtimeModule.getName();
     }
 
-    public DataWriterInstance CreateDataWriterInstance() {
+    public DataWriterInstance createDataWriterInstance() {
         if (!runtimeModuleMode) {
             return new DataWriterInstance(dynamicScope, mablApiBuilder, this);
         } else {
@@ -157,8 +157,7 @@ public class DataWriter {
         public void close() {
             AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
                     .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
-                            MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE),
-                            Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName))));
+                            MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE), Arrays.asList()));
             this.dynamicScope.add(stm);
         }
 

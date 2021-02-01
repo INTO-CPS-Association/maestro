@@ -166,7 +166,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
                 // Create the logging
                 DataWriter dataWriter = builder.getMablToMablAPI().getDataWriter();
-                DataWriter.DataWriterInstance dataWriterInstance = dataWriter.CreateDataWriterInstance();
+                DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
                 dataWriterInstance
                         .initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
