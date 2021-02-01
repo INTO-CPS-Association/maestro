@@ -130,9 +130,9 @@ public class DataWriter {
             AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
                     .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
                             MableAstFactory.newAIdentifier(this.writeDataPointFunctionName), Stream.concat(
-                                    Arrays.asList(MableAstFactory.newAIdentifierExp(this.logConfigurationVariableName), time.getReferenceExp())
-                                            .stream(), portsToLog.stream().map(x -> x.getSharedAsVariable().getReferenceExp()))
-                                    .collect(Collectors.toList())));
+                                    Arrays.asList(MableAstFactory.newAIdentifierExp(this.logConfigurationVariableName),
+                                            time.getReferenceExp().clone()).stream(),
+                                    portsToLog.stream().map(x -> x.getSharedAsVariable().getReferenceExp().clone())).collect(Collectors.toList())));
             this.dynamicScope.add(stm);
 
         }
