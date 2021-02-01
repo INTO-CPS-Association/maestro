@@ -76,7 +76,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     @Override
     public ScopeFmi2Api leave() {
-        return null;
+        return parent.activate();
     }
 
     @Override

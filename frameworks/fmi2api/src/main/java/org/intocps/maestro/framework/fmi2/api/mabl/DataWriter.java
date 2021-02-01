@@ -2,10 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.AExpressionStm;
-import org.intocps.maestro.ast.node.ALocalVariableStm;
-import org.intocps.maestro.ast.node.AStringLiteralExp;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
@@ -14,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class DataWriter {
 
@@ -48,6 +47,14 @@ public class DataWriter {
 
     public String getModuleIdentifier() {
         return moduleIdentifier;
+    }
+
+    public void unload() {
+        mablApiBuilder.getDynamicScope().add(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))));
+    }
+
+    private PExp getReferenceExp() {
+        return newAIdentifierExp(moduleIdentifier);
     }
 
     // TODO: Only works for shared variables. Fixed this.
