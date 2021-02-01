@@ -46,7 +46,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Deploy
-        run: mvn -B -X deploy
+        run: mvn -B -X -Prelease-sources-javadoc deploy
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
