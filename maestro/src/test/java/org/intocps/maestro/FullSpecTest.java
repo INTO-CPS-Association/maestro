@@ -205,6 +205,9 @@ public class FullSpecTest {
             reporter.printErrors(new PrintWriter(System.err, true));
             Assert.fail();
         }
+        if (reporter.getErrorCount() > 0) {
+            reporter.printWarnings(new PrintWriter(System.out, true));
+        }
 
         mabl.dump(workingDirectory);
         Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists());
