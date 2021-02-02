@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import shutil
 import sys
 
 import testutils
@@ -46,8 +47,13 @@ def legacyCliSimConfig():
         raise Exception(f"Error executing: {cmd1}")
     else:
         print("SUCCESS")
-        testutils.compare("CSV", "wt/result.csv", temporary.resultPath)
         testutils.checkMablSpecExists(temporary.mablSpecPath)
+
+        if not testutils.compare("CSV", "wt/result.csv", temporary.resultPath):
+            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(temporary.resultPath, tempActualOutputs)
+            raise Exception("Results files do not match")
 
 
 legacyCliSimConfig()
@@ -63,7 +69,13 @@ def legacyCliStarttimeEndtime():
         raise Exception(f"Error executing {cmd2}")
     else:
         print("SUCCESS")
-        testutils.compare("CSV", "wt/result.csv", temporary.resultPath)
         testutils.checkMablSpecExists(temporary.mablSpecPath)
+
+        if not testutils.compare("CSV", "wt/result.csv", temporary.resultPath):
+            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(temporary.resultPath, tempActualOutputs)
+            raise Exception("Results files do not match")
+
 
 legacyCliStarttimeEndtime()
