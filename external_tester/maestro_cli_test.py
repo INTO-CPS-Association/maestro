@@ -52,20 +52,22 @@ def cliSpecGen():
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
-        print("ERROR: In Executing %s" % cmd)
-        return False
+        raise Exception(f"Error executing {cmd}")
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
+
         if not testutils.compare("CSV", "wt/result.csv", outputs):
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-    return True
+            raise Exception("Results files do not match")
 
 
-assert(cliSpecGen())
-deleteOutputsFile(outputs)
+try:
+    cliSpecGen()
+finally:
+    deleteOutputsFile(outputs)
 
 def cliRaw():
     testutils.printSection("CLI Raw")
@@ -74,8 +76,7 @@ def cliRaw():
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
-        print("ERROR: In Executing %s" % cmd)
-        return False
+        raise Exception(f"Error executing {cmd}")
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
@@ -83,11 +84,13 @@ def cliRaw():
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-        return True
+            raise Exception("Results files do not match")
 
 
-assert(cliRaw())
-deleteOutputsFile(outputs)
+try:
+    cliRaw()
+finally:
+    deleteOutputsFile(outputs)
 
 def cliExpansion():
     testutils.printSection("CLI Expansion")
@@ -96,8 +99,7 @@ def cliExpansion():
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
-        print("ERROR: In Executing %s" % cmd)
-        return False
+        raise Exception(f"Error executing {cmd}")
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
@@ -105,9 +107,10 @@ def cliExpansion():
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
+            raise Exception("Results files do not match")
 
-        return True
 
-
-assert(cliExpansion())
-deleteOutputsFile(outputs)
+try:
+    cliExpansion()
+finally:
+    deleteOutputsFile(outputs)

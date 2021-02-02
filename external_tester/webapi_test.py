@@ -81,7 +81,6 @@ print("Testing Web api of: " + path + "with port: " + str(port))
 cmd = "java -jar " + path
 p = subprocess.Popen(cmd, shell=True)
 try:
-
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
 
@@ -118,8 +117,9 @@ try:
 
     r = requests.post(basicUrl + "/initialize/" + status["sessionId"], json=config)
     if not r.status_code == 200:
-        print("ERROR: Could not initialize")
-        terminate(p)
+        raise Exception("Could not initialize")
+
+
     print ("Initialize response code '%d, data=%s'" % (r.status_code, r.text))
     sessionID = status["sessionId"]
 
@@ -146,9 +146,7 @@ try:
     printSection("SIMULATE")
     r = requests.post(basicUrl + "/simulate/" + sessionID, json=json.load(open("wt/start_message.json")))
     if not r.status_code == 200:
-        print("ERROR: Could not simulate: " + r.text)
-        terminate(p)
-        assert(False)
+        raise Exception(f"Could not simulate: {r.text}")
 
     print ("Simulate response code '%d, data=%s'" % (r.status_code, r.text))
     wsThread.join()
@@ -161,9 +159,7 @@ try:
     printSection("PLAIN RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/plain")
     if not r.status_code == 200:
-        print("ERROR: Could not receive plain results: " + r.text)
-        terminate(p)
-        assert (False)
+        raise Exception(f"Could not get plain results: {r.text}")
 
     print ("Result response code '%d" % (r.status_code))
     result_csv_path = "actual_result.csv"
@@ -179,9 +175,8 @@ try:
     printSection("ZIP RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/zip", stream=True)
     if not r.status_code == 200:
-        print("ERROR: Could not receive zip results: " + r.text)
-        terminate(p)
-        assert (False)
+        raise Exception(f"Could not get zip results: {r.text}")
+
     print ("Result response code '%d" % (r.status_code))
     result_zip_path = "actual_zip_result.zip"
     zipFilePath = tempDirectory + "/" + result_zip_path
@@ -193,8 +188,7 @@ try:
     with closing(ZipFile(zipFilePath)) as archive:
         filesInZipCount = len(archive.infolist())
     if filesInZipCount < 2:
-        print("Error: Less than 2 files in result zip. Actually there was: " + str(filesInZipCount))
-        assert (False)
+        raise Exception(f"Wrong number of files in zip. Actually: {str(filesInZipCount)}")
     else:
         print("2 or more files in result zip. Actually: " + str(filesInZipCount))
 
@@ -202,14 +196,8 @@ try:
     printSection("DESTROY")
     r = requests.get(basicUrl + "/destroy/" + sessionID)
     if not r.status_code == 200:
-        print("ERROR: Could not destory: " + r.text)
-        terminate(p)
-        assert (False)
+        raise Exception(f"Could not destroy: {r.text}")
+
     print ("Result response code '%d" % (r.status_code))
-
-
-except Exception as x:
-    print("ERROR: Exception: " + str(x))
-    assert (False)
 finally:
     terminate(p)
