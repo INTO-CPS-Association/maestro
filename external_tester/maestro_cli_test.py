@@ -31,7 +31,7 @@ try:
     def cliSpecGen():
         testutils.printSection("CLI with Specification Generation")
         temporary=testutils.createAndPrepareTempDirectory()
-        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+        cmd = "java -jar {0} --dump {1} --dump-intermediate {1} -sg1 {2} {3} -i -v -vi FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
         print("Cmd: " + cmd)
         p = subprocess.run(cmd, shell=True)
         if p.returncode != 0:

@@ -108,7 +108,7 @@
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>fmi2api</artifactId>
             <version>2.0.4-SNAPSHOT</version>
-            <scope>test</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.codegen</groupId>

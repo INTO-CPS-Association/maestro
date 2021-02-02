@@ -28,6 +28,7 @@ import com.fujitsu.vdmj.tc.definitions.TCClassDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCDefinition;
 import com.fujitsu.vdmj.tc.expressions.TCExpression;
 import com.fujitsu.vdmj.tc.expressions.TCExpressionList;
+import com.fujitsu.vdmj.tc.expressions.TCIntegerLiteralExpression;
 import com.fujitsu.vdmj.tc.expressions.TCStringLiteralExpression;
 import com.fujitsu.vdmj.tc.lex.TCIdentifierToken;
 import com.fujitsu.vdmj.tc.modules.TCModule;
@@ -69,12 +70,13 @@ public class TCOnFailAnnotation extends TCAnnotation {
         if (args.isEmpty()) {
             name.report(6008, "@OnFail must start with a string argument");
         } else {
-            if (args.get(0) instanceof TCStringLiteralExpression) {
+            if (args.get(0) instanceof TCIntegerLiteralExpression && args.get(1) instanceof TCStringLiteralExpression) {
                 for (TCExpression arg : args) {
                     arg.typeCheck(env, null, scope, null);    // Just checks scope
                 }
 
-                TCStringLiteralExpression str = (TCStringLiteralExpression) args.get(0);
+                TCIntegerLiteralExpression errorCode = (TCIntegerLiteralExpression) args.get(0);
+                TCStringLiteralExpression str = (TCStringLiteralExpression) args.get(1);
                 String format = str.value.value;
 
                 try {
@@ -83,10 +85,10 @@ public class TCOnFailAnnotation extends TCAnnotation {
                     Arrays.fill(args, "A string");
                     String.format(format, args);
                 } catch (IllegalArgumentException e) {
-                    name.report(6008, "@OnFail must use %[arg$][width]s conversions");
+                    name.report((int) errorCode.value.value, "@OnFail must use %[arg$][width]s conversions");
                 }
             } else {
-                name.report(6008, "@OnFail must start with a string argument");
+                name.report(6008, "@OnFail must start with a integer error code followed by a string argument");
             }
         }
     }

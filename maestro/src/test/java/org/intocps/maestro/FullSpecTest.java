@@ -205,7 +205,7 @@ public class FullSpecTest {
             reporter.printErrors(new PrintWriter(System.err, true));
             Assert.fail();
         }
-        if (reporter.getErrorCount() > 0) {
+        if (reporter.getWarningCount() > 0) {
             reporter.printWarnings(new PrintWriter(System.out, true));
         }
 
