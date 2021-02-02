@@ -7,15 +7,14 @@ import subprocess
 import shutil
 
 parser = argparse.ArgumentParser(prog='Example of Maestro CLI', usage='%(prog)s [options]')
-parser.add_argument('file', type=str, help="Filename of .jar")
-parser.add_argument('--path', type=str, default=r"../maestro/target", help='Relative path to the folder containing Maestro CLI jar')
+parser.add_argument('--path', type=str, default=r"../maestro/target/maestro-2.0.4-SNAPSHOT-jar-with-dependencies.jar", help="Path to the Maestro CLI jar (Can be relative path)")
 
 args = parser.parse_args()
 
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-path = os.path.abspath(os.path.join(args.path, args.file))
+path = os.path.abspath(args.path)
 
 if not os.path.isfile(path):
     print('The path does not exist')

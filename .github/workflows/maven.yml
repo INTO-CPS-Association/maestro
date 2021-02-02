@@ -42,17 +42,17 @@ jobs:
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
+          python maestro_cli_test.py --path ../maestro/target/maestro-${{env.COE_VERSION}}-jar-with-dependencies.jar
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python webapi_test.py maestro-webapi-${{env.COE_VERSION}}.jar
+          python webapi_test.py ../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python cli_legacy_test.py maestro-webapi-${{env.COE_VERSION}}.jar
+          python cli_legacy_test.py ../maestro-webapi/target/maestro-webapi-${{env.COE_VERSION}}.jar
 
   deploy:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )

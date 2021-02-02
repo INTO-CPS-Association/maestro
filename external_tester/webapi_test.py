@@ -46,8 +46,7 @@ def ws_thread(*args):
 
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
-parser.add_argument('file', type=str, help="Filename of .jar")
-parser.add_argument('--path', type=str, default=r"../maestro-webapi/target", help='Relative path to the folder containing maestro2 web api jar')
+parser.add_argument('--path', type=str, default=r"../maestro-webapi/target/maestro-webapi-2.0.4-SNAPSHOT.jar", help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
 parser.set_defaults(port=8082)
 
@@ -56,7 +55,7 @@ args = parser.parse_args()
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-path = os.path.abspath(os.path.join(args.path, args.file))
+path = os.path.abspath(args.path)
 
 port = args.port
 
