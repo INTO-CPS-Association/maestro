@@ -147,10 +147,7 @@ public class Main {
                 } finally {
 
 
-                    if (reporter.getErrorCount() > 0) {
-                        if (verbose) {
-                            reporter.printErrors(new PrintWriter(System.err, true));
-                        }
+                    if (hasErrorAndPrintErrorsAndWarnings(verbose, reporter)) {
                         return false;
                     }
                 }
@@ -178,10 +175,7 @@ public class Main {
         }
 
 
-        if (reporter.getErrorCount() > 0) {
-            if (verbose) {
-                reporter.printErrors(new PrintWriter(System.err, true));
-            }
+        if (hasErrorAndPrintErrorsAndWarnings(verbose, reporter)) {
             return false;
         }
 
@@ -192,10 +186,7 @@ public class Main {
         Map.Entry<Boolean, Map<INode, PType>> typeCheckResult = mabl.typeCheck();
         if (!typeCheckResult.getKey()) {
             if (reporter.getErrorCount() > 0) {
-                if (verbose) {
-                    reporter.printErrors(new PrintWriter(System.err, true));
-                }
-                return false;
+                return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
             }
             return false;
         }
@@ -203,14 +194,12 @@ public class Main {
             Framework framework = Framework.valueOf(cmd.getOptionValue(verifyOpt.getOpt()));
 
             if (!mabl.verify(framework)) {
-                if (reporter.getErrorCount() > 0) {
-                    if (verbose) {
-                        reporter.printErrors(new PrintWriter(System.err, true));
-                    }
-                    return false;
-                }
-                return false;
+                return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
             }
+
+            // verify can be true but there can still be warnings.
+            hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
+
         }
 
         if (cmd.hasOption(cgOpt.getOpt())) {
@@ -225,6 +214,27 @@ public class Main {
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
         }
         return true;
+    }
+
+    /**
+     * Returns true if there are any errors
+     *
+     * @param verbose
+     * @param reporter
+     * @return
+     */
+    private static boolean hasErrorAndPrintErrorsAndWarnings(boolean verbose, IErrorReporter reporter) {
+        if (reporter.getErrorCount() > 0) {
+            reporter.printErrors(new PrintWriter(System.err, true));
+            return true;
+        }
+
+        if (reporter.getWarningCount() > 0) {
+            if (verbose) {
+                reporter.printWarnings(new PrintWriter(System.out, true));
+            }
+        }
+        return false;
     }
 
     public static void main(String[] args) throws Exception {

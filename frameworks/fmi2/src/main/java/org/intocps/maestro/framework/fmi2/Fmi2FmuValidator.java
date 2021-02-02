@@ -53,13 +53,13 @@ public class Fmi2FmuValidator implements IFmuValidator {
             String annotationsSearchClassPath = System.getProperty("vdmj.annotations",
                     "com.fujitsu.vdmj.ast.annotations");//"org.intocps.maestro.framework.fmi2.vdm.annotations.ast")
             if (!annotationsSearchClassPath.contains(ASTOnFailAnnotation.class.getPackage().getName())) {
-                annotationsSearchClassPath = annotationsSearchClassPath + ";" + ASTOnFailAnnotation.class.getPackage().getName();
+                annotationsSearchClassPath = annotationsSearchClassPath + File.pathSeparator + ASTOnFailAnnotation.class.getPackage().getName();
             }
             //We need to lock on VDMJ as it uses lots of static references and thus cannot run in parallel
             synchronized (VDMJ.class) {
                 synchronized (Settings.class) {
                     System.setProperty("vdmj.annotations", annotationsSearchClassPath);
-                    System.setProperty("vdmj.mappingpath", String.format("%smaestro%sfmi2%svdm", File.separator, File.separator, File.separator));
+                    System.setProperty("vdmj.mappingpath", "/maestro/fmi2/vdm");
                     VDMJ controller = new VDMSL();
                     controller.setQuiet(true);
                     Settings.dialect = Dialect.VDM_SL;
@@ -73,71 +73,84 @@ public class Fmi2FmuValidator implements IFmuValidator {
                                     "VariableNaming_2.2.9.vdmsl", "VendorAnnotations_2.2.6.vdmsl"};
 
                     logger.trace("Copying static standard specification for id: {}", id);
-                    List<File> specFiles = Arrays.stream(fmi2StaticModelFiles).map(specPath -> {
-                        File tmp;
-                        try {
-                            tmp = File.createTempFile("fmi2Spec", "");
-                            try (OutputStream dest = new FileOutputStream(tmp); InputStream in = this.getClass().getClassLoader()
-                                    .getResourceAsStream(specPath)) {
-                                if (in != null) {
-                                    IOUtils.copy(in, dest);
+                    List<File> specFiles = null;
+                    try {
+                        specFiles = Arrays.stream(fmi2StaticModelFiles).map(specPath -> {
+                            File tmp;
+                            try {
+                                tmp = File.createTempFile("fmi2Spec", "");
+                                try (OutputStream dest = new FileOutputStream(tmp); InputStream in = this.getClass().getClassLoader()
+                                        .getResourceAsStream(specPath)) {
+                                    if (in != null) {
+                                        IOUtils.copy(in, dest);
+                                    }
                                 }
+                                return tmp;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return null;
                             }
-                            return tmp;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    }).collect(Collectors.toList());
+                        }).collect(Collectors.toList());
 
-                    File modelSped = File.createTempFile("fmi2", "");
-                    FileUtils.write(modelSped, vdm, StandardCharsets.UTF_8);
+                        File modelSped = File.createTempFile("fmi2", "");
+                        FileUtils.write(modelSped, vdm, StandardCharsets.UTF_8);
 
-                    specFiles.add(modelSped);
-                    synchronized (INOnFailAnnotation.class) {
-                        if (controller.parse(specFiles) == ExitStatus.EXIT_OK) {
-                            if (controller.typeCheck() == ExitStatus.EXIT_OK) {
+                        specFiles.add(modelSped);
+                        synchronized (INOnFailAnnotation.class) {
+                            if (controller.parse(specFiles) == ExitStatus.EXIT_OK) {
+                                if (controller.typeCheck() == ExitStatus.EXIT_OK) {
 
-                                INOnFailAnnotation.failures.clear();
-                                Interpreter interpreter = controller.getInterpreter();
-                                logger.trace("Initialize VDM interpreter and execute validation for id: {}", id);
-                                interpreter.init();
-                                Value result = interpreter.execute("isValidFMIModelDescription(var)").deref();
+                                    INOnFailAnnotation.failures.clear();
+                                    Interpreter interpreter = controller.getInterpreter();
+                                    logger.trace("Initialize VDM interpreter and execute validation for id: {}", id);
+                                    interpreter.init();
+                                    Value result = interpreter.execute("isValidFMIModelDescription(var)").deref();
 
-                                boolean success = false;
-                                if (result instanceof BooleanValue) {
-                                    success = result.boolValue(null);
+                                    boolean success = false;
+                                    if (result instanceof BooleanValue) {
+                                        success = result.boolValue(null);
+                                    }
+
+                                    boolean hasAnnotations = !INOnFailAnnotation.failures.isEmpty();
+                                    logger.trace("Specification for id '{}', compliant = {}, annotation = {}", id, success, hasAnnotations);
+                                    INOnFailAnnotation.failures.forEach(msg -> reporter
+                                            .warning(0, msg, new LexToken(path.toString() + File.separator + "modelDescription" + ".xml", 0, 0)));
+
+                                    //clean up
+                                    INOnFailAnnotation.failures.clear();
+
+                                    for (File specFile : specFiles) {
+                                        FileUtils.deleteQuietly(specFile);
+                                    }
+                                    //FIXME we need to have better control over this
+                                    return true;
+                                } else {
+                                    logger.trace("Specification for id '{}' did not type check", id);
+                                    reporter.warning(999, "Internal error could not check spec for: " + path, null);
+                                    return false;
                                 }
-
-                                boolean hasAnnotations = !INOnFailAnnotation.failures.isEmpty();
-                                logger.trace("Specification for id '{}', compliant = {}, annotation = {}", id, success, hasAnnotations);
-                                INOnFailAnnotation.failures
-                                        .forEach(msg -> reporter.warning(0, msg, new LexToken(path.toString() + "/modelDescription" + ".xml", 0, 0)));
-
-                                //clean up
-                                INOnFailAnnotation.failures.clear();
-
-                                for (File specFile : specFiles) {
-                                    FileUtils.deleteQuietly(specFile);
-                                }
-                                //FIXME we need to have better control over this
-                                return true;
                             } else {
-                                logger.trace("Specification for id '{}' did not type check", id);
+                                logger.trace("Specification could not parse id '{}'", id);
                                 reporter.warning(999, "Internal error could not check spec for: " + path, null);
                                 return false;
                             }
-                        } else {
-                            logger.trace("Specification could not parse id '{}'", id);
-                            reporter.warning(999, "Internal error could not check spec for: " + path, null);
-                            return false;
                         }
+                    } catch (Exception e) {
+                        if (specFiles != null) {
+                            specFiles.forEach(f -> {
+                                FileUtils.deleteQuietly(f);
+                            });
+                        }
+                        logger.error("An exception occured during Fmi2FmUValidator: ", e);
+                        return false;
                     }
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.error("An unknown exception occured during Fmi2FmUValidator: ", e);
+            return false;
         }
     }
+
 
 }

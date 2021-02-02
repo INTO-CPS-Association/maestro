@@ -1,0 +1,42 @@
+simulation
+import Initializer;
+import FixedStepBuilder;
+import BooleanLogic;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+Math math = load("Math");
+BooleanLogic booleanLogic = load("BooleanLogic");
+FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
+FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, false);;
+FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);;
+
+
+FMI2Component components[2]={wtInstance,crtlInstance};
+
+bool global_execution_continue = true;
+
+@Config("@file: config.json");
+Initializer.expand initialize(components,START_TIME, END_TIME);
+@Config("@file: fixedstepconfig.json");
+FixedStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+dataWriter.close();
+tankcontroller.freeInstance(crtlInstance);
+SingleWatertank.freeInstance(wtInstance);
+
+unload(tankcontroller);
+unload(SingleWatertank);
+unload(dataWriter);
+unload(logger);
+unload(math);
+unload(booleanLogic);
+
+}

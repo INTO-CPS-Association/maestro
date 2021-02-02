@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -13,7 +14,7 @@
     <groupId>org.into-cps.maestro.frameworks</groupId>
     <artifactId>fmi2</artifactId>
     <version>2.0.4-SNAPSHOT</version>
-    <name>Fmi frameworks</name>
+    <name>Fmi2 framework</name>
 
     <repositories>
         <repository>
@@ -29,10 +30,18 @@
     </repositories>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>4.4</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.into-cps.vdmcheck.fmi2</groupId>
             <artifactId>fmi2vdm</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.fujitsu</groupId>
@@ -67,6 +76,13 @@
             <version>2.0.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro.plugins</groupId>
+            <artifactId>api</artifactId>
+            <version>2.0.4-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
 
     </dependencies>
 

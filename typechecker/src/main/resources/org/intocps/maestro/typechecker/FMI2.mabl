@@ -1,7 +1,7 @@
  module FMI2
  import FMI2Component;
  {
-	FMI2Component instantiate(string name, bool visible, bool loggingOn);
+        FMI2Component instantiate(string name, bool visible, bool loggingOn);
  	void freeInstance(FMI2Component comp);
 }
 

@@ -26,6 +26,7 @@ package org.intocps.maestro.framework.fmi2.vdm.annotations.in;
 import com.fujitsu.vdmj.in.annotations.INAnnotation;
 import com.fujitsu.vdmj.in.expressions.INExpression;
 import com.fujitsu.vdmj.in.expressions.INExpressionList;
+import com.fujitsu.vdmj.in.expressions.INIntegerLiteralExpression;
 import com.fujitsu.vdmj.in.expressions.INStringLiteralExpression;
 import com.fujitsu.vdmj.runtime.Context;
 import com.fujitsu.vdmj.runtime.ValueException;
@@ -49,11 +50,13 @@ public class INOnFailAnnotation extends INAnnotation {
             {
                 Object[] values = new Value[args.size() - 1];
 
-                for (int p = 1; p < args.size(); p++) {
-                    values[p - 1] = args.get(p).eval(ctxt);
+                for (int p = 2; p < args.size(); p++) {
+                    values[p - 2] = args.get(p).eval(ctxt);
                 }
 
-                INStringLiteralExpression fmt = (INStringLiteralExpression) args.get(0);
+                INIntegerLiteralExpression errorCode = (INIntegerLiteralExpression) args.get(0);
+
+                INStringLiteralExpression fmt = (INStringLiteralExpression) args.get(1);
                 String fmts = fmt.value.value;
                 String location = "";
 
@@ -63,7 +66,7 @@ public class INOnFailAnnotation extends INAnnotation {
                 }
 
                 // Console.out.printf(fmts + location + "\n", values);
-                failures.add(String.format(fmts + location, values));
+                failures.add(String.format(errorCode + ": " + fmts + location, values));
             }
         } catch (ValueException e) {
             // Doesn't happen

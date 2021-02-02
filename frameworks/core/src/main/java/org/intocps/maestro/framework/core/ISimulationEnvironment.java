@@ -16,13 +16,15 @@ public interface ISimulationEnvironment {
      * @param identifiers
      * @return
      */
-    Set<? extends FrameworkVariableInfo> getRelations(LexIdentifier... identifiers);
+    Set<? extends IRelation> getRelations(LexIdentifier... identifiers);
+
+    Set<? extends IRelation> getRelations(String... identifiers);
 
     List<? extends RelationVariable> getVariablesToLog(String instanceName);
 
     Set<? extends Map.Entry<String, ? extends FrameworkUnitInfo>> getInstances();
 
-    Set<? extends FrameworkVariableInfo> getRelations(List<LexIdentifier> identifiers);
+    Set<? extends IRelation> getRelations(List<LexIdentifier> identifiers);
 
     List<? extends RelationVariable> getConnectedOutputs();
 

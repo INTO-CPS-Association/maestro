@@ -32,6 +32,10 @@
             <version>2.10.4</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.into-cps</groupId>
+            <artifactId>modeldefinition</artifactId>
+        </dependency>
     </dependencies>
 
 
