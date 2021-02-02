@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import threading
 import websocket
 import testutils
+import glob
 
 print(requests.__file__)
 print("bla")
@@ -44,9 +45,20 @@ def ws_thread(*args):
     ws = websocket.WebSocketApp(args[0], on_open = ws_open, on_message = args[1], on_close=ws_close)
     ws.run_forever()
 
+def findJar():
+    basePath = r"../maestro-webapi/target/"
+    basePath = os.path.abspath(os.path.join(basePath, "maestro-webapi*.jar"))
+
+    # try and find the jar file
+    result = glob.glob(basePath)
+    if len(result) == 0 or len(result) > 1:
+        raise FileNotFoundError("Could not automatically find jar file please specify manually")
+
+    return result[0]
+
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
-parser.add_argument('--path', type=str, default=r"../maestro-webapi/target/maestro-webapi-2.0.4-SNAPSHOT.jar", help="Path to the Maestro Web API jar (Can be relative path)")
+parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
 parser.set_defaults(port=8082)
 
@@ -55,7 +67,7 @@ args = parser.parse_args()
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-path = os.path.abspath(args.path)
+path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
 
 port = args.port
 
