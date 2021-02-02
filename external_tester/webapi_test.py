@@ -195,9 +195,10 @@ try:
     # Destroy
     printSection("DESTROY")
     r = requests.get(basicUrl + "/destroy/" + sessionID)
+    print ("Result response code '%d" % (r.status_code))
+
     if not r.status_code == 200:
         raise Exception(f"Could not destroy: {r.text}")
 
-    print ("Result response code '%d" % (r.status_code))
 finally:
     terminate(p)
