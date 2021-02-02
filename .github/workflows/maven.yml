@@ -8,7 +8,6 @@ env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
   PYTHON_VERISON: '3.x'
-  COE_VERSION: 2.0.4-SNAPSHOT
 
 jobs:
   build:
