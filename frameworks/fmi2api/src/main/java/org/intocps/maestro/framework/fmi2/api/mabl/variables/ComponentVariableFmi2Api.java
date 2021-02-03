@@ -114,29 +114,30 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.valueRefBuffer;
     }
 
-    private ArrayVariableFmi2Api<Object> getIOBuffer(PType type) {
-        if (!this.ioBuffer.containsKey(type)) {
-            this.ioBuffer.put(type, createBuffer(type, "IO", modelDescriptionContext.valRefToSv.size()));
-        }
-        return this.ioBuffer.get(type);
-    }
-
-    private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type) {
-        Optional<PType> first = this.sharedBuffer.keySet().stream().filter(x -> x.toString().equals(type.toString())).findFirst();
+    private ArrayVariableFmi2Api<Object> getBuffer(Map<PType, ArrayVariableFmi2Api<Object>> buffer, PType type, String prefix, int size) {
+        Optional<PType> first = buffer.keySet().stream().filter(x -> x.toString().equals(type.toString())).findFirst();
         if (first.isEmpty()) {
-            ArrayVariableFmi2Api<Object> value = createBuffer(type, "Share", 0);
-            this.sharedBuffer.put(type, value);
+            ArrayVariableFmi2Api<Object> value = createBuffer(type, prefix, size);
+            buffer.put(type, value);
             return value;
 
         } else {
-            return this.sharedBuffer.get(first.get());
+            return buffer.get(first.get());
         }
     }
 
-    private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefixPostfix, int length) {
+    private ArrayVariableFmi2Api<Object> getIOBuffer(PType type) {
+        return getBuffer(this.ioBuffer, type, "IO", modelDescriptionContext.valRefToSv.size());
+    }
+
+    private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type) {
+        return this.getBuffer(this.sharedBuffer, type, "Share", 0);
+    }
+
+    private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefix, int length) {
 
         //lets find a good place to store the buffer.
-        String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefixPostfix);
+        String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefix);
         PInitializer initializer = null;
         if (length > 0) {
             //Bug in the interpreter it relies on values being there

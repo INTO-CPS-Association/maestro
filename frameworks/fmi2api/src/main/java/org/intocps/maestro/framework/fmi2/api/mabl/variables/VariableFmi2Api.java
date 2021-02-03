@@ -60,7 +60,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
     @Override
     public void setValue(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Variable<PStm, V> variable) {
         //TODO use  BuilderUtil.createTypeConvertingAssignment(bui)
-        scope.add(newAAssignmentStm(this.designator.clone(), ((VariableFmi2Api<V>) variable).getReferenceExp()));
+        scope.add(newAAssignmentStm(this.designator.clone(), ((VariableFmi2Api<V>) variable).getReferenceExp().clone()));
     }
 
     @Override

@@ -98,9 +98,10 @@ public class VariableCreatorFmi2Api {
 
         IFmu fmu = (IFmu) VariableCreatorFmi2Api.class.getClassLoader().loadClass(className).getConstructor().newInstance();
 
-        FmuVariableFmi2Api fmuVar = new FmuVariableFmi2Api(builder, new ModelDescriptionContext(new ModelDescription(fmu.getModelDescription())), var,
-                MableAstFactory.newANameType("FMI2"), scope, dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)),
-                newAIdentifierExp(uniqueName));
+        FmuVariableFmi2Api fmuVar =
+                new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(new ModelDescription(fmu.getModelDescription())), var,
+                        MableAstFactory.newANameType("FMI2"), scope, dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)),
+                        newAIdentifierExp(uniqueName));
 
         return fmuVar;
     }
@@ -120,7 +121,7 @@ public class VariableCreatorFmi2Api {
         scope.add(var);
 
         FmuVariableFmi2Api fmuVar =
-                new FmuVariableFmi2Api(builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
+                new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
                         dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
 
         return fmuVar;
