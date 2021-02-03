@@ -164,12 +164,13 @@ try:
     print ("Result response code '%d" % (r.status_code))
     result_csv_path = "actual_result.csv"
     csv = r.text
-    csvFilePath = tempDirectory + "/" + result_csv_path
-    f = open(csvFilePath, "w")
-    f.write(csv)
-    f.close()
+    csvFilePath = os.path.join(tempDirectory, result_csv_path)
+    with open(csvFilePath, "w+") as f:
+        f.write(csv.replace("\r\n", "\n"))
+        
     print("Wrote csv file to: " + csvFilePath)
-    testutils.compare("CSV", "wt/result.csv", csvFilePath)
+    if not testutils.compare("CSV", "wt/result.csv", csvFilePath):
+        raise Exception("CSV files did not match!")
 
     #Get zip results
     printSection("ZIP RESULT")
