@@ -86,7 +86,8 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     @Override
     public void addAll(Collection<PStm> commands) {
-        block.getBody().addAll(commands);
+        //DO NOT USE ADDALL. IT FAILS IN THE ASTCREATOR.
+        commands.forEach(x -> block.getBody().add(x));
     }
 
     @Override
@@ -99,7 +100,9 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         } else {
             int insertAt = index - 1;
             if (insertAt < 0) {
-                block.getBody().addAll(0, Arrays.asList(commands));
+                for (int i = 0; i < commands.length; i++) {
+                    block.getBody().add(i, commands[i]);
+                }
             } else {
                 block.getBody().addAll(insertAt, Arrays.asList(commands));
             }

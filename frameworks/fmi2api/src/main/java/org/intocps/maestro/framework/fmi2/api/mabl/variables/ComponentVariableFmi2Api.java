@@ -323,7 +323,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     @Override
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Port... ports) {
-        return get(builder.getDynamicScope(), ports);
+        return get(builder.getDynamicScope().getActiveScope(), ports);
     }
 
     @Override
