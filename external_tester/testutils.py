@@ -70,4 +70,4 @@ def checkMablSpecExists(mablSpecPath):
     if os.path.isfile(mablSpecPath):
         print("MaBL Spec exists at: " + mablSpecPath)
     else:
-        print("ERROR: MaBL spec does not exist at: " + mablSpecPath)
+        raise Exception(f"Mable spec does not exist at {mablSpecPath}")

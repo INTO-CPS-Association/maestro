@@ -11,6 +11,7 @@ from zipfile import ZipFile
 import threading
 import websocket
 import testutils
+import glob
 
 print(requests.__file__)
 print("bla")
@@ -44,16 +45,32 @@ def ws_thread(*args):
     ws = websocket.WebSocketApp(args[0], on_open = ws_open, on_message = args[1], on_close=ws_close)
     ws.run_forever()
 
+def findJar():
+    basePath = r"../maestro-webapi/target/"
+    basePath = os.path.abspath(os.path.join(basePath, "maestro-webapi*.jar"))
+
+    # try and find the jar file
+    result = glob.glob(basePath)
+    if len(result) == 0 or len(result) > 1:
+        raise FileNotFoundError("Could not automatically find jar file please specify manually")
+
+    return result[0]
+
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
-parser.add_argument('--path', type=str, required=True, help ='Path to the maestro2 web api jar')
+parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
 parser.set_defaults(port=8082)
 
 args = parser.parse_args()
 
+# cd to run everything relative to this file
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
+
 port = args.port
-path = args.path
+
 
 if not os.path.isfile(path):
     print('The path does not exist')
@@ -64,7 +81,6 @@ print("Testing Web api of: " + path + "with port: " + str(port))
 cmd = "java -jar " + path
 p = subprocess.Popen(cmd, shell=True)
 try:
-
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
 
@@ -76,7 +92,7 @@ try:
             r = requests.get(basicUrl+"/version")
             if r.status_code == 200:
                 print("Version: " + r.text)
-                break;
+                break
         except requests.exceptions.ConnectionError as x:
             print("Failed to connect: " + x.__class__.__name__)
             time.sleep(1)
@@ -101,8 +117,9 @@ try:
 
     r = requests.post(basicUrl + "/initialize/" + status["sessionId"], json=config)
     if not r.status_code == 200:
-        print("ERROR: Could not initialize")
-        terminate(p)
+        raise Exception("Could not initialize")
+
+
     print ("Initialize response code '%d, data=%s'" % (r.status_code, r.text))
     sessionID = status["sessionId"]
 
@@ -129,8 +146,7 @@ try:
     printSection("SIMULATE")
     r = requests.post(basicUrl + "/simulate/" + sessionID, json=json.load(open("wt/start_message.json")))
     if not r.status_code == 200:
-        print("ERROR: Could not simulate: " + r.text)
-        terminate(p)
+        raise Exception(f"Could not simulate: {r.text}")
 
     print ("Simulate response code '%d, data=%s'" % (r.status_code, r.text))
     wsThread.join()
@@ -143,25 +159,25 @@ try:
     printSection("PLAIN RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/plain")
     if not r.status_code == 200:
-        print("ERROR: Could not receive plain results: " + r.text)
-        terminate(p)
+        raise Exception(f"Could not get plain results: {r.text}")
 
     print ("Result response code '%d" % (r.status_code))
     result_csv_path = "actual_result.csv"
     csv = r.text
-    csvFilePath = tempDirectory + "/" + result_csv_path
-    f = open(csvFilePath, "w")
-    f.write(csv)
-    f.close()
+    csvFilePath = os.path.join(tempDirectory, result_csv_path)
+    with open(csvFilePath, "w+") as f:
+        f.write(csv.replace("\r\n", "\n"))
+        
     print("Wrote csv file to: " + csvFilePath)
-    testutils.compare("CSV", "wt/result.csv", csvFilePath)
+    if not testutils.compare("CSV", "wt/result.csv", csvFilePath):
+        raise Exception("CSV files did not match!")
 
     #Get zip results
     printSection("ZIP RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/zip", stream=True)
     if not r.status_code == 200:
-        print("ERROR: Could not receive zip results: " + r.text)
-        terminate(p)
+        raise Exception(f"Could not get zip results: {r.text}")
+
     print ("Result response code '%d" % (r.status_code))
     result_zip_path = "actual_zip_result.zip"
     zipFilePath = tempDirectory + "/" + result_zip_path
@@ -173,20 +189,17 @@ try:
     with closing(ZipFile(zipFilePath)) as archive:
         filesInZipCount = len(archive.infolist())
     if filesInZipCount < 2:
-        print("Error: Less than 2 files in result zip. Actually there was: " + str(filesInZipCount))
+        raise Exception(f"Wrong number of files in zip. Actually: {str(filesInZipCount)}")
     else:
         print("2 or more files in result zip. Actually: " + str(filesInZipCount))
 
     # Destroy
     printSection("DESTROY")
     r = requests.get(basicUrl + "/destroy/" + sessionID)
-    if not r.status_code == 200:
-        print("ERROR: Could not destory: " + r.text)
-        terminate(p)
     print ("Result response code '%d" % (r.status_code))
 
+    if not r.status_code == 200:
+        raise Exception(f"Could not destroy: {r.text}")
 
-except Exception as x:
-    print("ERROR: Exception: " + str(x))
 finally:
     terminate(p)
