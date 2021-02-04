@@ -30,9 +30,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
     private final MablToMablAPI mablToMablAPI;
-    private final MathBuilderFmi2Api mathBuilderApi;
-    private final BooleanBuilderFmi2Api booleanBuilderApi;
     List<String> importedModules = new Vector<>();
+    private MathBuilderFmi2Api mathBuilderApi;
+    private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
 
     public MablApiBuilder() {
@@ -40,10 +40,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
         this.mablToMablAPI = new MablToMablAPI(this);
-        this.mathBuilderApi = new MathBuilderFmi2Api(dynamicScope, this);
-        this.booleanBuilderApi = new BooleanBuilderFmi2Api(dynamicScope, this);
-        //        this.dataWriter = new DataWriter(dynamicScope, this);
-        //        this.
 
         //create global variables
         globalExecutionContinue =
@@ -96,6 +92,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public MathBuilderFmi2Api getMathBuilder() {
+        if (this.mathBuilderApi == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Math");
+            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
+        }
         return this.mathBuilderApi;
 
     }
@@ -232,6 +232,11 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public BooleanBuilderFmi2Api getBooleanBuilder() {
-        return new BooleanBuilderFmi2Api(this.dynamicScope, this);
+
+        if (this.booleanBuilderApi == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("BooleanLogic");
+            this.booleanBuilderApi = new BooleanBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
+        }
+        return this.booleanBuilderApi;
     }
 }

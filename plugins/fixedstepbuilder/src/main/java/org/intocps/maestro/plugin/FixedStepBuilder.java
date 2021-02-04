@@ -139,8 +139,8 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
                     if (fixedstepConfig.stabilisation) {
                         stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
                         convergenceReached = dynamicScope.store("hasConverged", false);
-                        stabilisationScope = dynamicScope
-                                .enterWhile(convergenceReached.toPredicate().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
+                        stabilisationScope = dynamicScope.enterWhile(
+                                convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
 
 
                     }

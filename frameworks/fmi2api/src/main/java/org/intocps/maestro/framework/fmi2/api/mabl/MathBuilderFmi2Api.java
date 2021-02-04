@@ -13,12 +13,27 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class MathBuilderFmi2Api {
 
+    private static final String DEFAULT_MODULE_IDENTIFIER = "math";
+    private static final String FUNCTION_IS_CLOSE = "isClose";
     private final DynamicActiveBuilderScope dynamicScope;
     private final MablApiBuilder builder;
+    private boolean runtimeModuleMode;
+    private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
+    private String moduleIdentifier;
+
+
+    public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(dynamicScope, mablApiBuilder);
+        this.runtimeModuleMode = true;
+        this.runtimeModule = runtimeModule;
+        this.moduleIdentifier = this.runtimeModule.getName();
+    }
 
     public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder) {
+        this.runtimeModuleMode = false;
         this.dynamicScope = dynamicScope;
         this.builder = mablApiBuilder;
+        this.moduleIdentifier = DEFAULT_MODULE_IDENTIFIER;
     }
 /*
     public static Fmi2Builder.ProvidesReferenceExp add(Fmi2Builder.ProvidesReferenceExp left, Fmi2Builder.ProvidesReferenceExp right) {
@@ -31,7 +46,7 @@ public class MathBuilderFmi2Api {
 
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
 
-                newACallExp(newAIdentifierExp("math"), newAIdentifier("isClose"),
+                newACallExp(newAIdentifierExp(this.moduleIdentifier), newAIdentifier(this.FUNCTION_IS_CLOSE),
                         Arrays.asList(a.getExp(), b.getExp(), absoluteTolerance.getExp(), relativeTolerance.getExp())))));
         dynamicScope.add(stm);
         return new BooleanVariableFmi2Api(stm, dynamicScope.getActiveScope(), dynamicScope,

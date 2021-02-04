@@ -16,10 +16,25 @@ public class BooleanBuilderFmi2Api {
     private static final String ALL_FALSE_FUNCTION_NAME = "allFalse";
     private final DynamicActiveBuilderScope dynamicScope;
     private final MablApiBuilder builder;
+    private String moduleIdentifier;
+    private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
+    private boolean runtimeModuleMode = false;
+
+
+    public BooleanBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder,
+            Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(dynamicScope, mablApiBuilder);
+        this.runtimeModuleMode = true;
+        this.runtimeModule = runtimeModule;
+        this.moduleIdentifier = runtimeModule.getName();
+    }
 
     public BooleanBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder) {
+        this.runtimeModuleMode = false;
         this.dynamicScope = dynamicScope;
         this.builder = mablApiBuilder;
+        this.moduleIdentifier = BOOLEAN_LOGIC_MODULE_IDENTIFIER;
+
     }
 
     public BooleanVariableFmi2Api allTrue(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
@@ -35,7 +50,7 @@ public class BooleanBuilderFmi2Api {
         String variableName = dynamicScope.getName(variablePrefix);
 
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
-                newACallExp(newAIdentifierExp(BOOLEAN_LOGIC_MODULE_IDENTIFIER), newAIdentifier(function),
+                newACallExp(newAIdentifierExp(this.moduleIdentifier), newAIdentifier(function),
                         parameters.stream().map(x -> x.getExp()).collect(Collectors.toList())))));
         dynamicScope.add(stm);
         return new BooleanVariableFmi2Api(stm, dynamicScope.getActiveScope(), dynamicScope,
