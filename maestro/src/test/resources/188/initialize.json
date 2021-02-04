@@ -1,0 +1,20 @@
+{
+  "algorithm": {
+    "size": 0.1,
+    "type": "fixed-step"
+  },
+  "connections": {
+    "{fmu}.equations.equationResult": [
+      "{fmu}.equations.dummyInput"
+    ]
+  },
+  "fmus": {
+    "{fmu}": "file:/Users/au443759/source/into-cps-association/maestro/maestro/src/test/resources/188/GATestController.fmu"
+  },
+  "parameters": {
+    "{fmu}.equations.equationSelection": "sphere",
+    "{fmu}.equations.x": 1,
+    "{fmu}.equations.y": 1,
+    "{fmu}.equations.z": 1
+  }
+}

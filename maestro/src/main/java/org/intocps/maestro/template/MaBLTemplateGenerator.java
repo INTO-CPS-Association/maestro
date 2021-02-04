@@ -195,10 +195,13 @@ public class MaBLTemplateGenerator {
 
 
         // Debug logging
-        if (templateConfiguration.getLogLevels() != null) {
+        if (templateConfiguration.getLoggingOn()) {
+            //            if (templateConfiguration.getLogLevels() != null) {
             stmMaintainer.addAll(createDebugLoggingStms(instaceNameToInstanceLex, templateConfiguration.getLogLevels()));
             stmMaintainer.wrapInIfBlock();
+            //            }
         }
+
 
         // Components Array
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToInstanceName.keySet()));
@@ -260,36 +263,56 @@ public class MaBLTemplateGenerator {
                 newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(GLOBAL_EXECUTION_CONTINUE)), newABoolLiteralExp(false)), null);
     }
 
+    private static Collection<? extends PStm> createDebugLoggingStmsHelper(Map<String, String> instaceNameToInstanceLex, String instanceName,
+            List<String> logLevels) {
+        String instanceLexName = instaceNameToInstanceLex.get(instanceName);
+        if (instanceLexName != null) {
+            return createExpandDebugLogging(instanceLexName, logLevels);
+        } else {
+            logger.warn("Could not set log levels for " + instanceName);
+            return Arrays.asList();
+        }
+
+    }
+
     private static Collection<? extends PStm> createDebugLoggingStms(Map<String, String> instaceNameToInstanceLex,
             Map<String, List<String>> logLevels) {
         List<PStm> stms = new ArrayList<>();
-        for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
-            if (entry.getValue().isEmpty()) {
-                continue;
-            }
-            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
-            if (instanceLexName != null) {
-                stms.addAll(createExpandDebugLogging(instanceLexName, entry.getValue()));
-            } else {
-                logger.warn("Could not set log levels for " + entry.getKey());
-            }
 
+        // If no logLevels have defined, then call setDebugLogging for all instances
+        if (logLevels == null) {
+            for (Map.Entry<String, String> entry : instaceNameToInstanceLex.entrySet()) {
+                stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), new ArrayList<>()));
+            }
+        } else {
+            // If loglevels have been defined for some instances, then only call setDebugLogging for those instances.
+            for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
+                // If the instance is available as key in loglevels but has an empty value, then call setDebugLogging with empty loglevels.
+                if (entry.getValue().isEmpty()) {
+                    stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), new ArrayList<>()));
+                    continue;
+                }
+                // If the instance is available as key in loglevels and has nonempty value, then call setDebugLogging with the relevant values.
+                stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), entry.getValue()));
+            }
         }
 
         return stms;
     }
 
     private static List<PStm> createExpandDebugLogging(String instanceLexName, List<String> logLevels) {
-
+        AArrayInitializer loglevelsArrayInitializer = null;
         String arrayName = instanceLexName + LOGLEVELS_POSTFIX;
-        List<PExp> stringLiterals = logLevels.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList());
+        if (!logLevels.isEmpty()) {
+            loglevelsArrayInitializer =
+                    newAArrayInitializer(logLevels.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
+        }
         ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
-                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), logLevels.size(),
-                        MableAstFactory.newAArrayInitializer(stringLiterals)));
+                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), logLevels.size(), loglevelsArrayInitializer));
 
         AExpressionStm expandCall = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME)),
+                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifierExp(arrayName),
                                 MableAstFactory.newAUIntLiteralExp(Long.valueOf(logLevels.size())))));

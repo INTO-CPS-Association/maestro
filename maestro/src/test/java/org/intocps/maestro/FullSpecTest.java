@@ -188,7 +188,8 @@ public class FullSpecTest {
             if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
                 Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
                         (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
-                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime, a.size)).setVisible(true).setLoggingOn(true);
+                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime, a.size))
+                        .setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn);
             }
 
             MaBLTemplateConfiguration configuration = builder.build();
