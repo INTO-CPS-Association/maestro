@@ -91,6 +91,8 @@ public interface Fmi2Builder<S, B, E> {
 
         FunctionType getReturnType();
 
+        boolean usingVargs();
+
 
         static public class FunctionType {
             final Type nativeType;
@@ -124,7 +126,11 @@ public interface Fmi2Builder<S, B, E> {
                 UInt,
                 Double,
                 String,
-                Boolean
+                Boolean,
+                /**
+                 * This should be used with care as it disabled any type checking
+                 */
+                Any
             }
         }
 
