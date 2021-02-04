@@ -6,12 +6,10 @@ import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.TagNameGenerator;
+import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
@@ -21,7 +19,6 @@ import java.net.URI;
 import java.util.Arrays;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
@@ -93,7 +90,8 @@ public class VariableCreatorFmi2Api {
             String name, String className, IMablScope scope) throws Exception {
         String uniqueName = nameGenerator.getName(name);
 
-        PStm var = newVariable(uniqueName, newANameType("FMI2"), call("load", newAStringLiteralExp("JFMI2"), newAStringLiteralExp(className)));
+        PStm var = newVariable(uniqueName, newANameType("FMI2"),
+                newALoadExp(Arrays.asList(newAStringLiteralExp("JFMI2"), newAStringLiteralExp(className))));
         scope.add(var);
 
         IFmu fmu = (IFmu) VariableCreatorFmi2Api.class.getClassLoader().loadClass(className).getConstructor().newInstance();
@@ -102,6 +100,27 @@ public class VariableCreatorFmi2Api {
                 new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(new ModelDescription(fmu.getModelDescription())), var,
                         MableAstFactory.newANameType("FMI2"), scope, dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)),
                         newAIdentifierExp(uniqueName));
+
+
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+
+            ScopeFmi2Api thenScope = scope.enterIf(new PredicateFmi2Api(newEqual(fmuVar.getReferenceExp().clone(), newNullExp()))).enterThen();
+
+
+            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
+
+            builder.getLogger().error(thenScope, "FMU load failed on fmu: '%s' for classpath: '%s'", name, className + "");
+
+            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder.collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast())
+                    .forEach(p -> {
+                        thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
+                        thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
+                    });
+
+
+            thenScope.add(newBreak());
+            thenScope.leave();
+        }
 
         return fmuVar;
     }
@@ -116,22 +135,38 @@ public class VariableCreatorFmi2Api {
 
         String uniqueName = nameGenerator.getName(name);
 
-        PStm var = newVariable(uniqueName, newANameType("FMI2"),
-                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path)));
+        PStm var = newVariable(uniqueName, newANameType("FMI2"), newALoadExp(
+                Arrays.asList(newAStringLiteralExp("FMI2"), newAStringLiteralExp(modelDescription.getGuid()), newAStringLiteralExp(path))));
         scope.add(var);
 
         FmuVariableFmi2Api fmuVar =
                 new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(modelDescription), var, MableAstFactory.newANameType("FMI2"), scope,
                         dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
 
+
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+
+            ScopeFmi2Api thenScope = scope.enterIf(new PredicateFmi2Api(newEqual(fmuVar.getReferenceExp().clone(), newNullExp()))).enterThen();
+
+
+            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
+
+            builder.getLogger().error(thenScope, "FMU load failed on fmu: '%s' for uri: '%s'", name, uriPath + "");
+
+            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder.collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast())
+                    .forEach(p -> {
+                        thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
+                        thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
+                    });
+
+
+            thenScope.add(newBreak());
+            thenScope.leave();
+        }
+
+
         return fmuVar;
     }
 
-    // CreateFMU is a root-level function and therefore located in the VariableCreator.
 
-
-
-   /* public VariableFmi2Api createVariableForPort(PortFmi2Api port) {
-        return createVariableForPort(builder.getNameGenerator(), port, scope, builder.getDynamicScope());
-    }*/
 }

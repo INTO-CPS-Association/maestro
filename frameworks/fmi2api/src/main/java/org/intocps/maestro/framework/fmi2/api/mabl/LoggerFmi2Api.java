@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 
 public class LoggerFmi2Api {
 
@@ -44,6 +45,30 @@ public class LoggerFmi2Api {
 
     public void error(String format, Object... args) {
         log(Level.ERROR, format, args);
+    }
+
+    public void log(ScopeFmi2Api scope, Level level, String format, Object... args) {
+        module.call(scope, logFunction, level.level, format, args);
+    }
+
+    public void warn(ScopeFmi2Api scope, String format, Object... args) {
+        log(scope, Level.WARN, format, args);
+    }
+
+    public void trace(ScopeFmi2Api scope, String format, Object... args) {
+        log(scope, Level.TRACE, format, args);
+    }
+
+    public void debug(ScopeFmi2Api scope, String format, Object... args) {
+        log(scope, Level.DEBUG, format, args);
+    }
+
+    public void info(ScopeFmi2Api scope, String format, Object... args) {
+        log(scope, Level.INFO, format, args);
+    }
+
+    public void error(ScopeFmi2Api scope, String format, Object... args) {
+        log(scope, Level.ERROR, format, args);
     }
 
 

@@ -11,10 +11,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,13 +22,16 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp> {
 
-    static ScopeFmi2Api rootScope;
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
+    final MablSettings settings;
+    private final ScopeFmi2Api rootScope;
+    private final ScopeFmi2Api mainErrorHandlingScope;
     private final VariableCreatorFmi2Api currentVariableCreator;
     private final BooleanVariableFmi2Api globalExecutionContinue;
     private final IntVariableFmi2Api globalFmiStatus;
     private final MablToMablAPI mablToMablAPI;
+    private final Map<FmiStatus, IntVariableFmi2Api> fmiStatusVariables;
     List<String> importedModules = new Vector<>();
     private MathBuilderFmi2Api mathBuilderApi;
     private BooleanBuilderFmi2Api booleanBuilderApi;
@@ -38,16 +39,46 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private LoggerFmi2Api runtimeLogger;
 
     public MablApiBuilder() {
+        this(new MablSettings());
+    }
+
+    public MablApiBuilder(MablSettings settings) {
+        this.settings = settings;
         rootScope = new ScopeFmi2Api(this);
-        this.dynamicScope = new DynamicActiveBuilderScope(rootScope);
-        this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
-        this.mablToMablAPI = new MablToMablAPI(this);
+
+        fmiStatusVariables = new HashMap<>();
+        if (settings.fmiErrorHandlingEnabled) {
+            fmiStatusVariables.put(FmiStatus.FMI_OK, rootScope.store("FMI_STATUS_OK", 0));
+            fmiStatusVariables.put(FmiStatus.FMI_WARNING, rootScope.store("FMI_STATUS_WARNING", 1));
+            fmiStatusVariables.put(FmiStatus.FMI_DISCARD, rootScope.store("FMI_STATUS_DISCARD", 2));
+            fmiStatusVariables.put(FmiStatus.FMI_ERROR, rootScope.store("FMI_STATUS_ERROR", 3));
+            fmiStatusVariables.put(FmiStatus.FMI_FATAL, rootScope.store("FMI_STATUS_FATAL", 4));
+            fmiStatusVariables.put(FmiStatus.FMI_PENDING, rootScope.store("FMI_STATUS_PENDING", 5));
+        }
 
         //create global variables
         globalExecutionContinue =
                 (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
         globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
 
+        mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
+
+        this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope);
+        this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
+        this.mablToMablAPI = new MablToMablAPI(this);
+
+
+    }
+
+    public MablSettings getSettings() {
+        return settings;
+    }
+
+    public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {
+        if (!settings.fmiErrorHandlingEnabled) {
+            throw new IllegalStateException("Fmi error handling feature not enabled");
+        }
+        return this.fmiStatusVariables.get(status);
     }
 
     public MablToMablAPI getMablToMablAPI() {
@@ -104,7 +135,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public IMablScope getRootScope() {
-        return MablApiBuilder.rootScope;
+        return rootScope;
     }
 
     @Override
@@ -120,7 +151,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
         return mp.getSharedAsVariable();
     }
-
 
     Pair<PStateDesignator, PExp> getDesignatorAndReferenceExp(PExp exp) {
         if (exp instanceof AArrayIndexExp) {
@@ -192,6 +222,18 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
+        AtomicReference<ABlockStm> errorHandingBlock = new AtomicReference<>();
+        block.apply(new DepthFirstAnalysisAdaptor() {
+            @Override
+            public void caseAWhileStm(AWhileStm node) throws AnalysisException {
+                if (node.getBody().equals(mainErrorHandlingScope.getBlock())) {
+                    errorHandingBlock.set(((ABlockStm) node.getBody()));
+
+                }
+                super.caseAWhileStm(node);
+            }
+        });
+
         if (runtimeLogger != null) {
             //attempt a syntactic comparison to find the load in the clone
             VariableFmi2Api loggerVar = (VariableFmi2Api) runtimeLogger.module;
@@ -224,6 +266,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
             });
         }
+
+        errorHandingBlock.get().getBody().add(newBreak());
 
         //Post cleaning: Remove empty block statements
         block.apply(new DepthFirstAnalysisAdaptor() {
@@ -262,7 +306,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     }
 
-
     public FunctionBuilder getFunctionBuilder() {
         return new FunctionBuilder();
     }
@@ -283,5 +326,18 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
         return this.runtimeLogger;
+    }
+
+    public enum FmiStatus {
+        FMI_OK,
+        FMI_WARNING,
+        FMI_DISCARD,
+        FMI_ERROR,
+        FMI_FATAL,
+        FMI_PENDING
+    }
+
+    public static class MablSettings {
+        public final boolean fmiErrorHandlingEnabled = true;
     }
 }
