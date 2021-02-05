@@ -7,7 +7,6 @@ import FMI2Component;
 import Logger;
 import Math;
 {
-	int status = 0;
  	bool global_execution_continue = true;
 	Math math = load("Math");
 	Logger logger = load("Logger");
@@ -22,212 +21,186 @@ import Math;
 	FMI2Component equations = null;
 	if( ((global_execution_continue)) )
 	{
-			equations = fmu.instantiate("equations", true, true);
-
+			equations = fmu.instantiate("equations", false, false);
 			if( ((equations == null)) )
 			{
 				global_execution_continue = false;
 			}
-			string logcat[6] = {"logAll","logError","logFmiCall","Protocol","VdmOut","VdmErr"};
-			status = equations.setDebugLogging(true,6,logcat);
-            if( (status == 3 || status == 4) )
-            {
-                    logger.log(4, "Set debug logging Failed:  %d", status);
-                    global_execution_continue = false;
-            }
 	}
-	if( ((global_execution_continue)) )
+	FMI2Component components[1] = { equations };
+	real START_TIME = 0.0;
+	real STEP_SIZE = 0.1;
+	real END_TIME = 1.0;
+	while( (global_execution_continue) )
 	{
-			FMI2Component components[1] = { equations };
-			real START_TIME = 0.0;
-			real STEP_SIZE = 0.1;
-			real END_TIME = 1.0;
-			while( (global_execution_continue) )
+		int status = 0;
+		status = equations.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "Setup Experiment Failed:  %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real realValueSize1[1] = { 0.0 };
+		uint valRefsSize1[1] = { 1 };
+		status = equations.setReal(valRefsSize1, 1, realValueSize1);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		status = equations.enterInitializationMode();
+		string stringValueSize1[1] = { "sphere" };
+		valRefsSize1[0] = 2;
+		status = equations.setString(valRefsSize1, 1, stringValueSize1);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real realValueSize4[4] = { 0.0 , 1.0 , 1.0 , 1.0 };
+		uint valRefsSize4[4] = { 0 , 3 , 4 , 5 };
+		status = equations.setReal(valRefsSize4, 4, realValueSize4);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		valRefsSize1[0] = 1;
+		status = equations.getReal(valRefsSize1, 1, realValueSize1);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "get failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		real equationsSvValRef1 = realValueSize1[0];
+		realValueSize1[0] = equationsSvValRef1;
+		valRefsSize1[0] = 0;
+		status = equations.setReal(valRefsSize1, 1, realValueSize1);
+		if( (status == 3 || status == 4) )
+		{
+				logger.log(4, "set failed %d", status);
+				global_execution_continue = false;
+				break;
+		}
+		status = equations.exitInitializationMode();
+		break;
+	}
+	if( (global_execution_continue) )
+	{
+			FMI2Component fix_components[1] = { equations };
 			{
-
-				status = equations.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
-				if( (status == 3 || status == 4) )
+ 				real end = END_TIME - STEP_SIZE;
+				real time = START_TIME;
+				real fix_stepSize = 0.0;
+				real fix_recoveryStepSize = 0.0;
+				bool fix_recovering = false;
+				bool fix_global_status = false;
+				int fix_comp_index = 0;
+				real equationsROut[1];
+				uint equationsVrefROut[1] = { 1 };
+				real equationsRIn[1];
+				uint equationsVrefRIn[1] = { 0 };
+				int fix_status[1] = { 0 };
+				fix_status[0] = equations.getReal(equationsVrefROut, 1, equationsROut);
+				if( (fix_status[0] == 3 || fix_status[0] == 4) )
 				{
-						logger.log(4, "Setup Experiment Failed:  %d", status);
+						logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
 						global_execution_continue = false;
-						break;
 				}
-                {
-                    /*int vref_[1] = {1};
-                    real in_[1] = {0.0};
-                    status = equations.setReal(vref_, 1, in_);
-                    if( (status == 3 || status == 4) )
-                    {
-                            logger.log(4, "setReal failed %d", status);
-                            global_execution_continue = false;
-                            break;
-                    }*/
-                }
-
-				status = equations.enterInitializationMode();
-                if( (status == 3 || status == 4) )
-                {
-                        logger.log(4, "enterInitializationMode failed %d", status);
-                        global_execution_continue = false;
-                        break;
-                }
-                {
-                    int vref_[1] = {2};
-                    string in_[1] = {"sphere"};
-                    status = equations.setString(vref_, 1, in_);
-                    if( (status == 3 || status == 4) )
-                    {
-                            logger.log(4, "setReal failed %d", status);
-                            global_execution_continue = false;
-                            break;
-                    }
-                }
-
-                {
-                    /*int vref_[3] = {3,4,5};
-                    real in_[3] = {0.0,0.0,0.0};
-                    status = equations.setReal(vref_, 3, in_);
-                    if( (status == 3 || status == 4) )
-                    {
-                            logger.log(4, "setReal failed %d", status);
-                            global_execution_continue = false;
-                            break;
-                    }*/
-                }
-
-                {
-                    /*int vref_[1] = {0};
-                    real in_[1] = {0.0};
-                    status = equations.setReal(vref_, 1, in_);
-                    if( (status == 3 || status == 4) )
-                    {
-                            logger.log(4, "setReal failed %d", status);
-                            global_execution_continue = false;
-                            break;
-                    }*/
-                }
-
-				status = equations.exitInitializationMode();
-                if( (status == 3 || status == 4) )
-                {
-                        logger.log(4, "exitInitializationMode failed %d", status);
-                        global_execution_continue = false;
-                        break;
-                }
-                break;
-			}
-			if( (global_execution_continue) )
-			{
-					FMI2Component fix_components[1] = { equations };
+				string data_headers[1] = { "{fmu}.equations.equationResult" };
+				DataWriterConfig dataWriter_configuration = dataWriter.writeHeader(data_headers);
+				? data_values[1] = { equationsROut[0] };
+				dataWriter.writeDataPoint(dataWriter_configuration, time, equationsROut[0]);
+				while( (global_execution_continue && time <= end) )
+				{
+					if( (fix_recovering) )
 					{
- 						real end = END_TIME - STEP_SIZE;
-						real time = START_TIME;
-						real fix_stepSize = 0.0;
-						real fix_recoveryStepSize = 0.0;
-						bool fix_recovering = false;
-						bool fix_global_status = false;
-						int fix_comp_index = 0;
-						real equationsROut[1];
-						uint equationsVrefROut[1] = { 1 };
-						real equationsRIn[1];
-						uint equationsVrefRIn[1] = { 0 };
-						int fix_status[1] = { 0 };
-						fix_status[0] = equations.getReal(equationsVrefROut, 1, equationsROut);
-						if( (fix_status[0] == 3 || fix_status[0] == 4) )
+							fix_stepSize = fix_recoveryStepSize;
+							fix_recovering = false;
+					}
+					else
+					{
+						fix_stepSize = STEP_SIZE;
+					}
+					equationsRIn[0] = equationsROut[0];
+					fix_status[0] = equations.setReal(equationsVrefRIn, 1, equationsRIn);
+					if( (fix_status[0] == 3 || fix_status[0] == 4) )
+					{
+							logger.log(4, "set failed %d ", fix_status[fix_comp_index]);
+							global_execution_continue = false;
+							break;
+					}
+					fix_status[0] = equations.doStep(time, fix_stepSize, true);
+					fix_global_status = true;
+					fix_comp_index = 0;
+					while( (fix_comp_index < 1) )
+					{
+						if( (fix_status[fix_comp_index] != 0) )
 						{
-								logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
-								global_execution_continue = false;
+								fix_global_status = false;
+								logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
+								break;
 						}
-						string data_headers[1] = { "{fmu}.equations.equationResult" };
-						DataWriterConfig dataWriter_configuration = dataWriter.writeHeader(data_headers);
-						? data_values[1] = { equationsROut[0] };
-						dataWriter.writeDataPoint(dataWriter_configuration, time, equationsROut[0]);
-						while( (global_execution_continue && time <= end) )
-						{
-							if( (fix_recovering) )
-							{
-									fix_stepSize = fix_recoveryStepSize;
-									fix_recovering = false;
-							}
-							else
-							{
-								fix_stepSize = STEP_SIZE;
-							}
-							equationsRIn[0] = equationsROut[0];
-							fix_status[0] = equations.setReal(equationsVrefRIn, 1, equationsRIn);
-							if( (fix_status[0] == 3 || fix_status[0] == 4) )
-							{
-									logger.log(4, "set failed %d ", fix_status[fix_comp_index]);
-									global_execution_continue = false;
-									break;
-							}
-							fix_status[0] = equations.doStep(time, fix_stepSize, false);
+						fix_comp_index = fix_comp_index + 1;
+					}
+					if( (!fix_global_status) )
+					{
+							logger.log(4, "Deviating from normal execution. Handling exceptions %d", 0);
 							fix_global_status = true;
 							fix_comp_index = 0;
+							bool discardObserved = false;
 							while( (fix_comp_index < 1) )
 							{
+								logger.log(4, "Fmu index %d, status code %d", fix_comp_index, fix_status[fix_comp_index]);
 								if( (fix_status[fix_comp_index] != 0) )
 								{
 										fix_global_status = false;
-										logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
+										if( (fix_status[fix_comp_index] == 5) )
+										{
+											logger.log(4, "doStep failed for %d PENDING not supported- status code ", fix_status[fix_comp_index]);
+										}
+										else
+										{
+											if( (fix_status[fix_comp_index] == 3 || fix_status[fix_comp_index] == 4) )
+											{
+												logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
+											}
+										}
+										if( (fix_status[fix_comp_index] == 2) )
+										{
+												logger.log(2, "Instance discarding %d", fix_comp_index);
+												discardObserved = true;
+										}
+										global_execution_continue = false;
 										break;
 								}
 								fix_comp_index = fix_comp_index + 1;
 							}
-							if( (!fix_global_status) )
+							if( (!global_execution_continue) )
 							{
-									logger.log(4, "Deviating from normal execution. Handling exceptions %d", 0);
-									fix_global_status = true;
-									fix_comp_index = 0;
-									bool discardObserved = false;
-									while( (fix_comp_index < 1) )
-									{
-										logger.log(4, "Fmu index %d, status code %d", fix_comp_index, fix_status[fix_comp_index]);
-										if( (fix_status[fix_comp_index] != 0) )
-										{
-												fix_global_status = false;
-												if( (fix_status[fix_comp_index] == 5) )
-												{
-													logger.log(4, "doStep failed for %d PENDING not supported- status code ", fix_status[fix_comp_index]);
-												}
-												else
-												{
-													if( (fix_status[fix_comp_index] == 3 || fix_status[fix_comp_index] == 4) )
-													{
-														logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
-													}
-												}
-												if( (fix_status[fix_comp_index] == 2) )
-												{
-														logger.log(2, "Instance discarding %d", fix_comp_index);
-														discardObserved = true;
-												}
-												global_execution_continue = false;
-												break;
-										}
-										fix_comp_index = fix_comp_index + 1;
-									}
-									if( (!global_execution_continue) )
-									{
-										break;
-									}
+								break;
 							}
-							if( (global_execution_continue && !fix_recovering) )
-							{
-									fix_status[0] = equations.getReal(equationsVrefROut, 1, equationsROut);
-									if( (fix_status[0] == 3 || fix_status[0] == 4) )
-									{
-											logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
-											global_execution_continue = false;
-											break;
-									}
-									time = time + fix_stepSize;
-									dataWriter.writeDataPoint(dataWriter_configuration, time, equationsROut[0]);
-							}
-						}
-						equations.terminate();
-						dataWriter.close();
 					}
+					if( (global_execution_continue && !fix_recovering) )
+					{
+							fix_status[0] = equations.getReal(equationsVrefROut, 1, equationsROut);
+							if( (fix_status[0] == 3 || fix_status[0] == 4) )
+							{
+									logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
+									global_execution_continue = false;
+									break;
+							}
+							time = time + fix_stepSize;
+							dataWriter.writeDataPoint(dataWriter_configuration, time, equationsROut[0]);
+					}
+				}
+				equations.terminate();
+				dataWriter.close();
 			}
 	}
 	fmu.freeInstance(equations);
