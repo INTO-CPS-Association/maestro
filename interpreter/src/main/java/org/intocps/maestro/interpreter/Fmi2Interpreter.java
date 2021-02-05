@@ -7,11 +7,11 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.intocps.fmi.*;
-import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
+import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -726,7 +727,7 @@ public class Fmi2Interpreter {
 
         try {
             long startExecTime = System.nanoTime();
-            final IFmu fmu = Factory.create(new File(path));
+            final IFmu fmu = FmuFactory.create(null, URI.create(path));
 
             fmu.load();
 
@@ -739,6 +740,9 @@ public class Fmi2Interpreter {
 
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {
 
+            e.printStackTrace();
+            return new NullValue();
+        } catch (Exception e) {
             e.printStackTrace();
             return new NullValue();
         }

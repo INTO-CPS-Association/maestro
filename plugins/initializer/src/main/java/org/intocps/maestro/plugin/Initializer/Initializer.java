@@ -12,6 +12,7 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.*;
+import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.LongUtils;
 import org.intocps.maestro.plugin.Initializer.Spec.StatementGeneratorContainer;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
@@ -31,6 +32,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment.Variable;
 
@@ -61,6 +63,16 @@ public class Initializer implements IMaestroExpansionPlugin {
     public Initializer(TopologicalPlugin topologicalPlugin, InitializationPrologQuery initializationPrologQuery) {
         this.topologicalPlugin = topologicalPlugin;
         this.initializationPrologQuery = initializationPrologQuery;
+    }
+
+    private static Object FindParameterOrDefault(LexIdentifier compName, ModelDescription.ScalarVariable sv, List<ModelParameter> modelParameters) {
+        Optional<ModelParameter> parameterValue = modelParameters.stream()
+                .filter(x -> x.variable.instance.instanceName.equals(compName.getText()) && x.variable.variable.equals(sv.name)).findFirst();
+        if (parameterValue.isPresent()) {
+            return parameterValue.get().value;
+        } else {
+            return sv.type.start;
+        }
     }
 
     @Override
@@ -131,9 +143,79 @@ public class Initializer implements IMaestroExpansionPlugin {
         var inputOutMapping = createInputOutputMapping(inputToOutputRelations, env);
         sc.setInputOutputMapping(inputOutMapping);
 
+        // Set all unconnected inputs
+        List<PStm> setUnconnectedInputsStm = new ArrayList<>();
+        Map<String, List<ModelDescription.ScalarVariable>> instanceToUnconnectedInputs = new HashMap<>();
+        for (LexIdentifier compName : knownComponentNames) {
+            ComponentInfo instanceByLexName = env.getInstanceByLexName(compName.getText());
+            try {
+                List<ModelDescription.ScalarVariable> scalarVariables = instanceByLexName.getModelDescription().getScalarVariables();
+                // I want all the input scalar variables that are not connected to anything
+                Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>> collect =
+                        scalarVariables.stream().filter(x -> x.causality == ModelDescription.Causality.Input).collect(groupingBy(x -> x.type.type));
+                for (Map.Entry<ModelDescription.Types, List<ModelDescription.ScalarVariable>> typeToSvsEntry : collect.entrySet()) {
+                    ModelDescription.Types svType = typeToSvsEntry.getKey();
+                    List<ModelDescription.ScalarVariable> svs = typeToSvsEntry.getValue();
+                    // Sort the svs according to valuereference
+                    svs.sort(Comparator.comparingLong(a -> a.valueReference));
+
+                    switch (svType) {
+                        case Boolean:
+                            setUnconnectedInputsStm.addAll(sc
+                                    .setBooleansStm(compName.getText(), svs.stream().mapToLong(sv -> sv.getValueReference()).toArray(),
+                                            svs.stream().map(sv -> {
+                                                var x = FindParameterOrDefault(compName, sv, modelParameters);
+                                                return (boolean) x;
+                                            }).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY)));
+                            break;
+                        case Real:
+                            setUnconnectedInputsStm.addAll(sc
+                                    .setRealsStm(compName.getText(), svs.stream().mapToLong(sv -> sv.getValueReference()).toArray(),
+                                            svs.stream().mapToDouble(sv -> {
+                                                Object x = FindParameterOrDefault(compName, sv, modelParameters);
+                                                if (x instanceof Integer) {
+                                                    return ((Integer) x).doubleValue();
+                                                } else {
+                                                    return (double) x;
+                                                }
+                                            }).toArray()));
+                            break;
+                        case Integer:
+                            setUnconnectedInputsStm.addAll(sc
+                                    .setIntegersStm(compName.getText(), svs.stream().mapToLong(sv -> sv.getValueReference()).toArray(),
+                                            svs.stream().mapToInt(sv -> {
+                                                var x = FindParameterOrDefault(compName, sv, modelParameters);
+                                                return (int) x;
+                                            }).toArray()));
+                            break;
+                        case String:
+                            setUnconnectedInputsStm.addAll(sc
+                                    .setStringsStm(compName.getText(), svs.stream().mapToLong(sv -> sv.getValueReference()).toArray(),
+                                            svs.stream().map(sv -> {
+                                                var x = FindParameterOrDefault(compName, sv, modelParameters);
+                                                return (String) x;
+                                            }).toArray(String[]::new)));
+                            break;
+                        case Enumeration:
+                            throw new ExpandException("Enumeration not supported");
+                    }
+                }
+            } catch (Exception e) {
+                throw new ExpandException("Initializer failed to read scalarvariables", e);
+            }
+        }
+
+        if (setUnconnectedInputsStm.size() > 0) {
+            statements.addAll(setUnconnectedInputsStm);
+        }
+
+
         //var optimizedOrder = optimizeInstantiationOrder(instantiationOrder);
 
+        // // All inputs
+
         statements.addAll(initializeInterconnectedPorts(env, sc, instantiationOrder));
+
 
         //Exit initialization Mode
         knownComponentNames.forEach(comp -> {
@@ -227,7 +309,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
                 inputToOutputMapping = new HashMap<>();
 
-        var relationsPerInstance = relations.stream().collect(Collectors.groupingBy(o -> o.getSource().scalarVariable.getInstance()));
+        var relationsPerInstance = relations.stream().collect(groupingBy(o -> o.getSource().scalarVariable.getInstance()));
 
         relationsPerInstance.forEach((instance, rel) -> {
             ComponentInfo infoSource = env.getUnitInfo(instance, Framework.FMI2);
@@ -273,7 +355,7 @@ public class Initializer implements IMaestroExpansionPlugin {
             ComponentInfo info = env.getUnitInfo(comp, Framework.FMI2);
             try {
                 var variablesToInitialize =
-                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(Collectors.groupingBy(o -> o.getType().type));
+                        info.modelDescription.getScalarVariables().stream().filter(predicate).collect(groupingBy(o -> o.getType().type));
                 if (!variablesToInitialize.isEmpty()) {
                     variablesToInitialize.forEach((type, variables) -> {
 
@@ -305,7 +387,7 @@ public class Initializer implements IMaestroExpansionPlugin {
                     containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
                             .map(ALocalVariableStm::getDeclaration).filter(decl -> decl.getName().equals(name) && decl.getInitializer() != null)
                             .findFirst();
-            
+
             if (compDecl.isEmpty()) {
                 throw new ExpandException("Could not find names for comps");
             }
@@ -438,6 +520,7 @@ public class Initializer implements IMaestroExpansionPlugin {
             return list;
         }
     }
+
 }
 
 

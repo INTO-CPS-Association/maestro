@@ -22,6 +22,8 @@ public class Fmi2SimulationEnvironmentConfiguration {
 
     public Map<String, List<String>> variablesToLog;
 
+    @JsonProperty("faultInjectConfigurationPath")
+    public String faultInjectConfigurationPath;
     @JsonProperty("faultInjectInstances")
     public Map<String, String> faultInjectInstances;
 

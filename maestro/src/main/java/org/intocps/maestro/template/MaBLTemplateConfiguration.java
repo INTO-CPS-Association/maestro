@@ -19,8 +19,13 @@ public class MaBLTemplateConfiguration {
     private Pair<Boolean, String> initialize;
     private boolean loggingOn = false;
     private boolean visible = false;
+    private String faultInjectionConfigurationPath;
 
     private MaBLTemplateConfiguration() {
+    }
+
+    public String getFaultInjectionConfigurationPath() {
+        return faultInjectionConfigurationPath;
     }
 
     public Fmi2SimulationEnvironment getSimulationEnvironment() {
@@ -145,6 +150,7 @@ public class MaBLTemplateConfiguration {
             config.simulationEnvironment = this.simulationEnvironment;
             config.loggingOn = this.loggingOn;
             config.visible = this.visible;
+            config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
             return config;
         }
     }
