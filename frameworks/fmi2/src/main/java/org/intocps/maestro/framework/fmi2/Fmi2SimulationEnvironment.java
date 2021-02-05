@@ -33,6 +33,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
     Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
+    private String faultInjectionConfigurationPath;
 
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
@@ -141,6 +142,14 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         List<ModelConnection> connections = buildConnections(msg.connections);
         HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
+
+        if (msg.faultInjectConfigurationPath != null && msg.faultInjectConfigurationPath.length() > 0) {
+            if ((new File(msg.faultInjectConfigurationPath).exists())) {
+                this.faultInjectionConfigurationPath = msg.faultInjectConfigurationPath;
+            } else {
+                throw new EnvironmentException("Failed to find the fault injection configuration file: " + msg.faultInjectConfigurationPath);
+            }
+        }
 
         // Build map from InstanceName to InstanceComponentInfo
         Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
@@ -389,6 +398,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
 
     public ModelDescription getModelDescription(String name) {
         return this.fmuKeyToModelDescription.get(name);
+    }
+
+    public String getFaultInjectionConfigurationPath() {
+        return this.faultInjectionConfigurationPath;
     }
 
     public static class Relation implements FrameworkVariableInfo, IRelation {

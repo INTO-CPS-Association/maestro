@@ -48,6 +48,7 @@ public class MaBLTemplateGenerator {
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
+    public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -121,7 +122,7 @@ public class MaBLTemplateGenerator {
             statements.add(ficomp);
             AIfStm stm = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
                     newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInjectLexName)),
-                            newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_NAME), newAIdentifier("faultInject"),
+                            newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
                                     Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
                                             newAStringLiteralExp(faultInject.get().constraintId)))), checkNullAndStop(faultInjectLexName)), null);
             statements.add(stm);
@@ -158,7 +159,8 @@ public class MaBLTemplateGenerator {
         boolean faultInject =
                 unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
         if (faultInject) {
-            stmMaintainer.add(createLoadStatement(FAULT_INJECT_MODULE_NAME));
+            stmMaintainer.add(createLoadStatement(FAULT_INJECT_MODULE_NAME,
+                    Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath()))));
         }
 
         // Create FMU load statements
@@ -235,7 +237,7 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(unloadFmuStatements);
         stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
         if (faultInject) {
-            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_NAME)));
+            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
@@ -361,11 +363,19 @@ public class MaBLTemplateGenerator {
                 .map(x -> function.apply(x)).collect(Collectors.toList());
     }
 
-    private static PStm createLoadStatement(String moduleName) {
+    private static PStm createLoadStatement(String moduleName, List<PExp> pexp) {
+        List<PExp> arguments = new ArrayList<>();
+        arguments.add(MableAstFactory.newAStringLiteralExp(moduleName));
+        if (pexp != null && pexp.size() > 0) {
+            arguments.addAll(pexp);
+        }
         return MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(MableAstFactory.newAIdentifier(StringUtils.uncapitalize(moduleName)),
-                        MableAstFactory.newANameType(moduleName), MableAstFactory
-                                .newAExpInitializer(MableAstFactory.newALoadExp(Arrays.asList(MableAstFactory.newAStringLiteralExp(moduleName))))));
+                        MableAstFactory.newANameType(moduleName), MableAstFactory.newAExpInitializer(MableAstFactory.newALoadExp(arguments))));
+    }
+
+    private static PStm createLoadStatement(String moduleName) {
+        return createLoadStatement(moduleName, null);
     }
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
