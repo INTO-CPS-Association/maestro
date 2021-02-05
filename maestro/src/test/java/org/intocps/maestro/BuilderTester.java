@@ -76,7 +76,7 @@ public class BuilderTester {
         ComponentVariableFmi2Api tank = tankFMU.instantiate("tank");
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
-        tank.setupExperiment(0d, 10d, null);
+
  /*
         IMablScope scope1 = dynamicScope.getActiveScope();
         for (int i = 0; i < 4; i++) {

@@ -7,9 +7,7 @@ import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 
 import java.util.Arrays;
 
@@ -62,27 +60,6 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         aMablFmi2ComponentAPI = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope,
                 newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
         scope.add(var);
-
-        if (builder.getSettings().fmiErrorHandlingEnabled) {
-
-            ScopeFmi2Api thenScope =
-                    (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(aMablFmi2ComponentAPI.getReferenceExp().clone(), newNullExp())))
-                            .enterThen();
-
-
-            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
-
-            builder.getLogger().error(thenScope, "Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix);
-
-            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder.collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast())
-                    .forEach(p -> {
-                        thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
-                        thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
-                    });
-
-            thenScope.add(newBreak());
-            thenScope.leave();
-        }
 
         return aMablFmi2ComponentAPI;
     }
