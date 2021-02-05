@@ -13,7 +13,7 @@ import Math;
 	Logger logger = load("Logger");
 	DataWriter dataWriter = load("DataWriter");
 	BooleanLogic booleanLogic = load("BooleanLogic");
-	FMI2 fmu = load("FMI2", "{afb6bcd7-7160-4881-a8ec-9ba5add8b9d8}", "file:/Users/au443759/source/into-cps-association/maestro/maestro/src/test/resources/188/GATestController.fmu");
+	FMI2 fmu = load("FMI2", "{afb6bcd7-7160-4881-a8ec-9ba5add8b9d8}", "target/test-classes/188/GATestController.fmu");
 	if( ((fmu == null)) )
 	{
 		global_execution_continue = false;
