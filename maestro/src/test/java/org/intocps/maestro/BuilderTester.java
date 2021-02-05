@@ -12,6 +12,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -32,9 +33,6 @@ import java.util.Collections;
 import java.util.Map;
 
 public class BuilderTester {
-    public <T extends Ext> T loadModule(String name, Fmi2Builder.Variable args) {
-        return null;
-    }
 
     @Test
     public void wt() throws Exception {
@@ -47,7 +45,7 @@ public class BuilderTester {
 
         MablApiBuilder builder = new MablApiBuilder();
 
-        Fmi2Builder.RuntimeModule<PStm> logger = builder.loadRuntimeModule("Logger");
+       /* Fmi2Builder.RuntimeModule<PStm> logger = builder.loadRuntimeModule("Logger");
         Fmi2Builder.RuntimeFunction func =
                 builder.getFunctionBuilder().setName("log").addArgument("msg", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
                         .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Void).build();
@@ -59,8 +57,13 @@ public class BuilderTester {
 
         logger.initialize(func, func2);
         logger.call(func, "ddd");
+
+        */
+
+        LoggerFmi2Api logger = builder.getLogger();
+
         Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().store(6);
-        Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
+        // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
@@ -99,6 +102,8 @@ public class BuilderTester {
         Fmi2Builder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
         tank.step(var, step);
         //Fmi2Builder.StateVariable<PStm> s = tank.getState();
+
+        logger.warn("Something is wrong %f -- %f. Fmu %s, Instance %s", 1.3, step, controllerFMU, controller);
         //s.set();
         //s.destroy();
 
@@ -113,7 +118,7 @@ public class BuilderTester {
 
         controllerFMU.unload();
         tankFMU.unload();
-        logger.destroy();
+        // logger.destroy();
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         String test = PrettyPrinter.print(program);

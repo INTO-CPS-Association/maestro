@@ -11,6 +11,7 @@ public class FunctionBuilder {
     String name;
     Fmi2Builder.RuntimeFunction.FunctionType returnType;
     List<Map.Entry<String, Fmi2Builder.RuntimeFunction.FunctionType>> args = new Vector<>();
+    boolean usingVargs = false;
 
     public FunctionBuilder setName(String name) {
         this.name = name;
@@ -30,6 +31,11 @@ public class FunctionBuilder {
     public FunctionBuilder addArgument(String name, Fmi2Builder.RuntimeFunction.FunctionType.Type type) {
         Fmi2Builder.RuntimeFunction.FunctionType t = new Fmi2Builder.RuntimeFunction.FunctionType(type);
         args.add(Map.entry(name, t));
+        return this;
+    }
+
+    public FunctionBuilder useVargs() {
+        this.usingVargs = true;
         return this;
     }
 
@@ -60,6 +66,11 @@ public class FunctionBuilder {
             @Override
             public FunctionType getReturnType() {
                 return returnType;
+            }
+
+            @Override
+            public boolean usingVargs() {
+                return usingVargs;
             }
         };
 

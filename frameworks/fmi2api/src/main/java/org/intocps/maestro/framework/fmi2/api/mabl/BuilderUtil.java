@@ -5,6 +5,8 @@ import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableUtil;
 import org.intocps.maestro.typechecker.TypeComparator;
@@ -81,8 +83,18 @@ public class BuilderUtil {
                 expressions.add(newABoolLiteralExp((Boolean) obj));
             } else if (obj instanceof String) {
                 expressions.add(newAStringLiteralExp((String) obj));
+            } else if (obj instanceof FmuVariableFmi2Api) {
+                expressions.add(newAStringLiteralExp(((FmuVariableFmi2Api) obj).getName()));
+            } else if (obj instanceof ComponentVariableFmi2Api) {
+                expressions.add(newAStringLiteralExp(((ComponentVariableFmi2Api) obj).getName()));
             } else if (obj instanceof VariableFmi2Api) {
                 expressions.add(VariableUtil.getAsExp((VariableFmi2Api) obj));
+            } else if (obj instanceof Object[]) {
+                //should check if this is suppose to be vargs
+                Object[] arr = (Object[]) obj;
+                for (Object o : arr) {
+                    expressions.addAll(toExp(o));
+                }
             }
         }
         return expressions;

@@ -12,6 +12,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -34,6 +35,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private MathBuilderFmi2Api mathBuilderApi;
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
+    private LoggerFmi2Api runtimeLogger;
 
     public MablApiBuilder() {
         rootScope = new ScopeFmi2Api(this);
@@ -190,6 +192,39 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
+        if (runtimeLogger != null) {
+            //attempt a syntactic comparison to find the load in the clone
+            VariableFmi2Api loggerVar = (VariableFmi2Api) runtimeLogger.module;
+            block.apply(new DepthFirstAnalysisAdaptor() {
+
+
+                @Override
+                public void defaultInPStm(PStm node) throws AnalysisException {
+                    if (node.equals(loggerVar.getDeclaringStm())) {
+                        if (node.parent() instanceof ABlockStm) {
+                            //this is the scope where the logger is loaded. Check for unload
+                            LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
+                            boolean unloadFound = false;
+                            for (int i = body.indexOf(node); i < body.size(); i++) {
+                                PStm stm = body.get(i);
+                                //newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone())
+                                if (stm instanceof AExpressionStm && ((AExpressionStm) stm).getExp() instanceof AUnloadExp) {
+                                    AUnloadExp unload = (AUnloadExp) ((AExpressionStm) stm).getExp();
+                                    if (!unload.getArgs().isEmpty() && unload.getArgs().get(0).equals(loggerVar.getReferenceExp())) {
+                                        unloadFound = true;
+                                    }
+                                }
+                            }
+                            if (!unloadFound) {
+                                body.add(newExpressionStm(newUnloadExp(Collections.singletonList(loggerVar.getReferenceExp().clone()))));
+                            }
+                        }
+                    }
+                }
+
+            });
+        }
+
         //Post cleaning: Remove empty block statements
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
@@ -227,6 +262,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     }
 
+
     public FunctionBuilder getFunctionBuilder() {
         return new FunctionBuilder();
     }
@@ -238,5 +274,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             this.booleanBuilderApi = new BooleanBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
         }
         return this.booleanBuilderApi;
+    }
+
+    public LoggerFmi2Api getLogger() {
+        if (this.runtimeLogger == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Logger");
+            this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
+        }
+
+        return this.runtimeLogger;
     }
 }
