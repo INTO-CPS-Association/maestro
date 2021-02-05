@@ -9,7 +9,7 @@
     ]
   },
   "fmus": {
-    "{fmu}": "file:/Users/au443759/source/into-cps-association/maestro/maestro/src/test/resources/188/GATestController.fmu"
+    "{fmu}": "target/test-classes/188/GATestController.fmu"
   },
   "parameters": {
     "{fmu}.equations.equationSelection": "sphere",
