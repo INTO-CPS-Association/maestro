@@ -1,4 +1,4 @@
-package org.intocps.maestro.framework.core;
+package org.intocps.maestro.framework.fmi2;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -8,6 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Full simulation configuration: initialize and simulate configuration.
+ *
+ * @deprecated This method is no longer to be used for new code. Currently only used by tests.
+ * Use org.intocps.maestro.cli.MaestroV1SimulationConfiguration instead.
+ * This is the full simulation configuration containing both initialize and simulate.
+ */
+@Deprecated(since = "1.0", forRemoval = true)
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Fmi2EnvironmentConfiguration {

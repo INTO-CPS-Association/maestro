@@ -138,6 +138,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public Fmi2Builder.StringVariable<PStm> store(String value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
     public BooleanVariableFmi2Api store(boolean value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
@@ -149,6 +154,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     @Override
     public DoubleVariableFmi2Api store(String prefix, double value) {
+        return store(() -> builder.getNameGenerator().getName(prefix), value);
+    }
+
+    @Override
+    public Fmi2Builder.StringVariable<PStm> store(String prefix, String value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
@@ -202,6 +212,15 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
         add(var);
         return new IntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
+    protected StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
+        String name = nameProvider.get();
+        AStringLiteralExp initial = newAStringLiteralExp(value);
+        PStm var = newVariable(name, newAStringPrimitiveType(), initial);
+        add(var);
+        return new StringVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
     }
 

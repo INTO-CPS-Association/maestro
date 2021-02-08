@@ -7,7 +7,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.*;
 import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.config.ModelConnection;
+import org.intocps.orchestration.coe.config.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

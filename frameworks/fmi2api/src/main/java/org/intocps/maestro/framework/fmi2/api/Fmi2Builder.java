@@ -181,6 +181,7 @@ public interface Fmi2Builder<S, B, E> {
          */
         DoubleVariable<T> store(double value);
 
+        StringVariable<T> store(String value);
 
         BoolVariable<T> store(boolean value);
 
@@ -193,6 +194,8 @@ public interface Fmi2Builder<S, B, E> {
          * @return
          */
         DoubleVariable<T> store(String name, double value);
+
+        StringVariable<T> store(String name, String value);
 
         BoolVariable<T> store(String name, boolean value);
 
