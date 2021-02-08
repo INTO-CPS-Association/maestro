@@ -547,11 +547,22 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
+    public <V> void set(Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+        this.set(new PortVariableMapImpl(Map.of(port, value)));
+    }
+
+    @Override
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+        this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
+    }
+
+    @Override
     public void set(Fmi2Builder.Port port, Fmi2Builder.Value value) {
         PortValueMap map = new PortValueMapImpl();
         map.put(port, value);
         set(map);
     }
+
 
     @Override
     public <V> void set(PortVariableMap<PStm, V> value) {

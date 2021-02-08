@@ -582,6 +582,10 @@ public interface Fmi2Builder<S, B, E> {
 
         <V> void set(Port port, Value<V> value);
 
+        <V> void set(Port port, VariableFmi2Api<V> value);
+
+        <V> void set(Scope<T> scope, Port port, VariableFmi2Api<V> value);
+
         <V> void set(PortVariableMap<T, V> value);
 
         /**
