@@ -181,6 +181,7 @@ public interface Fmi2Builder<S, B, E> {
          */
         DoubleVariable<T> store(double value);
 
+        StringVariable<T> store(String value);
 
         BoolVariable<T> store(boolean value);
 
@@ -193,6 +194,8 @@ public interface Fmi2Builder<S, B, E> {
          * @return
          */
         DoubleVariable<T> store(String name, double value);
+
+        StringVariable<T> store(String name, String value);
 
         BoolVariable<T> store(String name, boolean value);
 
@@ -581,6 +584,10 @@ public interface Fmi2Builder<S, B, E> {
         <V> void set(PortValueMap<V> value);
 
         <V> void set(Port port, Value<V> value);
+
+        <V> void set(Port port, VariableFmi2Api<V> value);
+
+        <V> void set(Scope<T> scope, Port port, VariableFmi2Api<V> value);
 
         <V> void set(PortVariableMap<T, V> value);
 
