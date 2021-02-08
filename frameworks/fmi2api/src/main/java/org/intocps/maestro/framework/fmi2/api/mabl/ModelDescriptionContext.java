@@ -12,7 +12,6 @@ public class ModelDescriptionContext {
     private final ModelDescription modelDescription;
     public Map<String, ModelDescription.ScalarVariable> nameToSv = new HashMap<>();
     public Map<Long, ModelDescription.ScalarVariable> valRefToSv = new HashMap<>();
-
     public ModelDescriptionContext(
             ModelDescription modelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         this.modelDescription = modelDescription;
@@ -20,5 +19,9 @@ public class ModelDescriptionContext {
             this.nameToSv.put(sv.name, sv);
             this.valRefToSv.put(sv.valueReference, sv);
         });
+    }
+
+    public ModelDescription getModelDescription() {
+        return modelDescription;
     }
 }

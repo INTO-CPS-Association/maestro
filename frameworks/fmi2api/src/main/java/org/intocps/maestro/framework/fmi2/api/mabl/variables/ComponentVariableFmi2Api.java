@@ -69,6 +69,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
     }
 
+    public ModelDescription getModelDescription() {
+        return modelDescriptionContext.getModelDescription();
+    }
+
     public List<PortFmi2Api> getVariablesToLog() {
         return this.getPorts(this.variabesToLog.toArray(new String[0]));
     }
