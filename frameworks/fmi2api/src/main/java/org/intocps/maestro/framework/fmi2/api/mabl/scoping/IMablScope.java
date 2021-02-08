@@ -2,10 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.net.URI;
@@ -51,6 +48,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     IntVariableFmi2Api store(int value);
 
     @Override
+    StringVariableFmi2Api store(String value);
+
+    @Override
     DoubleVariableFmi2Api store(String name, double value);
 
     @Override
@@ -58,6 +58,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     IntVariableFmi2Api store(String name, int value);
+
+    @Override
+    StringVariableFmi2Api store(String name, String value);
 
     @Override
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);

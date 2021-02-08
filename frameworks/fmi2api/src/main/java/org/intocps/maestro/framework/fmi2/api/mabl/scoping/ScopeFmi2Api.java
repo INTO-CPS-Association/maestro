@@ -138,7 +138,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public Fmi2Builder.StringVariable<PStm> store(String value) {
+    public StringVariableFmi2Api store(String value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
 
@@ -158,7 +158,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public Fmi2Builder.StringVariable<PStm> store(String prefix, String value) {
+    public StringVariableFmi2Api store(String prefix, String value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
