@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer.instructions
+package org.intocps.maestro.plugin.initializer.instructions
 
 interface CoSimInstruction {
     fun perform()

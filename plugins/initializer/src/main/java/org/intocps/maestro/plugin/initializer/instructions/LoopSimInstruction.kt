@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer.instructions
+package org.intocps.maestro.plugin.initializer.instructions
 
 import org.intocps.maestro.ast.node.PStm
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
@@ -23,7 +23,7 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
         var algebraicLoop = scope.store("stabilisation_loop", 5) as IntVariableFmi2Api;
         var basis = scope.store(0) as IntVariableFmi2Api;
 
-        var convergenceReached = scope.store("hasConverged", false);
+        var convergenceReached : BooleanVariableFmi2Api = scope.store("hasConverged", false) as BooleanVariableFmi2Api;
         var stabilisationScope = scope
                 .enterWhile(convergenceReached.toPredicate().and(algebraicLoop.toMath().greaterThan(basis.toMath())));
 
@@ -38,7 +38,8 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
                             math.checkConvergence(oldVariable, newVariable, absoluteTolerance, relativeTolerance)
                         }
             }
-            //convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
+            convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
+
             var ifScope = scope.enterIf(convergenceReached.toPredicate().not()).enterThen();
             algebraicLoop.decrement()
 

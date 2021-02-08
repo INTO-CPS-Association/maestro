@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer.Spec;
+package org.intocps.maestro.plugin.initializer.Spec;
 
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 

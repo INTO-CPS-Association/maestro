@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer;
+package org.intocps.maestro.plugin.initializer;
 
 import java.util.function.Predicate;
 
