@@ -7,7 +7,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 
-import static org.intocps.maestro.ast.MableAstFactory.newARealNumericPrimitiveType;
+import static org.intocps.maestro.ast.MableAstFactory.newABoleanPrimitiveType;
 
 public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValue> implements Fmi2Builder.BoolVariable<PStm> {
 
@@ -15,7 +15,7 @@ public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BoolValu
 
     public BooleanVariableFmi2Api(PStm declaration, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
-        super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
+        super(declaration, newABoleanPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
         this.predicate = new PredicateFmi2Api(referenceExp);
     }
 

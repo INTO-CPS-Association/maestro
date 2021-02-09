@@ -11,8 +11,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleValueFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.newARealNumericPrimitiveType;
 
-public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleValue> implements Fmi2Builder.DoubleVariable<PStm> {
-    public DoubleVariableFmi2Api(PStm declaration, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+public class DoubleVariableFmi2Api2 extends VariableFmi2Api<Fmi2Builder.DoubleValue> implements Fmi2Builder.DoubleVariable<PStm> {
+    public DoubleVariableFmi2Api2(PStm declaration, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
         super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
     }
@@ -41,7 +41,7 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleVal
     }
 
     @Override
-    public DoubleVariableFmi2Api clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
-        return new DoubleVariableFmi2Api(declaration, declaredScope, dynamicScope, designator, referenceExp);
+    public DoubleVariableFmi2Api2 clone(PStm declaration, IMablScope declaredScope, PStateDesignator designator, PExp referenceExp) {
+        return new DoubleVariableFmi2Api2(declaration, declaredScope, dynamicScope, designator, referenceExp);
     }
 }

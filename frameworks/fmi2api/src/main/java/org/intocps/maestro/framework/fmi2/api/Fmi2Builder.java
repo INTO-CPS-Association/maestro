@@ -267,16 +267,16 @@ public interface Fmi2Builder<S, B, E> {
 
     interface LogicBuilder {
 
-        Predicate isEqual(Port a, Port b);
-
-
-        <T> Predicate isLess(T a, T b);
-
-        <T> Predicate isLessOrEqualTo(Variable a, Variable b);
-
-        Predicate isGreater(Value<Double> a, double b);
-
-        <T> Predicate fromValue(Value<T> value);
+        //        Predicate isEqual(Port a, Port b);
+        //
+        //
+        //        <T> Predicate isLess(T a, T b);
+        //
+        //        <T> Predicate isLessOrEqualTo(Variable a, Variable b);
+        //
+        //        Predicate isGreater(Value<Double> a, double b);
+        //
+        //        <T> Predicate fromValue(Value<T> value);
 
         // Predicate fromExternalFunction(String name, Value... args);
 
@@ -372,7 +372,7 @@ public interface Fmi2Builder<S, B, E> {
     }
 
 
-    interface IntVariable<T> extends Variable<T, IntValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
+    interface IntVariable<T> extends Variable<T, IntValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
         void decrement();
 
         void increment();
@@ -388,7 +388,10 @@ public interface Fmi2Builder<S, B, E> {
 
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesTypedReferenceExp, NumericExpressionValue {
+    interface NumericTypedReferenceExp extends ProvidesTypedReferenceExp {
+    }
+
+    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
 
         void set(Double value);
     }
@@ -654,6 +657,9 @@ public interface Fmi2Builder<S, B, E> {
 
         interface PortValueMap<V> extends Map<Port, Value<V>> {
         }
+
+        interface PortExpressionValueMap extends Map<Port, ExpressionValue> {
+        }
     }
 
     interface Variable<T, V> {
@@ -671,7 +677,11 @@ public interface Fmi2Builder<S, B, E> {
         Scope<T> getDeclaredScope();
     }
 
-    public interface NumericExpressionValue extends ProvidesTypedReferenceExp {
+    public interface ExpressionValue extends ProvidesTypedReferenceExp {
+    }
+
+    public interface NumericExpressionValue extends ExpressionValue, NumericTypedReferenceExp {
 
     }
+
 }

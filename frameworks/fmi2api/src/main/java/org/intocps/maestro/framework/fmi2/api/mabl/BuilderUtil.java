@@ -21,8 +21,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class BuilderUtil {
     final static Logger logger = LoggerFactory.getLogger(BuilderUtil.class);
 
-    public static List<PStm> createTypeConvertingAssignment(MablApiBuilder builder, Fmi2Builder.Scope<PStm> scope, PStateDesignator designator,
-            PExp value, PType valueType, PType targetType) {
+    public static List<PStm> createTypeConvertingAssignment(PStateDesignator designator, PExp value, PType valueType, PType targetType) {
 
         List<PStm> statements = new Vector<>();
         TypeComparator typeComparator = new TypeComparator();
@@ -65,6 +64,12 @@ public class BuilderUtil {
 
         }
         return statements;
+    }
+
+    public static List<PStm> createTypeConvertingAssignment(MablApiBuilder builder, Fmi2Builder.Scope<PStm> scope, PStateDesignator designator,
+            PExp value, PType valueType, PType targetType) {
+
+        return createTypeConvertingAssignment(designator, value, valueType, targetType);
     }
 
     public static List<PExp> toExp(Object... args) {
