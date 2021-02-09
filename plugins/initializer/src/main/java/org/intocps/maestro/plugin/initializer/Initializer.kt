@@ -36,6 +36,7 @@ import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.Initializatio
 import org.intocps.orchestration.coe.config.InvalidVariableStringException
 import org.intocps.orchestration.coe.config.ModelConnection
 import org.intocps.orchestration.coe.config.ModelParameter
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -56,7 +57,7 @@ class Initializer : IMaestroExpansionPlugin {
         newAVoidType()
     )
 
-    //private val portsAlreadySet = HashMap<ModelInstance, HashSet<ScalarVariable>>()
+    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<ScalarVariable>>()
     private val topologicalPlugin: TopologicalPlugin
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
@@ -148,24 +149,6 @@ class Initializer : IMaestroExpansionPlugin {
             logger.debug("Enter initialization Mode")
             fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
 
-            for (comp in fmuInstances.values) {
-                try {
-                    val scalarVariables = comp.modelDescription.scalarVariables
-                    val inputsScalars =
-                        scalarVariables.filter { x -> x.causality == Causality.Input }
-
-                    val ports =
-                        comp.getPorts(*inputsScalars.stream().mapToInt { sv -> Math.toIntExact(sv.getValueReference()) }
-                            .toArray())
-
-                    for (port in ports) {
-                        setParameterOnPort(port, comp)
-                    }
-                } catch (e: Exception) {
-                    throw ExpandException("Initializer failed to read scalarvariables", e)
-                }
-            }
-
             val instructions = instantiationOrder.map { i ->
                 createInitInstructions(
                     i.toList(),
@@ -177,15 +160,44 @@ class Initializer : IMaestroExpansionPlugin {
             }
             instructions.forEach { i -> i.perform() }
 
+            setRemainingInputs(fmuInstances)
+
             //Exit initialization Mode
             fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
             val algorithm = builder.buildRaw() as ABlockStm
             algorithm.apply(ToParExp())
+
             println(PrettyPrinter.print(algorithm))
             algorithm.body
         } catch (e: Exception) {
             throw ExpandException("Internal error: ", e)
         }
+    }
+
+    private fun setRemainingInputs(fmuInstances: MutableMap<String, ComponentVariableFmi2Api>) {
+        for (comp in fmuInstances.values) {
+            try {
+                val scalarVariables = comp.modelDescription.scalarVariables
+                val inputsScalars =
+                    scalarVariables.filter { x ->
+                        x.causality == Causality.Input && !portSet(comp, x)
+                    }
+
+                val ports =
+                    comp.getPorts(*inputsScalars.stream().mapToInt { sv -> Math.toIntExact(sv.getValueReference()) }
+                        .toArray())
+
+                for (port in ports) {
+                    setParameterOnPort(port, comp)
+                }
+            } catch (e: Exception) {
+                throw ExpandException("Initializer failed to read scalarvariables", e)
+            }
+        }
+    }
+
+    private fun portSet(comp: ComponentVariableFmi2Api, x: ScalarVariable?): Boolean {
+        return if (portsAlreadySet.containsKey(comp)) portsAlreadySet.getValue(comp).contains(x) else false
     }
 
     private fun setParameterOnPort(
@@ -207,6 +219,15 @@ class Initializer : IMaestroExpansionPlugin {
             Types.String -> comp.set(port, StringExpressionValue.of(value as String))
             Types.Enumeration -> throw ExpandException("Enumeration not supported")
             else -> throw ExpandException("Not known type")
+        }
+        addToPortsAlreadySet(comp, port.scalarVariable)
+    }
+
+    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: ScalarVariable) {
+        if(portsAlreadySet.containsKey(comp)){
+            portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
+        }else{
+            portsAlreadySet[comp] = setOf(port)
         }
     }
 
@@ -245,7 +266,9 @@ class Initializer : IMaestroExpansionPlugin {
         val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
         return when (p.scalarVariable.scalarVariable.causality) {
             Causality.Output -> GetInstruction(fmu, port, false)
-            Causality.Input -> SetInstruction(fmu, port)
+            Causality.Input -> {
+                addToPortsAlreadySet(fmu, port.scalarVariable)
+                SetInstruction(fmu, port)}
             else -> throw ExpandException("Internal error")
         }
     }
