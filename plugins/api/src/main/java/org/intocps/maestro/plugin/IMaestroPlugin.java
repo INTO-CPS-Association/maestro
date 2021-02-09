@@ -7,6 +7,8 @@ public interface IMaestroPlugin {
      */
     String GLOBAL_EXECUTION_CONTINUE = "global_execution_continue";
 
+    String FMI_STATUS_VARIABLE_NAME = "status";
+
     String getName();
 
     String getVersion();

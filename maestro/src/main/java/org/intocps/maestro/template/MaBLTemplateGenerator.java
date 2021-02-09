@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.xpath.XPathExpressionException;
 import java.net.URI;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,7 @@ public class MaBLTemplateGenerator {
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
+    public static final String STATUS = IMaestroPlugin.FMI_STATUS_VARIABLE_NAME;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
@@ -152,6 +154,7 @@ public class MaBLTemplateGenerator {
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
         stmMaintainer.add(createGlobalExecutionContinue());
+        stmMaintainer.addAll(createStatusVariables());
 
         stmMaintainer.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement));
 
@@ -257,6 +260,22 @@ public class MaBLTemplateGenerator {
                 new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
         return unit;
+    }
+
+    private static Collection<? extends PStm> createStatusVariables() {
+        List<PStm> list = new ArrayList<>();
+        BiFunction<String, Integer, PStm> createStatusVariable_ = (name, value) -> newALocalVariableStm(
+                newAVariableDeclaration(newLexIdentifier(name), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(value))));
+        list.add(createStatusVariable_.apply("FMI_STATUS_OK", 0));
+        list.add(createStatusVariable_.apply("FMI_STATUS_WARNING", 1));
+        list.add(createStatusVariable_.apply("FMI_STATUS_DISCARD", 2));
+        list.add(createStatusVariable_.apply("FMI_STATUS_ERROR", 3));
+        list.add(createStatusVariable_.apply("FMI_STATUS_FATAL", 4));
+        list.add(createStatusVariable_.apply("FMI_STATUS_PENDING", 5));
+        list.add(MableAstFactory.newALocalVariableStm(MableAstFactory
+                .newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
+                        MableAstFactory.newAExpInitializer(MableAstFactory.newAIntLiteralExp(0)))));
+        return list;
     }
 
 

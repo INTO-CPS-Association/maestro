@@ -16,11 +16,18 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.RuntimeModule<PStm> {
     private final MablApiBuilder builder;
+    private boolean external = false;
 
     public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             MablApiBuilder builder, PStateDesignator designator, PExp referenceExp) {
+        this(declaration, type, declaredScope, dynamicScope, builder, designator, referenceExp, false);
+    }
+
+    public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+            MablApiBuilder builder, PStateDesignator designator, PExp referenceExp, boolean external) {
         super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.builder = builder;
+        this.external = external;
     }
 
     @Override
@@ -120,6 +127,8 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
 
     @Override
     public void destroy(Fmi2Builder.Scope<PStm> scope) {
-        scope.add(newExpressionStm(newUnloadExp(getReferenceExp())));
+        if (!this.external) {
+            scope.add(newExpressionStm(newUnloadExp(getReferenceExp())));
+        }
     }
 }

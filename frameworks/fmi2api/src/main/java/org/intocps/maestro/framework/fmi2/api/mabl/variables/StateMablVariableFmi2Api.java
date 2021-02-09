@@ -35,6 +35,11 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(owner.getReferenceExp().clone(), "setState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder
+                    .generate(builder, "setState", this.owner, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                            MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override
@@ -51,6 +56,11 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(owner.getReferenceExp().clone(), "freeState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder
+                    .generate(builder, "freeState", this.owner, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                            MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
 
         valid = false;
     }

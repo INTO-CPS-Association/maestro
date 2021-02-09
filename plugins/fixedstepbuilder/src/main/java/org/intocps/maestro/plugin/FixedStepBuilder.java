@@ -78,22 +78,19 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
         if (declaredFunction.equals(fun)) {
             try {
                 // Selected fun now matches funWithBuilder
-                MablApiBuilder builder = new MablApiBuilder();
+                MablApiBuilder builder = new MablApiBuilder(true);
 
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
                 MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
                 BooleanBuilderFmi2Api booleanLogic = builder.getMablToMablAPI().getBooleanBuilder();
 
                 // Convert raw MaBL to API
-                // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
                 DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
                 stepSizeVar.setValue(externalStepSize);
-                // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
                 DoubleVariableFmi2Api currentCommunicationTime = (DoubleVariableFmi2Api) dynamicScope.store("fixed_current_communication_point", 0.0);
                 currentCommunicationTime.setValue(externalStartTime);
-                // TODO: Create a reference value type
                 DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
                 DoubleVariableFmi2Api endTimeVar = (DoubleVariableFmi2Api) dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);

@@ -134,7 +134,7 @@ public class DataWriter {
             if (this.runtimeModuleMode) {
                 this.runtimeModule.getDeclaredScope().add(logHeadersStm, writeHeadersStm);
             } else {
-                this.mablApiBuilder.getRootScope().add(logHeadersStm, writeHeadersStm);
+                this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
             }
 
             this.initialized = true;

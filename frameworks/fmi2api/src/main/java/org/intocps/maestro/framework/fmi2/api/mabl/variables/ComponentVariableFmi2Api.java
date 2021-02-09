@@ -1,14 +1,14 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
+import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
-import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueExpresssionMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -186,7 +187,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     private void setupExperiment(PExp startTime, PExp endTime, Double tolerance) {
-        DynamicActiveBuilderScope scope = builder.getDynamicScope();
+        IMablScope scope = builder.getDynamicScope().getActiveScope();
         this.setupExperiment(scope, startTime, endTime, tolerance);
     }
 
@@ -197,11 +198,16 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                 startTime.clone(), newABoolLiteralExp(endTime != null),
                                 endTime != null ? endTime.clone() : newARealLiteralExp(0d)))));
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, "setupExperiment", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override
     public void enterInitializationMode() {
         this.enterInitializationMode(builder.getDynamicScope());
+
     }
 
     @Override
@@ -225,13 +231,20 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     public void enterInitializationMode(Fmi2Builder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.ENTERINITIALIZATIONMODE);
         scope.add(stm);
-
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, "enterInitializationMode", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override
     public void exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.EXITINITIALIZATIONMODE);
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, "exitInitializationMode", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override
@@ -269,8 +282,16 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         Arrays.asList(((VariableFmi2Api) currentCommunicationPoint).getReferenceExp().clone(),
                                 ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
 
-        scope.add(newIf(newNotEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_OK)), newABlockStm(
-                newIf(newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), newAIntLiteralExp(FMI_DISCARD)), newABlockStm(
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder
+                    .generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
+
+
+        scope.add(newIf(newNotEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(),
+                builder.getFmiStatusConstant(MablApiBuilder.FmiStatus.FMI_OK).getReferenceExp().clone()), newABlockStm(
+                newIf(newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(),
+                        builder.getFmiStatusConstant(MablApiBuilder.FmiStatus.FMI_DISCARD).getReferenceExp().clone()), newABlockStm(
                         newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                                 newACallExp(this.getReferenceExp().clone(), newAIdentifier("getRealStatus"),
                                         Arrays.asList(newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
@@ -360,6 +381,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
 
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), this, (IMablScope) scope,
+                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
 
         Map<PortFmi2Api, VariableFmi2Api<V>> results = new HashMap<>();
 
@@ -570,6 +595,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
+                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override
@@ -753,6 +782,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
         scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder
+                    .generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
 
         return state;
     }
@@ -778,6 +811,93 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         ENTERINITIALIZATIONMODE,
         EXITINITIALIZATIONMODE,
         SETUPEXPERIMENT
+    }
+
+    static class FmiStatusErrorHandlingBuilder {
+        static void generate(MablApiBuilder builder, String method, ComponentVariableFmi2Api instance, IMablScope scope,
+                MablApiBuilder.FmiStatus... statusesToFail) {
+            if (statusesToFail == null || statusesToFail.length == 0) {
+                return;
+            }
+
+            Function<MablApiBuilder.FmiStatus, PExp> checkStatusEq =
+                    s -> newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), builder.getFmiStatusConstant(s).getReferenceExp().clone());
+
+            PExp exp = checkStatusEq.apply(statusesToFail[0]);
+
+            for (int i = 1; i < statusesToFail.length; i++) {
+                exp = newOr(exp, checkStatusEq.apply(statusesToFail[i]));
+            }
+
+            ScopeFmi2Api thenScope = scope.enterIf(new PredicateFmi2Api(exp)).enterThen();
+
+            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
+
+            for (MablApiBuilder.FmiStatus status : statusesToFail) {
+                ScopeFmi2Api s = thenScope.enterIf(new PredicateFmi2Api(checkStatusEq.apply(status))).enterThen();
+                builder.getLogger()
+                        .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
+            }
+
+            collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast()/*, builder.getExternalLoadedModuleIdentifiers()*/).forEach(p -> {
+                thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
+                thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
+            });
+
+            thenScope.add(newBreak());
+            thenScope.leave();
+        }
+
+        static Set<String> collectedPreviousLoadedModules(INode node/*, Set<String> externalLoadedModuleIdentifiers*/) {
+
+            if (node == null) {
+                return new HashSet<>();
+            }
+
+            Function<PStm, String> getLoadedIdentifier = s -> {
+                AtomicReference<String> id = new AtomicReference<>();
+                try {
+                    s.apply(new DepthFirstAnalysisAdaptor() {
+                        @Override
+                        public void caseALoadExp(ALoadExp node) {
+                            AVariableDeclaration decl = node.getAncestor(AVariableDeclaration.class);
+                            if (decl != null) {
+                                id.set(decl.getName().getText());
+                            }
+                            ALocalVariableStm ldecl = node.getAncestor(ALocalVariableStm.class);
+                            if (decl != null) {
+                                id.set(ldecl.getDeclaration().getName().getText());
+                            }
+                        }
+                    });
+                } catch (AnalysisException e) {
+                    e.addSuppressed(e);
+                }
+                return id.get();
+            };
+
+            Set<String> identifiers = new HashSet<>();
+            if (node instanceof ABlockStm) {
+
+                for (PStm n : ((ABlockStm) node).getBody()) {
+                    String id = getLoadedIdentifier.apply(n);
+                    if (id != null) {
+                        identifiers.add(id);
+                    }
+                }
+            }
+
+            if (node.parent() != null) {
+                identifiers.addAll(collectedPreviousLoadedModules(node.parent()/*, externalLoadedModuleIdentifiers*/));
+            }
+            /*
+            if (identifiers != null) {
+                identifiers.removeAll(externalLoadedModuleIdentifiers);
+            }*/
+
+            return identifiers;
+
+        }
     }
 
 
