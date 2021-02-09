@@ -53,7 +53,7 @@ public class InitializerTest {
         List<PExp> arguments = setupFormalArguments(components, 0, 10);
 
         List<PStm> stm1 = plugin.expand(funcDecl, arguments, parsedPluginConfiguration,
-                Fmi2SimulationEnvironment.of(envJson, new IErrorReporter.SilentReporter()), null);
+                Fmi2SimulationEnvironment.of(envJson, new IErrorReporter.SilentReporter()), new IErrorReporter.SilentReporter());
         Console.println(stm1.toString());
 
         //Useful test to make
