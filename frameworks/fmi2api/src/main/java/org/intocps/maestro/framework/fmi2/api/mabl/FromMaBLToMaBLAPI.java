@@ -33,14 +33,13 @@ public class FromMaBLToMaBLAPI {
 
             //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
             PStm dummyStm = newABlockStm();
-            builder.getRootScope().add(dummyStm);
+            builder.getDynamicScope().add(dummyStm);
 
             FmuVariableFmi2Api fmu = new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
-                    builder.getRootScope(), builder.getDynamicScope(), null, null);
+                    builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null, null);
 
-            ComponentVariableFmi2Api a =
-                    new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder, builder.getRootScope(), null,
-                            newAIdentifierExp(componentName));
+            ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                    builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
             List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
             a.setVariablesToLog(variablesToLog);
 
