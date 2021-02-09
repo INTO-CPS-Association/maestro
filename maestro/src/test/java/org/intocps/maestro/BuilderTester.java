@@ -12,14 +12,12 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.Fmi2ApiStaticCreator;
 import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.PortVariableMapImpl;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.junit.Assert;
@@ -31,6 +29,8 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+
+import static org.intocps.maestro.framework.fmi2.api.mabl.Fmi2ApiStaticCreator.of;
 
 public class BuilderTester {
 
@@ -111,9 +111,18 @@ public class BuilderTester {
         // tank.set(tank.getPort("valvecontrol"), new AMablValue(newBoleanType(), true));
 
         var.set(456.678);
+
         PortVariableMapImpl<Fmi2Builder.DoubleValue> allVars2 = new PortVariableMapImpl<>();
         allVars2.put(allVars.keySet().iterator().next(), var);
         //tank.set(allVars);
+
+
+        controller.set(controller.getPort("valve"), of(false));
+
+        BooleanVariableFmi2Api store = dynamicScope.store(false);
+        store.setValue(Fmi2ApiStaticCreator.of(false));
+
+        tank.set(tank.getPort("level"), Fmi2ApiStaticCreator.of(5.5));
 
 
         controllerFMU.unload();

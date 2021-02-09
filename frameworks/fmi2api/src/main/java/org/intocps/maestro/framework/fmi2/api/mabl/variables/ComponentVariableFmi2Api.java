@@ -9,6 +9,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueExpresssionMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
@@ -468,6 +469,32 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return (VariableFmi2Api) this.get(name).entrySet().iterator().next().getValue();
     }
 
+
+    public void set(Fmi2Builder.Port p, Fmi2Builder.ExpressionValue v) {
+        this.set(new PortValueExpresssionMapImpl(Map.of(p, v)));
+    }
+
+    public void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port p, Fmi2Builder.ExpressionValue v) {
+        this.set(scope, new PortValueMapImpl(Map.of(p, v)));
+    }
+
+    public void set(PortExpressionValueMap value) {
+        this.set(builder.getDynamicScope().getActiveScope(), value);
+    }
+
+    public void set(Fmi2Builder.Scope<PStm> scope, PortExpressionValueMap value) {
+        if (value == null || value.isEmpty()) {
+            return;
+        }
+
+        List<PortFmi2Api> selectedPorts = value.keySet().stream().map(PortFmi2Api.class::cast).collect(Collectors.toList());
+
+        set(scope, selectedPorts, port -> {
+            Fmi2Builder.ExpressionValue value_ = value.get(port);
+            return Map.entry(value_.getExp(), value_.getType());
+        });
+    }
+
     @Override
     public <V> void set(Fmi2Builder.Scope<PStm> scope, PortValueMap<V> value) {
 
@@ -565,6 +592,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         PortValueMap map = new PortValueMapImpl();
         map.put(port, value);
         set(map);
+
     }
 
 

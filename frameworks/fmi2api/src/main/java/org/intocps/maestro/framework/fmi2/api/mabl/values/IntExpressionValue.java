@@ -18,7 +18,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         this.exp = exp;
     }
 
-    public static Fmi2Builder.NumericExpressionValue of(int i) {
+    public static IntExpressionValue of(int i) {
         return new IntExpressionValue(newAIntLiteralExp(i));
     }
 
@@ -75,7 +75,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
     }
 
     @Override
-    public NumericExpressionValueFmi2Api addition(Fmi2Builder.NumericExpressionValue v) {
+    public NumericExpressionValueFmi2Api addition(Fmi2Builder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newPlusExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {
@@ -86,7 +86,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
     }
 
     @Override
-    public NumericExpressionValueFmi2Api divide(Fmi2Builder.NumericExpressionValue v) {
+    public NumericExpressionValueFmi2Api divide(Fmi2Builder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue || v instanceof IntExpressionValue) {
             return new DoubleExpressionValue(newDivideExp(this.getExp(), v.getExp()));
         } else {
@@ -95,7 +95,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
     }
 
     @Override
-    public NumericExpressionValueFmi2Api subtraction(Fmi2Builder.NumericExpressionValue v) {
+    public NumericExpressionValueFmi2Api subtraction(Fmi2Builder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newMinusExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {
@@ -106,7 +106,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
     }
 
     @Override
-    public NumericExpressionValueFmi2Api multiply(Fmi2Builder.NumericExpressionValue v) {
+    public NumericExpressionValueFmi2Api multiply(Fmi2Builder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newMultiplyExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {

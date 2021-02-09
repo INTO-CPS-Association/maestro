@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder.NumericExpressionValue;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -22,34 +23,34 @@ public abstract class NumericExpressionValueFmi2Api implements NumericExpression
 
     public abstract NumericExpressionValueFmi2Api multiply(double v);
 
-    public abstract NumericExpressionValueFmi2Api addition(NumericExpressionValue v);
+    public abstract NumericExpressionValueFmi2Api addition(Fmi2Builder.NumericTypedReferenceExp v);
 
-    public abstract NumericExpressionValueFmi2Api divide(NumericExpressionValue v);
+    public abstract NumericExpressionValueFmi2Api divide(Fmi2Builder.NumericTypedReferenceExp v);
 
-    public abstract NumericExpressionValueFmi2Api subtraction(NumericExpressionValue v);
+    public abstract NumericExpressionValueFmi2Api subtraction(Fmi2Builder.NumericTypedReferenceExp v);
 
-    public abstract NumericExpressionValueFmi2Api multiply(NumericExpressionValue v);
+    public abstract NumericExpressionValueFmi2Api multiply(Fmi2Builder.NumericTypedReferenceExp v);
 
-    public PredicateFmi2Api lessThan(NumericExpressionValue var) {
+    public PredicateFmi2Api lessThan(Fmi2Builder.NumericTypedReferenceExp var) {
         return new PredicateFmi2Api(newALessBinaryExp(getExp(), var.getExp()));
     }
 
-    public PredicateFmi2Api greaterThan(NumericExpressionValue var) {
+    public PredicateFmi2Api greaterThan(Fmi2Builder.NumericTypedReferenceExp var) {
         return new PredicateFmi2Api(newAGreaterBinaryExp(getExp(), var.getExp()));
     }
 
 
-    public PredicateFmi2Api equalTo(NumericExpressionValue var) {
+    public PredicateFmi2Api equalTo(Fmi2Builder.NumericTypedReferenceExp var) {
         return new PredicateFmi2Api(newAEqualBinaryExp(getExp(), var.getExp()));
     }
 
 
-    public PredicateFmi2Api lessEqualTo(NumericExpressionValue var) {
+    public PredicateFmi2Api lessEqualTo(Fmi2Builder.NumericTypedReferenceExp var) {
         return new PredicateFmi2Api(newALessEqualBinaryExp(getExp(), var.getExp()));
     }
 
 
-    public PredicateFmi2Api greaterEqualTo(NumericExpressionValue var) {
+    public PredicateFmi2Api greaterEqualTo(Fmi2Builder.NumericTypedReferenceExp var) {
         return new PredicateFmi2Api(newAGreaterEqualBinaryExp(getExp(), var.getExp()));
     }
 

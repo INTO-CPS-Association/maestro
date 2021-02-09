@@ -79,27 +79,27 @@ public class DoubleExpressionValue extends NumericExpressionValueFmi2Api {
     }
 
     @Override
-    public DoubleExpressionValue addition(Fmi2Builder.NumericExpressionValue v) {
+    public DoubleExpressionValue addition(Fmi2Builder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newPlusExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue divide(Fmi2Builder.NumericExpressionValue v) {
+    public DoubleExpressionValue divide(Fmi2Builder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newDivideExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue subtraction(Fmi2Builder.NumericExpressionValue v) {
+    public DoubleExpressionValue subtraction(Fmi2Builder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newMinusExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue multiply(Fmi2Builder.NumericExpressionValue v) {
+    public DoubleExpressionValue multiply(Fmi2Builder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newMultiplyExp(getExp(), v.getExp()));
     }
 
     @Override
-    public PredicateFmi2Api lessThan(Fmi2Builder.NumericExpressionValue endTimeVar) {
+    public PredicateFmi2Api lessThan(Fmi2Builder.NumericTypedReferenceExp endTimeVar) {
         return new PredicateFmi2Api(newALessBinaryExp(getExp(), endTimeVar.getExp()));
     }
 }
