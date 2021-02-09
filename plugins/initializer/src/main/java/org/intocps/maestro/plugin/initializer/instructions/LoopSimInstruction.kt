@@ -20,11 +20,11 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
 
 
     override fun perform() {
-        var algebraicLoop = scope.store("stabilisation_loop", 5) as IntVariableFmi2Api;
-        var basis = scope.store(0) as IntVariableFmi2Api;
+        val algebraicLoop = scope.store("stabilisation_loop", 5) as IntVariableFmi2Api;
+        val basis = scope.store(0) as IntVariableFmi2Api;
 
-        var convergenceReached : BooleanVariableFmi2Api = scope.store("hasConverged", false) as BooleanVariableFmi2Api;
-        var stabilisationScope = scope
+        val convergenceReached : BooleanVariableFmi2Api = scope.store("hasConverged", false) as BooleanVariableFmi2Api;
+        val stabilisationScope = scope
                 .enterWhile(convergenceReached.toPredicate().and(algebraicLoop.toMath().greaterThan(basis.toMath())));
 
         run {
@@ -40,7 +40,7 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
             }
             convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
 
-            var ifScope = scope.enterIf(convergenceReached.toPredicate().not()).enterThen();
+            val ifScope = scope.enterIf(convergenceReached.toPredicate().not()).enterThen();
             algebraicLoop.decrement()
 
             convergencePorts.forEach { (k, v) -> k.share(v) }

@@ -22,6 +22,10 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue
+import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*
 import org.intocps.maestro.plugin.ExpandException
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin
@@ -134,21 +138,19 @@ class Initializer : IMaestroExpansionPlugin {
             };
             val connections = createConnections(env, fmuInstances)
 
-
             //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
             val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
 
             //Set variables for all components in IniPhase
-            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), dynamicScope)
+            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase())
 
             //Enter initialization Mode
             logger.debug("Enter initialization Mode")
-            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.enterInitializationMode() })
+            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
 
-            for ((fmuName, comp) in fmuInstances) {
-                val instanceByLexName = env.getInstanceByLexName(fmuName)
+            for (comp in fmuInstances.values) {
                 try {
-                    val scalarVariables = instanceByLexName.getModelDescription().scalarVariables
+                    val scalarVariables = comp.modelDescription.scalarVariables
                     val inputsScalars =
                         scalarVariables.filter { x -> x.causality == Causality.Input }
 
@@ -157,7 +159,7 @@ class Initializer : IMaestroExpansionPlugin {
                             .toArray())
 
                     for (port in ports) {
-                        setParameterOnPort(port, dynamicScope, comp)
+                        setParameterOnPort(port, comp)
                     }
                 } catch (e: Exception) {
                     throw ExpandException("Initializer failed to read scalarvariables", e)
@@ -188,35 +190,21 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setParameterOnPort(
         port: PortFmi2Api,
-        dynamicScope: DynamicActiveBuilderScope,
         comp: ComponentVariableFmi2Api
     ) {
         val fmuName = comp.name
         var value = FindParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
         when (port.scalarVariable.type.type!!) {
-            Types.Boolean -> {
-                val b : Boolean = value as Boolean
-                val v: BooleanVariableFmi2Api = dynamicScope.store(b)
-                comp.set(port, v)
-            }
+            Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
             Types.Real -> {
                 if (value is Int) {
-                    value = (value as Int).toDouble()
+                    value = value.toDouble()
                 }
                 val b : Double = value as Double
-                val v: DoubleVariableFmi2Api = dynamicScope.store(b)
-                comp.set(port, v)
+                comp.set(port, DoubleExpressionValue.of(b))
             }
-            Types.Integer -> {
-                val b : Int = value as Int
-                val v: IntVariableFmi2Api = dynamicScope.store(b)
-                comp.set(port, v)
-            }
-            Types.String -> {
-                val b : String = value as String
-                val v: StringVariableFmi2Api = dynamicScope.store(b)
-                comp.set(port, v)
-            }
+            Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
+            Types.String -> comp.set(port, StringExpressionValue.of(value as String))
             Types.Enumeration -> throw ExpandException("Enumeration not supported")
             else -> throw ExpandException("Not known type")
         }
@@ -294,13 +282,12 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
-        predicate: Predicate<ScalarVariable>,
-        scope: DynamicActiveBuilderScope
+        predicate: Predicate<ScalarVariable>
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
             for (sv in comp.modelDescription.scalarVariables.filter { i -> predicate.test(i) }) {
                 val port = comp.getPort(sv.name)
-                setParameterOnPort(port, scope, comp)
+                setParameterOnPort(port, comp)
             }
         }
     }
@@ -383,10 +370,7 @@ class Initializer : IMaestroExpansionPlugin {
 
         init {
             val mapper = ObjectMapper()
-            val convertParameters: Map<String, Any>? = if (parameters?.isNull == true) null else mapper.convertValue(
-                parameters,
-                Map::class.java
-            ) as Map<String, Any>
+            val convertParameters: Map<String, Any>? = if (parameters == null) null else mapper.convertValue(parameters, Map::class.java) as Map<String, Any>
 
             modelParameters =
                 convertParameters?.map { (key, value) -> ModelParameter(ModelConnection.Variable.parse(key), value) }
@@ -415,7 +399,7 @@ class Initializer : IMaestroExpansionPlugin {
             modelParameters: List<ModelParameter>?
         ): Any {
             val parameterValue =
-                modelParameters!!.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
+                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
             return if(parameterValue != null) parameterValue.value else sv.type.start
         }
     }
