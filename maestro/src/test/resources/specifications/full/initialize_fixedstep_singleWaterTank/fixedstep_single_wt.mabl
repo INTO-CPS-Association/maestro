@@ -8,6 +8,13 @@ real START_TIME = 0.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.1;
 
+int fmi_status_ok = 0;
+int fmi_status_warning = 1;
+int fmi_status_discard = 2;
+int fmi_status_error = 3;
+int fmi_status_fatal = 4;
+int fmi_status_pending = 5;
+
 
 DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");

@@ -6,6 +6,13 @@ import Initializer;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
+int fmi_status_ok = 0;
+int fmi_status_warning = 1;
+int fmi_status_discard = 2;
+int fmi_status_error = 3;
+int fmi_status_fatal = 4;
+int fmi_status_pending = 5;
+
 Math math = load("Math");
 Logger logger = load("Logger");
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");

@@ -101,7 +101,7 @@ class Initializer : IMaestroExpansionPlugin {
         val endTime = formalArguments[2].clone()
 
         return try {
-            val builder = MablApiBuilder()
+            val builder = MablApiBuilder(true)
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.mablToMablAPI.booleanBuilder
