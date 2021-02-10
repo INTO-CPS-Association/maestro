@@ -164,6 +164,7 @@ class Initializer : IMaestroExpansionPlugin {
 
             //Exit initialization Mode
             fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
+
             val algorithm = builder.buildRaw() as ABlockStm
             algorithm.apply(ToParExp())
 
