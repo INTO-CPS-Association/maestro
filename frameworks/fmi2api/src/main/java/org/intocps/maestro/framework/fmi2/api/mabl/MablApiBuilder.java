@@ -230,7 +230,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
-    public PStm buildRaw() {
+    public PStm buildRaw() throws AnalysisException {
+        AtomicReference<ABlockStm> errorHandlingBlock = this.getErrorHandlingBlock();
+        if (errorHandlingBlock.get() != null) {
+            errorHandlingBlock.get().getBody().add(newBreak());
+        }
+
+        postClean(rootScope.getBlock());
+
         return rootScope.getBlock().clone();
     }
 
@@ -253,8 +260,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return module;
     }
 
-    @Override
-    public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
+    private AtomicReference<ABlockStm> getErrorHandlingBlock() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
         AtomicReference<ABlockStm> errorHandingBlock = new AtomicReference<>();
@@ -268,6 +274,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 super.caseAWhileStm(node);
             }
         });
+        return errorHandingBlock;
+    }
+
+    @Override
+    public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
+        ABlockStm block = rootScope.getBlock().clone();
+
+        AtomicReference<ABlockStm> errorHandingBlock = this.getErrorHandlingBlock();
 
         if (runtimeLogger != null && this.getSettings().externalRuntimeLogger == false) {
             //attempt a syntactic comparison to find the load in the clone
@@ -304,6 +318,25 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
         errorHandingBlock.get().getBody().add(newBreak());
 
+
+        postClean(block);
+
+        ASimulationSpecificationCompilationUnit unit = new ASimulationSpecificationCompilationUnit();
+        unit.setBody(block);
+        unit.setFramework(Collections.singletonList(newAIdentifier("FMI2")));
+
+        AConfigFramework config = new AConfigFramework();
+        config.setName(newAIdentifier("FMI2"));
+        //config.setConfig(StringEscapeUtils.escapeJava(simulationEnvironment.));
+        // unit.setFrameworkConfigs(Arrays.asList(config));
+        unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")), importedModules.stream().map(MableAstFactory::newAIdentifier))
+                .collect(Collectors.toList()));
+
+        return unit;
+
+    }
+
+    private void postClean(ABlockStm block) throws AnalysisException {
         //Post cleaning: Remove empty block statements
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
@@ -322,22 +355,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 } else {
                     super.caseABlockStm(node);
                 }
-
             }
         });
-
-        ASimulationSpecificationCompilationUnit unit = new ASimulationSpecificationCompilationUnit();
-        unit.setBody(block);
-        unit.setFramework(Collections.singletonList(newAIdentifier("FMI2")));
-
-        AConfigFramework config = new AConfigFramework();
-        config.setName(newAIdentifier("FMI2"));
-        //config.setConfig(StringEscapeUtils.escapeJava(simulationEnvironment.));
-        // unit.setFrameworkConfigs(Arrays.asList(config));
-        unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")), importedModules.stream().map(MableAstFactory::newAIdentifier))
-                .collect(Collectors.toList()));
-
-        return unit;
 
     }
 

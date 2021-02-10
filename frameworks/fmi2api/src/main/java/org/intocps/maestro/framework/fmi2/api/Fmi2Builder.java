@@ -13,7 +13,7 @@ import java.util.Map;
 public interface Fmi2Builder<S, B, E> {
     B build() throws Exception;
 
-    PStm buildRaw();
+    PStm buildRaw() throws Exception;
 
     RuntimeModule<S> loadRuntimeModule(String name, Object... args);
 
