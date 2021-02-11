@@ -36,7 +36,6 @@ import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.Initializatio
 import org.intocps.orchestration.coe.config.InvalidVariableStringException
 import org.intocps.orchestration.coe.config.ModelConnection
 import org.intocps.orchestration.coe.config.ModelParameter
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -101,6 +100,10 @@ class Initializer : IMaestroExpansionPlugin {
         val endTime = formalArguments[2].clone()
 
         return try {
+            val setting = MablApiBuilder.MablSettings()
+            setting.fmiErrorHandlingEnabled = false
+            setting.externalRuntimeLogger = false
+            //val builder = MablApiBuilder(setting, true)
             val builder = MablApiBuilder(true)
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
@@ -206,7 +209,7 @@ class Initializer : IMaestroExpansionPlugin {
         comp: ComponentVariableFmi2Api
     ) {
         val fmuName = comp.name
-        var value = FindParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
+        var value = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
         when (port.scalarVariable.type.type!!) {
             Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
             Types.Real -> {
@@ -417,7 +420,7 @@ class Initializer : IMaestroExpansionPlugin {
     companion object {
         val logger: Logger = LoggerFactory.getLogger(Initializer::class.java)
 
-        private fun FindParameterOrDefault(
+        private fun findParameterOrDefault(
             compName: String,
             sv: ScalarVariable,
             modelParameters: List<ModelParameter>?
