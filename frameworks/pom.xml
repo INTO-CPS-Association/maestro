@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.4</version>
+        <version>2.1.5-SNAPSHOT</version>
     </parent>
 
 
     <artifactId>frameworks</artifactId>
-    <version>2.1.4</version>
+    <version>2.1.5-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Mable frameworks root</name>
 
