@@ -418,7 +418,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public static class MablSettings {
+        /**
+         * Automatically perform FMI2ErrorHandling
+         */
         public boolean fmiErrorHandlingEnabled = true;
+
+        /**
+         * If true, then the builder will not load a runtime logger.
+         */
         public boolean externalRuntimeLogger = false;
     }
 }
