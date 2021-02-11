@@ -77,8 +77,10 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
         PExp endTime = formalArguments.get(3).clone();
         if (declaredFunction.equals(fun)) {
             try {
+                MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
+                settings.externalRuntimeLogger = true;
                 // Selected fun now matches funWithBuilder
-                MablApiBuilder builder = new MablApiBuilder(true);
+                MablApiBuilder builder = new MablApiBuilder(settings, true);
 
                 DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
                 MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();

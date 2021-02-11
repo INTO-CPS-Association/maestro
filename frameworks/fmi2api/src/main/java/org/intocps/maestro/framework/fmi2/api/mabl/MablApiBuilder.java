@@ -94,7 +94,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
         this.mablToMablAPI = new MablToMablAPI(this);
 
-        if (this.settings.fmiErrorHandlingEnabled) {
+        if (this.settings.externalRuntimeLogger) {
             // The Logger module is external
             this.getMablToMablAPI().createExternalRuntimeLogger();
         }
@@ -121,7 +121,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public DataWriter getDataWriter() {
         if (this.dataWriter == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("DataWriter");
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DataWriter");
             this.dataWriter = new DataWriter(this.dynamicScope, this, runtimeModule);
         }
 
@@ -231,14 +231,15 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public PStm buildRaw() throws AnalysisException {
-        AtomicReference<ABlockStm> errorHandlingBlock = this.getErrorHandlingBlock();
-        if (errorHandlingBlock.get() != null) {
-            errorHandlingBlock.get().getBody().add(newBreak());
+        ABlockStm block = rootScope.getBlock().clone();
+        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(rootScope.getBlock().clone());
+        if (block == null) {
+            return null;
         }
 
-        postClean(rootScope.getBlock());
-
-        return rootScope.getBlock().clone();
+        errorHandlingBlock.getBody().add(newBreak());
+        postClean(block);
+        return block;
     }
 
     @Override
@@ -260,9 +261,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return module;
     }
 
-    private AtomicReference<ABlockStm> getErrorHandlingBlock() throws AnalysisException {
-        ABlockStm block = rootScope.getBlock().clone();
-
+    private ABlockStm getErrorHandlingBlock(ABlockStm block) throws AnalysisException {
         AtomicReference<ABlockStm> errorHandingBlock = new AtomicReference<>();
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
@@ -274,14 +273,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 super.caseAWhileStm(node);
             }
         });
-        return errorHandingBlock;
+        return errorHandingBlock.get();
     }
 
     @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
-        AtomicReference<ABlockStm> errorHandingBlock = this.getErrorHandlingBlock();
+        ABlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
         if (runtimeLogger != null && this.getSettings().externalRuntimeLogger == false) {
             //attempt a syntactic comparison to find the load in the clone
@@ -316,7 +315,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             });
         }
 
-        errorHandingBlock.get().getBody().add(newBreak());
+        errorHandingBlock.getBody().add(newBreak());
 
 
         postClean(block);
@@ -376,7 +375,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public LoggerFmi2Api getLogger() {
         if (this.runtimeLogger == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Logger");
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "Logger");
             this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
         }
 
@@ -413,7 +412,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public static class MablSettings {
-        public final boolean fmiErrorHandlingEnabled = true;
+        public boolean fmiErrorHandlingEnabled = true;
         public boolean externalRuntimeLogger = false;
     }
 }
