@@ -46,7 +46,7 @@ public class LoggerFmi2Api {
     }
 
     public void log(ScopeFmi2Api scope, Level level, String format, Object... args) {
-        module.call(scope, logFunction, level.level, format, args);
+        module.callVoid(scope, logFunction, level.level, format, args);
     }
 
     public void warn(ScopeFmi2Api scope, String format, Object... args) {

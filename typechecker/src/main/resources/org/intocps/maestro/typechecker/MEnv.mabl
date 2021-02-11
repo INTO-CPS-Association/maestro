@@ -1,0 +1,6 @@
+ module MEnv {
+    real getReal( string id);
+    int getInt( string id);
+    bool getBool( string id);
+    string getString( string id);
+}

@@ -39,6 +39,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
     private LoggerFmi2Api runtimeLogger;
+    private ExecutionEnvironmentFmi2Api executionEnvironment;
 
     /**
      * @param limited If false then it will create the error handling environment, i.e. FMI2 Status Variables and global execution.
@@ -52,6 +53,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public MablApiBuilder() {
         this(new MablSettings(), false);
+    }
+
+    public MablApiBuilder(MablSettings settings) {
+        this(settings, false);
     }
 
     /**
@@ -386,6 +391,17 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
         return this.runtimeLogger;
+    }
+
+
+    public ExecutionEnvironmentFmi2Api getExecutionEnvironment() {
+        if (this.executionEnvironment == null) {
+            RuntimeModule<PStm> runtimeModule =
+                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var), "MEnv");
+            this.executionEnvironment = new ExecutionEnvironmentFmi2Api(this, runtimeModule);
+        }
+
+        return this.executionEnvironment;
     }
 
     public void addExternalLoadedModuleIdentifier(String name) {
