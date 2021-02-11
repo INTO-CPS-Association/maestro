@@ -184,7 +184,7 @@ class Initializer : IMaestroExpansionPlugin {
                 val scalarVariables = comp.modelDescription.scalarVariables
                 val inputsScalars =
                     scalarVariables.filter { x ->
-                        x.causality == Causality.Input && !portSet(comp, x)
+                        PhasePredicates.inPhase().test(x) && !portSet(comp, x)
                     }
 
                 val ports =
