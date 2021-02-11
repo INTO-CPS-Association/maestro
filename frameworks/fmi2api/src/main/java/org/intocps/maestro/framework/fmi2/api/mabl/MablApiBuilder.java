@@ -375,7 +375,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public LoggerFmi2Api getLogger() {
         if (this.runtimeLogger == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Logger");
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "Logger");
             this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
         }
 
