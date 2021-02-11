@@ -11,12 +11,12 @@ real START_TIME = 1.0;
 real END_TIME = 1.0;
 real STEP_SIZE = 0.1;
 
-int fmi_status_ok = 0;
-int fmi_status_warning = 1;
-int fmi_status_discard = 2;
-int fmi_status_error = 3;
-int fmi_status_fatal = 4;
-int fmi_status_pending = 5;
+   	int FMI_STATUS_OK = 0;
+  	int FMI_STATUS_WARNING = 1;
+  	int FMI_STATUS_DISCARD = 2;
+  	int FMI_STATUS_ERROR = 3;
+  	int FMI_STATUS_FATAL = 4;
+  	int FMI_STATUS_PENDING = 5;
 
 Math math = load("Math");
 Logger logger = load("Logger");

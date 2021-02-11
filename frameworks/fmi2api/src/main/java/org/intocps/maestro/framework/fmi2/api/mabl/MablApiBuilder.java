@@ -13,6 +13,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -229,6 +230,22 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return null;
     }
 
+    @Override
+    public PStm buildRaw() throws AnalysisException {
+        ABlockStm block = rootScope.getBlock().clone();
+        if (block == null) {
+            return null;
+        }
+        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
+        if (errorHandlingBlock == null) {
+            return null;
+        }
+
+
+        errorHandlingBlock.getBody().add(newBreak());
+        postClean(block);
+        return block;
+    }
 
     @Override
     public RuntimeModule<PStm> loadRuntimeModule(String name, Object... args) {
@@ -237,11 +254,15 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+        return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
+    }
+
+    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));
         PStm var = newVariable(varName, newANameType(name), newALoadExp(argList));
-        scope.add(var);
+        variableStoreFunc.accept(scope, var);
         RuntimeModuleVariable module =
                 new RuntimeModuleVariable(var, newANameType(name), (IMablScope) scope, dynamicScope, this, newAIdentifierStateDesignator(varName),
                         newAIdentifierExp(varName));
@@ -262,23 +283,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             }
         });
         return errorHandingBlock.get();
-    }
-
-    @Override
-    public PStm buildRaw() throws AnalysisException {
-        ABlockStm block = rootScope.getBlock().clone();
-        if (block == null) {
-            return null;
-        }
-        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
-        if (errorHandlingBlock == null) {
-            return null;
-        }
-
-
-        errorHandlingBlock.getBody().add(newBreak());
-        postClean(block);
-        return block;
     }
 
     @Override
@@ -380,7 +384,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public LoggerFmi2Api getLogger() {
         if (this.runtimeLogger == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "Logger");
+            RuntimeModule<PStm> runtimeModule =
+                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var), "Logger");
             this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
         }
 
@@ -417,7 +422,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public static class MablSettings {
+        /**
+         * Automatically perform FMI2ErrorHandling
+         */
         public boolean fmiErrorHandlingEnabled = true;
+
+        /**
+         * If true, then the builder will not load a runtime logger.
+         */
         public boolean externalRuntimeLogger = false;
     }
 }
