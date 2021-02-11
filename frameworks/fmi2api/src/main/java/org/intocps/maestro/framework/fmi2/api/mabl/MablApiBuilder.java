@@ -121,7 +121,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public DataWriter getDataWriter() {
         if (this.dataWriter == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("DataWriter");
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DataWriter");
             this.dataWriter = new DataWriter(this.dynamicScope, this, runtimeModule);
         }
 
