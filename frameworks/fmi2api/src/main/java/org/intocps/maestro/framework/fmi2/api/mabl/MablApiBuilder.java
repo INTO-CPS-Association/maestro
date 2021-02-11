@@ -94,7 +94,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
         this.mablToMablAPI = new MablToMablAPI(this);
 
-        if (this.settings.fmiErrorHandlingEnabled) {
+        if (this.settings.externalRuntimeLogger) {
             // The Logger module is external
             this.getMablToMablAPI().createExternalRuntimeLogger();
         }
