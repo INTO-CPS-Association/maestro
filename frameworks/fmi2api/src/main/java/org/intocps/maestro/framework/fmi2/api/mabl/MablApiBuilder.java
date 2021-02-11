@@ -231,14 +231,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public PStm buildRaw() throws AnalysisException {
-        AtomicReference<ABlockStm> errorHandlingBlock = this.getErrorHandlingBlock();
-        if (errorHandlingBlock.get() != null) {
-            errorHandlingBlock.get().getBody().add(newBreak());
+        ABlockStm block = this.getErrorHandlingBlock(rootScope.getBlock().clone());
+        if (block == null) {
+            return null;
         }
 
-        postClean(rootScope.getBlock());
-
-        return rootScope.getBlock().clone();
+        block.getBody().add(newBreak());
+        postClean(block);
+        return block;
     }
 
     @Override
@@ -260,9 +260,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return module;
     }
 
-    private AtomicReference<ABlockStm> getErrorHandlingBlock() throws AnalysisException {
-        ABlockStm block = rootScope.getBlock().clone();
-
+    private ABlockStm getErrorHandlingBlock(ABlockStm block) throws AnalysisException {
         AtomicReference<ABlockStm> errorHandingBlock = new AtomicReference<>();
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
@@ -274,14 +272,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 super.caseAWhileStm(node);
             }
         });
-        return errorHandingBlock;
+        return errorHandingBlock.get();
     }
 
     @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
 
-        AtomicReference<ABlockStm> errorHandingBlock = this.getErrorHandlingBlock();
+        ABlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
         if (runtimeLogger != null && this.getSettings().externalRuntimeLogger == false) {
             //attempt a syntactic comparison to find the load in the clone
@@ -316,7 +314,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             });
         }
 
-        errorHandingBlock.get().getBody().add(newBreak());
+        errorHandingBlock.getBody().add(newBreak());
 
 
         postClean(block);
@@ -413,7 +411,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public static class MablSettings {
-        public final boolean fmiErrorHandlingEnabled = true;
+        public boolean fmiErrorHandlingEnabled = true;
         public boolean externalRuntimeLogger = false;
     }
 }
