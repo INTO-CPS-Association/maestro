@@ -13,6 +13,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -249,11 +250,15 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+        return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
+    }
+
+    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));
         PStm var = newVariable(varName, newANameType(name), newALoadExp(argList));
-        scope.add(var);
+        variableStoreFunc.accept(scope, var);
         RuntimeModuleVariable module =
                 new RuntimeModuleVariable(var, newANameType(name), (IMablScope) scope, dynamicScope, this, newAIdentifierStateDesignator(varName),
                         newAIdentifierExp(varName));
@@ -375,7 +380,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public LoggerFmi2Api getLogger() {
         if (this.runtimeLogger == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "Logger");
+            RuntimeModule<PStm> runtimeModule =
+                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var), "Logger");
             this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
         }
 
