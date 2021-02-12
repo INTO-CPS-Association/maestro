@@ -60,15 +60,17 @@ FMI2 load_FMI2(const char *guid, const char *path) {
         break;
     }
 
-    auto fmu = new Fmi2Impl();
-    fmu->guid = guid;
-    loadDll(firstFile.c_str(), &fmu->fmu);
-auto t2 = std::chrono::high_resolution_clock::now();
+      auto fmu = new Fmi2Impl();
+      fmu->guid = guid;
+    auto success=  loadDll(firstFile.c_str(), &fmu->fmu);
+  auto t2 = std::chrono::high_resolution_clock::now();
 
-    auto dur = t2-t1;
-        std::cout << "Load in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
+      auto dur = t2-t1;
+          std::cout << "Load in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
 
-    return fmu;
+          if(!success)
+          return nullptr;
+      return fmu;
 
 }
 
@@ -78,15 +80,19 @@ void Fmi2Impl::freeInstance(fmi2Component c) {
 }
 
 Fmi2Comp *Fmi2Impl::instantiate(fmi2String instanceName, fmi2Boolean visible, fmi2Boolean loggingOn) {
-    fmi2CallbackFunctions callback = {
-            .componentEnvironment = this, .logger = &fmuLogger, .allocateMemory = calloc, .freeMemory = free};
+     fmi2CallbackFunctions callback = {
+              .logger = &fmuLogger, .allocateMemory = calloc, .freeMemory = free,.stepFinished=nullptr, .componentEnvironment = this};
 
-    Fmi2Comp *comp = new Fmi2Comp();
-    comp->fmu = &this->fmu;
-    comp->comp =
-            this->fmu.instantiate(instanceName, fmi2CoSimulation, this->guid.c_str(), "", &callback, visible,
-                                  loggingOn);
+       auto *comp = new Fmi2Comp();
+       comp->fmu = &this->fmu;
+       memcpy (&comp->callback,&callback, sizeof (fmi2CallbackFunctions));
+       comp->comp =
+               this->fmu.instantiate(instanceName, fmi2CoSimulation, this->guid.c_str(), "", &comp->callback, visible,
+                                     loggingOn);
 
-    return comp;
+       if(comp->comp== nullptr)
+           return nullptr;
+
+       return comp;
 
 }

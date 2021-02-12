@@ -66,6 +66,11 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     }
 
     @Override
+    public void caseANullExp(ANullExp node, Integer question) throws AnalysisException {
+        sb.append("nullptr");
+    }
+
+    @Override
     public void caseACallExp(ACallExp node, Integer question) throws AnalysisException {
 
         boolean isFmuComp = false;
@@ -141,6 +146,34 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
                 sb.append(", ");
             }
             node.getArgs().get(i).apply(this, question);
+
+            if (isFmuComp && node.getMethodName().getText().equals("getRealStatus") && i == 0) {
+                //we need to convert int to enum
+                int index = sb.lastIndexOf(",");
+                String numberToReplace = sb.substring(index + 1);
+                String newValue;
+                int ival = Integer.parseInt(numberToReplace.trim());
+                switch (ival) {
+                    case 0:
+                        newValue = "fmi2DoStepStatus";
+                        break;
+                    case 1:
+                        newValue = "fmi2PendingStatus";
+                        break;
+                    case 2:
+                        newValue = "fmi2LastSuccessfulTime";
+                        break;
+                    case 3:
+                        newValue = "fmi2Terminated";
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown integer used in status");
+                }
+
+
+                sb.replace(index + 1, index + numberToReplace.length() + 1, " " + newValue);
+            }
+
         }
         sb.append(")");
     }

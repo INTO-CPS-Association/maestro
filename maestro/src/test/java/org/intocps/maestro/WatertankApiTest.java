@@ -1,9 +1,13 @@
 package org.intocps.maestro;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.codegen.mabl2cpp.MablCppCodeGenerator;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -25,9 +29,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class WatertankApiTest {
 
@@ -56,6 +58,10 @@ public class WatertankApiTest {
         tank.set(tank.getPort("level"), IntExpressionValue.of(0));
         tank.set(tank.getPort("level"), DoubleExpressionValue.of(0.0));
         controller.set(controller.getPort("valve"), BooleanExpressionValue.of(false));
+
+        controller.set(controller.getPort("minlevel"), builder.getExecutionEnvironment().getInt("lower-level"));
+        controller.set(controller.getPort("maxlevel"), builder.getExecutionEnvironment().getReal("upper-level"));
+
 
         List<ComponentVariableFmi2Api> ins = Arrays.asList(tank, controller);
 
@@ -86,10 +92,26 @@ public class WatertankApiTest {
         controllerFmu.unload();
         tankFmu.unload();
 
-        check(builder.build());
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("DataWriter", Arrays.asList(new HashMap<>() {
+            {
+                put("type", "CSV");
+                put("filename", "output.csv");
+            }
+        }));
+
+        data.put("environment_variables", new HashMap() {
+            {
+                put("lower-level", 1);
+                put("upper-level", 3.3);
+            }
+        });
+
+        check(builder.build(), new ObjectMapper().writeValueAsString(data));
     }
 
-    private void check(ASimulationSpecificationCompilationUnit program) throws Exception {
+    private void check(ASimulationSpecificationCompilationUnit program, String runtimeData) throws Exception {
         String test = PrettyPrinter.print(program);
 
         System.out.println(PrettyPrinter.printLineNumbers(program));
@@ -105,15 +127,18 @@ public class WatertankApiTest {
 
         mabl.parse(Collections.singletonList(specFile));
 
-        mabl.typeCheck();
+        Map.Entry<Boolean, Map<INode, PType>> tcRef = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             Assert.fail();
         }
         mabl.dump(workingDirectory);
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
+
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8)))
                 .execute(mabl.getMainSimulationUnit());
+
+        MablCppCodeGenerator cppCodeGenerator = new MablCppCodeGenerator(workingDirectory);
+        cppCodeGenerator.generate(mabl.getMainSimulationUnit(), tcRef.getValue());
     }
 }
