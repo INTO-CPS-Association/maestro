@@ -59,8 +59,8 @@ public class WatertankApiTest {
         tank.set(tank.getPort("level"), DoubleExpressionValue.of(0.0));
         controller.set(controller.getPort("valve"), BooleanExpressionValue.of(false));
 
-        controller.set(controller.getPort("minlevel"), builder.getExecutionEnvironment().getInt("lower-level"));
-        controller.set(controller.getPort("maxlevel"), builder.getExecutionEnvironment().getReal("upper-level"));
+        controller.set(controller.getPort("minlevel"), builder.getExecutionEnvironment().getInt("lowerlevel"));
+        controller.set(controller.getPort("maxlevel"), builder.getExecutionEnvironment().getReal("upperlevel"));
 
 
         List<ComponentVariableFmi2Api> ins = Arrays.asList(tank, controller);
@@ -103,8 +103,8 @@ public class WatertankApiTest {
 
         data.put("environment_variables", new HashMap() {
             {
-                put("lower-level", 1);
-                put("upper-level", 3.3);
+                put("lowerlevel", 1);
+                put("upperlevel", 3.3);
             }
         });
 

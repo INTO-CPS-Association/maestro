@@ -50,7 +50,7 @@ public:
         if (value == nullptr) {
             std::cerr << "Environment variable '" << id << "' was not found" << std::endl;
             throw -1;
-           
+
         }
         return value;
     }
