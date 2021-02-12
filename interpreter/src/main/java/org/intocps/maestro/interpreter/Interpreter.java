@@ -181,10 +181,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseANotEqualBinaryExp(ANotEqualBinaryExp node, Context question) throws AnalysisException {
-        NumericValue left = (NumericValue) node.getLeft().apply(this, question).deref();
-        NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
-
-        return new BooleanValue(left.deref().compareTo(right.deref()) != 0);
+        BooleanValue equals = equals(node.getLeft().apply(this, question), node.getRight().apply(this, question));
+        return new BooleanValue(!equals.getValue());
     }
 
     @Override
@@ -357,8 +355,16 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAEqualBinaryExp(AEqualBinaryExp node, Context question) throws AnalysisException {
 
-        Value lv = node.getLeft().apply(this, question).deref();
-        Value rv = node.getRight().apply(this, question).deref();
+        return equals(node.getLeft().apply(this, question), node.getRight().apply(this, question));
+
+        //        throw new InterpreterException(
+        //                "Equality not implement for: " + lv.getClass().getSimpleName() + " == " + rv.getClass().getSimpleName() + " (" + lv + " == " + rv +
+        //                        ")");
+    }
+
+    private BooleanValue equals(Value lv, Value rv) throws AnalysisException {
+        lv = lv.deref();
+        rv = rv.deref();
 
         if (lv.equals(rv)) {
             new BooleanValue(true);
@@ -377,10 +383,6 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         return new BooleanValue(false);
-
-        //        throw new InterpreterException(
-        //                "Equality not implement for: " + lv.getClass().getSimpleName() + " == " + rv.getClass().getSimpleName() + " (" + lv + " == " + rv +
-        //                        ")");
     }
 
     @Override
