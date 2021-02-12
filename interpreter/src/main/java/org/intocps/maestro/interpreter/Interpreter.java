@@ -280,7 +280,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
 
         if (left instanceof IntegerValue && right instanceof IntegerValue) {
-            return new IntegerValue(left.intValue() + right.intValue());
+            return new IntegerValue(left.intValue() - right.intValue());
         }
 
         return new RealValue(left.realValue() - right.realValue());
