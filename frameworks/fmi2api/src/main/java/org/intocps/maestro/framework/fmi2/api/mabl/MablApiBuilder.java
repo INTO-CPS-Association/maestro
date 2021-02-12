@@ -115,9 +115,58 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {
-        if (!settings.fmiErrorHandlingEnabled) {
-            throw new IllegalStateException("Fmi error handling feature not enabled");
+        //if (!settings.fmiErrorHandlingEnabled) {
+        //   throw new IllegalStateException("Fmi error handling feature not enabled");
+        // }
+
+        if (!this.fmiStatusVariables.containsKey(status)) {
+            switch (status) {
+                case FMI_OK: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_OK", FmiStatus.FMI_OK.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_OK, var);
+                }
+                break;
+                case FMI_WARNING: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_WARNING", FmiStatus.FMI_WARNING.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
+                    break;
+                }
+                case FMI_DISCARD: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_DISCARD", FmiStatus.FMI_DISCARD.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
+                }
+                break;
+                case FMI_ERROR: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_ERROR", FmiStatus.FMI_ERROR.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
+                    break;
+                }
+                case FMI_FATAL: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_FATAL", FmiStatus.FMI_FATAL.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
+                    break;
+                }
+                case FMI_PENDING: {
+                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_PENDING", FmiStatus.FMI_PENDING.getValue());
+                    //relocate to top of scope
+                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
+                    break;
+                }
+            }
+
         }
+
         return this.fmiStatusVariables.get(status);
     }
 
@@ -316,7 +365,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                                 }
                             }
                             if (!unloadFound) {
-                                body.add(newExpressionStm(newUnloadExp(Collections.singletonList(loggerVar.getReferenceExp().clone()))));
+                                body.add(newIf(newNotEqual(loggerVar.getReferenceExp().clone(), newNullExp()),
+                                        newExpressionStm(newUnloadExp(Collections.singletonList(loggerVar.getReferenceExp().clone()))), null));
                             }
                         }
                     }
