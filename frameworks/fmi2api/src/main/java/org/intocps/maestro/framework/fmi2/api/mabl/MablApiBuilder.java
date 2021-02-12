@@ -238,10 +238,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     @Override
     public PStm buildRaw() throws AnalysisException {
         ABlockStm block = rootScope.getBlock().clone();
-        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(rootScope.getBlock().clone());
         if (block == null) {
             return null;
         }
+        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
+        if (errorHandlingBlock == null) {
+            return null;
+        }
+
 
         errorHandlingBlock.getBody().add(newBreak());
         postClean(block);
@@ -434,7 +438,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public static class MablSettings {
+        /**
+         * Automatically perform FMI2ErrorHandling
+         */
         public boolean fmiErrorHandlingEnabled = true;
+
+        /**
+         * If true, then the builder will not load a runtime logger.
+         */
         public boolean externalRuntimeLogger = false;
     }
 }
