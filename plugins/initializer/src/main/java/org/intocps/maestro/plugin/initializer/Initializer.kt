@@ -22,6 +22,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue
@@ -103,8 +104,7 @@ class Initializer : IMaestroExpansionPlugin {
             val setting = MablApiBuilder.MablSettings()
             setting.fmiErrorHandlingEnabled = false
             setting.externalRuntimeLogger = false
-            //val builder = MablApiBuilder(setting, true)
-            val builder = MablApiBuilder(true)
+            val builder = MablApiBuilder(setting, true)
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.mablToMablAPI.booleanBuilder
@@ -161,7 +161,23 @@ class Initializer : IMaestroExpansionPlugin {
                     math
                 )
             }
+            var stabilisationScope: ScopeFmi2Api? = null
+            var stabilisationLoop: IntVariableFmi2Api? = null
+            if (this.config!!.stabilisation) {
+                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
+                stabilisationScope = dynamicScope.enterWhile(
+                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
+                )
+            }
+
             instructions.forEach { i -> i.perform() }
+
+            if(stabilisationScope != null){
+                stabilisationLoop!!.decrement();
+                stabilisationScope.activate()
+                stabilisationScope.leave();
+            }
+
 
             setRemainingInputs(fmuInstances)
 

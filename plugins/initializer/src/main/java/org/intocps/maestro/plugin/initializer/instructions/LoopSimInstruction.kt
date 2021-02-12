@@ -20,7 +20,7 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
 
 
     override fun perform() {
-        val algebraicLoop = scope.store("stabilisation_loop", 5) as IntVariableFmi2Api;
+        val algebraicLoop = scope.store( 5) as IntVariableFmi2Api;
         val basis = scope.store(0) as IntVariableFmi2Api;
 
         val convergenceReached : BooleanVariableFmi2Api = scope.store("hasConverged", false) as BooleanVariableFmi2Api;
