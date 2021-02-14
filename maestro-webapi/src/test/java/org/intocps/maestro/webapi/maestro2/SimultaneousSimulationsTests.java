@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
 @SpringBootTest
-public class SimultaneousSimulations {
+public class SimultaneousSimulationsTests {
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
@@ -50,9 +50,9 @@ public class SimultaneousSimulations {
         // setup the webapp so that we can send things to it
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 
-        simulationJson = new File(SimultaneousSimulations.class.getClassLoader().getResource("maestro2/ThreadedTest/simulate.json").getPath());
-        initJson = new File(SimultaneousSimulations.class.getClassLoader().getResource("maestro2/ThreadedTest/initialize.json").getPath());
-        expectedOutputCSV = new File(SimultaneousSimulations.class.getClassLoader().getResource("maestro2/ThreadedTest/outputs.csv").getPath());
+        simulationJson = new File(SimultaneousSimulationsTests.class.getClassLoader().getResource("maestro2/ThreadedTest/simulate.json").getPath());
+        initJson = new File(SimultaneousSimulationsTests.class.getClassLoader().getResource("maestro2/ThreadedTest/initialize.json").getPath());
+        expectedOutputCSV = new File(SimultaneousSimulationsTests.class.getClassLoader().getResource("maestro2/ThreadedTest/outputs.csv").getPath());
     }
 
     @ParameterizedTest
