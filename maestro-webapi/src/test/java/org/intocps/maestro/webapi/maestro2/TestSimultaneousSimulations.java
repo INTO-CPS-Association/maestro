@@ -70,7 +70,8 @@ public class TestSimultaneousSimulations {
                         RunSingleSimulation();
                     } catch (AssertionFailedError f)
                     {
-                        failedTest[0] = f; // spcificaly catch assertion erorrs since junit cant throw from subthreads
+                        failedTest[0] = f;
+                        // specifically catch assertion errors since junit wont detect anything that dosn't come from the main thread
                     }
                     catch (Exception e) {
                         e.printStackTrace();
