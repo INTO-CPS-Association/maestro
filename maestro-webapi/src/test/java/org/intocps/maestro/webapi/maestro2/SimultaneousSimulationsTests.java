@@ -56,7 +56,7 @@ public class SimultaneousSimulationsTests {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20})
+    @ValueSource(ints = {1})
     public void TestMultithreadedPerformance(int threadCount) throws Exception
     {
         var threads = new ArrayList<Thread>();
