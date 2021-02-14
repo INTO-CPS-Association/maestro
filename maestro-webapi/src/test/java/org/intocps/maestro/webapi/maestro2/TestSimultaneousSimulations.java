@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -150,7 +149,7 @@ public class TestSimultaneousSimulations {
                 var f1 = new HashSet<>(FileUtils.readLines(f));
                 var f2 = new HashSet<>(FileUtils.readLines(expectedOutputCSV));
 
-                Assertions.assertEquals(f2.size(), f1.size(), "Not enough entries in results file!");
+                Assertions.assertEquals(f2.size(), f1.size(), "Comparing results files");
             }
         }
     }
@@ -170,8 +169,8 @@ public class TestSimultaneousSimulations {
 
     private void CheckSimpleResponse(String expectedStatus, String sessionId, StatusModel reponse)
     {
-        Assertions.assertEquals(expectedStatus.toLowerCase(), reponse.status.toLowerCase());
+        Assertions.assertEquals(expectedStatus.toLowerCase(), reponse.status.toLowerCase(), "Status Response");
         // check we arnt getting confused between the threads so check we always have the correct session id
-        Assertions.assertEquals(sessionId, reponse.sessionId);
+        Assertions.assertEquals(sessionId, reponse.sessionId, "Session ID");
     }
 }
