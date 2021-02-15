@@ -1,5 +1,6 @@
 package org.intocps.maestro.interpreter;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
@@ -15,9 +16,7 @@ import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -46,6 +45,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             InputStream config) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         this.workingDirectory = workingDirectory;
 
+
         lifecycleHandlers = new HashMap<>();
 
         for (Class<? extends IValueLifecycleHandler> handler : defaultHandlers) {
@@ -53,8 +53,17 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                     .put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), instantiateHandler(workingDirectory, handler));
         }
 
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (config != null) {
+            config.transferTo(baos);
+        }
+
         lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
-                new DataWriterLifecycleHandler(workingDirectory, config));
+                new DataWriterLifecycleHandler(workingDirectory, new ByteArrayInputStream(baos.toByteArray())));
+
+        lifecycleHandlers.put(MEnvLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
+                new MEnvLifecycleHandler(new ByteArrayInputStream(baos.toByteArray())));
 
 
     }
@@ -310,6 +319,70 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             } catch (ClassNotFoundException e) {
                 return Either.left(new AnalysisException("The path passed to load is not a URI", e));
             }
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "MEnv")
+    protected class MEnvLifecycleHandler extends BaseLifecycleHandler {
+
+        public static final String ENVIRONMENT_VARIABLES = "environment_variables";
+
+        private final Map<String, Object> rawData;
+
+        public MEnvLifecycleHandler(InputStream config) throws IOException {
+
+            if (config != null && config.available() > 0) {
+                Map<String, Object> map = new ObjectMapper().readValue(config, new TypeReference<>() {
+                });
+                this.rawData = map;
+            } else {
+                this.rawData = null;
+            }
+
+
+        }
+
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+
+            if (rawData == null || !rawData.containsKey(ENVIRONMENT_VARIABLES)) {
+                return Either.left(new Exception("Missing required runtime key: " + ENVIRONMENT_VARIABLES));
+            }
+
+            final Map<String, Object> data = (Map<String, Object>) rawData.get(ENVIRONMENT_VARIABLES);
+
+
+            Map<String, Value> members = new HashMap<>();
+            members.put("getBool", new FunctionValue.ExternalFunctionValue(a -> {
+
+                Value.checkArgLength(a, 1);
+
+                return new BooleanValue((Boolean) data.get(((StringValue) a.get(0).deref()).getValue()));
+            }));
+            members.put("getInt", new FunctionValue.ExternalFunctionValue(a -> {
+
+                Value.checkArgLength(a, 1);
+
+                return new IntegerValue((Integer) data.get(((StringValue) a.get(0).deref()).getValue()));
+            }));
+            members.put("getReal", new FunctionValue.ExternalFunctionValue(a -> {
+
+                Value.checkArgLength(a, 1);
+
+                return new RealValue((Double) data.get(((StringValue) a.get(0).deref()).getValue()));
+            }));
+            members.put("getString", new FunctionValue.ExternalFunctionValue(a -> {
+
+                Value.checkArgLength(a, 1);
+
+                return new StringValue((String) data.get(((StringValue) a.get(0).deref()).getValue()));
+            }));
+
+
+            ExternalModuleValue<Map<String, Object>> val = new ExternalModuleValue<>(members, data) {
+
+            };
+            return Either.right(val);
         }
     }
 

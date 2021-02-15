@@ -11,6 +11,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
@@ -47,7 +48,8 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
 
     @Override
     public void callVoid(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.RuntimeFunction functionId, Object... args) {
-        PStm stm = newExpressionStm(MableBuilder.call(this.getReferenceExp().clone(), functionId.getName(), BuilderUtil.toExp(args)));
+        PStm stm = newExpressionStm(MableBuilder.call(this.getReferenceExp().clone(), functionId.getName(),
+                BuilderUtil.toExp(args).stream().map(PExp::clone).collect(Collectors.toList())));
         scope.add(stm);
     }
 
@@ -64,8 +66,8 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
         PType varType = getMablType(functionId.getReturnType());
 
         String name = builder.getNameGenerator().getName();
-        PStm stm = MableBuilder
-                .newVariable(name, varType, MableBuilder.call(this.getReferenceExp().clone(), functionId.getName(), BuilderUtil.toExp(args)));
+        PStm stm = MableBuilder.newVariable(name, varType, MableBuilder.call(this.getReferenceExp().clone(), functionId.getName(),
+                BuilderUtil.toExp(args).stream().map(PExp::clone).collect(Collectors.toList())));
         scope.add(stm);
 
         if (functionId.getReturnType().isNative()) {

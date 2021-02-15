@@ -189,8 +189,8 @@ public class Fmi2Interpreter {
             long[] scalarValueIndices =
                     getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                             .toArray();
-            double[] values =
-                    getArrayValue(fcargs.get(2), Optional.of(elementsToUse), RealValue.class).stream().mapToDouble(RealValue::getValue).toArray();
+            double[] values = getArrayValue(fcargs.get(2), Optional.of(elementsToUse), NumericValue.class).stream().limit(elementsToUse)
+                    .mapToDouble(NumericValue::realValue).toArray();
 
             try {
                 Fmi2Status res = component.setReals(scalarValueIndices, values);
