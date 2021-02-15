@@ -60,6 +60,7 @@ add_executable(sim
     libs/Logger.cpp
     libs/SimFmi2.cpp
     libs/SimMath.cpp
+    libs/MEnv.cpp
     co-sim.cxx
     main.cpp)
 

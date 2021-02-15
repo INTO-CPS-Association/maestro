@@ -47,7 +47,7 @@ public class MablCppCodeGenerator {
     private void copyLibraries(File outputDirectory) throws IOException {
 
 
-        String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath"};
+        String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv"};
 
         for (String libraryName : libraries) {
             for (String ext : new String[]{"cpp", "h"}) {
