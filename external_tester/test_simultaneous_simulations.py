@@ -102,8 +102,7 @@ if "__main__":
     p = StartCOE(path, args.port)
     time.sleep(2) # give some time for the COE to actually start
 
-    # threadCounts = [1, 2, 4, 6, 8, 10]
-    threadCounts = [1]
+    threadCounts = [1, 2, 4, 6, 8, 10]
 
     try:
         for i in threadCounts:
