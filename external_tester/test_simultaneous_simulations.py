@@ -84,11 +84,6 @@ def RunTest():
     if not testutils.compare("CSV", "wt/result.csv", csvFilePath):
         raise Exception("CSV files did not match!")
 
-    # Zip Results
-    # r = requests.get(f"http://localhost:8082/result/{sessionId}/zip", stream=True)
-    # if not r.status_code == 200:
-    #     raise Exception(f"Could not get zip results: {r.text}")
-
     # cleanup after myself
     shutil.rmtree(tempDirectory)
 
@@ -107,11 +102,12 @@ if "__main__":
     p = StartCOE(path, args.port)
     time.sleep(2) # give some time for the COE to actually start
 
-    threadCounts = [1, 2]
+    threadCounts = [1, 2, 4, 6, 8, 10]
 
     try:
         for i in threadCounts:
             print(f"Running test with {i} threads")
             RunTests(i)
+            print(f"{i} threads tests passed!")
     finally:
         StopCOE(p)
