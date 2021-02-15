@@ -10,7 +10,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 
 import requests
 
-from external_tester import testutils
+import testutils
 
 
 def GetParameters():
@@ -113,6 +113,5 @@ if "__main__":
         for i in threadCounts:
             print(f"Running test with {i} threads")
             RunTests(i)
-            print("\n\n\n")
     finally:
         StopCOE(p)
