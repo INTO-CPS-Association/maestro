@@ -57,7 +57,6 @@ def findJar():
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
-parser.add_argument("--runAsMultiThread", action="store_true")
 parser.set_defaults(port=8082)
 
 args = parser.parse_args()
@@ -76,9 +75,8 @@ if not os.path.isfile(path):
 
 print("Testing Web api of: " + path + "with port: " + str(port))
 
-if not args.runAsMultiThread:
-    cmd = "java -jar " + path
-    p = subprocess.Popen(cmd, shell=True)
+cmd = "java -jar " + path
+p = subprocess.Popen(cmd, shell=True)
 
 try:
     tempDirectory = tempfile.mkdtemp()
@@ -198,6 +196,5 @@ try:
         raise Exception(f"Could not destroy: {r.text}")
 
 finally:
-    if not args.runAsMultiThread:
-        terminateSocket(p)
-        terminate(p)
+    terminateSocket(p)
+    terminate(p)
