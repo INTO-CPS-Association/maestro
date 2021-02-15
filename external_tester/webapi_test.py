@@ -22,7 +22,7 @@ def printSection(section):
     print(hashes)
 
 def terminate(p):
-    p.kill()
+    p.terminate()
     sys.exit()
 
 def terminateSocket(p):
