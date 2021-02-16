@@ -1,8 +1,11 @@
  module VariableStep
  import VariableStepConfig;
+ import FMI2;
  {
-    VariableStepConfig writeHeader(string headers[]);
-    void writeDataPoint(VariableStepConfig configuration, real time, ? values);
+    VariableStepConfig setFMUs(string names[], FMI2 fmus[]);
+    void initializePortNames(VariableStepConfig, string portNames[]);
+    void addDataPoint(VariableStepConfig configuration, real time, ? values);
+    real getStepSize(VariableStepConfig configuration);
 }
 
 module VariableStepConfig {}
