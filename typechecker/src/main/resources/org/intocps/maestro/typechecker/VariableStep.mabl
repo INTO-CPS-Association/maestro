@@ -1,0 +1,8 @@
+ module VariableStep
+ import VariableStepConfig;
+ {
+    VariableStepConfig writeHeader(string headers[]);
+    void writeDataPoint(VariableStepConfig configuration, real time, ? values);
+}
+
+module VariableStepConfig {}
