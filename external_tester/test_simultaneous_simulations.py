@@ -7,6 +7,8 @@ import shutil
 import tempfile
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
+import concurrent.futures
+from threading import Lock
 
 import requests
 
@@ -40,10 +42,18 @@ def StopCOE(p):
 
 def RunTests(threadCount):
     with ThreadPoolExecutor(max_workers=threadCount) as ex:
-        _ = {ex.submit(RunTest) for _ in range(threadCount)}
+        sims = {ex.submit(RunTest) for _ in range(threadCount)}
+
+        for _ in concurrent.futures.as_completed(sims):
+            pass
+
+
+mutex = Lock()
 
 def RunTest():
-    config = testutils.retrieveConfiguration()
+    # just to ensure that any file reads in the python size are not causing false positives
+    with mutex:
+        config = testutils.retrieveConfiguration()
 
     # Create Session
     r = requests.get("http://localhost:8082/createSession")
@@ -81,7 +91,12 @@ def RunTest():
     with open(csvFilePath, "w+") as f:
         f.write(csv.replace("\r\n", "\n"))
 
-    if not testutils.compare("CSV", "wt/result.csv", csvFilePath):
+    # just to ensure that any file reads in the python size are not causing false positives
+    with mutex:
+        fileDestination = os.path.join(tempDirectory, "expected_result.csv")
+        shutil.copyfile("wt/result.csv", fileDestination)
+
+    if not testutils.compare("CSV", fileDestination, csvFilePath):
         raise Exception("CSV files did not match!")
 
     # cleanup after myself
@@ -100,9 +115,9 @@ if "__main__":
     path = os.path.abspath(args.path) if str(args.path) != "None" else FindJar()
 
     p = StartCOE(path, args.port)
-    time.sleep(2) # give some time for the COE to actually start
+    time.sleep(20) # give some time for the COE to actually start
 
-    threadCounts = [1, 2, 4, 6, 8, 10]
+    threadCounts = [1, 2, 4, 8, 10, 12, 16, 18, 20, 100]
 
     try:
         for i in threadCounts:
