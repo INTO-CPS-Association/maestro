@@ -53,8 +53,6 @@ import java.util.UUID;
  * Created by ctha on 17-03-2016.
  */
 public class SessionController {
-
-
     public static boolean test = false;
     private final Map<String, SessionLogic> maestroInstanceMap = new HashMap<>();
     private final SessionLogicFactory sessionLogicFactory;
@@ -65,12 +63,16 @@ public class SessionController {
 
     public String createNewSession() {
         String session = UUID.randomUUID().toString();
-        maestroInstanceMap.put(session, sessionLogicFactory.createSessionLogic(this.getSessionRootDir(session)));
+        synchronized (maestroInstanceMap) {
+            maestroInstanceMap.put(session, sessionLogicFactory.createSessionLogic(this.getSessionRootDir(session)));
+        }
         return session;
     }
 
     public SessionLogic getSessionLogic(String sessionID) {
-        return maestroInstanceMap.get(sessionID);
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.get(sessionID);
+        }
     }
 
     public Coe getCoe(String sessionId) throws Exception {
@@ -78,11 +80,15 @@ public class SessionController {
     }
 
     public boolean containsSession(String sessionId) {
-        return maestroInstanceMap.containsKey(sessionId);
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.containsKey(sessionId);
+        }
     }
 
     public SessionLogic removeSession(String sessionId) {
-        return maestroInstanceMap.remove(sessionId);
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.remove(sessionId);
+        }
     }
 
     public List<StatusMsgJson> getStatus() {
@@ -94,8 +100,11 @@ public class SessionController {
     }
 
     public void deleteSession(String sessionId) throws IOException {
-        FileUtils.deleteDirectory(maestroInstanceMap.get(sessionId).rootDirectory);
+        synchronized (maestroInstanceMap) {
+            FileUtils.deleteDirectory(maestroInstanceMap.get(sessionId).rootDirectory);
+        }
         this.removeSession(sessionId);
+
     }
 
     public File getSessionRootDir(String session) {
