@@ -33,7 +33,7 @@ public class Application {
 
     }
 
-    static class MableV1ToV2ProxyRunner implements MaestroV#1CliProxy.OneShotRunner {
+    static class MableV1ToV2ProxyRunner implements MaestroV1CliProxy.OneShotRunner {
 
         @Override
         public boolean run(boolean verbose, File configFile, File simulationConfigFile, Double startTime, Double endTime,
