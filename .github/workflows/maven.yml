@@ -52,6 +52,11 @@ jobs:
         run: |
           cd external_tester
           python cli_legacy_test.py
+      - name: Threaded Web API test
+        timeout-minutes: 5
+        run: |
+          cd external_tester
+          python test_simultaneous_simulations.py
 
   deploy:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )

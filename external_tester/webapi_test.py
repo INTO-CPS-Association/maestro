@@ -13,10 +13,6 @@ import websocket
 import testutils
 import glob
 
-print(requests.__file__)
-print("bla")
-print(sys.prefix, sys.base_prefix, sys.executable)
-print("bla2")
 websocketopen = False
 
 def printSection(section):
@@ -26,11 +22,12 @@ def printSection(section):
     print(hashes)
 
 def terminate(p):
-    if socketFile:
-        socketFile.close()
-    p.kill()
+    p.terminate()
     sys.exit()
 
+def terminateSocket(p):
+    if socketFile:
+        socketFile.close()
 
 def ws_open(ws):
     print("WS_THREAD: open")
@@ -80,6 +77,7 @@ print("Testing Web api of: " + path + "with port: " + str(port))
 
 cmd = "java -jar " + path
 p = subprocess.Popen(cmd, shell=True)
+
 try:
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
@@ -106,8 +104,7 @@ try:
     printSection("CREATE SESSION")
     r = requests.get(basicUrl + "/createSession")
     if not r.status_code == 200:
-        print("ERROR: Could not create session")
-        terminate(p)
+        raise Exception("Could not create session")
 
     status = json.loads(r.text)
     print ("Session '%s', data=%s'" % (status["sessionId"], status))
@@ -130,9 +127,6 @@ try:
     socketFile = open(wsResult, "w")
     print("Writing websocket output to: " + wsResult)
     wsOnMessage = lambda ws, msg: socketFile.write(msg)
-    def wsOnOpen(ws, wsOpenFlag):
-        print("WS: Open")
-        wsOpenFlag=True
     wsThread=threading.Thread(target=ws_thread, args=(wsurl,wsOnMessage,))
     wsThread.start()
 
@@ -202,4 +196,5 @@ try:
         raise Exception(f"Could not destroy: {r.text}")
 
 finally:
+    terminateSocket(p)
     terminate(p)
