@@ -40,12 +40,21 @@ def StartCOE(path, port):
 def StopCOE(p):
     p.terminate()
 
+
+errors = []
+
 def RunTests(threadCount):
+    global errors
+    errors = []
+
     with ThreadPoolExecutor(max_workers=threadCount) as ex:
         sims = {ex.submit(RunTest) for _ in range(threadCount)}
 
         for _ in concurrent.futures.as_completed(sims):
             pass
+
+    for error in errors:
+        raise Exception(error)
 
 
 mutex = Lock()
@@ -53,38 +62,47 @@ mutex = Lock()
 def RunTest():
     # just to ensure that any file reads in the python size are not causing false positives
     with mutex:
+        tempDirectory = tempfile.mkdtemp()
         config = testutils.retrieveConfiguration()
 
     # Create Session
     r = requests.get("http://localhost:8082/createSession")
     if not r.status_code == 200:
-        raise Exception("Could not create session")
+        errors.append("Could not create session")
+        return
     sessionId = json.loads(r.text)['sessionId']
 
     # Init Session
     r = requests.post(f"http://localhost:8082/initialize/{sessionId}", json=config)
     if not r.status_code == 200:
-        raise Exception("Could not initialize")
+        errors.append("Could not initialize")
+        return
 
     initSessionId = json.loads(r.text)['sessionId']
     if initSessionId != sessionId:
-        raise Exception("Incorrect Init Session ID!")
+        errors.append(f"Incorrect Init Session ID! Got: {initSessionId} Expected: {sessionId}")
+        return
 
     # Simulate
-    r = requests.post(f"http://localhost:8082/simulate/{sessionId}", json=json.load(open("wt/start_message.json")))
+    with mutex:
+        fileDestination = os.path.join(tempDirectory, "startMessage.json")
+        shutil.copyfile("wt/start_message.json", fileDestination)
+
+    r = requests.post(f"http://localhost:8082/simulate/{sessionId}", json=json.load(open(fileDestination)))
     if not r.status_code == 200:
-        raise Exception(f"Could not simulate: {r.text}")
+        errors.append(f"Could not simulate: {r.text}")
+        return
 
     simSessionId = json.loads(r.text)['sessionId']
     if simSessionId != sessionId:
-        raise Exception("Incorrect Simulate Session ID!")
+        errors.append(f"Incorrect Simulate Session ID! Got: {simSessionId} Expected: {sessionId}")
+        return
 
     # Plain Results
     r = requests.get(f"http://localhost:8082/result/{sessionId}/plain")
     if not r.status_code == 200:
-        raise Exception(f"Could not get plain results: {r.text}")
-
-    tempDirectory = tempfile.mkdtemp()
+        errors.append(f"Could not get plain results: {r.text}")
+        return
 
     csv = r.text
     csvFilePath = os.path.join(tempDirectory, "actual_result.csv")
@@ -97,7 +115,8 @@ def RunTest():
         shutil.copyfile("wt/result.csv", fileDestination)
 
     if not testutils.compare("CSV", fileDestination, csvFilePath):
-        raise Exception("CSV files did not match!")
+        errors.append(f"CSV files did not match for session {sessionId}!")
+        return
 
     # cleanup after myself
     shutil.rmtree(tempDirectory)
@@ -106,7 +125,9 @@ def RunTest():
     r = requests.get(f"http://localhost:8082/destroy/{sessionId}")
 
     if not r.status_code == 200:
-        raise Exception(f"Could not destroy: {r.text}")
+        errors.append(f"Could not destroy session {sessionId}: {r.text}")
+        return
+
 
 if "__main__":
     args = GetParameters()
