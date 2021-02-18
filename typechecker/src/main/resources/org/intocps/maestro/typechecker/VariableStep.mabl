@@ -3,7 +3,7 @@
  import FMI2;
  {
     VariableStepConfig setFMUs(string names[], FMI2 fmus[]);
-    void initializePortNames(VariableStepConfig, string portNames[]);
+    void initializePortNames(VariableStepConfig configuration, string portNames[]);
     void addDataPoint(VariableStepConfig configuration, real time, ? values);
     real getStepSize(VariableStepConfig configuration);
 }
