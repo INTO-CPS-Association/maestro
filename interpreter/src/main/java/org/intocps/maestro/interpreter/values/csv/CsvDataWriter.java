@@ -1,10 +1,7 @@
 package org.intocps.maestro.interpreter.values.csv;
 
 import org.intocps.maestro.interpreter.InterpreterException;
-import org.intocps.maestro.interpreter.values.BooleanValue;
-import org.intocps.maestro.interpreter.values.IntegerValue;
-import org.intocps.maestro.interpreter.values.RealValue;
-import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.datawriter.DataFileRotater;
 import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
 
@@ -63,6 +60,8 @@ public class CsvDataWriter implements IDataListener {
                 value = ((RealValue) d).getValue();
             } else if (d instanceof BooleanValue) {
                 value = ((BooleanValue) d).getValue();
+            } else if (d instanceof StringValue) {
+                value = ((StringValue) d).getValue();
             }
 
             data.add(value.toString());

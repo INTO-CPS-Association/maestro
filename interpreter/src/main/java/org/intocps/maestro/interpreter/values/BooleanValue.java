@@ -15,4 +15,15 @@ public class BooleanValue extends Value {
     public String toString() {
         return "BooleanValue{" + "value=" + value + '}';
     }
+
+    @Override
+    public int compareTo(Value other) {
+
+        other = other.deref();
+        if (other instanceof BooleanValue) {
+            return this.value.compareTo(((BooleanValue) other).value);
+        }
+
+        return super.compareTo(other);
+    }
 }
