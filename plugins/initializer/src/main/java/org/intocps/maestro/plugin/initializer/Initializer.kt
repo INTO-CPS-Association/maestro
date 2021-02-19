@@ -145,6 +145,11 @@ class Initializer : IMaestroExpansionPlugin {
             //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
             val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
 
+            //Verification against prolog should only be done if it turned on and there is no loops
+            if(this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
+                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
+
+
             //Set variables for all components in IniPhase
             setComponentsVariables(fmuInstances, PhasePredicates.iniPhase())
 
