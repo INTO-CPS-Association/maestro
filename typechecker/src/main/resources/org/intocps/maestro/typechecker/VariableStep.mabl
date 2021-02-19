@@ -6,6 +6,7 @@
     void initializePortNames(VariableStepConfig configuration, string portNames[]);
     void addDataPoint(VariableStepConfig configuration, real time, ? values);
     real getStepSize(VariableStepConfig configuration);
+    void setEndTime(VariableStepConfig configuration, real endTime);
 }
 
 module VariableStepConfig {}

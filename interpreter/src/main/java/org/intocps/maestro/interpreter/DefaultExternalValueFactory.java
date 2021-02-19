@@ -184,7 +184,6 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
     public static class VariableStepLifecycleHandler extends BaseLifecycleHandler {
         @Override
         public Either<Exception, Value> instantiate(List<Value> args) {
-            //TODO: check for size and null
             if (args == null || args.isEmpty()) {
                 return Either.left(new AnalysisException("No values passed"));
             }

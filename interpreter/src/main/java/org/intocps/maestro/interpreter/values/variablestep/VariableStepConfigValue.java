@@ -6,16 +6,13 @@ import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class VariableStepConfigValue extends Value {
 
     private final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances;
     private List<String> portNames;
-    private Map<ModelDescription.Types, StepVal> dataPoint;
+    private List<StepVal> dataPoint;
     private Double time;
     private StepsizeCalculator stepsizeCalculator;
 
@@ -31,24 +28,31 @@ public class VariableStepConfigValue extends Value {
         this.portNames = portNames;
     }
 
-    public void addDataPoint(Double time, Map<ModelDescription.Types, StepVal> dataPoint) {
+    public void addDataPoint(Double time, List<StepVal> dataPoint) {
         this.time = time;
         this.dataPoint = dataPoint;
     }
 
     public double getStepSize() {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues = new HashMap<>();
-        instances.forEach((mi,si) -> {
-            Map<ModelDescription.ScalarVariable, Object> scalarVals = new HashMap<>();
-            si.config.scalarVariables.forEach( sv -> {
-                Object value = dataPoint.values().stream().filter(dp -> (dp.getName().contains(mi.key) && dp.getName().contains(sv.name))).findFirst();
-                if(value != null)
-                    scalarVals.put(sv, value);
+        instances.forEach((mi,fsi) -> {
+            Map<ModelDescription.ScalarVariable, Object> scalarValues = new HashMap<>();
+            fsi.config.scalarVariables.forEach( sv -> {
+                Optional<StepVal> stepVal =
+                        dataPoint.stream().filter(dp -> (dp.getName().contains(("{" + (mi.key == null ? "" : mi.key) + "}." + mi.instanceName + "." + sv.name)))).findFirst();
+                if(stepVal.isPresent())
+                    scalarValues.put(sv, stepVal.get().getValue());
             });
-            currentValues.put(mi, scalarVals);
+            currentValues.put(mi, scalarValues);
         });
 
         return stepsizeCalculator.getStepsize(time,currentValues, null, null);
+    }
+
+    public void setEndTime(final Double endTime){
+        if(stepsizeCalculator != null){
+            stepsizeCalculator.setEndTime(endTime);
+        }
     }
 
     public List<String> getPorts() { return this.portNames; }

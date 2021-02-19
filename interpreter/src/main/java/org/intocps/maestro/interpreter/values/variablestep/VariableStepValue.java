@@ -76,7 +76,7 @@ public class VariableStepValue extends ModuleValue {
             initSize = getInitSizeFromConfig(config);
         }
         catch (Exception e){
-            throw new InterpreterException("Configuration could not be passed", e);
+            throw new InterpreterException("Configuration could not be passed testt", e);
         }
 
         Map<String, Value> componentMembers = new HashMap<>();
@@ -90,13 +90,13 @@ public class VariableStepValue extends ModuleValue {
                     throw new InterpreterException("Argument list contains null values");
                 }
 
-                List<StringValue> fmuInstanceNames = ArrayUtilValue.getArrayValue(fcargs.get(1), StringValue.class);
+                List<StringValue> fmuInstanceNames = ArrayUtilValue.getArrayValue(fcargs.get(0), StringValue.class);
                 List<FmuValue> fmus = ArrayUtilValue.getArrayValue(fcargs.get(1), FmuValue.class);
 
                 Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances = new HashMap<>();
 
                 for (int i = 0; i < fmuInstanceNames.size(); i++) {
-                    ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(fmuInstanceNames.get(i).getValue(), null);
+                    ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(null, fmuInstanceNames.get(i).getValue());
                     IFmu fmu = fmus.get(i).getModule();
                     ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
                     FmiInstanceConfig fmiInstanceConfig = new FmiInstanceConfig(modelDescription, modelDescription.getScalarVariables());
@@ -121,7 +121,7 @@ public class VariableStepValue extends ModuleValue {
             Value id = fcargs.get(0).deref();
             VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) id;
             variableStepConfig.initializePorts(
-                    ArrayUtilValue.getArrayValue(fcargs.get(0), StringValue.class).stream().map(x -> x.getValue()).collect(Collectors.toList()));
+                    ArrayUtilValue.getArrayValue(fcargs.get(1), StringValue.class).stream().map(x -> x.getValue()).collect(Collectors.toList()));
             return new VoidValue();
         }));
         componentMembers.put("addDataPoint", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -137,30 +137,34 @@ public class VariableStepValue extends ModuleValue {
             if (id instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue)id;
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
-                List<Value> arrayValue = fcargs.stream().skip(2).map(Value::deref).collect(Collectors.toList());
-                Map<ModelDescription.Types, VariableStepConfigValue.StepVal> typesToValues = new HashMap<>();
+                List<Value> arrayValue = ArrayUtilValue.getArrayValue(fcargs.get(2), Value.class);
+                List<VariableStepConfigValue.StepVal> typesToValues = new ArrayList<>();
 
-                //TODO: Should this type conversion and linking of port names and values be done in VariableStepConfig instead?
+                //TODO: Should the relation between ports and values be made here or in VariableStepConfigValue?
                 for(int i = 0; i < arrayValue.size(); i++) {
                     Object value = arrayValue.get(i);
 
                     if (value instanceof StringValue) {
-                        typesToValues.put(ModelDescription.Types.String, new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i), ((StringValue) value).getValue()));
+                        typesToValues.add(
+                                new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i), ((StringValue) value).getValue()));
                     }
                     else if (value instanceof IntegerValue) {
-                        typesToValues.put(ModelDescription.Types.Integer, new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
+                        typesToValues.add(
+                                new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
                                 ((IntegerValue) value).getValue()));
                     }
                     else if (value instanceof RealValue) {
-                        typesToValues.put(ModelDescription.Types.Real, new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
+                        typesToValues.add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
                                 ((RealValue) value).getValue()));
                     }
                     else if (value instanceof BooleanValue) {
-                        typesToValues.put(ModelDescription.Types.Boolean, new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
+                        typesToValues.add(
+                                new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
                                 ((BooleanValue) value).getValue()));
                     }
                     else if (value instanceof EnumerationValue) {
-                        typesToValues.put(ModelDescription.Types.Enumeration, new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
+                        typesToValues.add(
+                                new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
                                 ((EnumerationValue) value).getValue()));
                     }
 
@@ -175,6 +179,13 @@ public class VariableStepValue extends ModuleValue {
                 return new RealValue(((VariableStepConfigValue) id).getStepSize());
             }
             return new RealValue(-1.0);
+        }));
+        componentMembers.put("setEndTime", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            Value id = fcargs.get(0).deref();
+            if (id instanceof VariableStepConfigValue) {
+                ((VariableStepConfigValue)id).setEndTime(((RealValue)fcargs.get(1)).getValue());
+            }
+            return  new VoidValue();
         }));
 
         return componentMembers;
