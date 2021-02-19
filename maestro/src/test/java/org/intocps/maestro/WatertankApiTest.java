@@ -73,8 +73,8 @@ public class WatertankApiTest {
         controller.getAndShare();
         ins.forEach(ComponentVariableFmi2Api::exitInitializationMode);
 
-        DoubleVariableFmi2Api time = ds.store(0d);
-        DoubleVariableFmi2Api step = ds.store(0.1);
+        DoubleVariableFmi2Api time = ds.store("time", 0d);
+        DoubleVariableFmi2Api step = ds.store("step_size", 0.1);
         ScopeFmi2Api whileScope = ds.enterWhile(time.toMath().lessThan(DoubleExpressionValue.of(10d))).activate();
 
         tank.setLinked();
