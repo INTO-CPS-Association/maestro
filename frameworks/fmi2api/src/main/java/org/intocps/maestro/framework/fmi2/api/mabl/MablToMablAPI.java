@@ -44,7 +44,6 @@ public class MablToMablAPI {
             this.runtimeLogger = new LoggerFmi2Api(this.mablApiBuilder, runtimeModule);
         }
         mablApiBuilder.setRuntimeLogger(runtimeLogger);
-        mablApiBuilder.getSettings().externalRuntimeLogger = true;
         mablApiBuilder.addExternalLoadedModuleIdentifier(name);
     }
 

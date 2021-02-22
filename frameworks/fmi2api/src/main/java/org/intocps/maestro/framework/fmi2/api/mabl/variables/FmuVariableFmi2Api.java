@@ -49,7 +49,9 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     @Override
     public void unload(Fmi2Builder.Scope<PStm> scope) {
-        scope.add(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))));
+        scope.add(newIf(newNotEqual(getReferenceExp().clone(), newNullExp()),
+                newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))),
+                        newAAssignmentStm(getDesignator(), newNullExp())), null));
     }
 
     @Override
@@ -64,16 +66,12 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         scope.add(var);
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-
             ScopeFmi2Api thenScope =
                     (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(aMablFmi2ComponentAPI.getReferenceExp().clone(), newNullExp())))
                             .enterThen();
 
-
             thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
-
             builder.getLogger().error(thenScope, "Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix);
-
             ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder.collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast())
                     .forEach(p -> {
                         thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
