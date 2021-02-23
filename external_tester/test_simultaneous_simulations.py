@@ -109,6 +109,19 @@ def RunTest():
     with open(csvFilePath, "w+") as f:
         f.write(csv.replace("\r\n", "\n"))
 
+    r = requests.get(f"http://localhost:8082/result/{sessionId}/zip", stream=true)
+    if not r.status_code == 200:
+           errors.append(f"Could not get zip results: {r.text}")
+           return
+    print ("Result response code '%d" % (r.status_code))
+    result_zip_path = "actual_zip_result.zip"
+    zipFilePath = os.path.join(tempDirectory,result_zip_path)
+    chunk_size = 128
+    with open(zipFilePath, 'wb') as fd:
+       for chunk in r.iter_content(chunk_size=chunk_size):
+           fd.write(chunk)
+    print("Wrote zip file file to: " + zipFilePath)
+
     # just to ensure that any file reads in the python size are not causing false positives
     with mutex:
         fileDestination = os.path.join(tempDirectory, "expected_result.csv")
@@ -117,6 +130,8 @@ def RunTest():
     if not testutils.compare("CSV", fileDestination, csvFilePath):
         errors.append(f"CSV files did not match for session {sessionId}!")
         return
+
+
 
     # cleanup after myself
     shutil.rmtree(tempDirectory)
