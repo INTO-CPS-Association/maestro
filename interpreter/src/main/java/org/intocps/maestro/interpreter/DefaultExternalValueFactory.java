@@ -409,12 +409,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                     JsonNode dwConfig = configTree.get(DATA_WRITER_TYPE_NAME);
 
                     for (JsonNode val : dwConfig) {
-                        if (val.has("type") && val.get("type").equals("CSV")) {
-                            dataWriterFileName = val.get("filename").asText();
+                        if (val.has("type") && val.get("type").isTextual() && val.get("type").asText().equals("CSV")) {
+                            if (val.has("filename") && val.get("filename").isTextual()) {
+                                dataWriterFileName = val.get("filename").asText();
 
-                            dataWriterFilter = StreamSupport
-                                    .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
-                                    .map(v -> v.asText()).collect(Collectors.toList());
+                                dataWriterFilter = StreamSupport
+                                        .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
+                                        .map(v -> v.asText()).collect(Collectors.toList());
+                            }
                         }
                     }
                 }
