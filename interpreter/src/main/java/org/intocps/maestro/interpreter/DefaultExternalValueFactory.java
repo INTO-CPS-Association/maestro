@@ -412,11 +412,13 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                         if (val.has("type") && val.get("type").isTextual() && val.get("type").asText().equals("CSV")) {
                             if (val.has("filename") && val.get("filename").isTextual()) {
                                 dataWriterFileName = val.get("filename").asText();
-
+                            }
+                            if (val.has("filter")) {
                                 dataWriterFilter = StreamSupport
                                         .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
                                         .map(v -> v.asText()).collect(Collectors.toList());
                             }
+
                         }
                     }
                 }
