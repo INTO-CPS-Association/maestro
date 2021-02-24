@@ -33,22 +33,16 @@ if not os.path.isfile(path):
     sys.exit()
 
 # Interpreter outputs to directory from where it is executed.
-outputs = "outputs.csv"
-
-def deleteOutputsFile(outputsFile):
-    if os.path.exists(outputs) and os.path.isfile(outputs):
-        print("Removing file: " + outputs)
-        os.remove(outputs)
-
+outputsFileName = "outputs.csv"
 
 print("Testing CLI with specification generation of: " + path)
-
-deleteOutputsFile(outputs)
 
 def cliSpecGen():
     testutils.printSection("CLI with Specification Generation")
     temporary=testutils.createAndPrepareTempDirectory()
-    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+    outputs = os.path.join(temporary.dirPath, outputsFileName)
+    #cmd = "java -jar -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 {0} --dump-simple {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
@@ -63,16 +57,14 @@ def cliSpecGen():
             shutil.copyfile(outputs, tempActualOutputs)
             raise Exception("Results files do not match")
 
+cliSpecGen()
 
-try:
-    cliSpecGen()
-finally:
-    deleteOutputsFile(outputs)
 
 def cliRaw():
     testutils.printSection("CLI Raw")
     temporary=testutils.createAndPrepareTempDirectory()
-    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+    outputs = os.path.join(temporary.dirPath, outputsFileName)
+    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
@@ -86,16 +78,14 @@ def cliRaw():
             shutil.copyfile(outputs, tempActualOutputs)
             raise Exception("Results files do not match")
 
+cliRaw()
 
-try:
-    cliRaw()
-finally:
-    deleteOutputsFile(outputs)
 
 def cliExpansion():
     testutils.printSection("CLI Expansion")
     temporary=testutils.createAndPrepareTempDirectory()
-    cmd = "java -jar {0} --dump {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
+    outputs = os.path.join(temporary.dirPath, outputsFileName)
+    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
@@ -109,8 +99,4 @@ def cliExpansion():
             shutil.copyfile(outputs, tempActualOutputs)
             raise Exception("Results files do not match")
 
-
-try:
-    cliExpansion()
-finally:
-    deleteOutputsFile(outputs)
+cliExpansion()

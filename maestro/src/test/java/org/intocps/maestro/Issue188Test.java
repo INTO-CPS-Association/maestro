@@ -18,7 +18,7 @@ public class Issue188Test {
         String initializeJson = Issue188Test.class.getClassLoader().getResource("188/initialize.json").getPath();
         String simulateJson = Issue188Test.class.getClassLoader().getResource("188/simulate.json").getPath();
         String dumpPath = "target/test-classes/188/dump";
-        Assert.assertTrue(Main.argumentHandler(new String[]{"-sg1", initializeJson, simulateJson, "-d", dumpPath}));
+        Assert.assertTrue(Main.argumentHandler(new String[]{"-sg1", initializeJson, simulateJson, "-ds", dumpPath}));
     }
 
 }

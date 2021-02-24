@@ -12,7 +12,7 @@ public class CliTest {
     @Test
     public void oneShotTest() throws IOException, InterruptedException {
 
-        Path outFile = Paths.get("target", CliTest.class.getName(), "output.csv");
+        Path outFile = Paths.get("target", CliTest.class.getName(), "outputs.csv");
         outFile.toFile().getParentFile().mkdirs();
         double startTimeIn = 0;
         double endTimeIn = 10;
