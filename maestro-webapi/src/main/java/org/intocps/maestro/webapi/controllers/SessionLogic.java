@@ -7,6 +7,10 @@ import java.io.File;
 
 public class SessionLogic {
     public final File rootDirectory;
+    /**
+     * Whether to run the co-simulation internally via CLI or not. Disallows websocket.
+     */
+    public boolean cliExecution = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
 
@@ -16,6 +20,13 @@ public class SessionLogic {
 
     }
 
+    public boolean getCliExecution() {
+        return this.cliExecution;
+    }
+
+    public void setCliExecution(boolean executeViaCLI) {
+        this.cliExecution = executeViaCLI;
+    }
 
     public WebSocketSession getSocket() {
         return socket;

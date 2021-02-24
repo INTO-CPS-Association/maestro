@@ -83,6 +83,12 @@ def RunTest():
         errors.append(f"Incorrect Init Session ID! Got: {initSessionId} Expected: {sessionId}")
         return
 
+    r = requests.post(f"http://localhost:8082/executeViaCLI/{sessionId}", json={"executeViaCLI":True})
+    if not r.status_code == 200:
+            errors.append("Could not set executeViaCLI")
+            return
+
+
     # Simulate
     with mutex:
         fileDestination = os.path.join(tempDirectory, "startMessage.json")
@@ -150,10 +156,10 @@ if "__main__":
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     path = os.path.abspath(args.path) if str(args.path) != "None" else FindJar()
 
-    p = StartCOE(path, args.port)
-    time.sleep(20) # give some time for the COE to actually start
+    #p = StartCOE(path, args.port)
+    #time.sleep(20) # give some time for the COE to actually start
 
-    threadCounts = [1, 2, 4, 8, 10, 12, 16, 18, 20, 100]
+    threadCounts = [1, 2, 4, 8, 10, 12, 16]
 
     try:
         for i in threadCounts:
@@ -161,4 +167,5 @@ if "__main__":
             RunTests(i)
             print(f"{i} threads tests passed!")
     finally:
-        StopCOE(p)
+        print("stopping")
+        #StopCOE(p)

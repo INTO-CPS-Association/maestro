@@ -14,6 +14,7 @@ import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
+import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
@@ -40,8 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
@@ -147,9 +147,12 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body1);
+        try (PrintWriter out = new PrintWriter(new File(logic.rootDirectory, "initializeRaw.json"))) {
+            out.println(body1.replaceAll("\\\\", ""));
+        }
         ObjectMapper mapper = new ObjectMapper();//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
+        mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
 
 
         if (logic == null) {
@@ -256,25 +259,55 @@ public class Maestro2SimulationController {
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
         ErrorReporter reporter = new ErrorReporter();
-        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
-        mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
 
-        if (reporter.getErrorCount() > 0) {
-            reporter.getErrors().forEach(x -> logger.error(x.toString()));
-            StringWriter out = new StringWriter();
-            PrintWriter writer = new PrintWriter(out);
-            reporter.printWarnings(writer);
-            reporter.printErrors(writer);
-            throw new Exception(out.toString());
+        if (logic.getCliExecution() == false) {
+            Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
+            mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
+
+            if (reporter.getErrorCount() > 0) {
+                reporter.getErrors().forEach(x -> logger.error(x.toString()));
+                StringWriter out = new StringWriter();
+                PrintWriter writer = new PrintWriter(out);
+                reporter.printWarnings(writer);
+                reporter.printErrors(writer);
+                throw new Exception(out.toString());
+            }
+
+            reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
+
+            return new StatusModel("Simulation completed", sessionId, 0,
+                    reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
+                    reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+        } else {
+            String simulateJsonPath = new File(logic.rootDirectory, "simulate.json").getAbsolutePath();
+            String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
+            String dumpDirectory = logic.rootDirectory.getAbsolutePath();
+            List<String> arguments =
+                    Arrays.asList("--dump-simple", dumpDirectory, "--dump-intermediate", dumpDirectory, "-sg1", simulateJsonPath, initializeJsonPath,
+                            "-i", "-v", "FMI2");
+
+            List<String> command = JavaProcess.calculateCommand(Main.class, Arrays.asList(), arguments);
+            List<String> error = new ArrayList<>();
+            List<String> out = new ArrayList<>();
+            ProcessBuilder pb = new ProcessBuilder(command);
+            Process p = pb.start();
+            Scanner outputStreamSc = new Scanner(p.getInputStream());
+            Scanner errorStream = new Scanner(p.getErrorStream());
+            while (outputStreamSc.hasNextLine() || errorStream.hasNext()) {
+                if (outputStreamSc.hasNextLine()) {
+                    out.add(outputStreamSc.nextLine());
+                }
+                if (errorStream.hasNext()) {
+                    error.add(errorStream.nextLine());
+                }
+            }
+
+            int result = JavaProcess.exec(Main.class, Arrays.asList(), arguments);
+
+            return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
         }
 
-        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-
-        return new StatusModel("Simulation completed", sessionId, 0,
-                reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
-                reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
     }
-
 
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
@@ -324,6 +357,12 @@ public class Maestro2SimulationController {
         final String message = "{\"version\":\"" + Main.getVersion() + "\"}";
         return message;
     }
+
+    @RequestMapping(value = "/executeViaCLI/{sessionId}", method = RequestMethod.POST)
+    public void executeViaCLI(@PathVariable String sessionId, @RequestBody CliExecutionRequestBody cliExecutionRequestBody) {
+        sessionController.getSessionLogic(sessionId).setCliExecution(cliExecutionRequestBody.executeViaCLI);
+    }
+
 
     //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)
     //    public void reset(@PathVariable String sessionId) {

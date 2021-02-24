@@ -57,6 +57,7 @@ public class SessionController {
     private final Map<String, SessionLogic> maestroInstanceMap = new HashMap<>();
     private final SessionLogicFactory sessionLogicFactory;
 
+
     public SessionController(SessionLogicFactory sessionLogicFactory) {
         this.sessionLogicFactory = sessionLogicFactory;
     }
@@ -118,6 +119,7 @@ public class SessionController {
     public void removeSocket(String sessionId) {
         this.getSessionLogic(sessionId).removeSocket();
     }
+
 
     public boolean containsSocket(String sessionId) {
         return this.getSessionLogic(sessionId).containsSocket();
