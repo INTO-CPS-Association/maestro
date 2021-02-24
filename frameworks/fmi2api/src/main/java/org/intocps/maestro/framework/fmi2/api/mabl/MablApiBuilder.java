@@ -35,20 +35,22 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private final ScopeFmi2Api mainErrorHandlingScope;
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
     List<String> importedModules = new Vector<>();
+    List<RuntimeModuleVariable> loadedModules = new Vector<>();
     private MathBuilderFmi2Api mathBuilderApi;
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
     private LoggerFmi2Api runtimeLogger;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
+    private ExternalResources externalResources = null;
 
     /**
-     * @param limited If false then it will create the error handling environment, i.e. FMI2 Status Variables and global execution.
-     *                If true it will use the ones created by the template generator.
+     * @param enableDefaultExternalContext If false then it will create the error handling environment, i.e. FMI2 Status Variables and global execution.
+     *                                     If true it will use existing.
      * @deprecated This is expected to be removed in the future.
      */
     @Deprecated
-    public MablApiBuilder(boolean limited) {
-        this(new MablSettings(), limited);
+    public MablApiBuilder(boolean enableDefaultExternalContext) {
+        this(new MablSettings(), new ExternalResources(enableDefaultExternalContext));
     }
 
     public MablApiBuilder() {
@@ -59,19 +61,24 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this(settings, false);
     }
 
+    public MablApiBuilder(MablSettings settings, boolean enableDefaultExternalContext) {
+        this(settings, new ExternalResources(enableDefaultExternalContext));
+    }
+
     /**
      * Create a MablApiBuilder
      *
      * @param settings
-     * @param limited  if true it will not create Fmi2StatusVariables, as it expects them to be present already.
      */
-    public MablApiBuilder(MablSettings settings, boolean limited) {
+    public MablApiBuilder(MablSettings settings, ExternalResources externalResources) {
+        this.externalResources = externalResources;
+
         this.settings = settings;
         rootScope = new ScopeFmi2Api(this);
 
         fmiStatusVariables = new HashMap<>();
         if (settings.fmiErrorHandlingEnabled) {
-            if (limited) {
+            if (this.externalResources.fmi2StatusVariables) {
                 fmiStatusVariables.putAll(MablToMablAPI.getFmiStatusVariables(this.nameGenerator));
             } else {
                 fmiStatusVariables.put(FmiStatus.FMI_OK, rootScope.store("FMI_STATUS_OK", FmiStatus.FMI_OK.getValue()));
@@ -83,27 +90,25 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             }
         }
 
+        if (this.externalResources.continuationVariables) {
+            globalExecutionContinue = rootScope.store("global_execution_continue", true);
+            globalFmiStatus = rootScope.store("status", FmiStatus.FMI_OK.getValue());
 
-        // In limited mode, these variables are already present
-        if (limited) {
+        } else {
             globalExecutionContinue =
                     (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
             globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
-        } else {
-            globalExecutionContinue = rootScope.store("global_execution_continue", true);
-            globalFmiStatus = rootScope.store("status", FmiStatus.FMI_OK.getValue());
         }
-
-
         mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
         this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
         this.mablToMablAPI = new MablToMablAPI(this);
 
-        if (this.settings.externalRuntimeLogger) {
-            // The Logger module is external
+        if (this.externalResources.runtimeLogger) {
             this.getMablToMablAPI().createExternalRuntimeLogger();
         }
+
+
     }
 
     public void setRuntimeLogger(LoggerFmi2Api runtimeLogger) {
@@ -321,6 +326,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 new RuntimeModuleVariable(var, newANameType(name), (IMablScope) scope, dynamicScope, this, newAIdentifierStateDesignator(varName),
                         newAIdentifierExp(varName));
         importedModules.add(name);
+        loadedModules.add(module);
         return module;
     }
 
@@ -345,39 +351,71 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
         ABlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
-        if (runtimeLogger != null && this.getSettings().externalRuntimeLogger == false) {
-            //attempt a syntactic comparison to find the load in the clone
-            VariableFmi2Api loggerVar = (VariableFmi2Api) runtimeLogger.module;
+        /**
+         * Automatically created unloads for all modules loaded by the builder.
+         */
+        for (RuntimeModuleVariable module : this.loadedModules) {
+            VariableFmi2Api var = module;
             block.apply(new DepthFirstAnalysisAdaptor() {
-
-
                 @Override
                 public void defaultInPStm(PStm node) throws AnalysisException {
-                    if (node.equals(loggerVar.getDeclaringStm())) {
+                    if (node.equals(module.getDeclaringStm())) {
                         if (node.parent() instanceof ABlockStm) {
                             //this is the scope where the logger is loaded. Check for unload
                             LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
                             boolean unloadFound = false;
                             for (int i = body.indexOf(node); i < body.size(); i++) {
                                 PStm stm = body.get(i);
-                                //newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone())
                                 if (stm instanceof AExpressionStm && ((AExpressionStm) stm).getExp() instanceof AUnloadExp) {
                                     AUnloadExp unload = (AUnloadExp) ((AExpressionStm) stm).getExp();
-                                    if (!unload.getArgs().isEmpty() && unload.getArgs().get(0).equals(loggerVar.getReferenceExp())) {
+                                    if (!unload.getArgs().isEmpty() && unload.getArgs().get(0).equals(module.getReferenceExp())) {
                                         unloadFound = true;
                                     }
                                 }
                             }
                             if (!unloadFound) {
-                                body.add(newIf(newNotEqual(loggerVar.getReferenceExp().clone(), newNullExp()),
-                                        newExpressionStm(newUnloadExp(Collections.singletonList(loggerVar.getReferenceExp().clone()))), null));
+                                body.add(newIf(newNotEqual(module.getReferenceExp().clone(), newNullExp()),
+                                        newExpressionStm(newUnloadExp(Collections.singletonList(module.getReferenceExp().clone()))), null));
                             }
                         }
                     }
                 }
-
             });
         }
+
+        //        if (runtimeLogger != null && this.getSettings().externalRuntimeLogger == false) {
+        //            //attempt a syntactic comparison to find the load in the clone
+        //            VariableFmi2Api loggerVar = (VariableFmi2Api) runtimeLogger.module;
+        //            block.apply(new DepthFirstAnalysisAdaptor() {
+        //
+        //
+        //                @Override
+        //                public void defaultInPStm(PStm node) throws AnalysisException {
+        //                    if (node.equals(loggerVar.getDeclaringStm())) {
+        //                        if (node.parent() instanceof ABlockStm) {
+        //                            //this is the scope where the logger is loaded. Check for unload
+        //                            LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
+        //                            boolean unloadFound = false;
+        //                            for (int i = body.indexOf(node); i < body.size(); i++) {
+        //                                PStm stm = body.get(i);
+        //                                //newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone())
+        //                                if (stm instanceof AExpressionStm && ((AExpressionStm) stm).getExp() instanceof AUnloadExp) {
+        //                                    AUnloadExp unload = (AUnloadExp) ((AExpressionStm) stm).getExp();
+        //                                    if (!unload.getArgs().isEmpty() && unload.getArgs().get(0).equals(loggerVar.getReferenceExp())) {
+        //                                        unloadFound = true;
+        //                                    }
+        //                                }
+        //                            }
+        //                            if (!unloadFound) {
+        //                                body.add(newIf(newNotEqual(loggerVar.getReferenceExp().clone(), newNullExp()),
+        //                                        newExpressionStm(newUnloadExp(Collections.singletonList(loggerVar.getReferenceExp().clone()))), null));
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //
+        //            });
+        //        }
 
         errorHandingBlock.getBody().add(newBreak());
 
@@ -467,6 +505,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.externalLoadedModuleIdentifier;
     }
 
+    public ExternalResources getExternalResources() {
+        return this.externalResources;
+    }
+
     public enum FmiStatus {
         FMI_OK(0),
         FMI_WARNING(1),
@@ -492,10 +534,33 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
          * Automatically perform FMI2ErrorHandling
          */
         public boolean fmiErrorHandlingEnabled = true;
+    }
+
+    public static class ExternalResources {
 
         /**
-         * If true, then the builder will not load a runtime logger.
+         * If true the following FMI2StatusFlags already exists and are available to the builder:
+         * OK, DISCARD, WARNING, ERROR, FATAL and PENDING
          */
-        public boolean externalRuntimeLogger = false;
+        public final boolean fmi2StatusVariables;
+        /**
+         * If true the following continue-execution variables already exists and are available to the builder:
+         * OK, DISCARD, WARNING, ERROR, FATAL and PENDING
+         */
+        public final boolean continuationVariables;
+        public boolean runtimeLogger;
+
+        public ExternalResources(boolean enabled) {
+            if (enabled) {
+                this.runtimeLogger = true;
+                this.continuationVariables = true;
+                this.fmi2StatusVariables = true;
+
+            } else {
+                this.runtimeLogger = false;
+                this.fmi2StatusVariables = false;
+                this.continuationVariables = false;
+            }
+        }
     }
 }
