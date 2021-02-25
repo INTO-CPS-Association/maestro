@@ -1,45 +1,165 @@
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorInstanceValue;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorValue;
+import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class DerivativeEstimatorTests {
 
+    @Test
+    public void testDerivativeEstimationFromDatapointsForConstantInput() {
+        //Arrange
+        double assertionDelta = 0.0001;
+        Double td1 = null;
+        double x1 = 1.0, x2 = 1.0, x3 = 1.0, expectedXDotDot = 0.0, expectedXDot = 0.0, td2 = 1.0, td3 = 1.0;
+
+        ScalarDerivativeEstimator estimator = new ScalarDerivativeEstimator(2);
+
+        //Act
+        estimator.advance(new Double[]{x1, null, null}, td1);
+        estimator.advance(new Double[]{x2, null, null}, td2);
+        estimator.advance(new Double[]{x3, null, null}, td3);
+        Double xDot = estimator.getFirstDerivative();
+        Double xDotDot = estimator.getSecondDerivative();
+
+        //Assert
+        Assert.assertEquals("xdot must be 0", expectedXDot, xDot, assertionDelta);
+        Assert.assertEquals("xdotdot must be 0", expectedXDotDot, xDotDot, assertionDelta);
+    }
 
     @Test
-    public void calculateDerivatives() {
-        //variablesOfInterest(["x","y"], [2,1], [1,0],2);
-        RealValue x = new RealValue(1.0), xdot = new RealValue(2.0), xdotdot = new RealValue(0.0), y = new RealValue(10.0), ydot = new RealValue(0.0);
-        ArrayValue<StringValue> variables = new ArrayValue<>(Arrays.asList(new StringValue("x"), new StringValue("y")));
-        ArrayValue<IntegerValue> orders = new ArrayValue<>(Arrays.asList(new IntegerValue(2), new IntegerValue(1)));
-        ArrayValue<IntegerValue> provided = new ArrayValue<>(Arrays.asList(new IntegerValue(1), new IntegerValue(0)));
-        UnsignedIntegerValue size = new UnsignedIntegerValue(2);
+    public void testDerivativeEstimationFromDatapointsForStraightLineInput() {
+        //Arrange
+        double assertionDelta = 0.0001;
+        Double td1 = null;
+        double x1 = 0.0, x2 = 1.0, x3 = 7.3, expectedXDotDot = 0.0, expectedXDot = 1.0, td2 = 1.0, td3 = 6.3;
+
+        ScalarDerivativeEstimator estimator = new ScalarDerivativeEstimator(2);
+
+        //Act
+        estimator.advance(new Double[]{x1, null, null}, td1);
+        estimator.advance(new Double[]{x2, null, null}, td2);
+        estimator.advance(new Double[]{x3, null, null}, td3);
+        Double xDot = estimator.getFirstDerivative();
+        Double xDotDot = estimator.getSecondDerivative();
+
+        //Assert
+        Assert.assertEquals("xdot must be 1.0", expectedXDot, xDot, assertionDelta);
+        Assert.assertEquals("xdotdot must be 0", expectedXDotDot, xDotDot, assertionDelta);
+    }
+
+    @Test
+    public void testDerivativeEstimationFromDatapointsForParabolaInput() {
+        //Arrange
+        double assertionDelta = 0.0001;
+        Double td1 = null;
+        double x1 = 0.0, x2 = 1.0, x3 = 4.0, x4 = 16.0, expectedXDotDot = 2.0, expectedXDot = 8.0, td2 = 1.0, td3 = 1.0, td4 = 2.0;
+
+        ScalarDerivativeEstimator estimator = new ScalarDerivativeEstimator(2);
+
+        //Act
+        estimator.advance(new Double[]{x1, null, null}, td1);
+        estimator.advance(new Double[]{x2, null, null}, td2);
+        estimator.advance(new Double[]{x3, null, null}, td3);
+        estimator.advance(new Double[]{x4, null, null}, td4);
+        Double xDot = estimator.getFirstDerivative();
+        Double xDotDot = estimator.getSecondDerivative();
+
+        //Assert
+        Assert.assertEquals("xdot must be 8.0", expectedXDot, xDot, assertionDelta);
+        Assert.assertEquals("xdotdot must be 2.0", expectedXDotDot, xDotDot, assertionDelta);
+    }
+
+    @Test
+    public void testCalculateDerivativesFromMableInterface() {
+        //Arrange
+        double assertionDelta = 0.0001;
+        RealValue x1 = new RealValue(4.0), x2 = new RealValue(9.0), x3 = new RealValue(25.0), expectedXDotDot = new RealValue(2.0), y1 =
+                new RealValue(4.0), y2 = new RealValue(9.0), y3 = new RealValue(25.0), expectedYDot = new RealValue(8.0);
+
+        UnsignedIntegerValue providedDerOrderForX = new UnsignedIntegerValue(0);
+        UnsignedIntegerValue providedDerOrderForY = new UnsignedIntegerValue(0);
+        UnsignedIntegerValue indexOfX = new UnsignedIntegerValue(0);
+        UnsignedIntegerValue indexOfY = new UnsignedIntegerValue(2);
+        UnsignedIntegerValue derOrderOfX = new UnsignedIntegerValue(2);
+        UnsignedIntegerValue derOrderOfY = new UnsignedIntegerValue(1);
+
+        ArrayValue<RealValue> sharedDataStep1 = new ArrayValue<>(Arrays.asList(x1, new RealValue(-1), y1));
+        ArrayValue<RealValue> sharedDataStep2 = new ArrayValue<>(Arrays.asList(x2, new RealValue(-1), y2));
+        ArrayValue<RealValue> sharedDataStep3 = new ArrayValue<>(Arrays.asList(x3, new RealValue(-1), y3));
+
+        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(
+                Arrays.asList(new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
+                        new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
+                        new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue()))));
+        ArrayValue<UnsignedIntegerValue> derivativeOrders = new ArrayValue<>(Arrays.asList(derOrderOfX, derOrderOfY));
+        ArrayValue<UnsignedIntegerValue> indicesOfInterest = new ArrayValue<>(Arrays.asList(indexOfX, indexOfY));
+        ArrayValue<UnsignedIntegerValue> providedDerivativeOrders = new ArrayValue<>(Arrays.asList(providedDerOrderForX, providedDerOrderForY));
 
         DerivativeEstimatorValue derivativeEstimatorValue = new DerivativeEstimatorValue();
-        FunctionValue.ExternalFunctionValue variablesOfInterest =
-                (FunctionValue.ExternalFunctionValue) derivativeEstimatorValue.lookup("variablesOfInterest");
-        Value evaluate = variablesOfInterest.evaluate(variables, orders, provided, size);
-        DerivativeEstimatorInstanceValue deref = (DerivativeEstimatorInstanceValue) evaluate.deref();
+        FunctionValue.ExternalFunctionValue createFunc = (FunctionValue.ExternalFunctionValue) derivativeEstimatorValue.lookup("create");
+        DerivativeEstimatorInstanceValue derEs =
+                (DerivativeEstimatorInstanceValue) createFunc.evaluate(indicesOfInterest, derivativeOrders, providedDerivativeOrders).deref();
 
-        //calculate(1.0, [1.0,2.0,10.0], array[3])
-        RealValue time = new RealValue(1.0);
-        ArrayValue<RealValue> values = new ArrayValue<>(Arrays.asList(x, xdot, y));
-        ArrayList<RealValue> updateableArray = new ArrayList<>();
-        UpdatableValue updatableValue = new UpdatableValue(new ArrayValue<>(updateableArray));
-        FunctionValue.ExternalFunctionValue calcuate = (FunctionValue.ExternalFunctionValue) deref.lookup("calculate");
-        calcuate.evaluate(time, values, updatableValue);
+        RealValue stepSize = new RealValue(1.0);
+        FunctionValue.ExternalFunctionValue estimateFunc = (FunctionValue.ExternalFunctionValue) derEs.lookup("estimate");
 
-        List<RealValue> expected = Arrays.asList(xdot, xdotdot, ydot);
-        Assert.assertTrue(updateableArray.size() == 3);
-        for (int i = 0; i < updateableArray.size(); i++) {
-            Assert.assertTrue(expected.get(i).getValue() == updateableArray.get(i).getValue());
-        }
+        //Act
+        estimateFunc.evaluate(stepSize, sharedDataStep1, sharedDataDerivatives);
+        stepSize = new RealValue(1.0);
+        estimateFunc.evaluate(stepSize, sharedDataStep2, sharedDataDerivatives);
+        stepSize = new RealValue(2.0);
+        estimateFunc.evaluate(stepSize, sharedDataStep3, sharedDataDerivatives);
 
+        RealValue xDotDot = ((RealValue) sharedDataDerivatives.getValues().get(0).getValues().get(1));
+        RealValue yDot = ((RealValue) sharedDataDerivatives.getValues().get(2).getValues().get(0));
 
+        //Assert
+        Assert.assertEquals("xdotdot must be 2.0", expectedXDotDot.getValue(), xDotDot.getValue(), assertionDelta);
+        Assert.assertEquals("ydot must be 8.0", expectedYDot.getValue(), yDot.getValue(), assertionDelta);
+    }
+
+    @Test
+    public void testRollBackFromMableInterface() {
+        //Arrange
+        double assertionDelta = 0.0001;
+        RealValue x = new RealValue(1.0), providedXDot = new RealValue(2.0), y = new RealValue(10.0);
+
+        ArrayValue<RealValue> sharedDataStep1 = new ArrayValue<>(Arrays.asList(x, new RealValue(-1), y));
+
+        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(Arrays.asList(new ArrayValue<>(Arrays.asList(providedXDot, new NullValue())),
+                new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
+                new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue()))));
+        ArrayValue<UnsignedIntegerValue> derivativeOrders = new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(2), new UnsignedIntegerValue(1)));
+        ArrayValue<UnsignedIntegerValue> indicesOfInterest =
+                new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(0), new UnsignedIntegerValue(2)));
+        ArrayValue<UnsignedIntegerValue> providedDerivativeOrders =
+                new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(1), new UnsignedIntegerValue(0)));
+
+        DerivativeEstimatorValue derivativeEstimatorValue = new DerivativeEstimatorValue();
+        FunctionValue.ExternalFunctionValue createFunc = (FunctionValue.ExternalFunctionValue) derivativeEstimatorValue.lookup("create");
+        DerivativeEstimatorInstanceValue derEs =
+                (DerivativeEstimatorInstanceValue) createFunc.evaluate(indicesOfInterest, derivativeOrders, providedDerivativeOrders).deref();
+
+        RealValue stepSize = new RealValue(1.0);
+        FunctionValue.ExternalFunctionValue estimateFunc = (FunctionValue.ExternalFunctionValue) derEs.lookup("estimate");
+        estimateFunc.evaluate(stepSize, sharedDataStep1, sharedDataDerivatives);
+
+        FunctionValue.ExternalFunctionValue rollbackFunc = (FunctionValue.ExternalFunctionValue) derEs.lookup("rollback");
+
+        //Act
+        rollbackFunc.evaluate(sharedDataDerivatives);
+
+        Value xDotDot = (Value) sharedDataDerivatives.getValues().get(0).getValues().get(1);
+        Value yDot = (Value) sharedDataDerivatives.getValues().get(2).getValues().get(0);
+        RealValue xDot = (RealValue) sharedDataDerivatives.getValues().get(0).getValues().get(0);
+
+        //Assert
+        Assert.assertTrue("yDot should be null", yDot instanceof NullValue);
+        Assert.assertTrue("xDotDot should be null", xDotDot instanceof NullValue);
+        Assert.assertEquals("xDot should be 2.0", providedXDot.getValue(), xDot.getValue(), assertionDelta);
     }
 }
