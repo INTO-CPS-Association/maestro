@@ -290,7 +290,7 @@ public class Maestro2SimulationController {
             List<String> error = new ArrayList<>();
             List<String> out = new ArrayList<>();
             List<String> command = JavaProcess.calculateCommand(Application.class, Arrays.asList(), arguments);
-            System.out.println("Executing command: " + String.join(" ", command));
+            logger.info("Executing command: " + String.join(" ", command));
             Process p = Runtime.getRuntime().exec(command.toArray(String[]::new));
             Scanner outputStreamSc = new Scanner(p.getInputStream());
             Scanner errorStream = new Scanner(p.getErrorStream());

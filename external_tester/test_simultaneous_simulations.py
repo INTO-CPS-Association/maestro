@@ -156,8 +156,8 @@ if "__main__":
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     path = os.path.abspath(args.path) if str(args.path) != "None" else FindJar()
 
-    #p = StartCOE(path, args.port)
-    #time.sleep(20) # give some time for the COE to actually start
+    p = StartCOE(path, args.port)
+    time.sleep(10) # give some time for the COE to actually start
 
     threadCounts = [1, 2, 4, 8]
 
@@ -168,4 +168,4 @@ if "__main__":
             print(f"{i} threads tests passed!")
     finally:
         print("stopping")
-        #StopCOE(p)
+        StopCOE(p)
