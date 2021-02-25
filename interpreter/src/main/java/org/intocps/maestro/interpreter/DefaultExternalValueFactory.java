@@ -192,8 +192,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 return Either.left(new AnalysisException("Argument list contains null values"));
             }
 
-            String guid = ((StringValue) args.get(0)).getValue();
-            return Either.right(new VariableStepValue(guid));
+            String config = ((StringValue) args.get(0)).getValue();
+            return Either.right(new VariableStepValue(config));
         }
     }
 

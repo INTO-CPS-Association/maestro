@@ -92,9 +92,9 @@ public class DerivativeEstimatorTests {
         ArrayValue<RealValue> sharedDataStep3 = new ArrayValue<>(Arrays.asList(x3, new RealValue(-1), y3));
 
         ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(
-                Arrays.asList(new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
-                        new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
-                        new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue()))));
+                Arrays.asList(new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue())),
+                        new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue())),
+                        new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue()))));
         ArrayValue<UnsignedIntegerValue> derivativeOrders = new ArrayValue<>(Arrays.asList(derOrderOfX, derOrderOfY));
         ArrayValue<UnsignedIntegerValue> indicesOfInterest = new ArrayValue<>(Arrays.asList(indexOfX, indexOfY));
         ArrayValue<UnsignedIntegerValue> providedDerivativeOrders = new ArrayValue<>(Arrays.asList(providedDerOrderForX, providedDerOrderForY));
@@ -130,9 +130,10 @@ public class DerivativeEstimatorTests {
 
         ArrayValue<RealValue> sharedDataStep1 = new ArrayValue<>(Arrays.asList(x, new RealValue(-1), y));
 
-        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(Arrays.asList(new ArrayValue<>(Arrays.asList(providedXDot, new NullValue())),
-                new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue())),
-                new ArrayValue<>(Arrays.asList(new NullValue(), new NullValue()))));
+        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(Arrays.asList(new ArrayValue<Value>(Arrays.asList(providedXDot,
+                new NullValue())),
+                new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue())),
+                new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue()))));
         ArrayValue<UnsignedIntegerValue> derivativeOrders = new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(2), new UnsignedIntegerValue(1)));
         ArrayValue<UnsignedIntegerValue> indicesOfInterest =
                 new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(0), new UnsignedIntegerValue(2)));

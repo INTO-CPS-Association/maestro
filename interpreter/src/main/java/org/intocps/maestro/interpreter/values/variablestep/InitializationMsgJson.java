@@ -38,9 +38,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintType;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.Sampling;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
