@@ -14,6 +14,7 @@ import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
+import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
@@ -282,27 +283,31 @@ public class Maestro2SimulationController {
             String simulateJsonPath = new File(logic.rootDirectory, "simulate.json").getAbsolutePath();
             String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
             String dumpDirectory = logic.rootDirectory.getAbsolutePath();
-            List<String> arguments =
-                    Arrays.asList("--dump-simple", dumpDirectory, "--dump-intermediate", dumpDirectory, "-sg1", simulateJsonPath, initializeJsonPath,
-                            "-i", "-v", "FMI2");
+            List<String> arguments = new ArrayList<>(
+                    List.of("cliMain", "--dump-simple", dumpDirectory, "--dump-intermediate", dumpDirectory, "-sg1", simulateJsonPath,
+                            initializeJsonPath, "-i", "-v", "FMI2"));
 
-            List<String> command = JavaProcess.calculateCommand(Main.class, Arrays.asList(), arguments);
             List<String> error = new ArrayList<>();
             List<String> out = new ArrayList<>();
-            ProcessBuilder pb = new ProcessBuilder(command);
-            Process p = pb.start();
+            List<String> command = JavaProcess.calculateCommand(Application.class, Arrays.asList(), arguments);
+            System.out.println("Executing command: " + String.join(" ", command));
+            Process p = Runtime.getRuntime().exec(command.toArray(String[]::new));
             Scanner outputStreamSc = new Scanner(p.getInputStream());
             Scanner errorStream = new Scanner(p.getErrorStream());
             while (outputStreamSc.hasNextLine() || errorStream.hasNext()) {
                 if (outputStreamSc.hasNextLine()) {
-                    out.add(outputStreamSc.nextLine());
+                    String outLine = outputStreamSc.nextLine();
+                    out.add(outLine);
+                    System.out.println(outLine);
                 }
                 if (errorStream.hasNext()) {
-                    error.add(errorStream.nextLine());
+                    var line = errorStream.nextLine();
+                    error.add(line);
+                    System.out.println(line);
                 }
             }
+            int result = p.waitFor();
 
-            int result = JavaProcess.exec(Main.class, Arrays.asList(), arguments);
 
             return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
         }
