@@ -24,7 +24,7 @@ public class VariableStepTests {
 //    public void testStepSize() throws IOException, URISyntaxException, ParserConfigurationException, SAXException, XPathExpressionException, InvocationTargetException, IllegalAccessException {
 //
 //        //Arrange
-//        URI configUri = VariableStepTests.class.getClassLoader().getResource("variable_step/coe.json").toURI();
+//        String configUri = VariableStepTests.class.getClassLoader().getResource("variable_step/coe.json").toURI().getPath();
 //        String WorkingDirectory = VariableStepTests.class.getClassLoader().getResource("variable_step").getPath();
 //        String tankPath = VariableStepTests.class.getClassLoader().getResource("variable_step/singlewatertank-20sim.fmu").getPath();
 //        String controllerPath = VariableStepTests.class.getClassLoader().getResource("variable_step/watertankcontroller-c.fmu").getPath();
@@ -66,8 +66,7 @@ public class VariableStepTests {
 //            }
 //        }
 //
-//        String configuration = new String(Files.readAllBytes(Paths.get(configUri)));
-//        VariableStepValue variableStepValue = new VariableStepValue(configuration);
+//        VariableStepValue variableStepValue = new VariableStepValue(configUri);
 //
 //        FunctionValue.ExternalFunctionValue addDataPoint = (FunctionValue.ExternalFunctionValue) variableStepValue.lookup("addDataPoint");
 //        FunctionValue.ExternalFunctionValue getStepSize = (FunctionValue.ExternalFunctionValue) variableStepValue.lookup("getStepSize");

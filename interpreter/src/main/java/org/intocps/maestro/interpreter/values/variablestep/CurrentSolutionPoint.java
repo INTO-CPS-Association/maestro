@@ -187,6 +187,7 @@ public class CurrentSolutionPoint extends Observable
 			return null;
 		}
 
+		//TODO: What is to be done here?
 		if (order == 0)
 		{
 			return getDoubleValue(variable);
