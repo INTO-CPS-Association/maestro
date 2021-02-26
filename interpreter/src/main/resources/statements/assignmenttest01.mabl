@@ -1,0 +1,4 @@
+int a;
+a = 1;
+
+assert.assertEquals(a, 1);

@@ -1,0 +1,4 @@
+int a[1][1];
+a[0][0] = 1;
+
+assert.assertEquals(a[0][0], 1);
