@@ -199,12 +199,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
 
     public UpdatableValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
-        // Check if there are more
         List<Value> arrayValues = new ArrayList<>();
         for (int i = 0; i < ((IntegerValue) sizes.get(0).apply(this, question)).getValue(); i++) {
             if (sizes.size() > 1) {
-                // Recurse
                 List<PExp> nextSizes = sizes.subList(1, sizes.size());
+                // Call recursively
                 arrayValues.add(createArrayValue(nextSizes, type, question));
             } else {
                 if (type instanceof AIntNumericPrimitiveType) {
@@ -237,10 +236,6 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 }
 
                 //array deceleration
-                //                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-                //                val = new ArrayValue<>(
-                //                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
-
                 val = createArrayValue(node.getSize(), node.getType(), question);
             }
 
@@ -473,18 +468,23 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return new UnsignedIntegerValue(node.getValue());
     }
 
+    private Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices){
+        return (indices.size() > 1) ? getInnerArrayValue((ArrayValue<Value>) arrayValue.getValues().get(indices.get(0).intValue()).deref(),
+                indices.subList(1,
+                            indices.size())) :
+                arrayValue.getValues().get(indices.get(0).intValue()).deref();
+    }
+
     @Override
     public Value caseAArrayIndexExp(AArrayIndexExp node, Context question) throws AnalysisException {
         Value value = node.getArray().apply(this, question).deref();
 
         if (value instanceof ArrayValue) {
-            ArrayValue<Value> array = (ArrayValue<Value>) value;
 
-            List<NumericValue> indies =
+            List<NumericValue> indices =
                     evaluate(node.getIndices(), question).stream().map(Value::deref).map(NumericValue.class::cast).collect(Collectors.toList());
 
-
-            return array.getValues().get(indies.get(0).intValue());
+            return getInnerArrayValue((ArrayValue<Value>) value, indices);
         }
         throw new AnalysisException("No array or index for: " + node);
     }
