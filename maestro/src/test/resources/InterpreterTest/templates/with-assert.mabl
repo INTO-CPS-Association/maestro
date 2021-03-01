@@ -1,6 +1,6 @@
 simulation
 import MDebugAssert;
 {
-assert = load("MDebugAssert");
+MDebugAssert assert = load("MDebugAssert");
 @replaceme
 }
