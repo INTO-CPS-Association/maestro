@@ -9,6 +9,7 @@ import org.intocps.maestro.interpreter.values.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -183,6 +184,24 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseANotEqualBinaryExp(ANotEqualBinaryExp node, Context question) throws AnalysisException {
         BooleanValue equals = equals(node.getLeft().apply(this, question), node.getRight().apply(this, question));
         return new BooleanValue(!equals.getValue());
+    }
+
+
+    public UpdatableValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
+        // Check if there are more
+        List<UpdatableValue> arrayValues = new ArrayList<>();
+        for (int i = 0; i < ((IntegerValue) sizes.get(0).apply(this, question)).getValue(); i++) {
+            if (sizes.size() > 1) {
+                // Recurse
+                List<PExp> nextSizes = sizes.subList(1, sizes.size());
+                arrayValues.add(createArrayValue(nextSizes, type, question));
+            } else {
+                if (type instanceof AIntNumericPrimitiveType) {
+                    arrayValues.add(new UpdatableValue(new IntegerValue(0)));
+                }
+            }
+        }
+        return new UpdatableValue(new ArrayValue<>(arrayValues));
     }
 
     @Override

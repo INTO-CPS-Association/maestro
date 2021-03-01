@@ -94,13 +94,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
         PType type = node.getArray().apply(this, ctxt);
-
-        if (!(type instanceof AArrayType)) {
-            errorReporter.report(0, "Canont index none array expression", null);
-            return store(node, MableAstFactory.newAUnknownType());
-        } else {
-            return store(node, ((AArrayType) type).getType());
+        PType iterationType = type.clone();
+        //TODO: Step down through the types according to the size of the indicesLinkedList
+        for (int i = 0; i < node.getIndices().size(); i++) {
+            // If this happens, then we are finished already.
+            if (!(iterationType instanceof AArrayType)) {
+                errorReporter.report(0, "Canont index none array expression", null);
+                return store(node, MableAstFactory.newAUnknownType());
+            } else {
+                iterationType = ((AArrayType) iterationType).getType();
+            }
         }
+        return store(node, iterationType);
     }
 
     @Override
