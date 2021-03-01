@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
@@ -148,6 +147,18 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             if (node.getTarget() instanceof AArrayStateDesignator) {
                 AArrayStateDesignator arrayStateDesignator = (AArrayStateDesignator) node.getTarget();
 
+                while (arrayStateDesignator.getTarget() instanceof AArrayStateDesignator) {
+                    // This indicates that we are at least in a [][]. Thus we have to step down in targets AND currentUpdatableValue
+                    Value indexValue = arrayStateDesignator.getExp().apply(this, question).deref();
+                    if (!(indexValue instanceof NumericValue)) {
+                        throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
+                    }
+                    int index = ((NumericValue) indexValue).intValue();
+                    currentUpdatableValue = (UpdatableValue) ((ArrayValue) currentUpdatableValue.deref()).getValues().get(index);
+                    arrayStateDesignator = (AArrayStateDesignator) arrayStateDesignator.getTarget();
+                    //TODO: Here we also need to step down the values.
+                }
+
                 if (arrayStateDesignator.getExp() == null) {
                     //replace array completly
                     currentUpdatableValue.setValue(newValue.deref());
@@ -189,7 +200,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     public UpdatableValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
         // Check if there are more
-        List<UpdatableValue> arrayValues = new ArrayList<>();
+        List<Value> arrayValues = new ArrayList<>();
         for (int i = 0; i < ((IntegerValue) sizes.get(0).apply(this, question)).getValue(); i++) {
             if (sizes.size() > 1) {
                 // Recurse
@@ -197,16 +208,13 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 arrayValues.add(createArrayValue(nextSizes, type, question));
             } else {
                 if (type instanceof AIntNumericPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new IntegerValue(0)));
-                }
-                else if (type instanceof ABooleanPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new BooleanValue(false)));
-                }
-                else if (type instanceof AStringPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new StringValue("")));
-                }
-                else if (type instanceof ARealNumericPrimitiveType){
-                    arrayValues.add(new UpdatableValue(new RealValue(0.0)));
+                    arrayValues.add(new IntegerValue(0));
+                } else if (type instanceof ABooleanPrimitiveType) {
+                    arrayValues.add(new BooleanValue(false));
+                } else if (type instanceof AStringPrimitiveType) {
+                    arrayValues.add(new StringValue(""));
+                } else if (type instanceof ARealNumericPrimitiveType) {
+                    arrayValues.add(new RealValue(0.0));
                 }
             }
         }
@@ -229,9 +237,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 }
 
                 //array deceleration
-//                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-//                val = new ArrayValue<>(
-//                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
+                //                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
+                //                val = new ArrayValue<>(
+                //                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
 
                 val = createArrayValue(node.getSize(), node.getType(), question);
             }
