@@ -199,6 +199,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 if (type instanceof AIntNumericPrimitiveType) {
                     arrayValues.add(new UpdatableValue(new IntegerValue(0)));
                 }
+                else if (type instanceof ABooleanPrimitiveType) {
+                    arrayValues.add(new UpdatableValue(new BooleanValue(false)));
+                }
+                else if (type instanceof AStringPrimitiveType) {
+                    arrayValues.add(new UpdatableValue(new StringValue("")));
+                }
+                else if (type instanceof ARealNumericPrimitiveType){
+                    arrayValues.add(new UpdatableValue(new RealValue(0.0)));
+                }
             }
         }
         return new UpdatableValue(new ArrayValue<>(arrayValues));
@@ -210,9 +219,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
-            Value val;
+            UpdatableValue val;
             if (node.getInitializer() != null) {
-                val = node.getInitializer().apply(this, question);
+                val = new UpdatableValue(node.getInitializer().apply(this, question));
             } else {
 
                 if (node.getSize() == null || node.getSize().isEmpty()) {
@@ -220,12 +229,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 }
 
                 //array deceleration
-                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-                val = new ArrayValue<>(
-                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
+//                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
+//                val = new ArrayValue<>(
+//                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
+
+                val = createArrayValue(node.getSize(), node.getType(), question);
             }
 
-            question.put(node.getName(), new UpdatableValue(val));
+            question.put(node.getName(), val);
 
         } else {
 
