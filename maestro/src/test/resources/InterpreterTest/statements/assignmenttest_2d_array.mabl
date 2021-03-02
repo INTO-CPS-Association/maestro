@@ -1,9 +1,3 @@
-int simp[1][1];
-simp[0][0] = 1;
-assert.assertEquals(simp[0][0], 1);
-
-int comp[1][2][1];
-int a[1];
-a[0] = 2;
-comp[0][1] = a;
-assert.assertEquals(comp[0][1][0], 2);
+int simp[1][2];
+simp[0][1] = 1;
+assert.assertEquals(simp[0][1], 1);
