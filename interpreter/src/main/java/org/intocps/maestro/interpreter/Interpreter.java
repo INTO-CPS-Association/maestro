@@ -477,7 +477,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     private Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices) {
         return (indices.size() > 1) ? getInnerArrayValue((ArrayValue<Value>) arrayValue.getValues().get(indices.get(0).intValue()).deref(),
-                indices.subList(1, indices.size())) : arrayValue.getValues().get(indices.get(0).intValue()).deref();
+                indices.subList(1, indices.size())) : arrayValue.getValues().get(indices.get(0).intValue());
     }
 
     @Override
