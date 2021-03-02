@@ -1,3 +1,11 @@
 int a[1];
-
 assert.assertEquals(a[0], 0);
+
+string b[1];
+assert.assertEquals(b[0], "");
+
+real c[1];
+assert.assertEquals(c[0], 0.0);
+
+bool d[1];
+assert.assertEquals(d[0], false);
