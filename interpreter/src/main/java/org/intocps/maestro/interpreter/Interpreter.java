@@ -219,6 +219,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 } else if (type instanceof ARealNumericPrimitiveType) {
                     arrayValues.add(new UpdatableValue(new RealValue(0.0)));
                 }
+                else {
+                    arrayValues.add(new UpdatableValue(new NullValue()));
+                }
             }
         }
         return new UpdatableValue(new ArrayValue<>(arrayValues));
@@ -486,9 +489,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             List<NumericValue> indices =
                     evaluate(node.getIndices(), question).stream().map(Value::deref).map(NumericValue.class::cast).collect(Collectors.toList());
 
-            ArrayValue<Value> arrVal = (ArrayValue) value;
-
-            return getInnerArrayValue(arrVal, indices);
+            return getInnerArrayValue((ArrayValue) value, indices);
         }
         throw new AnalysisException("No array or index for: " + node);
     }
