@@ -6,6 +6,7 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.utilities.ArrayUpdatableValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,14 +124,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (!(arrayValue.deref() instanceof ArrayValue)) {
             throw new InterpreterException("Array designator is not an array: " + arrayValue);
         } else {
-            ArrayValue array = (ArrayValue) arrayValue.deref();
+            ArrayValue<Value> array = (ArrayValue<Value>) arrayValue.deref();
             int index = ((NumericValue) node.getExp().apply(this, question).deref()).intValue();
-            Value value = (Value) array.getValues().get(index);
-            if (!(value instanceof UpdatableValue)) {
-                return new UpdatableValue(value);
-            } else {
-                return value;
-            }
+            return new ArrayUpdatableValue(array, index);
         }
     }
 
@@ -166,15 +162,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 arrayValues.add(createArrayValue(nextSizes, type, question));
             } else {
                 if (type instanceof AIntNumericPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new IntegerValue(0)));
+                    arrayValues.add(new IntegerValue(0));
                 } else if (type instanceof ABooleanPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new BooleanValue(false)));
+                    arrayValues.add(new BooleanValue(false));
                 } else if (type instanceof AStringPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new StringValue("")));
+                    arrayValues.add(new StringValue(""));
                 } else if (type instanceof ARealNumericPrimitiveType) {
-                    arrayValues.add(new UpdatableValue(new RealValue(0.0)));
+                    arrayValues.add(new RealValue(0.0));
                 } else {
-                    arrayValues.add(new UpdatableValue(new NullValue()));
+                    arrayValues.add(new NullValue());
                 }
             }
         }
@@ -217,7 +213,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAArrayInitializer(AArrayInitializer node, Context question) throws AnalysisException {
-        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question).stream().map(Value::deref).collect(Collectors.toList()));
+        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question).stream().map(v -> v.deref()).collect(Collectors.toList()));
         return array;
     }
 
@@ -429,7 +425,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return new UnsignedIntegerValue(node.getValue());
     }
 
-    private Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices) {
+    protected Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices) {
         return (indices.size() > 1) ? getInnerArrayValue((ArrayValue<Value>) arrayValue.getValues().get(indices.get(0).intValue()).deref(),
                 indices.subList(1, indices.size())) : arrayValue.getValues().get(indices.get(0).intValue());
     }
@@ -478,7 +474,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseARefExp(ARefExp node, Context question) throws AnalysisException {
-        return node.getExp().apply(this, question);
+        ByRefInterpreter byRefInterpreter = new ByRefInterpreter(this.loadFactory);
+        return node.getExp().apply(byRefInterpreter, question);
     }
 
     @Override
