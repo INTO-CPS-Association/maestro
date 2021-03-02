@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -111,26 +110,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return this.loadFactory.destroy(nameVal);
     }
 
-
     @Override
     public Value caseAIdentifierStateDesignator(AIdentifierStateDesignator node, Context question) throws AnalysisException {
         return question.lookup(node.getName());
-    }
-
-    private UpdatableValue getTargetArray(AArrayStateDesignator currentNode, Context question, List<Integer> indices) throws AnalysisException {
-
-        PStateDesignator nextNode = currentNode.getTarget();
-        indices.add(((NumericValue) currentNode.getExp().apply(this, question).deref()).intValue());
-        if (nextNode instanceof AArrayStateDesignator) {
-            return getTargetArray((AArrayStateDesignator) nextNode, question, indices);
-        } else {
-            Collections.reverse(indices);
-            UpdatableValue arrVal = (UpdatableValue) currentNode.apply(this, question);
-            for (int i = 0; i < indices.size() - 1; i++) {
-                arrVal = (UpdatableValue) ((ArrayValue) arrVal.deref()).getValues().get(i);
-            }
-            return arrVal;
-        }
     }
 
     @Override
@@ -140,9 +122,16 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         if (!(arrayValue.deref() instanceof ArrayValue)) {
             throw new InterpreterException("Array designator is not an array: " + arrayValue);
+        } else {
+            ArrayValue array = (ArrayValue) arrayValue.deref();
+            int index = ((NumericValue) node.getExp().apply(this, question).deref()).intValue();
+            Value value = (Value) array.getValues().get(index);
+            if (!(value instanceof UpdatableValue)) {
+                return new UpdatableValue(value);
+            } else {
+                return value;
+            }
         }
-
-        return arrayValue;
     }
 
     @Override
@@ -156,41 +145,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
-
-        if (currentUpdatableValue.deref() instanceof ArrayValue) {
-
-            if (node.getTarget() instanceof AArrayStateDesignator) {
-                AArrayStateDesignator arrayStateDesignator = (AArrayStateDesignator) node.getTarget();
-
-                currentUpdatableValue = getTargetArray((AArrayStateDesignator) node.getTarget(), question, new ArrayList<>());
-
-
-                if (arrayStateDesignator.getExp() == null) {
-                    //replace array completly
-                    currentUpdatableValue.setValue(newValue.deref());
-                } else {
-                    //in-place array update
-                    Value indexValue = arrayStateDesignator.getExp().apply(this, question).deref();
-
-                    if (!(indexValue instanceof NumericValue)) {
-                        throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
-                    }
-
-                    int index = ((NumericValue) indexValue).intValue();
-                    ArrayValue<Value> arrayValue = (ArrayValue<Value>) currentUpdatableValue.deref();
-                    if (index >= 0 && index < arrayValue.getValues().size()) {
-                        arrayValue.getValues().set(index, newValue);
-                    } else {
-                        throw new InterpreterException("Array index out of bounds: " + indexValue.toString());
-                    }
-                }
-
-            } else {
-                throw new InterpreterException("Bad array designator: " + node.getTarget().toString());
-            }
-        } else {
-            currentUpdatableValue.setValue(newValue.deref());
-        }
+        currentUpdatableValue.setValue(newValue.deref());
 
         return new VoidValue();
     }
@@ -218,8 +173,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                     arrayValues.add(new UpdatableValue(new StringValue("")));
                 } else if (type instanceof ARealNumericPrimitiveType) {
                     arrayValues.add(new UpdatableValue(new RealValue(0.0)));
-                }
-                else {
+                } else {
                     arrayValues.add(new UpdatableValue(new NullValue()));
                 }
             }
