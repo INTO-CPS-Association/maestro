@@ -1,4 +1,8 @@
 simulation
+import FMI2;
+import DataWriter;
+import Logger;
+import Math;
 {
     real START_TIME = 0.0;
     real END_TIME = 10.0;
@@ -8,9 +12,9 @@ simulation
     // DataWriter for results
     // #############################
     DataWriter dataWriter = load("DataWriter");
-    string[] data_headers[1] = {"crtlValveState","wtLevel"};
+    string data_headers[2] = {"{crtl}.crtlInstance.valve","{wt}.wtInstance.level"};
     DataWriterConfig dataWriterConfiguration = dataWriter.writeHeader(data_headers);
-    string[] data_values[2];
+
 
     // #############################
     // Load the FMUs and instantiate instances
@@ -26,25 +30,25 @@ simulation
     // #############################
     // Set maximum level and minimum level parameters
     // #############################
-    real[] crtlParameters[2] = { 2.0 , 1.0 };
-    uInt[] crtlParameterValRefs[2] = { 0 , 1 };
+    real crtlParameters[2] = { 2.0 , 1.0 };
+    uint crtlParameterValRefs[2] = { 0 , 1 };
     crtlInstance.setReal(crtlParameterValRefs, 2, crtlParameters);
 
     wtInstance.enterInitializationMode();
     crtlInstance.enterInitializationMode();
 
 
-    uInt[] crtlValveStateValRef[1] = { 4 };
-    bool[] crtlValveStateOutput[1];
+    uint crtlValveStateValRef[1] = { 4 };
+    bool crtlValveStateOutput[1];
 
-    uInt[] crtlLevelInputValRef[1] = { 3 };
-    real[] crtlLevelInputValue[1];
+    uint crtlLevelInputValRef[1] = { 3 };
+    real crtlLevelInputValue[1];
 
-    uInt[] wtValveStateValRef[1] = { 16 };
-    real[] wtValveStateInputs[1];
+    uint wtValveStateValRef[1] = { 16 };
+    real wtValveStateInputs[1];
 
-    uInt[] wtLevelValRef[1] = { 17 };
-    real[] wtLevelOutputValue[1];
+    uint wtLevelValRef[1] = { 17 };
+    real wtLevelOutputValue[1];
 
     // #############################
     // Perform the Initialization:
@@ -82,9 +86,7 @@ simulation
     // #############################
     crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
     wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
-    data_values[0] = crtlValveStateOutput[0];
-    data_values[1] = wtLevelOutputValue[0];
-    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, data_values);
+    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
 
     real time = START_TIME;
@@ -131,9 +133,7 @@ simulation
         // Write the valve state and the water level to the results
         // #############################
         time = time + STEP_SIZE;
-        data_values[0] = crtlValveStateOutput[0];
-        data_values[1] = wtLevelOutputValue[0];
-        dataWriter.writeDataPoint(dataWriterConfiguration, time, data_values);
+        dataWriter.writeDataPoint(dataWriterConfiguration, time, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
     }
     
@@ -150,3 +150,4 @@ simulation
     unload(singleWatertank);
     unload(dataWriter);
 }
+
