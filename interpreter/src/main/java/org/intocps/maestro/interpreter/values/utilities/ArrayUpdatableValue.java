@@ -21,7 +21,6 @@ public class ArrayUpdatableValue extends UpdatableValue {
         } else {
             owner.getValues().set(index, newValue);
         }
-
     }
 
     @Override

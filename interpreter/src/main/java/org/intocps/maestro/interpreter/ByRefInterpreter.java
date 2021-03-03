@@ -24,7 +24,6 @@ class ByRefInterpreter extends Interpreter {
         } else {
             return new ArrayUpdatableValue(arrayValue, indices.get(0).intValue());
         }
-        //                        return arrayValue.getValues().get(indices.get(0).intValue());
 
     }
 
