@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EnvTest extends BaseApiTest {
-
-
     @Test
     public void test() throws AnalysisException, IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
