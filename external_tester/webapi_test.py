@@ -12,8 +12,20 @@ import threading
 import websocket
 import testutils
 import glob
+import socket
 
 websocketopen = False
+
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 def printSection(section):
     hashes = "###############################"
@@ -68,6 +80,12 @@ path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
 
 port = args.port
 
+# CHeck if port is free
+if is_port_in_use(port):
+    print("Port %s in already in use. Choosing new port" % port)
+    port = find_free_port()
+    print("New port is: %s" % port)
+
 
 if not os.path.isfile(path):
     print('The path does not exist')
@@ -75,7 +93,7 @@ if not os.path.isfile(path):
 
 print("Testing Web api of: " + path + "with port: " + str(port))
 
-cmd = "java -jar " + path
+cmd = "java -jar " + path + " -p " + str(port)
 p = subprocess.Popen(cmd, shell=True)
 
 try:
@@ -122,7 +140,8 @@ try:
 
     # Weboscket support
     printSection("WEBSOCKET")
-    wsurl = "ws://localhost:8082/attachSession/" + sessionID
+    wsurl = "ws://localhost:{port}/attachSession/{session}".format(port=port, session=sessionID)
+    print("Connecting to websocket with url: " + wsurl)
     wsResult = tempDirectory + "/" + "wsActualResult.txt"
     socketFile = open(wsResult, "w")
     print("Writing websocket output to: " + wsResult)
