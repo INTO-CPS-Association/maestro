@@ -95,7 +95,7 @@ import VariableStep;
     // #############################
     FMI2 FMUs[2] = {tankController, singleWatertank};
     string FMUInstanceNames[2] = {"{control}.c", "{tank}.t"};
-    VariableStep variableStep = load("VariableStep", "src/test/resources/variable_step/coe.json");
+    VariableStep variableStep = load("VariableStep", "src/test/resources/variable_step/config.json");
     VariableStepConfig variableStepConfig = variableStep.setFMUs(FMUInstanceNames, FMUs);
     string portNames[3] = {"{tank}.t.level","{control}.c.maxlevel", "{control}.c.minlevel"};
     variableStep.initializePortNames(variableStepConfig, portNames);
@@ -155,7 +155,7 @@ import VariableStep;
         // #############################
         portValues[0] = wtLevelOutputValue[0];
         bool validStepSize = variableStep.isStepValid(variableStepConfig, time + STEP_SIZE, portValues);
-        if(!valudStepSize)
+        if(!validStepSize)
             break;
 
         // #############################
