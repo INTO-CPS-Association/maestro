@@ -7,6 +7,7 @@
     void addDataPoint(VariableStepConfig configuration, real time, ? values);
     real getStepSize(VariableStepConfig configuration);
     void setEndTime(VariableStepConfig configuration, real endTime);
+    bool isStepValid(VariableStepConfig configuration, real nextTime, ? values);
 }
 
 module VariableStepConfig {}
