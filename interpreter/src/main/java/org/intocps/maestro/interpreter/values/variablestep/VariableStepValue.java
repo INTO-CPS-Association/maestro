@@ -80,7 +80,8 @@ public class VariableStepValue extends ModuleValue {
             if (!pathAsUri.isAbsolute()) {
                 pathAsUri = (new File(".")).toURI().resolve(pathAsUri);
             }
-            InitializationMsgJson config = (new ObjectMapper()).readValue(new String(Files.readAllBytes(Paths.get(pathAsUri))), InitializationMsgJson.class);
+            InitializationMsgJson config =
+                    (new ObjectMapper()).readValue(new String(Files.readAllBytes(Paths.get(pathAsUri))), InitializationMsgJson.class);
             constraints = getConstraintsFromConfig(config);
             stepsizeInterval = getStepSizeIntervalFromConfig(config);
             initSize = getInitSizeFromConfig(config);
@@ -115,8 +116,8 @@ public class VariableStepValue extends ModuleValue {
         componentMembers.put("initializePortNames", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 2);
 
-            Value id = fcargs.get(0).deref();
-            VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) id;
+            Value cv = fcargs.get(0).deref();
+            VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
             variableStepConfig.initializePorts(
                     ValueExtractionUtilities.getArrayValue(fcargs.get(1), StringValue.class).stream().map(StringValue::getValue)
                             .collect(Collectors.toList()));
@@ -125,53 +126,44 @@ public class VariableStepValue extends ModuleValue {
         componentMembers.put("addDataPoint", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 3);
 
-            Value id = fcargs.get(0).deref();
-            if (id instanceof VariableStepConfigValue) {
-                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) id;
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
-                List<Value> arrayValue = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
-                List<VariableStepConfigValue.StepVal> typesToValues = new ArrayList<>();
-
-                for (int i = 0; i < arrayValue.size(); i++) {
-                    Object value = arrayValue.get(i);
-
-                    if (value instanceof StringValue) {
-                        typesToValues.add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
-                                ((StringValue) value).getValue()));
-                    } else if (value instanceof IntegerValue) {
-                        typesToValues.add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
-                                ((IntegerValue) value).getValue()));
-                    } else if (value instanceof RealValue) {
-                        typesToValues
-                                .add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i), ((RealValue) value).getValue()));
-                    } else if (value instanceof BooleanValue) {
-                        typesToValues.add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
-                                ((BooleanValue) value).getValue()));
-                    } else if (value instanceof EnumerationValue) {
-                        typesToValues.add(new VariableStepConfigValue.StepVal(variableStepConfigValue.getPorts().get(i),
-                                ((EnumerationValue) value).getValue()));
-                    }
-                }
-                variableStepConfigValue.addDataPoint(time, typesToValues);
+                List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
+                variableStepConfigValue.addDataPoint(time, portValues);
             }
             return new VoidValue();
         }));
         componentMembers.put("getStepSize", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 1);
 
-            Value id = fcargs.get(0).deref();
-            if (id instanceof VariableStepConfigValue) {
-                return new RealValue(((VariableStepConfigValue) id).getStepSize());
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                return new RealValue(((VariableStepConfigValue) cv).getStepSize());
             }
             return new RealValue(-1.0);
         }));
         componentMembers.put("setEndTime", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 2);
-            Value id = fcargs.get(0).deref();
-            if (id instanceof VariableStepConfigValue) {
-                ((VariableStepConfigValue) id).setEndTime(((RealValue) fcargs.get(1).deref()).getValue());
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                ((VariableStepConfigValue) cv).setEndTime(((RealValue) fcargs.get(1).deref()).getValue());
             }
             return new VoidValue();
+        }));
+        componentMembers.put("isStepValid", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 3);
+
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
+                double nextTime = ((RealValue) fcargs.get(1).deref()).getValue();
+                List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
+                return new BooleanValue(variableStepConfigValue.isStepValid(nextTime, portValues));
+            } else {
+                return new BooleanValue(false);
+            }
         }));
 
         return componentMembers;

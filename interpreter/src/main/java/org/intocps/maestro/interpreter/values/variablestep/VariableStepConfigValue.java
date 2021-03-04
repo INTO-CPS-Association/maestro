@@ -1,20 +1,18 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
-import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.*;
 import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import javax.xml.xpath.XPathExpressionException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class VariableStepConfigValue extends Value {
 
     private final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances;
     private List<String> portNames;
-    private List<StepVal> dataPoint;
+    private List<StepVal> dataPoints;
     private Double time;
     private StepsizeCalculator stepsizeCalculator;
 
@@ -28,45 +26,78 @@ public class VariableStepConfigValue extends Value {
         this.portNames = portNames;
     }
 
-    public void addDataPoint(Double time, List<StepVal> dataPoint) {
+    public void addDataPoint(Double time, List<Value> portValues) {
         this.time = time;
-        this.dataPoint = dataPoint;
+        this.dataPoints = convertValuesToDataPoint(portValues);
+    }
+
+    private List<StepVal> convertValuesToDataPoint(List<Value> arrayValues) {
+        List<StepVal> stepVals = new ArrayList<>();
+
+        for (int i = 0; i < arrayValues.size(); i++) {
+            Object value = arrayValues.get(i);
+
+            if (value instanceof StringValue) {
+                stepVals.add(new StepVal(portNames.get(i), ((StringValue) value).getValue()));
+            } else if (value instanceof IntegerValue) {
+                stepVals.add(new StepVal(portNames.get(i), ((IntegerValue) value).getValue()));
+            } else if (value instanceof RealValue) {
+                stepVals.add(new StepVal(portNames.get(i), ((RealValue) value).getValue()));
+            } else if (value instanceof BooleanValue) {
+                stepVals.add(new StepVal(portNames.get(i), ((BooleanValue) value).getValue()));
+            } else if (value instanceof EnumerationValue) {
+                stepVals.add(new StepVal(portNames.get(i), ((EnumerationValue) value).getValue()));
+            }
+        }
+        return stepVals;
+    }
+
+    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> mapModelInstancesToPortValues(List<StepVal> dataPointsToMap) {
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> values = new HashMap<>();
+        instances.forEach((mi, fsi) -> {
+            Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
+            fsi.config.scalarVariables.forEach(
+                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
+                            .ifPresent(val -> {
+                                // if key not absent something is wrong?
+                                portValues.putIfAbsent(sv, val.getValue());
+
+                            }));
+            values.put(mi, portValues);
+        });
+        return values;
+    }
+
+    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> getCurrentDerivatives() {
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
+        instances.forEach((mi, fsi) -> {
+            Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
+            fsi.config.scalarVariables.forEach(
+                    sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
+                            .ifPresent(val -> {
+                                // if key not absent something is wrong?
+                                derivatives.putIfAbsent(sv, new HashMap<>() {{
+                                    put(0, 0.0);
+                                }});
+
+                            }));
+            currentDerivatives.put(mi, derivatives);
+        });
+        return currentDerivatives;
     }
 
     public double getStepSize() {
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues = new HashMap<>();
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
-        instances.forEach((mi, fsi) -> {
-            Map<ModelDescription.ScalarVariable, Object> scalarValues = new HashMap<>();
-            Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
-            fsi.config.scalarVariables.forEach(sv -> {
-                Optional<StepVal> stepVal = dataPoint.stream()
-                        .filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name))))
-                        .findFirst();
-                stepVal.ifPresent(val -> {
-                    scalarValues.put(sv, val.getValue());
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentPortValues = mapModelInstancesToPortValues(dataPoints);
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = getCurrentDerivatives();
 
-                    try {
-                        List<ModelDescription.ScalarVariable> ders = fsi.config.modelDescription.getDerivatives();
-                    } catch (XPathExpressionException | InvocationTargetException | IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
+        return stepsizeCalculator.getStepsize(time, currentPortValues, currentDerivatives, null);
+    }
 
-                    if (!derivatives.containsKey(sv)) {
-                        derivatives.put(sv, new HashMap<>() {{
-                            put(0, 0.0);
-                        }});
-                    }
-                    else{
-                        derivatives.get(sv).put(0, 0.0);
-                    }
-                });
-            });
-            currentDerivatives.put(mi,derivatives);
-            currentValues.put(mi, scalarValues);
-        });
+    public boolean isStepValid(Double nextTime, List<Value> portValues) {
+        StepValidationResult res =
+                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), false);
 
-        return stepsizeCalculator.getStepsize(time, currentValues, currentDerivatives, null);
+        return res.isValid();
     }
 
     public void setEndTime(final Double endTime) {
