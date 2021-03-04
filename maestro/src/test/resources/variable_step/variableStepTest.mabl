@@ -91,28 +91,16 @@ import VariableStep;
 
 
     // #############################
-    // Get variable step
+    // Setup of variable step
     // #############################
     FMI2 FMUs[2] = {tankController, singleWatertank};
     string FMUInstanceNames[2] = {"{control}.c", "{tank}.t"};
     VariableStep variableStep = load("VariableStep", "src/test/resources/variable_step/coe.json");
     VariableStepConfig variableStepConfig = variableStep.setFMUs(FMUInstanceNames, FMUs);
-    string portNames[1] = {"{tank}.t.level"};
+    string portNames[3] = {"{tank}.t.level","{control}.c.maxlevel", "{control}.c.minlevel"};
     variableStep.initializePortNames(variableStepConfig, portNames);
     variableStep.setEndTime(variableStepConfig, END_TIME);
-
-    real PortValues[1] = {1.0};
-    variableStep.addDataPoint(variableStepConfig, START_TIME, PortValues);
-    real stepVal = variableStep.getStepSize(variableStepConfig);
-
-    PortValues[0] = 2.0;
-    variableStep.addDataPoint(variableStepConfig, STEP_SIZE, PortValues);
-    stepVal = variableStep.getStepSize(variableStepConfig);
-
-    PortValues[0] = 2.5;
-    variableStep.addDataPoint(variableStepConfig, STEP_SIZE+STEP_SIZE, PortValues);
-    stepVal = variableStep.getStepSize(variableStepConfig);
-
+    real portValues[3] = {wtLevelOutputValue[0], 2.0, 1.0};
 
 
     // #############################
@@ -140,6 +128,13 @@ import VariableStep;
         wtInstance.setReal(wtValveStateValRef, 1, wtValveStateInputs);
         crtlInstance.setReal(crtlLevelInputValRef, 1, wtLevelOutputValue);
 
+
+        // #############################
+        // Get step size from variable step
+        // #############################
+        variableStep.addDataPoint(variableStepConfig, time, portValues);
+        STEP_SIZE = variableStep.getStepSize(variableStepConfig);
+
         // #############################
         // Step the tank
         // Step the controller
@@ -153,6 +148,15 @@ import VariableStep;
         // #############################
         crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
         wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+
+
+        // #############################
+        // Validate step size
+        // #############################
+        portValues[0] = wtLevelOutputValue[0];
+        bool validStepSize = variableStep.isStepValid(variableStepConfig, time + STEP_SIZE, portValues);
+        if(!valudStepSize)
+            break;
 
         // #############################
         // Increase the time with STEP_SIZE
