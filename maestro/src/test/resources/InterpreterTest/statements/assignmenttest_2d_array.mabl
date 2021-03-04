@@ -1,0 +1,3 @@
+int simp[1][2];
+simp[0][1] = 1;
+assert.assertEquals(simp[0][1], 1);
