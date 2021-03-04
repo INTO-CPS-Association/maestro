@@ -67,8 +67,8 @@ def specGen(tempDirPath):
 def buildAndCopyPart1():
     zip1tmpdir = createAndPrepareTempDirectory()
     zip1tmpdirPath = zip1tmpdir.name
-    with open(wtExampleSpecRelativePath, 'r') as file:
-        data = file.read()
+    with open(wtExampleSpecRelativePath, 'r') as mabl_file:
+        data = mabl_file.read()
 
     # flatten path to fmus
     data = data.replace('wt/watertankcontroller-c.fmu', 'watertankcontroller-c.fmu')
@@ -91,10 +91,10 @@ def buildAndCopyPart2():
     zip2tmpdirPath = zip2tmpdir.name
     config = buildDocsConfig()
 
-    with open(os.path.join(toDirectoryAbsPath, newExampleConfigName), 'w') as outfile:
-        json.dump(config, outfile)
-    with open(os.path.join(zip2tmpdirPath, newExampleConfigName), 'w') as outfile:
-        json.dump(config, outfile)
+    with open(os.path.join(toDirectoryAbsPath, newExampleConfigName), 'w') as json_file:
+        json.dump(config, json_file, indent=2)
+    with open(os.path.join(zip2tmpdirPath, newExampleConfigName), 'w') as json_file:
+        json.dump(config, json_file, indent=2)
     shutil.copy(pyPlotterPath, os.path.join(zip2tmpdirPath, 'part2pythoncsvplotter.py'))
 
     # generate getting-started-part 2 zipfile
