@@ -2,7 +2,6 @@ package org.intocps.maestro.webapi;
 
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -10,9 +9,9 @@ import java.util.Locale;
 public class CliTest {
 
     @Test
-    public void oneShotTest() throws IOException, InterruptedException {
+    public void oneShotTest() throws Exception {
 
-        Path outFile = Paths.get("target", CliTest.class.getName(), "output.csv");
+        Path outFile = Paths.get("target", CliTest.class.getName(), "outputs.csv");
         outFile.toFile().getParentFile().mkdirs();
         double startTimeIn = 0;
         double endTimeIn = 10;

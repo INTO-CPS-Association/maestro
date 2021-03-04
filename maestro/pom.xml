@@ -104,18 +104,17 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.into-cps.maestro.frameworks</groupId>
-            <artifactId>fmi2api</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.into-cps.maestro.codegen</groupId>
             <artifactId>mabl2cpp</artifactId>
             <version>2.1.5-SNAPSHOT</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.into-cps.maestro.frameworks</groupId>
+            <artifactId>fmi2api</artifactId>
+            <version>2.1.5-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -134,12 +133,9 @@
                     <exclude>**/maestro.properties</exclude>
                 </excludes>
             </resource>
-
         </resources>
 
-
         <plugins>
-
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>

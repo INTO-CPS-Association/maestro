@@ -60,7 +60,7 @@ public class Main {
         //        Option mablOpt =
         //                Option.builder("m").longOpt("mabl").desc("Path to Mabl files").hasArg().valueSeparator(' ').argName("path").required().build();
         Option interpretOpt = Option.builder("i").longOpt("interpret").desc("Interpret specification").build();
-        Option dumpLocation = Option.builder("d").longOpt("dump").hasArg(true).argName("path")
+        Option dumpLocation = Option.builder("ds").longOpt("dump-simple").hasArg(true).argName("path")
                 .desc("Path to a directory where the spec and runtime data will be " + "dumped").build();
         Option dumpIntermediateSpecs = Option.builder("di").longOpt("dump-intermediate").hasArg(true).argName("path")
                 .desc("Path to a directory " + "where the intermediate specs will be dumped during expansion").build();
@@ -181,6 +181,7 @@ public class Main {
 
         if (cmd.hasOption(dumpLocation.getOpt())) {
             mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
+            workingDirectory = new File(cmd.getOptionValue(dumpLocation.getOpt()));
         }
 
         Map.Entry<Boolean, Map<INode, PType>> typeCheckResult = mabl.typeCheck();

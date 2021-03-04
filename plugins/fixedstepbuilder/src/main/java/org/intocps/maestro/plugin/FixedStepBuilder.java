@@ -78,7 +78,6 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
         if (declaredFunction.equals(fun)) {
             try {
                 MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
-                settings.externalRuntimeLogger = true;
                 // Selected fun now matches funWithBuilder
                 MablApiBuilder builder = new MablApiBuilder(settings, true);
 
