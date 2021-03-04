@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,18 @@ public class Fmi2SimulationEnvironmentConfiguration {
         if (fmus != null) {
             for (Map.Entry<String, String> entry : fmus.entrySet()) {
                 try {
-                    files.put(entry.getKey(), new URI(entry.getValue()));
+                    // This fix is related to removing an erroneous leading / in the URI.
+                    // See https://github.com/INTO-CPS-Association/into-cps-application/issues/136
+                    URI uri = URI.create(entry.getValue());
+                    if (uri.getScheme() == null || uri.getScheme().equals("file")) {
+                        if (!uri.isAbsolute()) {
+                            uri = new File(".").toURI().resolve(uri);
+                        }
+                        File f = new File(uri);
+                        uri = f.toURI();
+                    }
+                    files.put(entry.getKey(), uri);
+
                 } catch (Exception e) {
                     throw new Exception(entry.getKey() + "-" + entry.getValue() + ": " + e.getMessage(), e);
                 }
