@@ -31,11 +31,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -123,17 +125,16 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
-    public List<StatusModel> getStatuses(@PathVariable String sessionId) {
-        throw new NotImplementedException("/status/{sessionId} has not been implemented.");
+    public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
+        return sessionController.getStatus(sessionId);
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
     public List<StatusModel> getStatuses() {
-        sessionController.getStatus();
-        throw new NotImplementedException("/status/{sessionId} has not been implemented.");
+        return sessionController.getStatus();
     }
 
-    StatusModel getStatus(String sessionId) {
+    private StatusModel getStatus(String sessionId) {
         if (sessionController.containsSession(sessionId)) {
             return new StatusModel("Session exists", sessionId, 0);
         } else {
@@ -160,7 +161,6 @@ public class Maestro2SimulationController {
         ObjectMapper mapper = new ObjectMapper();//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
-
 
         if (logic == null) {
             throw new Exception("Session has not been created.");
@@ -194,7 +194,7 @@ public class Maestro2SimulationController {
             FixedStepAlgorithmConfig algorithm = (FixedStepAlgorithmConfig) body.getAlgorithm();
 
             if (algorithm.size == null) {
-                throw new Exception("fixed-step size must be an integer or double");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fixed-step size must be an integer or double");
             }
 
             logger.info("Using Fixed-step size calculator with size = {}", algorithm.size);
@@ -230,8 +230,7 @@ public class Maestro2SimulationController {
 
         logger.trace("Initialization completed");
         logic.setInitializationData(body);
-
-        //TODO: set logic status to initialized and return error code if any errors.
+        logic.setStatus(SessionLogic.CoeStatus.Initialized);
 
         return new InitializeStatusModel("initialized", sessionId, null, 0);
     }
@@ -267,12 +266,19 @@ public class Maestro2SimulationController {
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
         ErrorReporter reporter = new ErrorReporter();
+        long preSimTime;
+        long postSimTime;
+        logic.setStatus(SessionLogic.CoeStatus.Simulating);
 
-        if (logic.getCliExecution() == false) {
+        if (!logic.getCliExecution()) {
+            preSimTime = System.currentTimeMillis();
             Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
             mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
+            postSimTime = System.currentTimeMillis();
+            logic.setExecTime(postSimTime-preSimTime);
 
             if (reporter.getErrorCount() > 0) {
+                logic.setStatus(SessionLogic.CoeStatus.Error);
                 reporter.getErrors().forEach(x -> logger.error(x.toString()));
                 StringWriter out = new StringWriter();
                 PrintWriter writer = new PrintWriter(out);
@@ -282,7 +288,7 @@ public class Maestro2SimulationController {
             }
 
             reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-
+            logic.setStatus(SessionLogic.CoeStatus.Finished);
             return new StatusModel("Simulation completed", sessionId, 0,
                     reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
                     reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
@@ -298,9 +304,11 @@ public class Maestro2SimulationController {
             List<String> out = new ArrayList<>();
             List<String> command = JavaProcess.calculateCommand(Application.class, Arrays.asList(), arguments);
             logger.info("Executing command: " + String.join(" ", command));
+            preSimTime = System.currentTimeMillis();
             Process p = Runtime.getRuntime().exec(command.toArray(String[]::new));
             Scanner outputStreamSc = new Scanner(p.getInputStream());
             Scanner errorStream = new Scanner(p.getErrorStream());
+
             while (outputStreamSc.hasNextLine() || errorStream.hasNext()) {
                 if (outputStreamSc.hasNextLine()) {
                     String outLine = outputStreamSc.nextLine();
@@ -315,6 +323,14 @@ public class Maestro2SimulationController {
             }
             int result = p.waitFor();
 
+            if(error.size() > 0){
+                logic.setStatus(SessionLogic.CoeStatus.Error);
+            }
+            else{
+                logic.setStatus(SessionLogic.CoeStatus.Finished);
+            }
+            postSimTime = System.currentTimeMillis();
+            logic.setExecTime(postSimTime-preSimTime);
 
             return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
         }
@@ -324,6 +340,7 @@ public class Maestro2SimulationController {
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
         throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
+        //        sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.CoeStatus.Stopping);
         //        if (sessions.containsKey(sessionId)) {
         //            sessions.get(sessionId).stopSimulation();
         //        }
