@@ -231,6 +231,7 @@ public class Maestro2SimulationController {
         logger.trace("Initialization completed");
         logic.setInitializationData(body);
 
+        //TODO: set logic status to initialized and return error code if any errors.
 
         return new InitializeStatusModel("initialized", sessionId, null, 0);
     }
