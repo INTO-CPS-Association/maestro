@@ -13,7 +13,8 @@ public class SessionLogic {
     public boolean cliExecution = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
-    private CoeStatus status;
+    private CoeStatus status = CoeStatus.Unitialized;
+    private long lastExecTime;
 
     public SessionLogic(File rootDirectory) {
         rootDirectory.mkdir();
@@ -69,6 +70,14 @@ public class SessionLogic {
 
     public void setStatus(CoeStatus status) {
         this.status = status;
+    }
+
+    public Long getLastExecTime() {
+        return lastExecTime;
+    }
+
+    public void setExecTime(long execTime) {
+        this.lastExecTime = execTime;
     }
 
     public enum CoeStatus {
