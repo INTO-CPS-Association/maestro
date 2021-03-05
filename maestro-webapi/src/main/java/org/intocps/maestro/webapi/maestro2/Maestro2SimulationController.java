@@ -127,6 +127,12 @@ public class Maestro2SimulationController {
         throw new NotImplementedException("/status/{sessionId} has not been implemented.");
     }
 
+    @RequestMapping(value = "/status", method = RequestMethod.GET)
+    public List<StatusModel> getStatuses() {
+        sessionController.getStatus();
+        throw new NotImplementedException("/status/{sessionId} has not been implemented.");
+    }
+
     StatusModel getStatus(String sessionId) {
         if (sessionController.containsSession(sessionId)) {
             return new StatusModel("Session exists", sessionId, 0);

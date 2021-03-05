@@ -44,10 +44,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by ctha on 17-03-2016.
@@ -93,6 +91,8 @@ public class SessionController {
     }
 
     public List<StatusMsgJson> getStatus() {
+        List<StatusMsgJson> data = maestroInstanceMap.entrySet().stream().map(entry -> new StatusMsgJson(entry.getValue().coe().getState(), entry.getKey(), entry.getValue().coe().getLastExecTime())).collect(
+                Collectors.toCollection(Vector::new));
         throw new NotImplementedException("SessionController.getStatus has not been implemented yet");
     }
 
