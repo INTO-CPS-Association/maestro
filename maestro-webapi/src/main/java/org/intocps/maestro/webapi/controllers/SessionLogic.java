@@ -13,6 +13,7 @@ public class SessionLogic {
     public boolean cliExecution = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
+    private CoeStatus status;
 
     public SessionLogic(File rootDirectory) {
         rootDirectory.mkdir();
@@ -60,5 +61,22 @@ public class SessionLogic {
 
     public void removeSocket() {
         this.socket = null;
+    }
+
+    public CoeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CoeStatus status) {
+        this.status = status;
+    }
+
+    public enum CoeStatus {
+        Unitialized,
+        Initialized,
+        Simulating,
+        Finished,
+        Error,
+        Stopping
     }
 }
