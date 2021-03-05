@@ -155,8 +155,8 @@ import VariableStep;
         // #############################
         portValues[0] = wtLevelOutputValue[0];
         bool validStepSize = variableStep.isStepValid(variableStepConfig, time + STEP_SIZE, portValues);
-        if(!validStepSize)
-            break;
+        //if(!validStepSize)
+        //    break;
 
         // #############################
         // Increase the time with STEP_SIZE

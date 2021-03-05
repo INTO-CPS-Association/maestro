@@ -7,8 +7,6 @@ import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
-import javax.xml.xpath.XPathExpressionException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class VariableStepConfigValue extends Value {
@@ -16,14 +14,20 @@ public class VariableStepConfigValue extends Value {
     private final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances;
     private List<String> portNames;
     private List<StepVal> dataPoints;
-    private Double time;
+    private Double currTime = 0.0;
+    private Double stepSize = 0.0;
     private StepsizeCalculator stepsizeCalculator;
-    private Map<FmiSimulationInstance, ScalarDerivativeEstimator> derEsts = new HashMap<>();
+    private final Map<FmiSimulationInstance, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
             Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws AbortSimulationException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
+        Map<FmiSimulationInstance, ScalarDerivativeEstimator> derEsts = new HashMap<>();
+        instances.forEach((mi, fsi) -> {
+            derEsts.put(fsi, new ScalarDerivativeEstimator(2));
+        });
+        derivativeEstimators = derEsts;
     }
 
     public void initializePorts(List<String> portNames) {
@@ -31,8 +35,9 @@ public class VariableStepConfigValue extends Value {
     }
 
     public void addDataPoint(Double time, List<Value> portValues) {
-        this.time = time;
-        this.dataPoints = convertValuesToDataPoint(portValues);
+        stepSize = time - currTime;
+        currTime = time;
+        dataPoints = convertValuesToDataPoint(portValues);
     }
 
     public double getStepSize() {
@@ -44,22 +49,20 @@ public class VariableStepConfigValue extends Value {
             fsi.config.scalarVariables.forEach(
                     sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
                             .ifPresent(val -> {
-                                // if key not absent something is wrong?
 
-
-                                // generate first order ders
-
+                                ScalarDerivativeEstimator derEst = derivativeEstimators.get(fsi);
+                                derEst.advance(new Double[]{(Double) val.getValue(), null, null}, stepSize);
                                 derivatives.putIfAbsent(sv, new HashMap<>() {{
-                                    put(0, 0.0);
+                                    put(2, derEst.getSecondDerivative());
                                 }});
-                                portValues.putIfAbsent(sv, val.getValue());
 
+                                portValues.putIfAbsent(sv, val.getValue());
                             }));
             currentDerivatives.put(mi, derivatives);
             currentPortValues.put(mi, portValues);
         });
 
-        return stepsizeCalculator.getStepsize(time, currentPortValues, currentDerivatives, null);
+        return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, null);
     }
 
     public boolean isStepValid(Double nextTime, List<Value> portValues) {
