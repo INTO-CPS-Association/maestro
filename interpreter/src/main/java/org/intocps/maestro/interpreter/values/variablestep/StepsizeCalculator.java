@@ -100,16 +100,6 @@ public class StepsizeCalculator {
         }
     }
 
-    private Map<Variable, Types> getTypeMap(final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) {
-        Map<Variable, Types> map = new HashMap<>();
-        for (ModelInstance key : instances.keySet()) {
-            for (ScalarVariable sv : instances.get(key).config.scalarVariables) {
-                map.put(new Variable(key, sv.getName()), sv.getType().type);
-            }
-        }
-        return map;
-    }
-
     public Double getStepsize(final Double currentTime, final Map<ModelInstance, Map<ScalarVariable, Object>> currentValues,
             final Map<ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
         currentSolutionPoint.advance(currentTime, currentValues, currentDerivatives, stepsize, wasStepsizeLimitedByDiscreteConstraint);
@@ -185,6 +175,16 @@ public class StepsizeCalculator {
 
     public void setEndTime(final Double endTime) {
         this.endTime = endTime;
+    }
+
+    private Map<Variable, Types> getTypeMap(final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) {
+        Map<Variable, Types> map = new HashMap<>();
+        for (ModelInstance key : instances.keySet()) {
+            for (ScalarVariable sv : instances.get(key).config.scalarVariables) {
+                map.put(new Variable(key, sv.getName()), sv.getType().type);
+            }
+        }
+        return map;
     }
 
     private Boolean wasStepValid() {

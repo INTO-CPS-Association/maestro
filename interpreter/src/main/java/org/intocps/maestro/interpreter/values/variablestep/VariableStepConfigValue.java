@@ -1,11 +1,14 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
 import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
+import javax.xml.xpath.XPathExpressionException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class VariableStepConfigValue extends Value {
@@ -15,6 +18,7 @@ public class VariableStepConfigValue extends Value {
     private List<StepVal> dataPoints;
     private Double time;
     private StepsizeCalculator stepsizeCalculator;
+    private Map<FmiSimulationInstance, ScalarDerivativeEstimator> derEsts = new HashMap<>();
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
             Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws AbortSimulationException {
@@ -29,6 +33,46 @@ public class VariableStepConfigValue extends Value {
     public void addDataPoint(Double time, List<Value> portValues) {
         this.time = time;
         this.dataPoints = convertValuesToDataPoint(portValues);
+    }
+
+    public double getStepSize() {
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
+        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentPortValues = new HashMap<>();
+        instances.forEach((mi, fsi) -> {
+            Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
+            Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
+            fsi.config.scalarVariables.forEach(
+                    sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
+                            .ifPresent(val -> {
+                                // if key not absent something is wrong?
+
+
+                                // generate first order ders
+
+                                derivatives.putIfAbsent(sv, new HashMap<>() {{
+                                    put(0, 0.0);
+                                }});
+                                portValues.putIfAbsent(sv, val.getValue());
+
+                            }));
+            currentDerivatives.put(mi, derivatives);
+            currentPortValues.put(mi, portValues);
+        });
+
+        return stepsizeCalculator.getStepsize(time, currentPortValues, currentDerivatives, null);
+    }
+
+    public boolean isStepValid(Double nextTime, List<Value> portValues) {
+        StepValidationResult res =
+                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), false);
+
+        return res.isValid();
+    }
+
+    public void setEndTime(final Double endTime) {
+        if (stepsizeCalculator != null) {
+            stepsizeCalculator.setEndTime(endTime);
+        }
     }
 
     private List<StepVal> convertValuesToDataPoint(List<Value> arrayValues) {
@@ -52,63 +96,23 @@ public class VariableStepConfigValue extends Value {
         return stepVals;
     }
 
-    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> mapModelInstancesToPortValues(List<StepVal> dataPointsToMap) {
+    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> mapModelInstancesToPortValues(
+            List<StepVal> dataPointsToMap) {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> values = new HashMap<>();
         instances.forEach((mi, fsi) -> {
             Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
-                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
-                            .ifPresent(val -> {
-                                // if key not absent something is wrong?
-                                portValues.putIfAbsent(sv, val.getValue());
+                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name))))
+                            .findFirst()).ifPresent(val -> {
+                        // if key not absent something is wrong?
+                        portValues.putIfAbsent(sv, val.getValue());
 
-                            }));
+                    }));
             values.put(mi, portValues);
         });
         return values;
     }
 
-    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> getCurrentDerivatives() {
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
-        instances.forEach((mi, fsi) -> {
-            Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
-            fsi.config.scalarVariables.forEach(
-                    sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
-                            .ifPresent(val -> {
-                                // if key not absent something is wrong?
-                                derivatives.putIfAbsent(sv, new HashMap<>() {{
-                                    put(0, 0.0);
-                                }});
-
-                            }));
-            currentDerivatives.put(mi, derivatives);
-        });
-        return currentDerivatives;
-    }
-
-    public double getStepSize() {
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentPortValues = mapModelInstancesToPortValues(dataPoints);
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = getCurrentDerivatives();
-
-        return stepsizeCalculator.getStepsize(time, currentPortValues, currentDerivatives, null);
-    }
-
-    public boolean isStepValid(Double nextTime, List<Value> portValues) {
-        StepValidationResult res =
-                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), false);
-
-        return res.isValid();
-    }
-
-    public void setEndTime(final Double endTime) {
-        if (stepsizeCalculator != null) {
-            stepsizeCalculator.setEndTime(endTime);
-        }
-    }
-
-    public List<String> getPorts() {
-        return this.portNames;
-    }
 
     public static class StepVal {
         private String name;

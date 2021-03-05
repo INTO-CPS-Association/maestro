@@ -93,14 +93,14 @@ public class VariableStepValue extends ModuleValue {
         componentMembers.put("setFMUs", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 2);
             try {
-                List<StringValue> fmuInstanceNames = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
+                List<StringValue> fmuAggregatedNames = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
                 List<FmuValue> fmus = ValueExtractionUtilities.getArrayValue(fcargs.get(1), FmuValue.class);
 
                 Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances = new HashMap<>();
 
-                for (int i = 0; i < fmuInstanceNames.size(); i++) {
-                    String instanceName = fmuInstanceNames.get(i).getValue().split("\\.")[1]; //TODO: This should be more dynamic
-                    String fmuName = fmuInstanceNames.get(i).getValue().split("\\.")[0];
+                for (int i = 0; i < fmuAggregatedNames.size(); i++) {
+                    String instanceName = fmuAggregatedNames.get(i).getValue().split("\\.")[1]; //TODO: This should probably be done in another way
+                    String fmuName = fmuAggregatedNames.get(i).getValue().split("\\.")[0];
                     ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(fmuName, instanceName);
                     IFmu fmu = fmus.get(i).getModule();
                     ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
@@ -140,7 +140,8 @@ public class VariableStepValue extends ModuleValue {
 
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
-                return new RealValue(((VariableStepConfigValue) cv).getStepSize());
+                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
+                return new RealValue(variableStepConfigValue.getStepSize());
             }
             return new RealValue(-1.0);
         }));

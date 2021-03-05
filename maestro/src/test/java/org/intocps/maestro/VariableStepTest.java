@@ -17,7 +17,7 @@ import java.util.List;
 
 public class VariableStepTest {
     @Test
-    public void testMablStepSize() throws Exception {
+    public void testStepSizeMabl() throws Exception {
         File testFilesDirectory = new File(VariableStepTest.class.getClassLoader().getResource("variable_step").getPath());
 
         List<File> sourceFiles = Arrays.asList(new File(testFilesDirectory, "variableStepTest.mabl"));
