@@ -24,7 +24,7 @@ public class VariableStepTest {
         File specificationDirectory = new File("target", "variable_step/spec");
         File workingDirectory = new File("target", "variable_step/working");
 
-        //FileUtils.deleteDirectory(workingDirectory);
+        FileUtils.deleteDirectory(workingDirectory);
 
         IErrorReporter reporter = new ErrorReporter();
 
@@ -43,7 +43,7 @@ public class VariableStepTest {
             new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
-            //FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
+            FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
         }
 
     }

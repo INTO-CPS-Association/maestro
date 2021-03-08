@@ -13,7 +13,7 @@ import VariableStep;
     // DataWriter for results
     // #############################
     DataWriter dataWriter = load("DataWriter");
-    string data_headers[2] = {"crtlValveState","wtLevel"};
+    string data_headers[2] = {"{control}.c.valve", "{tank}.t.level"};
     DataWriterConfig dataWriterConfiguration = dataWriter.writeHeader(data_headers);
 
 

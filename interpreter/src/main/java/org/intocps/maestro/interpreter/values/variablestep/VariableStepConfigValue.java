@@ -17,16 +17,14 @@ public class VariableStepConfigValue extends Value {
     private Double currTime = 0.0;
     private Double stepSize = 0.0;
     private StepsizeCalculator stepsizeCalculator;
-    private final Map<FmiSimulationInstance, ScalarDerivativeEstimator> derivativeEstimators;
+    private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
             Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws AbortSimulationException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
-        Map<FmiSimulationInstance, ScalarDerivativeEstimator> derEsts = new HashMap<>();
-        instances.forEach((mi, fsi) -> {
-            derEsts.put(fsi, new ScalarDerivativeEstimator(2));
-        });
+        Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
+        instances.forEach((mi, fsi) -> fsi.config.scalarVariables.forEach(sv -> derEsts.put(sv, new ScalarDerivativeEstimator(2))));
         derivativeEstimators = derEsts;
     }
 
@@ -50,9 +48,10 @@ public class VariableStepConfigValue extends Value {
                     sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
                             .ifPresent(val -> {
 
-                                ScalarDerivativeEstimator derEst = derivativeEstimators.get(fsi);
+                                ScalarDerivativeEstimator derEst = derivativeEstimators.get(sv);
                                 derEst.advance(new Double[]{(Double) val.getValue(), null, null}, stepSize);
                                 derivatives.putIfAbsent(sv, new HashMap<>() {{
+                                    put(1, derEst.getFirstDerivative());
                                     put(2, derEst.getSecondDerivative());
                                 }});
 
