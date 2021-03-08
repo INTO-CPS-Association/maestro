@@ -230,7 +230,7 @@ public class Maestro2SimulationController {
 
         logger.trace("Initialization completed");
         logic.setInitializationData(body);
-        logic.setStatus(SessionLogic.CoeStatus.Initialized);
+        logic.setStatus(SessionLogic.SessionStatus.Initialized);
 
         return new InitializeStatusModel("initialized", sessionId, null, 0);
     }
@@ -268,7 +268,7 @@ public class Maestro2SimulationController {
         ErrorReporter reporter = new ErrorReporter();
         long preSimTime;
         long postSimTime;
-        logic.setStatus(SessionLogic.CoeStatus.Simulating);
+        logic.setStatus(SessionLogic.SessionStatus.Simulating);
 
         if (!logic.getCliExecution()) {
             preSimTime = System.currentTimeMillis();
@@ -278,7 +278,7 @@ public class Maestro2SimulationController {
             logic.setExecTime(postSimTime-preSimTime);
 
             if (reporter.getErrorCount() > 0) {
-                logic.setStatus(SessionLogic.CoeStatus.Error);
+                logic.setStatus(SessionLogic.SessionStatus.Error);
                 reporter.getErrors().forEach(x -> logger.error(x.toString()));
                 StringWriter out = new StringWriter();
                 PrintWriter writer = new PrintWriter(out);
@@ -288,7 +288,7 @@ public class Maestro2SimulationController {
             }
 
             reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-            logic.setStatus(SessionLogic.CoeStatus.Finished);
+            logic.setStatus(SessionLogic.SessionStatus.Finished);
             return new StatusModel("Simulation completed", sessionId, 0,
                     reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
                     reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
@@ -324,10 +324,10 @@ public class Maestro2SimulationController {
             int result = p.waitFor();
 
             if(error.size() > 0){
-                logic.setStatus(SessionLogic.CoeStatus.Error);
+                logic.setStatus(SessionLogic.SessionStatus.Error);
             }
             else{
-                logic.setStatus(SessionLogic.CoeStatus.Finished);
+                logic.setStatus(SessionLogic.SessionStatus.Finished);
             }
             postSimTime = System.currentTimeMillis();
             logic.setExecTime(postSimTime-preSimTime);
@@ -340,7 +340,7 @@ public class Maestro2SimulationController {
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
         throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
-        //        sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.CoeStatus.Stopping);
+        //        sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.SessionStatus.Stopping);
         //        if (sessions.containsKey(sessionId)) {
         //            sessions.get(sessionId).stopSimulation();
         //        }

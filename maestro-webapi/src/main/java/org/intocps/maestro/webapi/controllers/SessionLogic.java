@@ -13,7 +13,7 @@ public class SessionLogic {
     public boolean cliExecution = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
-    private CoeStatus status = CoeStatus.Unitialized;
+    private SessionStatus status = SessionStatus.Unitialized;
     private long lastExecTime;
 
     public SessionLogic(File rootDirectory) {
@@ -64,11 +64,11 @@ public class SessionLogic {
         this.socket = null;
     }
 
-    public CoeStatus getStatus() {
+    public SessionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(CoeStatus status) {
+    public void setStatus(SessionStatus status) {
         this.status = status;
     }
 
@@ -80,7 +80,7 @@ public class SessionLogic {
         this.lastExecTime = execTime;
     }
 
-    public enum CoeStatus {
+    public enum SessionStatus {
         Unitialized,
         Initialized,
         Simulating,
