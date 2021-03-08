@@ -18,7 +18,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.PortVariableMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
@@ -109,8 +108,8 @@ public class BuilderTester {
         // tank.set(tank.getPort("valvecontrol"), new AMablValue(newBoleanType(), true));
 
         var.set(456.678);
-        PortVariableMapImpl<Fmi2Builder.DoubleValue> allVars2 = new PortVariableMapImpl<>();
-        allVars2.put(allVars.keySet().iterator().next(), var);
+        //        PortVariableMapImpl<Fmi2Builder.DoubleValue> allVars2 = new PortVariableMapImpl<>();
+        //        allVars2.put(allVars.keySet().iterator().next(), var);
         //tank.set(allVars);
 
 
