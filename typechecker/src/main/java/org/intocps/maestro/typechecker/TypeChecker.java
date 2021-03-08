@@ -24,7 +24,7 @@ public class TypeChecker {
     }
 
     public static List<String> getRuntimeModules() {
-        return Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math", "ArrayUtil", "BooleanLogic", "MEnv");
+        return Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math", "ArrayUtil", "BooleanLogic", "MEnv", "VariableStep");
     }
 
     public static InputStream getRuntimeModule(String name) {

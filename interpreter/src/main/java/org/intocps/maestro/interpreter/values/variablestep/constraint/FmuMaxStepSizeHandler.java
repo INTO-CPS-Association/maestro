@@ -40,25 +40,53 @@
  *		Kenneth Lausdahl
  *		Casper Thule
  */
-package org.intocps.maestro.interpreter.values.derivativeestimator;
+package org.intocps.maestro.interpreter.values.variablestep.constraint;
 
 
-public class FirstOrderDerivativeEstimationAlgorithm implements IDerivativeEstimationAlgorithm {
+import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
+
+import java.util.Observable;
+import java.util.Observer;
+
+public class FmuMaxStepSizeHandler implements Observer, ConstraintHandler {
+    private final String id;
+    private Double stepSize;
+
+    public FmuMaxStepSizeHandler(final InitializationMsgJson.Constraint jc) {
+        this.id = jc.getId();
+    }
 
     @Override
-    public Double[] update(final Double[] x, final Double[] xPrev, final Double[] xPrevPrev, final Double dt, final Double dtPrev) {
-        // xdot already provided
-        if (x[1] != null) {
-            return new Double[]{x[0], x[1], x[2]};
-        }
+    public void update(final Observable obs, final Object arg) {
 
-        // xdot not provided
-        // first step of simulation
-        if (xPrev == null) {
-            return new Double[]{x[0], 0.0, x[2]};
-        }
+    }
 
-        // at least second step of simulation
-        return new Double[]{x[0], (x[0] - xPrev[0]) / dt, x[2]};
+    @Override
+    public Double getMaxStepSize() {
+        return stepSize;
+    }
+
+    @Override
+    public String getDecision() {
+        return "adjust stepsize be min of all getMaxStepSize values from all FMU instances";
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public Boolean isRelaxingStrongly() {
+        return false;
+    }
+
+    @Override
+    public Boolean wasStepValid() {
+        return true;
+    }
+
+    public void setStepSize(double stepSize) {
+        this.stepSize = stepSize;
     }
 }

@@ -42,6 +42,6 @@
  */
 package org.intocps.maestro.interpreter.values.derivativeestimator;
 
-public interface DerivativeEstimationAlgorithm {
+public interface IDerivativeEstimationAlgorithm {
     public Double[] update(final Double[] x, final Double[] xPrev, final Double[] xPrevPrev, final Double dt, final Double dtPrev);
 }

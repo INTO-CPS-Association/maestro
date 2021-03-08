@@ -43,7 +43,7 @@
 package org.intocps.maestro.interpreter.values.derivativeestimator;
 
 public class ScalarDerivativeEstimator {
-    private final DerivativeEstimationAlgorithm algorithm;
+    private final IDerivativeEstimationAlgorithm algorithm;
     private final Integer order;
     private Double[] x = null;
     private Double[] xPrev = null;
