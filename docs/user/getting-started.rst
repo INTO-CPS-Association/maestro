@@ -150,7 +150,6 @@ The initial specification, `spec00000.mabl`, refers to the specification generat
 The reason for these annotations are that the file is self-contained. The relevant information to generate the final specification is added to the specifications via these annotations. See the example below and the description afterwards:
 
 .. literalinclude:: images/wt_example/spec00000.mabl
-    :language:
     :linenos:
 
 - Line 12-13 describes the framework and the JSON necessary to generate the configuration of the framework context, which is needed by the expansion plugins.
@@ -163,5 +162,4 @@ Thus the :code:`@Config(...)` and :code:`Initializer.expand initialize(...)` hav
 As it can be seen on line 159, :code:`FixedStep.expand fixedStep(...)` has not been expanded yet.
 
 .. literalinclude:: images/wt_example/spec00002.mabl
-    :language:
     :linenos:
