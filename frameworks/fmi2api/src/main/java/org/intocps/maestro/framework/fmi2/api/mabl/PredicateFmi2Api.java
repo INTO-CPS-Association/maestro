@@ -8,7 +8,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableUtil;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PredicateFmi2Api implements Fmi2Builder.LogicBuilder.Predicate, Fmi2Builder.ProvidesTypedReferenceExp {
+public class PredicateFmi2Api implements Fmi2Builder.Predicate, Fmi2Builder.ProvidesTypedReferenceExp {
 
     private final PExp exp;
 
@@ -27,7 +27,7 @@ public class PredicateFmi2Api implements Fmi2Builder.LogicBuilder.Predicate, Fmi
     }
 
     @Override
-    public PredicateFmi2Api and(Fmi2Builder.LogicBuilder.Predicate p) {
+    public PredicateFmi2Api and(Fmi2Builder.Predicate p) {
         if (p instanceof PredicateFmi2Api) {
             return this.and((PredicateFmi2Api) p);
         } else {
@@ -36,7 +36,7 @@ public class PredicateFmi2Api implements Fmi2Builder.LogicBuilder.Predicate, Fmi
     }
 
     @Override
-    public PredicateFmi2Api or(Fmi2Builder.LogicBuilder.Predicate p) {
+    public PredicateFmi2Api or(Fmi2Builder.Predicate p) {
         if (p instanceof PredicateFmi2Api) {
             return this.or((PredicateFmi2Api) p);
         } else {

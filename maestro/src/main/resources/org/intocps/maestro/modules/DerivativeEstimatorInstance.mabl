@@ -1,3 +1,5 @@
-module DerivativeEstimatorInstance {
-    calculate(real time, real[] values, ref real[] derivativesOutput);
+module DerivativeEstimatorInstance
+{
+    boolean estimate( real stepSize, real sharedData[], real sharedDataDerivatives[][]);
+    boolean rollback( real sharedDataDerivatives[][]);
 }

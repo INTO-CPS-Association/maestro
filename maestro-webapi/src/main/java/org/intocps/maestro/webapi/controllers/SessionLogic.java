@@ -13,6 +13,8 @@ public class SessionLogic {
     public boolean cliExecution = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
+    private SessionStatus status = SessionStatus.Unitialized;
+    private long lastExecTime;
 
     public SessionLogic(File rootDirectory) {
         rootDirectory.mkdir();
@@ -60,5 +62,30 @@ public class SessionLogic {
 
     public void removeSocket() {
         this.socket = null;
+    }
+
+    public SessionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SessionStatus status) {
+        this.status = status;
+    }
+
+    public Long getLastExecTime() {
+        return lastExecTime;
+    }
+
+    public void setExecTime(long execTime) {
+        this.lastExecTime = execTime;
+    }
+
+    public enum SessionStatus {
+        Unitialized,
+        Initialized,
+        Simulating,
+        Finished,
+        Error,
+        Stopping
     }
 }

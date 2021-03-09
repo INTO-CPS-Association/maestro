@@ -42,8 +42,7 @@
  */
 package org.intocps.maestro.interpreter.values.derivativeestimator;
 
-
-public class SecondOrderDerivativeEstimationAlgorithm implements DerivativeEstimationAlgorithm {
+public class SecondOrderDerivativeEstimationAlgorithm implements IDerivativeEstimationAlgorithm {
 
     @Override
     public Double[] update(final Double[] x, final Double[] xPrev, final Double[] xPrevPrev, final Double dt, final Double dtPrev) {
@@ -84,6 +83,8 @@ public class SecondOrderDerivativeEstimationAlgorithm implements DerivativeEstim
         final Double b = -r2 - a * dtPrev;
         final Double xdotdot = 2 * a;
         final Double xdot = xdotdot * (dt + dtPrev) + b;
+
+
         return new Double[]{x[0], xdot, xdotdot};
     }
 }

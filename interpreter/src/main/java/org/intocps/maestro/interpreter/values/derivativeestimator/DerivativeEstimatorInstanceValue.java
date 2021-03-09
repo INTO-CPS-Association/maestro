@@ -3,118 +3,87 @@ package org.intocps.maestro.interpreter.values.derivativeestimator;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-// See the related file "DerivativeEstimatorInstance.mabl" for the interface
 public class DerivativeEstimatorInstanceValue extends ModuleValue {
+    private static final Map<Integer, ScalarDerivativeEstimator> estimators = new HashMap<>(); //Keys corresponds to the values in indicesOfInterest
 
-    HashMap<Integer, DerivativesForVariable> derivatives;
-    long variablesCount;
-
-    public DerivativeEstimatorInstanceValue(long variablesCount_, HashMap<Integer, DerivativesForVariable> derivatives) {
-        super(createMembers(variablesCount_, derivatives));
-        this.variablesCount = variablesCount_;
-        this.derivatives = derivatives;
+    public DerivativeEstimatorInstanceValue(List<Integer> indicesOfInterest, List<Integer> derivativeOrder, List<Integer> providedDerivativesOrder) {
+        super(createMembers(indicesOfInterest, derivativeOrder, providedDerivativesOrder));
+        for (int i = 0; i < indicesOfInterest.size(); i++) {
+            estimators.put(indicesOfInterest.get(i), new ScalarDerivativeEstimator(derivativeOrder.get(i)));
+        }
     }
 
     /**
-     * @param variables
-     * @param orders
-     * @param provided       describes how many derivatives of the variable are provided by the FMU itself. 1 is first derivative, 2 is second derivative
-     *                       etc. 0 means that no derivatives is provided, only the variable value.
-     * @param variablesCount
+     * Dont rollback FMU provided values
+     *
+     * @param indicesOfInterest        The indices of relevant data in sharedData and sharedDataDerivatives that is passed to 'estimate'
+     * @param derivativeOrders         The derivative order that is to be estimated for each data of interest
+     * @param providedDerivativesOrder Any derivative order that is already provided and thus should not be estimated.
+     * @return Component members
      */
-    public static DerivativeEstimatorInstanceValue createDerivativeEstimatorInstanceValue(List<StringValue> variables, List<IntegerValue> orders,
-            List<IntegerValue> provided, UnsignedIntegerValue variablesCount) {
-        long variablesCount_ = variablesCount.getValue();
-        HashMap<Integer, DerivativesForVariable> derivatives = new HashMap<>();
-        for (int i = 0; i < variablesCount_; i++) {
-            String s = variables.get(i).getValue();
-            Integer order = orders.get(i).getValue();
-            Integer provided_ = provided.get(i).getValue();
-            ScalarDerivativeEstimator estimator = new ScalarDerivativeEstimator(order);
-            derivatives.put(i, new DerivativesForVariable(order, provided_, i, s, estimator));
-        }
-        return new DerivativeEstimatorInstanceValue(variablesCount_, derivatives);
-    }
-
-    private static Map<String, Value> createMembers(long size, HashMap<Integer, DerivativesForVariable> derivatives) {
+    private static Map<String, Value> createMembers(List<Integer> indicesOfInterest, List<Integer> derivativeOrders,
+            List<Integer> providedDerivativesOrder) {
         Map<String, Value> componentMembers = new HashMap<>();
+        componentMembers.put("estimate", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(fcargs, 3);
 
-        // calculate(real time, real[] values, ref real[] derivativesOutput)
-        // The values are related to the arguments: variables and provided in the constructor.
-        // For example, if variables=["x","y"] and provided=[2,1], then values consist of: [x, derx, derderx, y, dery].
-        componentMembers.put("calculate", new FunctionValue.ExternalFunctionValue(fcargs -> {
-            Double time = ValueExtractionUtilities.getValue(fcargs.get(0), RealValue.class).getValue();
+            Double stepSize = ValueExtractionUtilities.getValue(fcargs.get(0), RealValue.class).getValue();
+            List<ArrayValue> sharedDataDerivatives = ValueExtractionUtilities.getArrayValue(fcargs.get(2), ArrayValue.class);
 
-            // Group values according to variables.
-            List<Double> values = ValueExtractionUtilities.getArrayValue(fcargs.get(1), RealValue.class).stream().map(RealValue::getValue)
-                    .collect(Collectors.toList());
+            for (int i = 0; i < indicesOfInterest.size(); i++) {
+                Integer indexOfInterest = indicesOfInterest.get(i);
+                double dataOfInterest = ValueExtractionUtilities.getArrayValue(fcargs.get(1), RealValue.class).get(indexOfInterest).getValue();
 
-            List<RealValue> outputReference = ((ArrayValue<RealValue>) fcargs.get(2).deref()).getValues();
-
-            Map<Integer, Double[]> variableIndexToProvidedValues = new HashMap<>();
-
-            // Variable used to control iteration of values argument
-            int valuesIndex = 0;
-
-            // Variable used to control insertion into outputReference array
-            int outputReferenceIndex = 0;
-
-            for (int variableIterator = 0; variableIterator < size; variableIterator++) {
-                DerivativesForVariable derivativesForVariable = derivatives.get(variableIterator);
-
-                // Extract values related to variable
-                int nextValuesIndex = valuesIndex + derivativesForVariable.sizeOfProvidedValues;
+                List<Double> dataDerivativesOfInterest =
+                        ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest), Value.class).stream().map(v -> {
+                            if (v instanceof RealValue) {
+                                return ((RealValue) v).getValue();
+                            } else {
+                                return null;
+                            }
+                        }).collect(Collectors.toList());
 
                 // provided has to be of size 3 for the estimator.
-                Double[] provided = values.subList(valuesIndex, nextValuesIndex).toArray(new Double[3]);
-                variableIndexToProvidedValues.put(variableIterator, provided);
-                derivativesForVariable.estimator.advance(provided, time);
+                Double[] provided = {dataOfInterest, null, null};
+                for (int derOrderIndex = 1; derOrderIndex <= providedDerivativesOrder.get(i); derOrderIndex++) {
+                    provided[derOrderIndex] = dataDerivativesOfInterest.get(derOrderIndex - 1);
+                }
+                estimators.get(indexOfInterest).advance(provided, stepSize);
 
-                // j-for loop is for retrieving derivatives
-                // k-for loop is for indexing them into calculatedDerivatives
-                for (int derivativeOrder = 1; derivativeOrder <= derivativesForVariable.order; derivativeOrder++, outputReferenceIndex++) {
-                    outputReference.add(outputReferenceIndex, new RealValue(derivativesForVariable.estimator.getDerivative(derivativeOrder)));
+                for (int derOrder = providedDerivativesOrder.get(i); derOrder < derivativeOrders.get(i); derOrder++) {
+                    ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest), Value.class)
+                            .set(derOrder, new RealValue(estimators.get(indexOfInterest).getDerivative(derOrder + 1)));
                 }
 
-                valuesIndex = nextValuesIndex;
             }
             return new BooleanValue(true);
-        }));
 
+        }));
         componentMembers.put("rollback", new FunctionValue.ExternalFunctionValue(fcargs -> {
-            derivatives.values().forEach(l -> l.estimator.rollback());
+            fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(fcargs, 1);
+
+            List<ArrayValue> sharedDataDerivativesForIndex = ValueExtractionUtilities.getArrayValue(fcargs.get(0), ArrayValue.class);
+
+            estimators.forEach((indexOfInterest, estimator) -> {
+                estimator.rollback();
+
+                for (int derOrder = providedDerivativesOrder.get(indicesOfInterest.indexOf(indexOfInterest));
+                        derOrder < estimators.get(indexOfInterest).getOrder(); derOrder++) {
+                    Double der = estimator.getDerivative(derOrder + 1);
+                    ValueExtractionUtilities.getArrayValue(sharedDataDerivativesForIndex.get(indexOfInterest), Value.class)
+                            .set(derOrder, der != null ? new RealValue(der) : new NullValue());
+                }
+            });
+
             return new BooleanValue(true);
         }));
 
         return componentMembers;
     }
 
-    public static class DerivativesForVariable {
-        public final Integer order;
-        public final Integer provided;
-        public final Integer index;
-        public final String variable;
-        public final ScalarDerivativeEstimator estimator;
-        public final int sizeOfProvidedValues;
-
-        public DerivativesForVariable(Integer order, Integer provided, Integer index, String variable, ScalarDerivativeEstimator estimator) {
-            this.order = order;
-            this.provided = provided;
-            this.index = index;
-            this.variable = variable;
-            this.estimator = estimator;
-            // + 1 is due to provided is related conceptually to the derivates provided. However, the original variable is always provided. I.e
-            // Example: For x, derx and derderx provided will be 2, yet three values are sent.
-            this.sizeOfProvidedValues = this.provided + 1;
-        }
-    }
-
 }
-
-
-

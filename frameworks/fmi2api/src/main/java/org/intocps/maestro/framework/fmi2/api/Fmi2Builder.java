@@ -3,6 +3,10 @@ package org.intocps.maestro.framework.fmi2.api;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.Collection;
@@ -18,7 +22,6 @@ public interface Fmi2Builder<S, B, E> {
     RuntimeModule<S> loadRuntimeModule(String name, Object... args);
 
     RuntimeModule<S> loadRuntimeModule(Scope<S> scope, String name, Object... args);
-
 
     /**
      * Gets the default scope
@@ -36,15 +39,6 @@ public interface Fmi2Builder<S, B, E> {
      * @return
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
-    //    public abstract void pushScope(Scope scope);
-
-
-    /**
-     * Get handle to the current time
-     *
-     * @return
-     */
-    //Time getCurrentTime();
 
     DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
 
@@ -133,8 +127,6 @@ public interface Fmi2Builder<S, B, E> {
                 Any
             }
         }
-
-
     }
 
     /**
@@ -148,9 +140,9 @@ public interface Fmi2Builder<S, B, E> {
      * Scoping functions
      */
     interface Scoping<T> {
-        WhileScope<T> enterWhile(LogicBuilder.Predicate predicate);
+        WhileScope<T> enterWhile(Predicate predicate);
 
-        IfScope<T> enterIf(LogicBuilder.Predicate predicate);
+        IfScope<T> enterIf(Predicate predicate);
 
         Scope<T> leave();
 
@@ -201,10 +193,6 @@ public interface Fmi2Builder<S, B, E> {
 
         IntVariable<T> store(String name, int value);
 
-        <ValType extends Object, Val extends Value<ValType>, Var extends Variable<T, Val>> Var store(String name, Var value);
-
-        <ValType extends Object, Val extends Value<ValType>, Var extends Variable<T, Val>> Var copy(String name, Var value);
-
         /**
          * Store the given value and get a tag for it. Copy
          *
@@ -213,18 +201,6 @@ public interface Fmi2Builder<S, B, E> {
          */
         @Deprecated
         <V> Variable<T, V> store(Value<V> tag);
-
-
-        //   /**
-        //   * Override a tags value from an existing value. Copy
-        //   *
-        //   * @param tag
-        //   * @param value
-        //   * @return
-        //   */
-        // <V extends Value> Variable<T, V> store(V tag, V value);
-        //TODO add overload with name prefix, tag override is done through variable and not the scope
-
 
         Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
     }
@@ -265,30 +241,12 @@ public interface Fmi2Builder<S, B, E> {
     }
 
 
-    interface LogicBuilder {
+    interface Predicate {
+        Predicate and(Predicate p);
 
-        //        Predicate isEqual(Port a, Port b);
-        //
-        //
-        //        <T> Predicate isLess(T a, T b);
-        //
-        //        <T> Predicate isLessOrEqualTo(Variable a, Variable b);
-        //
-        //        Predicate isGreater(Value<Double> a, double b);
-        //
-        //        <T> Predicate fromValue(Value<T> value);
+        Predicate or(Predicate p);
 
-        // Predicate fromExternalFunction(String name, Value... args);
-
-
-        interface Predicate {
-            Predicate and(Predicate p);
-
-            Predicate or(Predicate p);
-
-            Predicate not();
-        }
-
+        Predicate not();
     }
 
     interface Type {
@@ -342,45 +300,21 @@ public interface Fmi2Builder<S, B, E> {
 
 
     interface Value<V> {
-        static Value<Double> of(double a) {
-            return null;
-        }
-
-       /* static Value of(Variable var) {
-            return null;
-        }*/
-
         V get();
     }
 
-    interface IntValue extends Value<Integer>, NumericExpressionValue {
-    }
-
-    interface BoolValue extends Value<Boolean> {
-    }
-
-    interface DoubleValue extends Value<Double>, NumericExpressionValue {
-    }
-
-    interface StringValue extends Value<String> {
-    }
-
-    interface ReferenceValue extends Value<PExp> {
-    }
 
     interface NamedValue extends Value<Object> {
     }
 
 
-    interface IntVariable<T> extends Variable<T, IntValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+    interface IntVariable<T> extends Variable<T, IntExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
         void decrement();
 
         void increment();
     }
 
 
-    //FIXME why is this still here this is mable expression is very specific its not needed to should be deleted
-    @Deprecated
     interface ProvidesTypedReferenceExp {
         PType getType();
 
@@ -391,16 +325,16 @@ public interface Fmi2Builder<S, B, E> {
     interface NumericTypedReferenceExp extends ProvidesTypedReferenceExp {
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+    interface DoubleVariable<T> extends Variable<T, DoubleExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
 
         void set(Double value);
     }
 
-    interface BoolVariable<T> extends Variable<T, BoolValue>, ProvidesTypedReferenceExp {
-        LogicBuilder.Predicate toPredicate();
+    interface BoolVariable<T> extends Variable<T, BooleanExpressionValue>, ProvidesTypedReferenceExp {
+        Predicate toPredicate();
     }
 
-    interface StringVariable<T> extends Variable<T, StringValue>, ProvidesTypedReferenceExp {
+    interface StringVariable<T> extends Variable<T, StringExpressionValue>, ProvidesTypedReferenceExp {
 
     }
 

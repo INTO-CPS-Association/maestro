@@ -1,24 +1,23 @@
 {
-    "fmus": {
-        "{controller}": "watertankcontroller-c.fmu",
-        "{tank}": "singlewatertank-20sim.fmu"
-    },
-    "connections": {
-        "{controller}.crtlInstance.valve": [
-            "{tank}.wtInstance.valvecontrol"
-        ],
-        "{tank}.wtInstance.level": [
-            "{controller}.crtlInstance.level"
-        ]
-    },
-    "parameters": {
-        "{controller}.crtlInstance.maxlevel": 2,
-        "{controller}.crtlInstance.minlevel": 1
-    },
-
-    "algorithm": {
-        "type": "fixed-step",
-        "size": 0.1
-    },
-    "endTime": 10.0
+  "fmus": {
+    "{crtl}": "watertankcontroller-c.fmu",
+    "{wt}": "singlewatertank-20sim.fmu"
+  },
+  "connections": {
+    "{crtl}.crtlInstance.valve": [
+      "{wt}.wtInstance.valvecontrol"
+    ],
+    "{wt}.wtInstance.level": [
+      "{crtl}.crtlInstance.level"
+    ]
+  },
+  "parameters": {
+    "{crtl}.crtlInstance.maxlevel": 2,
+    "{crtl}.crtlInstance.minlevel": 1
+  },
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.1
+  },
+  "endTime": 10
 }
