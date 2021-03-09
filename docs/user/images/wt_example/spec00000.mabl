@@ -24,12 +24,12 @@ import BooleanLogic;
 	Logger logger = load("Logger");
 	DataWriter dataWriter = load("DataWriter");
 	BooleanLogic booleanLogic = load("BooleanLogic");
-	FMI2 crtl = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "watertankcontroller-c.fmu");
+	FMI2 crtl = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/watertankcontroller-c.fmu");
 	if( (crtl == null) )
 	{
 		global_execution_continue = false;
 	}
-	FMI2 wt = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "singlewatertank-20sim.fmu");
+	FMI2 wt = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/singlewatertank-20sim.fmu");
 	if( (wt == null) )
 	{
 		global_execution_continue = false;
