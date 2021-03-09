@@ -201,7 +201,28 @@ public class Maestro2SimulationController {
             stepSizeCalculator = new BasicFixedStepSizeCalculator(algorithm.size);
             stepAlgorithm = Algorithm.FIXED;
         } else if (body.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            logger.info("Variable step algorithm not supported");
+            VariableStepAlgorithmConfig algorithm = (VariableStepAlgorithmConfig) body.getAlgorithm();
+
+            if (algorithm.getSize() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "min and max variable-step size must be integers or doubles");
+            }
+
+            //TODO: what is the value of the minimum step-size defined for FMI2?
+            if (algorithm.getSize()[0] <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the minimum variable-step size does not conform to the minimum step-size" +
+                        " of FMI2");
+            }
+
+            if (algorithm.getSize()[1] <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the maximum variable-step size does not conform to the minimum step-size" +
+                        " of FMI2");
+            }
+
+            logger.info("Using variable-step size calculator with minimum step-size: {}, maximum step-size: {} and initial step-size: {}",
+                    algorithm.getSize()[0],
+                    algorithm.getSize()[1], algorithm.getInitsize());
+
+
             throw new NotImplementedException("Variable step algorithms are not supported.");
         }
         Map<String, List<ModelDescription.LogCategory>> logs = null;
