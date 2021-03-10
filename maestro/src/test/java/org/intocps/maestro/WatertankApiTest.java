@@ -22,8 +22,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2A
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -132,7 +132,7 @@ public class WatertankApiTest {
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
-            Assert.fail();
+            Assertions.fail();
         }
         mabl.dump(workingDirectory);
 

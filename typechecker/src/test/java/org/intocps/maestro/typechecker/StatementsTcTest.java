@@ -15,10 +15,9 @@ import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParser;
 import org.intocps.maestro.parser.ParseTree2AstConverter;
 import org.intocps.maestro.typechecker.context.LocalContext;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,18 +27,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@RunWith(Parameterized.class)
+
 public class StatementsTcTest {
 
-    final String spec;
-    private final String name;
-
-    public StatementsTcTest(String name, String spec) {
-        this.name = name;
-        this.spec = spec;
-    }
-
-    @Parameterized.Parameters(name = "{index} \"{1}\" in {0}")
     public static Collection<Object[]> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "single_file").toFile().listFiles()))
                 .filter(f -> f.getName().equals("statements.mabl")).map(f -> {
@@ -84,8 +74,9 @@ public class StatementsTcTest {
         return (PType) new ParseTree2AstConverter().visit(p.typeType());
     }
 
-    @Test
-    public void test() throws IOException, AnalysisException {
+    @ParameterizedTest(name = "{index} \"{1}\" in {0}")
+    @MethodSource("data")
+    public void test(String name, String spec) throws IOException, AnalysisException {
 
         //        String template =
         //                FileUtils.readFileToString(Paths.get("src", "test", "resources", "statements", "template.mabl").toFile(), StandardCharsets.UTF_8);
@@ -94,9 +85,9 @@ public class StatementsTcTest {
 
         //        template = template.replace("TEMPLATE", testString);
 
-        int split = this.spec.indexOf(",");
-        String expectedTypeString = this.spec.substring(0, split);
-        String testExp = this.spec.substring(split + 1);
+        int split = spec.indexOf(",");
+        String expectedTypeString = spec.substring(0, split);
+        String testExp = spec.substring(split + 1);
 
 
         IErrorReporter errorReporter = new ErrorReporter();
@@ -142,8 +133,8 @@ public class StatementsTcTest {
                 System.err.println(PrettyPrinter.print(doc));
                 System.err.flush();
             }
-            Assert.assertTrue("Type mismatch. Type '" + type + "' is not compatible with expected: '" + expectedType + "'", compatible);
-            Assert.assertEquals(0, errorReporter.getErrorCount());
+            Assertions.assertTrue(compatible, "Type mismatch. Type '" + type + "' is not compatible with expected: '" + expectedType + "'");
+            Assertions.assertEquals(0, errorReporter.getErrorCount());
         } else {
             //            Assert.assertFalse(errorReporter.getErrorCount() == 0);
         }

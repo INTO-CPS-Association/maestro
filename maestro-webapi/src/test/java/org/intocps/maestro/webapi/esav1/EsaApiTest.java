@@ -4,14 +4,15 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.webapi.services.CoeService;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("mocked_coe_service")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class EsaApiTest {
     final static String baseUrl = "/api/esav1/simulator";
@@ -52,7 +53,7 @@ public class EsaApiTest {
 
 
     @Test
-    @Ignore
+    @Disabled
     public void initialize() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/initialize.json"));
@@ -61,7 +62,7 @@ public class EsaApiTest {
 
 
     @Test
-    @Ignore("FIX ME")
+    @Disabled("FIX ME")
     public void initializeFailure() throws Exception {
 
         when(service.get()).thenThrow(new RuntimeException());
@@ -73,7 +74,7 @@ public class EsaApiTest {
 
 
     @Test
-    @Ignore
+    @Disabled
     public void simulate() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/test1/simulate.json"));

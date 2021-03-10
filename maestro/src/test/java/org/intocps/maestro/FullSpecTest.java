@@ -19,38 +19,31 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 
-@RunWith(Parameterized.class)
 public class FullSpecTest {
 
-    final File directory;
-    private final String name;
-
-    public FullSpecTest(String name, File directory) {
-        this.name = name;
-        this.directory = directory;
-    }
-
     //TODO: Temporary ignored fixedstepbuilder
-    @Parameterized.Parameters(name = "{index} {0}")
-    public static Collection<Object[]> data() {
+    private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
-                /*.filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop"))*/.map(f -> new Object[]{f.getName(), f})
-                .collect(Collectors.toList());
+                /*.filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop"))*/.map(f -> Arguments.arguments(f.getName(), f));
     }
 
     private static TestJsonObject getTestJsonObject(File directory) throws java.io.IOException {
@@ -105,7 +98,7 @@ public class FullSpecTest {
 
             for (Delta delta : patch.getDeltas()) {
                 System.err.println(delta);
-                Assert.fail("Expected result and actual differ: " + delta);
+                Assertions.fail("Expected result and actual differ: " + delta);
             }
 
         }
@@ -138,10 +131,11 @@ public class FullSpecTest {
         }
     }
 
-    @Test
-    public void test() throws Exception {
+    @ParameterizedTest(name = "{index} \"{0}\"")
+    @MethodSource("data")
+    public void test(String name, File directory) throws Exception {
 
-        File workingDirectory = getWorkingDirectory(this.directory);
+        File workingDirectory = getWorkingDirectory(directory);
 
         File specFolder = new File(workingDirectory, "specs");
         specFolder.mkdirs();
@@ -204,15 +198,15 @@ public class FullSpecTest {
 
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
-            Assert.fail();
+            Assertions.fail();
         }
         if (reporter.getWarningCount() > 0) {
             reporter.printWarnings(new PrintWriter(System.out, true));
         }
 
         mabl.dump(workingDirectory);
-        Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists());
-        Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists());
+        Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
+        Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
         System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         new MableInterpreter(
                 new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
