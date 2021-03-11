@@ -131,14 +131,14 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public List<String> getStatuses() {
-        return sessionController.getStatus().stream().map(model -> {
-            try {
-                return new ObjectMapper().writeValueAsString(model);
-            }catch(JsonProcessingException e){
-                return "";
-            }
-        }).collect(Collectors.toList());
+    public String getStatuses() {
+        try
+        {
+            return new ObjectMapper().writeValueAsString(sessionController.getStatus());
+        } catch(JsonProcessingException e)
+        {
+            return "[]";
+        }
     }
 
     private StatusModel getStatus(String sessionId) {
