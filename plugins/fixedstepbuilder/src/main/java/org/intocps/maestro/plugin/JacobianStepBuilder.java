@@ -6,10 +6,7 @@ import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.ToParExp;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.ABlockStm;
-import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
@@ -18,10 +15,10 @@ import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,14 +26,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class FixedStepBuilder implements IMaestroExpansionPlugin {
+public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
-    final static Logger logger = LoggerFactory.getLogger(FixedStepBuilder.class);
+    final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
 
     final AFunctionDeclaration fun = newAFunctionDeclaration(newAIdentifier("fixedStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
@@ -54,8 +52,8 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
-        logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
-        FixedstepConfig fixedstepConfig = (FixedstepConfig) config;
+        logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
+        JacobianStepConfig jacobianStepConfig = (JacobianStepConfig) config;
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
@@ -112,11 +110,7 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
 
                 // Create the iteration predicate
                 PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
-                DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 1.0);
-                DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 1.0);
 
-                // Store the state for all
-                List<Fmi2Builder.StateVariable<PStm>> fmuStates = fmuInstances.values().stream().map(x -> x.getState()).collect(Collectors.toList());
 
                 // Get and share all variables related to outputs or logging.
                 fmuInstances.forEach((x, y) -> {
@@ -124,33 +118,77 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
                     y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
                 });
 
-                IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
-
-                // SET ALL LINKED VARIABLES
+                // Store the state for all
+//                List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
+//                for(Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
+//
+//                    fmuStates.add(entry.getValue().getState());
+//                }
 
 
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
-                    ScopeFmi2Api stabilisationScope = null;
-                    IntVariableFmi2Api stabilisation_loop = null;
-                    BooleanVariableFmi2Api convergenceReached = null;
-                    if (fixedstepConfig.stabilisation) {
-                        stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
-                        convergenceReached = dynamicScope.store("hasConverged", false);
-                        stabilisationScope = dynamicScope.enterWhile(
-                                convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
-
-
-                    }
 
                     // SET ALL LINKED VARIABLES
                     // This has to be carried out regardless of stabilisation or not.
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
+                    DoubleVariableFmi2Api smallestDecreasedStepTime = dynamicScope.store("smallestDecreasedStepTime", -1.0);
+                    BooleanVariableFmi2Api didFullStep = dynamicScope.store("didFullStep", true);
+                    DoubleVariableFmi2Api instanceCurrentTimeStep = dynamicScope.store("instanceCurrentTimeStep", 0.0);
+
+//                    PType type = new ARealNumericPrimitiveType();
+//                    String name = "Arr";
+//                    int length = 1;
+//                    PStm varstm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type, length, null));
+//
+//                    List<DoubleVariableFmi2Api> listVals = new ArrayList<>();
+//
+//                    ArrayVariableFmi2Api<DoubleVariableFmi2Api> arr = new ArrayVariableFmi2Api(varstm, type, scopeFmi2Api, dynamicScope,
+//                            newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name), listVals);
+
+
                     // STEP ALL
                     fmuInstances.forEach((x, y) -> {
-                        Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> a = y.step(currentCommunicationTime, stepSizeVar);
+                        Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = y.step(currentCommunicationTime,
+                                stepSizeVar);
+
+                        instanceCurrentTimeStep.setValue(discard.getValue());
+
+                        PredicateFmi2Api ifUpdateStepSize =
+                                didFullStep.toPredicate().not().and(new PredicateFmi2Api(discard.getKey().getExp()).not()).and(instanceCurrentTimeStep.toMath().lessThan(smallestDecreasedStepTime));
+
+                        PredicateFmi2Api ifFirst = didFullStep.toPredicate().and(new PredicateFmi2Api(discard.getKey().getExp()).not());
+
+                        dynamicScope.enterIf(ifFirst);
+                        {
+                            smallestDecreasedStepTime.setValue(instanceCurrentTimeStep);
+                            didFullStep.setValue(discard.getKey());
+                            dynamicScope.leave();
+                        }
+
+                        dynamicScope.enterIf(ifUpdateStepSize);
+                        {
+                            smallestDecreasedStepTime.setValue(instanceCurrentTimeStep);
+                            dynamicScope.leave();
+                        }
                     });
+
+                    // Discard
+                    PredicateFmi2Api didNotDoFullStep = new PredicateFmi2Api(didFullStep.getExp()).not();
+                    dynamicScope.enterIf(didNotDoFullStep);
+                    {
+
+                        fmuInstances.forEach((x, y) -> {
+                            DoubleExpressionValue decreasedStepSize = smallestDecreasedStepTime.toMath().subtraction(currentCommunicationTime);
+
+                            //rollback FMU
+                            y.step(currentCommunicationTime, new DoubleVariableFmi2Api(null, null, dynamicScope, null, decreasedStepSize.getExp()));
+
+                        });
+                        dynamicScope.leave();
+                    }
+
 
                     // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
                     Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> retrievedValues =
@@ -160,40 +198,8 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
                                 return entry.getValue().get(variablesToGet);
                             }));
 
-                    // CONVERGENCE
-                    if (fixedstepConfig.stabilisation) {
-                        // For each instance ->
-                        //      For each retrieved variable
-                        //          compare with previous in terms of convergence
-                        //  If all converge, set retrieved values and continue
-                        //  else reset to previous state, set retrieved values and continue
-                        List<BooleanVariableFmi2Api> convergenceVariables = retrievedValues.entrySet().stream().flatMap(comptoPortAndVariable -> {
-                            Stream<BooleanVariableFmi2Api> converged = comptoPortAndVariable.getValue().entrySet().stream()
-                                    .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).map(portAndVariable -> {
-                                        VariableFmi2Api oldVariable = portAndVariable.getKey().getSharedAsVariable();
-                                        VariableFmi2Api<Object> newVariable = portAndVariable.getValue();
-                                        return math.checkConvergence(oldVariable, newVariable, absTol, relTol);
-                                    });
-                            return converged;
-                        }).collect(Collectors.toList());
-                        convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
-                        ScopeFmi2Api ifScope = dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
-                        {
-                            fmuStates.forEach(x -> x.set());
-                            if (stabilisation_loop != null) {
-                                stabilisation_loop.decrement();
-                            } else {
-                                throw new RuntimeException("NO STABILISATION LOOP FOUND");
-                            }
-                        }
-                        stabilisationScope.activate();
-                        retrievedValues.forEach((k, v) -> k.share(v));
-                    }
-                    scopeFmi2Api.activate();
-                    if (!fixedstepConfig.stabilisation) {
-                        retrievedValues.forEach((k, v) -> k.share(v));
-                    }
 
+                    retrievedValues.forEach((k, v) -> k.share(v));
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
@@ -216,78 +222,6 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
         }
     }
 
-    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
-            ISimulationEnvironment envIn, IErrorReporter errorReporter, MablApiBuilder builder) throws ExpandException {
-
-        FixedstepConfig fixedstepConfig = (FixedstepConfig) config;
-
-        if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
-            throw new ExpandException("Unknown function declaration");
-        }
-        AFunctionDeclaration selectedFun = fun;
-
-        if (formalArguments == null || formalArguments.size() != selectedFun.getFormals().size()) {
-            throw new ExpandException("Invalid args");
-        }
-
-        if (envIn == null) {
-            throw new ExpandException("Simulation environment must not be null");
-        }
-
-        Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
-
-        PExp stepSize = formalArguments.get(1).clone();
-        PExp startTime = formalArguments.get(2).clone();
-        PExp endTime = formalArguments.get(3).clone();
-        if (declaredFunction.equals(fun)) {
-            try {
-                DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-
-                MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
-                BooleanBuilderFmi2Api booleanLogic = builder.getMablToMablAPI().getBooleanBuilder();
-
-                // Convert raw MaBL to API
-                DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
-                DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
-                stepSizeVar.setValue(externalStepSize);
-                DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
-                DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("fixed_current_communication_point", 0.0);
-                currentCommunicationTime.setValue(externalStartTime);
-                DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
-                DoubleVariableFmi2Api endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
-                endTimeVar.setValue(externalEndTime);
-
-                // Import the external components into Fmi2API
-                Map<String, ComponentVariableFmi2Api> fmuInstances =
-                        FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments.get(0), env);
-
-                // Create bindings
-                FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
-
-                // Create the logging
-                DataWriter dataWriter = builder.getMablToMablAPI().getDataWriter();
-                DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
-                dataWriterInstance
-                        .initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
-
-
-                // Create the iteration predicate
-                PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
-                DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 1.0);
-                DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 1.0);
-
-
-            } catch (Exception e) {
-                throw new ExpandException("Internal error: ", e);
-            }
-        } else {
-            throw new ExpandException("Unknown function");
-        }
-
-        return null;
-    }
-
-
 
     @Override
     public boolean requireConfig() {
@@ -296,7 +230,7 @@ public class FixedStepBuilder implements IMaestroExpansionPlugin {
 
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return (new ObjectMapper().readValue(is, FixedstepConfig.class));
+        return (new ObjectMapper().readValue(is, JacobianStepConfig.class));
     }
 
     @Override

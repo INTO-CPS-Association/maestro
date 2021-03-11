@@ -1,6 +1,6 @@
 simulation
 import Initializer;
-import FixedStepBuilder;
+import JacobianStepBuilder;
 import BooleanLogic;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
@@ -35,7 +35,7 @@ int status = 0;
 @Config("@file: config.json");
 Initializer.expand initialize(components,START_TIME, END_TIME);
 @Config("@file: fixedstepconfig.json");
-FixedStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+JacobianStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 dataWriter.close();
 tankcontroller.freeInstance(crtlInstance);
 SingleWatertank.freeInstance(wtInstance);

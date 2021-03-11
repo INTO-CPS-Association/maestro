@@ -1,6 +1,6 @@
 package org.intocps.maestro.plugin;
 
-class FixedstepConfig implements IPluginConfiguration {
+class JacobianStepConfig implements IPluginConfiguration {
     public int endtime;
     public boolean stabilisation;
 }

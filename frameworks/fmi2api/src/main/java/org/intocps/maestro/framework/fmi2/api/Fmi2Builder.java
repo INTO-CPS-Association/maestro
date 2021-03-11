@@ -9,6 +9,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -576,14 +577,14 @@ public interface Fmi2Builder<S, B, E> {
          *
          * @return
          */
-        StateVariable<T> getState();
+        StateVariable<T> getState() throws XPathExpressionException;
 
         /**
          * Get the current state
          *
          * @return
          */
-        StateVariable<T> getState(Scope<T> scope);
+        StateVariable<T> getState(Scope<T> scope) throws XPathExpressionException;
 
 
         interface PortVariableMap<S, V> extends Map<Port, Variable<S, V>> {

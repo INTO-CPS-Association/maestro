@@ -15,6 +15,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -762,14 +763,18 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState() {
+    public Fmi2Builder.StateVariable<PStm> getState() throws XPathExpressionException {
 
         return getState(builder.getDynamicScope());
 
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) {
+    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) throws XPathExpressionException {
+
+        if(!this.modelDescriptionContext.getModelDescription().getCanGetAndSetFmustate()){
+             throw new RuntimeException("Unable to get state on fmu: " + this.getOwner() + " with instance name: " + this.getName());
+        }
 
         String stateName = builder.getNameGenerator().getName(name, "state");
         PStm stateVar = newVariable(stateName, newANameType("FmiComponentState"));
