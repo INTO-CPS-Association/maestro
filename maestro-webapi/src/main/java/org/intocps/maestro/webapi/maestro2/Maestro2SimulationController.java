@@ -39,8 +39,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import springfox.documentation.spring.web.json.Json;
-import springfox.documentation.spring.web.json.JsonSerializer;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
