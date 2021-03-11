@@ -155,9 +155,6 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        try (PrintWriter out = new PrintWriter(new File(logic.rootDirectory, "initializeRaw.json"))) {
-            out.println(body1.replaceAll("\\\\", ""));
-        }
         ObjectMapper mapper = new ObjectMapper();//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
