@@ -252,6 +252,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
@@ -312,7 +313,6 @@
                 <version>1.9</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
@@ -348,20 +348,12 @@
     </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Either type -->
         <dependency>
             <groupId>com.spencerwi</groupId>
             <artifactId>Either.java</artifactId>
             <version>2.1.1</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

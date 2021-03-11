@@ -3,7 +3,7 @@ package org.intocps.maestro.webapi.esav1;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.webapi.services.CoeService;
 import org.intocps.orchestration.coe.scala.Coe;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -36,7 +35,7 @@ public class EsaApiTest {
     private MockMvc mockMvc;
 
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         Mockito.reset(service);
         Mockito.reset(coe);
