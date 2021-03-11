@@ -1,5 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -38,6 +39,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import springfox.documentation.spring.web.json.Json;
+import springfox.documentation.spring.web.json.JsonSerializer;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -125,13 +128,19 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
-    public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
-        return sessionController.getStatus(sessionId);
+    public String getStatuses(@PathVariable String sessionId) throws Exception {
+        return sessionController.getStatus(sessionId).toString();
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public List<StatusModel> getStatuses() {
-        return sessionController.getStatus();
+    public List<String> getStatuses() {
+        return sessionController.getStatus().stream().map(model -> {
+            try {
+                return new ObjectMapper().writeValueAsString(model);
+            }catch(JsonProcessingException e){
+                return "";
+            }
+        }).collect(Collectors.toList());
     }
 
     private StatusModel getStatus(String sessionId) {
