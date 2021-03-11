@@ -8,8 +8,8 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -55,7 +55,7 @@ public class DocumentationGettingStartedExamplesTest {
 
 
     @Test
-    @Ignore("Ignored due to storing outputs.csv in non-target place")
+    @Disabled("Ignored due to storing outputs.csv in non-target place")
     public void part2_json_parse() throws Exception {
         File configurationFile = new File(testFilesDirectory, "wt-example-config.json");
         File targetDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2");

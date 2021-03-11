@@ -7,10 +7,9 @@ import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.parser.MablParserUtil;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,26 +18,18 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@RunWith(Parameterized.class)
+
 public class DocumentTcTest {
 
-    final File spec;
-    private final String name;
-
-    public DocumentTcTest(String name, File spec) {
-        this.name = name;
-        this.spec = spec;
-    }
-
-    @Parameterized.Parameters(name = "{index} \"{1}\" in {0}")
     public static Collection<Object[]> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "modules").toFile().listFiles()))
                 .filter(f -> f.getName().endsWith(".mabl")).map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 
 
-    @Test
-    public void test() throws IOException, AnalysisException {
+    @ParameterizedTest(name = "{index} \"{1}\" in {0}")
+    @MethodSource("data")
+    public void test(String name, File spec) throws IOException, AnalysisException {
         IErrorReporter errorReporter = new ErrorReporter();
         ARootDocument doc = MablParserUtil.parse(CharStreams.fromPath(spec.toPath()), errorReporter);
         PrettyPrinter.printLineNumbers(doc);
@@ -48,6 +39,6 @@ public class DocumentTcTest {
         errorReporter.printErrors(new PrintWriter(System.out, true));
         errorReporter.printWarnings(new PrintWriter(System.out, true));
 
-        Assert.assertEquals(0, errorReporter.getErrorCount());
+        Assertions.assertEquals(0, errorReporter.getErrorCount());
     }
 }

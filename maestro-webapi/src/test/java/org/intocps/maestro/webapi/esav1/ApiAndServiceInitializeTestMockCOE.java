@@ -8,17 +8,17 @@ import org.intocps.orchestration.coe.config.CoeConfiguration;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("mocked_coe")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class ApiAndServiceInitializeTestMockCOE {
     final static String baseUrl = "/api/esav1/simulator";
@@ -52,7 +52,7 @@ public class ApiAndServiceInitializeTestMockCOE {
     private MockMvc mockMvc;
     private File root;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         mockedCoe = service.get();
@@ -74,7 +74,7 @@ public class ApiAndServiceInitializeTestMockCOE {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
-    @After
+    @AfterEach
     public void after() throws IOException {
         if (root != null && root.exists()) {
             FileUtils.deleteDirectory(root);
@@ -83,7 +83,7 @@ public class ApiAndServiceInitializeTestMockCOE {
 
 
     @Test
-    @Ignore
+    @Disabled
     public void initializeSingleFMU() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
@@ -91,7 +91,7 @@ public class ApiAndServiceInitializeTestMockCOE {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void initializeTwoFmus() throws Exception {
 
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));

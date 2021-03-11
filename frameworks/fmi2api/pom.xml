@@ -30,7 +30,10 @@
     </repositories>
 
     <dependencies>
-
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>fmi2</artifactId>

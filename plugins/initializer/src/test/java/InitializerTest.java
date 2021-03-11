@@ -11,8 +11,8 @@ import org.intocps.maestro.plugin.Initializer.Initializer;
 import org.intocps.maestro.plugin.Initializer.TopologicalPlugin;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.PrologGenerator;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import scala.Console;
 
 import java.io.IOException;
@@ -58,13 +58,13 @@ public class InitializerTest {
 
         //Useful test to make
         //Make sure SetupExperiment is called for all components
-        components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".setupExperiment")));
+        components.forEach(o -> Assertions.assertTrue(stm1.toString().contains(o + ".setupExperiment")));
 
         //Make sure EnterInitial
-        components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".enterInitializationMode")));
+        components.forEach(o -> Assertions.assertTrue(stm1.toString().contains(o + ".enterInitializationMode")));
 
         //Make sure ExitInitialazionMode is called on all components
-        components.forEach(o -> Assert.assertTrue(stm1.toString().contains(o + ".exitInitializationMode")));
+        components.forEach(o -> Assertions.assertTrue(stm1.toString().contains(o + ".exitInitializationMode")));
     }
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {

@@ -5,15 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 import org.assertj.core.util.Files;
-import org.intocps.maestro.webapi.ConditionalIgnoreRule;
 import org.intocps.maestro.webapi.services.CoeService;
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.client.match.ContentRequestMatchers;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,20 +32,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("main")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @WebAppConfiguration
 public class Stp3Instance1Test {
     final static String baseUrl = "/api/esav1/simulator";
-    @Rule
-    public final ConditionalIgnoreRule mConditionalIgnore = new ConditionalIgnoreRule();
     @Autowired
     CoeService service;
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         service.reset();
@@ -51,7 +51,7 @@ public class Stp3Instance1Test {
     }
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void pingTest() throws Exception {
         mockMvc.perform(post(baseUrl + "/ping").contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()));
     }
@@ -59,7 +59,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     //    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeTest() throws Exception {
 
@@ -86,7 +86,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     //    @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateTest() throws Exception {
         initializeTest();
@@ -103,13 +103,13 @@ public class Stp3Instance1Test {
         Map<String, Map<String, Object>> actualOutput = new ObjectMapper().readValue(response, valueTypeRef);
         Map<String, Map<String, Object>> expectedOutput =
                 new ObjectMapper().readValue(Paths.get("src", "test", "resources", "esa", "STP3", "1-simulateForResult.json").toFile(), valueTypeRef);
-        Assert.assertEquals(expectedOutput, actualOutput);
+        Assertions.assertEquals(expectedOutput, actualOutput);
     }
 
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     // @ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulate2Test() throws Exception {
         initializeTest();
@@ -134,7 +134,7 @@ public class Stp3Instance1Test {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina. Change back ones fixed.
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void simulateAndGetResultTest() throws Exception {
         simulateTest();
@@ -145,8 +145,8 @@ public class Stp3Instance1Test {
         String result = mockMvc.perform(get(baseUrl + "/result/plain").contentType(APPLICATION_JSON)).andExpect(status().is(HttpStatus.OK.value()))
                 .andReturn().getResponse().getContentAsString();
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(result.isEmpty());
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isEmpty());
         System.out.println(result);
     }
 }
