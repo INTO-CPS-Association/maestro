@@ -127,18 +127,12 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
     public String getStatuses(@PathVariable String sessionId) throws Exception {
-        return sessionController.getStatus(sessionId).toString();
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus(sessionId));
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public String getStatuses() {
-        try
-        {
-            return new ObjectMapper().writeValueAsString(sessionController.getStatus());
-        } catch(JsonProcessingException e)
-        {
-            return "[]";
-        }
+    public String getStatuses() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus());
     }
 
     private StatusModel getStatus(String sessionId) {
