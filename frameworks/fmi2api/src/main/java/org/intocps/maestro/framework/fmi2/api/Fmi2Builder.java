@@ -194,6 +194,8 @@ public interface Fmi2Builder<S, B, E> {
 
         IntVariable<T> store(String name, int value);
 
+        <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
+
         /**
          * Store the given value and get a tag for it. Copy
          *

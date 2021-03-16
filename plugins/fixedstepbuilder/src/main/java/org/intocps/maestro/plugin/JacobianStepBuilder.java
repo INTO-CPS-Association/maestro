@@ -17,16 +17,18 @@ import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -85,13 +87,17 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 // Convert raw MaBL to API
                 DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
-                DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("fixed_step_size", 0.0);
+                DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("step_size", 0.0);
                 stepSizeVar.setValue(externalStepSize);
+
+                DoubleVariableFmi2Api fixedStepSize = dynamicScope.store("fixed_step_size", 0.0);
+                fixedStepSize.setValue(externalStepSize);
+
                 DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
-                DoubleVariableFmi2Api currentCommunicationTime = (DoubleVariableFmi2Api) dynamicScope.store("fixed_current_communication_point", 0.0);
+                DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("fixed_current_communication_point", 0.0);
                 currentCommunicationTime.setValue(externalStartTime);
                 DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
-                DoubleVariableFmi2Api endTimeVar = (DoubleVariableFmi2Api) dynamicScope.store("fixed_end_time", 0.0);
+                DoubleVariableFmi2Api endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
 
                 // Import the external components into Fmi2API
@@ -104,8 +110,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 // Create the logging
                 DataWriter dataWriter = builder.getMablToMablAPI().getDataWriter();
                 DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
-                dataWriterInstance
-                        .initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
+                dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
 
                 // Create the iteration predicate
@@ -118,94 +123,107 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     y.share(y.get(variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new)));
                 });
 
-                // Store the state for all
-//                List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
-//                for(Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
-//
-//                    fmuStates.add(entry.getValue().getState());
-//                }
+                // Initialize variable step module
+                //                VariableStep variableStep = builder.getMablToMablAPI().getVariableStep();
+                //                VariableStep.VariableStepInstance variableStepInstance = variableStep.createVariableStepInstanceInstance();
+                //                variableStepInstance.initialize(fmuInstances.values(), new ArrayList<>(), endTimeVar);
 
+
+                // Map FMUs to step-size array values
+
+                ArrayVariableFmi2Api<Double> stepSizes = dynamicScope.store("stepSizes", new Double[fmuInstances.entrySet().size()]);
+                Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToArrayVaraible = new HashMap<>();
+
+                boolean everyFMUSupportsGetState = true;
+                int indexer = 0;
+                for(Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()){
+                    everyFMUSupportsGetState = entry.getValue().getModelDescription().getCanGetAndSetFmustate() && everyFMUSupportsGetState;
+                    fmuInstancesToArrayVaraible.put(entry.getValue(), stepSizes.items().get(indexer));
+                    indexer++;
+                }
+                BooleanVariableFmi2Api canGetFMUStates = dynamicScope.store("canGetFMUStates", everyFMUSupportsGetState);
+                List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
 
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
+
+                    if(everyFMUSupportsGetState){
+                        for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
+                            fmuStates.add(entry.getValue().getState());
+                        }
+                    }
 
                     // SET ALL LINKED VARIABLES
                     // This has to be carried out regardless of stabilisation or not.
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
-                    DoubleVariableFmi2Api smallestDecreasedStepTime = dynamicScope.store("smallestDecreasedStepTime", -1.0);
-                    BooleanVariableFmi2Api didFullStep = dynamicScope.store("didFullStep", true);
-                    DoubleVariableFmi2Api instanceCurrentTimeStep = dynamicScope.store("instanceCurrentTimeStep", 0.0);
-
-//                    PType type = new ARealNumericPrimitiveType();
-//                    String name = "Arr";
-//                    int length = 1;
-//                    PStm varstm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type, length, null));
-//
-//                    List<DoubleVariableFmi2Api> listVals = new ArrayList<>();
-//
-//                    ArrayVariableFmi2Api<DoubleVariableFmi2Api> arr = new ArrayVariableFmi2Api(varstm, type, scopeFmi2Api, dynamicScope,
-//                            newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name), listVals);
-
+                    BooleanVariableFmi2Api anyDiscards = dynamicScope.store("anyDiscards", false);
 
                     // STEP ALL
                     fmuInstances.forEach((x, y) -> {
-                        Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = y.step(currentCommunicationTime,
-                                stepSizeVar);
+                                Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = y.step(currentCommunicationTime,
+                                        stepSizeVar);
+                    });
+                    fmuInstancesToArrayVaraible.forEach((k,v) -> {
+                        Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = k.step(currentCommunicationTime, stepSizeVar);
 
-                        instanceCurrentTimeStep.setValue(discard.getValue());
+                        v.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
-                        PredicateFmi2Api ifUpdateStepSize =
-                                didFullStep.toPredicate().not().and(new PredicateFmi2Api(discard.getKey().getExp()).not()).and(instanceCurrentTimeStep.toMath().lessThan(smallestDecreasedStepTime));
+                        PredicateFmi2Api didDiscard = new PredicateFmi2Api(discard.getKey().getExp()).not();
 
-                        PredicateFmi2Api ifFirst = didFullStep.toPredicate().and(new PredicateFmi2Api(discard.getKey().getExp()).not());
-
-                        dynamicScope.enterIf(ifFirst);
+                        dynamicScope.enterIf(didDiscard);
                         {
-                            smallestDecreasedStepTime.setValue(instanceCurrentTimeStep);
-                            didFullStep.setValue(discard.getKey());
-                            dynamicScope.leave();
-                        }
-
-                        dynamicScope.enterIf(ifUpdateStepSize);
-                        {
-                            smallestDecreasedStepTime.setValue(instanceCurrentTimeStep);
+                            anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null,
+                                    anyDiscards.toPredicate().or(didDiscard).getExp()));
                             dynamicScope.leave();
                         }
                     });
 
-                    // Discard
-                    PredicateFmi2Api didNotDoFullStep = new PredicateFmi2Api(didFullStep.getExp()).not();
-                    dynamicScope.enterIf(didNotDoFullStep);
+                    // FMU get state not supported
+                    dynamicScope.enterIf(canGetFMUStates.toPredicate());
                     {
-
-                        fmuInstances.forEach((x, y) -> {
-                            DoubleExpressionValue decreasedStepSize = smallestDecreasedStepTime.toMath().subtraction(currentCommunicationTime);
-
-                            //rollback FMU
-                            y.step(currentCommunicationTime, new DoubleVariableFmi2Api(null, null, dynamicScope, null, decreasedStepSize.getExp()));
-
-                        });
+                        //TODO: What should be done?
                         dynamicScope.leave();
                     }
 
+                    // Discard
+                    PredicateFmi2Api anyDiscardsPred = anyDiscards.toPredicate();
+                    IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscardsPred);
+                    {
+                        DoubleVariableFmi2Api decreasedStepTime = dynamicScope.store("decreasedStepTime", 0.0);
+                        decreasedStepTime.setValue(builder.getMathBuilder().minRealFromArray(stepSizes));
 
-                    // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
-                    Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> retrievedValues =
-                            fmuInstances.entrySet().stream().collect(Collectors.toMap(entry -> entry.getValue(), entry -> {
-                                List<RelationVariable> variablesToLog = env.getVariablesToLog(entry.getKey());
-                                String[] variablesToGet = variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new);
-                                return entry.getValue().get(variablesToGet);
-                            }));
+                        //rollback FMU
+                        fmuStates.forEach(Fmi2Builder.StateVariable::set);
+
+                        stepSizeVar.setValue(decreasedStepTime.toMath().subtraction(currentCommunicationTime));
+
+                        dynamicScope.leave();
+                    }
+
+                    discardScope.enterElse();
+                    {
+                        stepSizeVar.setValue(fixedStepSize);
+
+                        // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
+                        Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> retrievedValues =
+                                fmuInstances.entrySet().stream().collect(Collectors.toMap(entry -> entry.getValue(), entry -> {
+                                    List<RelationVariable> variablesToLog = env.getVariablesToLog(entry.getKey());
+                                    String[] variablesToGet = variablesToLog.stream().map(var -> var.scalarVariable.getName()).toArray(String[]::new);
+                                    return entry.getValue().get(variablesToGet);
+                                }));
 
 
-                    retrievedValues.forEach((k, v) -> k.share(v));
+                        retrievedValues.forEach((k, v) -> k.share(v));
 
-                    // Update currentCommunicationTime
-                    currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
+                        // Update currentCommunicationTime
+                        currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
 
-                    // Call log
-                    dataWriterInstance.log(currentCommunicationTime);
+                        // Call log
+                        dataWriterInstance.log(currentCommunicationTime);
+
+                        dynamicScope.leave();
+                    }
                 }
 
                 ABlockStm algorithm = (ABlockStm) builder.buildRaw();
@@ -236,8 +254,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil").map(MableAstFactory::newAIdentifier)
-                .collect(Collectors.toList()));
+        unit.setImports(
+                Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "VariableStep").map(MableAstFactory::newAIdentifier)
+                        .collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));
         module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));

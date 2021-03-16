@@ -7,6 +7,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 
 public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
@@ -61,6 +62,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     StringVariableFmi2Api store(String name, String value);
+
+    @Override
+    <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
 
     @Override
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);

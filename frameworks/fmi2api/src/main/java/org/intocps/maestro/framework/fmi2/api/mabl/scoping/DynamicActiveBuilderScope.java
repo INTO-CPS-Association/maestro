@@ -7,6 +7,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 
 public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.DynamicActiveScope<PStm> {
 
@@ -132,6 +133,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, BooleanVariableFmi2Api value) {
         return activeScope.copy(name, value);
     }*/
+
+    @Override
+    public <V> ArrayVariableFmi2Api<V> store(String name, V value[]) {
+        return activeScope.store(name, value);
+    }
 
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
