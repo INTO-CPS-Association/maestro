@@ -93,10 +93,10 @@ import VariableStep;
     // #############################
     // Setup of variable step
     // #############################
-    FMI2 FMUs[2] = {tankController, singleWatertank};
+    FMI2Component FMUInstances[2] = {crtlInstance, wtInstance};
     string FMUInstanceNames[2] = {"{control}.c", "{tank}.t"};
     VariableStep variableStep = load("VariableStep", "src/test/resources/variable_step/config.json");
-    VariableStepConfig variableStepConfig = variableStep.setFMUs(FMUInstanceNames, FMUs);
+    VariableStepConfig variableStepConfig = variableStep.setFMUs(FMUInstanceNames, FMUInstances);
     string portNames[3] = {"{tank}.t.level","{control}.c.maxlevel", "{control}.c.minlevel"};
     variableStep.initializePortNames(variableStepConfig, portNames);
     variableStep.setEndTime(variableStepConfig, END_TIME);

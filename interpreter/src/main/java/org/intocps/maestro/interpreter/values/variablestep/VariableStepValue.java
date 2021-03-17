@@ -1,10 +1,12 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.intocps.fmi.IFmiComponent;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiInstanceConfig;
@@ -93,17 +95,17 @@ public class VariableStepValue extends ModuleValue {
         componentMembers.put("setFMUs", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 2);
             try {
-                List<StringValue> fmuAggregatedNames = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
-                List<FmuValue> fmus = ValueExtractionUtilities.getArrayValue(fcargs.get(1), FmuValue.class);
+                List<StringValue> fullyQualifiedFMUInstanceNames = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
+                List<FmuComponentValue> fmus = ValueExtractionUtilities.getArrayValue(fcargs.get(1), FmuComponentValue.class);
 
                 Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances = new HashMap<>();
 
-                for (int i = 0; i < fmuAggregatedNames.size(); i++) {
-                    String instanceName = fmuAggregatedNames.get(i).getValue().split("\\.")[1]; //TODO: This should probably be done in another way
-                    String fmuName = fmuAggregatedNames.get(i).getValue().split("\\.")[0];
+                for (int i = 0; i < fullyQualifiedFMUInstanceNames.size(); i++) {
+                    String instanceName = fullyQualifiedFMUInstanceNames.get(i).getValue().split("\\.")[1]; //TODO: This should probably be done in another way
+                    String fmuName = fullyQualifiedFMUInstanceNames.get(i).getValue().split("\\.")[0];
                     ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(fmuName, instanceName);
-                    IFmu fmu = fmus.get(i).getModule();
-                    ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
+                    IFmiComponent fmu = fmus.get(i).getModule();
+                    ModelDescription modelDescription = new ModelDescription(fmu.getFmu().getModelDescription());
                     FmiInstanceConfig fmiInstanceConfig = new FmiInstanceConfig(modelDescription, modelDescription.getScalarVariables());
                     FmiSimulationInstance si = new FmiSimulationInstance(null, fmiInstanceConfig);
                     instances.put(mi, si);

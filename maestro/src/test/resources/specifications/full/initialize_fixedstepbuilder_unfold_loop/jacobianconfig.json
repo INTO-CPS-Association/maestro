@@ -1,5 +1,6 @@
 {
   "endtime": 10,
+  "variablesOfInterest": ["{tank}.wtInstance.level","{ctrl}.ctrlInstance.maxlevel", "{ctrl}.ctrlInstance.minlevel"],
   "stabilisation": false
 }
 
