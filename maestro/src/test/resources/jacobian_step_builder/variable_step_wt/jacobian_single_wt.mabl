@@ -2,6 +2,7 @@ simulation
 import Initializer;
 import JacobianStepBuilder;
 import BooleanLogic;
+import VariableStep;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
@@ -21,7 +22,7 @@ DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
 Math math = load("Math");
 BooleanLogic booleanLogic = load("BooleanLogic");
-VariableStep variableStep = load("VariableStep", "src/test/resources/specifications/full/initialize_fixedstepbuilder_unfold_loop/mm.json");
+VariableStep variableStep = load("VariableStep", "src/test/resources/specifications/full/initialize_jacobianstepbuilder_unfold_loop/mm.json");
 FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
 FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
 FMI2Component ctrlInstance = tankcontroller.instantiate("ctrlInstance", false, false);;
@@ -36,7 +37,7 @@ int status = 0;
 @Config("@file: config.json");
 Initializer.expand initialize(components,START_TIME, END_TIME);
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand jacobianStep(components,STEP_SIZE,START_TIME,END_TIME);
+JacobianStepBuilder.expand variableStep(components,STEP_SIZE,START_TIME,END_TIME);
 dataWriter.close();
 tankcontroller.freeInstance(ctrlInstance);
 SingleWatertank.freeInstance(wtInstance);

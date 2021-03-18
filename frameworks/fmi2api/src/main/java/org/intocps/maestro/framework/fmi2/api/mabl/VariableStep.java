@@ -4,10 +4,8 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.StringVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -101,21 +99,23 @@ public class VariableStep {
         }
 
         public BooleanVariableFmi2Api validateStepSize(DoubleVariableFmi2Api nextTime) {
-            AAssigmentStm assignUpdatedValuesStm;
             PStm targetVarStm;
-            List<PExp> portsWithData = ports.stream().map(p -> p.getSharedAsVariable().getReferenceExp().clone()).collect(Collectors.toList());
-            //            assignUpdatedValuesStm = newAAssignmentStm(newAIdentifierStateDesignator(portsWithDataIdentifierName),
-            //                    call(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()), "getReal",
-            //                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) portsWithData.size()), valBuf.getReferenceExp().clone()));
+            List <AAssigmentStm> assignmentStms = new ArrayList<>();
+            List<VariableFmi2Api> portsWithData = ports.stream().map(PortFmi2Api::getSharedAsVariable).collect(Collectors.toList());
 
+            for(int i = 0; i < portsWithData.size(); i++){
+                AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(portsWithDataIdentifier), newAIntLiteralExp(i));
+                PExp from = portsWithData.get(i).getReferenceExp().clone();
+                assignmentStms.add(newAAssignmentStm(to, from));
+            }
 
-
-            String variableName = dynamicScope.getName("validStep");
+            String variableName = dynamicScope.getName("valid_step");
             targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
                     newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_ISSTEPVALID),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), nextTime.getExp(),
                                     MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))))));
 
+            this.dynamicScope.add(assignmentStms.stream().toArray(AAssigmentStm[]::new));
             this.dynamicScope.add(targetVarStm);
 
             return new BooleanVariableFmi2Api(targetVarStm, dynamicScope.getActiveScope(), dynamicScope,
@@ -149,11 +149,11 @@ public class VariableStep {
         public void initialize(Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmus, Collection<PortFmi2Api> ports,
                 DoubleVariableFmi2Api endTime) {
             this.ports = ports;
-            portsWithDataIdentifier = mablApiBuilder.getNameGenerator().getName("portsWithDataForVarStep");
-            variableStepConfigurationIdentifier = mablApiBuilder.getNameGenerator().getName("varStepConfig");
-            String fmuInstanceNamesIdentifier = mablApiBuilder.getNameGenerator().getName("FMUInstanceNames");
-            String fmuInstancesIdentifier = mablApiBuilder.getNameGenerator().getName("fmuInstances");
-            String portNamesIdentifier = mablApiBuilder.getNameGenerator().getName("portNamesForVarStep");
+            portsWithDataIdentifier = mablApiBuilder.getNameGenerator().getName("ports_with_data_for_varstep");
+            variableStepConfigurationIdentifier = mablApiBuilder.getNameGenerator().getName("varstep_config");
+            String fmuInstanceNamesIdentifier = mablApiBuilder.getNameGenerator().getName("FMU_instance_names");
+            String fmuInstancesIdentifier = mablApiBuilder.getNameGenerator().getName("fmu_instances");
+            String portNamesIdentifier = mablApiBuilder.getNameGenerator().getName("portnames_for_varstep");
             ALocalVariableStm fmuNamesStm;
             ALocalVariableStm fmuInstancesStm;
             ALocalVariableStm setFMUsStm;

@@ -40,10 +40,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FullSpecTest {
 
-    //TODO: Temporary ignored fixedstepbuilder
     private static Stream<Arguments> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
-                /*.filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop"))*/.map(f -> Arguments.arguments(f.getName(), f));
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles())).map(f -> Arguments.arguments(f.getName(), f));
     }
 
     private static TestJsonObject getTestJsonObject(File directory) throws java.io.IOException {
@@ -102,6 +100,10 @@ public class FullSpecTest {
             }
 
         }
+    }
+
+    protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
+        compareCsvResults(expectedCsvFile, actualCsvFile);
     }
 
     public static void compareCsvResults(File expectedCsvFile, File actualCsvFile) throws IOException {
@@ -213,7 +215,7 @@ public class FullSpecTest {
                 .execute(mabl.getMainSimulationUnit());
 
 
-        compareCsvResults(new File(directory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
+        compareCSVs(new File(directory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {
