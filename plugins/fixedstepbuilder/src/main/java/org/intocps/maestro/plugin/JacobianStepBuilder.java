@@ -21,6 +21,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderS
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
         Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
 
-        PExp stepSize = formalArguments.get(1).clone();
+        PExp stepSizeVar = formalArguments.get(1).clone();
         PExp startTime = formalArguments.get(2).clone();
         PExp endTime = formalArguments.get(3).clone();
         if (declaredFunction.equals(fun)) {
@@ -87,12 +88,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 BooleanBuilderFmi2Api booleanLogic = builder.getMablToMablAPI().getBooleanBuilder();
 
                 // Convert raw MaBL to API
-                DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSize);
-                DoubleVariableFmi2Api stepSizeVar = dynamicScope.store("step_size", 0.0);
-                stepSizeVar.setValue(externalStepSize);
+                DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
+                DoubleVariableFmi2Api stepSize = dynamicScope.store("step_size", 0.0);
+                stepSize.setValue(externalStepSize);
 
-                DoubleVariableFmi2Api fixedStepSize = dynamicScope.store("fixed_step_size", 0.0);
-                fixedStepSize.setValue(externalStepSize);
+                DoubleVariableFmi2Api defaultStepSize = dynamicScope.store("default_step_size", 0.0);
+                defaultStepSize.setValue(externalStepSize);
 
                 DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
                 DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("fixed_current_communication_point", 0.0);
@@ -100,6 +101,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTime);
                 DoubleVariableFmi2Api endTimeVar = dynamicScope.store("fixed_end_time", 0.0);
                 endTimeVar.setValue(externalEndTime);
+
+                DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variableStepSize", 0.0);
+                variableStepSize.setValue(externalStepSize);
+
 
                 // Import the external components into Fmi2API
                 Map<String, ComponentVariableFmi2Api> fmuInstances =
@@ -116,11 +121,11 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
 
                 // Create the iteration predicate
-                PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSizeVar).lessThan(endTimeVar);
+                PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(stepSize).lessThan(endTimeVar);
 
 
                 // Get and share all variables related to outputs or logging.
-                Map<ComponentVariableFmi2Api, List<String>> portsToGetAndShare = new HashMap<>();
+                Map<ComponentVariableFmi2Api, List<String>> portsToGet = new HashMap<>();
 
                 fmuInstances.forEach((x, y) -> {
                     List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
@@ -137,7 +142,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                                     e.getKey().scalarVariable.causality == ModelDescription.Causality.Input).map(e -> e.getKey().getName())
                             .collect(Collectors.toList());
 
-                    portsToGetAndShare.put(y, portsOfInterest);
+                    portsToGet.put(y, portsOfInterest);
                     y.share(portsToShare);
                 });
 
@@ -178,6 +183,18 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
                 {
 
+                    ScopeFmi2Api stabilisationScope = null;
+                    IntVariableFmi2Api stabilisation_loop = null;
+                    BooleanVariableFmi2Api convergenceReached = null;
+                    if (jacobianStepConfig.stabilisation) {
+                        IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
+                        stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
+                        convergenceReached = dynamicScope.store("hasConverged", false);
+                        stabilisationScope = dynamicScope.enterWhile(
+                                convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
+
+                    }
+
                     if (everyFMUSupportsGetState) {
                         for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                             fmuStates.add(entry.getValue().getState());
@@ -190,12 +207,13 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                     BooleanVariableFmi2Api anyDiscards = dynamicScope.store("anyDiscards", false);
 
-                    stepSizeVar.setValue(variableStepInstance.getStepSize(currentCommunicationTime));
+                    variableStepSize.setValue(variableStepInstance.getStepSize(currentCommunicationTime));
+                    stepSize.setValue(variableStepSize);
 
                     // STEP ALL
                     fmuInstancesToArrayVariables.forEach((k, v) -> {
                         Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
-                                k.step(currentCommunicationTime, stepSizeVar);
+                                k.step(currentCommunicationTime, stepSize);
 
                         v.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
@@ -226,29 +244,76 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                         //rollback FMU
                         fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
-                        stepSizeVar.setValue(builder.getMathBuilder().minRealFromArray(stepSizes).toMath().subtraction(currentCommunicationTime));
+                        stepSize.setValue(builder.getMathBuilder().minRealFromArray(stepSizes).toMath().subtraction(currentCommunicationTime));
 
                         dynamicScope.leave();
                     }
 
                     discardScope.enterElse();
                     {
-                        stepSizeVar.setValue(fixedStepSize);
+
+                        stepSize.setValue(variableStepSize);
+
 
                         // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
-                        portsToGetAndShare.forEach((k, v) -> k.getAndShare(v.toArray(String[]::new)));
+                        Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> portsToShare = portsToGet.entrySet().stream()
+                                .collect(Collectors
+                                        .toMap(entry -> entry.getKey(), entry -> entry.getKey().get(entry.getValue().toArray(String[]::new))));
+
+
+                        // CONVERGENCE
+                        if (jacobianStepConfig.stabilisation) {
+                            DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 1.0);
+                            DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 1.0);
+
+                            // For each instance ->
+                            //      For each retrieved variable
+                            //          compare with previous in terms of convergence
+                            //  If all converge, set retrieved values and continue
+                            //  else reset to previous state, set retrieved values and continue
+                            List<BooleanVariableFmi2Api> convergenceVariables = portsToShare.entrySet().stream().flatMap(comptoPortAndVariable -> {
+                                Stream<BooleanVariableFmi2Api> converged = comptoPortAndVariable.getValue().entrySet().stream()
+                                        .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).map(portAndVariable -> {
+                                            VariableFmi2Api oldVariable = portAndVariable.getKey().getSharedAsVariable();
+                                            VariableFmi2Api<Object> newVariable = portAndVariable.getValue();
+                                            return math.checkConvergence(oldVariable, newVariable, absTol, relTol);
+                                        });
+                                return converged;
+                            }).collect(Collectors.toList());
+
+                            if (convergenceReached != null) {
+                                convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
+                            } else {
+                                throw new RuntimeException("NO STABILISATION LOOP FOUND");
+                            }
+
+                            dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
+                            {
+                                fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                                stabilisation_loop.decrement();
+                                dynamicScope.leave();
+                            }
+                            stabilisationScope.activate();
+                            portsToShare.forEach(ComponentVariableFmi2Api::share);
+                        }
+                        scopeFmi2Api.activate();
+                        if (!jacobianStepConfig.stabilisation) {
+                            portsToShare.forEach(ComponentVariableFmi2Api::share);
+                        }
+
+
+                        //portsToGet.forEach((k, v) -> k.getAndShare(v.toArray(String[]::new)));
 
                         //Validate step
-                        //                        DoubleVariableFmi2Api stepTime = dynamicScope.store("stepTime", 0.0);
-                        //                        stepTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
-                        dynamicScope.enterIf(variableStepInstance.validateStepSize(new DoubleVariableFmi2Api(null, null, dynamicScope, null,
-                                currentCommunicationTime.toMath().addition(stepSizeVar).getExp())).toPredicate().not());
+                        PredicateFmi2Api validStepPred = variableStepInstance.validateStepSize(new DoubleVariableFmi2Api(null, null, dynamicScope, null,
+                                currentCommunicationTime.toMath().addition(stepSize).getExp())).toPredicate().not();
+                        dynamicScope.enterIf(validStepPred);
                         {
                             dynamicScope.leave();
                         }
 
                         // Update currentCommunicationTime
-                        currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSizeVar));
+                        currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(stepSize));
 
                         // Call log
                         dataWriterInstance.log(currentCommunicationTime);
