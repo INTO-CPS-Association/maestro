@@ -140,9 +140,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             throw new InterpreterException("Cannot assign to a constant value");
         }
 
-        UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
-        currentUpdatableValue.setValue(newValue.deref());
-
+        try {
+            UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
+            currentUpdatableValue.setValue(newValue.deref());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed at: " + node, e);
+        }
         return new VoidValue();
     }
 

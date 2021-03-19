@@ -6,7 +6,10 @@ import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.ToParExp;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.ast.node.ABlockStm;
+import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
@@ -17,7 +20,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -36,32 +38,22 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 @SimulationFramework(framework = Framework.FMI2)
 public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
-    private enum algorithmEnum {
-        variableStep,
-        fixedStep
-    }
-
-    private algorithmEnum algorithm;
-
     final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
-
     final AFunctionDeclaration fixedStepFunc = newAFunctionDeclaration(newAIdentifier("fixedStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-
     final AFunctionDeclaration variableStepFunc = newAFunctionDeclaration(newAIdentifier("variableStep"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-
+    private algorithmEnum algorithm;
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
     }
-
 
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
@@ -216,8 +208,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 if (jacobianStepConfig.stabilisation) {
                     absTol = dynamicScope.store("absolute_tolerance", jacobianStepConfig.absoluteTolerance);
                     relTol = dynamicScope.store("relative_tolerance", jacobianStepConfig.relativeTolerance);
-                    IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations",
-                            jacobianStepConfig.stabilisationLoopMaxIterations);
+                    IntVariableFmi2Api stabilisation_loop_max_iterations =
+                            dynamicScope.store("stabilisation_loop_max_iterations", jacobianStepConfig.stabilisationLoopMaxIterations);
                     stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
                     convergenceReached = dynamicScope.store("has_converged", false);
                     stabilisationScope = dynamicScope.enterWhile(
@@ -226,8 +218,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 }
 
                 if (everyFMUSupportsGetState) {
+                    fmuStates.clear();
                     for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
-                        fmuStates.clear();
                         fmuStates.add(entry.getValue().getState());
                     }
                 }
@@ -396,6 +388,11 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.0.1";
+    }
+
+    private enum algorithmEnum {
+        variableStep,
+        fixedStep
     }
 
 
