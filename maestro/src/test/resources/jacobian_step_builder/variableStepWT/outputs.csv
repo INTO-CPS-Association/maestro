@@ -1,4 +1,5 @@
 time,{ctrl}.ctrlInstance.valve,{tank}.wtInstance.level
+0.0,0.0,false
 0.1,false,0.1099999999999999
 0.2,false,0.19999999999999996
 0.32,false,0.32000000000000006

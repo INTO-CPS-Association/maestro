@@ -1,0 +1,8 @@
+{
+  "variablesOfInterest": ["{sine}.sineI.EXTSIG","{massB}.massBI.TB", "{massA}.massAI.TB_used"],
+  "stabilisation": false,
+  "absoluteTolerance": 1.0,
+  "relativeTolerance": 1.0,
+  "stabilisationLoopMaxIterations": 5
+}
+

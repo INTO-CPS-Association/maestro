@@ -1,0 +1,61 @@
+simulation
+import Initializer;
+import JacobianStepBuilder;
+import BooleanLogic;
+import VariableStep;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+   	int fmi_status_ok = 0;
+  	int fmi_status_warning = 1;
+  	int fmi_status_discard = 2;
+  	int fmi_status_error = 3;
+  	int fmi_status_fatal = 4;
+  	int fmi_status_pending = 5;
+
+
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+Math math = load("Math");
+BooleanLogic booleanLogic = load("BooleanLogic");
+VariableStep variableStep = load("VariableStep", "src/test/resources/jacobian_step_builder/legacyVarStep/mm.json");
+
+FMI2 massA = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/VarStepSolverTest_FMUs_MassA");
+FMI2 massB = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/VarStepSolverTest_FMUs_MassB");
+FMI2 sine = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/VarStepSolverTest_FMUs_Sine");
+FMI2 sink = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/VarStepSolverTest_FMUs_Sink");
+
+FMI2Component massAI = massA.instantiate("massAI", false, false);
+FMI2Component massBI = massB.instantiate("massBI", false, false);
+FMI2Component sineI = sine.instantiate("sineI", false, false);
+FMI2Component sinkI = sink.instantiate("sinkI", false, false);
+
+FMI2Component components[4]={massAI, massBI, sineI, sinkI};
+
+bool global_execution_continue = true;
+int status = 0;
+
+@Config("@file: config.json");
+Initializer.expand initialize(components,START_TIME, END_TIME);
+@Config("@file: jacobianconfig.json");
+JacobianStepBuilder.expand variableStep(components,STEP_SIZE,START_TIME,END_TIME);
+dataWriter.close();
+massA.freeInstance(massAI);
+massB.freeInstance(massBI);
+sine.freeInstance(sineI);
+sink.freeInstance(sinkI);
+
+unload(massA);
+unload(massB);
+unload(sine);
+unload(sink);
+unload(dataWriter);
+unload(logger);
+unload(math);
+unload(booleanLogic);
+unload(variableStep);
+}

@@ -1,0 +1,37 @@
+{
+	"startTime": 0,
+	"endTime": 10,
+	"algorithm":{
+		"type":"var-step",
+		"size":[
+			1E-6,
+			1.0
+		],
+		"initsize":1E-4,
+		"constraints":{
+			"zc":{
+				"type":"zerocrossing",
+				"order":2,
+				"ports":[
+					"{sine}.sineI.EXTSIG"
+				],
+				"abstol":1.0
+			},
+			"bd":{
+				"type":"boundeddifference",
+				"ports":[
+					"{massB}.massBI.TB",
+					"{massA}.massAI.TB_used"
+				],
+				"abstol":1.0,
+				"reltol":1.0
+			},
+			"sr":{
+				"type":"samplingrate",
+				"base":-1,
+				"rate":10,
+				"startTime":15
+			}
+		}
+	}
+}

@@ -85,20 +85,20 @@ public class JacobianStepBuilderTest extends FullSpecTest {
             }
 
             // Validate that columns are equal
-            if(actualCsvFileColumnsMap.keySet().size() != expectedCsvFileColumnsMap.keySet().size()){
-                Assertions.fail("CSV files does not contain the same amount of columns");
-            }
+//            if(actualCsvFileColumnsMap.keySet().size() != expectedCsvFileColumnsMap.keySet().size()){
+//                Assertions.fail("CSV files do not contain the same amount of columns");
+//            }
             if(!actualCsvFileColumnsMap.keySet().containsAll(expectedCsvFileColumnsMap.keySet())){
-                Assertions.fail("CSV files does not contain the same columns");
+                Assertions.fail("CSV files do not contain the same columns");
             }
 
             // Validate that columns contains the same elements
-            for(Map.Entry<String, List<String>> entry : actualCsvFileColumnsMap.entrySet()){
-                List<String> original = entry.getValue();
-                original.add(0, entry.getKey());
-
-                List<String> revised = expectedCsvFileColumnsMap.get(entry.getKey());
+            for(Map.Entry<String, List<String>> entry : expectedCsvFileColumnsMap.entrySet()){
+                List<String> revised = entry.getValue();
                 revised.add(0, entry.getKey());
+
+                List<String> original = actualCsvFileColumnsMap.get(entry.getKey());
+                original.add(0, entry.getKey());
 
                 // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                 Patch patch = DiffUtils.diff(original, revised);

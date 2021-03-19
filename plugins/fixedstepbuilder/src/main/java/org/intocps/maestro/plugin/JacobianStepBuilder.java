@@ -99,7 +99,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
         try {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
-
+            settings.fmiErrorHandlingEnabled = false;
             // Selected fun now matches funWithBuilder
             MablApiBuilder builder = new MablApiBuilder(settings, true);
 
@@ -194,6 +194,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
 
             BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
+
+            // Call log
+            dataWriterInstance.log(currentCommunicationTime);
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {

@@ -1,6 +1,6 @@
 {
   "startTime": 0,
-  "endTime": 30,
+  "endTime": 10,
   "multimodel_path": "Multi-models/c-control/mm.json",
   "livestream": {
     "{ctrl}.ctrlInstance": [
