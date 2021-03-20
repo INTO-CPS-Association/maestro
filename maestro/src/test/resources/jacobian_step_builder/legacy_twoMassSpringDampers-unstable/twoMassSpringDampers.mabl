@@ -9,12 +9,12 @@ real START_TIME = 0.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.001;
 
-int fmi_status_ok = 0;
-int fmi_status_warning = 1;
-int fmi_status_discard = 2;
-int fmi_status_error = 3;
-int fmi_status_fatal = 4;
-int fmi_status_pending = 5;
+   	int fmi_status_ok = 0;
+  	int fmi_status_warning = 1;
+  	int fmi_status_discard = 2;
+  	int fmi_status_error = 3;
+  	int fmi_status_fatal = 4;
+  	int fmi_status_pending = 5;
 
 
 DataWriter dataWriter = load("DataWriter");
@@ -32,8 +32,116 @@ FMI2Component components[2]={mi1, mi2};
 bool global_execution_continue = true;
 int status = 0;
 
-@Config("@file: config.json");
-Initializer.expand initialize(components,START_TIME, END_TIME);
+//@Config("@file: config.json");
+//Initializer.expand initialize(components,START_TIME, END_TIME);
+
+while( (global_execution_continue) )
+{
+    int status = 0;
+    status = mi1.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "Setup Experiment Failed:  %d", status);
+            global_execution_continue = false;
+            break;
+    }
+    status = mi2.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "Setup Experiment Failed:  %d", status);
+            global_execution_continue = false;
+            break;
+    }
+    real realValueSize5[5] = { 1.0 , 1.0 , 1.0 , 0.0 , 1.0 };
+    uint valRefsSize5[5] = { 0 , 1 , 2 , 3 , 4 };
+    status = mi1.setReal(valRefsSize5, 5, realValueSize5);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+    real realValueSize7[7] = { 1.0 , 2.0 , 100.0 , 100.0 , 1.0 , 0.0 , 0.0 };
+    uint valRefsSize7[7] = { 0 , 1 , 2 , 3 , 4 , 5 , 6 };
+    status = mi2.setReal(valRefsSize7, 7, realValueSize7);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    status = mi1.enterInitializationMode();
+    status = mi2.enterInitializationMode();
+
+    real realValueSize1[1] = { 0.0 };
+    uint valRefsSize1[1] = { 7 };
+    status = mi1.getReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    real mi1SvValRef7 = realValueSize1[0];
+    //realValueSize1[0] = mi1SvValRef7;
+    realValueSize1[0] = 0.0;
+    valRefsSize1[0] = 8;
+    status = mi2.setReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    valRefsSize1[0] = 6;
+    status = mi1.getReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    real mi1SvValRef6 = realValueSize1[0];
+    //realValueSize1[0] = mi1SvValRef6;
+    realValueSize1[0] = 0.0;
+    valRefsSize1[0] = 9;
+    status = mi2.setReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    valRefsSize1[0] = 7;
+    status = mi2.getReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    real mi2SvValRef7 = realValueSize1[0];
+    //realValueSize1[0] = mi2SvValRef7;
+    realValueSize1[0] = 0.0;
+    valRefsSize1[0] = 5;
+    status = mi1.setReal(valRefsSize1, 1, realValueSize1);
+    if( (status == 3 || status == 4) )
+    {
+            logger.log(4, "set failed %d", status);
+            global_execution_continue = false;
+            break;
+    }
+
+    status = mi1.exitInitializationMode();
+    status = mi2.exitInitializationMode();
+    break;
+}
 
 @Config("@file: jacobianconfig.json");
 JacobianStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);

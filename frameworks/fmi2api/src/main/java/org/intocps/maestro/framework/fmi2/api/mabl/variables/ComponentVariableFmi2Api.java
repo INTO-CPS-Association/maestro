@@ -303,7 +303,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                 ((VariableFmi2Api<?>) communicationStepSize).getReferenceExp().clone())),
                 newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(true)))));
 
-
         return Map.entry(getCurrentTimeFullStepVar(), getCurrentTimeVar());
     }
 
@@ -371,8 +370,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         selectedPorts.stream().map(p -> p.scalarVariable.getType().type).distinct()
                 .map(t -> selectedPorts.stream().filter(p -> p.scalarVariable.getType().type.equals(t))
-                        .sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList())).forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable
-                .getType(), l));
+                        .sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList()))
+                .forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable.getType(), l));
 
         for (Map.Entry<ModelDescription.Type, List<PortFmi2Api>> e : typeToSortedPorts.entrySet()) {
             for (int i = 0; i < e.getValue().size(); i++) {
