@@ -205,6 +205,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 BooleanVariableFmi2Api convergenceReached = null;
                 DoubleVariableFmi2Api absTol = null;
                 DoubleVariableFmi2Api relTol = null;
+                if (everyFMUSupportsGetState) {
+                    fmuStates.clear();
+                    for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
+                        fmuStates.add(entry.getValue().getState());
+                    }
+                }
                 if (jacobianStepConfig.stabilisation) {
                     absTol = dynamicScope.store("absolute_tolerance", jacobianStepConfig.absoluteTolerance);
                     relTol = dynamicScope.store("relative_tolerance", jacobianStepConfig.relativeTolerance);
@@ -215,13 +221,6 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     stabilisationScope = dynamicScope.enterWhile(
                             convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
 
-                }
-
-                if (everyFMUSupportsGetState) {
-                    fmuStates.clear();
-                    for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
-                        fmuStates.add(entry.getValue().getState());
-                    }
                 }
 
                 // SET ALL LINKED VARIABLES
