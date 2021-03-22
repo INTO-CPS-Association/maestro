@@ -153,8 +153,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
             // Build static FMU relations and validate if all fmus can get state
             Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToInstances = new HashMap<>();
-            Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToArrayVariables = new HashMap<>();
-            ArrayVariableFmi2Api<Double> stepSizes = dynamicScope.store("step_sizes", new Double[fmuInstances.entrySet().size()]);
+            Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToVariablesInArray = new HashMap<>();
+            ArrayVariableFmi2Api<Double> fmuCommunicationPoints = dynamicScope.store("fmu_communicationpoints", new Double[fmuInstances.entrySet().size()]);
             boolean everyFMUSupportsGetState = true;
             int indexer = 0;
             for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
@@ -163,7 +163,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                                 env.getInstanceByLexName(entry.getValue().getName()).getFmuIdentifier() + "." + entry.getValue().getName()));
                 fmuNamesToInstances.put(fullyQualifiedFMUInstanceName, entry.getValue());
 
-                fmuInstancesToArrayVariables.put(entry.getValue(), stepSizes.items().get(indexer));
+                fmuInstancesToVariablesInArray.put(entry.getValue(), fmuCommunicationPoints.items().get(indexer));
 
                 everyFMUSupportsGetState = entry.getValue().getModelDescription().getCanGetAndSetFmustate() && everyFMUSupportsGetState;
                 indexer++;
@@ -242,7 +242,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
 
                 // STEP ALL
-                fmuInstancesToArrayVariables.forEach((k, v) -> {
+                fmuInstancesToVariablesInArray.forEach((k, v) -> {
                     Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
                             k.step(currentCommunicationTime, currentStepSize);
 
@@ -252,6 +252,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                     dynamicScope.enterIf(didDiscard);
                     {
+                        builder.getLogger().trace("## %s discarded step and could only step to: %.15E", k.getName(), new VariableFmi2Api<>(null,
+                                discard.getValue().getType(), dynamicScope, dynamicScope, null,
+                                discard.getValue().getExp()));
                         anyDiscards.setValue(
                                 new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
                         dynamicScope.leave();
@@ -267,7 +270,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
                     // set step-size to lowest
-                    currentStepSize.setValue(math.minRealFromArray(stepSizes).toMath().subtraction(currentCommunicationTime));
+                    currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
                     dynamicScope.leave();
                 }
@@ -299,7 +302,16 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                             for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
                                 VariableFmi2Api oldVariable = entry.getKey().getSharedAsVariable();
                                 VariableFmi2Api<Object> newVariable = entry.getValue();
-                                converged.add(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
+                                BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
+                                isClose.setValue(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
+                                dynamicScope.enterIf(isClose.toPredicate().not());
+                                {
+                                    builder.getLogger().trace("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
+                                            entry.getValue(), currentCommunicationTime);
+                                    dynamicScope.leave();
+                                }
+
+                                converged.add(isClose);
                             }
                             convergenceVariables.addAll(converged);
                         }

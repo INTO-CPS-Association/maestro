@@ -1,0 +1,32 @@
+{
+  "fmus":{
+    "{pump}":"src/test/resources/qmtests/build_varstep/FMU/pump/pump.fmu",
+    "{sink}":"src/test/resources/qmtests/build_varstep/FMU/sink/sink.fmu"
+  },
+  "connections":{
+    "{pump}.pump.mdot_out":["{sink}.sink.sig1"]
+  },
+  "parameters":{
+    "{pump}.pump.mdotInit":5,
+    "{pump}.pump.tBegin":3,
+    "{pump}.pump.tLength":0.05,
+    "{pump}.pump.h":0.5
+  },
+  "algorithm":{
+    "type":"var-step",
+    "size":[
+      1E-3,
+      0.2
+    ],
+    "initsize":1E-2,
+    "constraints":{
+      "bd":{
+        "type":"boundeddifference",
+        "ports":[
+          "{pump}.pump.mdot_out"
+        ],
+        "abstol":0.3
+      }
+    }
+  }
+}

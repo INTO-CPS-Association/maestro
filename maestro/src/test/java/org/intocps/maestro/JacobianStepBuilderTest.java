@@ -1,8 +1,5 @@
 package org.intocps.maestro;
 
-import difflib.Delta;
-import difflib.DiffUtils;
-import difflib.Patch;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -108,7 +105,7 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                     if (!expected.get(i).equals(actual.get(i))) {
                         if (assertionMsg.isEmpty()) {
                             assertionMsg =
-                                    "Mismatch between values on line " + (i+2) + " for column '" + entry.getKey() + "'. Actual: " + actual.get(i) +
+                                    "Mismatch between values on row " + (i+2) + " for column '" + entry.getKey() + "'. Actual: " + actual.get(i) +
                                             " " +
                                             "expected: " + expected.get(i) + ". ";
                         }
@@ -117,7 +114,7 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                 }
 
                 if (!assertionMsg.isEmpty()) {
-                    assertionMsg += "Additionally " + (mismatchedLines - 1) + " lines have mismatched values.";
+                    assertionMsg += "Additional " + (mismatchedLines - 1) + " rows have mismatched values.";
                     Assertions.fail(assertionMsg);
                 }
 

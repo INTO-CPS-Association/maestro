@@ -214,7 +214,6 @@ public class FullSpecTest {
                 new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
                 .execute(mabl.getMainSimulationUnit());
 
-
         compareCSVs(new File(directory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 

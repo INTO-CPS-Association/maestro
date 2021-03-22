@@ -1,0 +1,48 @@
+simulation
+import Initializer;
+import JacobianStepBuilder;
+import BooleanLogic;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.001;
+
+int fmi_status_ok = 0;
+int fmi_status_warning = 1;
+int fmi_status_discard = 2;
+int fmi_status_error = 3;
+int fmi_status_fatal = 4;
+int fmi_status_pending = 5;
+
+DataWriter dataWriter = load("DataWriter");
+Logger logger = load("Logger");
+Math math = load("Math");
+BooleanLogic booleanLogic = load("BooleanLogic");
+FMI2 pump = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}", "src/test/resources/pump.fmu");
+FMI2 sink = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}",  "src/test/resources/sink.fmu");
+FMI2Component pumpi = pump.instantiate("pump", false, false);;
+FMI2Component sinki = sink.instantiate("sink", false, false);;
+
+FMI2Component components[2]={pumpi, sinki};
+
+bool global_execution_continue = true;
+int status = 0;
+
+@Config("@file: config.json");
+Initializer.expand initialize(components,START_TIME, END_TIME);
+
+@Config("@file: jacobianconfig.json");
+JacobianStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+dataWriter.close();
+pump.freeInstance(pumpi);
+sink.freeInstance(sinki);
+
+unload(pump);
+unload(sink);
+unload(dataWriter);
+unload(logger);
+unload(math);
+unload(booleanLogic);
+}

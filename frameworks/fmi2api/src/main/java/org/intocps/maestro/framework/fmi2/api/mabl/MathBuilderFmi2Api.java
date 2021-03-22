@@ -66,6 +66,7 @@ public class MathBuilderFmi2Api {
         }
     }
 
+
     public DoubleVariableFmi2Api minRealFromArray(ArrayVariableFmi2Api<Double> array) {
         String variableName = dynamicScope.getName("minVal");
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(), newAExpInitializer(
