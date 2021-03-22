@@ -41,7 +41,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class FullSpecTest {
 
     private static Stream<Arguments> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles())).map(f -> Arguments.arguments(f.getName(), f));
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
+                .map(f -> Arguments.arguments(f.getName(), f));
     }
 
     private static TestJsonObject getTestJsonObject(File directory) throws java.io.IOException {
@@ -102,10 +103,6 @@ public class FullSpecTest {
         }
     }
 
-    protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
-        compareCsvResults(expectedCsvFile, actualCsvFile);
-    }
-
     public static void compareCsvResults(File expectedCsvFile, File actualCsvFile) throws IOException {
 
         if (Boolean.parseBoolean(System.getProperty("TEST_CREATE_OUTPUT_CSV_FILES", "false")) && actualCsvFile.exists()) {
@@ -131,6 +128,10 @@ public class FullSpecTest {
             System.out.println(sb.toString());
 
         }
+    }
+
+    protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
+        compareCsvResults(expectedCsvFile, actualCsvFile);
     }
 
     @ParameterizedTest(name = "{index} \"{0}\"")
@@ -215,7 +216,7 @@ public class FullSpecTest {
                 .execute(mabl.getMainSimulationUnit());
 
 
-        compareCSVs(new File(directory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
+        compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {
