@@ -43,7 +43,7 @@
             <Appender-ref ref="Console" level="INFO"/>
         </Logger>
 
-        <Root level="TRACE">
+        <Root level="DEBUG">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="LogFile"/>
         </Root>

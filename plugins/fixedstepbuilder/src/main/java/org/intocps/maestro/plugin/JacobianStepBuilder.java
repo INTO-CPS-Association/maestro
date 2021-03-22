@@ -252,7 +252,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                     dynamicScope.enterIf(didDiscard);
                     {
-                        builder.getLogger().trace("## %s discarded step and could only step to: %.15E", k.getName(), new VariableFmi2Api<>(null,
+                        builder.getLogger().debug("## %s discarded step and could only step to: %.15E", k.getName(), new VariableFmi2Api<>(null,
                                 discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                 discard.getValue().getExp()));
                         anyDiscards.setValue(
@@ -306,7 +306,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                                 isClose.setValue(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
                                 dynamicScope.enterIf(isClose.toPredicate().not());
                                 {
-                                    builder.getLogger().trace("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
+                                    builder.getLogger().debug("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
                                             entry.getValue(), currentCommunicationTime);
                                     dynamicScope.leave();
                                 }
