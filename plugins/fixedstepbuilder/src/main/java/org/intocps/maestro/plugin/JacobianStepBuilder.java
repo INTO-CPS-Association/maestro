@@ -11,6 +11,7 @@ import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.api.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -49,7 +50,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-    private algorithmEnum algorithm;
+    private StepAlgorithm algorithm;
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
@@ -69,10 +70,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             AFunctionDeclaration selectedFun;
 
             if (declaredFunction.getName().toString().equals("variableStep")) {
-                algorithm = algorithmEnum.variableStep;
+                algorithm = StepAlgorithm.VARIABLESTEP;
                 selectedFun = variableStepFunc;
             } else {
-                algorithm = algorithmEnum.fixedStep;
+                algorithm = StepAlgorithm.FIXEDSTEP;
                 selectedFun = fixedStepFunc;
             }
 
@@ -172,7 +173,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 VariableStep variableStep;
                 VariableStep.VariableStepInstance variableStepInstance = null;
-                if (algorithm == algorithmEnum.variableStep) {
+                if (algorithm == StepAlgorithm.VARIABLESTEP) {
                     // Initialize variable step module
                     List<PortFmi2Api> ports = fmuInstances.values().stream().map(ComponentVariableFmi2Api::getPorts).flatMap(Collection::stream)
                             .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getLogScalarVariableName())))
@@ -235,7 +236,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     // This has to be carried out regardless of stabilisation or not.
                     fmuInstances.forEach((x, y) -> y.setLinked());
 
-                    if (algorithm == algorithmEnum.variableStep) {
+                    if (algorithm == StepAlgorithm.VARIABLESTEP) {
                         dynamicScope.enterIf(anyDiscards.toPredicate().not());
                         {
                             DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variable_step_size", 0.0);
@@ -372,7 +373,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     }
 
                     //TODO: When should validate happen?
-                    if (algorithm == algorithmEnum.variableStep) {
+                    if (algorithm == StepAlgorithm.VARIABLESTEP) {
                         //Validate step
                         PredicateFmi2Api validStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
                                 new DoubleVariableFmi2Api(null, null, dynamicScope, null,

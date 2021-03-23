@@ -9,6 +9,8 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
+import org.intocps.maestro.core.api.StepAlgorithm;
+import org.intocps.maestro.core.api.VarStepSizeAlgorithm;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -39,8 +41,10 @@ public class MaBLTemplateGenerator {
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
-    public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
+    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStep";
+    public static final String VARIABLESTEP_FUNCTION_NAME = "variableStep";
     public static final String FIXEDSTEP_EXPANSION_MODULE_NAME = "FixedStep";
+    public static final String JACOBIANSTEP_EXPANSION_MODULE_NAME = "JacobianStep";
     public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
@@ -135,15 +139,34 @@ public class MaBLTemplateGenerator {
     }
 
     public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
+        double stepSize;
+        PStm algorithmStm;
+
         switch (algorithm.getType()) {
             case FIXEDSTEP:
-                FixedStepSizeAlgorithm a = (FixedStepSizeAlgorithm) algorithm;
-                return new ExpandStatements(
-                        Arrays.asList(createRealVariable(STEP_SIZE_NAME, a.stepSize), createRealVariable(END_TIME_NAME, a.endTime)),
-                        Arrays.asList(createExpandFixedStep(COMPONENTS_ARRAY_NAME, STEP_SIZE_NAME, START_TIME_NAME, END_TIME_NAME)));
+                stepSize = ((FixedStepSizeAlgorithm) algorithm).stepSize;
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
+                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                                MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
+                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+            break;
+
+            case VARIABLESTEP:
+                stepSize = ((VarStepSizeAlgorithm) algorithm).initialStepSize;
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
+                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                                MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
+                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+
             default:
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
+
+        return new ExpandStatements(
+                Arrays.asList(createRealVariable(STEP_SIZE_NAME, stepSize), createRealVariable(END_TIME_NAME, stepSize)),
+                Arrays.asList(algorithmStm));
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -244,7 +267,7 @@ public class MaBLTemplateGenerator {
         }
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
-                Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
+                Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
                         newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME)));
@@ -405,10 +428,11 @@ public class MaBLTemplateGenerator {
                                 AIdentifierExpFromString(endTimeLexName))));
     }
 
-    public static PStm createExpandFixedStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName, String endTimeLexName) {
+    public static PStm createExpandJacobianStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName,
+            String endTimeLexName, StepAlgorithm algorithm) {
         return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_FUNCTION_NAME),
+                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(algorithm == StepAlgorithm.FIXEDSTEP ? FIXEDSTEP_FUNCTION_NAME : VARIABLESTEP_FUNCTION_NAME),
                         Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(stepSizeLexName),
                                 AIdentifierExpFromString(startTimeLexName), AIdentifierExpFromString(endTimeLexName))));
     }
