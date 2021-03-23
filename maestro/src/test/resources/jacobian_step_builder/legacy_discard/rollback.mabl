@@ -6,8 +6,8 @@ import BooleanLogic;
 @FrameworkConfig("FMI2","@file: env.json");
 {
 real START_TIME = 0.0;
-real END_TIME = 10.0;
-real STEP_SIZE = 0.001;
+real END_TIME = 1.0;
+real STEP_SIZE = 0.1;
 
 int fmi_status_ok = 0;
 int fmi_status_warning = 1;
@@ -20,12 +20,12 @@ DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
 Math math = load("Math");
 BooleanLogic booleanLogic = load("BooleanLogic");
-FMI2 pump = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}", "src/test/resources/pump.fmu");
-FMI2 sink = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}",  "src/test/resources/sink.fmu");
-FMI2Component pumpi = pump.instantiate("pump", false, false);;
-FMI2Component sinki = sink.instantiate("sink", false, false);;
+FMI2 FMU = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/rollback-test.fmu");
+FMI2 Controller = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/rollback-end.fmu");
+FMI2Component roller = FMU.instantiate("roller", false, false);;
+FMI2Component cont = Controller.instantiate("cont", false, false);;
 
-FMI2Component components[2]={pumpi, sinki};
+FMI2Component components[2]={cont, roller};
 
 bool global_execution_continue = true;
 int status = 0;
@@ -36,11 +36,11 @@ Initializer.expand initialize(components,START_TIME, END_TIME);
 @Config("@file: jacobianconfig.json");
 JacobianStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 dataWriter.close();
-pump.freeInstance(pumpi);
-sink.freeInstance(sinki);
+Controller.freeInstance(cont);
+FMU.freeInstance(roller);
 
-unload(pump);
-unload(sink);
+unload(FMU);
+unload(Controller);
 unload(dataWriter);
 unload(logger);
 unload(math);

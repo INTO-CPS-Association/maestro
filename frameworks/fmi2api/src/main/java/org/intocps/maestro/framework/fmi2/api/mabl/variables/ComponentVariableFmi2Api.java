@@ -603,6 +603,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
         ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
+        //TODO: Is this correct?
+        if(sortedPorts.size() < 1){
+            return;
+        }
 
 
         for (int i = 0; i < sortedPorts.size(); i++) {

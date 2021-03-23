@@ -96,7 +96,7 @@ public class JacobianStepBuilderTest extends FullSpecTest {
 
 
                 if (expected.size() != actual.size()) {
-                    Assertions.fail("The length of column " + entry.getValue() + "differs between expected and actual");
+                    Assertions.fail("The length of column " + entry.getKey() + " differs between expected and actual");
                 }
 
                 String assertionMsg = "";
