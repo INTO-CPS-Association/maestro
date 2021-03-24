@@ -6,6 +6,7 @@ import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.maestro.plugin.IPluginConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -20,8 +21,18 @@ public class MaBLTemplateConfiguration {
     private boolean loggingOn = false;
     private boolean visible = false;
     private String faultInjectionConfigurationPath;
+    private String mmAsJson; //TODO: This should only be the algorithm part as this is what is needed for VariableStepValue
+    private IPluginConfiguration stepAlgorithmConfig;
 
     private MaBLTemplateConfiguration() {
+    }
+
+    public IPluginConfiguration getStepAlgorithmConfig() {
+        return stepAlgorithmConfig;
+    }
+
+    public String getMmAsJson() {
+        return mmAsJson;
     }
 
     public String getFaultInjectionConfigurationPath() {
@@ -73,6 +84,8 @@ public class MaBLTemplateConfiguration {
         private Map<String, List<String>> logLevels;
         private Framework framework;
         private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
+        private String mmAsJson;
+        private IPluginConfiguration stepAlgorithmConfig;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
             return new MaBLTemplateConfigurationBuilder();
@@ -103,6 +116,16 @@ public class MaBLTemplateConfiguration {
 
         public MaBLTemplateConfigurationBuilder setFramework(Framework framework) {
             this.framework = framework;
+            return this;
+        }
+
+        public MaBLTemplateConfigurationBuilder setStepAlgorithmConfig(IPluginConfiguration config) {
+            this.stepAlgorithmConfig = config;
+            return this;
+        }
+
+        public MaBLTemplateConfigurationBuilder setMmAsJson(String algorithm) {
+            this.mmAsJson = algorithm;
             return this;
         }
 
@@ -151,6 +174,8 @@ public class MaBLTemplateConfiguration {
             config.loggingOn = this.loggingOn;
             config.visible = this.visible;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
+            config.mmAsJson = this.mmAsJson;
+            config.stepAlgorithmConfig = this.stepAlgorithmConfig;
             return config;
         }
     }

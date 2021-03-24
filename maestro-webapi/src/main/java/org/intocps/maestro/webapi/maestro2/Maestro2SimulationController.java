@@ -218,22 +218,10 @@ public class Maestro2SimulationController {
             logger.info("Using variable-step size calculator with minimum step-size: {}, maximum step-size: {} and initial step-size: {}",
                     algorithm.getSize()[0],
                     algorithm.getSize()[1], algorithm.getInitsize());
-
-
-            throw new NotImplementedException("Variable step algorithms are not supported.");
         }
+
         Map<String, List<ModelDescription.LogCategory>> logs = null;
 
-        if (body.isStabalizationEnabled()) {
-
-            //            if (body.global_absolute_tolerance != 0.0) {
-            //                throw new NotImplementedException("global absolute tolerance is not implemented");
-            //            }
-            //            if (body.global_relative_tolerance != 0.0) {
-            //                throw new NotImplementedException("global absolute tolerance is not implemented");
-            //            }
-            throw new NotImplementedException("Stabilisation is not implemented");
-        }
         if (body.isParallelSimulation()) {
             throw new NotImplementedException("ParallelSimulation is not implemented");
         }

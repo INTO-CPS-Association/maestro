@@ -13,4 +13,14 @@ public class FixedStepSizeAlgorithm implements IStepAlgorithm {
     public StepAlgorithm getType() {
         return StepAlgorithm.FIXEDSTEP;
     }
+
+    @Override
+    public double getEndTime(){
+        return endTime;
+    }
+
+    @Override
+    public double getStepSize(){
+        return stepSize;
+    }
 }

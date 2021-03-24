@@ -1,6 +1,9 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.fmi.IFmiComponent;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.interpreter.InterpreterException;
@@ -14,7 +17,9 @@ import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -69,26 +74,44 @@ public class VariableStepValue extends ModuleValue {
     /**
      * Values passed in addDataPoint is assumed to follow the same order as the portNames passed in initializePortNames.
      *
-     * @param configUri
+     * @param configAsUriOrJson
      * @return
      */
-    private static Map<String, Value> createMembers(String configUri) {
+    private static Map<String, Value> createMembers(String configAsUriOrJson) {
         Set<InitializationMsgJson.Constraint> constraints;
         StepsizeInterval stepsizeInterval;
         Double initSize;
 
+        // Try to generate config from uri
+        InitializationMsgJson config = null;
         try {
-            URI pathAsUri = URI.create((new URI(configUri)).getRawPath());
+            URI pathAsUri = URI.create((new URI(configAsUriOrJson)).getRawPath());
             if (!pathAsUri.isAbsolute()) {
                 pathAsUri = (new File(".")).toURI().resolve(pathAsUri);
             }
-            InitializationMsgJson config =
-                    (new ObjectMapper()).readValue(new String(Files.readAllBytes(Paths.get(pathAsUri))), InitializationMsgJson.class);
+            config = (new ObjectMapper()).readValue(new String(Files.readAllBytes(Paths.get(pathAsUri))), InitializationMsgJson.class);
+        } catch (URISyntaxException | IOException e) {
+            if(e instanceof IOException){
+                throw new InterpreterException("Configuration could not be passed", e);
+            }
+        }
+
+        // Try to generate config from json
+        if(config == null){
+            try {
+                config = (new ObjectMapper()).readValue(StringEscapeUtils.unescapeJava(configAsUriOrJson), InitializationMsgJson.class);
+            } catch (JsonProcessingException e) {
+                throw new InterpreterException("Configuration could not be passed", e);
+            }
+        }
+
+        if(config != null){
             constraints = getConstraintsFromConfig(config);
             stepsizeInterval = getStepSizeIntervalFromConfig(config);
             initSize = getInitSizeFromConfig(config);
-        } catch (Exception e) {
-            throw new InterpreterException("Configuration could not be passed", e);
+        }
+        else{
+            throw new InterpreterException("Configuration could not be passed");
         }
 
         Map<String, Value> componentMembers = new HashMap<>();

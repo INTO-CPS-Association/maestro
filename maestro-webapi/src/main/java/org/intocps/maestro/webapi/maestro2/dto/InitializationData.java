@@ -265,7 +265,8 @@ public class InitializationData {
         public ZeroCrossingConstraint() {
         }
 
-        public ZeroCrossingConstraint(List<String> ports, Integer order, Double abstol, Double safety) {
+        public ZeroCrossingConstraint(List<String> ports, Integer order,
+                Double abstol, Double safety) {
             this.ports = ports;
             this.order = order;
             this.abstol = abstol;
