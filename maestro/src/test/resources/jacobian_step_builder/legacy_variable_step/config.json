@@ -1,8 +1,0 @@
-{
-  "parameters":{
-    "{massB}.massB.B.C":15000.0,
-    "{massA}.massA.A.C":120000.0
-  },
-  "verifyAgainstProlog": false,
-  "stabilisation": false
-}
