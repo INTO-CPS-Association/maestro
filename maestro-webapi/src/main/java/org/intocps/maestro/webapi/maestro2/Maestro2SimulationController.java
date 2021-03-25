@@ -20,11 +20,6 @@ import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
 import org.intocps.maestro.webapi.maestro2.dto.*;
-import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
-import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
-import org.intocps.orchestration.coe.httpserver.Algorithm;
-import org.intocps.orchestration.coe.json.InitializationMsgJson;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
@@ -56,45 +54,6 @@ public class Maestro2SimulationController {
     public static final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
-
-    public static InitializationMsgJson.Constraint convert(IVarStepConstraint constraint) {
-        if (constraint instanceof InitializationData.FmuMaxStepSizeConstraint) {
-            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
-            c.type = "fmumaxstepsize";
-            return c;
-
-        } else if (constraint instanceof InitializationData.BoundedDifferenceConstraint) {
-            InitializationData.BoundedDifferenceConstraint cIn = (InitializationData.BoundedDifferenceConstraint) constraint;
-            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
-            c.type = "boundeddifference";
-            c.abstol = cIn.getAbstol();
-            c.ports = cIn.getPorts();
-            c.reltol = cIn.getReltol();
-            c.safety = cIn.getSafety();
-            c.skipDiscrete = cIn.getSkipDiscrete();
-            return c;
-
-        } else if (constraint instanceof InitializationData.SamplingConstraint) {
-            InitializationData.SamplingConstraint cIn = (InitializationData.SamplingConstraint) constraint;
-            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
-            c.type = "samplingrate";
-            c.base = cIn.getBase();
-            c.rate = cIn.getRate();
-            c.startTime = cIn.getStartTime();
-            return c;
-
-        } else if (constraint instanceof InitializationData.ZeroCrossingConstraint) {
-            InitializationData.ZeroCrossingConstraint cIn = (InitializationData.ZeroCrossingConstraint) constraint;
-            InitializationMsgJson.Constraint c = new InitializationMsgJson.Constraint();
-            c.type = "zerocrossing";
-            c.abstol = cIn.getAbstol();
-            c.ports = cIn.getPorts();
-            c.order = cIn.getOrder();
-            c.safety = cIn.getSafety();
-            return c;
-        }
-        return null;
-    }
 
     public void overrideRootLoggerLogLevel(Level level) {
         if (level == null) {
@@ -179,15 +138,7 @@ public class Maestro2SimulationController {
             throw new Exception("Connections must not be null");
         }
 
-        CoSimStepSizeCalculator stepSizeCalculator = null;
-        Algorithm stepAlgorithm = Algorithm.NONE;
-        if (body.getAlgorithm() == null) {
-
-            stepAlgorithm = Algorithm.FIXED;
-            stepSizeCalculator = new BasicFixedStepSizeCalculator(0.1);
-            logger.info("No step size algorithm given. Defaulting to fixed-step with size 0.1");
-
-        } else if (body.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
+        if (body.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
             FixedStepAlgorithmConfig algorithm = (FixedStepAlgorithmConfig) body.getAlgorithm();
 
             if (algorithm.size == null) {
@@ -195,8 +146,7 @@ public class Maestro2SimulationController {
             }
 
             logger.info("Using Fixed-step size calculator with size = {}", algorithm.size);
-            stepSizeCalculator = new BasicFixedStepSizeCalculator(algorithm.size);
-            stepAlgorithm = Algorithm.FIXED;
+
         } else if (body.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             VariableStepAlgorithmConfig algorithm = (VariableStepAlgorithmConfig) body.getAlgorithm();
 
@@ -204,23 +154,19 @@ public class Maestro2SimulationController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "min and max variable-step size must be integers or doubles");
             }
 
-            //TODO: what is the value of the minimum step-size defined for FMI2?
             if (algorithm.getSize()[0] <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the minimum variable-step size does not conform to the minimum step-size" +
-                        " of FMI2");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "the minimum variable-step size does not conform to the minimum step-size" + " of FMI2");
             }
 
             if (algorithm.getSize()[1] <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the maximum variable-step size does not conform to the minimum step-size" +
-                        " of FMI2");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "the maximum variable-step size does not conform to the minimum step-size" + " of FMI2");
             }
 
             logger.info("Using variable-step size calculator with minimum step-size: {}, maximum step-size: {} and initial step-size: {}",
-                    algorithm.getSize()[0],
-                    algorithm.getSize()[1], algorithm.getInitsize());
+                    algorithm.getSize()[0], algorithm.getSize()[1], algorithm.getInitsize());
         }
-
-        Map<String, List<ModelDescription.LogCategory>> logs = null;
 
         if (body.isParallelSimulation()) {
             throw new NotImplementedException("ParallelSimulation is not implemented");
@@ -281,7 +227,7 @@ public class Maestro2SimulationController {
             Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
             mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
             postSimTime = System.currentTimeMillis();
-            logic.setExecTime(postSimTime-preSimTime);
+            logic.setExecTime(postSimTime - preSimTime);
 
             if (reporter.getErrorCount() > 0) {
                 logic.setStatus(SessionLogic.SessionStatus.Error);
@@ -329,14 +275,13 @@ public class Maestro2SimulationController {
             }
             int result = p.waitFor();
 
-            if(error.size() > 0){
+            if (error.size() > 0) {
                 logic.setStatus(SessionLogic.SessionStatus.Error);
-            }
-            else{
+            } else {
                 logic.setStatus(SessionLogic.SessionStatus.Finished);
             }
             postSimTime = System.currentTimeMillis();
-            logic.setExecTime(postSimTime-preSimTime);
+            logic.setExecTime(postSimTime - preSimTime);
 
             return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
         }
