@@ -155,7 +155,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             // Build static FMU relations and validate if all fmus can get state
             Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToInstances = new HashMap<>();
             Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToVariablesInArray = new HashMap<>();
-            ArrayVariableFmi2Api<Double> fmuCommunicationPoints = dynamicScope.store("fmu_communicationpoints", new Double[fmuInstances.entrySet().size()]);
+            ArrayVariableFmi2Api<Double> fmuCommunicationPoints =
+                    dynamicScope.store("fmu_communicationpoints", new Double[fmuInstances.entrySet().size()]);
             boolean everyFMUSupportsGetState = true;
             int indexer = 0;
             for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
@@ -227,7 +228,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 if (jacobianStepConfig.stabilisation) {
                     stabilisation_loop.setValue(stabilisation_loop_max_iterations);
-                    convergenceReached.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
+                    convergenceReached
+                            .setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
                     stabilisationScope = dynamicScope.enterWhile(
                             convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
                 }
@@ -258,22 +260,15 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                     PredicateFmi2Api didDiscard = new PredicateFmi2Api(discard.getKey().getExp()).not();
 
-                    IfMaBlScope discScope = dynamicScope.enterIf(didDiscard);
+                    dynamicScope.enterIf(didDiscard);
                     {
-                        builder.getLogger().debug("## FMU: '%s' DISCARDED step at sim-time: %f with step-size: %f and proposed sim-time: %.15f",
-                                k.getName(),currentCommunicationTime,currentStepSize,
-                                new VariableFmi2Api<>(null,
-                                discard.getValue().getType(), dynamicScope, dynamicScope, null,
-                                discard.getValue().getExp()));
+                        builder.getLogger()
+                                .debug("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", k.getName(),
+                                        currentCommunicationTime, currentStepSize,
+                                        new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
+                                                discard.getValue().getExp()));
                         anyDiscards.setValue(
                                 new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
-                        dynamicScope.leave();
-                    }
-
-                    discScope.enterElse();
-                    {
-                        builder.getLogger().debug("## FMU: '%s' ACCEPTED step at sim-time: %f with step-size: %f", k.getName(),
-                                currentCommunicationTime, currentStepSize);
                         dynamicScope.leave();
                     }
                 });
@@ -286,14 +281,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     // rollback FMUs
                     fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
-                    builder.getLogger().debug("## DISCARD smallest step: %f at time: %f", math.minRealFromArray(fmuCommunicationPoints),
-                            currentCommunicationTime);
-
                     // set step-size to lowest
-                    //currentStepSize.setValue(currentCommunicationTime.toMath().subtraction(math.minRealFromArray(fmuCommunicationPoints)));
                     currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
-                    builder.getLogger().debug("## DISCARD current step-size: %f", currentStepSize);
+                    builder.getLogger().debug("## Discard occurred! step-size reduced to: %f", currentStepSize);
 
                     dynamicScope.leave();
                 }
@@ -358,12 +349,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     }
 
 
-
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
-                    builder.getLogger().debug("## UPDATE currentCommunicationTime to: %f", currentCommunicationTime);
                     currentStepSize.setValue(stepSize);
-                    builder.getLogger().debug("## STEPSIZE: %f", currentStepSize);
 
 
                     // Call log
