@@ -21,7 +21,6 @@ public class MaBLTemplateConfiguration {
     private boolean loggingOn = false;
     private boolean visible = false;
     private String faultInjectionConfigurationPath;
-    private String algorithmAsJson;
     private IPluginConfiguration stepAlgorithmConfig;
 
     private MaBLTemplateConfiguration() {
@@ -29,10 +28,6 @@ public class MaBLTemplateConfiguration {
 
     public IPluginConfiguration getStepAlgorithmConfig() {
         return stepAlgorithmConfig;
-    }
-
-    public String getAlgorithmAsJson() {
-        return algorithmAsJson;
     }
 
     public String getFaultInjectionConfigurationPath() {
@@ -84,7 +79,6 @@ public class MaBLTemplateConfiguration {
         private Map<String, List<String>> logLevels;
         private Framework framework;
         private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
-        private String algorithmAsJson;
         private IPluginConfiguration stepAlgorithmConfig;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
@@ -121,11 +115,6 @@ public class MaBLTemplateConfiguration {
 
         public MaBLTemplateConfigurationBuilder setStepAlgorithmConfig(IPluginConfiguration config) {
             this.stepAlgorithmConfig = config;
-            return this;
-        }
-
-        public MaBLTemplateConfigurationBuilder setAlgorithmAsJson(String algorithm) {
-            this.algorithmAsJson = algorithm;
             return this;
         }
 
@@ -174,7 +163,6 @@ public class MaBLTemplateConfiguration {
             config.loggingOn = this.loggingOn;
             config.visible = this.visible;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
-            config.algorithmAsJson = this.algorithmAsJson;
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
             return config;
         }

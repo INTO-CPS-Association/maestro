@@ -100,7 +100,7 @@ public class Maestro2Broker {
             algorithm = new FixedStepSizeAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
         } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             algorithm = new VarStepSizeAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize());
+                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(), (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()));
 
                     ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
                         if (v instanceof InitializationData.ZeroCrossingConstraint) {
@@ -119,7 +119,7 @@ public class Maestro2Broker {
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
                         .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
                         .setLoggingOn(initializeRequest.isLoggingOn()).
-                        setStepAlgorithm(algorithm).setAlgorithmAsJson((new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm())).setStepAlgorithmConfig(config);
+                        setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();
