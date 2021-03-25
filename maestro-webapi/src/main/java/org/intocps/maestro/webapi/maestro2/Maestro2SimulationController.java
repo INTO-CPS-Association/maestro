@@ -1,5 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -125,13 +126,13 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
-    public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
-        return sessionController.getStatus(sessionId);
+    public String getStatuses(@PathVariable String sessionId) throws Exception {
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus(sessionId));
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public List<StatusModel> getStatuses() {
-        return sessionController.getStatus();
+    public String getStatuses() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus());
     }
 
     private StatusModel getStatus(String sessionId) {
