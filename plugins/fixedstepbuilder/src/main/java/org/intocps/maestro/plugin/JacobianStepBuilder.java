@@ -273,6 +273,62 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     }
                 });
 
+                // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
+                Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> portsToShare = portsToGet.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getKey().get(entry.getValue().toArray(String[]::new))));
+
+                // CONVERGENCE
+                if (jacobianStepConfig.stabilisation) {
+                    // For each instance ->
+                    //      For each retrieved variable
+                    //          compare with previous in terms of convergence
+                    //  If all converge, set retrieved values and continue
+                    //  else reset to previous state, set retrieved values and continue
+                    List<BooleanVariableFmi2Api> convergenceVariables = new ArrayList<>();
+                    for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> comptoPortAndVariable : portsToShare
+                            .entrySet()) {
+                        List<BooleanVariableFmi2Api> converged = new ArrayList<>();
+                        List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = comptoPortAndVariable.getValue().entrySet().stream()
+                                .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).collect(Collectors.toList());
+
+                        for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
+                            VariableFmi2Api oldVariable = entry.getKey().getSharedAsVariable();
+                            VariableFmi2Api<Object> newVariable = entry.getValue();
+                            BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
+                            isClose.setValue(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
+                            dynamicScope.enterIf(isClose.toPredicate().not());
+                            {
+                                builder.getLogger().debug("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
+                                        entry.getValue(), currentCommunicationTime);
+                                dynamicScope.leave();
+                            }
+
+                            converged.add(isClose);
+                        }
+                        convergenceVariables.addAll(converged);
+                    }
+
+                    if (convergenceReached != null) {
+                        convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
+                    } else {
+                        throw new RuntimeException("NO STABILISATION LOOP FOUND");
+                    }
+
+                    dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
+                    {
+                        fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                        stabilisation_loop.decrement();
+                        dynamicScope.leave();
+                    }
+                    portsToShare.forEach(ComponentVariableFmi2Api::share);
+                    stabilisationScope.leave();
+                }
+
+
+                if (!jacobianStepConfig.stabilisation) {
+                    portsToShare.forEach(ComponentVariableFmi2Api::share);
+                }
+
                 // Discard
                 PredicateFmi2Api anyDiscardsPred = anyDiscards.toPredicate();
                 IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscardsPred);
@@ -291,68 +347,11 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 discardScope.enterElse();
                 {
-                    // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
-                    Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> portsToShare = portsToGet.entrySet().stream()
-                            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getKey().get(entry.getValue().toArray(String[]::new))));
-
-
-                    // CONVERGENCE
-                    if (jacobianStepConfig.stabilisation) {
-                        // For each instance ->
-                        //      For each retrieved variable
-                        //          compare with previous in terms of convergence
-                        //  If all converge, set retrieved values and continue
-                        //  else reset to previous state, set retrieved values and continue
-                        List<BooleanVariableFmi2Api> convergenceVariables = new ArrayList<>();
-                        for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> comptoPortAndVariable : portsToShare
-                                .entrySet()) {
-                            List<BooleanVariableFmi2Api> converged = new ArrayList<>();
-                            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = comptoPortAndVariable.getValue().entrySet().stream()
-                                    .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).collect(Collectors.toList());
-
-                            for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
-                                VariableFmi2Api oldVariable = entry.getKey().getSharedAsVariable();
-                                VariableFmi2Api<Object> newVariable = entry.getValue();
-                                BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
-                                isClose.setValue(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
-                                dynamicScope.enterIf(isClose.toPredicate().not());
-                                {
-                                    builder.getLogger().debug("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
-                                            entry.getValue(), currentCommunicationTime);
-                                    dynamicScope.leave();
-                                }
-
-                                converged.add(isClose);
-                            }
-                            convergenceVariables.addAll(converged);
-                        }
-
-                        if (convergenceReached != null) {
-                            convergenceReached.setValue(booleanLogic.allTrue("convergence", convergenceVariables));
-                        } else {
-                            throw new RuntimeException("NO STABILISATION LOOP FOUND");
-                        }
-
-                        dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
-                        {
-                            fmuStates.forEach(Fmi2Builder.StateVariable::set);
-                            stabilisation_loop.decrement();
-                            dynamicScope.leave();
-                        }
-                        stabilisationScope.activate();
-                        portsToShare.forEach(ComponentVariableFmi2Api::share);
-                    }
-
-
-                    if (!jacobianStepConfig.stabilisation) {
-                        portsToShare.forEach(ComponentVariableFmi2Api::share);
-                    }
 
 
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
                     currentStepSize.setValue(stepSize);
-
 
                     // Call log
                     dataWriterInstance.log(currentCommunicationTime);
