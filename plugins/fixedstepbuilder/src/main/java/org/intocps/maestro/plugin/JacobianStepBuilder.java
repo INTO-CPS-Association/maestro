@@ -236,7 +236,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 // SET ALL LINKED VARIABLES
                 // This has to be carried out regardless of stabilisation or not.
-                fmuInstances.forEach((x, y) -> y.setLinked());
+                //TODO: do not set on non linked
+                fmuInstances.forEach((x, y) -> {
+                    if(y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)){
+                        y.setLinked();
+                    }
+                });
 
                 if (algorithm == StepAlgorithm.VARIABLESTEP) {
                     dynamicScope.enterIf(anyDiscards.toPredicate().not());

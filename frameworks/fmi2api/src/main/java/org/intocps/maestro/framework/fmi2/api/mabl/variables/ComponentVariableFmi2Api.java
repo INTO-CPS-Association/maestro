@@ -603,11 +603,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
         ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
-        //TODO: Is this correct?
-        if(sortedPorts.size() < 1){
-            return;
-        }
-
 
         for (int i = 0; i < sortedPorts.size(); i++) {
             Fmi2Builder.Port p = sortedPorts.get(i);
@@ -680,6 +675,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             }
 
             selectedPorts = selectedPorts.stream().filter(filterList::contains).collect(Collectors.toList());
+        }
+        if(selectedPorts.size() == 0){
+            logger.warn("No linked input variables for FMU instance: " + this.getName());
+            return;
         }
 
 
