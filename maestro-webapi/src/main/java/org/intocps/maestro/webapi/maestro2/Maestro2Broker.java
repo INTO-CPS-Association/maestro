@@ -119,7 +119,7 @@ public class Maestro2Broker {
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
                         .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
                         .setLoggingOn(initializeRequest.isLoggingOn()).
-                        setStepAlgorithm(algorithm).setMmAsJson((new ObjectMapper()).writeValueAsString(initializeRequest)).setStepAlgorithmConfig(config);
+                        setStepAlgorithm(algorithm).setAlgorithmAsJson((new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm())).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();

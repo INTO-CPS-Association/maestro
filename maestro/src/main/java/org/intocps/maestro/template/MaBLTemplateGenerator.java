@@ -189,7 +189,7 @@ public class MaBLTemplateGenerator {
         boolean includeVariableStep = templateConfiguration.getAlgorithm().getType() == StepAlgorithm.VARIABLESTEP;
         if (includeVariableStep) {
             stmMaintainer.add(createLoadStatement(VARIABLESTEP_MODULE_NAME,
-                    Arrays.asList(newAStringLiteralExp(StringEscapeUtils.escapeJava(templateConfiguration.getMmAsJson())))));
+                    Arrays.asList(newAStringLiteralExp(StringEscapeUtils.escapeJava(templateConfiguration.getAlgorithmAsJson())))));
 
         }
 

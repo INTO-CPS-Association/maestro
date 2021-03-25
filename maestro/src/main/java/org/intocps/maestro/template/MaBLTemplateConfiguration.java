@@ -21,7 +21,7 @@ public class MaBLTemplateConfiguration {
     private boolean loggingOn = false;
     private boolean visible = false;
     private String faultInjectionConfigurationPath;
-    private String mmAsJson; //TODO: This should only be the algorithm part as this is what is needed for VariableStepValue
+    private String algorithmAsJson;
     private IPluginConfiguration stepAlgorithmConfig;
 
     private MaBLTemplateConfiguration() {
@@ -31,8 +31,8 @@ public class MaBLTemplateConfiguration {
         return stepAlgorithmConfig;
     }
 
-    public String getMmAsJson() {
-        return mmAsJson;
+    public String getAlgorithmAsJson() {
+        return algorithmAsJson;
     }
 
     public String getFaultInjectionConfigurationPath() {
@@ -84,7 +84,7 @@ public class MaBLTemplateConfiguration {
         private Map<String, List<String>> logLevels;
         private Framework framework;
         private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
-        private String mmAsJson;
+        private String algorithmAsJson;
         private IPluginConfiguration stepAlgorithmConfig;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
@@ -124,8 +124,8 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
-        public MaBLTemplateConfigurationBuilder setMmAsJson(String algorithm) {
-            this.mmAsJson = algorithm;
+        public MaBLTemplateConfigurationBuilder setAlgorithmAsJson(String algorithm) {
+            this.algorithmAsJson = algorithm;
             return this;
         }
 
@@ -174,7 +174,7 @@ public class MaBLTemplateConfiguration {
             config.loggingOn = this.loggingOn;
             config.visible = this.visible;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
-            config.mmAsJson = this.mmAsJson;
+            config.algorithmAsJson = this.algorithmAsJson;
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
             return config;
         }
