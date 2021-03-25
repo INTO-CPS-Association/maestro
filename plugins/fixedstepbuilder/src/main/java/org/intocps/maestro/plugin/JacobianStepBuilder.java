@@ -40,16 +40,17 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
-    final AFunctionDeclaration fixedStepFunc = newAFunctionDeclaration(newAIdentifier("fixedStep"),
+    final AFunctionDeclaration fixedStepFunc = newAFunctionDeclaration(newAIdentifier("fixedStepSize"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
-    final AFunctionDeclaration variableStepFunc = newAFunctionDeclaration(newAIdentifier("variableStep"),
+    final AFunctionDeclaration variableStepFunc = newAFunctionDeclaration(newAIdentifier("variableStepSize"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),newAFormalParameter(newAStringPrimitiveType(), newAIdentifier(
+                            "variableStepConfig"))), newAVoidType());
     private StepAlgorithm algorithm;
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
@@ -69,7 +70,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
         AFunctionDeclaration selectedFun;
 
-        if (declaredFunction.getName().toString().equals("variableStep")) {
+        if (declaredFunction.getName().toString().equals("variableStepSize")) {
             algorithm = StepAlgorithm.VARIABLESTEP;
             selectedFun = variableStepFunc;
         } else {
@@ -97,8 +98,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             MablApiBuilder builder = new MablApiBuilder(settings, true);
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-            MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
-            BooleanBuilderFmi2Api booleanLogic = builder.getMablToMablAPI().getBooleanBuilder();
+            MathBuilderFmi2Api math = builder.getMathBuilder();
+            BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
 
             // Convert raw MaBL to API
             DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
@@ -122,7 +123,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
 
             // Create the logging
-            DataWriter dataWriter = builder.getMablToMablAPI().getDataWriter();
+            DataWriter dataWriter = builder.getDataWriter();
             DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
             dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
@@ -180,7 +181,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getLogScalarVariableName())))
                         .collect(Collectors.toList());
 
-                variableStep = builder.getMablToMablAPI().getVariableStep();
+                variableStep = builder.getVariableStep(new StringVariableFmi2Api(null, null, null, null, formalArguments.get(4).clone()));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }
@@ -376,8 +377,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     }
                 }
 
-                scopeFmi2Api.activate();
+                scopeFmi2Api.leave();
             }
+
+            dataWriterInstance.close();
 
             ABlockStm algorithm = (ABlockStm) builder.buildRaw();
 
@@ -403,7 +406,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil").map(MableAstFactory::newAIdentifier)
+        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "VariableStep", "BooleanLogic").map(MableAstFactory::newAIdentifier)
                 .collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));

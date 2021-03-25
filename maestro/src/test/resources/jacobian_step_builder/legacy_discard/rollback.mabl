@@ -1,7 +1,6 @@
 simulation
 import Initializer;
 import JacobianStepBuilder;
-import BooleanLogic;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
@@ -16,10 +15,7 @@ int fmi_status_error = 3;
 int fmi_status_fatal = 4;
 int fmi_status_pending = 5;
 
-DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
-Math math = load("Math");
-BooleanLogic booleanLogic = load("BooleanLogic");
 FMI2 FMU = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/rollback-test.fmu");
 FMI2 Controller = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/rollback-end.fmu");
 FMI2Component roller = FMU.instantiate("roller", false, false);;
@@ -34,15 +30,11 @@ int status = 0;
 Initializer.expand initialize(components,START_TIME, END_TIME);
 
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
-dataWriter.close();
+JacobianStepBuilder.expand fixedStepSize(components,STEP_SIZE,START_TIME,END_TIME);
 Controller.freeInstance(cont);
 FMU.freeInstance(roller);
 
 unload(FMU);
 unload(Controller);
-unload(dataWriter);
 unload(logger);
-unload(math);
-unload(booleanLogic);
 }
