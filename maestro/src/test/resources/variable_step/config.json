@@ -1,55 +1,29 @@
 {
-  "startTime": 0,
-  "endTime": 30,
-  "multimodel_path": "Multi-models/c-control/mm.json",
-  "livestream": {
-    "{control}.c": [
-      "valve"
-    ],
-    "{tank}.t": [
-      "level"
-    ]
-  },
-  "livestreamInterval": 0,
-  "logVariables": {},
-  "visible": false,
-  "loggingOn": false,
-  "overrideLogLevel": "WARN",
-  "enableAllLogCategoriesPerInstance": false,
-  "algorithm": {
-    "type": "var-step",
-    "initsize": 0.1,
-    "size": [
-      1e-17,
-      1
-    ],
-    "constraints": {
-      "max": {
-        "type": "zerocrossing",
-        "ports": [
-          "{tank}.t.level",
-          "{control}.c.maxlevel"
-        ],
-        "order": 1,
-        "abstol": 0.01
-      },
-      "min": {
-        "type": "zerocrossing",
-        "ports": [
-          "{tank}.t.level",
-          "{control}.c.minlevel"
-        ],
-        "order": 1,
-        "abstol": 0.01,
-        "safety": 1
-      }
+  "type": "var-step",
+  "initsize": 0.1,
+  "size": [
+    1e-17,
+    1
+  ],
+  "constraints": {
+    "max": {
+      "type": "zerocrossing",
+      "ports": [
+        "{tank}.t.level",
+        "{control}.c.maxlevel"
+      ],
+      "order": 1,
+      "abstol": 0.01
+    },
+    "min": {
+      "type": "zerocrossing",
+      "ports": [
+        "{tank}.t.level",
+        "{control}.c.minlevel"
+      ],
+      "order": 1,
+      "abstol": 0.01,
+      "safety": 1
     }
-  },
-  "postProcessingScript": "",
-  "multimodel_crc": "f10b58483b7902ec9886b51455a58677",
-  "parallelSimulation": false,
-  "stabalizationEnabled": false,
-  "global_absolute_tolerance": 0,
-  "global_relative_tolerance": 0.01,
-  "simulationProgramDelay": false
+  }
 }

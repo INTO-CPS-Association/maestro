@@ -62,7 +62,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
-        JacobianStepConfig jacobianStepConfig = (JacobianStepConfig) config;
+        JacobianStepConfig jacobianStepConfig = config != null ?  (JacobianStepConfig) config : new JacobianStepConfig();
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");

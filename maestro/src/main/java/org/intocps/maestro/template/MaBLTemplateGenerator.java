@@ -41,9 +41,8 @@ public class MaBLTemplateGenerator {
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
-    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStep";
-    public static final String VARIABLESTEP_FUNCTION_NAME = "variableStep";
-    public static final String FIXEDSTEP_EXPANSION_MODULE_NAME = "FixedStep";
+    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSize";
+    public static final String VARIABLESTEP_FUNCTION_NAME = "variableStepSize";
     public static final String JACOBIANSTEP_EXPANSION_MODULE_NAME = "JacobianStepBuilder";
     public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
