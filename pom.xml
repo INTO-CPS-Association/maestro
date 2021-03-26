@@ -152,6 +152,7 @@
                     <version>3.0.0-M5</version>
 
                     <configuration>
+                        <useSystemClassLoader>false</useSystemClassLoader>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
                         <!-- https://stackoverflow.com/questions/55272870/surefire-maven-plugin-corrupted-stdout-by-directly-writing-to-native-stream-in -->
