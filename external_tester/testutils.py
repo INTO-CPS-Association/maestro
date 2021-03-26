@@ -4,6 +4,7 @@ import os
 import filecmp
 import tempfile
 import pathlib
+import csv
 from collections import namedtuple
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
@@ -24,6 +25,43 @@ def retrieveConfiguration():
 def retrieveSimulationConfiguration():
     config = json.load(open(simulationConfigurationPath))
     return config
+
+def compareCSV(expected, actual):
+    if os.path.exists(expected):
+        convert(expected)
+        compareResult = True
+
+        with open(expected) as expectedCSV, open(actual) as actualCSV:
+            expectedReader = csv.DictReader(expectedCSV)
+            
+            expectedReader.fieldnames
+            actualReader = csv.DictReader(actualCSV)
+
+            if not(set(expectedReader.fieldnames) == set(actualReader.fieldnames)):
+                print("Columns does not match!")
+                compareResult = False
+
+            elif not(expectedReader.__sizeof__() == actualReader.__sizeof__()):
+                 print(f"Column lengths does not match! {expectedReader.__sizeof__()} {actualReader.__sizeof__()}")
+                 compareResult = False
+
+            else: 
+                for actualRow, expectedRow in zip(actualReader, expectedReader):
+                    if not(compareResult):
+                        break
+                    for expectedColumn in expectedReader.fieldnames:
+                        if not(actualRow[expectedColumn] == expectedRow[expectedColumn]):
+                            print(f"Value mismatch for column '{expectedColumn}' on line {expectedReader.line_num}. Expected value: {actualRow[expectedColumn]} and actual value: {expectedRow[expectedColumn]}")
+                            compareResult = False
+
+        if not compareResult:
+            print("ERROR: CSV files {} and {} do not match!".format(expected, actual))
+            return False
+        else:
+            print("CSV files match")
+            return True
+    else:
+        print(f"ERROR: {expected} doest not exist!")
 
 def compare(strPrefix, expected, actual):
     if os.path.exists(expected):
