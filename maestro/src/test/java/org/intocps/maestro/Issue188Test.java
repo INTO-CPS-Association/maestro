@@ -13,7 +13,6 @@ public class Issue188Test {
         Assertions.assertTrue(Main.argumentHandler(new String[]{"-i", Issue188Test.class.getClassLoader().getResource("188/spec.mabl").getPath()}));
     }
 
-    @Disabled
     @Test
     public void CreateAndInterpretNewSpec() throws Exception {
         String initializeJson = Issue188Test.class.getClassLoader().getResource("188/initialize.json").getPath();
