@@ -167,7 +167,7 @@ public class VariableStep {
             portsWithDataStm = MableAstFactory.newALocalVariableStm(MableAstFactory
                     .newAVariableDeclaration(MableAstFactory.newAIdentifier(portsWithDataIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), portsWithData.size(),
-                            MableAstFactory.newAArrayInitializer(portsWithData)));
+                            portsWithData.size() > 0 ? MableAstFactory.newAArrayInitializer(portsWithData) : null));
 
 
             //fmu names variable
@@ -202,7 +202,7 @@ public class VariableStep {
             portNamesStm = MableAstFactory.newALocalVariableStm(MableAstFactory
                     .newAVariableDeclaration(MableAstFactory.newAIdentifier(portNamesIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), portNames.size(),
-                            MableAstFactory.newAArrayInitializer(portNames)));
+                            portNames.size() > 0 ? MableAstFactory.newAArrayInitializer(portNames) : null));
 
             //initializePortNames function
             initializePortNamesStm = MableAstFactory.newExpressionStm(MableAstFactory

@@ -38,6 +38,9 @@ public class VariableStepValue extends ModuleValue {
         final Set<InitializationMsgJson.Constraint> constraints = new HashSet<>();
         Map<String, Map<String, Object>> namedConstraints = (new ObjectMapper()).convertValue(config.get("constraints"), new TypeReference<>() {
         });
+        if(namedConstraints == null){
+            return constraints;
+        }
 
         for (Map.Entry<String, Map<String, Object>> entry : namedConstraints.entrySet()) {
             final InitializationMsgJson.Constraint constraint = InitializationMsgJson.Constraint.parse(entry.getValue());
