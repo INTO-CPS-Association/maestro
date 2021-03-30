@@ -54,8 +54,6 @@ public class MaBLTemplateGenerator {
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
-    public static final String VARIABLESTEP_MODULE_NAME = "VariableStep";
-    public static final String VARIABLESTEP_MODULE_NAME_VARIABLE_NAME = "variableStep";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -156,7 +154,8 @@ public class MaBLTemplateGenerator {
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                                 MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
                                 Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
-                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(StringEscapeUtils
+                                                .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
                 break;
 
             default:
@@ -184,13 +183,6 @@ public class MaBLTemplateGenerator {
         if (faultInject) {
             stmMaintainer.add(createLoadStatement(FAULT_INJECT_MODULE_NAME,
                     Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath()))));
-        }
-
-        boolean includeVariableStep = templateConfiguration.getAlgorithm().getType() == StepAlgorithm.VARIABLESTEP;
-        if (includeVariableStep) {
-            stmMaintainer.add(createLoadStatement(VARIABLESTEP_MODULE_NAME, Arrays.asList(newAStringLiteralExp(StringEscapeUtils
-                    .escapeJava(((VariableStepAlgorithm) templateConfiguration.getAlgorithm()).getInitialisationDataForVariableStep())))));
-
         }
 
         // Create FMU load statements
@@ -273,9 +265,6 @@ public class MaBLTemplateGenerator {
         if (faultInject) {
             stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
-        if (includeVariableStep) {
-            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(VARIABLESTEP_MODULE_NAME_VARIABLE_NAME)));
-        }
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
                 Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
@@ -284,9 +273,6 @@ public class MaBLTemplateGenerator {
                         newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME)));
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
-        }
-        if (includeVariableStep) {
-            imports.add(newAIdentifier(VARIABLESTEP_MODULE_NAME));
         }
 
         ASimulationSpecificationCompilationUnit unit =
@@ -434,15 +420,6 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(startTimeLexName),
                                 AIdentifierExpFromString(endTimeLexName))));
-    }
-
-    public static PStm createExpandJacobianStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName, String endTimeLexName,
-            StepAlgorithm algorithm) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(algorithm == StepAlgorithm.FIXEDSTEP ? FIXEDSTEP_FUNCTION_NAME : VARIABLESTEP_FUNCTION_NAME),
-                        Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(stepSizeLexName),
-                                AIdentifierExpFromString(startTimeLexName), AIdentifierExpFromString(endTimeLexName))));
     }
 
     public static AIdentifierExp AIdentifierExpFromString(String x) {
