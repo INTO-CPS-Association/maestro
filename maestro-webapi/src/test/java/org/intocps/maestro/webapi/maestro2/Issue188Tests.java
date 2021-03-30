@@ -7,6 +7,7 @@ import org.intocps.maestro.core.ZipUtilities;
 import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +50,14 @@ public class Issue188Tests {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
+    
     @Test
     public void fixedStepSimulationRelativeFMU() throws Exception {
         File initializePath = new File(Issue188Tests.class.getClassLoader().getResource("maestro2/188/initialize.json").getPath());
         fixedStepSimulationParameterizedInitialize(initializePath);
     }
-
+    
+    @Disabled
     @Test
     public void fixedStepSimulationRelativeDirectoryFMU() throws Exception {
         File zipFile = new File("target/test-classes/maestro2/188/GATestController.fmu");
