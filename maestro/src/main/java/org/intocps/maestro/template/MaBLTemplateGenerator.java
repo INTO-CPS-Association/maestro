@@ -9,7 +9,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.core.api.StepAlgorithm;
-import org.intocps.maestro.core.api.VarStepSizeAlgorithm;
+import org.intocps.maestro.core.api.VariableStepAlgorithm;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -189,7 +189,7 @@ public class MaBLTemplateGenerator {
         boolean includeVariableStep = templateConfiguration.getAlgorithm().getType() == StepAlgorithm.VARIABLESTEP;
         if (includeVariableStep) {
             stmMaintainer.add(createLoadStatement(VARIABLESTEP_MODULE_NAME, Arrays.asList(newAStringLiteralExp(StringEscapeUtils
-                    .escapeJava(((VarStepSizeAlgorithm) templateConfiguration.getAlgorithm()).getInitialisationDataForVariableStep())))));
+                    .escapeJava(((VariableStepAlgorithm) templateConfiguration.getAlgorithm()).getInitialisationDataForVariableStep())))));
 
         }
 
@@ -248,7 +248,7 @@ public class MaBLTemplateGenerator {
         }
 
         // add variable statements for start time and end time.
-        stmMaintainer.add(createRealVariable(START_TIME_NAME, 0.0));
+        stmMaintainer.add(createRealVariable(START_TIME_NAME, templateConfiguration.getAlgorithm().getStartTime()));
         stmMaintainer.add(createRealVariable(END_TIME_NAME, templateConfiguration.getAlgorithm().getEndTime()));
 
         // Add the initializer expand stm

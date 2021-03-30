@@ -9,7 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2EnvironmentConfiguration;
@@ -185,7 +185,7 @@ public class FullSpecTest {
             if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
                 Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
                         (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
-                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime, a.size))
+                builder.setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime, a.size, 0.0))
                         .setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn);
             }
 

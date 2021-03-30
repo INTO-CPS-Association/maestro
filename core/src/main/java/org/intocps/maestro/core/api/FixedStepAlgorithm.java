@@ -1,12 +1,14 @@
 package org.intocps.maestro.core.api;
 
-public class FixedStepSizeAlgorithm implements IStepAlgorithm {
-    public final double endTime;
-    public final double stepSize;
+public class FixedStepAlgorithm implements IStepAlgorithm {
+    private final double endTime;
+    private final double stepSize;
+    private final double startTime;
 
-    public FixedStepSizeAlgorithm(double endTime, double stepSize) {
+    public FixedStepAlgorithm(double endTime, double stepSize, double startTime) {
         this.endTime = endTime;
         this.stepSize = stepSize;
+        this.startTime = startTime;
     }
 
     @Override
@@ -22,5 +24,10 @@ public class FixedStepSizeAlgorithm implements IStepAlgorithm {
     @Override
     public double getStepSize(){
         return stepSize;
+    }
+
+    @Override
+    public double getStartTime() {
+        return startTime;
     }
 }

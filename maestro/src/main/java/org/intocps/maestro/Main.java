@@ -10,7 +10,7 @@ import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.cli.MaestroV1SimulationConfiguration;
 import org.intocps.maestro.codegen.mabl2cpp.MablCppCodeGenerator;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -264,8 +264,8 @@ public class Main {
 
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn).
-                setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime,
-                        ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize()));
+                setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
+                        ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize(), 0.0));
 
 
         return builder.build();

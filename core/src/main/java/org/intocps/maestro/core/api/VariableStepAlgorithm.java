@@ -1,13 +1,14 @@
 package org.intocps.maestro.core.api;
 
-public class VarStepSizeAlgorithm implements IStepAlgorithm {
+public class VariableStepAlgorithm implements IStepAlgorithm {
     private final double endTime;
+    private final double startTime;
     private final double minStepSize;
     private final double maxStepSize;
     private final double initialStepSize;
     private final String initialisationDataForVariableStep;
 
-    public VarStepSizeAlgorithm(double endTime, Double[] stepSizes, Double initSize, String initDataForVarStep) {
+    public VariableStepAlgorithm(double endTime, Double[] stepSizes, Double initSize, String initDataForVarStep, double startTime) {
         if (stepSizes.length != 3) {
             //TODO: throw
         }
@@ -16,6 +17,7 @@ public class VarStepSizeAlgorithm implements IStepAlgorithm {
         this.maxStepSize = stepSizes[1];
         this.initialStepSize = initSize;
         this.initialisationDataForVariableStep = initDataForVarStep;
+        this.startTime = startTime;
     }
 
     public String getInitialisationDataForVariableStep() {
@@ -43,6 +45,11 @@ public class VarStepSizeAlgorithm implements IStepAlgorithm {
     @Override
     public double getStepSize() {
         return initialStepSize;
+    }
+
+    @Override
+    public double getStartTime() {
+        return startTime;
     }
 
     public class Constraint {

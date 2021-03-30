@@ -6,9 +6,9 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.core.api.VarStepSizeAlgorithm;
+import org.intocps.maestro.core.api.VariableStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -97,10 +97,11 @@ public class Maestro2Broker {
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
-            algorithm = new FixedStepSizeAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize());
+            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(), body.getStartTime());
         } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            algorithm = new VarStepSizeAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(), (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()));
+            algorithm = new VariableStepAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
+                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(),
+                    (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()), body.getStartTime());
 
                     ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
                         if (v instanceof InitializationData.ZeroCrossingConstraint) {
