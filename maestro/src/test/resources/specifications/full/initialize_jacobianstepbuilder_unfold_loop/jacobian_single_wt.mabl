@@ -29,7 +29,7 @@ int status = 0;
 @Config("@file: config.json");
 Initializer.expand initialize(components,START_TIME, END_TIME);
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME, "src/test/resources/specifications/full/initialize_jacobianstepbuilder_unfold_loop/mm.json");
+JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME, "src/test/resources/specifications/full/initialize_jacobianstepbuilder_unfold_loop/algorithm.json");
 tankcontroller.freeInstance(ctrlInstance);
 SingleWatertank.freeInstance(wtInstance);
 

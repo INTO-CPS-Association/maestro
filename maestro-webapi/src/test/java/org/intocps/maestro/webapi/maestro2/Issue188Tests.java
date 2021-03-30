@@ -50,14 +50,14 @@ public class Issue188Tests {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
-
+    @Disabled
     @Test
     public void fixedStepSimulationRelativeFMU() throws Exception {
         File initializePath = new File(Issue188Tests.class.getClassLoader().getResource("maestro2/188/initialize.json").getPath());
         fixedStepSimulationParameterizedInitialize(initializePath);
     }
     
-    @Disabled
+
     @Test
     public void fixedStepSimulationRelativeDirectoryFMU() throws Exception {
         File zipFile = new File("target/test-classes/maestro2/188/GATestController.fmu");
