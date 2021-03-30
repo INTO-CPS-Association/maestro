@@ -20,6 +20,10 @@ public class InitializationData {
     @JsonProperty("liveGraphVisibleRowCount")
     final Object liveGraphVisibleRowCount = null;
 
+    @JsonIgnore
+    @JsonProperty("livestreamInterval")
+    final Object livestreamInterval = null;
+
     @JsonProperty("fmus")
     final Map<String, String> fmus;
     @JsonProperty("connections")
@@ -62,7 +66,8 @@ public class InitializationData {
             @JsonProperty("hasExternalSignals") boolean hasExternalSignals, @JsonProperty("algorithm") IAlgorithmConfig algorithm,
             @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel,
             @JsonProperty("liveGraphColumns") final Object liveGraphColumns,
-            @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount) {
+            @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount,
+            @JsonProperty("livestreamInterval") final Object livestreamInterval) {
         this.fmus = fmus;
         this.connections = connections;
         this.parameters = parameters;
