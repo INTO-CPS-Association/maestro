@@ -36,6 +36,12 @@
             <groupId>org.into-cps</groupId>
             <artifactId>modeldefinition</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro</groupId>
+            <artifactId>fmi</artifactId>
+            <version>2.1.5-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 

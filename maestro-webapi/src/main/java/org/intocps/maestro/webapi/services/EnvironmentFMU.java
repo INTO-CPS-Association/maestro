@@ -4,7 +4,7 @@ import org.intocps.fmi.*;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;

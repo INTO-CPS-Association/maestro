@@ -1,7 +1,6 @@
 package org.intocps.maestro.framework.fmi2;
-
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import org.intocps.orchestration.fmi.VdmSvChecker;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;

@@ -6,7 +6,7 @@ import org.intocps.maestro.webapi.services.CoeService;
 import org.intocps.maestro.webapi.services.EnvironmentFMUFactory;
 import org.intocps.orchestration.coe.config.CoeConfiguration;
 import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.junit.After;
 import org.junit.Before;

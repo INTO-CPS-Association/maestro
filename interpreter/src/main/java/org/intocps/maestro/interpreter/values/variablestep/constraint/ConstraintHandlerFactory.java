@@ -42,6 +42,7 @@
  */
 package org.intocps.maestro.interpreter.values.variablestep.constraint;
 
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
 import org.intocps.maestro.interpreter.values.variablestep.StepsizeInterval;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.boundeddifference.BoundedDifferenceHandler;
@@ -49,8 +50,8 @@ import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingra
 import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossing.ZerocrossingHandler;
 import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
 import org.slf4j.Logger;
+import static org.intocps.maestro.fmi.ModelDescription.*;
 
 import java.util.*;
 

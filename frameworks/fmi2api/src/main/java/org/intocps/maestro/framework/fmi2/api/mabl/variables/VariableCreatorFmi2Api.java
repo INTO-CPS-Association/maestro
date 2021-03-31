@@ -5,13 +5,13 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;

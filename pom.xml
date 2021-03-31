@@ -50,6 +50,8 @@
         <module>frameworks</module>
         <module>maestro-webapi</module>
         <module>codegen</module>
+        <module>fmi</module>
+        <module>modeldefinitionchecker</module>
     </modules>
 
     <build>

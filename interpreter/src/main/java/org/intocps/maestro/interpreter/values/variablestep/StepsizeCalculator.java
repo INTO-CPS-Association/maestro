@@ -42,6 +42,8 @@
  */
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandlerFactory;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.FmuMaxStepSizeHandler;
@@ -50,12 +52,10 @@ import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.httpserver.RequestHandler;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.intocps.maestro.fmi.ModelDescription.*;
 
 import java.util.*;
 
@@ -100,8 +100,8 @@ public class StepsizeCalculator {
         }
     }
 
-    public Double getStepsize(final Double currentTime, final Map<ModelInstance, Map<ScalarVariable, Object>> currentValues,
-            final Map<ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
+    public Double getStepsize(final Double currentTime, final Map<ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues,
+            final Map<ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
         currentSolutionPoint.advance(currentTime, currentValues, currentDerivatives, stepsize, wasStepsizeLimitedByDiscreteConstraint);
         wasStepsizeLimitedByDiscreteConstraint = false;
         final Double stepsizeToEnd = endTime - currentTime;

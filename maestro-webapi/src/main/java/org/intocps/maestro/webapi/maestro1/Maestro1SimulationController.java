@@ -16,7 +16,7 @@ import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.httpserver.Algorithm;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.LogVariablesContainer;
 import org.intocps.orchestration.coe.util.ZipDirectory;

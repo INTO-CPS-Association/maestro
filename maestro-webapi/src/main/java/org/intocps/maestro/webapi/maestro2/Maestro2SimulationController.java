@@ -25,7 +25,7 @@ import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.Algorithm;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

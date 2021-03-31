@@ -1,6 +1,6 @@
 package org.intocps.maestro.webapi.services;
 
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.ArrayList;
 import java.util.List;

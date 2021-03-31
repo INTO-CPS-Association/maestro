@@ -48,8 +48,7 @@ import java.util.Observable;
 
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
+import static org.intocps.maestro.fmi.ModelDescription.*;
 
 public class CurrentSolutionPoint extends Observable
 {

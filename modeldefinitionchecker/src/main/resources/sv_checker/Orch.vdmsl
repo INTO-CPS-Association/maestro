@@ -1,0 +1,576 @@
+/* 
+  Model that formalises rule checking of FMU (Functional Mock-up Unit) scalars. The model takes as input an initial scalar
+  with possibly undefined values for causality, variability and intial. First, the model
+  attempts to adjust any of the undefined values. Afterwards it checks
+  that the adjusted scalar follows the standard. If the adjusted scalar does follow the standard then the model
+  produces a meaningful error message indicating what the specific problem with the scalar configuration is.
+
+  Steps of individual FMU init:
+  (1) Read all scalar variables from FMU (a set of SV)
+  (2) Initialise the FMU according to the FMI standard,
+  i.e. set the default values of the scalar properties,
+  if not defined.
+  (3) Validate the scalar variables of the FMU 
+	according to the FMI standard
+*/
+module Orch
+
+imports from IO all, from VDMUtil all
+definitions
+
+types
+
+-- The different causalities a scalar may specify
+Causality = <parameter> | <calculatedParameter> | <input> | <output> | <local> | <independent>;
+
+-- The different variabilities a scalar may specify
+Variability = <constant> | <fixed> | <tunable> | <discrete> | <continuous>;
+
+-- The different initial values a scalar may specify
+Initial = <exact> | <approx> | <calculated>;
+
+Types = <Real> | <Integer> | <Boolean> | <String> | <Enumeration>;
+StartValueTypes = [real | int | bool | seq of char | token];
+
+-- The type of a scalar
+Type ::
+	type  : Types
+	startValue : StartValueTypes;
+
+/*
+  Represents a scalar before it has been adjusted. At this point causality, variability as well as the
+  initial value might be undefined, which is indicated using the 'nil' value.
+*/
+SV ::
+	causality 	: [Causality]
+	variability : [Variability]
+	initial			: [Initial]
+	type				: Type;
+/*
+ Represents a scalar after it has been adjusted. At this point only the initial value may be undefined,
+ which is indicated using the 'nil' value.
+*/
+SV' ::
+	causality 	: Causality
+	variability : Variability
+	initial			: [Initial]
+	type				: Type
+
+functions
+
+TypeOk :  Type -> bool * seq of char
+TypeOk (ty) == 
+let mk_Type(t,s) = ty 
+in 
+if s=nil  or
+   (t=<Real> and is_real(s))  or
+   (t=<Integer> and is_int(s)) or
+   (t=<Boolean> and (is_bool(s) or s = 0 or s = 1)) or
+   (t=<String> and (is_(s,seq of char)or len s=0 )) or --or len s=0
+   (t=<Enumeration> and is_int(s))
+			then mk_(true, "Combination OK")
+else
+	mk_(false, "Type and startvalue incompatible. Got: type " ^
+	  VDMUtil`val2seq_of_char[Types](t) ^ " and start value " ^
+	  VDMUtil`val2seq_of_char[StartValueTypes](s));
+/*
+ Construction of initial values based on the "causality/variability" table on page 48
+ as well as the "initial" table on page 49
+*/
+CalcInitial : Causality * Variability -> [Initial]
+CalcInitial(c,v) ==
+cases c:
+	<parameter> ->
+	  if v in set {<fixed>, <tunable>} then
+	    <exact>
+	  else
+	    nil, -- (A)
+	<calculatedParameter> ->
+	  if(v in set {<fixed>, <tunable>}) then
+	    <calculated>
+	  else
+	    nil, -- (B)
+	<input> ->
+	  nil,--if(v in set {<discrete>, <continuous>}) then  nil else nil, --(D)
+	<output> ->
+	  if(v=<constant>) then
+	    <exact>
+	  else 
+	    if (v in set {<discrete>, <continuous>}) then
+	      <calculated>
+	    else
+	      nil, -- (A) and (C)
+	<local> ->
+	  if(v=<constant>) then
+	    <exact>
+	  else
+	    if (v in set { <discrete>, <fixed>, <tunable>, <continuous>}) then
+	      <calculated>
+	    else
+	      nil, -- (A), (B) and (C)
+	<independent> -> nil--if (v=<continuous>) then  nil, -- (E)
+end
+pre CausalityVariabilityOk(c,v).#1
+post InitialOk(c,v,RESULT).#1;
+
+/*
+ Takes a scalar value with possibly undefined properties and tries to
+ construct a valid scalar with the default values for the undefined
+ properties. See page 46 (causality default), page 47 (continuous default)
+ and page 49 (initial values)
+*/
+InitSV : SV -> SV'
+InitSV(sv) ==
+let mk_SV(c,v,i,t) = sv,
+	  c' = if (c = nil) then <local> else c,
+		v' = if (v = nil) then <continuous> else v,
+		i' = if (i = nil) then CalcInitial(c', v') else i
+in
+  mk_SV'(c', v', i', t)
+pre
+let cc = if sv.causality = nil then <local> else sv.causality,
+    vv = if sv.variability = nil then <continuous> else sv.variability
+in 
+  CausalityVariabilityOk(cc,vv).#1
+post
+let mk_SV'(c',v',i',-) = RESULT
+in 
+ (sv.causality = nil => c' = <local>) and
+ (sv.variability = nil => v' = <continuous>) and
+ ((sv.initial = nil and CausalityVariabilityOk(c',v').#1) => InitialOk(c',v',i').#1);
+
+
+TypeVariability :  Variability * Type -> bool * seq of char
+TypeVariability (v,t) ==
+  if v = <continuous> => t.type = <Real> then 
+  	mk_(true,"Combination OK")
+  else
+  	mk_(false, "For a continuous variable the type has to be Real");
+/*
+ Constructs a string representation based on a valid combination of causality and variablity
+ as indicated by the table on page 50
+*/
+ValidSettingsToStr : Causality * Variability -> seq of char
+ValidSettingsToStr(c ,v) ==
+if c=<parameter> and v=<fixed> then
+  "fixed parameter"
+elseif c=<parameter> and v=<tunable> then
+  "tunable parameter"
+elseif c=<calculatedParameter> and v=<fixed> then
+  "fixed dependent parameter"
+elseif c=<calculatedParameter> and v=<tunable> then
+  "tunable dependent parameter"
+elseif c=<input> and v=<discrete> then
+  "discrete input"
+elseif c=<input> and v=<continuous> then
+  "continuous input"
+elseif c=<output> and v=<constant> then
+  "constant output"
+elseif c=<output> and v=<discrete> then
+  "discrete output" 
+elseif c=<output> and v=<continuous> then
+  "continuous output"
+elseif c=<local> and v=<constant> then
+  "constant local"
+elseif c=<local> and v=<fixed> then
+  "fixed local"
+elseif c=<local> and v=<tunable> then
+  "tunable local"
+elseif c=<local> and v=<discrete> then
+  "discrete local"
+elseif c=<local> and v=<continuous> then
+  "continuous local"
+elseif c=<independent> and v=<continuous> then
+  "continuous independent"
+else
+  undefined
+pre CausalityVariabilityOk(c,v).#1;
+/*
+ Assuming that the scalar is invalid check if the causality and variable is the problem (see table on page 49)
+*/
+CausalityVariabilityOk : Causality * Variability -> bool * seq of char
+CausalityVariabilityOk(c,v) ==
+if c in set {<parameter>, <calculatedParameter>, <input>} and v = <constant> then
+  mk_(false, ErrorMsg(c,v))
+elseif c in set {<parameter>, <calculatedParameter>} and v in set {<discrete>, <continuous>} then
+  mk_(false, ErrorMsg(c,v))
+elseif c=<independent> and v in set {<constant>, <fixed>, <tunable>, <discrete>} then
+  mk_(false, ErrorMsg(c,v))
+elseif c in set {<input>,<output>} and v in set {<fixed>, <tunable>} then
+  mk_(false, ErrorMsg(c,v))
+else
+  mk_(true, "Valid combination of Causality and Variability.")
+post RESULT.#1 => ValidCV(c,v);
+
+ValidCV :  Causality * Variability -> bool
+ValidCV (c,v) ==
+((c=<parameter> and v=<fixed>) or
+(c=<parameter> and v=<tunable>) or
+(c=<calculatedParameter> and v=<fixed>) or
+(c=<calculatedParameter> and v=<tunable>) or
+(c=<input> and v=<discrete>) or
+(c=<input> and v=<continuous>) or
+(c=<output> and v=<constant>) or
+(c=<output> and v=<discrete>) or
+(c=<output> and v=<continuous>) or
+(c=<local> and v=<constant>) or
+(c=<local> and v=<fixed>) or
+(c=<local> and v=<tunable>) or
+(c=<local> and v=<discrete>) or
+(c=<local> and v=<continuous>) or
+(c=<independent> and v=<continuous>));
+
+  /*
+ Formatting of an error message
+*/
+ErrorMsg : Causality * Variability -> seq of char
+ErrorMsg (c,v) ==
+  IO`sprintf("Invalid combination of causality and variability. For causality '%s' the expected variabilities are '%s' but got: '%s'",[c,ValidVariabilities(c),v])
+pre not ValidCV(c,v);
+
+/*
+ Takes a causality and returns the valid variabilities in accordance with
+ the causality/variability table on page 49
+*/
+ValidVariabilities : Causality -> set of Variability
+ValidVariabilities(c) ==
+cases c:
+	<parameter> -> 	{<fixed>, <tunable>}, -- page 46
+	<calculatedParameter> -> {<fixed>, <tunable>},
+	<input> -> {<discrete>, <continuous>},
+	<output> -> {<discrete>, <continuous>, <constant>},
+	<local> -> {<constant> , <discrete>, <fixed>, <tunable>, <continuous>},
+	<independent> -> {<continuous>}
+end
+post
+forall v in set RESULT & CausalityVariabilityOk(c,v).#1;
+
+/*
+ Only invoked when CheckSV has returned false
+
+ Checks if the initial value is valid based on the combination of causality and variability.
+ Returns true if initial is valid - false otherwise. If initial is invalid a proper error message
+ is also being returned, otherwise the message just indicates that the combination was okay.
+*/
+InitialOk : Causality * Variability * [Initial] -> bool * seq of char
+InitialOk(c,v,i) ==
+let EXPECT_SPECIFIC_VAL = "An invalid value of Initial. Actual: %s, but expected: %s " ^
+        "for the combination of causality: %s and variability: %s",
+    EXPECT_INITIAL_NOT_SET = "An invalid value of Initial. Actual: %s, but expected " ^ 
+                "inital not to be set for the combination of causality: %s and variability: %s",
+    INITIAL_NOT_DEFINED = "An invalid value of Initial. Actual: Initial not defined, " ^
+    "but expected: %s for the combination of causality: %s and variability: %s",
+    COMB_OK = "Initial OK"
+in
+cases c:
+	<parameter> ->
+	  mk_(i in set {<exact>}, IO`sprintf(EXPECT_SPECIFIC_VAL, [i,<exact>,c,v])), -- page 46
+	<calculatedParameter> ->
+	  mk_(i in set {<approx>,<calculated>}, IO`sprintf(EXPECT_SPECIFIC_VAL, [i,{<approx>,<calculated>},c,v])),
+	<input> ->
+	  mk_(i=nil, IO`sprintf(EXPECT_INITIAL_NOT_SET, [i,{<approx>,<calculated>},c,v])),
+	<output> ->
+	  if (not(v = <constant> => i = <exact>)) then
+	    mk_(false, IO`sprintf(EXPECT_SPECIFIC_VAL, [i,<exact>,c,v]))
+		elseif (not(v in set {<continuous> , <discrete>} => i in set {<exact>, <approx>, <calculated>})) then
+		  mk_(false, IO`sprintf(INITIAL_NOT_DEFINED, [i,{<exact>,<approx>,<calculated>},c,v]))
+		else
+		  mk_(true,COMB_OK),
+	<local> ->
+	  if(not(v = <constant> => i=<exact>)) then
+	    mk_(false, IO`sprintf(INITIAL_NOT_DEFINED, [i,<exact>,c,v])) 
+		elseif(not(v in set {<fixed> , <tunable>} => i in set {<approx>, <calculated>})) then
+		  mk_(false, IO`sprintf(INITIAL_NOT_DEFINED, [i,{<approx>,<calculated>},c,v]))
+		elseif(not (v in set {<discrete> , <continuous>} => i in set {<exact>, <approx>, <calculated>})) then
+		  mk_(false, IO`sprintf(INITIAL_NOT_DEFINED, [i,{<exact>,<approx>,<calculated>},c,v]))
+		else
+		  mk_(true,COMB_OK),
+	<independent> ->
+	  mk_(i=nil, IO`sprintf(EXPECT_INITIAL_NOT_SET, [i,{<approx>,<calculated>},c,v]))
+end
+pre CausalityVariabilityOk(c,v).#1
+post RESULT.#1 =ValidCVI(c,v,i);
+
+ValidCVI :  Causality * Variability * [Initial] -> bool
+ValidCVI (c,v,i) ==
+ 
+(
+ -- Case A:
+ (i = <exact> and ((v in set {<fixed>,<tunable>} and c = <parameter>) or (v = <constant> and c in set {<output>,<local>})))
+ or
+ -- Case B:
+ (i in set {<approx>,<calculated>} and (v in set {<fixed>,<tunable>} and c in set {<calculatedParameter>,<local>}))
+ or
+ -- Case C:
+ (i in set {<exact>,<approx>,<calculated>} and (v in set {<discrete>,<continuous>} and c in set {<output>,<local>}))
+ or
+ -- Case D:
+ (i = nil and (v in set {<discrete>, <continuous>} and c = <input>))
+ or
+ -- Case E:
+ (i = nil and (v = <continuous> and c = <independent>))
+);
+
+/*
+ Only invoked when CheckSV has returned false. This function constructs
+ an appropriate error message for the start value.
+
+ If the problem is not the causality, variability or the initial value
+ then the start value must be the problem.
+*/
+StartValueOk : Causality * Variability * [Initial] *  Type -> bool * seq of char
+StartValueOk(c,v,i,t) ==
+let startValReq = true,
+		combOk = "Combination OK"
+in 
+cases c:
+	<parameter> ->
+	  if(not(i in set {<exact>, <approx>} => t.startValue <> nil)) then
+	    mk_(false,InvalidStartValueToStr(startValReq,c,v,i))
+	  else
+	    mk_(true,combOk),-- page 46
+	<calculatedParameter> ->
+	  if(not(i in set {<exact>, <approx>} => t.startValue <> nil)) then 
+		  mk_(false,InvalidStartValueToStr(startValReq,c,v,i)) 
+	  else if (not(i = <calculated> => t.startValue = nil)) then 
+		  mk_(false,InvalidStartValueToStr(not startValReq,c,v,i))
+		else
+		  mk_(true,combOk),
+	<input> ->
+	  if not t.startValue <> nil then
+	    mk_(false,InvalidStartValueToStr(startValReq,c,v,i))
+	  else
+	    mk_(true,combOk),
+	<output> ->
+	  if(not(i = <calculated> => t.startValue = nil)) then 
+		  mk_(false,InvalidStartValueToStr(not startValReq,c,v,i)) 
+	  elseif (not(i in set {<exact>, <approx>} => t.startValue <> nil)) then 
+		  mk_(false,InvalidStartValueToStr(startValReq,c,v,i))
+		else
+		  mk_(true,combOk),
+	<local> ->
+	  if(not(i = <calculated> => t.startValue = nil)) then 
+		  mk_(false,InvalidStartValueToStr(not startValReq,c,v,i)) 
+		elseif (not(i in set {<exact>, <approx>} => t.startValue <> nil)) then
+		  mk_(false,InvalidStartValueToStr(startValReq,c,v,i))
+		else
+		  mk_(true,combOk),
+	<independent> ->
+	  if not t.startValue = nil then
+	    mk_(false,InvalidStartValueToStr(not startValReq,c,v,i))
+	  else
+	    mk_(true,combOk)
+end
+pre ValidCV(c,v) and ValidCVI(c,v,i);
+
+ValidStart :  Causality * Variability * [Initial] * Type -> bool
+ValidStart (c,v,i,t) == 
+if (i in set{<exact>,<approx>}) or (c = <input>) then 
+  t.startValue <> nil
+elseif (i = <calculated> or c = <independent>) then
+  t.startValue = nil
+elseif (c in set {<parameter>,<input>} or v = <constant>) then
+  t.startValue <> nil
+else
+  false;
+ 
+
+InvalidStartValueToStr : bool * Causality * Variability * [Initial] -> seq of char
+InvalidStartValueToStr(b,c,v,i) ==
+if b then
+  IO`sprintf("A start value has to be set for a combination of " ^
+    "Causality: %s, Variability: %s and Initial: %s",[c, v, i])
+else
+  IO`sprintf("A start value is not allowed to be set for a combination " ^
+    "of Causality: %s, Variability: %s and Initial: %s",[c, v, i]);
+	
+/*
+ The main function of the specification.
+
+ Takes as input an adjusted scalar and checks if the combination
+ of properties is valid.
+
+ The function returns a string representation of the scalar if it is valid.
+ If the scalar is not valid the function produces an error message, which
+ describes the problem with the specific choice of properties.
+*/
+Validate : SV' -> bool * seq of char
+Validate(sv') ==
+let mk_(tc_ok, tc_msg) = TypeOk(sv'.type)
+in
+if not tc_ok then 
+		mk_(false, tc_msg)
+else
+	let mk_(vt_ok, vt_msg) = TypeVariability(sv'.variability,sv'.type)
+	in
+  	if not vt_ok then
+    	mk_(false, vt_msg)
+  	else
+    	-- The combination of properties is not valid and we need to construct a suitable error message
+    	--First check if causility and variability makes up an invalid combination
+  		let mk_(cv_ok, cv_msg) = CausalityVariabilityOk(sv'.causality,sv'.variability)
+    	in
+			if not cv_ok then
+		  	-- Causality and variability is not a valid combination so stop and return the error message
+		  	mk_(false, cv_msg)
+			else
+		  	-- Causality and variability makes up a valid combination. Check if the initial value is the problem 
+				let mk_(ini_ok, ini_msg) = InitialOk(sv'.causality,sv'.variability,sv'.initial)
+			  	
+				in
+					if not ini_ok then
+				  	mk_(false, ini_msg)
+					else
+				  	-- The initial value was also valid so the problem must be start value
+						let mk_(start_ok, start_msg) = StartValueOk(sv'.causality,sv'.variability,sv'.initial,sv'.type)
+					    	
+						in
+							if not start_ok then mk_(false, start_msg)
+							else
+								mk_(true, "ScalarVariable is valid")
+post
+RESULT.#1 = 
+let mk_SV'(c,v,i,t) = sv'
+in
+  TypeOk(t).#1 and
+	cases c:
+	 	<parameter> -> 	
+	    v in set {<fixed>, <tunable>} and
+	    (i in set {<exact>/*, <approx>*/} => t.startValue <> nil) and-- page 46
+	    i = <exact>, -- page 46
+		<calculatedParameter> -> 
+	    v in set {<fixed>, <tunable>} and --page 46
+	    i in set {<approx>,<calculated>} and-- page 46
+	    (i in set {<exact>, <approx>} => t.startValue <> nil) and
+	    (i = <calculated> => t.startValue = nil),
+		<input> -> 
+	    v in set {<discrete>, <continuous>} and -- page 46
+	    i = nil and		-- page 49 table
+	    (v = <continuous> => t.type = <Real>) and
+	    t.startValue <> nil,
+		<output> -> 
+	    v in set {<constant> , <discrete>, <continuous>} and --page 49 table
+	    (v = <continuous> => t.type = <Real>) and
+	    (v = <constant> => i = <exact>) and
+	    (i = <calculated> => t.startValue = nil) and
+	    (i in set {<exact>, <approx>} => t.startValue <> nil) and
+	    (v in set {<continuous> , <discrete>} => i in set {<exact>, <approx>, <calculated>}),
+		<local> -> 
+	    --v in set {<constant> , <discrete>, <fixed>, <tunable>, <continuous>} and -- A <local> can have any variability
+	    (v = <continuous> => t.type = <Real>) and
+	    (v = <constant> => i=<exact>) and
+	    (i = <calculated> => t.startValue = nil) and
+	    (i in set {<exact>, <approx>} => t.startValue <> nil) and
+	    (v in set {<fixed> , <tunable>} => i in set {<approx>, <calculated>}) and
+	    (v in set {<discrete> , <continuous>} => i in set {<exact>, <approx>, <calculated>}),
+		<independent> -> 
+	    v = <continuous> and -- page 46
+	    i = nil and
+	    (v = <continuous> => t.type = <Real>) and
+	    t.startValue = nil
+	 end;
+
+allSv: () -> set of SV
+allSv() ==
+{ mk_SV(c, v, i, mk_Type(t, s))|
+  v in set {<constant> , <discrete>, <fixed>, <tunable>, <continuous>, nil},
+	c in set {<parameter>,<calculatedParameter>,<input>,<output>,<local>,<independent>, nil},
+	i in set {<exact>, <approx>, <calculated>, nil},
+	t in set {<Real>,<Integer>,<Boolean>,<String>,<Enumeration>},
+	s in set {2, nil}};
+
+allC: () -> set of Causality
+allC() == {<parameter>,<calculatedParameter>,<input>,<output>,<local>,<independent>};
+
+allV: () -> set of Variability
+allV() == {<constant>,<discrete>,<fixed>,<tunable>,<continuous>};
+
+allI: () -> set of [Initial]
+allI() == {<exact>, <approx>, <calculated>, nil};
+
+allT: () -> set of Type
+allT() ==
+{mk_Type(t,s)|
+	t in set {<Real>,<Integer>,<Boolean>,<String>,<Enumeration>},
+	s in set {2.2, 2, true, "INTO" , mk_token("INTO"), nil}};
+  
+
+allCV: () -> set of (Causality * Variability)
+allCV() ==
+{ mk_(c,v) | 
+  v in set allV(),
+	c in set allC()};
+
+allCVI: () -> set of (Causality * Variability * [Initial])
+allCVI() ==
+{ mk_(c,v,i) | 
+  v in set allV(),
+	c in set allC(),
+	i in set allI()};
+	
+allCVIT: () -> set of (Causality * Variability * [Initial] * Type)
+allCVIT() ==
+{ mk_(c,v,i,t) | 
+  v in set allV(),
+	c in set allC(),
+	i in set allI(),
+	t in set allT()};
+
+allSV': () -> set of SV'
+allSV'() ==
+{ mk_SV'(c,v,i,t) |
+  c in set allC(),
+  v in set allV(),
+  i in set allI(),
+  t in set allT()}
+
+
+traces
+
+T_Validate:
+let sv' in set allSV'()
+in
+  Validate(sv')
+
+
+T_StartValueOk:
+let mk_(c,v,i,t) in set allCVIT()
+in
+  StartValueOk(c,v,i,t);
+
+T_InitialOk:
+let mk_(c,v,i) in set allCVI()
+in
+  InitialOk(c,v,i);
+
+T_ValidVariabilities:
+let c in set allC()
+in
+  ValidVariabilities(c);
+
+T_CausalityVariabilityOk:
+let mk_(c,v) in set allCV()
+in
+  CausalityVariabilityOk(c,v);
+
+T_CalcInit:
+let mk_(c,v) in set allCV()
+in
+  CalcInitial(c,v);
+
+T_InitSv:
+let sv in set allSv()
+in 
+	  InitSV(sv);
+	  
+T_ValidSettingsToStr:
+let mk_(c,v) in set allCV()
+in
+  ValidSettingsToStr(c,v)
+  
+T_TypeOK:
+let t in set allT() 
+in
+	TypeOk(t)
+
+end Orch

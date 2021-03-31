@@ -12,7 +12,7 @@ import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
