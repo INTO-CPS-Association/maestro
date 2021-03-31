@@ -272,6 +272,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         }
     }
 
+    @IValueLifecycleHandler.ValueLifecycle(name = "RealTime")
+    public static class RealTimeLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new RealTimeValue());
+        }
+    }
+
     @IValueLifecycleHandler.ValueLifecycle(name = "BooleanLogic")
     public static class BooleanLogicLifecycleHandler extends BaseLifecycleHandler {
         @Override

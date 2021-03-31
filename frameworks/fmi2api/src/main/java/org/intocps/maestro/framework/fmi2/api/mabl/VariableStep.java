@@ -5,18 +5,15 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableBuilder.call;
 
 public class VariableStep {
     private final DynamicActiveBuilderScope dynamicScope;
     private final MablApiBuilder mablApiBuilder;
-    private final String FUNCTION_CLOSE = "close";
     private String moduleIdentifier;
     private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
     private boolean runtimeModuleMode = false;
@@ -100,10 +97,10 @@ public class VariableStep {
 
         public BooleanVariableFmi2Api validateStepSize(DoubleVariableFmi2Api nextTime) {
             PStm targetVarStm;
-            List <AAssigmentStm> assignmentStms = new ArrayList<>();
+            List<AAssigmentStm> assignmentStms = new ArrayList<>();
             List<VariableFmi2Api> portsWithData = ports.stream().map(PortFmi2Api::getSharedAsVariable).collect(Collectors.toList());
 
-            for(int i = 0; i < portsWithData.size(); i++){
+            for (int i = 0; i < portsWithData.size(); i++) {
                 AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(portsWithDataIdentifier), newAIntLiteralExp(i));
                 PExp from = portsWithData.get(i).getReferenceExp().clone();
                 assignmentStms.add(newAAssignmentStm(to, from));
@@ -136,8 +133,8 @@ public class VariableStep {
 
 
             String variableName = dynamicScope.getName("var_step_size");
-            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(), newAExpInitializer(
-                    newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETSTEPSIZE),
+            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(),
+                    newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETSTEPSIZE),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
 
             this.dynamicScope.add(addDataPointStm, targetVarStm);

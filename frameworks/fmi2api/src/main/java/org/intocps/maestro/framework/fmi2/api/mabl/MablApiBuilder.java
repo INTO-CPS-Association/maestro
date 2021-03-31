@@ -39,6 +39,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private MathBuilderFmi2Api mathBuilderApi;
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
+    private RealTime realTime;
     private VariableStep variableStep;
     private LoggerFmi2Api runtimeLogger;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
@@ -195,6 +196,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
         return this.dataWriter;
+    }
+
+    public RealTime getRealTime() {
+        if (this.realTime == null){
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "RealTime");
+            this.realTime = new RealTime(this.dynamicScope, this, runtimeModule);
+        }
+        return this.realTime;
     }
 
     public BooleanVariableFmi2Api getGlobalExecutionContinue() {
