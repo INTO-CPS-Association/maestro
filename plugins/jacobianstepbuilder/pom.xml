@@ -9,7 +9,7 @@
     </parent>
 
     <groupId>org.into-cps.maestro.plugins</groupId>
-    <artifactId>fixedstepbuilder</artifactId>
+    <artifactId>jacobianstepbuilder</artifactId>
 
     <dependencies>
         <dependency>

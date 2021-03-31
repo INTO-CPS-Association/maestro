@@ -100,6 +100,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
             MathBuilderFmi2Api math = builder.getMathBuilder();
             BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
+            RealTime realTime = builder.getRealTime();
 
             // Convert raw MaBL to API
             DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
@@ -208,6 +209,11 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 stabilisation_loop = dynamicScope.store("stabilisation_loop", stabilisation_loop_max_iterations);
                 convergenceReached = dynamicScope.store("has_converged", false);
             }
+
+
+
+            DoubleVariableFmi2Api realStartTime = dynamicScope.store("real_start_time", 0.0);
+            realStartTime.setValue(realTime.getRealTime());
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
@@ -353,14 +359,25 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 discardScope.enterElse();
                 {
-
-
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
                     currentStepSize.setValue(stepSize);
 
                     // Call log
                     dataWriterInstance.log(currentCommunicationTime);
+
+                    DoubleVariableFmi2Api realStepTime = dynamicScope.store("real_step_time", 0.0);
+                    realStepTime.setValue(new DoubleExpressionValue(realTime.getRealTime().toMath().subtraction(realStartTime.toMath()).getExp()));
+                    if(jacobianStepConfig.simulationProgramDelay){
+                        dynamicScope.enterIf(realStepTime.toMath().lessThan(currentCommunicationTime));
+                        {
+                            DoubleVariableFmi2Api sleepTime = dynamicScope.store("sleep_time", 0.0);
+                            sleepTime.setValue(new DoubleExpressionValue(currentCommunicationTime.toMath().subtraction(realStepTime).getExp()));
+                            builder.getLogger().debug("## Simulation is ahead of real time. Sleeping for: %f MS", sleepTime);
+                            realTime.sleep(sleepTime);
+                            dynamicScope.leave();
+                        }
+                    }
 
                     dynamicScope.leave();
                 }
@@ -423,11 +440,6 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.0.1";
-    }
-
-    private enum algorithmEnum {
-        variableStep,
-        fixedStep
     }
 }
 
