@@ -1,12 +1,11 @@
 simulation
 import Initializer;
 import JacobianStepBuilder;
-import RealTime;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
 real START_TIME = 0.0;
-real END_TIME = 10.0;
+real END_TIME = 1.0;
 real STEP_SIZE = 0.1;
 
 int fmi_status_ok = 0;
@@ -38,5 +37,4 @@ SingleWatertank.freeInstance(wtInstance);
 unload(tankcontroller);
 unload(SingleWatertank);
 unload(logger);
-unload(RealTime);
 }
