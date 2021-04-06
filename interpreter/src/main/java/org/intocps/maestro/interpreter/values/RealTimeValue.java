@@ -10,7 +10,6 @@ public class RealTimeValue extends ModuleValue {
         super(createMembers());
     }
 
-
     private static Map<String, Value> createMembers(){
         Map<String, Value> componentMembers = new HashMap<>();
         componentMembers.put("getRealTime", new FunctionValue.ExternalFunctionValue(fcArgs -> {
@@ -27,6 +26,10 @@ public class RealTimeValue extends ModuleValue {
             }
             else{
                 throw new InterpreterException("Sleep time is not a valid value.");
+            }
+
+            if(sleepTime < 0){
+                throw new InterpreterException("Sleep time cannot be a negative number.");
             }
 
             try {

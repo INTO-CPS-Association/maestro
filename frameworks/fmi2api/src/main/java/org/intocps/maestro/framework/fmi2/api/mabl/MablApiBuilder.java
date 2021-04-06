@@ -198,7 +198,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.dataWriter;
     }
 
-    public RealTime getRealTime() {
+    public RealTime getRealTimeModule() {
         if (this.realTime == null){
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "RealTime");
             this.realTime = new RealTime(this.dynamicScope, this, runtimeModule);

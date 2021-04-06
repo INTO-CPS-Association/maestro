@@ -93,6 +93,7 @@ public class Maestro2Broker {
         config.absoluteTolerance = initializeRequest.getGlobal_absolute_tolerance();
         config.relativeTolerance = initializeRequest.getGlobal_relative_tolerance();
         config.stabilisationLoopMaxIterations = 5;
+        config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {

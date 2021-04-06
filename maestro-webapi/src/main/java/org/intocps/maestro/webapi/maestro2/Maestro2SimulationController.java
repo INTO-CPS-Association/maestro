@@ -171,9 +171,6 @@ public class Maestro2SimulationController {
         if (body.isParallelSimulation()) {
             throw new NotImplementedException("ParallelSimulation is not implemented");
         }
-        if (body.isSimulationProgramDelay()) {
-            throw new NotImplementedException("SimulationProgramDelay is not implemented");
-        }
 
         if (body.isHasExternalSignals()) {
             throw new NotImplementedException("HasExternalSignals is not implemented");
@@ -291,7 +288,7 @@ public class Maestro2SimulationController {
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
         throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
-        //        sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.SessionStatus.Stopping);
+        //sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.SessionStatus.Stopping);
         //        if (sessions.containsKey(sessionId)) {
         //            sessions.get(sessionId).stopSimulation();
         //        }
