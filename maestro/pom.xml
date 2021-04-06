@@ -61,9 +61,10 @@
             <artifactId>fixedstep</artifactId>
             <version>2.1.5-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
-            <artifactId>fixedstepbuilder</artifactId>
+            <artifactId>jacobianstepbuilder</artifactId>
             <version>2.1.5-SNAPSHOT</version>
         </dependency>
 
