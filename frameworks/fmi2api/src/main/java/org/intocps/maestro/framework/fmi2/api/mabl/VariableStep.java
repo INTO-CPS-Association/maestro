@@ -57,6 +57,8 @@ public class VariableStep {
         private final String FUNCTION_SETFMUS = "setFMUs";
         private final String FUNCTION_INITIALIZEPORTNAMES = "initializePortNames";
         private final String FUNCTION_ADDDATAPOINT = "addDataPoint";
+        private final String FUNCTION_HASREDUCEDSTEPSIZE = "hasReducedStepsize";
+        private final String FUNCTION_GETREDUCEDSTEPSIZE = "getReducedStepSize";
         private final String FUNCTION_GETSTEPSIZE = "getStepSize";
         private final String FUNCTION_SETENDTIME = "setEndTime";
         private final String FUNCTION_ISSTEPVALID = "isStepValid";
@@ -95,7 +97,9 @@ public class VariableStep {
             }
         }
 
-        public BooleanVariableFmi2Api validateStepSize(DoubleVariableFmi2Api nextTime) {
+        public BooleanVariableFmi2Api validateStepSize(DoubleVariableFmi2Api nextTime, BooleanVariableFmi2Api supportsRollBack) {
+            checkForInitialized();
+
             PStm targetVarStm;
             List<AAssigmentStm> assignmentStms = new ArrayList<>();
             List<VariableFmi2Api> portsWithData = ports.stream().map(PortFmi2Api::getSharedAsVariable).collect(Collectors.toList());
@@ -110,9 +114,10 @@ public class VariableStep {
             targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
                     newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_ISSTEPVALID),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), nextTime.getExp(),
+                                    supportsRollBack.getExp(),
                                     MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))))));
 
-            this.dynamicScope.add(assignmentStms.stream().toArray(AAssigmentStm[]::new));
+            this.dynamicScope.add(assignmentStms.toArray(AAssigmentStm[]::new));
             this.dynamicScope.add(targetVarStm);
 
             return new BooleanVariableFmi2Api(targetVarStm, dynamicScope.getActiveScope(), dynamicScope,
@@ -138,6 +143,38 @@ public class VariableStep {
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
 
             this.dynamicScope.add(addDataPointStm, targetVarStm);
+
+            return new DoubleVariableFmi2Api(targetVarStm, dynamicScope.getActiveScope(), dynamicScope,
+                    newAIdentifierStateDesignator(newAIdentifier(variableName)), newAIdentifierExp(variableName));
+        }
+
+        public BooleanVariableFmi2Api hasReducedStepsize() {
+            checkForInitialized();
+
+            PStm targetVarStm;
+
+            String variableName = dynamicScope.getName("has_reduced_step_size");
+            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(),
+                    newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_HASREDUCEDSTEPSIZE),
+                            Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
+
+            this.dynamicScope.add(targetVarStm);
+
+            return new BooleanVariableFmi2Api(targetVarStm, dynamicScope.getActiveScope(), dynamicScope,
+                    newAIdentifierStateDesignator(newAIdentifier(variableName)), newAIdentifierExp(variableName));
+        }
+
+        public DoubleVariableFmi2Api getReducedStepSize() {
+            checkForInitialized();
+
+            PStm targetVarStm;
+
+            String variableName = dynamicScope.getName("reduced_step_size");
+            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(),
+                    newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETREDUCEDSTEPSIZE),
+                            Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
+
+            this.dynamicScope.add(targetVarStm);
 
             return new DoubleVariableFmi2Api(targetVarStm, dynamicScope.getActiveScope(), dynamicScope,
                     newAIdentifierStateDesignator(newAIdentifier(variableName)), newAIdentifierExp(variableName));
