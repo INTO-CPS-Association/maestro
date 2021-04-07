@@ -50,6 +50,10 @@ public class Issue188Tests {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
+    /**
+     * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     * @throws Exception
+     */
     @Disabled
     @Test
     public void fixedStepSimulationRelativeFMU() throws Exception {
@@ -57,6 +61,10 @@ public class Issue188Tests {
         fixedStepSimulationParameterizedInitialize(initializePath);
     }
 
+    /**
+     * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     * @throws Exception
+     */
     @Disabled
     @Test
     public void fixedStepSimulationRelativeDirectoryFMU() throws Exception {
