@@ -3,7 +3,6 @@ package org.intocps.maestro.framework.fmi2;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
-import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.maestro.fmi.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;

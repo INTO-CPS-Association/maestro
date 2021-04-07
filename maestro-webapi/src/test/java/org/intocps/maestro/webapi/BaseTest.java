@@ -1,6 +1,6 @@
 package org.intocps.maestro.webapi;
 
-import org.intocps.orchestration.coe.httpserver.SessionController;
+import org.intocps.maestro.webapi.controllers.SessionController;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 

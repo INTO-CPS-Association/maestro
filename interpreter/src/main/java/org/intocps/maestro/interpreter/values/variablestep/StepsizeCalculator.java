@@ -44,15 +44,12 @@ package org.intocps.maestro.interpreter.values.variablestep;
 
 import org.intocps.maestro.fmi.FmiSimulationInstance;
 import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandlerFactory;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.FmuMaxStepSizeHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.SamplingRateHandler;
-import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.intocps.maestro.fmi.ModelDescription.*;
@@ -61,7 +58,7 @@ import java.util.*;
 
 public class StepsizeCalculator {
 
-    final static Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+    final static Logger logger = LoggerFactory.getLogger(StepsizeCalculator.class);
     private final static Double STRONG_RELAXATION_FACTOR = 3.0;
     private final static Double INVALID_STEP_TIGHTENING_FACTOR = 0.25;
     private final static String ROLLBACK_MSG = "Discarding previous step and rolling back internal states";
@@ -76,7 +73,7 @@ public class StepsizeCalculator {
     private FmuMaxStepSizeHandler fmuMaxStepSizeHandler = null;
 
     public StepsizeCalculator(final Set<InitializationMsgJson.Constraint> constraints, final StepsizeInterval stepsizeInterval,
-            final Double initialStepsize, final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) throws AbortSimulationException {
+            final Double initialStepsize, final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) throws InterpreterException {
         this.initialStepsize = stepsizeInterval.saturateStepsize(initialStepsize);
         this.stepsizeInterval = stepsizeInterval;
         for (InitializationMsgJson.Constraint constraint : constraints) {
@@ -92,16 +89,16 @@ public class StepsizeCalculator {
                 } else {
                     handler.add(h);
                 }
-            } catch (AbortSimulationException e) {
-                throw new AbortSimulationException(
+            } catch (Exception e) {
+                throw new InterpreterException(
                         "The simulation has been aborted because the constraint '" + constraint.getId() + "' could not be instantiated. Details: " +
                                 e.getMessage(), e);
             }
         }
     }
 
-    public Double getStepsize(final Double currentTime, final Map<ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues,
-            final Map<ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
+    public Double getStepsize(final Double currentTime, final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues,
+            final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
         currentSolutionPoint.advance(currentTime, currentValues, currentDerivatives, stepsize, wasStepsizeLimitedByDiscreteConstraint);
         wasStepsizeLimitedByDiscreteConstraint = false;
         final Double stepsizeToEnd = endTime - currentTime;
@@ -151,7 +148,7 @@ public class StepsizeCalculator {
         return stepsize;
     }
 
-    public StepValidationResult validateStep(final Double nextTime, final Map<ModelInstance, Map<ScalarVariable, Object>> nextValues,
+    public StepValidationResult validateStep(final Double nextTime, final Map<ModelConnection.ModelInstance, Map<ScalarVariable, Object>> nextValues,
             final Boolean supportsRollback) {
 
         currentSolutionPoint.peek(nextTime, nextValues);
@@ -177,11 +174,11 @@ public class StepsizeCalculator {
         this.endTime = endTime;
     }
 
-    private Map<Variable, Types> getTypeMap(final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) {
-        Map<Variable, Types> map = new HashMap<>();
-        for (ModelInstance key : instances.keySet()) {
+    private Map<ModelConnection.Variable, Types> getTypeMap(final Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) {
+        Map<ModelConnection.Variable, Types> map = new HashMap<>();
+        for (ModelConnection.ModelInstance key : instances.keySet()) {
             for (ScalarVariable sv : instances.get(key).config.scalarVariables) {
-                map.put(new Variable(key, sv.getName()), sv.getType().type);
+                map.put(new ModelConnection.Variable(key, sv.getName()), sv.getType().type);
             }
         }
         return map;

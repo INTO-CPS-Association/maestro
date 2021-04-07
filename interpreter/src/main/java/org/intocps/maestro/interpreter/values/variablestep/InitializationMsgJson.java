@@ -38,9 +38,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintType;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.Sampling;
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,9 +118,9 @@ import java.util.Vector;
 			return order == null ? DEFAULT_ORDER : order;
 		}
 
-		public List<Variable> getPorts()
+		public List<ModelConnection.Variable> getPorts()
 		{
-			final List<Variable> v = new Vector<Variable>();
+			final List<ModelConnection.Variable> v = new Vector<ModelConnection.Variable>();
 			if (ports == null || ports.isEmpty())
 			{
 				return v;
@@ -129,7 +129,7 @@ import java.util.Vector;
 			{
 				try
 				{
-					v.add(Variable.parse(vs));
+					v.add(ModelConnection.Variable.parse(vs));
 				} catch (Exception e)
 				{
 					// TODO Auto-generated catch block

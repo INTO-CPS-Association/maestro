@@ -45,7 +45,8 @@ package org.intocps.maestro.interpreter.values.variablestep.valuetracker;
 import java.util.Observable;
 import java.util.Observer;
 
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
+
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.values.variablestep.CurrentSolutionPoint;
 import org.intocps.maestro.interpreter.values.variablestep.CurrentSolutionPoint.Operation;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
@@ -55,7 +56,7 @@ public class DoubleValueTracker implements Observer, ValueTracker
 {
 
 	private DoubleValueTracker previousState = null;
-	private Variable trackedVariable;
+	private ModelConnection.Variable trackedVariable;
 	private Double xNext = null;
 	private Double x = null;
 	private Double xPrev = null;
@@ -77,7 +78,7 @@ public class DoubleValueTracker implements Observer, ValueTracker
 	}
 
 	public DoubleValueTracker(final Observable observable,
-			final Variable variable, final Integer predictionOrder)
+			final ModelConnection.Variable variable, final Integer predictionOrder)
 	{
 		observable.addObserver(this);
 		trackedVariable = variable;

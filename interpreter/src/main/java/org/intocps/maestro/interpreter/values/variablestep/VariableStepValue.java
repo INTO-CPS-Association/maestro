@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
-import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.maestro.fmi.ModelDescription;
 
 import java.io.File;

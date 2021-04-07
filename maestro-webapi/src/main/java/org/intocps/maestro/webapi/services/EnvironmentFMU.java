@@ -1,10 +1,10 @@
 package org.intocps.maestro.webapi.services;
 
 import org.intocps.fmi.*;
-import org.intocps.orchestration.coe.config.InvalidVariableStringException;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.framework.fmi2.InvalidVariableStringException;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+import org.intocps.maestro.plugin.Initializer.ModelParameter;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;

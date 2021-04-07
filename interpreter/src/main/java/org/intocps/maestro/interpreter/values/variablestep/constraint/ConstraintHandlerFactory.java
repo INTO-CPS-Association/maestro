@@ -43,13 +43,13 @@
 package org.intocps.maestro.interpreter.values.variablestep.constraint;
 
 import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
 import org.intocps.maestro.interpreter.values.variablestep.StepsizeInterval;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.boundeddifference.BoundedDifferenceHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.SamplingRateHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossing.ZerocrossingHandler;
-import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.slf4j.Logger;
 import static org.intocps.maestro.fmi.ModelDescription.*;
 
@@ -58,7 +58,7 @@ import java.util.*;
 public class ConstraintHandlerFactory {
 
     public static ConstraintHandler getHandler(final Observable obs, final InitializationMsgJson.Constraint jc, final StepsizeInterval interval,
-            final Double strongRelaxationFactor, final Map<Variable, Types> portTypeMap, final Logger logger) throws AbortSimulationException {
+            final Double strongRelaxationFactor, final Map<ModelConnection.Variable, Types> portTypeMap, final Logger logger) throws InterpreterException {
         Map<ConstraintType, Set<Types>> validTypeMap = new HashMap<>();
         validTypeMap.put(ConstraintType.ZEROCROSSING, new HashSet<>(Arrays.asList(Types.Real)));
         validTypeMap.put(ConstraintType.BOUNDEDDIFFERENCE, new HashSet<>(Arrays.asList(Types.Real, Types.Integer)));
@@ -80,12 +80,12 @@ public class ConstraintHandlerFactory {
         return null;
     }
 
-    private static void validatePortTypes(Map<Variable, Types> portTypeMap, Set<Types> validTypes, InitializationMsgJson.Constraint jc,
-            Logger logger) throws AbortSimulationException {
-        for (Variable var : jc.getPorts()) {
+    private static void validatePortTypes(Map<ModelConnection.Variable, Types> portTypeMap, Set<Types> validTypes, InitializationMsgJson.Constraint jc,
+            Logger logger) throws InterpreterException {
+        for (ModelConnection.Variable var : jc.getPorts()) {
             String varname = var.instance.key + "." + var.instance.instanceName + "." + var.variable;
             Boolean isFound = false;
-            for (Variable port : portTypeMap.keySet()) {
+            for (ModelConnection.Variable port : portTypeMap.keySet()) {
                 if (var.instance.key.equals(port.instance.key) && var.instance.instanceName.equals(port.instance.instanceName) &&
                         var.variable.equals(port.variable)) {
                     isFound = true;
@@ -95,7 +95,7 @@ public class ConstraintHandlerFactory {
                                 "Datatype " + type.toString() + " of variable " + varname + " is not a valid port-type for constraint of type " +
                                         jc.type + ". Please use only ports with type " + validTypes.toString();
                         logger.error(errMsg);
-                        throw new AbortSimulationException(errMsg);
+                        throw new InterpreterException(errMsg);
                     }
                     break;
                 }
@@ -103,7 +103,7 @@ public class ConstraintHandlerFactory {
             if (!isFound) {
                 String foundMsg = "Variable '" + varname + "' and datatype could not be validated.";
                 logger.error(foundMsg);
-                throw new AbortSimulationException(foundMsg);
+                throw new InterpreterException(foundMsg);
             }
 
         }

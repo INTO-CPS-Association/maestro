@@ -51,7 +51,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>org.intocps.orchestration.coe.modeldefinition.Main</mainClass>
+							<mainClass>org.intocps.maestro.fmi.Main</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

@@ -10,11 +10,11 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.config.ModelParameter;
+import org.intocps.maestro.plugin.Initializer.ModelParameter;
 
 import java.util.*;
 import java.util.function.BiFunction;

@@ -2,8 +2,6 @@ package org.intocps.maestro.webapi.controllers;
 
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.intocps.maestro.webapi.services.CoeService;
-import org.intocps.orchestration.coe.config.ModelConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
@@ -76,28 +74,6 @@ public class ControllerAdvisor {
         logger.error("Internal API BeanCreationException ref: " + guid, e);
         return error(e, HttpStatus.INTERNAL_SERVER_ERROR, guid);
     }
-
-    @ExceptionHandler(CoeService.SimulatorNotConfigured.class)
-    public ResponseEntity<VndErrors> simulatorNotConfigured(final CoeService.SimulatorNotConfigured e) {
-        final String guid = java.util.UUID.randomUUID().toString();
-        logger.error("Internal API Exception ref: " + guid, e);
-        return error(e, HttpStatus.BAD_REQUEST, guid);
-    }
-
-    @ExceptionHandler(CoeService.SimulatorInputNotRegonized.class)
-    public ResponseEntity<VndErrors> simulatorNotConfigured(final CoeService.SimulatorInputNotRegonized e) {
-        final String guid = java.util.UUID.randomUUID().toString();
-        logger.error("Internal API Exception ref: " + guid, e);
-        return error(e, HttpStatus.BAD_REQUEST, guid);
-    }
-
-    @ExceptionHandler(ModelConnection.InvalidConnectionException.class)
-    public ResponseEntity<VndErrors> simulatorNotConfigured(final ModelConnection.InvalidConnectionException e) {
-        final String guid = java.util.UUID.randomUUID().toString();
-        logger.error("Internal API Exception ref: " + guid, e);
-        return error(e, HttpStatus.BAD_REQUEST, guid);
-    }
-
 
     @ExceptionHandler(NotImplementedException.class)
     public ResponseEntity<VndErrors> notImplementedException(final NotImplementedException e) {
