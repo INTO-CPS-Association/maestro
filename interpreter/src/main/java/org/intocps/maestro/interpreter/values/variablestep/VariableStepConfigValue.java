@@ -47,7 +47,6 @@ public class VariableStepConfigValue extends Value {
             fsi.config.scalarVariables.forEach(
                     sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
                             .ifPresent(val -> {
-
                                 ScalarDerivativeEstimator derEst = derivativeEstimators.get(sv);
                                 derEst.advance(new Double[]{(Double) val.getValue(), null, null}, stepSize);
                                 derivatives.putIfAbsent(sv, new HashMap<>() {{

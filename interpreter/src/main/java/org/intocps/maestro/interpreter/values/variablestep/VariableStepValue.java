@@ -2,17 +2,14 @@ package org.intocps.maestro.interpreter.values.variablestep;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.fmi.IFmiComponent;
-import org.intocps.fmi.IFmu;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
-import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiInstanceConfig;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;

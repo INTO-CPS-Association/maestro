@@ -523,6 +523,19 @@ public class Fmi2Interpreter {
 
         }));
 
+        componentMembers.put("getMaxOutputDerivativeOrder",new FunctionValue.ExternalFunctionValue(fcargs -> {
+            ModelDescription modelDescription;
+            int maxDerOrder = 0;
+            try {
+                modelDescription = new ModelDescription(component.getFmu().getModelDescription());
+                maxDerOrder = modelDescription.getMaxOutputDerivativeOrder();
+            } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
+                e.printStackTrace();
+            }
+
+            return new IntegerValue(maxDerOrder);
+        }));
+
         componentMembers.put("getRealOutputDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
             //   int getRealOutputDerivatives(long[] scalarValueIndices, UInt nvr, int[] order, ref double[] derivatives);
             checkArgLength(fcargs, 4);
@@ -540,7 +553,6 @@ public class Fmi2Interpreter {
 
             int[] orders =
                     getArrayValue(fcargs.get(2), Optional.of(elementsToUse), NumericValue.class).stream().mapToInt(NumericValue::intValue).toArray();
-
 
             try {
                 FmuResult<double[]> res = component.getRealOutputDerivatives(scalarValueIndices, orders);

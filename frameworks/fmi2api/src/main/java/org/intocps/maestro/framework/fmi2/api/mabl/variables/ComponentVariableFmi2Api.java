@@ -438,7 +438,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     @Override
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
-        //return get(builder.getDynamicScope(), outputPorts.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
         Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName()) &&
                 (p.scalarVariable.causality == ModelDescription.Causality.Output ||
                         p.scalarVariable.causality == ModelDescription.Causality.Parameter)).toArray(Fmi2Builder.Port[]::new);
@@ -598,7 +597,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 port -> Map.entry(((VariableFmi2Api) valueFinal.get(port)).getReferenceExp().clone(), ((VariableFmi2Api) valueFinal.get(port)).type));
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
+    public void  set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
 
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
@@ -749,9 +748,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 if (port.getSharedAsVariable() == null) {
                     ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
                     this.setSharedBuffer(newBuf, type);
-
                     // TODO: Variable is not being added to buffer items.
-
                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                     port.setSharedAsVariable(newShared);
                 }
@@ -848,7 +845,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         SET,
         ENTERINITIALIZATIONMODE,
         EXITINITIALIZATIONMODE,
-        SETUPEXPERIMENT
+        SETUPEXPERIMENT,
+        GETREALOUTPUTDERIVATIVES,
+        SETREALOUTPUTDERIVATIVES,
+        GETMAXOUTPUTDERIVATIVEORDER
     }
 
     static class FmiStatusErrorHandlingBuilder {
