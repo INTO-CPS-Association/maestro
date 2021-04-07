@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
-public class BuilderTester {
+public class BuilderTest {
 
     @Test
     public void wt() throws Exception {
