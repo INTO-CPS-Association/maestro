@@ -470,19 +470,20 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
-    public Value createNewReturnValue(INode node, Context question) throws AnalysisException {
-        //TODO: Is this correct?
-        if(node instanceof AMultiplyBinaryExp){
-            NumericValue x = (NumericValue) ((AMultiplyBinaryExp) node).getLeft().apply(this,question).deref();
-            NumericValue y = (NumericValue) ((AMultiplyBinaryExp) node).getRight().apply(this,question).deref();
-            if(x instanceof RealValue || y instanceof RealValue){
-                return new RealValue(x.realValue() * y.realValue());
-            }
-            if(x instanceof IntegerValue || y instanceof IntegerValue){
-                return new IntegerValue(x.intValue() * y.intValue());
-            }
+    public Value caseAMultiplyBinaryExp(AMultiplyBinaryExp node, Context question) throws AnalysisException {
+
+        NumericValue x = (NumericValue) node.getLeft().apply(this,question).deref();
+        NumericValue y = (NumericValue) node.getRight().apply(this,question).deref();
+
+        if(x instanceof RealValue || y instanceof RealValue){
+            return new RealValue(x.realValue() * y.realValue());
         }
 
+        return new IntegerValue(x.intValue() * y.intValue());
+    }
+
+    @Override
+    public Value createNewReturnValue(INode node, Context question) throws AnalysisException {
         logger.debug("Unhandled interpreter node: {}", node.getClass().getSimpleName());
         throw new InterpreterException("Unhandled node: " + node);
     }
