@@ -1,5 +1,6 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
 import org.intocps.orchestration.coe.AbortSimulationException;
@@ -16,7 +17,8 @@ public class VariableStepConfigValue extends Value {
     private List<StepVal> dataPoints;
     private Double currTime = 0.0;
     private Double stepSize = 0.0;
-    private StepsizeCalculator stepsizeCalculator;
+    private StepValidationResult stepValidationResult;
+    private final StepsizeCalculator stepsizeCalculator;
     private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
@@ -63,11 +65,27 @@ public class VariableStepConfigValue extends Value {
         return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, null);
     }
 
-    public boolean isStepValid(Double nextTime, List<Value> portValues) {
-        StepValidationResult res =
-                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), false);
+    public boolean isStepValid(Double nextTime, List<Value> portValues, boolean supportsRollBack) {
+        stepValidationResult =
+                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), supportsRollBack);
 
-        return res.isValid();
+        return stepValidationResult.isValid();
+    }
+
+    public boolean hasReducedStepSize() {
+        if(stepValidationResult == null){
+            throw new InterpreterException("'isStepValid' needs to be called before 'hasReducedStepSize'");
+        }
+
+        return stepValidationResult.hasReducedStepsize();
+    }
+
+    public Double getReducedStepSize() {
+        if(stepValidationResult == null){
+            throw new InterpreterException("'isStepValid' needs to be called before 'reducedStepSize'");
+        }
+
+        return stepValidationResult.getStepsize();
     }
 
     public void setEndTime(final Double endTime) {

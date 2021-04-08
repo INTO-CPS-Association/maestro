@@ -21,6 +21,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -170,6 +171,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToVariablesInArray = new HashMap<>();
             ArrayVariableFmi2Api<Double> fmuCommunicationPoints =
                     dynamicScope.store("fmu_communicationpoints", new Double[fmuInstances.entrySet().size()]);
+            List<String> fmusThatSupportsGetState = new ArrayList<>();
             boolean everyFMUSupportsGetState = true;
             int indexer = 0;
             for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
@@ -180,10 +182,23 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                 fmuInstancesToVariablesInArray.put(entry.getValue(), fmuCommunicationPoints.items().get(indexer));
 
-                everyFMUSupportsGetState = entry.getValue().getModelDescription().getCanGetAndSetFmustate() && everyFMUSupportsGetState;
+                boolean supportsGetState = entry.getValue().getModelDescription().getCanGetAndSetFmustate();
+
+                if (supportsGetState) {
+                    fmusThatSupportsGetState.add(entry.getKey());
+                }
+
+                everyFMUSupportsGetState = supportsGetState && everyFMUSupportsGetState;
+
                 indexer++;
             }
-            BooleanVariableFmi2Api canGetFMUStates = dynamicScope.store("can_get_FMU_states", everyFMUSupportsGetState);
+
+
+            if (!everyFMUSupportsGetState && jacobianStepConfig.stabilisation) {
+                throw new RuntimeException("Cannot use stabilisation as not every FMU supports rollback");
+            }
+
+            BooleanVariableFmi2Api allFMUsSupportGetState = dynamicScope.store("all_fmus_support_get_state", everyFMUSupportsGetState);
 
             VariableStep variableStep;
             VariableStep.VariableStepInstance variableStepInstance = null;
@@ -199,8 +214,11 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             }
 
             List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
+            BooleanVariableFmi2Api anyDiscards;
 
-            BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
+
+            anyDiscards = dynamicScope.store("any_discards", false);
+
 
             // Call log
             dataWriterInstance.log(currentCommunicationTime);
@@ -224,26 +242,19 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             DoubleVariableFmi2Api realStartTime = null;
             if (jacobianStepConfig.simulationProgramDelay) {
                 realStartTime = dynamicScope.store("real_start_time", 0.0);
-                realStartTime.setValue(realTimeModule.getRealTime());
+                realStartTime.setValue(Objects.requireNonNull(realTimeModule).getRealTime());
             }
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
 
-                // FMU get state not supported
-                dynamicScope.enterIf(canGetFMUStates.toPredicate().not());
-                {
-                    //TODO: What should be done?
-                    dynamicScope.leave();
-                }
-
-
-                if (everyFMUSupportsGetState) {
-                    fmuStates.clear();
+                // Get fmu states
+                if(everyFMUSupportsGetState){
                     for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                         fmuStates.add(entry.getValue().getState());
                     }
                 }
+
 
                 if (jacobianStepConfig.stabilisation) {
                     stabilisation_loop.setValue(stabilisation_loop_max_iterations);
@@ -262,9 +273,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 });
 
                 if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                    DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variable_step_size", 0.0);
                     dynamicScope.enterIf(anyDiscards.toPredicate().not());
                     {
-                        DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variable_step_size", 0.0);
                         variableStepSize.setValue(variableStepInstance.getStepSize(currentCommunicationTime));
                         currentStepSize.setValue(variableStepSize);
                         stepSize.setValue(variableStepSize);
@@ -352,24 +363,58 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     portsToShare.forEach(ComponentVariableFmi2Api::share);
                 }
 
-                // Discard
-                PredicateFmi2Api anyDiscardsPred = anyDiscards.toPredicate();
-                IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscardsPred);
-                {
+                if(everyFMUSupportsGetState) {
+                    // Discard
+                    IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
+                    {
 
-                    // rollback FMUs
-                    fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                        // rollback FMUs
+                        fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
-                    // set step-size to lowest
-                    currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
+                        // set step-size to lowest
+                        currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
-                    builder.getLogger().debug("## Discard occurred! step-size reduced to: %f", currentStepSize);
+                        builder.getLogger().debug("## Discard occurred! FMUs are rolledback and step-size reduced to: %f", currentStepSize);
 
-                    dynamicScope.leave();
+                        dynamicScope.leave();
+                    }
+
+                    discardScope.enterElse();
                 }
-
-                discardScope.enterElse();
                 {
+                    if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                        //Validate step
+                        PredicateFmi2Api notValidStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
+                                new DoubleVariableFmi2Api(null, null, dynamicScope, null,
+                                        currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate().not();
+                        dynamicScope.enterIf(notValidStepPred);
+                        {
+                            IfMaBlScope reducedStepSizeScope = dynamicScope.enterIf(Objects.requireNonNull(variableStepInstance).hasReducedStepsize().toPredicate());
+                            {
+
+                                // rollback FMUs
+                                fmuStates.forEach(Fmi2Builder.StateVariable::set);
+
+                                // set step-size to suggested size
+                                currentStepSize.setValue(Objects.requireNonNull(variableStepInstance).getReducedStepSize());
+
+                                builder.getLogger().debug("## Invalid variable step-size! FMUs are rolled back and step-size reduced to: %f",
+                                        currentStepSize);
+
+                                dynamicScope.leave();
+                            }
+                            reducedStepSizeScope.enterElse();
+                            {
+                                builder.getLogger().debug("## The step could not be validated by the constraint at time %f. Continue nevertheless " +
+                                        "with" +
+                                        " next simulation step!", currentCommunicationTime);
+                                dynamicScope.leave();
+                            }
+
+                            dynamicScope.leave();
+                        }
+                    }
+
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
                     currentStepSize.setValue(stepSize);
@@ -394,17 +439,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                         }
                     }
 
-                    dynamicScope.leave();
-                }
-
-                //TODO: When should validate happen?
-                if (algorithm == StepAlgorithm.VARIABLESTEP) {
-                    //Validate step
-                    PredicateFmi2Api validStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
-                            new DoubleVariableFmi2Api(null, null, dynamicScope, null,
-                                    currentCommunicationTime.toMath().addition(currentStepSize).getExp())).toPredicate().not();
-                    dynamicScope.enterIf(validStepPred);
-                    {
+                    if(everyFMUSupportsGetState) {
                         dynamicScope.leave();
                     }
                 }

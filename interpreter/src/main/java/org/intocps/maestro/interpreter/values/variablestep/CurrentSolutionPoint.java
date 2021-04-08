@@ -187,12 +187,6 @@ public class CurrentSolutionPoint extends Observable
 			return null;
 		}
 
-		//TODO: What is to be done here?
-		if (order == 0)
-		{
-			return getDoubleValue(variable);
-		}
-
 		final Map<ScalarVariable, Map<Integer, Double>> dersInstance = currentDerivatives.get(variable.instance);
 		if (dersInstance == null)
 		{
@@ -219,8 +213,7 @@ public class CurrentSolutionPoint extends Observable
 
 	public Boolean wasLastStepsizeLimitedByDiscreteConstraint()
 	{
-		return wasLastStepsizeLimitedByDiscreteConstraint == null ? false
-				: wasLastStepsizeLimitedByDiscreteConstraint;
+		return wasLastStepsizeLimitedByDiscreteConstraint != null && wasLastStepsizeLimitedByDiscreteConstraint;
 	}
 
 	private <T> T retrieveValue(final Map<ScalarVariable, T> values,

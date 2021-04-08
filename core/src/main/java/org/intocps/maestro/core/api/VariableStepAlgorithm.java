@@ -9,9 +9,6 @@ public class VariableStepAlgorithm implements IStepAlgorithm {
     private final String initialisationDataForVariableStep;
 
     public VariableStepAlgorithm(double endTime, Double[] stepSizes, Double initSize, String initDataForVarStep, double startTime) {
-        if (stepSizes.length != 3) {
-            //TODO: throw
-        }
         this.endTime = endTime;
         this.minStepSize = stepSizes[0];
         this.maxStepSize = stepSizes[1];

@@ -146,10 +146,14 @@ public class VariableStepValue extends ModuleValue {
             checkArgLength(fcargs, 2);
 
             Value cv = fcargs.get(0).deref();
-            VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
-            variableStepConfig.initializePorts(
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), StringValue.class).stream().map(StringValue::getValue)
-                            .collect(Collectors.toList()));
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
+                variableStepConfig.initializePorts(
+                        ValueExtractionUtilities.getArrayValue(fcargs.get(1), StringValue.class).stream().map(StringValue::getValue).collect(Collectors.toList()));
+            }
+            else {
+                throw new InterpreterException("Invalid arguments");
+            }
             return new VoidValue();
         }));
         componentMembers.put("addDataPoint", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -162,6 +166,9 @@ public class VariableStepValue extends ModuleValue {
                 List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
                 variableStepConfigValue.addDataPoint(time, portValues);
             }
+            else{
+                throw new InterpreterException("Invalid arguments");
+            }
             return new VoidValue();
         }));
         componentMembers.put("getStepSize", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -172,7 +179,7 @@ public class VariableStepValue extends ModuleValue {
                 VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
                 return new RealValue(variableStepConfigValue.getStepSize());
             }
-            return new RealValue(-1.0);
+            throw new InterpreterException("Invalid arguments");
         }));
         componentMembers.put("setEndTime", new FunctionValue.ExternalFunctionValue(fcargs -> {
             checkArgLength(fcargs, 2);
@@ -180,19 +187,45 @@ public class VariableStepValue extends ModuleValue {
             if (cv instanceof VariableStepConfigValue) {
                 ((VariableStepConfigValue) cv).setEndTime(((RealValue) fcargs.get(1).deref()).getValue());
             }
+            else{
+                throw new InterpreterException("Invalid arguments");
+            }
             return new VoidValue();
         }));
         componentMembers.put("isStepValid", new FunctionValue.ExternalFunctionValue(fcargs -> {
-            checkArgLength(fcargs, 3);
+            checkArgLength(fcargs, 4);
 
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
                 double nextTime = ((RealValue) fcargs.get(1).deref()).getValue();
-                List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
-                return new BooleanValue(variableStepConfigValue.isStepValid(nextTime, portValues));
+                boolean supportsRollBack = ((BooleanValue) fcargs.get(2).deref()).getValue();
+                List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(3), Value.class);
+                return new BooleanValue(variableStepConfigValue.isStepValid(nextTime, portValues, supportsRollBack));
             } else {
-                return new BooleanValue(false);
+                throw new InterpreterException("Invalid arguments");
+            }
+        }));
+        componentMembers.put("hasReducedStepsize", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 1);
+
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
+                return new BooleanValue(variableStepConfigValue.hasReducedStepSize());
+            } else {
+                throw new InterpreterException("Invalid arguments");
+            }
+        }));
+        componentMembers.put("getReducedStepSize", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 1);
+
+            Value cv = fcargs.get(0).deref();
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
+                return new RealValue(variableStepConfigValue.getReducedStepSize());
+            } else {
+                throw new InterpreterException("Invalid arguments");
             }
         }));
 
