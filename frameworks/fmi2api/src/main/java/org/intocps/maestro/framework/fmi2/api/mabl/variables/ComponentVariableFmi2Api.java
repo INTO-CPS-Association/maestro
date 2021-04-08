@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -46,6 +48,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final MablApiBuilder builder;
     private final Map<PType, ArrayVariableFmi2Api<Object>> ioBuffer = new HashMap<>();
     private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
+    private ArrayVariableFmi2Api<Object> derBuffer;
+    private ArrayVariableFmi2Api<Object> derOrderBuffer;
+    private ArrayVariableFmi2Api<Object> derRefBuffer;
     Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi2Api) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
     private DoubleVariableFmi2Api currentTimeVar = null;
@@ -136,6 +141,29 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private ArrayVariableFmi2Api<Object> getIOBuffer(PType type) {
         return getBuffer(this.ioBuffer, type, "IO", modelDescriptionContext.valRefToSv.size());
     }
+
+    private ArrayVariableFmi2Api<Object> getDerBuffer(int size) {
+        if (this.derBuffer == null) {
+            this.derBuffer = createBuffer(newRealType(), "DER",size);
+        }
+        return this.derBuffer;
+    }
+
+    private ArrayVariableFmi2Api<Object> getDerOrderBuffer(int size) {
+        if (this.derOrderBuffer == null) {
+            this.derOrderBuffer = createBuffer(newUIntType(), "DER_ORDER",size);
+        }
+        return this.derBuffer;
+    }
+
+    private ArrayVariableFmi2Api<Object> getDerRefBuffer(int size) {
+        if (this.derRefBuffer == null) {
+            this.derRefBuffer = createBuffer(newUIntType(), "_DREF", size);
+        }
+        return this.derRefBuffer;
+    }
+
+
 
     private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type) {
         return this.getBuffer(this.sharedBuffer, type, "Share", 0);
@@ -397,6 +425,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     break;
                 case Enumeration:
                     throw new RuntimeException("Cannot assign enumeration port type.");
+
                 default:
                     throw new RuntimeException("Cannot match port types.");
             }
@@ -408,6 +437,60 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                             vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), valBuf.getReferenceExp().clone()));
 
             scope.add(stm);
+
+            if (builder.getSettings().retrieveDerivatives && type.equals(new ARealNumericPrimitiveType())) {
+                //If any target ports exists that can interpolate the port is also linked.
+                List<PortFmi2Api> linkedPortsWithInterpolate = e.getValue().stream().filter(p1 -> p1.getTargetPorts().stream().anyMatch(p2 -> {
+                    try {
+                        return p2.aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs();
+                    } catch (XPathExpressionException xPathExpressionException) {
+                        xPathExpressionException.printStackTrace();
+                    }
+                    return false;
+                })).collect(Collectors.toList());
+
+                try {
+                    int maxDerOrder = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
+                    if (linkedPortsWithInterpolate.size() > 0 && maxDerOrder > 0) {
+                        Map<ModelDescription.ScalarVariable, ModelDescription.ScalarVariable> scalarVariablesWithDers =
+                                modelDescriptionContext.getModelDescription().getDerivativesMap();
+
+                        List<PortFmi2Api> portsWithDers = linkedPortsWithInterpolate.stream()
+                                .filter(p -> scalarVariablesWithDers.keySet().stream()
+                                        .anyMatch(s -> s.getValueReference().equals(p.getPortReferenceValue()))).collect(Collectors.toList());
+
+                        int portsWithDersSize = portsWithDers.size();
+                        if(portsWithDersSize > 0){
+                            ArrayVariableFmi2Api<Object> derBuf = getDerBuffer(portsWithDersSize * maxDerOrder);
+                            ArrayVariableFmi2Api<Object> derOrderBuf = getDerOrderBuffer(portsWithDersSize * maxDerOrder);
+                            ArrayVariableFmi2Api<Object> derRefBuf = getDerRefBuffer(portsWithDersSize * maxDerOrder);
+
+                            for (int i = 0; i < portsWithDersSize; i++) {
+                                PortFmi2Api p = portsWithDers.get(i);
+                                for(int order = 1; order <= maxDerOrder; order++){
+                                    PStateDesignator dRefDesignator = derRefBuf.items().get(i).getDesignator().clone();
+                                    scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
+
+                                    PStateDesignator derOrderDesignator = derOrderBuf.items().get(i).getDesignator().clone();
+                                    scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+                                    i++;
+                                }
+                            }
+
+                            PStm ifStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
+                                            derRefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()),
+                                            derOrderBuf.getReferenceExp().clone(), derBuf.getReferenceExp().clone()));
+
+                            scope.addAfter(ifStm);
+                        }
+                    }
+                } catch (XPathExpressionException xPathExpressionException) {
+                    throw new RuntimeException("Error when accessing model description for derivative information.", xPathExpressionException);
+                } catch (InvocationTargetException | IllegalAccessException invocationTargetException) {
+                    invocationTargetException.printStackTrace();
+                }
+            }
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
                 FmiStatusErrorHandlingBuilder
@@ -493,6 +576,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 return "exitInitializationMode";
             case SETUPEXPERIMENT:
                 return "setupExperiment";
+            case GETREALOUTPUTDERIVATIVES:
+                return "getRealOutputDerivatives";
+            case GETMAXOUTPUTDERIVATIVEORDER:
+                return "getMaxOutputDerivativeOrder";
+            case SETREALOUTPUTDERIVATIVES:
+                return "setRealOutputDerivatives";
             default:
                 throw new RuntimeException("Attempting to call function that is type dependant without specifying type: " + fun);
         }
@@ -597,7 +686,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 port -> Map.entry(((VariableFmi2Api) valueFinal.get(port)).getReferenceExp().clone(), ((VariableFmi2Api) valueFinal.get(port)).type));
     }
 
-    public void  set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
+    public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
 
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
@@ -675,7 +764,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
             selectedPorts = selectedPorts.stream().filter(filterList::contains).collect(Collectors.toList());
         }
-        if(selectedPorts.size() == 0){
+        if (selectedPorts.size() == 0) {
             logger.warn("No linked input variables for FMU instance: " + this.getName());
             return;
         }

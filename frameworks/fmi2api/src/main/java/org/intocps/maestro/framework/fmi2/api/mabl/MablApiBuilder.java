@@ -585,6 +585,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
          * Automatically perform FMI2ErrorHandling
          */
         public boolean fmiErrorHandlingEnabled = true;
+        /**
+         * Automatically retrieve derivatives if possible
+         */
+        public boolean retrieveDerivatives = true;
     }
 
     public static class ExternalResources {

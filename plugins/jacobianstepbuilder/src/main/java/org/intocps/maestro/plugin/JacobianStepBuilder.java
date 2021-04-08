@@ -49,11 +49,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),newAFormalParameter(newAStringPrimitiveType(), newAIdentifier(
-                            "variableStepConfig"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("variableStepConfig"))), newAVoidType());
     private StepAlgorithm algorithm;
 
-    private List<String> imports = Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
+    private List<String> imports =
+            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
@@ -64,7 +65,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
-        JacobianStepConfig jacobianStepConfig = config != null ?  (JacobianStepConfig) config : new JacobianStepConfig();
+        JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
@@ -89,7 +90,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             throw new ExpandException("Invalid args");
         }
 
-        if(jacobianStepConfig.simulationProgramDelay){
+        if (jacobianStepConfig.simulationProgramDelay) {
             imports.add("RealTime");
         }
 
@@ -108,7 +109,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             MathBuilderFmi2Api math = builder.getMathBuilder();
             BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
             RealTime realTimeModule = null;
-            if(jacobianStepConfig.simulationProgramDelay){
+            if (jacobianStepConfig.simulationProgramDelay) {
                 realTimeModule = builder.getRealTimeModule();
             }
 
@@ -148,12 +149,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             fmuInstances.forEach((x, y) -> {
                 List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
 
-                Set<String> variablesToShare = y.getPorts().stream()
+                Set<String> scalarVariablesToShare = y.getPorts().stream()
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getLogScalarVariableName())))
                         .map(PortFmi2Api::getName).collect(Collectors.toSet());
-                variablesToShare.addAll(variablesToLog.stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
+                scalarVariablesToShare.addAll(variablesToLog.stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
 
-                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(variablesToShare.toArray(String[]::new));
+                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
                 List<String> portsOfInterest = portsToShare.keySet().stream()
                         .filter(objectVariableFmi2Api -> objectVariableFmi2Api.scalarVariable.causality == ModelDescription.Causality.Output ||
@@ -221,7 +222,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             }
 
             DoubleVariableFmi2Api realStartTime = null;
-            if(jacobianStepConfig.simulationProgramDelay){
+            if (jacobianStepConfig.simulationProgramDelay) {
                 realStartTime = dynamicScope.store("real_start_time", 0.0);
                 realStartTime.setValue(realTimeModule.getRealTime());
             }
@@ -255,7 +256,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 // SET ALL LINKED VARIABLES
                 // This has to be carried out regardless of stabilisation or not.
                 fmuInstances.forEach((x, y) -> {
-                    if(y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)){
+                    if (y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                         y.setLinked();
                     }
                 });
@@ -377,9 +378,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     dataWriterInstance.log(currentCommunicationTime);
 
                     DoubleVariableFmi2Api realStepTime;
-                    if(jacobianStepConfig.simulationProgramDelay){
+                    if (jacobianStepConfig.simulationProgramDelay) {
                         realStepTime = dynamicScope.store("real_step_time", 0.0);
-                        realStepTime.setValue(new DoubleExpressionValue(realTimeModule.getRealTime().toMath().subtraction(realStartTime.toMath()).getExp()));
+                        realStepTime.setValue(
+                                new DoubleExpressionValue(realTimeModule.getRealTime().toMath().subtraction(realStartTime.toMath()).getExp()));
 
                         dynamicScope.enterIf(realStepTime.toMath().lessThan(currentCommunicationTime.toMath().multiply(1000)));
                         {
@@ -436,8 +438,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(imports.stream().map(MableAstFactory::newAIdentifier)
-                .collect(Collectors.toList()));
+        unit.setImports(imports.stream().map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));
         module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
