@@ -136,7 +136,6 @@ public class VariableStep {
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), simTime.getExp(),
                                     MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))));
 
-
             String variableName = dynamicScope.getName("var_step_size");
             targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(),
                     newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETSTEPSIZE),

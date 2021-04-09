@@ -5,6 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
+import org.intocps.fmi.Fmi2Status;
+import org.intocps.fmi.FmiInvalidNativeStateException;
+import org.intocps.fmi.FmuResult;
 import org.intocps.fmi.IFmiComponent;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
@@ -75,6 +78,41 @@ public class VariableStepValue extends ModuleValue {
         return initsize;
     }
 
+    private static Double calculateMaxStepSize(Double minStepSize, Double maxStepSize, Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances){
+        boolean allGreaterOrEqualMaxSize = true;
+        Double stepSize = Double.MAX_VALUE;
+        for(FmiSimulationInstance instance : instances.values()){
+            try {
+                if(instance.instance != null){
+                    FmuResult<Double> res = instance.instance.getMaxStepSize();
+                    if(res.status != Fmi2Status.Error){
+                        double maxSize = res.result;
+
+                        //If ANY are less than minStepsize, choose minStepsize.
+                        if(maxSize < minStepSize){
+                            return minStepSize;
+                        }
+                        allGreaterOrEqualMaxSize = allGreaterOrEqualMaxSize && maxSize >= maxStepSize;
+
+                        stepSize = Math.min(maxSize, stepSize);
+                    }
+
+                }
+            } catch (FmiInvalidNativeStateException e) {
+                //TODO: log event
+            }
+        }
+
+        //If ALL are greater than maxStepsize, choose maxStepsize
+        //If NONE succeeds in getMaxStepSize, choose maxStepsize
+        if(allGreaterOrEqualMaxSize || stepSize.equals(Double.MAX_VALUE)){
+            return maxStepSize;
+        }
+
+        //If ANY are between minStepsize and maxStepsize AND none are less than minStepsize, then choose minimum of these.
+        return stepSize;
+    }
+
     /**
      * Values passed in addDataPoint is assumed to follow the same order as the portNames passed in initializePortNames.
      *
@@ -137,7 +175,8 @@ public class VariableStepValue extends ModuleValue {
                     FmiSimulationInstance si = new FmiSimulationInstance(null, fmiInstanceConfig);
                     instances.put(mi, si);
                 }
-                return new VariableStepConfigValue(instances, constraints, stepsizeInterval, initSize);
+                return new VariableStepConfigValue(instances, constraints, stepsizeInterval, initSize,
+                        calculateMaxStepSize(stepsizeInterval.getMinimalStepsize(), stepsizeInterval.getMaximalStepsize(), instances));
             } catch (Exception e) {
                 throw new InterpreterException("Could not set FMUs", e);
             }
