@@ -1,0 +1,211 @@
+simulation 
+import FixedStep;
+import Initializer;
+import DebugLogging;
+import TypeConverter;
+import DataWriter;
+import FMI2;
+import Math;
+import ArrayUtil;
+import Logger;
+import BooleanLogic;
+@Framework( "FMI2");
+@FrameworkConfig( "FMI2", "{\"fmus\":{\"{crtl}\":\"watertankcontroller-c.fmu\",\"{wt}\":\"singlewatertank-20sim.fmu\"},\"connections\":{\"{crtl}.crtlInstance.valve\":[\"{wt}.wtInstance.valvecontrol\"],\"{wt}.wtInstance.level\":[\"{crtl}.crtlInstance.level\"]},\"parameters\":{\"{crtl}.crtlInstance.maxlevel\":2,\"{crtl}.crtlInstance.minlevel\":1},\"startTime\":0.0,\"endTime\":10.0,\"loggingOn\":false,\"visible\":false,\"algorithm\":{\"type\":\"fixed-step\",\"size\":0.1}}");
+{
+ 	bool global_execution_continue = true;
+	int FMI_STATUS_OK = 0;
+	int FMI_STATUS_WARNING = 1;
+	int FMI_STATUS_DISCARD = 2;
+	int FMI_STATUS_ERROR = 3;
+	int FMI_STATUS_FATAL = 4;
+	int FMI_STATUS_PENDING = 5;
+	int status = 0;
+	Math math = load("Math");
+	Logger logger = load("Logger");
+	DataWriter dataWriter = load("DataWriter");
+	BooleanLogic booleanLogic = load("BooleanLogic");
+	FMI2 crtl = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "watertankcontroller-c.fmu");
+	if( (crtl == null) )
+	{
+		global_execution_continue = false;
+	}
+	FMI2 wt = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "singlewatertank-20sim.fmu");
+	if( (wt == null) )
+	{
+		global_execution_continue = false;
+	}
+	@map wtInstance -> "wtInstance";
+	FMI2Component wtInstance = null;
+	if( (global_execution_continue) )
+	{
+			wtInstance = wt.instantiate("wtInstance", false, false);
+			if( (wtInstance == null) )
+			{
+				global_execution_continue = false;
+			}
+	}
+	@map crtlInstance -> "crtlInstance";
+	FMI2Component crtlInstance = null;
+	if( (global_execution_continue) )
+	{
+			crtlInstance = crtl.instantiate("crtlInstance", false, false);
+			if( (crtlInstance == null) )
+			{
+				global_execution_continue = false;
+			}
+	}
+	FMI2Component components[2] = { wtInstance , crtlInstance };
+	real START_TIME = 0.0;
+	real STEP_SIZE = 0.1;
+	real END_TIME = 10.0;
+	@Config("{\"parameters\":{\"{crtl}.crtlInstance.maxlevel\":2,\"{crtl}.crtlInstance.minlevel\":1}}");
+	Initializer.expand initialize(components, START_TIME, END_TIME);
+	if( global_execution_continue )
+	{
+			FMI2Component fix_components[2] = { wtInstance , crtlInstance };
+			{
+ 				real end = END_TIME - STEP_SIZE;
+				real time = START_TIME;
+				real fix_stepSize = 0.0;
+				real fix_recoveryStepSize = 0.0;
+				bool fix_recovering = false;
+				bool fix_global_status = false;
+				int fix_comp_index = 0;
+				real wtInstanceROut[1];
+				bool crtlInstanceBOut[1];
+				uint wtInstanceVrefROut[1] = { 17 };
+				uint crtlInstanceVrefBOut[1] = { 4 };
+				real wtInstanceRIn[1];
+				real crtlInstanceRIn[1];
+				uint wtInstanceVrefRIn[1] = { 16 };
+				uint crtlInstanceVrefRIn[1] = { 3 };
+				int fix_status[2] = { 0 , 0 };
+				fix_status[0] = wtInstance.getReal(wtInstanceVrefROut, 1, wtInstanceROut);
+				if( fix_status[0] == 3 || fix_status[0] == 4 )
+				{
+						logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
+						global_execution_continue = false;
+				}
+				fix_status[1] = crtlInstance.getBoolean(crtlInstanceVrefBOut, 1, crtlInstanceBOut);
+				if( fix_status[1] == 3 || fix_status[1] == 4 )
+				{
+						logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
+						global_execution_continue = false;
+				}
+				string data_headers[2] = { "{crtl}.crtlInstance.valve" , "{wt}.wtInstance.level" };
+				DataWriterConfig dataWriter_configuration = dataWriter.writeHeader(data_headers);
+				? data_values[2] = { crtlInstanceBOut[0] , wtInstanceROut[0] };
+				dataWriter.writeDataPoint(dataWriter_configuration, time, crtlInstanceBOut[0], wtInstanceROut[0]);
+				while( global_execution_continue && time <= end )
+				{
+					if( fix_recovering )
+					{
+							fix_stepSize = fix_recoveryStepSize;
+							fix_recovering = false;
+					}
+					else
+					{
+							fix_stepSize = STEP_SIZE;
+					}
+					crtlInstanceRIn[0] = wtInstanceROut[0];
+					TypeConverter.expand convertBoolean2Real(crtlInstanceBOut[0], wtInstanceRIn[0]);
+					fix_status[0] = wtInstance.setReal(wtInstanceVrefRIn, 1, wtInstanceRIn);
+					if( fix_status[0] == 3 || fix_status[0] == 4 )
+					{
+							logger.log(4, "set failed %d ", fix_status[fix_comp_index]);
+							global_execution_continue = false;
+							break;
+					}
+					fix_status[1] = crtlInstance.setReal(crtlInstanceVrefRIn, 1, crtlInstanceRIn);
+					if( fix_status[1] == 3 || fix_status[1] == 4 )
+					{
+							logger.log(4, "set failed %d ", fix_status[fix_comp_index]);
+							global_execution_continue = false;
+							break;
+					}
+					fix_status[0] = wtInstance.doStep(time, fix_stepSize, true);
+					fix_status[1] = crtlInstance.doStep(time, fix_stepSize, true);
+					fix_global_status = true;
+					fix_comp_index = 0;
+					while( fix_comp_index < 2 )
+					{
+						if( fix_status[fix_comp_index] != 0 )
+						{
+								fix_global_status = false;
+								logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
+								break;
+						}
+						fix_comp_index = fix_comp_index + 1;
+					}
+					if( !fix_global_status )
+					{
+							logger.log(4, "Deviating from normal execution. Handling exceptions %d", 0);
+							fix_global_status = true;
+							fix_comp_index = 0;
+							bool discardObserved = false;
+							while( fix_comp_index < 2 )
+							{
+								logger.log(4, "Fmu index %d, status code %d", fix_comp_index, fix_status[fix_comp_index]);
+								if( fix_status[fix_comp_index] != 0 )
+								{
+										fix_global_status = false;
+										if( fix_status[fix_comp_index] == 5 )
+										{
+												logger.log(4, "doStep failed for %d PENDING not supported- status code ", fix_status[fix_comp_index]);
+										}
+										else
+										{
+												if( fix_status[fix_comp_index] == 3 || fix_status[fix_comp_index] == 4 )
+												{
+														logger.log(4, "doStep failed for %d - status code ", fix_status[fix_comp_index]);
+												}
+										}
+										if( fix_status[fix_comp_index] == 2 )
+										{
+												logger.log(2, "Instance discarding %d", fix_comp_index);
+												discardObserved = true;
+										}
+										global_execution_continue = false;
+										break;
+								}
+								fix_comp_index = fix_comp_index + 1;
+							}
+							if( !global_execution_continue )
+							{
+									break;
+							}
+					}
+					if( global_execution_continue && !fix_recovering )
+					{
+							fix_status[0] = wtInstance.getReal(wtInstanceVrefROut, 1, wtInstanceROut);
+							if( fix_status[0] == 3 || fix_status[0] == 4 )
+							{
+									logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
+									global_execution_continue = false;
+									break;
+							}
+							fix_status[1] = crtlInstance.getBoolean(crtlInstanceVrefBOut, 1, crtlInstanceBOut);
+							if( fix_status[1] == 3 || fix_status[1] == 4 )
+							{
+									logger.log(4, "get failed %d ", fix_status[fix_comp_index]);
+									global_execution_continue = false;
+									break;
+							}
+							time = time + fix_stepSize;
+							dataWriter.writeDataPoint(dataWriter_configuration, time, crtlInstanceBOut[0], wtInstanceROut[0]);
+					}
+				}
+				wtInstance.terminate();
+				crtlInstance.terminate();
+				dataWriter.close();
+			}
+	}
+	wt.freeInstance(wtInstance);
+	crtl.freeInstance(crtlInstance);
+	unload(crtl);
+	unload(wt);
+	unload(math);
+	unload(logger);
+	unload(dataWriter);
+	unload(booleanLogic);
+}

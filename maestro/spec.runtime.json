@@ -1,6 +1,8 @@
 {
-  "DataWriter" : [ {
-    "filename" : "output.csv",
-    "type" : "CSV"
-  } ]
+  "DataWriter": [
+    {
+      "filename": "outputs.csv",
+      "type": "CSV"
+    }
+  ]
 }

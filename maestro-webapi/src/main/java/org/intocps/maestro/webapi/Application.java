@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 
 @SpringBootApplication
@@ -20,15 +21,18 @@ public class Application {
 
     final static ObjectMapper mapper = new ObjectMapper();
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws Exception {
 
-        CommandLine cmd = MaestroV1CliProxy.parse(args);
-
-        if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
-            SpringApplication app = new SpringApplication(Application.class);
-            app.run("--server.port=" + port);
-        })) {
-            System.exit(1);
+        if (args.length > 0 && args[0].equals("cliMain")) {
+            org.intocps.maestro.Main.argumentHandler(Arrays.stream(args).skip(1).toArray(String[]::new));
+        } else {
+            CommandLine cmd = MaestroV1CliProxy.parse(args);
+            if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
+                SpringApplication app = new SpringApplication(Application.class);
+                app.run("--server.port=" + port);
+            })) {
+                System.exit(1);
+            }
         }
 
     }

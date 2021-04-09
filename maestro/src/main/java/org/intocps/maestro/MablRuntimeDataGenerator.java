@@ -20,7 +20,7 @@ public class MablRuntimeDataGenerator {
         data.put("DataWriter", Arrays.asList(new HashMap<>() {
             {
                 put("type", "CSV");
-                put("filename", "output.csv");
+                put("filename", "outputs.csv");
             }
         }));
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -132,7 +133,7 @@ public class Maestro2Broker {
         mabl.generateSpec(config);
         mabl.expand();
         mabl.dump(workingDirectory);
-        //logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
+        logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,

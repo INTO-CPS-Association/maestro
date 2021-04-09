@@ -6,13 +6,14 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.QuestionAnswerAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.utilities.ArrayUpdatableValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
@@ -110,7 +111,6 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return this.loadFactory.destroy(nameVal);
     }
 
-
     @Override
     public Value caseAIdentifierStateDesignator(AIdentifierStateDesignator node, Context question) throws AnalysisException {
         return question.lookup(node.getName());
@@ -123,9 +123,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         if (!(arrayValue.deref() instanceof ArrayValue)) {
             throw new InterpreterException("Array designator is not an array: " + arrayValue);
+        } else {
+            ArrayValue<Value> array = (ArrayValue<Value>) arrayValue.deref();
+            int index = ((NumericValue) node.getExp().apply(this, question).deref()).intValue();
+            return new ArrayUpdatableValue(array, index);
         }
-
-        return arrayValue;
     }
 
     @Override
@@ -133,50 +135,15 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         Value newValue = node.getExp().apply(this, question);
 
-
         Value currentValue = node.getTarget().apply(this, question);
         if (!(currentValue instanceof UpdatableValue)) {
             throw new InterpreterException("Cannot assign to a constant value");
         }
 
         UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
-
-
-        if (currentUpdatableValue.deref() instanceof ArrayValue) {
-
-            if (node.getTarget() instanceof AArrayStateDesignator) {
-                AArrayStateDesignator arrayStateDesignator = (AArrayStateDesignator) node.getTarget();
-
-                if (arrayStateDesignator.getExp() == null) {
-                    //replace array completly
-                    currentUpdatableValue.setValue(newValue.deref());
-                } else {
-                    //in-place array update
-                    Value indexValue = arrayStateDesignator.getExp().apply(this, question).deref();
-
-                    if (!(indexValue instanceof NumericValue)) {
-                        throw new InterpreterException("Array index is not an integer: " + indexValue.toString());
-                    }
-
-                    int index = ((NumericValue) indexValue).intValue();
-                    ArrayValue<Value> arrayValue = (ArrayValue<Value>) currentUpdatableValue.deref();
-                    if (index >= 0 && index < arrayValue.getValues().size()) {
-                        arrayValue.getValues().set(index, newValue);
-                    } else {
-                        throw new InterpreterException("Array index out of bounds: " + indexValue.toString());
-                    }
-                }
-
-            } else {
-                throw new InterpreterException("Bad array designator: " + node.getTarget().toString());
-            }
-        } else {
-            currentUpdatableValue.setValue(newValue.deref());
-        }
-
+        currentUpdatableValue.setValue(newValue.deref());
 
         return new VoidValue();
-
     }
 
     @Override
@@ -185,15 +152,40 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return new BooleanValue(!equals.getValue());
     }
 
+
+    public UpdatableValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
+        List<Value> arrayValues = new ArrayList<>();
+        for (int i = 0; i < ((IntegerValue) sizes.get(0).apply(this, question)).getValue(); i++) {
+            if (sizes.size() > 1) {
+                List<PExp> nextSizes = sizes.subList(1, sizes.size());
+                // Call recursively
+                arrayValues.add(createArrayValue(nextSizes, type, question));
+            } else {
+                if (type instanceof AIntNumericPrimitiveType) {
+                    arrayValues.add(new IntegerValue(0));
+                } else if (type instanceof ABooleanPrimitiveType) {
+                    arrayValues.add(new BooleanValue(false));
+                } else if (type instanceof AStringPrimitiveType) {
+                    arrayValues.add(new StringValue(""));
+                } else if (type instanceof ARealNumericPrimitiveType) {
+                    arrayValues.add(new RealValue(0.0));
+                } else {
+                    arrayValues.add(new NullValue());
+                }
+            }
+        }
+        return new UpdatableValue(new ArrayValue<>(arrayValues));
+    }
+
     @Override
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
 
         if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
-            Value val;
+            UpdatableValue val;
             if (node.getInitializer() != null) {
-                val = node.getInitializer().apply(this, question);
+                val = new UpdatableValue(node.getInitializer().apply(this, question));
             } else {
 
                 if (node.getSize() == null || node.getSize().isEmpty()) {
@@ -201,12 +193,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 }
 
                 //array deceleration
-                NumericValue size = (NumericValue) node.getSize().get(0).apply(this, question);
-                val = new ArrayValue<>(
-                        IntStream.range(0, size.intValue()).mapToObj(i -> new UpdatableValue(new UndefinedValue())).collect(Collectors.toList()));
+                val = createArrayValue(node.getSize(), node.getType(), question);
             }
 
-            question.put(node.getName(), new UpdatableValue(val));
+            question.put(node.getName(), val);
 
         } else {
 
@@ -223,7 +213,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAArrayInitializer(AArrayInitializer node, Context question) throws AnalysisException {
-        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question).stream().map(Value::deref).collect(Collectors.toList()));
+        ArrayValue<Value> array = new ArrayValue<>(evaluate(node.getExp(), question).stream().map(v -> v.deref()).collect(Collectors.toList()));
         return array;
     }
 
@@ -249,7 +239,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
 
     @Override
-    public Value caseAIdentifierExp(AIdentifierExp node, Context question) throws AnalysisException {
+    public Value caseAIdentifierExp(AIdentifierExp node, Context question) {
         Value val = question.lookup(node.getName());
         if (val == null) {
             throw new InterpreterException("Variable undefined: '" + node.getName() + "':" + node.getName().getSymbol().getLine());
@@ -435,18 +425,21 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         return new UnsignedIntegerValue(node.getValue());
     }
 
+    protected Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices) {
+        return (indices.size() > 1) ? getInnerArrayValue((ArrayValue<Value>) arrayValue.getValues().get(indices.get(0).intValue()).deref(),
+                indices.subList(1, indices.size())) : arrayValue.getValues().get(indices.get(0).intValue());
+    }
+
     @Override
     public Value caseAArrayIndexExp(AArrayIndexExp node, Context question) throws AnalysisException {
         Value value = node.getArray().apply(this, question).deref();
 
         if (value instanceof ArrayValue) {
-            ArrayValue<Value> array = (ArrayValue<Value>) value;
 
-            List<NumericValue> indies =
+            List<NumericValue> indices =
                     evaluate(node.getIndices(), question).stream().map(Value::deref).map(NumericValue.class::cast).collect(Collectors.toList());
 
-
-            return array.getValues().get(indies.get(0).intValue());
+            return getInnerArrayValue((ArrayValue) value, indices);
         }
         throw new AnalysisException("No array or index for: " + node);
     }
@@ -481,7 +474,8 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseARefExp(ARefExp node, Context question) throws AnalysisException {
-        return node.getExp().apply(this, question);
+        ByRefInterpreter byRefInterpreter = new ByRefInterpreter(this.loadFactory);
+        return node.getExp().apply(byRefInterpreter, question);
     }
 
     @Override

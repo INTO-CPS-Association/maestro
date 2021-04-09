@@ -9,7 +9,7 @@ import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.*;
 import java.util.function.Consumer;

@@ -1,4 +1,5 @@
 module DerivativeEstimator
+import DerivateiveEstimatorInstance
 {
-    variablesOfInterest(String[] variables, int[] order, int[] provided, uInt size);
+    DerivativeEstimatorInstance create(uint indicesOfInterest[], uint order[], uint provided[]);
 }

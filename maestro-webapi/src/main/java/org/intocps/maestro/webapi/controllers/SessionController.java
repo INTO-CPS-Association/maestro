@@ -36,28 +36,22 @@ package org.intocps.maestro.webapi.controllers;
 
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
-import org.intocps.maestro.webapi.exceptions.LegacyException;
-import org.intocps.orchestration.coe.json.StatusMsgJson;
-import org.intocps.orchestration.coe.scala.Coe;
+import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by ctha on 17-03-2016.
  */
 public class SessionController {
-
-
     public static boolean test = false;
     private final Map<String, SessionLogic> maestroInstanceMap = new HashMap<>();
     private final SessionLogicFactory sessionLogicFactory;
+
 
     public SessionController(SessionLogicFactory sessionLogicFactory) {
         this.sessionLogicFactory = sessionLogicFactory;
@@ -65,37 +59,48 @@ public class SessionController {
 
     public String createNewSession() {
         String session = UUID.randomUUID().toString();
-        maestroInstanceMap.put(session, sessionLogicFactory.createSessionLogic(this.getSessionRootDir(session)));
+        synchronized (maestroInstanceMap) {
+            maestroInstanceMap.put(session, sessionLogicFactory.createSessionLogic(this.getSessionRootDir(session)));
+        }
         return session;
     }
 
     public SessionLogic getSessionLogic(String sessionID) {
-        return maestroInstanceMap.get(sessionID);
-    }
-
-    public Coe getCoe(String sessionId) throws Exception {
-        throw new LegacyException("Legacy function does not exist anymore.");
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.get(sessionID);
+        }
     }
 
     public boolean containsSession(String sessionId) {
-        return maestroInstanceMap.containsKey(sessionId);
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.containsKey(sessionId);
+        }
     }
 
     public SessionLogic removeSession(String sessionId) {
-        return maestroInstanceMap.remove(sessionId);
+        synchronized (maestroInstanceMap) {
+            return maestroInstanceMap.remove(sessionId);
+        }
     }
 
-    public List<StatusMsgJson> getStatus() {
-        throw new NotImplementedException("SessionController.getStatus has not been implemented yet");
+    public List<StatusModel> getStatus() {
+        return maestroInstanceMap.entrySet().stream()
+                .map(entry -> new StatusModel(entry.getValue().getStatus() + "", entry.getKey(), entry.getValue().getLastExecTime()))
+                .collect(Collectors.toCollection(Vector::new));
     }
 
-    public StatusMsgJson getStatus(String sessionId) {
-        throw new NotImplementedException("SessionController.getStatus has not been implemented yet");
+    public StatusModel getStatus(String sessionId) throws Exception {
+        return maestroInstanceMap.entrySet().stream().filter(entry -> entry.getKey().equals(sessionId)).findFirst()
+                .map(kv -> new StatusModel(kv.getValue().getStatus() + "", kv.getKey(), kv.getValue().getLastExecTime()))
+                .orElseThrow(() -> new Exception("No such session id."));
     }
 
     public void deleteSession(String sessionId) throws IOException {
-        FileUtils.deleteDirectory(maestroInstanceMap.get(sessionId).rootDirectory);
+        synchronized (maestroInstanceMap) {
+            FileUtils.deleteDirectory(maestroInstanceMap.get(sessionId).rootDirectory);
+        }
         this.removeSession(sessionId);
+
     }
 
     public File getSessionRootDir(String session) {
@@ -109,6 +114,7 @@ public class SessionController {
     public void removeSocket(String sessionId) {
         this.getSessionLogic(sessionId).removeSocket();
     }
+
 
     public boolean containsSocket(String sessionId) {
         return this.getSessionLogic(sessionId).containsSocket();

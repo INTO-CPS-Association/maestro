@@ -42,10 +42,10 @@ public class WatertankApiTest {
         DynamicActiveBuilderScope ds = builder.getDynamicScope();
 
         FmuVariableFmi2Api controllerFmu =
-                ds.createFMU("controller", "FMI2", Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toUri().toASCIIString());
+                ds.createFMU("controllerFmu", "FMI2", Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toUri().toASCIIString());
 
         FmuVariableFmi2Api tankFmu =
-                ds.createFMU("tank", "FMI2", Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toUri().toASCIIString());
+                ds.createFMU("tankFmu", "FMI2", Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toUri().toASCIIString());
 
 
         ComponentVariableFmi2Api controller = controllerFmu.instantiate("controller");
@@ -73,8 +73,9 @@ public class WatertankApiTest {
         controller.getAndShare();
         ins.forEach(ComponentVariableFmi2Api::exitInitializationMode);
 
-        DoubleVariableFmi2Api time = ds.store(0d);
-        DoubleVariableFmi2Api step = ds.store(0.1);
+        DoubleVariableFmi2Api time = ds.store("time", 0d);
+        DoubleVariableFmi2Api step = ds.store("step_size", 0.1);
+
         ScopeFmi2Api whileScope = ds.enterWhile(time.toMath().lessThan(DoubleExpressionValue.of(10d))).activate();
 
         tank.setLinked();

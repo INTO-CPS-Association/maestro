@@ -1,7 +1,7 @@
 package org.intocps.maestro.framework.fmi2;
 
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 
 public class RelationVariable implements org.intocps.maestro.framework.core.RelationVariable {

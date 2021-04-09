@@ -43,7 +43,7 @@
 package org.intocps.maestro.interpreter.values.derivativeestimator;
 
 
-public class FirstOrderDerivativeEstimationAlgorithm implements DerivativeEstimationAlgorithm {
+public class FirstOrderDerivativeEstimationAlgorithm implements IDerivativeEstimationAlgorithm {
 
     @Override
     public Double[] update(final Double[] x, final Double[] xPrev, final Double[] xPrevPrev, final Double dt, final Double dtPrev) {

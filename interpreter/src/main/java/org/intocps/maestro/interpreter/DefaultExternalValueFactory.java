@@ -12,6 +12,7 @@ import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.maestro.interpreter.values.utilities.ArrayUtilValue;
+import org.intocps.maestro.interpreter.values.variablestep.VariableStepValue;
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
 import org.reflections.scanners.SubTypesScanner;
@@ -176,6 +177,23 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         @Override
         public InputStream getMablModule() {
             return null;
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "VariableStep")
+    public static class VariableStepLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            if (args == null || args.isEmpty()) {
+                return Either.left(new AnalysisException("No values passed"));
+            }
+
+            if (args.stream().anyMatch(Objects::isNull)) {
+                return Either.left(new AnalysisException("Argument list contains null values"));
+            }
+
+            String config = ((StringValue) args.get(0)).getValue();
+            return Either.right(new VariableStepValue(config));
         }
     }
 
@@ -409,12 +427,16 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                     JsonNode dwConfig = configTree.get(DATA_WRITER_TYPE_NAME);
 
                     for (JsonNode val : dwConfig) {
-                        if (val.has("type") && val.get("type").equals("CSV")) {
-                            dataWriterFileName = val.get("filename").asText();
+                        if (val.has("type") && val.get("type").isTextual() && val.get("type").asText().equals("CSV")) {
+                            if (val.has("filename") && val.get("filename").isTextual()) {
+                                dataWriterFileName = val.get("filename").asText();
+                            }
+                            if (val.has("filter")) {
+                                dataWriterFilter = StreamSupport
+                                        .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
+                                        .map(v -> v.asText()).collect(Collectors.toList());
+                            }
 
-                            dataWriterFilter = StreamSupport
-                                    .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
-                                    .map(v -> v.asText()).collect(Collectors.toList());
                         }
                     }
                 }

@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
@@ -33,12 +33,12 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
 
     @Override
-    public WhileMaBLScope enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate) {
+    public WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate) {
         return activeScope.enterWhile(predicate);
     }
 
     @Override
-    public IfMaBlScope enterIf(Fmi2Builder.LogicBuilder.Predicate predicate) {
+    public IfMaBlScope enterIf(Fmi2Builder.Predicate predicate) {
         return activeScope.enterIf(predicate);
     }
 
@@ -121,15 +121,17 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.store(name, value);
     }
 
-    @Override
+/*    @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
         return activeScope.store(name, value);
     }
-
     @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, Var value) {
         return activeScope.copy(name, value);
     }
+    public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var copy(String name, BooleanVariableFmi2Api value) {
+        return activeScope.copy(name, value);
+    }*/
 
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
@@ -151,5 +153,8 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.createFMU(name, modelDescription, path);
     }
 
-
+    @Override
+    public VariableFmi2Api copy(String name, VariableFmi2Api variable) {
+        return activeScope.copy(name, variable);
+    }
 }

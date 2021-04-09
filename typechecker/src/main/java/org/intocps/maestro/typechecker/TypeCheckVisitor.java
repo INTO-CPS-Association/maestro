@@ -1,6 +1,6 @@
 package org.intocps.maestro.typechecker;
 
-import org.apache.commons.collections.map.HashedMap;
+
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -23,7 +23,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     private final Map<INode, PType> resolvedTypes = new HashMap<>();
     TypeComparator typeComparator;
     MableAstFactory astFactory;
-    Map<INode, PType> checkedTypes = new HashedMap();
+    Map<INode, PType> checkedTypes = new HashMap();
 
     public TypeCheckVisitor(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;
@@ -94,13 +94,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
         PType type = node.getArray().apply(this, ctxt);
-
-        if (!(type instanceof AArrayType)) {
-            errorReporter.report(0, "Canont index none array expression", null);
-            return store(node, MableAstFactory.newAUnknownType());
-        } else {
-            return store(node, ((AArrayType) type).getType());
+        PType iterationType = type.clone();
+        //TODO: Step down through the types according to the size of the indicesLinkedList
+        for (int i = 0; i < node.getIndices().size(); i++) {
+            // If this happens, then we are finished already.
+            if (!(iterationType instanceof AArrayType)) {
+                errorReporter.report(0, "Canont index none array expression", null);
+                return store(node, MableAstFactory.newAUnknownType());
+            } else {
+                iterationType = ((AArrayType) iterationType).getType();
+            }
         }
+        return store(node, iterationType);
     }
 
     @Override

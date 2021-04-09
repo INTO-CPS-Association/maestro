@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
@@ -18,10 +18,10 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     public BooleanVariableFmi2Api store(boolean value);
 
     @Override
-    WhileMaBLScope enterWhile(Fmi2Builder.LogicBuilder.Predicate predicate);
+    WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate);
 
     @Override
-    IfMaBlScope enterIf(Fmi2Builder.LogicBuilder.Predicate predicate);
+    IfMaBlScope enterIf(Fmi2Builder.Predicate predicate);
 
     @Override
     ScopeFmi2Api leave();
@@ -71,6 +71,8 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
+
+    VariableFmi2Api copy(String var1, VariableFmi2Api bool);
 
     //    @Override
     //    <ValType extends Object, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>, RetVar extends VariableFmi2Api<Val>> RetVar copy(

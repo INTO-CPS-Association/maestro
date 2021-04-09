@@ -1,14 +1,11 @@
 package org.intocps.maestro.interpreter.values.derivativeestimator;
-
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// See the related file "DerivativeEstimator.mabl" for the interface
 public class DerivativeEstimatorValue extends ModuleValue {
 
     public DerivativeEstimatorValue() {
@@ -17,22 +14,21 @@ public class DerivativeEstimatorValue extends ModuleValue {
 
     private static Map<String, Value> createMembers() {
         Map<String, Value> componentMembers = new HashMap<>();
-        // variablesOfInterest(String[] variables, int[] order, int[] provided, uInt size)
-        componentMembers.put("variablesOfInterest", new FunctionValue.ExternalFunctionValue(fcargs -> {
-
+        componentMembers.put("create", new FunctionValue.ExternalFunctionValue(fcargs -> {
             fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(fcargs, 3);
 
-            checkArgLength(fcargs, 4);
+            List<Integer> indicesOfInterest =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(0), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                            Collectors.toList());
+            List<Integer> derivativeOrders =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                    Collectors.toList());
+            List<Integer> providedDerivativeOrders =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                    Collectors.toList());
 
-            List<StringValue> variables = ValueExtractionUtilities.getArrayValue(fcargs.get(0), StringValue.class);
-            List<IntegerValue> order = ValueExtractionUtilities.getArrayValue(fcargs.get(1), IntegerValue.class);
-            List<IntegerValue> provided = ValueExtractionUtilities.getArrayValue(fcargs.get(2), IntegerValue.class);
-            UnsignedIntegerValue size = ValueExtractionUtilities.getValue(fcargs.get(3), UnsignedIntegerValue.class);
-
-            DerivativeEstimatorInstanceValue de =
-                    DerivativeEstimatorInstanceValue.createDerivativeEstimatorInstanceValue(variables, order, provided, size);
-
-            return de;
+            return new DerivativeEstimatorInstanceValue(indicesOfInterest, derivativeOrders, providedDerivativeOrders);
         }));
 
         return componentMembers;

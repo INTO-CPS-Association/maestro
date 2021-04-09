@@ -2,6 +2,10 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
@@ -35,22 +39,22 @@ public class ExecutionEnvironmentFmi2Api {
 
 
     public DoubleVariableFmi2Api getReal(String id) {
-        Fmi2Builder.Variable<PStm, Fmi2Builder.DoubleValue> v = module.call(realFunc, id);
+        Fmi2Builder.Variable<PStm, DoubleExpressionValue> v = module.call(realFunc, id);
         return (DoubleVariableFmi2Api) v;
     }
 
     public BooleanVariableFmi2Api getBool(String id) {
-        Fmi2Builder.Variable<PStm, Fmi2Builder.BoolValue> v = module.call(boolFunc, id);
+        Fmi2Builder.Variable<PStm, BooleanExpressionValue> v = module.call(boolFunc, id);
         return (BooleanVariableFmi2Api) v;
     }
 
     public IntVariableFmi2Api getInt(String id) {
-        Fmi2Builder.Variable<PStm, Fmi2Builder.IntValue> v = module.call(intFunc, id);
+        Fmi2Builder.Variable<PStm, IntExpressionValue> v = module.call(intFunc, id);
         return (IntVariableFmi2Api) v;
     }
 
     public StringVariableFmi2Api getString(String id) {
-        Fmi2Builder.Variable<PStm, Fmi2Builder.StringValue> v = module.call(stringFunc, id);
+        Fmi2Builder.Variable<PStm, StringExpressionValue> v = module.call(stringFunc, id);
         return (StringVariableFmi2Api) v;
     }
 }
