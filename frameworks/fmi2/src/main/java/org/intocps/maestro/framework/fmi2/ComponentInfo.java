@@ -1,7 +1,7 @@
 package org.intocps.maestro.framework.fmi2;
 
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.Optional;
 

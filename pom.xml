@@ -50,6 +50,8 @@
         <module>frameworks</module>
         <module>maestro-webapi</module>
         <module>codegen</module>
+        <module>fmi</module>
+        <module>modeldefinitionchecker</module>
     </modules>
 
     <build>
@@ -284,13 +286,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.into-cps.orchestration</groupId>
-                <artifactId>coe</artifactId>
-                <version>${maestro.v1.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.6</version>
@@ -316,12 +311,6 @@
                 <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
                 <version>${fmu.api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.into-cps</groupId>
-                <artifactId>modeldefinition</artifactId>
-                <version>${maestro.v1.version}</version>
             </dependency>
 
             <dependency>

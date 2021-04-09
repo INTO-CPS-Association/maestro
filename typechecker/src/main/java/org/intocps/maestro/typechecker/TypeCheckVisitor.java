@@ -1,6 +1,6 @@
 package org.intocps.maestro.typechecker;
 
-import org.apache.commons.collections.map.HashedMap;
+
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -23,7 +23,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     private final Map<INode, PType> resolvedTypes = new HashMap<>();
     TypeComparator typeComparator;
     MableAstFactory astFactory;
-    Map<INode, PType> checkedTypes = new HashedMap();
+    Map<INode, PType> checkedTypes = new HashMap();
 
     public TypeCheckVisitor(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;

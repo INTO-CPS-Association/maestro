@@ -1,6 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;

@@ -1,8 +1,8 @@
 package org.intocps.maestro.webapi.services;
 
 import org.intocps.fmi.IFmu;
-import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.IFmuFactory;
+import org.intocps.maestro.framework.fmi2.IFmuFactory;
+import org.intocps.maestro.webapi.AbortSimulationException;
 
 import java.io.File;
 import java.net.URI;

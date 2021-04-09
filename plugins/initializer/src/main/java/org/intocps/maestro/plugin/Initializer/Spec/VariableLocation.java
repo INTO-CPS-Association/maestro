@@ -1,6 +1,6 @@
 package org.intocps.maestro.plugin.Initializer.Spec;
 
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.HashMap;
 import java.util.Map;

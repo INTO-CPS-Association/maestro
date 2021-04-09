@@ -1,7 +1,7 @@
 package org.intocps.maestro.framework.fmi2;
 
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.EnvironmentException;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;

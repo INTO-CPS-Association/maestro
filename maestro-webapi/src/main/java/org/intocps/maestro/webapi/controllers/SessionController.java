@@ -36,11 +36,7 @@ package org.intocps.maestro.webapi.controllers;
 
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
-import org.intocps.maestro.webapi.exceptions.LegacyException;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
-import org.intocps.orchestration.coe.json.StatusMsgJson;
-import org.intocps.orchestration.coe.scala.Coe;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
@@ -73,10 +69,6 @@ public class SessionController {
         synchronized (maestroInstanceMap) {
             return maestroInstanceMap.get(sessionID);
         }
-    }
-
-    public Coe getCoe(String sessionId) throws Exception {
-        throw new LegacyException("Legacy function does not exist anymore.");
     }
 
     public boolean containsSession(String sessionId) {
