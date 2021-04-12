@@ -15,18 +15,16 @@ import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
+import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
 import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
 import org.intocps.maestro.webapi.maestro2.dto.*;
-import org.intocps.orchestration.coe.cosim.BasicFixedStepSizeCalculator;
-import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
-import org.intocps.orchestration.coe.httpserver.Algorithm;
-import org.intocps.orchestration.coe.json.InitializationMsgJson;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import org.intocps.orchestration.coe.util.ZipDirectory;
+import org.intocps.maestro.fmi.ModelDescription;
+
+import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
@@ -183,12 +181,9 @@ public class Maestro2SimulationController {
             throw new Exception("Connections must not be null");
         }
 
-        CoSimStepSizeCalculator stepSizeCalculator = null;
-        Algorithm stepAlgorithm = Algorithm.NONE;
+
         if (body.getAlgorithm() == null) {
 
-            stepAlgorithm = Algorithm.FIXED;
-            stepSizeCalculator = new BasicFixedStepSizeCalculator(0.1);
             logger.info("No step size algorithm given. Defaulting to fixed-step with size 0.1");
 
         } else if (body.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
@@ -199,8 +194,7 @@ public class Maestro2SimulationController {
             }
 
             logger.info("Using Fixed-step size calculator with size = {}", algorithm.size);
-            stepSizeCalculator = new BasicFixedStepSizeCalculator(algorithm.size);
-            stepAlgorithm = Algorithm.FIXED;
+
         } else if (body.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             logger.info("Variable step algorithm not supported");
             throw new NotImplementedException("Variable step algorithms are not supported.");

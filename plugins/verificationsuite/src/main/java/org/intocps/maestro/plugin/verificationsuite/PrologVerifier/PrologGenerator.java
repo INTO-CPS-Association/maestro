@@ -1,9 +1,9 @@
 package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 
 import java.util.Collection;
 import java.util.List;

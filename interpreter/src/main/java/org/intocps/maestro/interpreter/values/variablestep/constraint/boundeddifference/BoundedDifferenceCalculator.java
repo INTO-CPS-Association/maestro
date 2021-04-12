@@ -47,7 +47,8 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Vector;
 
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
+
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.values.variablestep.valuetracker.DoubleValueTracker;
 
 public class BoundedDifferenceCalculator
@@ -56,10 +57,10 @@ public class BoundedDifferenceCalculator
 	private Boolean isDefinedBySinglePort;
 
 	public BoundedDifferenceCalculator(final Observable observable,
-			final List<Variable> variables)
+			final List<ModelConnection.Variable> variables)
 	{
 		isDefinedBySinglePort = variables.size() == 1;
-		for (Variable variable : variables)
+		for (ModelConnection.Variable variable : variables)
 		{
 			tracker.add(new DoubleValueTracker(observable, variable, 1));
 		}

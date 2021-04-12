@@ -42,10 +42,10 @@
 */
 package org.intocps.maestro.interpreter.values.variablestep.valuetracker;
 
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+
 import java.util.List;
 import java.util.Observable;
-
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 
 public class OptionalDifferenceTracker implements ValueTracker
 {
@@ -54,7 +54,7 @@ public class OptionalDifferenceTracker implements ValueTracker
 	private Boolean isDefinedByDifference;
 
 	public OptionalDifferenceTracker(final Observable observable,
-			final List<Variable> variables, final Integer predictionOrder)
+			final List<ModelConnection.Variable> variables, final Integer predictionOrder)
 	{
 		isDefinedByDifference = variables.size() == 2;
 		value1 = new DoubleValueTracker(observable, variables.get(0), predictionOrder);
@@ -65,7 +65,7 @@ public class OptionalDifferenceTracker implements ValueTracker
 	}
 
 	public OptionalDifferenceTracker(final Observable observable,
-			final Variable variable, final Integer predictionOrder)
+			final ModelConnection.Variable variable, final Integer predictionOrder)
 	{
 		value1 = new DoubleValueTracker(observable, variable, predictionOrder);
 		isDefinedByDifference = false;

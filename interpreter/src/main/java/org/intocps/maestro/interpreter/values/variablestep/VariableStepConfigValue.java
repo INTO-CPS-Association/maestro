@@ -1,11 +1,11 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
-import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.*;
 
@@ -20,7 +20,7 @@ public class VariableStepConfigValue extends Value {
     private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
-            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws AbortSimulationException {
+            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws InterpreterException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
         Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
