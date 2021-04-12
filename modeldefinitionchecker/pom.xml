@@ -73,26 +73,6 @@
             <version>2.1.5-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.into-cps.maestro</groupId>
-            <artifactId>fmi</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.into-cps.maestro</groupId>
-            <artifactId>fmi</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.into-cps.maestro</groupId>
-            <artifactId>fmi</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>
