@@ -1,12 +1,11 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
-import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.config.ModelConnection;
-import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.*;
 
@@ -17,17 +16,19 @@ public class VariableStepConfigValue extends Value {
     private List<StepVal> dataPoints;
     private Double currTime = 0.0;
     private Double stepSize = 0.0;
+    private final Double maxStepSize;
     private StepValidationResult stepValidationResult;
     private final StepsizeCalculator stepsizeCalculator;
     private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
-            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws AbortSimulationException {
+            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize, Double maxStepSize) throws InterpreterException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
         Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
         instances.forEach((mi, fsi) -> fsi.config.scalarVariables.forEach(sv -> derEsts.put(sv, new ScalarDerivativeEstimator(2))));
         derivativeEstimators = derEsts;
+        this.maxStepSize = maxStepSize;
     }
 
     public void initializePorts(List<String> portNames) {
@@ -62,7 +63,7 @@ public class VariableStepConfigValue extends Value {
             currentPortValues.put(mi, portValues);
         });
 
-        return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, null);
+        return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, maxStepSize);
     }
 
     public boolean isStepValid(Double nextTime, List<Value> portValues, boolean supportsRollBack) {
@@ -121,7 +122,7 @@ public class VariableStepConfigValue extends Value {
         instances.forEach((mi, fsi) -> {
             Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
-                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name))))
+                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().equals((mi.key + "." + mi.instanceName + "." + sv.name))))
                             .findFirst()).ifPresent(val -> {
                         // if key not absent something is wrong?
                         portValues.putIfAbsent(sv, val.getValue());

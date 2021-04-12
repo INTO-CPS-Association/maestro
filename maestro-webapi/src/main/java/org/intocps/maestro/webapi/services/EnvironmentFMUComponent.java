@@ -1,8 +1,8 @@
 package org.intocps.maestro.webapi.services;
 
 import org.intocps.fmi.*;
-import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeStateComponent;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
+import org.intocps.maestro.fmi.HierarchicalCoeStateComponent;
+import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.List;
 

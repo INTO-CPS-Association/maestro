@@ -3,9 +3,9 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
-import org.junit.Test;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.Arrays;

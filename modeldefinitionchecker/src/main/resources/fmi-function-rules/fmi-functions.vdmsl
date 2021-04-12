@@ -1,0 +1,219 @@
+types
+
+Value = int;
+
+States = <startEnd> 
+			| <instantiated> 
+			| <experimentConfigured>
+			| <InitializationMode> 
+			| StepStates 
+			| <terminated>
+			| <error>;
+				
+StepStates = <stepComplete> 
+					 | <stepInProgress> 
+					 | <stepFailed> 
+					 | <stepCanceled>;
+					 
+Instance ::
+	svs : seq of SV'
+	maxOrder : int
+
+values
+AllStates = { <startEnd>, <instantiated>, <InitializationMode>, <terminated>, 
+							<error>,<stepComplete>, <stepInProgress>, <stepFailed>, <stepCanceled>}
+
+state Mode of
+	mode : States		-- The game board, initialized by the play operation
+end
+
+
+--SV' ::
+--	causality 	: Causality
+--	variability : Variability
+--	initial			: [Initial]
+--	type				: Type;
+
+functions
+checkSV_during_State : SV' * int -> bool
+checkSV_during_State(sv', num) == 
+	let mk_SV'(c,v,i,-) = sv'
+	in
+		cases num:
+		1 -> v <> <constant> => i in set {<exact>, <approx>},
+		2 -> c = <output>, -- "...or continous-time states or state derivatives (if element <Derivatives> is present) p.177 line 1996
+		3 -> (v <> <constant> => i = <exact>) or c = <input>, -- Unclear in p.117 line 1998 -- Correct here?
+		4 -> undefined, -- Note: Number 4 and 5 are skipped, why? maybe related to FMI 1 standard?
+		5 -> undefined,
+		6 -> c = <input> or (c = <parameter> => v = <tunable>), -- Unclear on p.118 line 1999, Crrrect here?, 
+		7 -> true, -- Always true, but revieved values are usable for debugging only
+		8 -> true, -- Always true, but if status is other than fmi2Terminated, retrieved values are useable for dubigging only
+		others -> undefined	
+		end; 
+
+operations
+
+GetTypesPlatform : () ==>int
+GetTypesPlatform ()==is not yet specified;
+
+GetVersion: () ==>int
+GetVersion ()==is not yet specified;
+
+SetDebugLogging: () ==>int
+SetDebugLogging ()==is not yet specified
+pre mode <> <startEnd>;
+
+Instantiate: () ==>int
+Instantiate ()==is not yet specified
+pre mode = <startEnd>;
+
+FreeInstance: () ==>int
+FreeInstance ()==is not yet specified
+pre mode in set AllStates\{<startEnd>,<stepInProgress>};
+
+SetupExperiment: () ==>int
+SetupExperiment ()==is not yet specified
+pre mode = <instantiated>
+post mode = <experimentConfigured>;
+
+EnterInitializationMode: () ==>int
+EnterInitializationMode ()==is not yet specified
+pre mode = <experimentConfigured>
+post mode = <InitializationMode>;
+
+ExitInitializationMode: () ==>int
+ExitInitializationMode ()==is not yet specified
+pre mode = <InitializationMode>;
+
+Terminate: () ==>int
+Terminate ()==is not yet specified
+pre mode in set {<stepComplete>,<stepFailed>};
+
+Reset: () ==>int
+Reset ()==is not yet specified
+pre mode in set AllStates\{<startEnd>,<stepInProgress>};
+
+--Get: () ==>int
+--Get()==is not yet specified
+--pre mode in set AllStates\{<startEnd>,<instantiated>,<stepInProgress>} -- and
+--;
+
+--Set: () ==>int
+--Set()==is not yet specified
+--pre mode in set {<instantiated>,<InitializationMode>,<stepComplete>};
+
+Get: SV' ==>int
+Get(sv')==is not yet specified
+pre mode in set AllStates\{<startEnd>,<instantiated>,<stepInProgress>} and
+ (mode = <InitializationMode> => checkSV_during_State(sv', 2)) and -- Check if possible for this concrete scalar variable
+ (mode = <stepFailed> => checkSV_during_State(sv', 8)) and
+ (mode in set {<stepCanceled>,<error>} => checkSV_during_State(sv', 7))
+;
+
+Set: SV' ==>int
+Set(sv')==is not yet specified
+pre mode in set {<instantiated>,<InitializationMode>,<stepComplete>} and
+ (mode = <instantiated> => checkSV_during_State(sv', 1)) and
+ (mode = <InitializationMode> => checkSV_during_State(sv', 3)) and
+ (mode = <stepComplete> => checkSV_during_State(sv', 6))
+;
+
+
+--GetFMUstate: () ==>int
+--GetFMUstate ()==is not yet specified;
+--
+--SetFMUstate: () ==>int
+--SetFMUstate ()==is not yet specified;
+--
+--FreeFMUstate: () ==>int
+--FreeFMUstate ()==is not yet specified;
+--
+--SerializedFMUstateSize: () ==>int
+--SerializedFMUstateSize ()==is not yet specified;
+--
+--SerializeFMUstate: () ==>int
+--SerializeFMUstate ()==is not yet specified;
+--
+--DeSerializeFMUstate: () ==>int
+--DeSerializeFMUstate ()==is not yet specified;
+
+GetDirectionalDerivative: seq of SV' ==>int
+GetDirectionalDerivative (unknowns)==is not yet specified
+pre mode in set AllStates\{<startEnd>,<instantiated>,<stepInProgress>} and
+ forall i in set inds unknowns & let sv' = unknowns(i) in
+ (
+ 	(mode = <stepFailed> => checkSV_during_State(sv', 8)) and
+  (mode in set {<stepCanceled>,<error>} => checkSV_during_State(sv', 7))
+ )
+;
+
+SetRealInputDerivatives: seq of SV' * nat1 * seq of real ==>int
+SetRealInputDerivatives (valRefs, order, vals)==is not yet specified
+pre mode in set {<instantiated>,<InitializationMode>,<stepComplete>}
+		and forall i in set inds valRefs & let s = valRefs(i) in s.causality = <input> and s.variability = <continuous> 
+;
+
+GetRealOutputDerivatives: seq of SV' * nat1 ==> seq of real
+GetRealOutputDerivatives (valRefs, order)==is not yet specified
+pre mode in set AllStates\{<startEnd>,<instantiated>,<InitializationMode>,<stepInProgress>}
+		and forall i in set inds valRefs & let s = valRefs(i) in s.causality = <output> and s.variability = <continuous> 
+
+;
+
+DoStep: () ==>int
+DoStep ()==is not yet specified
+pre mode = <stepComplete>;
+
+CancelStep: () ==>int
+CancelStep ()==is not yet specified
+pre mode = <stepInProgress>;
+
+GetStatus: () ==>int
+GetStatus ()==is not yet specified
+pre mode in set {<stepComplete>,<stepInProgress>,<stepFailed>,<terminated>};
+
+--GetRealStatus: () ==>int
+--GetRealStatus ()==is not yet specified;
+--
+--GetIntegerStatus: () ==>int
+--GetIntegerStatus ()==is not yet specified;
+--
+--GetBooleanStatus: () ==>int
+--GetBooleanStatus ()==is not yet specified;
+--
+--GetStringStatus: () ==>int
+--GetStringStatus ()==is not yet specified;
+
+simulate : nat * nat  ==> ()
+simulate(startTime, endTime)==
+(
+let instances : set of Instance ={},
+		t : nat = 0
+in
+	(
+		let i : Instance = let i in set instances in i,
+				derivatives : map nat1 /*time*/ to (map Instance to (map nat1 /*order*/ to set of (SV' * Value))) = 
+			 {t |-> 
+			 		{i|-> 
+			 			{
+			 				order |->	let ids 	= inds i.svs,
+			 											vals 	= if order = 0 then [0 | j in set ids & j=j] else GetRealOutputDerivatives(i.svs,order)
+			 									in
+			 											{mk_(i.svs(j),vals(j)) | j in set ids }
+			 				
+			 						 | order in set {0,...,i.maxOrder}} 
+			 		}
+			 }
+in
+	let ids 	= inds i.svs
+	in
+		for all order in set dom derivatives(t)(i) do
+			let vals : seq of nat = [	let mk_(d,v) in set derivatives(t)(i)(order) be st d = i.svs(si) in v 
+															| si in set ids] 
+				in
+				 let - = SetRealInputDerivatives(i.svs,order,vals) in skip;
+	
+	
+	);
+
+);

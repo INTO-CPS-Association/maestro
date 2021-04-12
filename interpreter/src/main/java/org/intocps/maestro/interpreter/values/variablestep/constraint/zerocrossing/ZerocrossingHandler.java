@@ -52,7 +52,6 @@ import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossi
 import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossing.stepsize.DefaultZcStepsizeAdjustmentStrategy;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossing.stepsize.ZcStepsizeAdjustmentStrategy;
 import org.intocps.maestro.interpreter.values.variablestep.valuetracker.OptionalDifferenceTracker;
-import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,7 @@ import java.util.Observer;
 
 public class ZerocrossingHandler implements Observer, ConstraintHandler {
 
-    final static Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+    final static Logger logger = LoggerFactory.getLogger(ZerocrossingHandler.class);
     private final Double tol;
     private final String id;
     private final StepsizeInterval interval;

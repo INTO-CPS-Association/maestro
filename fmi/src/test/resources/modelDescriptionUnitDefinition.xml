@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fmiModelDescription author="federica.cianfrocca" copyright="" description="" fmiVersion="2.0"
+                     generationDateAndTime="2019-09-17T09:32:05Z"
+                     generationTool="Simulink (R2019a)"
+                     guid="6cd10b86-8d5b-8042-6796-ac9a55e1fe05"
+                     license=""
+                     modelName="TCS"
+                     variableNamingConvention="structured"
+                     version="1.97">
+   <CoSimulation canBeInstantiatedOnlyOncePerProcess="false"
+                 canHandleVariableCommunicationStepSize="true"
+                 canNotUseMemoryManagementFunctions="true"
+                 modelIdentifier="TCS"/>
+   <LogCategories>
+      <Category description="Error message from FMU or MATLAB exceptions."
+                name="logStatusError"/>
+      <Category description="All messages from FMU, MATLAB exceptions, and MATLAB command window."
+                name="logAll"/>
+   </LogCategories>
+   <DefaultExperiment startTime="0" stopTime="3600"/>
+   <VendorAnnotations>
+      <Tool name="Simulink">
+         <Simulink>
+            <ImportCompatibility requireMATLABOnPath="yes" requireRelease="R2019a"/>
+            <SimulinkProject modelName="TCS.slx" projectName="Thermal Model Simulink_fede_working.zip"/>
+            <SimulinkModelInterface>
+               <Inport blockPath="TCS/HeaterPowerProvided" dataType="double" dimension="[1]"
+                       portNumber="1"
+                       sampleTime="[0 0]"
+                       tag="cosimTransformedInput_1"
+                       unit="W"/>
+               <Outport blockPath="TCS/HeaterPowerRequired" dataType="double" dimension="[1]"
+                        portNumber="1"
+                        sampleTime="[0 1]"
+                        tag="cosimTransformedOutput_1"
+                        unit="W"/>
+            </SimulinkModelInterface>
+         </Simulink>
+      </Tool>
+   </VendorAnnotations>
+   <ModelVariables>
+      <ScalarVariable causality="input" description="Input Port: HeaterPowerProvided"
+                      name="HeaterPowerProvided"
+                      valueReference="0"
+                      variability="continuous"><!--Index = 1--><Real start="0" unit="W"/>
+         <Annotations>
+            <Tool name="Simulink">
+               <Data elementAccess="" tag="cosimTransformedInput_1"/>
+            </Tool>
+         </Annotations>
+      </ScalarVariable>
+      <ScalarVariable causality="output" description="Output Port: HeaterPowerRequired"
+                      initial="calculated"
+                      name="HeaterPowerRequired"
+                      valueReference="1"
+                      variability="continuous"><!--Index = 2--><Real unit="W"/>
+         <Annotations>
+            <Tool name="Simulink">
+               <Data elementAccess="" tag="cosimTransformedOutput_1"/>
+            </Tool>
+         </Annotations>
+      </ScalarVariable>
+   </ModelVariables>
+   <ModelStructure>
+      <Outputs>
+         <Unknown index="2"/>
+      </Outputs>
+      <InitialUnknowns>
+         <Unknown index="2"/>
+      </InitialUnknowns>
+   </ModelStructure>
+   <UnitDefinitions>
+      <Unit name="W"/>
+   </UnitDefinitions>
+</fmiModelDescription>

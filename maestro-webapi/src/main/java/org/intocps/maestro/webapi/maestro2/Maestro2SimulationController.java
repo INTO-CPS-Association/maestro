@@ -1,5 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -14,13 +15,16 @@ import org.intocps.maestro.Main;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
+import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
 import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
 import org.intocps.maestro.webapi.maestro2.dto.*;
-import org.intocps.orchestration.coe.util.ZipDirectory;
+import org.intocps.maestro.fmi.ModelDescription;
+
+import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
@@ -84,13 +88,13 @@ public class Maestro2SimulationController {
     }
 
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
-    public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
-        return sessionController.getStatus(sessionId);
+    public String getStatuses(@PathVariable String sessionId) throws Exception {
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus(sessionId));
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.GET)
-    public List<StatusModel> getStatuses() {
-        return sessionController.getStatus();
+    public String getStatuses() throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(sessionController.getStatus());
     }
 
     private StatusModel getStatus(String sessionId) {

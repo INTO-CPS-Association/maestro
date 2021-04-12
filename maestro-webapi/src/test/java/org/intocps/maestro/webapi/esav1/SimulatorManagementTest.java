@@ -41,7 +41,7 @@ public class SimulatorManagementTest {
 
     final static String baseUrl = "/api/esav1/orchestrator";
     private final static Logger logger = LoggerFactory.getLogger(SimulatorManagementTest.class);
-    @Autowired
+    //@Autowired <--- needs the @bean method-level annotation
     SimulatorManagementService service;
     @Autowired
     private WebApplicationContext webApplicationContext;

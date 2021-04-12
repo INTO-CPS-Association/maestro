@@ -42,14 +42,13 @@
 */
 package org.intocps.maestro.interpreter.values.variablestep;
 
+import org.intocps.maestro.framework.fmi2.ModelConnection;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
-import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
+import static org.intocps.maestro.fmi.ModelDescription.*;
 
 public class CurrentSolutionPoint extends Observable
 {
@@ -65,9 +64,9 @@ public class CurrentSolutionPoint extends Observable
 	private Double prevStepsize;
 	private Double lastStepsizeLimitedByContinuousConstraint;
 	private Boolean wasLastStepsizeLimitedByDiscreteConstraint;
-	private Map<ModelInstance, Map<ScalarVariable, Object>> currentValues;
-	private Map<ModelInstance, Map<ScalarVariable, Object>> nextValues;
-	private Map<ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives;
+	private Map<ModelConnection.ModelInstance, Map<ScalarVariable, Object>> currentValues;
+	private Map<ModelConnection.ModelInstance, Map<ScalarVariable, Object>> nextValues;
+	private Map<ModelConnection.ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives;
 	private Operation operation;
 
 	public CurrentSolutionPoint()
@@ -89,8 +88,8 @@ public class CurrentSolutionPoint extends Observable
 
 	public void advance(
 			final Double currentTime,
-			final Map<ModelInstance, Map<ScalarVariable, Object>> currentValues,
-			final Map<ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives,
+			final Map<ModelConnection.ModelInstance, Map<ScalarVariable, Object>> currentValues,
+			final Map<ModelConnection.ModelInstance, Map<ScalarVariable, Map<Integer, Double>>> currentDerivatives,
 			final Double prevStepsize,
 			final Boolean wasStepsizeLimitedByDiscreteConstraint)
 	{
@@ -110,7 +109,7 @@ public class CurrentSolutionPoint extends Observable
 	}
 
 	public void peek(final Double nextTime,
-			final Map<ModelInstance, Map<ScalarVariable, Object>> nextValues)
+			final Map<ModelConnection.ModelInstance, Map<ScalarVariable, Object>> nextValues)
 	{
 		operation = Operation.PEEK;
 		this.nextValues = nextValues;
@@ -155,32 +154,32 @@ public class CurrentSolutionPoint extends Observable
 		return prevStepsize;
 	}
 
-	public Double getDoubleValue(final Variable variable)
+	public Double getDoubleValue(final ModelConnection.Variable variable)
 	{
 		return (Double) retrieveValue(currentValues.get(variable.instance), variable);
 	}
 
-	public Double getNextDoubleValue(final Variable variable)
+	public Double getNextDoubleValue(final ModelConnection.Variable variable)
 	{
 		return (Double) retrieveValue(nextValues.get(variable.instance), variable);
 	}
 
-	public Integer getIntegerValue(final Variable variable)
+	public Integer getIntegerValue(final ModelConnection.Variable variable)
 	{
 		return (Integer) retrieveValue(currentValues.get(variable.instance), variable);
 	}
 
-	public Boolean getBooleanValue(final Variable variable)
+	public Boolean getBooleanValue(final ModelConnection.Variable variable)
 	{
 		return (Boolean) retrieveValue(currentValues.get(variable.instance), variable);
 	}
 
-	public String getStringValue(final Variable variable)
+	public String getStringValue(final ModelConnection.Variable variable)
 	{
 		return (String) retrieveValue(currentValues.get(variable.instance), variable);
 	}
 
-	public Double getDerivative(final Variable variable, final Integer order)
+	public Double getDerivative(final ModelConnection.Variable variable, final Integer order)
 	{
 		if (order < 1)
 		{
@@ -217,7 +216,7 @@ public class CurrentSolutionPoint extends Observable
 	}
 
 	private <T> T retrieveValue(final Map<ScalarVariable, T> values,
-			final Variable variable)
+			final ModelConnection.Variable variable)
 	{
 		if (values == null)
 		{

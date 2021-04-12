@@ -13,6 +13,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
@@ -25,7 +26,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -247,14 +247,12 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
-
                 // Get fmu states
                 if(everyFMUSupportsGetState){
                     for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                         fmuStates.add(entry.getValue().getState());
                     }
                 }
-
 
                 if (jacobianStepConfig.stabilisation) {
                     stabilisation_loop.setValue(stabilisation_loop_max_iterations);
@@ -382,14 +380,17 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     discardScope.enterElse();
                 }
                 {
+                    BooleanVariableFmi2Api hasReducedStepSize = null;
                     if (algorithm == StepAlgorithm.VARIABLESTEP) {
                         //Validate step
                         PredicateFmi2Api notValidStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
                                 new DoubleVariableFmi2Api(null, null, dynamicScope, null,
                                         currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate().not();
+                        hasReducedStepSize = new BooleanVariableFmi2Api(null, null, dynamicScope, null,
+                                Objects.requireNonNull(variableStepInstance).hasReducedStepsize().getReferenceExp());
                         dynamicScope.enterIf(notValidStepPred);
                         {
-                            IfMaBlScope reducedStepSizeScope = dynamicScope.enterIf(Objects.requireNonNull(variableStepInstance).hasReducedStepsize().toPredicate());
+                            IfMaBlScope reducedStepSizeScope = dynamicScope.enterIf(hasReducedStepSize.toPredicate());
                             {
 
                                 // rollback FMUs
@@ -400,6 +401,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
                                 builder.getLogger().debug("## Invalid variable step-size! FMUs are rolled back and step-size reduced to: %f",
                                         currentStepSize);
+
+                                anyDiscards.setValue(new BooleanVariableFmi2Api(null,null,dynamicScope,null,anyDiscards.toPredicate().not().getExp()));
 
                                 dynamicScope.leave();
                             }
@@ -414,13 +417,6 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                             dynamicScope.leave();
                         }
                     }
-
-                    // Update currentCommunicationTime
-                    currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
-                    currentStepSize.setValue(stepSize);
-
-                    // Call log
-                    dataWriterInstance.log(currentCommunicationTime);
 
                     DoubleVariableFmi2Api realStepTime;
                     if (jacobianStepConfig.simulationProgramDelay) {
@@ -442,6 +438,16 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     if(everyFMUSupportsGetState) {
                         dynamicScope.leave();
                     }
+                }
+
+                dynamicScope.enterIf(anyDiscards.toPredicate().not());
+                {
+                    // Update currentCommunicationTime
+                    currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
+
+                    // Call log
+                    dataWriterInstance.log(currentCommunicationTime);
+                    currentStepSize.setValue(stepSize);
                 }
 
                 scopeFmi2Api.leave();

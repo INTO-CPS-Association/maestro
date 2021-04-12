@@ -49,7 +49,6 @@ import org.intocps.maestro.interpreter.values.variablestep.StepsizeInterval;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.boundeddifference.stepsize.BdStepsizeAdjustmentStrategy;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.boundeddifference.stepsize.SimpleBdStepsizeAdjustmentStrategy;
-import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,7 @@ import java.util.Observer;
 
 public class BoundedDifferenceHandler implements Observer, ConstraintHandler {
 
-    final static Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+    final static Logger logger = LoggerFactory.getLogger(BoundedDifferenceHandler.class);
     private final BdStepsizeAdjustmentStrategy stepsizeAdjustmentStrategy;
     private final BoundedDifferenceCalculator calculator;
     private final StepsizeInterval interval;

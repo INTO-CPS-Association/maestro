@@ -29,12 +29,12 @@
         <repository>
             <id>maestro2-third-party</id>
             <name>maestro2-third-party</name>
-            <url>http://overture.au.dk/artifactory/maestro2-third-party</url>
+            <url>https://overture.au.dk/artifactory/maestro2-third-party</url>
         </repository>
         <repository>
             <id>overture.au.dk</id>
             <name>overture.au.dk-releases</name>
-            <url>http://overture.au.dk/artifactory/into-cps</url>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
         </repository>
 
     </repositories>
@@ -50,6 +50,8 @@
         <module>frameworks</module>
         <module>maestro-webapi</module>
         <module>codegen</module>
+        <module>fmi</module>
+        <module>modeldefinitionchecker</module>
     </modules>
 
     <build>
@@ -286,13 +288,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.into-cps.orchestration</groupId>
-                <artifactId>coe</artifactId>
-                <version>${maestro.v1.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>2.6</version>
@@ -317,12 +312,6 @@
                 <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
                 <version>${fmu.api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.into-cps</groupId>
-                <artifactId>modeldefinition</artifactId>
-                <version>${maestro.v1.version}</version>
             </dependency>
 
             <dependency>

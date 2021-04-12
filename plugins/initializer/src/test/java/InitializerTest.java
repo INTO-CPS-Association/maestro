@@ -11,8 +11,8 @@ import org.intocps.maestro.plugin.Initializer.Initializer;
 import org.intocps.maestro.plugin.Initializer.TopologicalPlugin;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.PrologGenerator;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import scala.Console;
 
 import java.io.IOException;
