@@ -30,12 +30,12 @@
         <repository>
             <id>maestro2-third-party</id>
             <name>maestro2-third-party</name>
-            <url>http://overture.au.dk/artifactory/maestro2-third-party</url>
+            <url>https://overture.au.dk/artifactory/maestro2-third-party</url>
         </repository>
         <repository>
             <id>overture.au.dk</id>
             <name>overture.au.dk-releases</name>
-            <url>http://overture.au.dk/artifactory/into-cps</url>
+            <url>https://overture.au.dk/artifactory/into-cps</url>
         </repository>
 
     </repositories>
