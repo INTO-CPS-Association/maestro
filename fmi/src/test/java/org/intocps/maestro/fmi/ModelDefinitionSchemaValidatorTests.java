@@ -35,6 +35,8 @@
 package org.intocps.maestro.fmi;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -46,35 +48,37 @@ import java.io.InputStream;
 
 public class ModelDefinitionSchemaValidatorTests
 {
-//	@Disabled
-//	@Test
-//	public void test() throws IOException, SAXException
-//	{
-//		File f = new File("src/test/resources/modelDescription.xml".replace('/', File.separatorChar));
-//
-//		FileInputStream in = FileUtils.openInputStream(f);
-//
-//		InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
-//
-//		try
-//		{
-//			ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
-//		} catch (SAXParseException e)
-//		{
-//
-//		}
-//	}
-//
-//	@Test(expected = SAXParseException.class)
-//	public void ModelDescriptionWithUnitDefinitionInWrongPosition() throws IOException, SAXException {
-//		File f = new File("src/test/resources/modelDescriptionUnitDefinition.xml".replace('/', File.separatorChar));
-//
-//		FileInputStream in = FileUtils.openInputStream(f);
-//
-//		InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
-//
-//
-//		ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
-//
-//	}
+	@Test
+	public void test() throws IOException, SAXException
+	{
+		File f = new File("src/test/resources/modelDescription.xml".replace('/', File.separatorChar));
+
+		FileInputStream in = FileUtils.openInputStream(f);
+
+		InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
+
+		try
+		{
+			ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+		} catch (SAXParseException e)
+		{
+
+		}
+	}
+
+	@Test()
+	public void ModelDescriptionWithUnitDefinitionInWrongPosition() {
+		Assertions.assertThrows(SAXParseException.class, () -> {
+			File f = new File("src/test/resources/modelDescriptionUnitDefinition.xml".replace('/', File.separatorChar));
+
+			FileInputStream in = FileUtils.openInputStream(f);
+
+			InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
+
+
+			ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+		});
+
+
+	}
 }
