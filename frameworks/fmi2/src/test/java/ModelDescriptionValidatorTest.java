@@ -1,8 +1,8 @@
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.EnvironmentException;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelDescriptionValidator;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
