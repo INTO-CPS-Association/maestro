@@ -1,7 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
@@ -48,9 +47,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final MablApiBuilder builder;
     private final Map<PType, ArrayVariableFmi2Api<Object>> ioBuffer = new HashMap<>();
     private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
-    private ArrayVariableFmi2Api<Object> derBuffer;
-    private ArrayVariableFmi2Api<Object> derOrderBuffer;
-    private ArrayVariableFmi2Api<Object> derRefBuffer;
+    private ArrayVariableFmi2Api<Object> derOutBuffer;
+    private ArrayVariableFmi2Api<Object> derOrderOutBuffer;
+    private ArrayVariableFmi2Api<Object> derRefOutBuffer;
     Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi2Api) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
     private DoubleVariableFmi2Api currentTimeVar = null;
@@ -142,27 +141,26 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return getBuffer(this.ioBuffer, type, "IO", modelDescriptionContext.valRefToSv.size());
     }
 
-    private ArrayVariableFmi2Api<Object> getDerBuffer(int size) {
-        if (this.derBuffer == null) {
-            this.derBuffer = createBuffer(newRealType(), "DER",size);
+    private ArrayVariableFmi2Api<Object> getDerOutBuffer(int size) {
+        if (this.derOutBuffer == null) {
+            this.derOutBuffer = createBuffer(newRealType(), "DER_OUT", size);
         }
-        return this.derBuffer;
+        return this.derOutBuffer;
     }
 
-    private ArrayVariableFmi2Api<Object> getDerOrderBuffer(int size) {
-        if (this.derOrderBuffer == null) {
-            this.derOrderBuffer = createBuffer(newUIntType(), "DER_ORDER",size);
+    private ArrayVariableFmi2Api<Object> getDerOrderOutBuffer(int size) {
+        if (this.derOrderOutBuffer == null) {
+            this.derOrderOutBuffer = createBuffer(newUIntType(), "DER_ORDER_OUT", size);
         }
-        return this.derBuffer;
+        return this.derOutBuffer;
     }
 
-    private ArrayVariableFmi2Api<Object> getDerRefBuffer(int size) {
-        if (this.derRefBuffer == null) {
-            this.derRefBuffer = createBuffer(newUIntType(), "_DREF", size);
+    private ArrayVariableFmi2Api<Object> getDerRefOutBuffer(int size) {
+        if (this.derRefOutBuffer == null) {
+            this.derRefOutBuffer = createBuffer(newUIntType(), "DREF_OUT", size);
         }
-        return this.derRefBuffer;
+        return this.derRefOutBuffer;
     }
-
 
 
     private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type) {
@@ -439,7 +437,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             scope.add(stm);
 
             if (builder.getSettings().retrieveDerivatives && type.equals(new ARealNumericPrimitiveType())) {
-                //If any target ports exists that can interpolate the port is also linked.
+                // if any target ports exists that can interpolate the port is also linked.
                 List<PortFmi2Api> linkedPortsWithInterpolate = e.getValue().stream().filter(p1 -> p1.getTargetPorts().stream().anyMatch(p2 -> {
                     try {
                         return p2.aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs();
@@ -450,37 +448,50 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 })).collect(Collectors.toList());
 
                 try {
-                    int maxDerOrder = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
-                    if (linkedPortsWithInterpolate.size() > 0 && maxDerOrder > 0) {
-                        Map<ModelDescription.ScalarVariable, ModelDescription.ScalarVariable> scalarVariablesWithDers =
-                                modelDescriptionContext.getModelDescription().getDerivativesMap();
+                    int maxOutputDerOrder = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
+                    if (linkedPortsWithInterpolate.size() > 0 && maxOutputDerOrder > 0) {
 
-                        List<PortFmi2Api> portsWithDers = linkedPortsWithInterpolate.stream()
-                                .filter(p -> scalarVariablesWithDers.keySet().stream()
-                                        .anyMatch(s -> s.getValueReference().equals(p.getPortReferenceValue()))).collect(Collectors.toList());
+                        // find derivatives for ports that are linked to targets that can interpolate
+                        List<ModelDescription.ScalarVariable> derivativeScalars =
+                                modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream()
+                                        .filter(entry -> linkedPortsWithInterpolate.stream()
+                                                .anyMatch(p -> p.getPortReferenceValue().equals(entry.getKey().getValueReference())))
+                                        .map(Map.Entry::getValue).collect(Collectors.toList());
 
-                        int portsWithDersSize = portsWithDers.size();
-                        if(portsWithDersSize > 0){
-                            ArrayVariableFmi2Api<Object> derBuf = getDerBuffer(portsWithDersSize * maxDerOrder);
-                            ArrayVariableFmi2Api<Object> derOrderBuf = getDerOrderBuffer(portsWithDersSize * maxDerOrder);
-                            ArrayVariableFmi2Api<Object> derRefBuf = getDerRefBuffer(portsWithDersSize * maxDerOrder);
+                        int dersSize = derivativeScalars.size();
+                        if (dersSize > 0) {
+                            // create buffers
+                            int arraySize = dersSize * maxOutputDerOrder;
+                            ArrayVariableFmi2Api<Object> derOutBuf = getDerOutBuffer(arraySize);
+                            ArrayVariableFmi2Api<Object> derOrderOutBuf = getDerOrderOutBuffer(arraySize);
+                            ArrayVariableFmi2Api<Object> derRefOutBuf = getDerRefOutBuffer(arraySize);
 
-                            for (int i = 0; i < portsWithDersSize; i++) {
-                                PortFmi2Api p = portsWithDers.get(i);
-                                for(int order = 1; order <= maxDerOrder; order++){
-                                    PStateDesignator dRefDesignator = derRefBuf.items().get(i).getDesignator().clone();
-                                    scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
+                            ModelDescription.ScalarVariable derivativeScalarVariable = null;
 
-                                    PStateDesignator derOrderDesignator = derOrderBuf.items().get(i).getDesignator().clone();
-                                    scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
-                                    i++;
+                            // loop buffers and assign scalar value reference and derivative order.
+                            // e.g for two ports with derivative order two: derRefOutBuf = [valref1, valref1, valref2,valref2], derOrderOutBuf =
+                            // [1,2,1,2]
+                            for (int i = 0, portIndex = 0, order = 1; i < arraySize; i++) {
+                                if (i == 0 || maxOutputDerOrder % i == 0) {
+                                    order = 1;
+                                    derivativeScalarVariable = derivativeScalars.get(portIndex);
+                                    portIndex++;
                                 }
+
+                                PStateDesignator dRefDesignator = derRefOutBuf.items().get(i).getDesignator().clone();
+                                scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(derivativeScalarVariable.getValueReference().intValue())));
+
+                                PStateDesignator derOrderDesignator = derOrderOutBuf.items().get(i).getDesignator().clone();
+                                scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+                                order++;
                             }
 
+                            // create assignment statement which assigns derivatives to derOutBuf by calling getRealOutputDerivatives with
+                            // derRefOutBuf, arraysize and derOrderOutBuf.
                             PStm ifStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
-                                            derRefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()),
-                                            derOrderBuf.getReferenceExp().clone(), derBuf.getReferenceExp().clone()));
+                                            derRefOutBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
+                                            derOrderOutBuf.getReferenceExp().clone(), derOutBuf.getReferenceExp().clone()));
 
                             scope.addAfter(ifStm);
                         }
@@ -578,8 +589,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 return "setupExperiment";
             case GETREALOUTPUTDERIVATIVES:
                 return "getRealOutputDerivatives";
-            case GETMAXOUTPUTDERIVATIVEORDER:
-                return "getMaxOutputDerivativeOrder";
             case SETREALOUTPUTDERIVATIVES:
                 return "setRealOutputDerivatives";
             default:
@@ -713,6 +722,82 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
+
+
+        try {
+            if (builder.getSettings().retrieveDerivatives &&
+                    sortedPorts.get(0).aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs() &&
+                    type.equals(new ARealNumericPrimitiveType())) {
+
+                List<ModelDescription.ScalarVariable> derScalars = new ArrayList<>();
+
+                // find all ports for which derivatives should be passed together with the derivatives.
+                List<PortFmi2Api> portsToSetDers = sortedPorts.stream().filter(p -> {
+                    try {
+                        Optional<ModelDescription.ScalarVariable> derScalar =
+                                p.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getDerivativesMap().entrySet().stream().filter(e ->
+                                        e.getKey().getValueReference().equals(p.getSourcePort().getPortReferenceValue())).map(e -> e.getValue()).findFirst();
+                        if (derScalar.isEmpty()) {
+                            return false;
+                        }
+                        derScalars.add(derScalar.get());
+                        return true;
+
+                    } catch (XPathExpressionException | IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }).collect(Collectors.toList());
+
+                if (portsToSetDers.size() > 0) {
+
+                    // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
+                    int arraySize =
+                            portsToSetDers.size() * portsToSetDers.stream().mapToInt(p -> {
+                                try {
+                                    return p.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getMaxOutputDerivativeOrder();
+                                } catch (XPathExpressionException e) {
+                                    e.printStackTrace();
+                                }
+                                return 0;
+                            }).sum();
+                    ArrayVariableFmi2Api<Object> derValInBuf = createBuffer(newUIntType(), "DER_IN", arraySize);
+                    ArrayVariableFmi2Api<Object> derOrderInBuf = createBuffer(newUIntType(), "DER_ORDER_IN", arraySize);
+                    ArrayVariableFmi2Api<Object> portWithDerRefInBuf = createBuffer(newUIntType(), "PORT_WITH_DER_REF_IN", arraySize);
+
+                    // loop through each array index and assign the port reference, derivative order and derivative value.
+                    // e.g: for two outputs vref1 (valref = 10) and vref2 (valref = 20) with derivative order 2 and 1: derValInBuf = [der(vref1), der
+                    // (der(vref1)),der(vref2))], derOrderInBuf = [1,2,1], portWithDerRefInBuf = [10, 10, 20]
+                    for (int portIndex = 0, arrayIndex = 0; portIndex < portsToSetDers.size(); portIndex++) {
+                        int maxOutputDerOrder = portsToSetDers.get(portIndex).aMablFmi2ComponentAPI.getModelDescription().getMaxOutputDerivativeOrder();
+                        for (int order = 1; order <= maxOutputDerOrder; order++, arrayIndex++) {
+                            PStateDesignator dRefDesignator = portWithDerRefInBuf.items().get(arrayIndex).getDesignator().clone();
+                            scope.add(newAAssignmentStm(dRefDesignator,
+                                    newAIntLiteralExp(portsToSetDers.get(portIndex).getPortReferenceValue().intValue())));
+
+                            PStateDesignator derOrderDesignator = derOrderInBuf.items().get(arrayIndex).getDesignator().clone();
+                            scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+
+                            PStateDesignator derInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
+                            scope.add(newAAssignmentStm(derInDesignator, newAUIntLiteralExp(derScalars.get(portIndex).getValueReference())));
+                        }
+                    }
+
+                    // create set derivatives statement which calls setRealOutputDerivatives with portWithDerRefInBuf, arraySize, derOrderInBuf and
+                    // derValInBuf.
+                    PStm ifStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                            call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETREALOUTPUTDERIVATIVES),
+                                    portWithDerRefInBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
+                                    derOrderInBuf.getReferenceExp().clone(), derValInBuf.getReferenceExp().clone()));
+
+                    scope.addAfter(ifStm);
+                }
+
+            }
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+        }
+
         if (builder.getSettings().fmiErrorHandlingEnabled) {
             FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
                     MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
@@ -936,8 +1021,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         EXITINITIALIZATIONMODE,
         SETUPEXPERIMENT,
         GETREALOUTPUTDERIVATIVES,
-        SETREALOUTPUTDERIVATIVES,
-        GETMAXOUTPUTDERIVATIVEORDER
+        SETREALOUTPUTDERIVATIVES
     }
 
     static class FmiStatusErrorHandlingBuilder {
