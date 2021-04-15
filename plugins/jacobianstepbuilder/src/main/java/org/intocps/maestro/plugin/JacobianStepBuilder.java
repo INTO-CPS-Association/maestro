@@ -22,7 +22,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -103,7 +102,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
         try {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             settings.fmiErrorHandlingEnabled = false;
-            settings.retrieveDerivatives = jacobianStepConfig.retrieveDerivatives;
+            settings.setGetDerivatives = jacobianStepConfig.retrieveDerivatives;
             // Selected fun now matches funWithBuilder
             MablApiBuilder builder = new MablApiBuilder(settings, true);
 
@@ -272,6 +271,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 });
 
                 if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                    // Get variable step
                     DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variable_step_size", 0.0);
                     dynamicScope.enterIf(anyDiscards.toPredicate().not());
                     {
@@ -318,10 +318,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     //  If all converge, set retrieved values and continue
                     //  else reset to previous state, set retrieved values and continue
                     List<BooleanVariableFmi2Api> convergenceVariables = new ArrayList<>();
-                    for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> comptoPortAndVariable : portsToShare
+                    for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> compToPortAndVariable : portsToShare
                             .entrySet()) {
                         List<BooleanVariableFmi2Api> converged = new ArrayList<>();
-                        List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = comptoPortAndVariable.getValue().entrySet().stream()
+                        List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = compToPortAndVariable.getValue().entrySet().stream()
                                 .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).collect(Collectors.toList());
 
                         for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
@@ -346,7 +346,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     } else {
                         throw new RuntimeException("NO STABILISATION LOOP FOUND");
                     }
-
+                    // Rollback
                     dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
                     {
                         fmuStates.forEach(Fmi2Builder.StateVariable::set);
@@ -363,14 +363,14 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 }
 
                 if(everyFMUSupportsGetState) {
-                    // Discard
+                    // HANDLE DISCARD
                     IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
                     {
 
-                        // rollback FMUs
+                        // Rollback FMUs
                         fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
-                        // set step-size to lowest
+                        // Set step-size to lowest
                         currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
                         builder.getLogger().debug("## Discard occurred! FMUs are rolledback and step-size reduced to: %f", currentStepSize);
@@ -383,7 +383,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 {
                     BooleanVariableFmi2Api hasReducedStepSize = null;
                     if (algorithm == StepAlgorithm.VARIABLESTEP) {
-                        //Validate step
+                        // Validate step
                         PredicateFmi2Api notValidStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
                                 new DoubleVariableFmi2Api(null, null, dynamicScope, null,
                                         currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate().not();
@@ -394,10 +394,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                             IfMaBlScope reducedStepSizeScope = dynamicScope.enterIf(hasReducedStepSize.toPredicate());
                             {
 
-                                // rollback FMUs
+                                // Rollback FMUs
                                 fmuStates.forEach(Fmi2Builder.StateVariable::set);
 
-                                // set step-size to suggested size
+                                // Set step-size to suggested size
                                 currentStepSize.setValue(Objects.requireNonNull(variableStepInstance).getReducedStepSize());
 
                                 builder.getLogger().debug("## Invalid variable step-size! FMUs are rolled back and step-size reduced to: %f",
@@ -420,6 +420,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     }
 
                     DoubleVariableFmi2Api realStepTime;
+                    // Slow-down to real-time
                     if (jacobianStepConfig.simulationProgramDelay) {
                         realStepTime = dynamicScope.store("real_step_time", 0.0);
                         realStepTime.setValue(

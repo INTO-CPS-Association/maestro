@@ -109,7 +109,7 @@ public class FmuFactory
 		String customFmuFactoryQualifiedName = System.getProperty(customFmuFactoryProperty);
 		if (customFmuFactoryQualifiedName != null)
 		{
-			logger.trace("Obtained custum fmu factory with qualified class name '{}'", customFmuFactoryQualifiedName);
+			logger.trace("Obtained custom fmu factory with qualified class name '{}'", customFmuFactoryQualifiedName);
 			Class<?> cls;
 			try
 			{
