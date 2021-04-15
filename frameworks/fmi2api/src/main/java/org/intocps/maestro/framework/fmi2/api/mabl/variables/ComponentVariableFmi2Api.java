@@ -528,7 +528,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                     int dersSize = derivativePorts.size();
                     if (dersSize > 0) {
-                        // create buffers
+                        // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
                         int arraySize = dersSize * maxOutputDerOrder;
 
                         List<PExp> refs = new ArrayList<>();
@@ -848,11 +848,15 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         }).collect(Collectors.toList());
 
         if (portsToDerPortsWithOrder.size() > 0) {
+            // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
             int arraySize = portsToDerPortsWithOrder.stream().mapToInt(e -> e.getValue().getValue()).sum();
             List<PExp> refs = new ArrayList<>();
             List<PExp> orders = new ArrayList<>();
             ArrayVariableFmi2Api<Object> derValInBuf = createBuffer2(newUIntType(), "DVAL_IN", arraySize, new ArrayList<>());
 
+            // loop through each array index and assign the port reference, derivative order and derivative value.
+            // e.g: for two outputs vref1 (valref = 10) and vref2 (valref = 20) with derivative order 2 and 1: derValInBuf = [der(vref1), der
+            // (der(vref1)),der(vref2))], derOrderInBuf = [1,2,1], derRefInBuf = [10, 10, 20]
             for (int portIndex = 0, arrayIndex = 0; portIndex < portsToDerPortsWithOrder.size(); portIndex++) {
                 int maxOutputDerOrder = portsToDerPortsWithOrder.get(portIndex).getValue().getValue();
                 for (int order = 1; order <= maxOutputDerOrder; order++, arrayIndex++) {
@@ -865,7 +869,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 }
             }
 
-            // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
+
 
 
             ArrayVariableFmi2Api<Object> derOrderInBuf = createBuffer2(newIntType(), "DOrder_IN", arraySize, orders);

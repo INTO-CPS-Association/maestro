@@ -105,6 +105,7 @@ public class BuilderGetSetDerivativesTest {
         int expected_derRefOutSum = 2;
 
         // Act
+        // get all ports
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
                     y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -112,7 +113,6 @@ public class BuilderGetSetDerivativesTest {
 
             y.get(scalarVariablesToShare.toArray(String[]::new));
         });
-        builder.buildRaw();
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         // Assert
@@ -167,6 +167,7 @@ public class BuilderGetSetDerivativesTest {
         int expected_derRefOutSum = 2;
 
         // Act
+        // get all ports and share them
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
                     y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -176,13 +177,13 @@ public class BuilderGetSetDerivativesTest {
 
             y.share(portsToShare);
         });
+
+        // set all linked ports
         fmuInstances.forEach((x, y) -> {
             if (y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                 y.setLinked();
             }
         });
-
-        builder.buildRaw();
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         // Assert
@@ -209,6 +210,7 @@ public class BuilderGetSetDerivativesTest {
 
         @BeforeEach
         void beforeEach() {
+            // setup the mock before the test
             FmuFactory.customFactory = new IFmuFactory() {
                 @Override
                 public boolean accept(URI uri) {
@@ -290,6 +292,7 @@ public class BuilderGetSetDerivativesTest {
             }};
 
             // Act
+            // get all ports and share them
             fmuInstances.forEach((x, y) -> {
                 Set<String> scalarVariablesToShare =
                         y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -299,13 +302,13 @@ public class BuilderGetSetDerivativesTest {
 
                 y.share(portsToShare);
             });
+
+            // set all linked ports
             fmuInstances.forEach((x, y) -> {
                 if (y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                     y.setLinked();
                 }
             });
-
-            builder.buildRaw();
             ASimulationSpecificationCompilationUnit program = builder.build();
 
             ARootDocument simUnit = new ARootDocument();
