@@ -1,0 +1,6 @@
+simulation
+{
+real mdArr[2][2];
+
+mdArr[1][0] = 5.0;
+}
