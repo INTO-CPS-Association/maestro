@@ -66,6 +66,12 @@
             <groupId>org.overturetool.core.codegen</groupId>
             <artifactId>codegen-runtime</artifactId>
             <version>${overture.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
