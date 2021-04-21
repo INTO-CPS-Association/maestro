@@ -1,41 +1,32 @@
 package org.intocps.maestro;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.*;
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
-import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
-import org.intocps.maestro.core.messages.ErrorReporter;
-import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.intocps.maestro.framework.fmi2.*;
-import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
+import org.intocps.maestro.framework.fmi2.FmuFactory;
+import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.mockito.Matchers.any;
@@ -43,32 +34,11 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-
 public class BuilderGetSetDerivativesTest {
 
     private final Path dirPath = Paths.get("src", "test", "resources", "builder_get_set_derivatives");
     private final Path pumpPath = Paths.get(dirPath.toString(), "mocked_fmus", "pump_mocked.fmu");
     private final Path sinkPath = Paths.get(dirPath.toString(), "mocked_fmus", "sink_mocked.fmu");
-
-    static File getWorkingDirectory(File base) throws IOException {
-        String s = "target/" + base.getAbsolutePath().substring(
-                base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
-
-        File workingDir = new File(s.replace('/', File.separatorChar));
-        if (workingDir.exists()) {
-            FileUtils.deleteDirectory(workingDir);
-        }
-        if (!workingDir.exists()) {
-            workingDir.mkdirs();
-        }
-        return workingDir;
-    }
-
-    protected List<File> getSpecificationFiles(File specFolder) {
-
-        return Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
-                .collect(Collectors.toList());
-    }
 
     @DisplayName("Get derivatives using the builder generates the expected MaBL spec.")
     @Test
@@ -95,17 +65,14 @@ public class BuilderGetSetDerivativesTest {
             put(sink.getName(), sink);
         }};
 
-        List<String> variablesOfInterest = new ArrayList<>() {{
-            add("pumpFMU.pump.fake_out1");
-            add("pumpFMU.pump.fake_out2");
-        }};
+        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
 
         int expected_derValOutSum = 2;
-        int expected_derOrderOutSum = 2;
-        int expected_derRefOutSum = 2;
+        int expected_derOrderOutSum = 6;
+        int expected_derRefOutSum = 6;
 
         // Act
-        // get all ports
+        // Get all ports
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
                     y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -131,10 +98,61 @@ public class BuilderGetSetDerivativesTest {
         Assertions.assertTrue(setDerFuncIsPresent);
     }
 
+    @DisplayName("Share derivatives using the builder generates the expected MaBL spec.")
+    @Test
+    @Order(2)
+    public void shareDerivativesTest() throws Exception {
+        // Arrange
+        MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
+        settings.fmiErrorHandlingEnabled = false;
+        settings.setGetDerivatives = true;
+        MablApiBuilder builder = new MablApiBuilder(settings, true);
+        DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
+
+        FmuVariableFmi2Api pumpFMU = dynamicScope.createFMU("pumpFMU", "FMI2", pumpPath.toUri().toASCIIString());
+        FmuVariableFmi2Api sinkFMU = dynamicScope.createFMU("sinkFMU", "FMI2", sinkPath.toUri().toASCIIString());
+
+        ComponentVariableFmi2Api pump = pumpFMU.instantiate("pump");
+        ComponentVariableFmi2Api sink = sinkFMU.instantiate("sink");
+
+        pump.getPort("fake_out1").linkTo(sink.getPort("fake_in1"));
+        pump.getPort("fake_out2").linkTo(sink.getPort("fake_in2"));
+
+        Map<String, ComponentVariableFmi2Api> fmuInstances = new HashMap<>() {{
+            put(pump.getName(), pump);
+            put(sink.getName(), sink);
+        }};
+
+        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
+
+        int expected_derShareSum = 5;
+
+        // Act
+        // Get all ports and share them
+        fmuInstances.forEach((x, y) -> {
+            Set<String> scalarVariablesToShare =
+                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
+                            .map(PortFmi2Api::getName).collect(Collectors.toSet());
+
+            Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
+
+            y.share(portsToShare);
+        });
+
+        ASimulationSpecificationCompilationUnit program = builder.build();
+
+        // Assert
+        List<String> specAsList =
+                Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]")).collect(Collectors.toList());
+        int derShareSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("dershare") ? 1 : 0).sum();
+
+        Assertions.assertEquals(expected_derShareSum, derShareSum);
+    }
+
 
     @DisplayName("Set derivatives using the builder generates the expected MaBL spec.")
     @Test
-    @Order(2)
+    @Order(3)
     public void setDerivativesTest() throws Exception {
         // Arrange
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
@@ -157,17 +175,14 @@ public class BuilderGetSetDerivativesTest {
             put(sink.getName(), sink);
         }};
 
-        List<String> variablesOfInterest = new ArrayList<>() {{
-            add("pumpFMU.pump.fake_out1");
-            add("pumpFMU.pump.fake_out2");
-        }};
+        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
 
         int expected_derValOutSum = 6;
-        int expected_derOrderOutSum = 2;
-        int expected_derRefOutSum = 2;
+        int expected_derOrderOutSum = 6;
+        int expected_derRefOutSum = 6;
 
         // Act
-        // get all ports and share them
+        // Get all ports and share them
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
                     y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -178,7 +193,7 @@ public class BuilderGetSetDerivativesTest {
             y.share(portsToShare);
         });
 
-        // set all linked ports
+        // Set all linked ports
         fmuInstances.forEach((x, y) -> {
             if (y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                 y.setLinked();
@@ -189,11 +204,11 @@ public class BuilderGetSetDerivativesTest {
         // Assert
         List<String> specAsList =
                 Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]")).collect(Collectors.toList());
-        int derValOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkuintdval_in") ? 1 : 0).sum();
-        int derOrderOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkintdorder") ? 1 : 0).sum();
-        int derRefOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkintdref_in") ? 1 : 0).sum();
+        int derValOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkrealdval_in") ? 1 : 0).sum();
+        int derOrderOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkuintdorder_in") ? 1 : 0).sum();
+        int derRefOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkuintdref_in") ? 1 : 0).sum();
         boolean setDerFuncIsPresent = specAsList.stream()
-                .filter(s -> s.contains("sink.setRealInputDerivatives(sinkIntDref_in, 4, sinkIntDorder_in, sinkUintDval_in)"))
+                .filter(s -> s.toLowerCase().contains("sink.setrealinputderivatives(sinkuintdref_in, 4, sinkuintdorder_in, sinkrealdval_in)"))
                 .collect(Collectors.toList()).size() == 1;
 
         Assertions.assertEquals(expected_derValOutSum, derValOutSum);
@@ -207,6 +222,20 @@ public class BuilderGetSetDerivativesTest {
     class getSetDerivativesInMabl {
         private final Path pumpMDPath = Paths.get(dirPath.toString(), "mocked_fmus", "pump_modelDescription.xml");
         private final Path sinkMDPath = Paths.get(dirPath.toString(), "mocked_fmus", "sink_modelDescription.xml");
+
+        private File getWorkingDirectory(File base) throws IOException {
+            String s = "target/" + base.getAbsolutePath().substring(
+                    base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
+
+            File workingDir = new File(s.replace('/', File.separatorChar));
+            if (workingDir.exists()) {
+                FileUtils.deleteDirectory(workingDir);
+            }
+            if (!workingDir.exists()) {
+                workingDir.mkdirs();
+            }
+            return workingDir;
+        }
 
         @BeforeEach
         void beforeEach() {
@@ -225,8 +254,17 @@ public class BuilderGetSetDerivativesTest {
                     IFmiComponent comp = mock(IFmiComponent.class);
                     when(fmu.instantiate(anyString(), anyString(), anyBoolean(), anyBoolean(), any())).thenReturn(comp);
 
-                    compMock(fmu, comp);
+                    when(comp.getFmu()).thenReturn(fmu);
+                    //		Fmi2Status setDebugLogging(boolean var1, String[] var2) throws FmuInvocationException;
+                    when(comp.setDebugLogging(anyBoolean(), any())).thenReturn(Fmi2Status.OK);
+                    //		Fmi2Status setReals(long[] var1, double[] var2) throws InvalidParameterException, FmiInvalidNativeStateException;
+                    when(comp.setReals(any(), any())).thenReturn(Fmi2Status.OK);
+                    //		Fmi2Status terminate() throws FmuInvocationException;
+                    when(comp.terminate()).thenReturn(Fmi2Status.OK);
+                    //		boolean isValid();
+                    when(comp.isValid()).thenReturn(true);
 
+                    // Mock get or set derivatives function depending on the fmu.
                     String modelDescriptionPath;
                     if (uri.toASCIIString().contains("pump_mocked")) {
                         modelDescriptionPath = "src/test/resources/builder_get_set_derivatives/mocked_fmus/pump_modelDescription.xml";
@@ -241,7 +279,7 @@ public class BuilderGetSetDerivativesTest {
 
                         doReturn(Fmi2Status.OK).when(comp)
                                 .setRealInputDerivatives(new long[]{123456789, 123456789, 987654321, 987654321}, new int[]{1, 2, 1, 2},
-                                        new double[]{12, 12, 22, 22});
+                                        new double[]{11, 12, 21, 22});
                     }
 
                     final InputStream md =
@@ -286,10 +324,7 @@ public class BuilderGetSetDerivativesTest {
                 put(sink.getName(), sink);
             }};
 
-            List<String> variablesOfInterest = new ArrayList<>() {{
-                add("pumpFMU.pump.fake_out1");
-                add("pumpFMU.pump.fake_out2");
-            }};
+            List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
 
             // Act
             // get all ports and share them
@@ -312,24 +347,10 @@ public class BuilderGetSetDerivativesTest {
             ASimulationSpecificationCompilationUnit program = builder.build();
 
             ARootDocument simUnit = new ARootDocument();
-            simUnit.setContent(new ArrayList<>() {{
-                add(program);
-            }});
+            simUnit.setContent(Collections.singletonList(program));
 
             // Assert
             Assertions.assertDoesNotThrow(() -> new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, null)).execute(simUnit));
-        }
-
-        private void compMock(IFmu fmu, IFmiComponent comp) throws FmuInvocationException, InvalidParameterException {
-            when(comp.getFmu()).thenReturn(fmu);
-            //		Fmi2Status setDebugLogging(boolean var1, String[] var2) throws FmuInvocationException;
-            when(comp.setDebugLogging(anyBoolean(), any())).thenReturn(Fmi2Status.OK);
-            //		Fmi2Status setReals(long[] var1, double[] var2) throws InvalidParameterException, FmiInvalidNativeStateException;
-            when(comp.setReals(any(), any())).thenReturn(Fmi2Status.OK);
-            //		Fmi2Status terminate() throws FmuInvocationException;
-            when(comp.terminate()).thenReturn(Fmi2Status.OK);
-            //		boolean isValid();
-            when(comp.isValid()).thenReturn(true);
         }
     }
 }
