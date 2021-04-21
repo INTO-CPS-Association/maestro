@@ -560,6 +560,12 @@ public class ModelDescription
 		return outputs;
 	}
 
+	/**
+	 * @return Map of ports to derivative ports.
+	 * @throws XPathExpressionException
+	 * @throws InvocationTargetException
+	 * @throws IllegalAccessException
+	 */
 	public Map<ScalarVariable, ScalarVariable> getDerivativesMap()
 			throws XPathExpressionException, InvocationTargetException,
 			IllegalAccessException
