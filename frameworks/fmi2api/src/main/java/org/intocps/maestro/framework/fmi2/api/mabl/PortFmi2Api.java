@@ -3,6 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ArrayVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 
@@ -17,6 +18,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     public final ModelDescription.ScalarVariable scalarVariable;
     private final List<PortFmi2Api> targetPorts = new ArrayList<>();
     private VariableFmi2Api sharedAsVariable;
+    private ArrayVariableFmi2Api sharedAsDerivative;
     private PortFmi2Api sourcePort;
 
     public PortFmi2Api(ComponentVariableFmi2Api aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
@@ -36,6 +38,12 @@ public class PortFmi2Api implements Fmi2Builder.Port {
 
     public void setSharedAsVariable(VariableFmi2Api sharedAsVariable) {
         this.sharedAsVariable = sharedAsVariable;
+    }
+
+    public ArrayVariableFmi2Api getSharedAsDerivative() { return sharedAsDerivative; }
+
+    public void setSharedAsDerivative (ArrayVariableFmi2Api sharedAsDerivative) {
+        this.sharedAsDerivative = sharedAsDerivative;
     }
 
     public PType getType() {
