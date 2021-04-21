@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableAstFactory.newAArayStateDesignator;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
@@ -48,14 +49,13 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final MablApiBuilder builder;
     private final Map<PType, ArrayVariableFmi2Api<Object>> ioBuffer = new HashMap<>();
     private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
-    private ArrayVariableFmi2Api<Object> derOutBuffer;
-    private ArrayVariableFmi2Api<Object> derOrderOutBuffer;
-    private ArrayVariableFmi2Api<Object> derRefOutBuffer;
+    private ArrayVariableFmi2Api<Object> derSharedBuffer;
     Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi2Api) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
     private DoubleVariableFmi2Api currentTimeVar = null;
     private BooleanVariableFmi2Api currentTimeStepFullStepVar = null;
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
+    private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePorts;
     private List<String> variabesToLog;
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
@@ -142,25 +142,18 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return getBuffer(this.ioBuffer, type, "IO", modelDescriptionContext.valRefToSv.size());
     }
 
-    private ArrayVariableFmi2Api<Object> getDerOutBuffer(int size) {
-        if (this.derOutBuffer == null) {
-            this.derOutBuffer = createBuffer(newRealType(), "DVal_OUT", size);
+    private ArrayVariableFmi2Api<Object> getSharedDerBuffer() {
+        if (this.derSharedBuffer == null) {
+            this.derSharedBuffer = createDerValBuffer("DerShare", new ArrayList<>() {{
+                add(1);
+                try {
+                    add(getModelDescription().getMaxOutputDerivativeOrder());
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException("Exception occurred when accessing modeldescription: " + e);
+                }
+            }});
         }
-        return this.derOutBuffer;
-    }
-
-    private ArrayVariableFmi2Api<Object> getDerOrderOutBuffer(int size) {
-        if (this.derOrderOutBuffer == null) {
-            this.derOrderOutBuffer = createBuffer(newUIntType(), "DOrder_OUT", size);
-        }
-        return this.derOutBuffer;
-    }
-
-    private ArrayVariableFmi2Api<Object> getDerRefOutBuffer(int size) {
-        if (this.derRefOutBuffer == null) {
-            this.derRefOutBuffer = createBuffer(newUIntType(), "DRef_OUT", size);
-        }
-        return this.derRefOutBuffer;
+        return this.derSharedBuffer;
     }
 
 
@@ -168,73 +161,73 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.getBuffer(this.sharedBuffer, type, "Share", 0);
     }
 
-    private ArrayVariableFmi2Api<Object> createBuffer2(PType type, String prefix, int length, List<PExp> values) {
 
-        //lets find a good place to store the buffer.
-        String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefix);
-        PInitializer initializer = null;
-        PStm var;
-        if (length > 0 && values.size() == 0) {
-            //Bug in the interpreter it relies on values being there
-            if (type instanceof ARealNumericPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newARealLiteralExp(0d)).collect(Collectors.toList()));
-            } else if (type instanceof AIntNumericPrimitiveType || type instanceof AUIntNumericPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList()));
+    private List<VariableFmi2Api<Object>> createMDArrayRecursively(PType type, List<Integer> arraySizes, PStm outerArrayVariableStm,
+            String identifierName, List<Integer> indexPath) {
 
-            } else if (type instanceof ABooleanPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newABoolLiteralExp(false)).collect(Collectors.toList()));
+        List<VariableFmi2Api<Object>> arrays = new ArrayList<>();
 
-            } else if (type instanceof AStringPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAStringLiteralExp("")).collect(Collectors.toList()));
+        if (arraySizes.size() > 1) {
+            for (int i = 0; i < arraySizes.get(0); i++) {
+                List<Integer> newIndexPath = new ArrayList<>(indexPath);
+                newIndexPath.add(i);
+                List<VariableFmi2Api<Object>> innerArrList =
+                        createMDArrayRecursively(type, arraySizes.subList(1, arraySizes.size()), outerArrayVariableStm, identifierName, newIndexPath);
+                if (innerArrList.size() > 1) {
+                    ArrayVariableFmi2Api arrayVariableFmi2Api =
+                            new ArrayVariableFmi2Api(outerArrayVariableStm, newAArrayType(innerArrList.get(0).type), getDeclaredScope(),
+                                    builder.getDynamicScope(), ((AArrayStateDesignator) innerArrList.get(0).getDesignator()).getTarget(),
+                                    newAArrayIndexExp(newAIdentifierExp(identifierName),
+                                            newIndexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())),
+                                    innerArrList);
+                    arrays.add(arrayVariableFmi2Api);
+                }
 
             }
-            var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, initializer));
+        } else {
+            List<VariableFmi2Api<Object>> variables = new ArrayList<>();
+            for (int i = 0; i < arraySizes.get(0); i++) {
+                AArrayStateDesignator designator =
+                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(identifierName)), newAIntLiteralExp(indexPath.get(0)));
+
+                for (int l = 1; l < indexPath.size(); l++) {
+                    designator = newAArayStateDesignator(designator, newAIntLiteralExp(indexPath.get(l)));
+                }
+                designator = newAArayStateDesignator(designator, newAIntLiteralExp(i));
+                List<AIntLiteralExp> indexExps = indexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList());
+                indexExps.add(newAIntLiteralExp(i));
+                AArrayIndexExp indexExp = newAArrayIndexExp(newAIdentifierExp(identifierName), indexExps);
+
+                variables.add(new VariableFmi2Api<>(outerArrayVariableStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator,
+                        indexExp));
+            }
+            return variables;
         }
-        else if(values.size() > 0){
-            var = MableAstFactory.newALocalVariableStm(MableAstFactory
-                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(ioBufName),
-                            MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), values.size(),
-                            values.size() > 0 ? MableAstFactory.newAArrayInitializer(values) : null));
-        }
-        else{
-            var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, null));
-        }
+
+        return arrays;
+    }
+
+    private ArrayVariableFmi2Api<Object> createDerValBuffer(String name, List<Integer> lengths) {
+        String bufferName = builder.getNameGenerator().getName(this.name, name);
+
+        PStm arrayVariableStm = newALocalVariableStm(
+                newAVariableDeclarationMultiDimensionalArray(newAIdentifier(bufferName), newAArrayType(newAArrayType(newARealNumericPrimitiveType())),
+                        lengths));
+
+        getDeclaredScope().addAfter(getDeclaringStm(), arrayVariableStm);
 
 
-        getDeclaredScope().addAfter(getDeclaringStm(), var);
-
-        List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
-                i -> new VariableFmi2Api<>(var, type, this.getDeclaredScope(), builder.getDynamicScope(),
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
-                        newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
-                .collect(Collectors.toList());
-
-        return new ArrayVariableFmi2Api<>(var, type, getDeclaredScope(), builder.getDynamicScope(),
-                newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
-
+        return new ArrayVariableFmi2Api<>(arrayVariableStm, newAArrayType(newAArrayType(newARealNumericPrimitiveType())), getDeclaredScope(),
+                builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIdentifierExp(bufferName),
+                createMDArrayRecursively(newARealNumericPrimitiveType(), lengths, arrayVariableStm, bufferName, new ArrayList<>()));
     }
 
     private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefix, int length) {
 
         //lets find a good place to store the buffer.
         String ioBufName = builder.getNameGenerator().getName(this.name, type + "", prefix);
-        PInitializer initializer = null;
-        if (length > 0) {
-            //Bug in the interpreter it relies on values being there
-            if (type instanceof ARealNumericPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newARealLiteralExp(0d)).collect(Collectors.toList()));
-            } else if (type instanceof AIntNumericPrimitiveType || type instanceof AUIntNumericPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAIntLiteralExp(0)).collect(Collectors.toList()));
 
-            } else if (type instanceof ABooleanPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newABoolLiteralExp(false)).collect(Collectors.toList()));
-
-            } else if (type instanceof AStringPrimitiveType) {
-                initializer = newAArrayInitializer(IntStream.range(0, length).mapToObj(i -> newAStringLiteralExp("")).collect(Collectors.toList()));
-
-            }
-        }
-        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, initializer));
+        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, length, null));
 
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
@@ -482,8 +475,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                             vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), valBuf.getReferenceExp().clone()));
 
             scope.add(stm);
-            if(type.equals(new ARealNumericPrimitiveType())){
-                results.putAll(getDerivatives(e.getValue(), scope));
+            if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
+                derivativePorts = getDerivatives(e.getValue(), scope);
             }
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -499,109 +492,82 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return results;
     }
 
-    private <V> Map<PortFmi2Api, VariableFmi2Api<V>> getDerivatives(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
-        Map<PortFmi2Api, VariableFmi2Api<V>> portsToReturn = new HashMap<>();
-        if (builder.getSettings().setGetDerivatives) {
-            // if any target ports exists that can interpolate the port is also linked.
-            List<PortFmi2Api> portsLinkedToTargetsThatInterpolates = ports.stream().filter(p1 -> p1.getTargetPorts().stream().anyMatch(p2 -> {
-                try {
-                    return p2.aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs();
-                } catch (XPathExpressionException xPathExpressionException) {
-                    xPathExpressionException.printStackTrace();
-                }
-                return false;
-            })).collect(Collectors.toList());
+    /**
+     *
+     * @param ports The ports for which derivatives should be retrieved
+     * @param scope The builder scope.
+     * @return Derivative ports with a list of derivative values up to max derivative order
+     */
+    private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> getDerivatives(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
+        Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePortsToReturn = new HashMap<>();
 
+        // If any target ports exists that can interpolate the port is also linked and derivatives should be retrieved.
+        List<PortFmi2Api> portsLinkedToTargetsThatInterpolates = ports.stream().filter(p1 -> p1.getTargetPorts().stream().anyMatch(p2 -> {
             try {
-                int maxOutputDerOrder = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
-                if (portsLinkedToTargetsThatInterpolates.size() > 0 && maxOutputDerOrder > 0) {
+                return p2.aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs();
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException("Exception occurred when accessing modeldescription.", e);
+            }
+        })).collect(Collectors.toList());
 
-                    // find derivatives for ports that are linked to targets that can interpolate
-                    List<PortFmi2Api> derivativePorts = new ArrayList<>();
-                            modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream()
-                            .filter(entry -> portsLinkedToTargetsThatInterpolates.stream()
-                                    .anyMatch(p -> p.getPortReferenceValue().equals(entry.getKey().getValueReference()))).forEach(e -> {
-                                Optional<PortFmi2Api> port = getPorts().stream()
-                                        .filter(p -> p.getPortReferenceValue().equals(e.getValue().getValueReference())).findFirst();
-                                port.ifPresent(derivativePorts::add);
-                            });
+        try {
+            int maxOutputDerOrder = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
+            if (portsLinkedToTargetsThatInterpolates.size() > 0 && maxOutputDerOrder > 0) {
 
-                    int dersSize = derivativePorts.size();
-                    if (dersSize > 0) {
-                        // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
-                        int arraySize = dersSize * maxOutputDerOrder;
+                // Find derivative ports
+                List<PortFmi2Api> derivativePorts = new ArrayList<>();
+                modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream()
+                        .filter(entry -> portsLinkedToTargetsThatInterpolates.stream()
+                                .anyMatch(p -> p.getPortReferenceValue().equals(entry.getKey().getValueReference()))).forEach(e ->
+                        // Find the PortFmi2Api representation of the scalarvariable derivative port.
+                        getPorts().stream().filter(p -> p.getPortReferenceValue().equals(e.getValue().getValueReference())).findAny()
+                                .ifPresent(derivativePorts::add));
 
-                        List<PExp> refs = new ArrayList<>();
-                        List<PExp> orders = new ArrayList<>();
-                        ArrayVariableFmi2Api<Object> derValOutBuf = createBuffer2(newRealType(), "DVal_OUT", arraySize, new ArrayList<>());
+                if (derivativePorts.size() > 0) {
+                    // Array size: number of ports for which to get derivatives multiplied by the total sum the max derivative order.
+                    int arraySize = derivativePorts.size() * maxOutputDerOrder;
 
-                        // loop buffers and assign derivative value reference and derivative order.
-                        // e.g for two ports with derivative order two: derRefOutBuf = [valref1, valref1, valref2,valref2], derOrderOutBuf =
-                        // [1,2,1,2]
-                        PortFmi2Api derivativePort = null;
-                        for (int i = 0, portIndex = 0, order = 1; i < arraySize; i++) {
-                            if (i % maxOutputDerOrder == 0) {
-                                order = 1;
-                                derivativePort = derivativePorts.get(portIndex);
-                                portIndex++;
-                            }
+                    ArrayVariableFmi2Api<Object> derValOutBuf = createBuffer(newRealType(), "DVal_OUT", arraySize);
+                    ArrayVariableFmi2Api<Object> derOrderOutBuf = createBuffer(newUIntType(), "DOrder_OUT", arraySize);
+                    ArrayVariableFmi2Api<Object> derRefOutBuf = createBuffer(newUIntType(), "DRef_OUT", arraySize);
 
-                            portsToReturn.put(derivativePort, (VariableFmi2Api<V>) derValOutBuf.items().get(i));
-                            refs.add(newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue()));
-                            orders.add(newAIntLiteralExp(order));
-
-                            order++;
+                    // Loop arrays and assign derivative value reference and derivative order.
+                    // E.g for two ports with and a max derivative order of two: derRefOutBuf = [derPortRef1, derPortRef1, derPortRef2,derPortRef2],
+                    // derOrderOutBuf = [1,2,1,2]
+                    PortFmi2Api derivativePort = null;
+                    for (int arrayIndex = 0, portIndex = 0, order = 1; arrayIndex < arraySize; arrayIndex++) {
+                        // Switch to the next port when we have traversed a length of 'maxOutputDerOrder' in the arrays and reset order.
+                        if (arrayIndex % maxOutputDerOrder == 0) {
+                            order = 1;
+                            derivativePort = derivativePorts.get(portIndex);
+                            derivativePortsToReturn.put(derivativePort, derValOutBuf.items().subList(arrayIndex, arrayIndex + maxOutputDerOrder));
+                            portIndex++;
                         }
 
+                        PStateDesignator dRefDesignator = derRefOutBuf.items().get(arrayIndex).getDesignator().clone();
+                        scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue())));
 
-                        ArrayVariableFmi2Api<Object> derOrderOutBuf = createBuffer2(newUIntType(), "DOrder_OUT", arraySize, orders);
-                        ArrayVariableFmi2Api<Object> derRefOutBuf = createBuffer2(newUIntType(), "DRef_OUT", arraySize, refs);
-
-
-//                        ArrayVariableFmi2Api<Object> derValOutBuf = createBuffer(newRealType(), "DER_VAL_OUT", arraySize);
-//                        ArrayVariableFmi2Api<Object> derOrderOutBuf = createBuffer(newUIntType(), "DER_ORDER_OUT", arraySize);
-//                        ArrayVariableFmi2Api<Object> derRefOutBuf = createBuffer(newUIntType(), "DER_REF_OUT", arraySize);
-//
-//                        PortFmi2Api derivativePort = null;
-//
-//                        // loop buffers and assign derivative value reference and derivative order.
-//                        // e.g for two ports with derivative order two: derRefOutBuf = [valref1, valref1, valref2,valref2], derOrderOutBuf =
-//                        // [1,2,1,2]
-//                        for (int i = 0, portIndex = 0, order = 1; i < arraySize; i++) {
-//                            if (i % maxOutputDerOrder == 0) {
-//                                order = 1;
-//                                derivativePort = derivativePorts.get(portIndex);
-//                                portIndex++;
-//                            }
-//
-//                            portsToReturn.put(derivativePort, (VariableFmi2Api<V>) derValOutBuf.items().get(i));
-//
-//                            PStateDesignator dRefDesignator = derRefOutBuf.items().get(i).getDesignator().clone();
-//                            scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue())));
-//
-//                            PStateDesignator derOrderDesignator = derOrderOutBuf.items().get(i).getDesignator().clone();
-//                            scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
-//                            order++;
-//                        }
-
-                        // create assignment statement which assigns derivatives to derValOutBuf by calling getRealOutputDerivatives with
-                        // derRefOutBuf, arraysize and derOrderOutBuf.
-                        PStm AStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
-                                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
-                                        derRefOutBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
-                                        derOrderOutBuf.getReferenceExp().clone(), derValOutBuf.getReferenceExp().clone()));
-
-                        scope.add(AStm);
+                        PStateDesignator derOrderDesignator = derOrderOutBuf.items().get(arrayIndex).getDesignator().clone();
+                        scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+                        order++;
                     }
+
+                    // Create assignment statement which assigns derivatives to derValOutBuf by calling getRealOutputDerivatives with
+                    // derRefOutBuf, arraySize and derOrderOutBuf.
+                    PStm AStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                            call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
+                                    derRefOutBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
+                                    derOrderOutBuf.getReferenceExp().clone(), derValOutBuf.getReferenceExp().clone()));
+
+                    scope.add(AStm);
                 }
-            } catch (XPathExpressionException xPathExpressionException) {
-                throw new RuntimeException("Error when accessing model description for derivative information.", xPathExpressionException);
-            } catch (InvocationTargetException | IllegalAccessException invocationTargetException) {
-                invocationTargetException.printStackTrace();
             }
+
+        } catch (InvocationTargetException | IllegalAccessException | XPathExpressionException e) {
+            throw new RuntimeException("Exception occurred when retrieving derivatives.", e);
         }
 
-        return portsToReturn;
+        return derivativePortsToReturn;
     }
 
     @Override
@@ -706,7 +672,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     @Override
     public VariableFmi2Api getSingle(String name) {
-        return (VariableFmi2Api) this.get(name).entrySet().iterator().next().getValue();
+        return this.get(name).entrySet().iterator().next().getValue();
     }
 
 
@@ -811,11 +777,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         scope.add(stm);
 
         try {
-            if(builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() && type.equals(new ARealNumericPrimitiveType())){
+            if (builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() &&
+                    type.equals(new ARealNumericPrimitiveType())) {
                 setDerivatives(sortedPorts, scope);
             }
         } catch (XPathExpressionException e) {
-            throw new RuntimeException("Exception occurred when when setting derivatives: " + e);
+            throw new RuntimeException("Exception occurred when when setting derivatives.", e);
         }
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -824,88 +791,74 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         }
     }
 
-    private void setDerivatives(List<PortFmi2Api> sortedPorts, Fmi2Builder.Scope<PStm> scope){
-        // find all ports for which derivatives should be passed together with the derivatives.
-        List<Map.Entry<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>>> portsToDerPortsWithOrder = sortedPorts.stream().map(p -> {
+    /**
+     *
+     * @param ports The ports for which derivative should be set from SHARED derivative ports
+     * @param scope The builder scope
+     */
+    public void setDerivatives(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
+        // Find all ports for which derivatives should be passed together with the derivatives and their order.
+        LinkedHashMap<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>> mapPortsToDerPortsWithOrder = ports.stream().map(port -> {
             try {
-                Optional<Map.Entry<PortFmi2Api, Integer>> innerEntry;
+                Map.Entry<PortFmi2Api, Integer> innerEntry;
+                // Find if port is in map of derivatives
+                Optional<Map.Entry<ModelDescription.ScalarVariable, ModelDescription.ScalarVariable>> derivativePortEntry =
+                        port.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getDerivativesMap().entrySet().stream()
+                                .filter(e -> e.getKey().getValueReference().equals(port.getSourcePort().getPortReferenceValue())).findAny();
 
-                innerEntry = p.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getDerivativesMap().entrySet().stream()
-                        .filter(e -> e.getKey().getValueReference().equals(p.getSourcePort().getPortReferenceValue())).map(e -> {
-                            try {
-                                ;
-                                return Map.entry(p.getSourcePort().aMablFmi2ComponentAPI.getPort(e.getValue().getValueReference().intValue()),
-                                        p.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getMaxOutputDerivativeOrder());
-                            } catch (XPathExpressionException innerE) {
-                                throw new RuntimeException("Exception occurred when accessing modeldescription: " + innerE);
-                            }
-                        }).findFirst();
 
-                return innerEntry.map(scalarVariableIntegerEntry -> Map.entry(p, scalarVariableIntegerEntry)).orElse(null);
-            } catch (XPathExpressionException | IllegalAccessException | InvocationTargetException outerE) {
-                throw new RuntimeException("Exception occurred when accessing modeldescription: " + outerE);
+                if (derivativePortEntry.isPresent()) {
+                    // Find PortFmi2Api value of the scalarvariable derivative port and the components max output derivative.
+                    innerEntry = Map.entry(
+                            port.getSourcePort().aMablFmi2ComponentAPI.getPort(derivativePortEntry.get().getValue().getValueReference().intValue()),
+                            port.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getMaxOutputDerivativeOrder());
+                    return Map.entry(port, innerEntry);
+                }
+
+                return null;
+            } catch (XPathExpressionException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException("Exception occurred when accessing modeldescription", e);
             }
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(LinkedHashMap::new, (map, item) -> map.put(item.getKey(), item.getValue()),  // Accumulator
+                Map::putAll);
 
-        if (portsToDerPortsWithOrder.size() > 0) {
-            // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
-            int arraySize = portsToDerPortsWithOrder.stream().mapToInt(e -> e.getValue().getValue()).sum();
-            List<PExp> refs = new ArrayList<>();
-            List<PExp> orders = new ArrayList<>();
-            ArrayVariableFmi2Api<Object> derValInBuf = createBuffer2(newUIntType(), "DVAL_IN", arraySize, new ArrayList<>());
+        if (mapPortsToDerPortsWithOrder.size() > 0) {
 
-            // loop through each array index and assign the port reference, derivative order and derivative value.
-            // e.g: for two outputs vref1 (valref = 10) and vref2 (valref = 20) with derivative order 2 and 1: derValInBuf = [der(vref1), der
+            // Get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
+            int arraySize = mapPortsToDerPortsWithOrder.values().stream().mapToInt(Map.Entry::getValue).sum();
+
+            // Create input arrays
+            ArrayVariableFmi2Api<Object> derValInBuf = createBuffer(newRealType(), "DVal_IN", arraySize);
+            ArrayVariableFmi2Api<Object> derOrderInBuf = createBuffer(newUIntType(), "DOrder_IN", arraySize);
+            ArrayVariableFmi2Api<Object> derRefInBuf = createBuffer(newUIntType(), "DRef_IN", arraySize);
+
+            // Loop through arrays and assign the port reference, derivative order and derivative value.
+            // E.g: for two outputs vref1 (valref = 10) and vref2 (valref = 20) with a max derivative order of 2 and 1: derValInBuf = [der(vref1), der
             // (der(vref1)),der(vref2))], derOrderInBuf = [1,2,1], derRefInBuf = [10, 10, 20]
-            for (int portIndex = 0, arrayIndex = 0; portIndex < portsToDerPortsWithOrder.size(); portIndex++) {
-                int maxOutputDerOrder = portsToDerPortsWithOrder.get(portIndex).getValue().getValue();
-                for (int order = 1; order <= maxOutputDerOrder; order++, arrayIndex++) {
-                    refs.add(newAIntLiteralExp(portsToDerPortsWithOrder.get(portIndex).getKey().getPortReferenceValue().intValue()));
-                    orders.add(newAIntLiteralExp(order));
+            int arrayIndex = 0;
+            for (Map.Entry<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>> entry : mapPortsToDerPortsWithOrder.entrySet()) {
+                PortFmi2Api port = entry.getKey();
+                int maxOrder = entry.getValue().getValue();
+                for (int order = 1; order <= maxOrder; order++, arrayIndex++) {
+                    // Assign to array variables
+                    PStateDesignator derRefDesignator = derRefInBuf.items().get(arrayIndex).getDesignator().clone();
+                    scope.add(newAAssignmentStm(derRefDesignator, newAIntLiteralExp(port.getPortReferenceValue().intValue())));
 
-                    PStateDesignator derInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
-                    scope.add(newAAssignmentStm(derInDesignator,
-                            portsToDerPortsWithOrder.get(portIndex).getValue().getKey().getSharedAsVariable().getReferenceExp().clone()));
+                    PStateDesignator derOrderDesignator = derOrderInBuf.items().get(arrayIndex).getDesignator().clone();
+                    scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+
+                    PStateDesignator derValInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
+                    scope.add(newAAssignmentStm(derValInDesignator,
+                            ((VariableFmi2Api) entry.getValue().getKey().getSharedAsDerivative().items().get(order - 1)).getReferenceExp().clone()));
                 }
             }
 
-
-
-
-            ArrayVariableFmi2Api<Object> derOrderInBuf = createBuffer2(newIntType(), "DOrder_IN", arraySize, orders);
-            ArrayVariableFmi2Api<Object> derRefInBuf = createBuffer2(newIntType(), "DRef_IN", arraySize, refs);
-
-            //                    // get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
-            //                    int arraySize = portsToDerPortsWithOrder.stream().mapToInt(e -> e.getValue().getValue()).sum();
-            //                    ArrayVariableFmi2Api<Object> derValInBuf = createBuffer(newUIntType(), "DER_VAL_IN", arraySize);
-            //                    ArrayVariableFmi2Api<Object> derOrderInBuf = createBuffer(newIntType(), "DER_ORDER_IN", arraySize);
-            //                    ArrayVariableFmi2Api<Object> derRefInBuf = createBuffer(newIntType(), "DER_REF_IN", arraySize);
-            //
-            //                    // loop through each array index and assign the port reference, derivative order and derivative value.
-            //                    // e.g: for two outputs vref1 (valref = 10) and vref2 (valref = 20) with derivative order 2 and 1: derValInBuf = [der(vref1), der
-            //                    // (der(vref1)),der(vref2))], derOrderInBuf = [1,2,1], derRefInBuf = [10, 10, 20]
-            //                    for (int portIndex = 0, arrayIndex = 0; portIndex < portsToDerPortsWithOrder.size(); portIndex++) {
-            //                        int maxOutputDerOrder = portsToDerPortsWithOrder.get(portIndex).getValue().getValue();
-            //                        for (int order = 1; order <= maxOutputDerOrder; order++, arrayIndex++) {
-            //                            PStateDesignator dRefDesignator = derRefInBuf.items().get(arrayIndex).getDesignator().clone();
-            //                            scope.add(newAAssignmentStm(dRefDesignator,
-            //                                    newAIntLiteralExp(portsToDerPortsWithOrder.get(portIndex).getKey().getPortReferenceValue().intValue())));
-            //
-            //                            PStateDesignator derOrderDesignator = derOrderInBuf.items().get(arrayIndex).getDesignator().clone();
-            //                            scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
-            //
-            //                            PStateDesignator derInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
-            //                            scope.add(newAAssignmentStm(derInDesignator,
-            //                                    portsToDerPortsWithOrder.get(portIndex).getValue().getKey().getSharedAsVariable().getReferenceExp().clone()));
-            //                        }
-            //                    }
-
-            // create set derivatives statement which calls setRealOutputDerivatives with derRefInBuf, arraySize, derOrderInBuf and
+            // Create set derivatives statement which calls setRealOutputDerivatives with derRefInBuf, arraySize, derOrderInBuf and
             // derValInBuf.
             PStm ifStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETREALINPUTDERIVATIVES),
-                            derRefInBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
-                            derOrderInBuf.getReferenceExp().clone(), derValInBuf.getReferenceExp().clone()));
+                            derRefInBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize), derOrderInBuf.getReferenceExp().clone(),
+                            derValInBuf.getReferenceExp().clone()));
 
             scope.add(ifStm);
         }
@@ -1029,7 +982,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 if (port.getSharedAsVariable() == null) {
                     ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
                     this.setSharedBuffer(newBuf, type);
-                    // TODO: Variable is not being added to buffer items.
+
                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                     port.setSharedAsVariable(newShared);
                 }
@@ -1038,9 +991,122 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 builder.getDynamicScope().addAll(BuilderUtil.createTypeConvertingAssignment(builder, dynamicScope, designator.clone(),
                         ((VariableFmi2Api) data.get(port)).getReferenceExp().clone(), port.getType(),
                         ((VariableFmi2Api) ((VariableFmi2Api<?>) data.get(port))).type));
-            });
 
+
+                if (type.equals(new ARealNumericPrimitiveType()) && derivativePorts != null) {
+                    derivativePorts.keySet().stream().filter(dp -> {
+                        try {
+                            return modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream().anyMatch(
+                                    e -> e.getKey().getValueReference().equals(port.getPortReferenceValue()) &&
+                                            e.getValue().getValueReference().equals(dp.getPortReferenceValue()));
+                        } catch (XPathExpressionException | InvocationTargetException | IllegalAccessException e) {
+                            throw new RuntimeException(
+                                    "Attempting to obtain shared values from a port that is linked but has no value shared. Share a value " +
+                                            "first. " + port);
+                        }
+                    }).findFirst().ifPresent((derivativePort) -> {
+                        // If the derivative port is not yet shared then get shared derivative buffer, grow it by one and set the port as shared
+                        // with the new array.
+                        if (derivativePort.getSharedAsDerivative() == null) {
+                            ArrayVariableFmi2Api<Object> sharedDerBuf = getOrGrowSharedDerBuf(1);
+
+                            ArrayVariableFmi2Api<Object> newSharedArray =
+                                    (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
+                            derivativePort.setSharedAsDerivative(newSharedArray);
+                        }
+
+                        // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsDerivative().items().size() as they are
+                        // both determined by the max derivative order.
+                        for (int i = 0; i < derivativePort.getSharedAsDerivative().items().size(); i++) {
+                            VariableFmi2Api var = (VariableFmi2Api) derivativePort.getSharedAsDerivative().items().get(i);
+                            PExp val = derivativePorts.get(derivativePort).get(i).getReferenceExp().clone();
+                            builder.getDynamicScope().add(newAAssignmentStm(var.getDesignator(), val));
+                        }
+                    });
+
+                    //                    if (derivativePort != null) {
+                    //                        // Get shared derivative buffer and grow by one to add new element.
+                    //                        if (derivativePort.getSharedAsVariable() == null) {
+                    //                            ArrayVariableFmi2Api<Object> sharedDerBuf = getOrGrowSharedDerBuf(1);
+                    //
+                    //                            ArrayVariableFmi2Api<Object> newShared = (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
+                    //                            derivativePort.setSharedAsDerivative(newShared);
+                    //                        }
+                    //
+                    //                        // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsDerivative().items().size() as they are both determined by the max
+                    //                        // derivative order.
+                    //                        for (int i = 0; i < derivativePort.getSharedAsDerivative().items().size(); i++) {
+                    //                            VariableFmi2Api var = (VariableFmi2Api) derivativePort.getSharedAsDerivative().items().get(i);
+                    //                            PExp val = derivativePorts.get(derivativePort).get(i).getReferenceExp().clone();
+                    //                            builder.getDynamicScope().add(newAAssignmentStm(var.getDesignator(), val));
+                    //                        }
+                    //                    }
+                }
+            });
         });
+    }
+
+
+    private ArrayVariableFmi2Api<Object> getOrGrowSharedDerBuf(int increaseByCount) {
+
+        // Get shared buffer creates the buffer with one element.
+        if (this.derSharedBuffer == null && increaseByCount == 1) {
+            return getSharedDerBuffer();
+        }
+
+        ArrayVariableFmi2Api<Object> sharedBuffer = getSharedDerBuffer();
+
+        int innerArraySize;
+        try {
+            innerArraySize = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException("Exception occurred when accessing model description.", e);
+        }
+
+        String bufferName = ((AIdentifierExp) sharedBuffer.getReferenceExp()).getName().getText();
+        int outerArraySize = sharedBuffer.size() + increaseByCount;
+
+        PStm outerArrayVariableStm = newALocalVariableStm(
+                newAVariableDeclarationMultiDimensionalArray(newAIdentifier(bufferName), newAArrayType(newAArrayType(newARealNumericPrimitiveType())),
+                        Arrays.asList(outerArraySize, innerArraySize)));
+
+        sharedBuffer.getDeclaringStm().parent().replaceChild(sharedBuffer.getDeclaringStm(), outerArrayVariableStm);
+
+        List<VariableFmi2Api<Object>> items = new ArrayList<>();
+
+        // Add new element(s) to array.
+        // E.g: buff[1][1] with increaseByCount of 2 will become: buff[3][1] where 1 is the derivative order.
+        for (int i = 0; i < increaseByCount; i++) {
+
+            int outerIndex = sharedBuffer.size() + i;
+
+            List<VariableFmi2Api<Object>> variables = new ArrayList<>();
+            // Create variables
+            for (int l = 0; l < innerArraySize; l++) {
+                AArrayStateDesignator designator = newAArayStateDesignator(
+                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIntLiteralExp(outerIndex)),
+                        newAIntLiteralExp(l));
+
+                AArrayIndexExp indexExp =
+                        newAArrayIndexExp(newAIdentifierExp(bufferName), Arrays.asList(newAIntLiteralExp(outerIndex), newAIntLiteralExp(l)));
+
+                variables.add(new VariableFmi2Api<>(outerArrayVariableStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator,
+                        indexExp));
+            }
+            // Create array with variables
+            ArrayVariableFmi2Api innerArrayVariable =
+                    new ArrayVariableFmi2Api(outerArrayVariableStm, newAArrayType(newRealType()), getDeclaredScope(), builder.getDynamicScope(),
+                            newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIntLiteralExp(outerIndex)),
+                            newAArrayIndexExp(newAIdentifierExp(bufferName), Collections.singletonList(newAIntLiteralExp(outerIndex))), variables);
+
+            items.add(innerArrayVariable);
+        }
+        // Add new array(s) to existing arrays
+        items.addAll(0, sharedBuffer.items());
+
+        return new ArrayVariableFmi2Api<>(outerArrayVariableStm, newAArrayType(newAArrayType(newARealNumericPrimitiveType())), getDeclaredScope(),
+                builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIdentifierExp(bufferName), items);
+
     }
 
     private void setSharedBuffer(ArrayVariableFmi2Api<Object> newBuf, PType type) {
