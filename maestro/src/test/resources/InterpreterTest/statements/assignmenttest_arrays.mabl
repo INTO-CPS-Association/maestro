@@ -1,0 +1,23 @@
+// 1d array
+int d1[1];
+d1[0] = 1;
+assert.assertEquals(d1[0], 1);
+
+int b = d1[0];
+assert.assertEquals(b, 1);
+
+// 2d array
+int d2[1][2];
+d2[0][1] = 2;
+assert.assertEquals(d2[0][1], 2);
+
+b = d2[0][1];
+assert.assertEquals(b, 2);
+
+// 3d array
+int d3[1][2][2];
+d3[0][1][1] = 3;
+assert.assertEquals(d3[0][1][1], 3);
+
+b = d3[0][1][1];
+assert.assertEquals(b, 3);
