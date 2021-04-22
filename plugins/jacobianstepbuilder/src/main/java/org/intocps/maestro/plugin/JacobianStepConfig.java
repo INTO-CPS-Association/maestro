@@ -10,5 +10,5 @@ public class JacobianStepConfig implements IPluginConfiguration {
     public double relativeTolerance;
     public int stabilisationLoopMaxIterations;
     public boolean simulationProgramDelay;
-    public boolean retrieveDerivatives;
+    public boolean setGetDerivatives;
 }

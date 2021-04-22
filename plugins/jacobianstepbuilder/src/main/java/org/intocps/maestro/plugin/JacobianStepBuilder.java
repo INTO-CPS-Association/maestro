@@ -102,7 +102,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
         try {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             settings.fmiErrorHandlingEnabled = false;
-            settings.setGetDerivatives = jacobianStepConfig.retrieveDerivatives;
+            settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
             // Selected fun now matches funWithBuilder
             MablApiBuilder builder = new MablApiBuilder(settings, true);
 
