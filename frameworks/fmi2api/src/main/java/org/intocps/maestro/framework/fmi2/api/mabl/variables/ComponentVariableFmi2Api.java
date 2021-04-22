@@ -55,7 +55,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private DoubleVariableFmi2Api currentTimeVar = null;
     private BooleanVariableFmi2Api currentTimeStepFullStepVar = null;
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
-    private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePorts;
+    private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePortsToShare;
     private List<String> variabesToLog;
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
@@ -473,16 +473,16 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, e.getValue().get(0)),
                             vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), valBuf.getReferenceExp().clone()));
-
             scope.add(stm);
-            if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
-                derivativePorts = getDerivatives(e.getValue(), scope);
-            }
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
                 FmiStatusErrorHandlingBuilder
                         .generate(builder, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)), this, (IMablScope) scope,
                                 MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            }
+
+            if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
+                derivativePortsToShare = getDerivatives(e.getValue(), scope);
             }
 
             for (int i = 0; i < e.getValue().size(); i++) {
@@ -493,7 +493,30 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     /**
-     *
+     * @param ports The ports for which derivatives should be retrieved
+     * @param scope The builder scope.
+     * @return Derivative ports with a list of derivative values up to max derivative order
+     */
+    public Map<PortFmi2Api, List<VariableFmi2Api<Object>>> getDervivativePorts(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> ports) {
+        if (ports != null && ports.size() != 0) {
+            Map<Long, Long> portRefToDerPortRef;
+            try {
+                portRefToDerPortRef =
+                        getModelDescription().getDerivativesMap().entrySet().stream().filter(e -> ports.stream().anyMatch(p -> p.getPortReferenceValue().equals(e.getKey().getValueReference()))).collect(
+                                Collectors.toMap((e) -> e.getKey().getValueReference(), (e) -> e.getValue().getValueReference()));
+            } catch (XPathExpressionException | InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException("Exception occurred when accessing modeldescription.", e);
+            } boolean allPortsInDerivativePorts = derivativePortsToShare != null && derivativePortsToShare.size() == ports.size() && ports.stream()
+                    .allMatch(p -> portRefToDerPortRef.keySet().stream().anyMatch(k -> k.equals(p.getPortReferenceValue())));
+            if (!allPortsInDerivativePorts) {
+                //return getDerivatives(ports, scope);
+                return Map.of();
+            }
+        }
+        return derivativePortsToShare;//derivativePortsToShare == null ? Map.of() : derivativePortsToShare;
+    }
+
+    /**
      * @param ports The ports for which derivatives should be retrieved
      * @param scope The builder scope.
      * @return Derivative ports with a list of derivative values up to max derivative order
@@ -558,8 +581,14 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                             call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
                                     derRefOutBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
                                     derOrderOutBuf.getReferenceExp().clone(), derValOutBuf.getReferenceExp().clone()));
-
                     scope.add(AStm);
+
+                    // If enabled handle potential errors from calling getRealInputDerivatives
+                    if (builder.getSettings().fmiErrorHandlingEnabled) {
+                        FmiStatusErrorHandlingBuilder
+                                .generate(builder, createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES), this, (IMablScope) scope,
+                                        MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                    }
                 }
             }
 
@@ -776,6 +805,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
 
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
+                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
+
         try {
             if (builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() &&
                     type.equals(new ARealNumericPrimitiveType())) {
@@ -784,15 +818,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         } catch (XPathExpressionException e) {
             throw new RuntimeException("Exception occurred when when setting derivatives.", e);
         }
-
-        if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
-        }
     }
 
     /**
-     *
      * @param ports The ports for which derivative should be set from SHARED derivative ports
      * @param scope The builder scope
      */
@@ -849,7 +877,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                     PStateDesignator derValInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
                     scope.add(newAAssignmentStm(derValInDesignator,
-                            ((VariableFmi2Api) entry.getValue().getKey().getSharedAsDerivative().items().get(order - 1)).getReferenceExp().clone()));
+                            ((VariableFmi2Api) ((ArrayVariableFmi2Api)entry.getValue().getKey().getSharedAsVariable()).items().get(order - 1)).getReferenceExp().clone()));
                 }
             }
 
@@ -859,8 +887,13 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETREALINPUTDERIVATIVES),
                             derRefInBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize), derOrderInBuf.getReferenceExp().clone(),
                             derValInBuf.getReferenceExp().clone()));
-
             scope.add(ifStm);
+
+            // If enabled handle potential errors from calling setRealInputDerivatives
+            if (builder.getSettings().fmiErrorHandlingEnabled) {
+                FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SETREALINPUTDERIVATIVES), this, (IMablScope) scope,
+                        MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            }
         }
     }
 
@@ -993,8 +1026,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         ((VariableFmi2Api) ((VariableFmi2Api<?>) data.get(port))).type));
 
 
-                if (type.equals(new ARealNumericPrimitiveType()) && derivativePorts != null) {
-                    derivativePorts.keySet().stream().filter(dp -> {
+                if (type.equals(new ARealNumericPrimitiveType()) && derivativePortsToShare != null) {
+                    derivativePortsToShare.keySet().stream().filter(dp -> {
                         try {
                             return modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream().anyMatch(
                                     e -> e.getKey().getValueReference().equals(port.getPortReferenceValue()) &&
@@ -1007,40 +1040,22 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     }).findFirst().ifPresent((derivativePort) -> {
                         // If the derivative port is not yet shared then get shared derivative buffer, grow it by one and set the port as shared
                         // with the new array.
-                        if (derivativePort.getSharedAsDerivative() == null) {
+                        if (derivativePort.getSharedAsVariable() == null) {
                             ArrayVariableFmi2Api<Object> sharedDerBuf = getOrGrowSharedDerBuf(1);
 
                             ArrayVariableFmi2Api<Object> newSharedArray =
                                     (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
-                            derivativePort.setSharedAsDerivative(newSharedArray);
+                            derivativePort.setSharedAsVariable(newSharedArray);
                         }
 
-                        // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsDerivative().items().size() as they are
+                        // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsVariable().items().size() as they are
                         // both determined by the max derivative order.
-                        for (int i = 0; i < derivativePort.getSharedAsDerivative().items().size(); i++) {
-                            VariableFmi2Api var = (VariableFmi2Api) derivativePort.getSharedAsDerivative().items().get(i);
-                            PExp val = derivativePorts.get(derivativePort).get(i).getReferenceExp().clone();
-                            builder.getDynamicScope().add(newAAssignmentStm(var.getDesignator(), val));
+                        List<VariableFmi2Api> derivatives = ((ArrayVariableFmi2Api)derivativePort.getSharedAsVariable()).items();
+                        for (int i = 0; i < derivatives.size(); i++) {
+                            PExp val = derivativePortsToShare.get(derivativePort).get(i).getReferenceExp().clone();
+                            builder.getDynamicScope().add(newAAssignmentStm(derivatives.get(i).getDesignator(), val));
                         }
                     });
-
-                    //                    if (derivativePort != null) {
-                    //                        // Get shared derivative buffer and grow by one to add new element.
-                    //                        if (derivativePort.getSharedAsVariable() == null) {
-                    //                            ArrayVariableFmi2Api<Object> sharedDerBuf = getOrGrowSharedDerBuf(1);
-                    //
-                    //                            ArrayVariableFmi2Api<Object> newShared = (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
-                    //                            derivativePort.setSharedAsDerivative(newShared);
-                    //                        }
-                    //
-                    //                        // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsDerivative().items().size() as they are both determined by the max
-                    //                        // derivative order.
-                    //                        for (int i = 0; i < derivativePort.getSharedAsDerivative().items().size(); i++) {
-                    //                            VariableFmi2Api var = (VariableFmi2Api) derivativePort.getSharedAsDerivative().items().get(i);
-                    //                            PExp val = derivativePorts.get(derivativePort).get(i).getReferenceExp().clone();
-                    //                            builder.getDynamicScope().add(newAAssignmentStm(var.getDesignator(), val));
-                    //                        }
-                    //                    }
                 }
             });
         });
