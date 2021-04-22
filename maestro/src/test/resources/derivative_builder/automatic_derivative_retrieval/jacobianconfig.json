@@ -1,8 +1,0 @@
-{
-  "variablesOfInterest": ["{pump}.pump.mdot_out"],
-  "stabilisation": false,
-  "absoluteTolerance": 0.3,
-  "relativeTolerance": 0.01,
-  "stabilisationLoopMaxIterations": 5,
-  "retrieveDerivatives": true
-}
