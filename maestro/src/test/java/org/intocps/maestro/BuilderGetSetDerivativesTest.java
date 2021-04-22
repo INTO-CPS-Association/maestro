@@ -1,34 +1,44 @@
 package org.intocps.maestro;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.*;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.ARootDocument;
-import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
+import org.intocps.maestro.core.messages.ErrorReporter;
+import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.intocps.maestro.framework.fmi2.FmuFactory;
-import org.intocps.maestro.framework.fmi2.IFmuFactory;
+import org.intocps.maestro.framework.fmi2.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.ThrowingSupplier;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.Charset.forName;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -123,7 +133,7 @@ public class BuilderGetSetDerivativesTest {
             put(sink.getName(), sink);
         }};
 
-        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
+        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2", "pumpFMU.pump.fake_out3");
 
         int expected_derShareSum = 5;
 
@@ -175,7 +185,7 @@ public class BuilderGetSetDerivativesTest {
             put(sink.getName(), sink);
         }};
 
-        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
+        List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2", "pumpFMU.pump.fake_out3");
 
         int expected_derValOutSum = 6;
         int expected_derOrderOutSum = 6;
@@ -239,7 +249,7 @@ public class BuilderGetSetDerivativesTest {
 
         @BeforeEach
         void beforeEach() {
-            // setup the mock before the test
+            // Setup the mock before the test
             FmuFactory.customFactory = new IFmuFactory() {
                 @Override
                 public boolean accept(URI uri) {
@@ -298,20 +308,18 @@ public class BuilderGetSetDerivativesTest {
 
         @Test
         public void test() throws Exception {
-
+            // Arrange
             Path directory = Paths.get("src", "test", "resources", "builder_get_set_derivatives");
 
             File workingDirectory = getWorkingDirectory(directory.toFile());
 
-            // Arrange
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             settings.fmiErrorHandlingEnabled = false;
             settings.setGetDerivatives = true;
             MablApiBuilder builder = new MablApiBuilder(settings, true);
-            DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-
-            FmuVariableFmi2Api pumpFMU = dynamicScope.createFMU("pumpFMU", new ModelDescription(pumpMDPath.toFile()), pumpPath.toUri());
-            FmuVariableFmi2Api sinkFMU = dynamicScope.createFMU("sinkFMU", new ModelDescription(sinkMDPath.toFile()), sinkPath.toUri());
+            IMablScope scope = builder.getDynamicScope();
+            FmuVariableFmi2Api pumpFMU = scope.createFMU("pumpFMU", new ModelDescription(pumpMDPath.toFile()), pumpPath.toUri());
+            FmuVariableFmi2Api sinkFMU = scope.createFMU("sinkFMU", new ModelDescription(sinkMDPath.toFile()), sinkPath.toUri());
 
             ComponentVariableFmi2Api pump = pumpFMU.instantiate("pump");
             ComponentVariableFmi2Api sink = sinkFMU.instantiate("sink");
@@ -327,7 +335,7 @@ public class BuilderGetSetDerivativesTest {
             List<String> variablesOfInterest = Arrays.asList("pumpFMU.pump.fake_out1", "pumpFMU.pump.fake_out2");
 
             // Act
-            // get all ports and share them
+            // Get all ports and share them
             fmuInstances.forEach((x, y) -> {
                 Set<String> scalarVariablesToShare =
                         y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
@@ -338,19 +346,50 @@ public class BuilderGetSetDerivativesTest {
                 y.share(portsToShare);
             });
 
-            // set all linked ports
+            // Set all linked ports
             fmuInstances.forEach((x, y) -> {
                 if (y.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                     y.setLinked();
                 }
             });
-            ASimulationSpecificationCompilationUnit program = builder.build();
 
+            pumpFMU.unload();
+            sinkFMU.unload();
+
+            // Setup mabl
+            ASimulationSpecificationCompilationUnit program = builder.build();
             ARootDocument simUnit = new ARootDocument();
             simUnit.setContent(Collections.singletonList(program));
 
+            File specFolder = new File(workingDirectory, "specs");
+            specFolder.mkdirs();
+
+            FileUtils.writeStringToFile(Paths.get(specFolder.toString(), "spec.mabl").toFile(), program.toString(), StandardCharsets.UTF_8);
+
+            FileUtils.copyInputStreamToFile(
+                    Objects.requireNonNull(TypeChecker.class.getResourceAsStream("/org/intocps/maestro/typechecker/FMI2.mabl")),
+                    new File(specFolder, "FMI2.mabl"));
+
+            IErrorReporter reporter = new ErrorReporter();
+            Mabl mabl = new Mabl(directory.toFile(), workingDirectory);
+            mabl.setReporter(reporter);
+            mabl.setVerbose(true);
+
             // Assert
-            Assertions.assertDoesNotThrow(() -> new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, null)).execute(simUnit));
+            Assertions.assertDoesNotThrow(() -> mabl.parse(Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+                    .collect(Collectors.toList())));
+
+            Assertions.assertDoesNotThrow((ThrowingSupplier<Map.Entry<Boolean, Map<INode, PType>>>) mabl::typeCheck);
+            Assertions.assertDoesNotThrow(() -> mabl.verify(Framework.FMI2));
+
+            if (reporter.getErrorCount() > 0) {
+                reporter.printErrors(new PrintWriter(System.err, true));
+                Assertions.fail();
+            }
+
+            Assertions.assertDoesNotThrow(() -> new MableInterpreter(
+                    new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
+                    .execute(mabl.getMainSimulationUnit()));
         }
     }
 }
