@@ -1,11 +1,11 @@
 module DerivativeEstimator
-import DerivativeEstimatorInstance
+import DerivativeEstimatorInstance;
 {
-    DerivativeEstimatorInstance create(uint indexesOfInterest[], uint order[], uint provided[])
+    DerivativeEstimatorInstance create(uint indexesOfInterest[], uint order[], uint provided[]);
 }
 
 module DerivativeEstimatorInstance
 {
-   boolean estimate( real time, real sharedData[], real sharedDataDerivatives[][])
-   boolean rollback( real sharedDataDerivatives[][])
+   bool estimate( real time, real sharedData[], real sharedDataDerivatives[][]);
+   bool rollback( real sharedDataDerivatives[][]);
 }
