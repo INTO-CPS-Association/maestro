@@ -1,31 +1,31 @@
 package org.intocps.maestro;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.intocps.fmi.*;
+import org.intocps.fmi.Fmi2Status;
+import org.intocps.fmi.FmuResult;
+import org.intocps.fmi.IFmiComponent;
+import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.ast.node.ARootDocument;
+import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.intocps.maestro.framework.fmi2.*;
+import org.intocps.maestro.framework.fmi2.FmuFactory;
+import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.ThrowingSupplier;
@@ -38,7 +38,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.nio.charset.Charset.forName;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -228,14 +227,15 @@ public class BuilderGetSetDerivativesTest {
     }
 
     @Nested
-    @DisplayName("Test for automatically get/set derivatives using the MaBL interpreter")
+    @DisplayName("Test of automatically get/set derivatives using the MaBL interpreter")
     class getSetDerivativesInMabl {
         private final Path pumpMDPath = Paths.get(dirPath.toString(), "mocked_fmus", "pump_modelDescription.xml");
         private final Path sinkMDPath = Paths.get(dirPath.toString(), "mocked_fmus", "sink_modelDescription.xml");
 
         private File getWorkingDirectory(File base) throws IOException {
             String s = "target/" + base.getAbsolutePath().substring(
-                    base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
+                    base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
+                            ("src" + "/test" + "/resources/").length());
 
             File workingDir = new File(s.replace('/', File.separatorChar));
             if (workingDir.exists()) {
@@ -279,7 +279,7 @@ public class BuilderGetSetDerivativesTest {
                     if (uri.toASCIIString().contains("pump_mocked")) {
                         modelDescriptionPath = "src/test/resources/builder_get_set_derivatives/mocked_fmus/pump_modelDescription.xml";
 
-                        doReturn(new FmuResult<>(Fmi2Status.OK, new double[]{0.0, 0.0})).when(comp).getReal(new long[]{335544321, 335544322});
+                        when(comp.getReal(any())).thenReturn(new FmuResult<>(Fmi2Status.OK, new double[]{0.0}));
 
                         doReturn(new FmuResult<>(Fmi2Status.OK, new double[]{11, 12, 21, 22})).when(comp)
                                 .getRealOutputDerivatives(new long[]{111111111, 111111111, 222222222, 222222222}, new int[]{1, 2, 1, 2});
@@ -288,8 +288,7 @@ public class BuilderGetSetDerivativesTest {
                         modelDescriptionPath = "src/test/resources/builder_get_set_derivatives/mocked_fmus/sink_modelDescription.xml";
 
                         doReturn(Fmi2Status.OK).when(comp)
-                                .setRealInputDerivatives(new long[]{123456789, 123456789, 987654321, 987654321}, new int[]{1, 2, 1, 2},
-                                        new double[]{11, 12, 21, 22});
+                                .setRealInputDerivatives(new long[]{1, 1, 2, 2}, new int[]{1, 2, 1, 2}, new double[]{11, 12, 21, 22});
                     }
 
                     final InputStream md =
@@ -376,8 +375,9 @@ public class BuilderGetSetDerivativesTest {
             mabl.setVerbose(true);
 
             // Assert
-            Assertions.assertDoesNotThrow(() -> mabl.parse(Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
-                    .collect(Collectors.toList())));
+            Assertions.assertDoesNotThrow(() -> mabl
+                    .parse(Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+                            .collect(Collectors.toList())));
 
             Assertions.assertDoesNotThrow((ThrowingSupplier<Map.Entry<Boolean, Map<INode, PType>>>) mabl::typeCheck);
             Assertions.assertDoesNotThrow(() -> mabl.verify(Framework.FMI2));
@@ -387,9 +387,8 @@ public class BuilderGetSetDerivativesTest {
                 Assertions.fail();
             }
 
-            Assertions.assertDoesNotThrow(() -> new MableInterpreter(
-                    new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                    .execute(mabl.getMainSimulationUnit()));
+            Assertions.assertDoesNotThrow(() -> new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+                    IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit()));
         }
     }
 }
