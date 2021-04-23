@@ -1,17 +1,15 @@
 package org.intocps.maestro.webapi.esav1;
 
 import org.apache.commons.io.IOUtils;
-import org.intocps.maestro.webapi.ConditionalIgnoreRule;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -22,18 +20,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("main")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @WebAppConfiguration
 public class ApiAndServiceInitializeTest {
     final static String baseUrl = "/api/esav1/simulator";
-    @Rule
-    public final ConditionalIgnoreRule ConditionalIgnore = new ConditionalIgnoreRule();
+
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void before() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
@@ -41,7 +38,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore
+    @Disabled
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeSingleFMU() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/singleFmuTest1/initialize.json"));
@@ -51,7 +48,7 @@ public class ApiAndServiceInitializeTest {
     //TODO: Overture toolwrapping FMUs has to be updated for mac catalina
     //See: https://github.com/overturetool/overture-fmu/issues/87
     @Test
-    @Ignore
+    @Disabled
     //@ConditionalIgnoreRule.ConditionalIgnore(condition = BaseTest.NonMac.class)
     public void initializeMultipleFMUs() throws Exception {
         String body = IOUtils.toString(this.getClass().getResourceAsStream("/esa/twoFmusInitialize.json"));

@@ -16,16 +16,19 @@ public class VariableStepConfigValue extends Value {
     private List<StepVal> dataPoints;
     private Double currTime = 0.0;
     private Double stepSize = 0.0;
-    private StepsizeCalculator stepsizeCalculator;
+    private final Double maxStepSize;
+    private StepValidationResult stepValidationResult;
+    private final StepsizeCalculator stepsizeCalculator;
     private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
-            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize) throws InterpreterException {
+            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize, Double maxStepSize) throws InterpreterException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
         Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
         instances.forEach((mi, fsi) -> fsi.config.scalarVariables.forEach(sv -> derEsts.put(sv, new ScalarDerivativeEstimator(2))));
         derivativeEstimators = derEsts;
+        this.maxStepSize = maxStepSize;
     }
 
     public void initializePorts(List<String> portNames) {
@@ -61,14 +64,30 @@ public class VariableStepConfigValue extends Value {
             currentPortValues.put(mi, portValues);
         });
 
-        return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, null);
+        return stepsizeCalculator.getStepsize(currTime, currentPortValues, currentDerivatives, maxStepSize);
     }
 
-    public boolean isStepValid(Double nextTime, List<Value> portValues) {
-        StepValidationResult res =
-                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), false);
+    public boolean isStepValid(Double nextTime, List<Value> portValues, boolean supportsRollBack) {
+        stepValidationResult =
+                stepsizeCalculator.validateStep(nextTime, mapModelInstancesToPortValues(convertValuesToDataPoint(portValues)), supportsRollBack);
 
-        return res.isValid();
+        return stepValidationResult.isValid();
+    }
+
+    public boolean hasReducedStepSize() {
+        if(stepValidationResult == null){
+            throw new InterpreterException("'isStepValid' needs to be called before 'hasReducedStepSize'");
+        }
+
+        return stepValidationResult.hasReducedStepsize();
+    }
+
+    public Double getReducedStepSize() {
+        if(stepValidationResult == null){
+            throw new InterpreterException("'isStepValid' needs to be called before 'reducedStepSize'");
+        }
+
+        return stepValidationResult.getStepsize();
     }
 
     public void setEndTime(final Double endTime) {
@@ -104,7 +123,7 @@ public class VariableStepConfigValue extends Value {
         instances.forEach((mi, fsi) -> {
             Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
-                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name))))
+                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().equals((mi.key + "." + mi.instanceName + "." + sv.name))))
                             .findFirst()).ifPresent(val -> {
                         // if key not absent something is wrong?
                         portValues.putIfAbsent(sv, val.getValue());

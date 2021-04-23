@@ -15,6 +15,7 @@ import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -302,7 +303,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                 ((VariableFmi2Api<?>) communicationStepSize).getReferenceExp().clone())),
                 newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(true)))));
 
-
         return Map.entry(getCurrentTimeFullStepVar(), getCurrentTimeVar());
     }
 
@@ -363,35 +363,63 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             selectedPorts = Arrays.stream(ports).map(PortFmi2Api.class::cast).collect(Collectors.toList());
         }
 
-        List<PortFmi2Api> sortedPorts =
-                selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
-        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
-
-        for (int i = 0; i < sortedPorts.size(); i++) {
-            PortFmi2Api p = sortedPorts.get(i);
-            PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
-            scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
-        }
-
-        PType type = sortedPorts.get(0).getType();
-        ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
-                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
-                        newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
-
-
-        scope.add(stm);
-        if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GET, sortedPorts.get(0)), this, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
-        }
-
         Map<PortFmi2Api, VariableFmi2Api<V>> results = new HashMap<>();
 
-        for (int i = 0; i < sortedPorts.size(); i++) {
-            results.put(sortedPorts.get(i), (VariableFmi2Api<V>) valBuf.items().get(i));
-        }
+        Map<ModelDescription.Type, List<PortFmi2Api>> typeToSortedPorts = new HashMap<>();
+        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
+        selectedPorts.stream().map(p -> p.scalarVariable.getType().type).distinct()
+                .map(t -> selectedPorts.stream().filter(p -> p.scalarVariable.getType().type.equals(t))
+                        .sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList()))
+                .forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable.getType(), l));
+
+        for (Map.Entry<ModelDescription.Type, List<PortFmi2Api>> e : typeToSortedPorts.entrySet()) {
+            for (int i = 0; i < e.getValue().size(); i++) {
+                PortFmi2Api p = e.getValue().get(i);
+                PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
+                scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
+            }
+
+
+            PType type;
+            switch (e.getKey().type) {
+                case Boolean:
+                    type = new ABooleanPrimitiveType();
+                    break;
+                case Real:
+                    type = new ARealNumericPrimitiveType();
+                    break;
+                case Integer:
+                    type = new AIntNumericPrimitiveType();
+                    break;
+                case String:
+                    type = new AStringPrimitiveType();
+                    break;
+                case Enumeration:
+                    throw new RuntimeException("Cannot assign enumeration port type.");
+                default:
+                    throw new RuntimeException("Cannot match port types.");
+            }
+
+            ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
+
+            AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, e.getValue().get(0)),
+                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), valBuf.getReferenceExp().clone()));
+
+            scope.add(stm);
+
+            if (builder.getSettings().fmiErrorHandlingEnabled) {
+                FmiStatusErrorHandlingBuilder
+                        .generate(builder, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)), this, (IMablScope) scope,
+                                MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            }
+
+
+            for (int i = 0; i < e.getValue().size(); i++) {
+                results.put(e.getValue().get(i), (VariableFmi2Api<V>) valBuf.items().get(i));
+            }
+        }
         return results;
     }
 
@@ -410,8 +438,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     @Override
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
-        return get(builder.getDynamicScope(), outputPorts.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
-
+        //return get(builder.getDynamicScope(), outputPorts.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
+        Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName()) &&
+                (p.scalarVariable.causality == ModelDescription.Causality.Output ||
+                        p.scalarVariable.causality == ModelDescription.Causality.Parameter)).toArray(Fmi2Builder.Port[]::new);
+        return get(builder.getDynamicScope(), ports);
     }
 
     /**
@@ -573,7 +604,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
         ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
-
         for (int i = 0; i < sortedPorts.size(); i++) {
             Fmi2Builder.Port p = sortedPorts.get(i);
             PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
@@ -645,6 +675,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             }
 
             selectedPorts = selectedPorts.stream().filter(filterList::contains).collect(Collectors.toList());
+        }
+        if(selectedPorts.size() == 0){
+            logger.warn("No linked input variables for FMU instance: " + this.getName());
+            return;
         }
 
 
@@ -762,14 +796,18 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState() {
+    public Fmi2Builder.StateVariable<PStm> getState() throws XPathExpressionException {
 
         return getState(builder.getDynamicScope());
 
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) {
+    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) throws XPathExpressionException {
+
+        if (!this.modelDescriptionContext.getModelDescription().getCanGetAndSetFmustate()) {
+            throw new RuntimeException("Unable to get state on fmu: " + this.getOwner() + " with instance name: " + this.getName());
+        }
 
         String stateName = builder.getNameGenerator().getName(name, "state");
         PStm stateVar = newVariable(stateName, newANameType("FmiComponentState"));

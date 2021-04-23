@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{crtl}": "target/test-classes/watertankexample/watertankcontroller-c.fmu",
-    "{wt}": "target/test-classes/watertankexample/singlewatertank-20sim.fmu"
+    "{crtl}": "src/test/watertankexample/resources/maestro2/watertankexample/watertankcontroller-c.fmu",
+    "{wt}": "src/test/watertankexample/resources/maestro2/watertankexample/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{crtl}.crtlInstance.valve": [
@@ -16,7 +16,32 @@
     "{crtl}.crtlInstance.minlevel": 1
   },
   "algorithm": {
-    "type": "fixed-step",
-    "size": 0.1
+    "type": "var-step",
+    "initsize": 0,
+    "size": [
+      1e-16,
+      1
+    ],
+    "constraints": {
+      "max": {
+        "type": "zerocrossing",
+        "ports": [
+          "{wt}.wtInstance.level",
+          "{crtl}.crtlInstance.maxlevel"
+        ],
+        "order": 1,
+        "abstol": 0.01
+      },
+      "min": {
+        "type": "zerocrossing",
+        "ports": [
+          "{wt}.wtInstance.level",
+          "{crtl}.crtlInstance.minlevel"
+        ],
+        "order": 1,
+        "abstol": 0.01,
+        "safety": 1
+      }
+    }
   }
 }

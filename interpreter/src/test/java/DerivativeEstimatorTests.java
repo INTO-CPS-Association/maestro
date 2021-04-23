@@ -2,8 +2,8 @@ import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorInstanceValue;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorValue;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
@@ -26,8 +26,8 @@ public class DerivativeEstimatorTests {
         Double xDotDot = estimator.getSecondDerivative();
 
         //Assert
-        Assert.assertEquals("xdot must be 0", expectedXDot, xDot, assertionDelta);
-        Assert.assertEquals("xdotdot must be 0", expectedXDotDot, xDotDot, assertionDelta);
+        Assertions.assertEquals(expectedXDot, xDot, assertionDelta, "xdot must be 0");
+        Assertions.assertEquals( expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 0");
     }
 
     @Test
@@ -47,8 +47,8 @@ public class DerivativeEstimatorTests {
         Double xDotDot = estimator.getSecondDerivative();
 
         //Assert
-        Assert.assertEquals("xdot must be 1.0", expectedXDot, xDot, assertionDelta);
-        Assert.assertEquals("xdotdot must be 0", expectedXDotDot, xDotDot, assertionDelta);
+        Assertions.assertEquals( expectedXDot, xDot, assertionDelta, "xdot must be 1.0");
+        Assertions.assertEquals(expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 0");
     }
 
     @Test
@@ -69,8 +69,8 @@ public class DerivativeEstimatorTests {
         Double xDotDot = estimator.getSecondDerivative();
 
         //Assert
-        Assert.assertEquals("xdot must be 8.0", expectedXDot, xDot, assertionDelta);
-        Assert.assertEquals("xdotdot must be 2.0", expectedXDotDot, xDotDot, assertionDelta);
+        Assertions.assertEquals(expectedXDot, xDot, assertionDelta, "xdot must be 8.0");
+        Assertions.assertEquals(expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 2.0");
     }
 
     @Test
@@ -118,8 +118,8 @@ public class DerivativeEstimatorTests {
         RealValue yDot = ((RealValue) sharedDataDerivatives.getValues().get(2).getValues().get(0));
 
         //Assert
-        Assert.assertEquals("xdotdot must be 2.0", expectedXDotDot.getValue(), xDotDot.getValue(), assertionDelta);
-        Assert.assertEquals("ydot must be 8.0", expectedYDot.getValue(), yDot.getValue(), assertionDelta);
+        Assertions.assertEquals(expectedXDotDot.getValue(), xDotDot.getValue(), assertionDelta, "xdotdot must be 2.0");
+        Assertions.assertEquals(expectedYDot.getValue(), yDot.getValue(), assertionDelta, "ydot must be 8.0");
     }
 
     @Test
@@ -159,8 +159,8 @@ public class DerivativeEstimatorTests {
         RealValue xDot = (RealValue) sharedDataDerivatives.getValues().get(0).getValues().get(0);
 
         //Assert
-        Assert.assertTrue("yDot should be null", yDot instanceof NullValue);
-        Assert.assertTrue("xDotDot should be null", xDotDot instanceof NullValue);
-        Assert.assertEquals("xDot should be 2.0", providedXDot.getValue(), xDot.getValue(), assertionDelta);
+        Assertions.assertTrue(yDot instanceof NullValue, "yDot should be null");
+        Assertions.assertTrue(xDotDot instanceof NullValue, "xDotDot should be null");
+        Assertions.assertEquals(providedXDot.getValue(), xDot.getValue(), assertionDelta, "xDot should be 2.0");
     }
 }

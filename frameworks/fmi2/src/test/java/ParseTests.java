@@ -2,8 +2,8 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.FrameworkVariableInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.Set;
@@ -16,6 +16,6 @@ public class ParseTests {
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(multimodelJson, reporter);
         Set<? extends FrameworkVariableInfo> relations = env.getRelations(new LexIdentifier("controller", null), new LexIdentifier("tank", null));
         // Todo: Improve test
-        Assert.assertTrue(relations.size() == 5);
+        Assertions.assertTrue(relations.size() == 5);
     }
 }

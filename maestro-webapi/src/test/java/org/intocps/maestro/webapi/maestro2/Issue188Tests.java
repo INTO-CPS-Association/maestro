@@ -6,15 +6,16 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.core.ZipUtilities;
 import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -35,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("main")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @SpringBootTest
 public class Issue188Tests {
@@ -44,17 +45,27 @@ public class Issue188Tests {
     private MockMvc mockMvc;
 
 
-    @Before
+    @BeforeEach
     public void before() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
+    /**
+     * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     * @throws Exception
+     */
+    @Disabled
     @Test
     public void fixedStepSimulationRelativeFMU() throws Exception {
         File initializePath = new File(Issue188Tests.class.getClassLoader().getResource("maestro2/188/initialize.json").getPath());
         fixedStepSimulationParameterizedInitialize(initializePath);
     }
 
+    /**
+     * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     * @throws Exception
+     */
+    @Disabled
     @Test
     public void fixedStepSimulationRelativeDirectoryFMU() throws Exception {
         File zipFile = new File("target/test-classes/maestro2/188/GATestController.fmu");

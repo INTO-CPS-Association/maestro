@@ -16,6 +16,9 @@ public class ArrayUpdatableValue extends UpdatableValue {
 
     @Override
     public void setValue(Value newValue) {
+        if (index >= owner.getValues().size()) {
+            throw new RuntimeException("Out of bounds for array");
+        }
         if (owner.getValues().get(index).deref() instanceof ArrayValue) {
             throw new RuntimeException("Assigning array to nested array is not allowed.");
         } else {

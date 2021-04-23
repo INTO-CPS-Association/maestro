@@ -152,6 +152,7 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M5</version>
+
                     <configuration>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
@@ -253,6 +254,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
@@ -306,7 +308,6 @@
                 <version>1.9</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.into-cps.fmi</groupId>
                 <artifactId>fmi2</artifactId>
@@ -320,9 +321,9 @@
             </dependency>
 
             <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.1</version>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.7.1</version>
                 <scope>test</scope>
             </dependency>
 
@@ -336,21 +337,12 @@
     </dependencyManagement>
 
     <dependencies>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Either type -->
         <dependency>
             <groupId>com.spencerwi</groupId>
             <artifactId>Either.java</artifactId>
             <version>2.1.1</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

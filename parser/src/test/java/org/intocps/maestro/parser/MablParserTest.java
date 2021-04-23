@@ -2,14 +2,14 @@ package org.intocps.maestro.parser;
 
 import org.antlr.v4.runtime.*;
 import org.intocps.maestro.ast.node.INode;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 public class MablParserTest {
 
-    @Before
+    @BeforeEach
     public void before() {
         System.out.println("\n\n###########################################################################\n\n");
     }

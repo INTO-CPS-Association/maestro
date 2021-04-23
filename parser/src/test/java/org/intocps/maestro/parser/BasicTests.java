@@ -1,14 +1,12 @@
 package org.intocps.maestro.parser;
 
-
 import org.antlr.v4.runtime.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.INode;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,31 +19,22 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-@RunWith(Parameterized.class)
+
 public class BasicTests {
 
-    final File source;
-    private final String name;
-
-    public BasicTests(String name, File source) {
-        this.name = name;
-        this.source = source;
-    }
-
-    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "basic_tests").toFile().listFiles()))
                 .map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 
-
-    @Test
-    public void test() throws IOException, AnalysisException {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void test(String name, File source) throws IOException, AnalysisException {
 
         System.out.println("############################## Source #################################\n\n");
-        System.out.println(Files.readString(this.source.toPath()));
+        System.out.println(Files.readString(source.toPath()));
 
-        MablLexer l = new MablLexer(CharStreams.fromPath(this.source.toPath(), StandardCharsets.UTF_8));
+        MablLexer l = new MablLexer(CharStreams.fromPath(source.toPath(), StandardCharsets.UTF_8));
         MablParser p = new MablParser(new CommonTokenStream(l));
         AtomicInteger errorCount = new AtomicInteger(0);
         p.addErrorListener(new BaseErrorListener() {
@@ -61,7 +50,7 @@ public class BasicTests {
         INode root = new ParseTree2AstConverter().visit(unit);
         System.out.println("############################## Parsed to string #################################\n\n");
         System.out.println(root);
-        Assert.assertEquals("No errors should exist", 0, errorCount.get());
+        Assertions.assertEquals(0, errorCount.get(), "No errors should exist");
 
 
         String ppRoot = PrettyPrinter.print(root);
@@ -86,7 +75,7 @@ public class BasicTests {
 
             root = new ParseTree2AstConverter().visit(unit);
             System.out.println(root);
-            Assert.assertEquals("No errors should exist", 0, errorCountPp.get());
+            Assertions.assertEquals(0, errorCountPp.get(), "No errors should exist");
         } catch (IllegalStateException e) {
             System.err.println(ppRoot);
             throw e;

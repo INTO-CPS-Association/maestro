@@ -140,9 +140,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             throw new InterpreterException("Cannot assign to a constant value");
         }
 
-        UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
-        currentUpdatableValue.setValue(newValue.deref());
-
+        try {
+            UpdatableValue currentUpdatableValue = (UpdatableValue) currentValue;
+            currentUpdatableValue.setValue(newValue.deref());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed at: " + node, e);
+        }
         return new VoidValue();
     }
 
@@ -464,6 +467,19 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseANullExp(ANullExp node, Context question) throws AnalysisException {
         return new NullValue();
+    }
+
+    @Override
+    public Value caseAMultiplyBinaryExp(AMultiplyBinaryExp node, Context question) throws AnalysisException {
+
+        NumericValue x = (NumericValue) node.getLeft().apply(this,question).deref();
+        NumericValue y = (NumericValue) node.getRight().apply(this,question).deref();
+
+        if(x instanceof RealValue || y instanceof RealValue){
+            return new RealValue(x.realValue() * y.realValue());
+        }
+
+        return new IntegerValue(x.intValue() * y.intValue());
     }
 
     @Override

@@ -2,8 +2,8 @@ package org.intocps.maestro;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +29,13 @@ public class MaestroV1CliTest {
 
         CommandLine cmd = MaestroV1CliProxy.parse(s);
         MaestroV1CliProxy.process(cmd, (verbose, configFile, simulationConfigFile, startTime, endTime, outputFile) -> {
-            Assert.assertNotNull("endtime must be defined", endTime);
-            Assert.assertEquals(configPath.getAbsolutePath(), configFile.getAbsolutePath());
-            Assert.assertEquals("start time must match expected input", startTimeIn, startTime, 0d);
-            Assert.assertEquals("end time must match expected input", endTimeIn, endTime, 0d);
-            Assert.assertNull("simulation config must be null", simulationConfigFile);
+            Assertions.assertNotNull(endTime, "endtime must be defined");
+            Assertions.assertEquals(configPath.getAbsolutePath(), configFile.getAbsolutePath());
+            Assertions.assertEquals(startTimeIn, startTime, 0d, "start time must match expected input");
+            Assertions.assertEquals(endTimeIn, endTime, 0d, "end time must match expected input");
+            Assertions.assertNull(simulationConfigFile, "simulation config must be null");
             return false;
-        }, port -> Assert.fail());
+        }, port -> Assertions.fail());
     }
 
     @Test
@@ -51,14 +51,14 @@ public class MaestroV1CliTest {
         String[] s = arguments.split(" ");
         CommandLine cmd = MaestroV1CliProxy.parse(s);
         MaestroV1CliProxy.process(cmd, (verbose, configFile, simulationConfigFile, startTime, endTime, outputFile) -> {
-            Assert.assertNotNull("endtime must be defined", endTime);
-            Assert.assertEquals(configPath.getAbsolutePath(), configFile.getAbsolutePath());
-            Assert.assertEquals("start time must match expected input", startTimeIn, startTime, 0d);
-            Assert.assertEquals("end time must match expected input", endTimeIn, endTime, 0d);
-            Assert.assertNotNull("simulation config must be null", simulationConfigFile);
-            Assert.assertEquals(simulationConfigPath.getAbsolutePath(), simulationConfigFile.getAbsolutePath());
+            Assertions.assertNotNull(endTime, "endtime must be defined");
+            Assertions.assertEquals(configPath.getAbsolutePath(), configFile.getAbsolutePath());
+            Assertions.assertEquals(startTimeIn, startTime, 0d, "start time must match expected input");
+            Assertions.assertEquals(endTimeIn, endTime, 0d, "end time must match expected input");
+            Assertions.assertNotNull(simulationConfigFile, "simulation config must be null");
+            Assertions.assertEquals(simulationConfigPath.getAbsolutePath(), simulationConfigFile.getAbsolutePath());
             return false;
-        }, port -> Assert.fail());
+        }, port -> Assertions.fail());
     }
 
     @Test
@@ -67,8 +67,8 @@ public class MaestroV1CliTest {
         String[] s = arguments.split(" ");
         CommandLine cmd = MaestroV1CliProxy.parse(s);
         MaestroV1CliProxy.process(cmd, (verbose, configFile, simulationConfigFile, startTime, endTime, outputFile) -> {
-            Assert.fail();
+            Assertions.fail();
             return false;
-        }, port -> Assert.assertEquals(8888, port));
+        }, port -> Assertions.assertEquals(8888, port));
     }
 }

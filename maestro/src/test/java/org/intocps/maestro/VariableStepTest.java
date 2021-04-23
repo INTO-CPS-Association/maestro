@@ -7,7 +7,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -43,7 +43,7 @@ public class VariableStepTest {
             new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
-            FullSpecTest.compareCsvResults(new File(testFilesDirectory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
+            FullSpecTest.compareCsvResults(new File(testFilesDirectory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
         }
 
     }

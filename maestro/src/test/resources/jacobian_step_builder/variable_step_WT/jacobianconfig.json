@@ -1,0 +1,8 @@
+{
+  "variablesOfInterest": ["{tank}.wtInstance.level","{ctrl}.ctrlInstance.maxlevel", "{ctrl}.ctrlInstance.minlevel"],
+  "stabilisation": false,
+  "absoluteTolerance": 1.0,
+  "relativeTolerance": 1.0,
+  "stabilisationLoopMaxIterations": 5
+}
+
