@@ -74,7 +74,7 @@ public class DerivativeEstimatorTests {
     }
 
     @Test
-    public void testCalculateDerivativesFromMableInterface() {
+    public void testCalculateDerivatives() {
         //Arrange
         double assertionDelta = 0.0001;
         RealValue x1 = new RealValue(4.0), x2 = new RealValue(9.0), x3 = new RealValue(25.0), expectedXDotDot = new RealValue(2.0), y1 =
