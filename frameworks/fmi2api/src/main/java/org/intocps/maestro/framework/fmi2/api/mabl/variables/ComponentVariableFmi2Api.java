@@ -162,7 +162,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
 
-    private List<VariableFmi2Api<Object>> createMDArrayRecursively(PType type, List<Integer> arraySizes, PStm outerArrayVariableStm,
+    private List<VariableFmi2Api<Object>> createMDArrayItemsRecursively(PType type, List<Integer> arraySizes, PStm outerArrayVariableStm,
             String identifierName, List<Integer> indexPath) {
 
         List<VariableFmi2Api<Object>> arrays = new ArrayList<>();
@@ -172,7 +172,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 List<Integer> newIndexPath = new ArrayList<>(indexPath);
                 newIndexPath.add(i);
                 List<VariableFmi2Api<Object>> innerArrList =
-                        createMDArrayRecursively(type, arraySizes.subList(1, arraySizes.size()), outerArrayVariableStm, identifierName, newIndexPath);
+                        createMDArrayItemsRecursively(type, arraySizes.subList(1, arraySizes.size()), outerArrayVariableStm, identifierName, newIndexPath);
                 if (innerArrList.size() > 1) {
                     ArrayVariableFmi2Api arrayVariableFmi2Api =
                             new ArrayVariableFmi2Api(outerArrayVariableStm, newAArrayType(innerArrList.get(0).type), getDeclaredScope(),
@@ -219,7 +219,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         return new ArrayVariableFmi2Api<>(arrayVariableStm, newAArrayType(newARealNumericPrimitiveType()), getDeclaredScope(),
                 builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIdentifierExp(bufferName),
-                createMDArrayRecursively(newARealNumericPrimitiveType(), lengths, arrayVariableStm, bufferName, new ArrayList<>()));
+                createMDArrayItemsRecursively(newARealNumericPrimitiveType(), lengths, arrayVariableStm, bufferName, new ArrayList<>()));
     }
 
     private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefix, int length) {

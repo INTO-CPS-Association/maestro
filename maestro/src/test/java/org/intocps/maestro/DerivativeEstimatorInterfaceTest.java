@@ -141,6 +141,8 @@ public class DerivativeEstimatorInterfaceTest {
             y.share(portsToShare);
         });
 
+
+
         pumpFMU.unload();
         sinkFMU.unload();
 
