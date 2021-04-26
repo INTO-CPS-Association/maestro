@@ -59,7 +59,7 @@ public class DerivativeEstimatorInterfaceTest {
     @Test
     public void testCalculateDerivativesFromMableInterface() throws Exception {
         //Arrange
-        // Setup the mock before the test
+        // Setup the mock fmu factory before the test
         FmuFactory.customFactory = new IFmuFactory() {
             @Override
             public boolean accept(URI uri) {
@@ -165,6 +165,9 @@ public class DerivativeEstimatorInterfaceTest {
 
 
         //Assert
+        
 
+        // Teardown the mock fmu factory after the test
+        FmuFactory.customFactory = null;
     }
 }
