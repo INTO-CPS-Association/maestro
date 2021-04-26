@@ -19,7 +19,7 @@
         <module>api</module>
         <module>typeconverter</module>
         <module>fixedstep</module>
-        <module>fixedstepbuilder</module>
+        <module>jacobianstepbuilder</module>
         <module>demo</module>
         <module>topologicalsorting</module>
         <module>verificationsuite</module>

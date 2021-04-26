@@ -1,8 +1,8 @@
 package org.intocps.maestro.typechecker;
 
 import org.intocps.maestro.ast.node.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -142,7 +142,7 @@ public class TypeComparatorTest {
 
     public void check(PType to, PType from) {
 
-        Assert.assertTrue(from + " should be compatible with " + to, tc.compatible(to, from));
+        Assertions.assertTrue(tc.compatible(to, from), from + " should be compatible with " + to);
     }
 
     public void checkNot(Class<? extends PType> toClz,
@@ -150,7 +150,7 @@ public class TypeComparatorTest {
         PType to = toClz.getDeclaredConstructor().newInstance();
         PType from = fromClz.getDeclaredConstructor().newInstance();
 
-        Assert.assertFalse(fromClz.getSimpleName() + " should NOT be compatible with " + toClz.getSimpleName(), tc.compatible(to, from));
+        Assertions.assertFalse(tc.compatible(to, from), fromClz.getSimpleName() + " should NOT be compatible with " + toClz.getSimpleName());
     }
 
     public void checkNot(Class<? extends PType> toClz,
@@ -161,6 +161,6 @@ public class TypeComparatorTest {
 
     public void checkNot(PType to, PType from) {
 
-        Assert.assertFalse(from + " should NOT be compatible with " + to, tc.compatible(to, from));
+        Assertions.assertFalse(tc.compatible(to, from), from + " should NOT be compatible with " + to);
     }
 }

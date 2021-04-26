@@ -51,7 +51,7 @@ def cliSpecGen():
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
-        if not testutils.compare("CSV", "wt/result.csv", outputs):
+        if not testutils.compareCSV("wt/result.csv", outputs):
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
@@ -72,7 +72,7 @@ def cliRaw():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compare("CSV", "wt/result.csv", outputs):
+        if not testutils.compareCSV("wt/result.csv", outputs):
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
@@ -93,7 +93,7 @@ def cliExpansion():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compare("CSV", "wt/result.csv", outputs):
+        if not testutils.compareCSV("wt/result.csv", outputs):
             tempActualOutputs=temporary.dirPath + "/actual_" + outputs
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)

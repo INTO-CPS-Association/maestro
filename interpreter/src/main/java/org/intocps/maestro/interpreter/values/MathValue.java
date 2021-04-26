@@ -1,6 +1,11 @@
 package org.intocps.maestro.interpreter.values;
 
+import org.intocps.maestro.interpreter.InterpreterException;
+import org.intocps.maestro.interpreter.ValueExtractionUtilities;
+import org.intocps.maestro.interpreter.values.fmi.FmuValue;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MathValue extends ExternalModuleValue<Object> {
@@ -28,6 +33,36 @@ public class MathValue extends ExternalModuleValue<Object> {
             }
 
         }));
+        componentMembers.put("minRealFromArray", new FunctionValue.ExternalFunctionValue(args -> {
+
+            if (args.get(0).deref() instanceof ArrayValue) {
+                List<Value> valueArray = ValueExtractionUtilities.getArrayValue(args.get(0), Value.class);
+                if (valueArray.size() < 1) {
+                    return new IntegerValue(0);
+                } else if (valueArray.get(0).deref() instanceof RealValue) {
+                    RealValue minDoubleSize = (RealValue) valueArray.get(0);
+                    for (int i = 1; i < valueArray.size(); i++) {
+                        if (((RealValue) valueArray.get(i)).getValue() < minDoubleSize.getValue()) {
+                            minDoubleSize = (RealValue) valueArray.get(i);
+                        }
+                    }
+                    return minDoubleSize;
+                } else if (valueArray.get(0).deref() instanceof IntegerValue) {
+                    IntegerValue minIntSize = (IntegerValue) valueArray.get(0);
+                    for (int i = 1; i < valueArray.size(); i++) {
+                        if (((IntegerValue) valueArray.get(i)).getValue() < minIntSize.getValue()) {
+                            minIntSize = (IntegerValue) valueArray.get(i);
+                        }
+                    }
+                    return minIntSize;
+                } else {
+                    throw new InterpreterException("Array values are not of type real.");
+                }
+            } else {
+                throw new InterpreterException("Value passed is not an array.");
+            }
+        }));
+
         return componentMembers;
     }
 }

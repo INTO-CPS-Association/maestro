@@ -66,27 +66,11 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     @Override
     public void setValue(Fmi2Builder.Scope<PStm> scope, V value) {
-        if (!(value instanceof ValueFmi2Api) || ((ValueFmi2Api<?>) value).get() == null) {
+        if (!(value instanceof DoubleExpressionValue)) {
             throw new IllegalArgumentException();
         }
 
-        ValueFmi2Api<V> v = (ValueFmi2Api<V>) value;
-
-        PExp exp = null;
-
-        if (v.getType() instanceof ARealNumericPrimitiveType) {
-            exp = newARealLiteralExp((Double) v.get());
-
-        } else if (v.getType() instanceof AIntNumericPrimitiveType) {
-            exp = newAIntLiteralExp((Integer) v.get());
-
-        } else if (v.getType() instanceof ABooleanPrimitiveType) {
-            exp = newABoolLiteralExp((Boolean) v.get());
-        } else if (v.getType() instanceof AStringPrimitiveType) {
-            exp = newAStringLiteralExp((String) v.get());
-        }
-
-        scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), exp));
+        scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), ((DoubleExpressionValue) value).getExp()));
     }
 
     @Override

@@ -3,9 +3,9 @@ import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.EnvironmentException;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelDescriptionValidator;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -16,7 +16,7 @@ public class ModelDescriptionValidatorTest {
     private ModelDescription md;
     private List<ModelDescription.ScalarVariable> variables;
 
-    @Before
+    @BeforeEach
     public void beforeEachTestMethod() throws Exception {
         InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel.json");
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(multimodelJson, new IErrorReporter.SilentReporter());
@@ -34,7 +34,7 @@ public class ModelDescriptionValidatorTest {
             o.causality = ModelDescription.Causality.Parameter;
             o.variability = ModelDescription.Variability.Constant;
         });
-        Assert.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
+        Assertions.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
     }
 
     @Test
@@ -44,7 +44,7 @@ public class ModelDescriptionValidatorTest {
             o.causality = ModelDescription.Causality.Independent;
             o.variability = ModelDescription.Variability.Constant;
         });
-        Assert.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
+        Assertions.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ModelDescriptionValidatorTest {
             o.causality = ModelDescription.Causality.Output;
             o.variability = ModelDescription.Variability.Fixed;
         });
-        Assert.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
+        Assertions.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class ModelDescriptionValidatorTest {
             o.initial = ModelDescription.Initial.Exact;
             o.causality = ModelDescription.Causality.Input;
         });
-        Assert.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
+        Assertions.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
     }
 
     @Test
@@ -74,7 +74,7 @@ public class ModelDescriptionValidatorTest {
             o.initial = ModelDescription.Initial.Exact;
             o.causality = ModelDescription.Causality.Independent;
         });
-        Assert.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
+        Assertions.assertThrows(EnvironmentException.class, () -> modelDescriptionValidator.verifyVariabilityCausality(variables));
     }
 
     @Test
@@ -92,8 +92,8 @@ public class ModelDescriptionValidatorTest {
         var variablesThatShouldNotHaveAnInitial = decoratedvariables.stream()
                 .filter(o -> o.causality == ModelDescription.Causality.Independent || o.causality == ModelDescription.Causality.Input)
                 .collect(Collectors.toList());
-        Assert.assertTrue(variablesThatShouldHaveAnInitial.stream().allMatch(o -> o.initial != null));
-        Assert.assertTrue(variablesThatShouldNotHaveAnInitial.stream().allMatch(o -> o.initial == null));
+        Assertions.assertTrue(variablesThatShouldHaveAnInitial.stream().allMatch(o -> o.initial != null));
+        Assertions.assertTrue(variablesThatShouldNotHaveAnInitial.stream().allMatch(o -> o.initial == null));
     }
 
     //Tank.volume.initial and Valve.outflow.initial
@@ -101,12 +101,12 @@ public class ModelDescriptionValidatorTest {
     public void addInitialModelDescription_ValveOutFlow() throws Exception {
         var valuesBefore = variables.stream().filter(o -> o.getValueReference() == 5 || o.getValueReference() == 6).collect(Collectors.toList());
         valuesBefore.forEach(o -> o.initial = null);
-        Assert.assertTrue(valuesBefore.stream().allMatch(o -> o.initial == null));
+        Assertions.assertTrue(valuesBefore.stream().allMatch(o -> o.initial == null));
 
         var decoratedvariables = modelDescriptionValidator.addInitialToModelDescription(variables);
         var valuesAfter =
                 decoratedvariables.stream().filter(o -> o.getValueReference() == 5 || o.getValueReference() == 6).collect(Collectors.toList());
-        Assert.assertTrue(valuesAfter.stream().allMatch(o -> o.initial != null));
+        Assertions.assertTrue(valuesAfter.stream().allMatch(o -> o.initial != null));
     }
 
     //Make tests to test a couple of default values

@@ -10,10 +10,8 @@ import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-import java.util.Vector;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Only works for a single websocket.
@@ -34,8 +32,9 @@ public class WebsocketDataWriter implements IDataListener {
 
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
-        List<String> hoi = filter;
-        List<Integer> ioi = DataListenerUtilities.indicesOfInterest(headers, hoi);
+        Map<Integer, String> ith = DataListenerUtilities.indicesToHeaders(headers, filter);
+        List<Integer> ioi = new ArrayList<>(ith.keySet());
+        List<String> hoi = new ArrayList<>(ith.values());
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);
         wdwi.interval = interval;
         this.instances.put(uuid, wdwi);

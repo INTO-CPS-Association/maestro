@@ -39,6 +39,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private MathBuilderFmi2Api mathBuilderApi;
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
+    private RealTime realTime;
+    private VariableStep variableStep;
     private LoggerFmi2Api runtimeLogger;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
     private ExternalResources externalResources = null;
@@ -179,6 +181,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.mablToMablAPI;
     }
 
+    public VariableStep getVariableStep(VariableFmi2Api config){
+        if (this.variableStep == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "VariableStep", config);
+            this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);
+        }
+        return this.variableStep;
+    }
+
     public DataWriter getDataWriter() {
         if (this.dataWriter == null) {
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DataWriter");
@@ -186,6 +196,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
         return this.dataWriter;
+    }
+
+    public RealTime getRealTimeModule() {
+        if (this.realTime == null){
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "RealTime");
+            this.realTime = new RealTime(this.dynamicScope, this, runtimeModule);
+        }
+        return this.realTime;
     }
 
     public BooleanVariableFmi2Api getGlobalExecutionContinue() {
@@ -298,6 +316,39 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
         if (errorHandlingBlock == null) {
             return null;
+        }
+
+
+        /**
+         * Automatically created unloads for all modules loaded by the builder.
+         */
+        for (RuntimeModuleVariable module : this.loadedModules) {
+            VariableFmi2Api var = module;
+            block.apply(new DepthFirstAnalysisAdaptor() {
+                @Override
+                public void defaultInPStm(PStm node) throws AnalysisException {
+                    if (node.equals(module.getDeclaringStm())) {
+                        if (node.parent() instanceof ABlockStm) {
+                            //this is the scope where the logger is loaded. Check for unload
+                            LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
+                            boolean unloadFound = false;
+                            for (int i = body.indexOf(node); i < body.size(); i++) {
+                                PStm stm = body.get(i);
+                                if (stm instanceof AExpressionStm && ((AExpressionStm) stm).getExp() instanceof AUnloadExp) {
+                                    AUnloadExp unload = (AUnloadExp) ((AExpressionStm) stm).getExp();
+                                    if (!unload.getArgs().isEmpty() && unload.getArgs().get(0).equals(module.getReferenceExp())) {
+                                        unloadFound = true;
+                                    }
+                                }
+                            }
+                            if (!unloadFound) {
+                                body.add(newIf(newNotEqual(module.getReferenceExp().clone(), newNullExp()),
+                                        newExpressionStm(newUnloadExp(Collections.singletonList(module.getReferenceExp().clone()))), null));
+                            }
+                        }
+                    }
+                }
+            });
         }
 
 

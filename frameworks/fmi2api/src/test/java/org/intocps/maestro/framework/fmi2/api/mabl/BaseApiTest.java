@@ -19,7 +19,7 @@ import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.VoidValue;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -76,7 +76,7 @@ public abstract class BaseApiTest {
             reporter.printErrors(writer);
         }
 
-        Assert.assertTrue("Type check errors:" + out.toString(), res);
+        Assertions.assertTrue(res, "Type check errors:" + out.toString());
 
 
         new MableInterpreter(
@@ -117,7 +117,7 @@ public abstract class BaseApiTest {
                 Map<String, Value> members = new HashMap<>();
                 members.put("assertEquals", new FunctionValue.ExternalFunctionValue(a -> {
 
-                    Assert.assertTrue("values does not match", 0 == a.get(0).deref().compareTo(a.get(1).deref()));
+                    Assertions.assertTrue(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
                     return new VoidValue();
                 }));
 

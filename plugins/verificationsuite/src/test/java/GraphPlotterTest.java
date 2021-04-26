@@ -4,15 +4,15 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
-@Ignore
+@Disabled
 public class GraphPlotterTest {
     InputStream envWaterTankJson = this.getClass().getResourceAsStream("PrologVerifierTest/env.json");
     InputStream envThreeTankJson = this.getClass().getResourceAsStream("PrologVerifierTest/threetank_env.json");

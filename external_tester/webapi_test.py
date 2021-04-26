@@ -183,7 +183,7 @@ try:
         f.write(csv.replace("\r\n", "\n"))
         
     print("Wrote csv file to: " + csvFilePath)
-    if not testutils.compare("CSV", "wt/result.csv", csvFilePath):
+    if not testutils.compareCSV("wt/result.csv", csvFilePath):
         raise Exception("CSV files did not match!")
 
     #Get zip results

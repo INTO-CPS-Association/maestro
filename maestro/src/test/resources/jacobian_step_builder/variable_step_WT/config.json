@@ -1,0 +1,11 @@
+{
+  "parameters": {
+    "{ctrl}.ctrlInstance.maxlevel": 2,
+    "{ctrl}.ctrlInstance.minlevel": 1
+  },
+  "verifyAgainstProlog": false,
+  "stabilisation": false,
+  "fixedPointIteration": 5,
+  "absoluteTolerance": 0.1,
+  "relativeTolerance": 0.1
+}

@@ -1,0 +1,21 @@
+{
+  "parameters": {
+    "{m2}.mi2.m2": 1,
+    "{m2}.mi2.dc": 100,
+    "{m2}.mi2.d2": 2,
+    "{m2}.mi2.cc": 100,
+    "{m2}.mi2.c2": 1,
+    "{m2}.mi2.v2_initial": 0,
+    "{m2}.mi2.x2_initial": 0,
+    "{m1}.mi1.v1_initial": 0,
+    "{m1}.mi1.x1_initial": 1,
+    "{m1}.mi1.m1": 1,
+    "{m1}.mi1.d1": 1,
+    "{m1}.mi1.c1": 1
+  },
+  "verifyAgainstProlog": false,
+  "stabilisation": false,
+  "fixedPointIteration": 5,
+  "absoluteTolerance": 0.0,
+  "relativeTolerance": 0.01
+}
