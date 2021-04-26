@@ -41,6 +41,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private DataWriter dataWriter;
     private RealTime realTime;
     private VariableStep variableStep;
+    private DerivativeEstimator derivativeEstimator;
     private LoggerFmi2Api runtimeLogger;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
     private ExternalResources externalResources = null;
@@ -187,6 +188,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);
         }
         return this.variableStep;
+    }
+
+    public DerivativeEstimator getDerivativeEstimator(){
+        if (this.derivativeEstimator == null) {
+            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DerivativeEstimator");
+            this.derivativeEstimator = new DerivativeEstimator(this.dynamicScope, this, runtimeModule);
+        }
+        return this.derivativeEstimator;
     }
 
     public DataWriter getDataWriter() {
