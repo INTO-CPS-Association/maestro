@@ -144,14 +144,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     private ArrayVariableFmi2Api<Object> getSharedDerBuffer() {
         if (this.derSharedBuffer == null) {
-            this.derSharedBuffer = createDerValBuffer("DerShare", new ArrayList<>() {{
-                add(1);
-                try {
-                    add(getModelDescription().getMaxOutputDerivativeOrder());
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException("Exception occurred when accessing modeldescription: " + e);
-                }
-            }});
+            try {
+                this.derSharedBuffer = createDerValBuffer("DerShare", List.of(1, getModelDescription().getMaxOutputDerivativeOrder()));
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException("Exception occurred when accessing modeldescription: " + e);
+            }
         }
         return this.derSharedBuffer;
     }
@@ -161,28 +158,16 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.getBuffer(this.sharedBuffer, type, "Share", 0);
     }
 
+    private ArrayVariableFmi2Api createMDArrayItemsRecursively(PType type, List<Integer> arraySizes, String identifierName, List<Integer> indexPath,
+            PStm declaringStm) {
 
-    private List<VariableFmi2Api<Object>> createMDArrayItemsRecursively(PType type, List<Integer> arraySizes, PStm outerArrayVariableStm,
-            String identifierName, List<Integer> indexPath) {
-
-        List<VariableFmi2Api<Object>> arrays = new ArrayList<>();
+        List<ArrayVariableFmi2Api> arrays = new ArrayList<>();
 
         if (arraySizes.size() > 1) {
             for (int i = 0; i < arraySizes.get(0); i++) {
                 List<Integer> newIndexPath = new ArrayList<>(indexPath);
                 newIndexPath.add(i);
-                List<VariableFmi2Api<Object>> innerArrList =
-                        createMDArrayItemsRecursively(type, arraySizes.subList(1, arraySizes.size()), outerArrayVariableStm, identifierName, newIndexPath);
-                if (innerArrList.size() > 1) {
-                    ArrayVariableFmi2Api arrayVariableFmi2Api =
-                            new ArrayVariableFmi2Api(outerArrayVariableStm, newAArrayType(innerArrList.get(0).type), getDeclaredScope(),
-                                    builder.getDynamicScope(), ((AArrayStateDesignator) innerArrList.get(0).getDesignator()).getTarget(),
-                                    newAArrayIndexExp(newAIdentifierExp(identifierName),
-                                            newIndexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())),
-                                    innerArrList);
-                    arrays.add(arrayVariableFmi2Api);
-                }
-
+                arrays.add(createMDArrayItemsRecursively(type, arraySizes.subList(1, arraySizes.size()), identifierName, newIndexPath, declaringStm));
             }
         } else {
             List<VariableFmi2Api<Object>> variables = new ArrayList<>();
@@ -198,28 +183,27 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 indexExps.add(newAIntLiteralExp(i));
                 AArrayIndexExp indexExp = newAArrayIndexExp(newAIdentifierExp(identifierName), indexExps);
 
-                variables.add(new VariableFmi2Api<>(outerArrayVariableStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator,
-                        indexExp));
+                variables.add(new VariableFmi2Api<>(declaringStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator, indexExp));
             }
-            return variables;
+            return new ArrayVariableFmi2Api(declaringStm, newAArrayType(variables.get(0).type), getDeclaredScope(), builder.getDynamicScope(),
+                    ((AArrayStateDesignator) variables.get(0).getDesignator()).getTarget(), newAArrayIndexExp(newAIdentifierExp(identifierName),
+                    indexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())), variables);
         }
 
-        return arrays;
+        return new ArrayVariableFmi2Api(declaringStm, newAArrayType(arrays.get(0).type), getDeclaredScope(), builder.getDynamicScope(),
+                ((AArrayStateDesignator) arrays.get(0).getDesignator()).getTarget(), newAIdentifierExp(identifierName), arrays);
     }
 
     private ArrayVariableFmi2Api<Object> createDerValBuffer(String name, List<Integer> lengths) {
         String bufferName = builder.getNameGenerator().getName(this.name, name);
 
         PStm arrayVariableStm = newALocalVariableStm(
-                newAVariableDeclarationMultiDimensionalArray(newAIdentifier(bufferName), newARealNumericPrimitiveType(),
-                        lengths));
+                newAVariableDeclarationMultiDimensionalArray(newAIdentifier(bufferName), newARealNumericPrimitiveType(), lengths));
 
         getDeclaredScope().addAfter(getDeclaringStm(), arrayVariableStm);
 
 
-        return new ArrayVariableFmi2Api<>(arrayVariableStm, newAArrayType(newARealNumericPrimitiveType()), getDeclaredScope(),
-                builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIdentifierExp(bufferName),
-                createMDArrayItemsRecursively(newARealNumericPrimitiveType(), lengths, arrayVariableStm, bufferName, new ArrayList<>()));
+        return createMDArrayItemsRecursively(newARealNumericPrimitiveType(), lengths, bufferName, new ArrayList<>(), arrayVariableStm);
     }
 
     private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefix, int length) {
@@ -853,7 +837,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                     PStateDesignator derValInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
                     scope.add(newAAssignmentStm(derValInDesignator,
-                            ((VariableFmi2Api) ((ArrayVariableFmi2Api)entry.getValue().getKey().getSharedAsVariable()).items().get(order - 1)).getReferenceExp().clone()));
+                            ((VariableFmi2Api) ((ArrayVariableFmi2Api) entry.getValue().getKey().getSharedAsVariable()).items().get(order - 1))
+                                    .getReferenceExp().clone()));
                 }
             }
 
@@ -1026,7 +1011,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                         // DerivativePorts.get(derivativePort).size should equal derivativePort.getSharedAsVariable().items().size() as they are
                         // both determined by the max derivative order.
-                        List<VariableFmi2Api> derivatives = ((ArrayVariableFmi2Api)derivativePort.getSharedAsVariable()).items();
+                        List<VariableFmi2Api> derivatives = ((ArrayVariableFmi2Api) derivativePort.getSharedAsVariable()).items();
                         for (int i = 0; i < derivatives.size(); i++) {
                             PExp val = derivativePortsToShare.get(derivativePort).get(i).getReferenceExp().clone();
                             builder.getDynamicScope().add(newAAssignmentStm(derivatives.get(i).getDesignator(), val));
