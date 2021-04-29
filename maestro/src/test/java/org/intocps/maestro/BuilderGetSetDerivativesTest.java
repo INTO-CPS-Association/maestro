@@ -353,8 +353,6 @@ public class BuilderGetSetDerivativesTest {
 
             // Setup mabl
             ASimulationSpecificationCompilationUnit program = builder.build();
-            ARootDocument simUnit = new ARootDocument();
-            simUnit.setContent(Collections.singletonList(program));
 
             File specFolder = new File(workingDirectory, "specs");
             specFolder.mkdirs();
