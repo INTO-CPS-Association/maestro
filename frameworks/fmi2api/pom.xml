@@ -16,10 +16,6 @@
     <version>2.1.5-SNAPSHOT</version>
     <name>Fmi2 API framework</name>
 
-    <properties>
-        <kotlin.version>1.5.0</kotlin.version>
-    </properties>
-
     <repositories>
         <repository>
             <id>overture.au.dk-releases</id>
@@ -38,7 +34,6 @@
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
-                <version>${kotlin.version}</version>
                 <executions>
                     <execution>
                         <id>compile</id>
@@ -120,12 +115,10 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>${kotlin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
 
