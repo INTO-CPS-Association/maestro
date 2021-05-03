@@ -181,6 +181,7 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
+                    <phase>process-classes</phase>
                         <goals>
                             <goal>unpack</goal>
                         </goals>
