@@ -1,10 +1,10 @@
-package org.intocps.maestro.framework.fmi2.api.mabl
+package org.intocps.maestro.framework.fmi2.api
 
 import org.intocps.maestro.ast.MableAstFactory
 import org.intocps.maestro.ast.node.ALocalVariableStm
 import org.intocps.maestro.ast.node.PExp
 import org.intocps.maestro.ast.node.PStm
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
+import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ArrayVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
@@ -34,12 +34,12 @@ class DerivativeEstimator(private val dynamicScope: DynamicActiveBuilderScope, p
     class DerivativeEstimatorInstance(private val dynamicScope: DynamicActiveBuilderScope, private val mablApiBuilder: MablApiBuilder, private val derivativeEstimator: DerivativeEstimator, private val runtimeModule: Fmi2Builder.RuntimeModule<PStm>?) {
 
         private val TYPE_DERIVATIVEESTIMATORINSTANCE = "DerivativeEstimatorInstance"
-        private val identifier_derivativeEstimatorInstance: String = mablApiBuilder.getNameGenerator().getName("derivative_estimator_instance")
-        private val identifier_indicesOfInterest: String = mablApiBuilder.getNameGenerator().getName("indices_of_interest")
-        private val identifier_derivativeOrders: String = mablApiBuilder.getNameGenerator().getName("derivative_orders")
-        private val identifier_providedDerivativeOrder: String = mablApiBuilder.getNameGenerator().getName("provided_derivative_order")
-        private val identifier_sharedData: String = mablApiBuilder.getNameGenerator().getName("shared_data")
-        private val identifier_sharedDerivatives: String = mablApiBuilder.getNameGenerator().getName("shared_derivatives")
+        private val identifier_derivativeEstimatorInstance: String = mablApiBuilder.nameGenerator.getName("derivativeEstimatorInstance")
+        private val identifier_indicesOfInterest: String = mablApiBuilder.nameGenerator.getName("indices_of_interest")
+        private val identifier_derivativeOrders: String = mablApiBuilder.nameGenerator.getName("derivative_orders")
+        private val identifier_providedDerivativeOrder: String = mablApiBuilder.nameGenerator.getName("provided_derivative_order")
+        private val identifier_sharedData: String = mablApiBuilder.nameGenerator.getName("shared_data")
+        private val identifier_sharedDerivatives: String = mablApiBuilder.nameGenerator.getName("shared_derivatives")
         private var isInitialized: Boolean = false
 
         constructor(dynamicScope: DynamicActiveBuilderScope, mablApiBuilder: MablApiBuilder, derivativeEstimator: DerivativeEstimator) : this(dynamicScope, mablApiBuilder, derivativeEstimator, null)
@@ -49,25 +49,25 @@ class DerivativeEstimator(private val dynamicScope: DynamicActiveBuilderScope, p
          * derivativeOrders is the derivative order and related to indicesOfInterest.
          * providedDerivativeOrder is the derivatives that are externally provided and thus should be ignored. It is also related to indicesOfInterest.
          */
-        fun initialize(indicesOfInterest: List<VariableFmi2Api<Int>>, derivativeOrders: List<VariableFmi2Api<Int>>, providedDerivativeOrder: List<VariableFmi2Api<Int>>) {
+        fun initialize(indicesOfInterest: List<VariableFmi2Api<Long>>, derivativeOrders: List<VariableFmi2Api<Long>>, providedDerivativeOrder: List<VariableFmi2Api<Long>>) {
             val identifier_createFunction = "create"
 
             // Generate indices of interest statement
             val indices: List<PExp> = indicesOfInterest.map { i -> i.exp }
             val indicesOfInterestStm: ALocalVariableStm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(identifier_indicesOfInterest),
-                    MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), indices.size,
+                    MableAstFactory.newAArrayType(MableAstFactory.newAUIntNumericPrimitiveType()), indices.size,
                     MableAstFactory.newAArrayInitializer(indices)))
 
             // Generate orders statement
             val orders: List<PExp> = derivativeOrders.map { i -> i.exp }
             val derivativeOrdersStm: ALocalVariableStm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(identifier_derivativeOrders),
-                    MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), orders.size,
+                    MableAstFactory.newAArrayType(MableAstFactory.newAUIntNumericPrimitiveType()), orders.size,
                     MableAstFactory.newAArrayInitializer(orders)))
 
             // Generate orders statement
             val providedDerivativesOrders: List<PExp> = providedDerivativeOrder.map { i -> i.exp }
             val providedDerivativeOrderStm: ALocalVariableStm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(identifier_providedDerivativeOrder),
-                    MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), providedDerivativesOrders.size,
+                    MableAstFactory.newAArrayType(MableAstFactory.newAUIntNumericPrimitiveType()), providedDerivativesOrders.size,
                     MableAstFactory.newAArrayInitializer(providedDerivativesOrders)))
 
 
@@ -101,7 +101,7 @@ class DerivativeEstimator(private val dynamicScope: DynamicActiveBuilderScope, p
             // Generate estimate function
             val sharedDataExp = sharedData.map { i -> i.exp }
             val sharedDataStm: ALocalVariableStm = MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(identifier_sharedData),
-                    MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), sharedDataExp.size,
+                    MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), sharedDataExp.size,
                     MableAstFactory.newAArrayInitializer(sharedDataExp)))
             dynamicScope.add(sharedDataStm)
 
@@ -121,7 +121,7 @@ class DerivativeEstimator(private val dynamicScope: DynamicActiveBuilderScope, p
 //                }
 //            }
 
-            val estimateDerivativesStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.derivativeEstimator.getModuleIdentifier()),
+            val estimateDerivativesStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(identifier_derivativeEstimatorInstance),
                     MableAstFactory.newAIdentifier(identifier_estimateFunction),
                     listOf(time.exp, MableAstFactory.newAIdentifierExp(identifier_sharedData), MableAstFactory.newAIdentifierExp(sharedDataDerivatives.name))))
 
