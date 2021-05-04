@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -78,7 +79,6 @@
     <build>
         <plugins>
             <plugin>
-
                 <groupId>org.overturetool.core.codegen</groupId>
                 <artifactId>codegen-plugin</artifactId>
                 <version>${overture.version}</version>
@@ -122,12 +122,40 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- This is related to a bug in Overture. See https://github.com/overturetool/overture/issues/778-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <tasks>
+                                <replace
+                                        dir="${project.build.directory}/generated-sources/javacode/org/intocps/fmichecker"
+                                        token="import org.overture.codegen.runtime.*;"
+                                        value="import org.overture.codegen.runtime.*;${line.separator}import org.overture.codegen.runtime.Record;"
+                                        failOnNoReplacements="true"
+                                >
+                                </replace>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
 
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+
+
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -146,7 +174,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
