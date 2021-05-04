@@ -19,13 +19,13 @@ public class DerivativeEstimatorValue extends ModuleValue {
             checkArgLength(fcargs, 3);
 
             List<Integer> indicesOfInterest =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(0), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(0), NumericValue.class).stream().map(NumericValue::intValue).collect(
                             Collectors.toList());
             List<Integer> derivativeOrders =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), NumericValue.class).stream().map(NumericValue::intValue).collect(
                     Collectors.toList());
             List<Integer> providedDerivativeOrders =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), UnsignedIntegerValue.class).stream().map(UnsignedIntegerValue::intValue).collect(
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), NumericValue.class).stream().map(NumericValue::intValue).collect(
                     Collectors.toList());
 
             return new DerivativeEstimatorInstanceValue(indicesOfInterest, derivativeOrders, providedDerivativeOrders);

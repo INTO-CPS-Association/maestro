@@ -32,7 +32,8 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
             checkArgLength(fcargs, 3);
 
             Double stepSize = ValueExtractionUtilities.getValue(fcargs.get(0), RealValue.class).getValue();
-            List<ArrayValue> sharedDataDerivatives = ValueExtractionUtilities.getArrayValue(fcargs.get(2), ArrayValue.class);
+            List<Value> sharedDataDerivatives =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
 
             for (int i = 0; i < indicesOfInterest.size(); i++) {
                 Integer indexOfInterest = indicesOfInterest.get(i);
@@ -67,7 +68,7 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
             fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
             checkArgLength(fcargs, 1);
 
-            List<ArrayValue> sharedDataDerivativesForIndex = ValueExtractionUtilities.getArrayValue(fcargs.get(0), ArrayValue.class);
+            List<Value> sharedDataDerivativesForIndex = ValueExtractionUtilities.getArrayValue(fcargs.get(0), Value.class);
 
             estimators.forEach((indexOfInterest, estimator) -> {
                 estimator.rollback();
