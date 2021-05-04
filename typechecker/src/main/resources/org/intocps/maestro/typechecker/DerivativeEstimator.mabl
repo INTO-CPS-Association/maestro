@@ -1,7 +1,7 @@
 module DerivativeEstimator
 import DerivativeEstimatorInstance;
 {
-    DerivativeEstimatorInstance create(uint indexesOfInterest[], uint order[], uint provided[]);
+    DerivativeEstimatorInstance create(uint indecesOfInterest[], uint order[], uint provided[]);
 }
 
 module DerivativeEstimatorInstance
