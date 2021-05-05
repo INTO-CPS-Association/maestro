@@ -507,7 +507,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                 .ifPresent(derivativePorts::add));
 
                 if (derivativePorts.size() > 0) {
-                    // Array size: number of ports for which to get derivatives multiplied by the total sum the max derivative order.
+                    // Array size: number of ports for which to get derivatives multiplied the max derivative order.
                     int arraySize = derivativePorts.size() * maxOutputDerOrder;
 
                     ArrayVariableFmi2Api<Object> derValOutBuf = createBuffer(newRealType(), "DVal_OUT", arraySize);
@@ -773,7 +773,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         try {
             if (builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() &&
                     type.equals(new ARealNumericPrimitiveType())) {
-                setDerivativesFromSharedPorts(sortedPorts, scope);
+                setDerivativesForSharedPorts(sortedPorts, scope);
             }
         } catch (XPathExpressionException e) {
             throw new RuntimeException("Exception occurred when when setting derivatives.", e);
@@ -784,7 +784,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
      * @param ports The ports for which derivative should be set from SHARED derivative ports
      * @param scope The builder scope
      */
-    private void setDerivativesFromSharedPorts(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
+    private void setDerivativesForSharedPorts(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
         // Find all ports for which derivatives should be passed together with the derivatives and their order.
         LinkedHashMap<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>> mapPortsToDerPortsWithOrder = ports.stream().map(port -> {
             try {
@@ -811,8 +811,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 Map::putAll);
 
         if (mapPortsToDerPortsWithOrder.size() > 0) {
-
-            // Get the total array size as: number of ports for which to set derivatives multiplied by the total sum of derivative orders.
+            // Get the total array size as the sum of derivative orders.
             int arraySize = mapPortsToDerPortsWithOrder.values().stream().mapToInt(Map.Entry::getValue).sum();
 
             // Create input arrays
@@ -848,15 +847,15 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     /**
      * If two derivative ports 'Out1' (linked to 'In1') and 'Out2' (linked to 'In2') with a max derivative order of 2 and 1 then derValInBuf =
-     * [der(Out1), der(der(Out1)),der(Out2))], derOrderInBuf = [1,2,1], derRefInBuf = [In1, In1, In2]
+     * [der(Out1), der(der(Out1)), der(Out2))], derOrderInBuf = [1,2,1], derRefInBuf = [In1, In1, In2]
      *
      * @param derValInBuf   derivative values
      * @param derOrderInBuf derivative value orders
-     * @param derRefInBuf   port for which to set the derivative
+     * @param derRefInBuf   ports for which to set the derivative
      * @param scope         the builder scope
      */
-    public void setDerivatives(ArrayVariableFmi2Api derValInBuf, ArrayVariableFmi2Api derOrderInBuf,
-            ArrayVariableFmi2Api derRefInBuf, Fmi2Builder.Scope<PStm> scope) {
+    public void setDerivatives(ArrayVariableFmi2Api derValInBuf, ArrayVariableFmi2Api derOrderInBuf, ArrayVariableFmi2Api derRefInBuf,
+            Fmi2Builder.Scope<PStm> scope) {
         int arraySize = derValInBuf.size();
 
         // Create set derivatives statement which calls setRealOutputDerivatives with derRefInBuf, arraySize, derOrderInBuf and
@@ -1004,11 +1003,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
 
                 if (type.equals(new ARealNumericPrimitiveType()) && derivativePortsToShare != null) {
-                    derivativePortsToShare.keySet().stream().filter(dp -> {
+                    // Find match a derivativePortsToShare where both port reference and derivative port reference matches.
+                    derivativePortsToShare.keySet().stream().filter(derivativePort -> {
                         try {
                             return modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream().anyMatch(
                                     e -> e.getKey().getValueReference().equals(port.getPortReferenceValue()) &&
-                                            e.getValue().getValueReference().equals(dp.getPortReferenceValue()));
+                                            e.getValue().getValueReference().equals(derivativePort.getPortReferenceValue()));
                         } catch (XPathExpressionException | InvocationTargetException | IllegalAccessException e) {
                             throw new RuntimeException(
                                     "Attempting to obtain shared values from a port that is linked but has no value shared. Share a value " +
@@ -1018,7 +1018,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         // If the derivative port is not yet shared then get shared derivative buffer, grow it by one and set the port as shared
                         // with the new array.
                         if (derivativePort.getSharedAsVariable() == null) {
-                            ArrayVariableFmi2Api<Object> sharedDerBuf = getOrGrowSharedDerBuf(1);
+                            ArrayVariableFmi2Api<Object> sharedDerBuf = growSharedDerBuf(1);
 
                             ArrayVariableFmi2Api newSharedArray = (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
                             derivativePort.setSharedAsVariable(newSharedArray);
@@ -1039,10 +1039,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     /**
      * @param increaseByCount the length of which the outer array should grow
-     * @return a two dimensional array for derivatives.
-     * e.g.: Array[originalSize+increaseByCount][maxDerivativeOrder]
+     * @return a two dimensional non-jagged array for derivatives.
+     * e.g.: <type>[originalSize+increaseByCount][maxDerivativeOrder]
      */
-    private ArrayVariableFmi2Api<Object> getOrGrowSharedDerBuf(int increaseByCount) {
+    private ArrayVariableFmi2Api<Object> growSharedDerBuf(int increaseByCount) {
 
         // Get shared buffer creates the buffer with one element.
         if (this.derSharedBuffer == null && increaseByCount == 1) {
@@ -1070,9 +1070,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         List<VariableFmi2Api<Object>> items = new ArrayList<>();
 
         // Add new element(s) to array.
-        // E.g: buff[1][1] with increaseByCount of 2 will become: buff[3][1] where 1 is the derivative order.
+        // E.g: buff[1][1] with increaseByCount of 2 will become: buff[3][1] where 1 equals the max derivative order.
         for (int i = 0; i < increaseByCount; i++) {
-
             int outerIndex = sharedBuffer.size() + i;
 
             List<VariableFmi2Api<Object>> variables = new ArrayList<>();
