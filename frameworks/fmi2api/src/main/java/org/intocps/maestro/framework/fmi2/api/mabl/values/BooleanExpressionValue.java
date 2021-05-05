@@ -12,6 +12,10 @@ public class BooleanExpressionValue extends PredicateFmi2Api implements Fmi2Buil
         super(exp);
     }
 
+    public BooleanExpressionValue(Boolean value) {
+        super(newABoolLiteralExp(value));
+    }
+
     public static BooleanExpressionValue of(boolean v) {
         return new BooleanExpressionValue(newABoolLiteralExp(v));
     }

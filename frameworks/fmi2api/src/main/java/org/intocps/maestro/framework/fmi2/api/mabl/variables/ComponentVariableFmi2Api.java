@@ -1,10 +1,10 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -12,7 +12,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueExpresssionMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableAstFactory.newAArayStateDesignator;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
@@ -158,52 +156,40 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.getBuffer(this.sharedBuffer, type, "Share", 0);
     }
 
-    private ArrayVariableFmi2Api createMDArrayRecursively(PType type, List<Integer> arraySizes, String identifierName, List<Integer> indexPath,
-            PStm declaringStm) {
-
-        List<VariableFmi2Api> arrays = new ArrayList<>();
+    private ArrayVariableFmi2Api createMDArrayRecursively(List<Integer> arraySizes, PStm declaringStm, PStateDesignatorBase stateDesignator,
+            PExpBase indexExp) {
 
         if (arraySizes.size() > 1) {
-
+            List<VariableFmi2Api> arrays = new ArrayList<>();
             for (int i = 0; i < arraySizes.get(0); i++) {
-                List<Integer> newIndexPath = new ArrayList<>(indexPath);
-                newIndexPath.add(i);
-                arrays.add(createMDArrayRecursively(type, arraySizes.subList(1, arraySizes.size()), identifierName, newIndexPath, declaringStm));
+                arrays.add(createMDArrayRecursively(arraySizes.subList(1, arraySizes.size()), declaringStm,
+                        newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)),
+                        newAArrayIndexExp(indexExp.clone(), List.of(newAIntLiteralExp(i)))));
             }
-        } else {
-            List<VariableFmi2Api<Object>> variables = new ArrayList<>();
-            for (int i = 0; i < arraySizes.get(0); i++) {
-                AArrayStateDesignator designator =
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(identifierName)), newAIntLiteralExp(indexPath.get(0)));
-
-                for (int l = 1; l < indexPath.size(); l++) {
-                    designator = newAArayStateDesignator(designator, newAIntLiteralExp(indexPath.get(l)));
-                }
-                designator = newAArayStateDesignator(designator, newAIntLiteralExp(i));
-                List<AIntLiteralExp> indexExps = indexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList());
-                indexExps.add(newAIntLiteralExp(i));
-                AArrayIndexExp indexExp = newAArrayIndexExp(newAIdentifierExp(identifierName), indexExps);
-
-                variables.add(new VariableFmi2Api<>(declaringStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator, indexExp));
-            }
-            return new ArrayVariableFmi2Api<>(declaringStm, type, getDeclaredScope(), builder.getDynamicScope(),
-                    ((AArrayStateDesignator) variables.get(0).getDesignator()).getTarget(), newAArrayIndexExp(newAIdentifierExp(identifierName),
-                    indexPath.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())), variables);
+            return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), getDeclaredScope(), builder.getDynamicScope(),
+                    ((AArrayStateDesignator) arrays.get(0).getDesignator()).getTarget(), indexExp, arrays);
         }
 
-        return new ArrayVariableFmi2Api(declaringStm, type, getDeclaredScope(), builder.getDynamicScope(),
-                ((AArrayStateDesignator) arrays.get(0).getDesignator()).getTarget(), newAIdentifierExp(identifierName), arrays);
+        List<VariableFmi2Api<Object>> variables = new ArrayList<>();
+        for (int i = 0; i < arraySizes.get(0); i++) {
+            variables.add(new VariableFmi2Api<>(declaringStm, type, getDeclaredScope(), builder.getDynamicScope(),
+                    newAArayStateDesignator(stateDesignator.clone(), newAIntLiteralExp(i)),
+                    newAArrayIndexExp(indexExp.clone(), List.of(newAIntLiteralExp(i)))));
+        }
+        return new ArrayVariableFmi2Api<>(declaringStm, variables.get(0).getType(), getDeclaredScope(), builder.getDynamicScope(),
+                ((AArrayStateDesignator) variables.get(0).getDesignator()).getTarget(), indexExp, variables);
     }
 
-    private ArrayVariableFmi2Api createDerValBuffer(String name, List<Integer> lengths) {
-        String bufferName = builder.getNameGenerator().getName(this.name, name);
+    private ArrayVariableFmi2Api createDerValBuffer(String identifyingName, List<Integer> lengths) {
+        String bufferName = builder.getNameGenerator().getName(this.name, identifyingName);
 
         PStm arrayVariableStm = newALocalVariableStm(
                 newAVariableDeclarationMultiDimensionalArray(newAIdentifier(bufferName), newARealNumericPrimitiveType(), lengths));
 
         getDeclaredScope().addAfter(getDeclaringStm(), arrayVariableStm);
 
-        return createMDArrayRecursively(newARealNumericPrimitiveType(), lengths, bufferName, new ArrayList<>(), arrayVariableStm);
+        return createMDArrayRecursively(lengths, arrayVariableStm,
+                newAIdentifierStateDesignator(newAIdentifier(bufferName)), newAIdentifierExp(bufferName));
     }
 
     private ArrayVariableFmi2Api<Object> createBuffer(PType type, String prefix, int length) {

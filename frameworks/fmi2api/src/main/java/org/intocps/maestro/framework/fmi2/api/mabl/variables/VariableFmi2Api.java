@@ -35,7 +35,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         this.type = type;
     }
 
-    protected PStateDesignator getDesignator() {
+    public PStateDesignator getDesignator() {
         return designator;
     }
 
