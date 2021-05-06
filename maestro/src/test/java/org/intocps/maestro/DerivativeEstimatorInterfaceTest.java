@@ -34,6 +34,10 @@ import static org.mockito.Mockito.*;
 public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
     private final Path dirPath = Paths.get("src", "test", "resources", "derivative_estimator_interface");
 
+    /**
+     * Tests the mabl interface for the derivative estimator by calling estimate. The values used and expected values are from
+     * 'testCalculateDerivatives' in 'DerivativeEstimatorTests' which is originates from Maestro 1 tests of the derivative estimator
+     */
     @Test
     @Order(0)
     public void testEstimateDerivatives() throws Exception {
@@ -147,6 +151,10 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
         FmuFactory.customFactory = null;
     }
 
+    /**
+     * Tests the mabl interface for the derivative estimator by calling rollback. The values used and expected values are from
+     * 'testRollBackFromMableInterface' in 'DerivativeEstimatorTests' which is originates from Maestro 1 tests of the derivative estimator
+     */
     @Test
     @Order(1)
     public void testRollbackDerivatives() throws Exception {

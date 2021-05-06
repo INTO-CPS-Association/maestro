@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+/**
+ * The values used and expected values in the following tests originates from Maestro 1 tests of the derivative estimator.
+ */
 public class DerivativeEstimatorTests {
 
     @Test
