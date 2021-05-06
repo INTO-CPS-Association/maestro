@@ -40,7 +40,6 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return block;
     }
 
-
     @Override
     public WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate) {
         if (predicate instanceof PredicateFmi2Api) {
@@ -412,21 +411,17 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, loaderName, args, this);
     }
 
-    public BooleanVariableFmi2Api copy(String name, BooleanVariableFmi2Api booleanVariable) {
-        String varName = builder.getNameGenerator().getName(name);
-        PStm variableDeclaration = newVariable(varName, booleanVariable.getType(), booleanVariable.getReferenceExp().clone());
-        add(variableDeclaration);
-        return booleanVariable
-                .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
-    }
-
     @Override
-    public VariableFmi2Api copy(String name, VariableFmi2Api variable) {
-        if (variable instanceof BooleanVariableFmi2Api) {
-            return this.copy(name, (BooleanVariableFmi2Api) variable);
+    public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
+        if (variable instanceof BooleanVariableFmi2Api || variable instanceof DoubleVariableFmi2Api || variable instanceof IntVariableFmi2Api ||
+                variable instanceof StringVariableFmi2Api) {
+            String varName = builder.getNameGenerator().getName(name);
+            PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
+            add(variableDeclaration);
+            return (Var) variable
+                    .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
         }
-
-        throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass());
+        throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass().getName());
     }
 
     @Override
