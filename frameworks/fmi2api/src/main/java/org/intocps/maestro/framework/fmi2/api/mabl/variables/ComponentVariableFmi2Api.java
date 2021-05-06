@@ -164,10 +164,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             for (int i = 0; i < arraySizes.get(0); i++) {
                 arrays.add(createMDArrayRecursively(arraySizes.subList(1, arraySizes.size()), declaringStm,
                         newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)),
-                        newAArrayIndexExp(indexExp.clone(), List.of(newAIntLiteralExp(i)))));
+                        newAArrayIndexExp(indexExp, List.of(newAIntLiteralExp(i)))));
             }
             return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), getDeclaredScope(), builder.getDynamicScope(),
-                    ((AArrayStateDesignator) arrays.get(0).getDesignator()).getTarget(), indexExp, arrays);
+                    ((AArrayStateDesignator) arrays.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), arrays);
         }
 
         List<VariableFmi2Api<Object>> variables = new ArrayList<>();
@@ -177,7 +177,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     newAArrayIndexExp(indexExp.clone(), List.of(newAIntLiteralExp(i)))));
         }
         return new ArrayVariableFmi2Api<>(declaringStm, variables.get(0).getType(), getDeclaredScope(), builder.getDynamicScope(),
-                ((AArrayStateDesignator) variables.get(0).getDesignator()).getTarget(), indexExp, variables);
+                ((AArrayStateDesignator) variables.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), variables);
     }
 
     private ArrayVariableFmi2Api createDerValBuffer(String identifyingName, List<Integer> lengths) {

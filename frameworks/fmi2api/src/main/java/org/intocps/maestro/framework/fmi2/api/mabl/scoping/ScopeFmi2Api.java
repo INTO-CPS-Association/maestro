@@ -265,11 +265,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             List<VariableFmi2Api> arrays = new ArrayList<>();
             for (int i = 0; i < array.length; i++) {
                 arrays.add(createMDArrayRecursively((V[]) array[i], declaringStm,
-                        newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)), newAArrayIndexExp(indexExp.clone(),
+                        newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)), newAArrayIndexExp(indexExp,
                                 List.of(newAIntLiteralExp(i)))));
             }
             return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), this, builder.getDynamicScope(),
-                    ((AArrayStateDesignator) arrays.get(0).getDesignator()).getTarget(), indexExp, arrays);
+                    ((AArrayStateDesignator) arrays.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), arrays);
         }
 
         List<VariableFmi2Api<V>> variables = new ArrayList<>();
@@ -300,7 +300,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         }
 
         return new ArrayVariableFmi2Api<>(declaringStm, variables.get(0).getType(), this, builder.getDynamicScope(),
-                ((AArrayStateDesignator) variables.get(0).getDesignator()).getTarget(), indexExp, variables);
+                ((AArrayStateDesignator) variables.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), variables);
     }
 
     protected <V> ArrayVariableFmi2Api<V> store(Supplier<String> nameProvider, V[] value) {
