@@ -3,11 +3,7 @@ package org.intocps.maestro.plugin.initializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import org.intocps.maestro.ast.AFunctionDeclaration
-import org.intocps.maestro.ast.AModuleDeclaration
-import org.intocps.maestro.ast.LexIdentifier
-import org.intocps.maestro.ast.MableAstFactory.*
-import org.intocps.maestro.ast.ToParExp
+import org.intocps.maestro.ast.*
 import org.intocps.maestro.ast.display.PrettyPrinter
 import org.intocps.maestro.ast.node.ABlockStm
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
@@ -15,10 +11,13 @@ import org.intocps.maestro.ast.node.PExp
 import org.intocps.maestro.ast.node.PStm
 import org.intocps.maestro.core.Framework
 import org.intocps.maestro.core.messages.IErrorReporter
+import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.framework.core.IRelation
 import org.intocps.maestro.framework.core.ISimulationEnvironment
 import org.intocps.maestro.framework.core.RelationVariable
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
+import org.intocps.maestro.framework.fmi2.InvalidVariableStringException
+import org.intocps.maestro.framework.fmi2.ModelConnection
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
@@ -27,17 +26,16 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
 import org.intocps.maestro.plugin.ExpandException
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin
 import org.intocps.maestro.plugin.IPluginConfiguration
 import org.intocps.maestro.plugin.SimulationFramework
 import org.intocps.maestro.plugin.initializer.instructions.*
 import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery
-import org.intocps.orchestration.coe.config.InvalidVariableStringException
-import org.intocps.orchestration.coe.config.ModelConnection
-import org.intocps.orchestration.coe.config.ModelParameter
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -47,17 +45,26 @@ import java.util.function.Predicate
 
 @SimulationFramework(framework = Framework.FMI2)
 class Initializer : IMaestroExpansionPlugin {
-    val f1 = newAFunctionDeclaration(
+    val f1 = MableAstFactory.newAFunctionDeclaration(
         LexIdentifier("initialize", null),
         listOf(
-            newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-            newAFormalParameter(newRealType(), newAIdentifier("startTime")),
-            newAFormalParameter(newRealType(), newAIdentifier("endTime"))
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
+                MableAstFactory.newAIdentifier("component")
+            ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newRealType(),
+                MableAstFactory.newAIdentifier("startTime")
+            ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newRealType(),
+                MableAstFactory.newAIdentifier("endTime")
+            )
         ),
-        newAVoidType()
+        MableAstFactory.newAVoidType()
     )
 
-    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<ScalarVariable>>()
+    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<ModelDescription.ScalarVariable>>()
     private val topologicalPlugin: TopologicalPlugin
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
@@ -103,7 +110,6 @@ class Initializer : IMaestroExpansionPlugin {
         return try {
             val setting = MablApiBuilder.MablSettings()
             setting.fmiErrorHandlingEnabled = false
-            setting.externalRuntimeLogger = false
             val builder = MablApiBuilder(setting, true)
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
@@ -221,7 +227,7 @@ class Initializer : IMaestroExpansionPlugin {
         }
     }
 
-    private fun portSet(comp: ComponentVariableFmi2Api, x: ScalarVariable?): Boolean {
+    private fun portSet(comp: ComponentVariableFmi2Api, x: ModelDescription.ScalarVariable?): Boolean {
         return if (portsAlreadySet.containsKey(comp)) portsAlreadySet.getValue(comp).contains(x) else false
     }
 
@@ -232,23 +238,23 @@ class Initializer : IMaestroExpansionPlugin {
         val fmuName = comp.name
         var value = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
         when (port.scalarVariable.type.type!!) {
-            Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
-            Types.Real -> {
+            ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
+            ModelDescription.Types.Real -> {
                 if (value is Int) {
                     value = value.toDouble()
                 }
                 val b : Double = value as Double
                 comp.set(port, DoubleExpressionValue.of(b))
             }
-            Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
-            Types.String -> comp.set(port, StringExpressionValue.of(value as String))
-            Types.Enumeration -> throw ExpandException("Enumeration not supported")
+            ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
+            ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(value as String))
+            ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
             else -> throw ExpandException("Not known type")
         }
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
-    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: ScalarVariable) {
+    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: ModelDescription.ScalarVariable) {
         if(portsAlreadySet.containsKey(comp)){
             portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
         }else{
@@ -268,7 +274,7 @@ class Initializer : IMaestroExpansionPlugin {
             fmuCoSimInstruction(fmuInstances, p)
         } else {
             val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, c) }
-            val outputPorts = ports.filter { p -> p.scalarVariable.scalarVariable.causality == Causality.Output }
+            val outputPorts = ports.filter { p -> p.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output }
                 .map { i -> i.scalarVariable }
             LoopSimInstruction(
                 dynamicScope,
@@ -290,10 +296,11 @@ class Initializer : IMaestroExpansionPlugin {
         val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
         val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
         return when (p.scalarVariable.scalarVariable.causality) {
-            Causality.Output -> GetInstruction(fmu, port, false)
-            Causality.Input -> {
+            ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
+            ModelDescription.Causality.Input -> {
                 addToPortsAlreadySet(fmu, port.scalarVariable)
-                SetInstruction(fmu, port)}
+                SetInstruction(fmu, port)
+            }
             else -> throw ExpandException("Internal error")
         }
     }
@@ -330,7 +337,7 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
-        predicate: Predicate<ScalarVariable>
+        predicate: Predicate<ModelDescription.ScalarVariable>
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
             for (sv in comp.modelDescription.scalarVariables.filter { i -> predicate.test(i) }) {
@@ -392,9 +399,13 @@ class Initializer : IMaestroExpansionPlugin {
         }
         compilationUnit = AImportedModuleCompilationUnit()
         compilationUnit!!.imports =
-            listOf("FMI2", "TypeConverter", "Math", "Logger").map { identifier: String? -> newAIdentifier(identifier) }
+            listOf("FMI2", "TypeConverter", "Math", "Logger").map { identifier: String? ->
+                MableAstFactory.newAIdentifier(
+                    identifier
+                )
+            }
         val module = AModuleDeclaration()
-        module.name = newAIdentifier(name)
+        module.name = MableAstFactory.newAIdentifier(name)
         module.setFunctions(ArrayList(declaredUnfoldFunctions))
         compilationUnit!!.module = module
         return compilationUnit as AImportedModuleCompilationUnit
@@ -443,7 +454,7 @@ class Initializer : IMaestroExpansionPlugin {
 
         private fun findParameterOrDefault(
             compName: String,
-            sv: ScalarVariable,
+            sv: ModelDescription.ScalarVariable,
             modelParameters: List<ModelParameter>?
         ): Any {
             val parameterValue =

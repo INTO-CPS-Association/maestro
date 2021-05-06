@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin.initializer.instructions
 
 import org.intocps.maestro.ast.node.PStm
+import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
 import org.intocps.maestro.framework.fmi2.api.mabl.BooleanBuilderFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.MathBuilderFmi2Api
@@ -9,7 +10,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 
 class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptAttempts: Fmi2Builder.IntVariable<PStm>,
                          private val absoluteTolerance: Fmi2Builder.DoubleVariable<PStm>, private val relativeTolerance: Fmi2Builder.DoubleVariable<PStm>,

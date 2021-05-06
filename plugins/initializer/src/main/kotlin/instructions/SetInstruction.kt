@@ -8,4 +8,3 @@ class SetInstruction(fmu: ComponentVariableFmi2Api, private val port: PortFmi2Ap
         FMU.setLinked(port.name)
     }
 }
-
