@@ -57,25 +57,26 @@ class DerivativeEstimator(
         ) : this(dynamicScope, mablApiBuilder, derivativeEstimator, null)
 
         /**
-         * indicesOfInterest is related to the buffer that is to be passed in subsequent estimate calls.
-         * derivativeOrders is the derivative order and related to indicesOfInterest.
-         * providedDerivativeOrder is the derivatives that are externally provided and thus should be ignored. It is also related to indicesOfInterest.
+         * [indicesOfInterest] is related to the buffer that is to be passed in subsequent estimate calls.
+         * [derivativeOrders] is the derivative order and related to indicesOfInterest.
+         * [providedDerivativeOrder] is the derivatives that are externally provided and thus should be ignored. It is also related to indicesOfInterest.
          */
         fun initialize(
             indicesOfInterest: ArrayVariableFmi2Api<Int>,
             derivativeOrders: ArrayVariableFmi2Api<Int>,
             providedDerivativeOrder: ArrayVariableFmi2Api<Int>
         ) {
-            val identifier_createFunction = "create"
+            val createFunctionIdentifier = "create"
 
             // Generate create function call
             val createFunctionStm = MableAstFactory.newALocalVariableStm(
                 MableAstFactory.newAVariableDeclaration(
                     MableAstFactory.newAIdentifier(identifier_derivativeEstimatorInstance),
-                    MableAstFactory.newANameType(TYPE_DERIVATIVEESTIMATORINSTANCE), MableAstFactory.newAExpInitializer(
+                    MableAstFactory.newANameType(TYPE_DERIVATIVEESTIMATORINSTANCE),
+                    MableAstFactory.newAExpInitializer(
                         MableAstFactory.newACallExp(
                             MableAstFactory.newAIdentifierExp(this.derivativeEstimator.getModuleIdentifier()),
-                            MableAstFactory.newAIdentifier(identifier_createFunction),
+                            MableAstFactory.newAIdentifier(createFunctionIdentifier),
                             listOf(
                                 MableAstFactory.newAIdentifierExp(indicesOfInterest.name),
                                 MableAstFactory.newAIdentifierExp(derivativeOrders.name),
@@ -93,13 +94,12 @@ class DerivativeEstimator(
         }
 
         /**
-         * time is the n-th time of the data
-         * sharedData is the value associated with indicesOfInterest.
-        E.g.: if indicesOfInterest={1,3,4} and sharedData={0,4,3,1,56,30} then the ones used subsequently are: {4, 1, 56}.
-         * sharedDataDerivatives is the buffer to contain the derivatives. It will be tampered with related to indicesOfInterest.
-        E.g.: Input function argument values: indicesOfInterest={1}, order=[2], provided=[0] and sharedDataDerivatives={{3,4},{0,0}}.
-        Argument values after function execution:
-        sharedDataDerivatives={{3,4},{DER(DER(variablez)),DER(DER(variableY))}}
+         *
+         * [time] is the n-th time of the data.
+         * [sharedData] is the value associated with indicesOfInterest. E.g.: if indicesOfInterest={1,3,4} and sharedData={0,4,3,1,56,30} then the ones used subsequently are: {4, 1, 56}.
+         * [sharedDataDerivatives] is the buffer to contain the derivatives.
+         * It will be tampered with related to indicesOfInterest. E.g.: Input function argument values: indicesOfInterest={1}, order={2}, provided={0} and sharedDataDerivatives={{3,4},{0,0}}.
+         * Argument values after function execution: sharedDataDerivatives={{3,4},{DER(DER(variableX)),DER(DER(variableY))}}
          */
         fun estimate(
             time: DoubleVariableFmi2Api,
@@ -108,12 +108,12 @@ class DerivativeEstimator(
         ) {
             if (!isInitialized) return
 
-            val identifier_estimateFunction = "estimate"
+            val estimateFunctionIdentifier = "estimate"
 
             val estimateDerivativesStm = MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(
                     MableAstFactory.newAIdentifierExp(identifier_derivativeEstimatorInstance),
-                    MableAstFactory.newAIdentifier(identifier_estimateFunction),
+                    MableAstFactory.newAIdentifier(estimateFunctionIdentifier),
                     listOf(
                         time.exp,
                         MableAstFactory.newAIdentifierExp(sharedData.name),
@@ -125,15 +125,18 @@ class DerivativeEstimator(
             dynamicScope.add(estimateDerivativesStm)
         }
 
+        /**
+         * [sharedDataDerivatives] should contain the derivatives to be rolled back.
+         */
         fun rollback(sharedDataDerivatives: ArrayVariableFmi2Api<Array<Double>>) {
             if (!isInitialized) return
 
-            val identifier_estimateFunction = "rollback"
+            val rollbackFunctionIdentifier = "rollback"
 
             val estimateDerivativesStm = MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(
                     MableAstFactory.newAIdentifierExp(identifier_derivativeEstimatorInstance),
-                    MableAstFactory.newAIdentifier(identifier_estimateFunction),
+                    MableAstFactory.newAIdentifier(rollbackFunctionIdentifier),
                     listOf(MableAstFactory.newAIdentifierExp(sharedDataDerivatives.name))
                 )
             )
