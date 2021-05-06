@@ -1,0 +1,40 @@
+simulation
+import Initializer;
+import JacobianStepBuilder;
+@Framework("FMI2");
+@FrameworkConfig("FMI2","@file: env.json");
+{
+real START_TIME = 0.0;
+real END_TIME = 10.0;
+real STEP_SIZE = 0.1;
+
+int FMI_STATUS_OK = 0;
+int FMI_STATUS_WARNING = 1;
+int FMI_STATUS_DISCARD = 2;
+int FMI_STATUS_ERROR = 3;
+int FMI_STATUS_FATAL = 4;
+int FMI_STATUS_PENDING = 5;
+
+
+Logger logger = load("Logger");
+FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
+FMI2Component ctrlInstance = tankcontroller.instantiate("ctrlInstance", false, false);;
+FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);;
+
+FMI2Component components[2]={wtInstance,ctrlInstance};
+
+bool global_execution_continue = true;
+int status = 0;
+
+@Config("@file: config.json");
+Initializer.expand initialize(components,START_TIME, END_TIME);
+@Config("@file: jacobianconfig.json");
+JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME, "src/test/resources/jacobian_step_builder/variable_step_WT/algorithm.json");
+tankcontroller.freeInstance(ctrlInstance);
+SingleWatertank.freeInstance(wtInstance);
+
+unload(tankcontroller);
+unload(SingleWatertank);
+unload(logger);
+}

@@ -48,8 +48,7 @@ def legacyCliSimConfig():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-
-        if not testutils.compare("CSV", "wt/result.csv", temporary.resultPath):
+        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
             tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(temporary.resultPath, tempActualOutputs)
@@ -71,7 +70,7 @@ def legacyCliStarttimeEndtime():
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
-        if not testutils.compare("CSV", "wt/result.csv", temporary.resultPath):
+        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
             tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(temporary.resultPath, tempActualOutputs)

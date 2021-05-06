@@ -7,8 +7,9 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
+import org.intocps.maestro.core.api.StepAlgorithm;
+import org.intocps.maestro.core.api.VariableStepAlgorithm;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableAstFactory.newAStringLiteralExp;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
@@ -39,8 +41,9 @@ public class MaBLTemplateGenerator {
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
-    public static final String FIXEDSTEP_EXPANSION_FUNCTION_NAME = "fixedStep";
-    public static final String FIXEDSTEP_EXPANSION_MODULE_NAME = "FixedStep";
+    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSize";
+    public static final String VARIABLESTEP_FUNCTION_NAME = "variableStepSize";
+    public static final String JACOBIANSTEP_EXPANSION_MODULE_NAME = "JacobianStepBuilder";
     public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
@@ -135,15 +138,31 @@ public class MaBLTemplateGenerator {
     }
 
     public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
+        PStm algorithmStm;
+
         switch (algorithm.getType()) {
             case FIXEDSTEP:
-                FixedStepSizeAlgorithm a = (FixedStepSizeAlgorithm) algorithm;
-                return new ExpandStatements(
-                        Arrays.asList(createRealVariable(STEP_SIZE_NAME, a.stepSize), createRealVariable(END_TIME_NAME, a.endTime)),
-                        Arrays.asList(createExpandFixedStep(COMPONENTS_ARRAY_NAME, STEP_SIZE_NAME, START_TIME_NAME, END_TIME_NAME)));
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
+                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                                MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
+                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+                break;
+
+            case VARIABLESTEP:
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
+                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                                MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
+                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(StringEscapeUtils
+                                                .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
+                break;
+
             default:
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
+
+        return new ExpandStatements(Arrays.asList(createRealVariable(STEP_SIZE_NAME, algorithm.getStepSize())), Arrays.asList(algorithmStm));
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -211,9 +230,7 @@ public class MaBLTemplateGenerator {
         // Components Array
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToInstanceName.keySet()));
 
-        stmMaintainer.add(createRealVariable(START_TIME_NAME, 0.0));
-
-        // Generate variable statements related to the given algorithm. I.e. the variable step size for fixed step.
+        // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
         ExpandStatements algorithmStatements = null;
         if (templateConfiguration.getAlgorithm() != null) {
             algorithmStatements = generateAlgorithmStms(templateConfiguration.getAlgorithm());
@@ -221,6 +238,10 @@ public class MaBLTemplateGenerator {
                 stmMaintainer.addAll(algorithmStatements.variablesToTopOfMabl);
             }
         }
+
+        // add variable statements for start time and end time.
+        stmMaintainer.add(createRealVariable(START_TIME_NAME, templateConfiguration.getAlgorithm().getStartTime()));
+        stmMaintainer.add(createRealVariable(END_TIME_NAME, templateConfiguration.getAlgorithm().getEndTime()));
 
         // Add the initializer expand stm
         if (templateConfiguration.getInitialize().getKey()) {
@@ -230,6 +251,8 @@ public class MaBLTemplateGenerator {
 
         // Add the algorithm expand stm
         if (algorithmStatements.body != null) {
+            stmMaintainer.add(new AConfigStm(
+                    StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
             stmMaintainer.addAll(algorithmStatements.body);
         }
 
@@ -244,7 +267,7 @@ public class MaBLTemplateGenerator {
         }
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
-                Arrays.asList(newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
+                Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
                         newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME)));
@@ -348,12 +371,6 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
     }
 
-    private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
-                        Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));
-    }
-
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName, Optional<FaultInject> faultInject) {
         if (faultInject.isPresent()) {
             instanceLexName = instanceLexName + "_original";
@@ -403,14 +420,6 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(startTimeLexName),
                                 AIdentifierExpFromString(endTimeLexName))));
-    }
-
-    public static PStm createExpandFixedStep(String componentsArrayLexName, String stepSizeLexName, String startTimeLexName, String endTimeLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(FIXEDSTEP_EXPANSION_FUNCTION_NAME),
-                        Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(stepSizeLexName),
-                                AIdentifierExpFromString(startTimeLexName), AIdentifierExpFromString(endTimeLexName))));
     }
 
     public static AIdentifierExp AIdentifierExpFromString(String x) {

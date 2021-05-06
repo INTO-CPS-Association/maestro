@@ -9,7 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2EnvironmentConfiguration;
@@ -19,38 +19,30 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 
-@RunWith(Parameterized.class)
 public class FullSpecTest {
 
-    final File directory;
-    private final String name;
-
-    public FullSpecTest(String name, File directory) {
-        this.name = name;
-        this.directory = directory;
-    }
-
-    //TODO: Temporary ignored fixedstepbuilder
-    @Parameterized.Parameters(name = "{index} {0}")
-    public static Collection<Object[]> data() {
+    private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "full").toFile().listFiles()))
-                /*.filter(x -> !x.getName().contains("initialize_fixedstepbuilder_unfold_loop"))*/.map(f -> new Object[]{f.getName(), f})
-                .collect(Collectors.toList());
+                .map(f -> Arguments.arguments(f.getName(), f));
     }
 
     private static TestJsonObject getTestJsonObject(File directory) throws java.io.IOException {
@@ -105,7 +97,7 @@ public class FullSpecTest {
 
             for (Delta delta : patch.getDeltas()) {
                 System.err.println(delta);
-                Assert.fail("Expected result and actual differ: " + delta);
+                Assertions.fail("Expected result and actual differ: " + delta);
             }
 
         }
@@ -138,10 +130,15 @@ public class FullSpecTest {
         }
     }
 
-    @Test
-    public void test() throws Exception {
+    protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
+        compareCsvResults(expectedCsvFile, actualCsvFile);
+    }
 
-        File workingDirectory = getWorkingDirectory(this.directory);
+    @ParameterizedTest(name = "{index} \"{0}\"")
+    @MethodSource("data")
+    public void test(String name, File directory) throws Exception {
+
+        File workingDirectory = getWorkingDirectory(directory);
 
         File specFolder = new File(workingDirectory, "specs");
         specFolder.mkdirs();
@@ -188,7 +185,7 @@ public class FullSpecTest {
             if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
                 Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
                         (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
-                builder.setStepAlgorithm(new FixedStepSizeAlgorithm(simulationConfiguration.endTime, a.size))
+                builder.setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime, a.size, 0.0))
                         .setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn);
             }
 
@@ -204,22 +201,22 @@ public class FullSpecTest {
 
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
-            Assert.fail();
+            Assertions.fail();
         }
         if (reporter.getWarningCount() > 0) {
             reporter.printWarnings(new PrintWriter(System.out, true));
         }
 
         mabl.dump(workingDirectory);
-        Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists());
-        Assert.assertTrue("Spec file must exist", new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists());
+        Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
+        Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
         System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         new MableInterpreter(
                 new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
                 .execute(mabl.getMainSimulationUnit());
 
 
-        compareCsvResults(new File(directory, "outputs.csv"), new File(workingDirectory, "outputs.csv"));
+        compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {

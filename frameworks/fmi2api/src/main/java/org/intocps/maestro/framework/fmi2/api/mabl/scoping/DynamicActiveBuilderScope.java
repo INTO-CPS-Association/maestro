@@ -1,9 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.maestro.fmi.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
@@ -134,6 +134,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }*/
 
     @Override
+    public <V> ArrayVariableFmi2Api<V> store(String name, V value[]) {
+        return activeScope.store(name, value);
+    }
+
+    @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
         return activeScope.store(tag);
     }
@@ -153,8 +158,9 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return activeScope.createFMU(name, modelDescription, path);
     }
 
+
     @Override
-    public VariableFmi2Api copy(String name, VariableFmi2Api variable) {
+    public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
         return activeScope.copy(name, variable);
     }
 }

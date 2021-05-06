@@ -2,17 +2,21 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.maestro.fmi.ModelDescription;
 
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -38,7 +42,6 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     public ABlockStm getBlock() {
         return block;
     }
-
 
     @Override
     public WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate) {
@@ -175,6 +178,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
+    @Override
+    public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
+        return store(() -> builder.getNameGenerator().getName(name), value);
+    }
+
     protected DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
@@ -209,6 +217,52 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         add(var);
         return new StringVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
+    }
+
+    protected <V> ArrayVariableFmi2Api<V> store(Supplier<String> nameProvider, V[] value) {
+        String name = nameProvider.get();
+        int length = value.length;
+        PType type = new ANullType();
+        PInitializer initializer = null;
+
+        if (value instanceof Double[]) {
+            type = new ARealNumericPrimitiveType();
+            if (length > 1 && value[0] != null) {
+                initializer =
+                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newARealLiteralExp((Double) v)).collect(Collectors.toList()));
+            }
+        } else if (value instanceof Integer[]) {
+            type = new AIntNumericPrimitiveType();
+            if (length > 1 && value[0] != null) {
+                initializer =
+                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newAIntLiteralExp((Integer) v)).collect(Collectors.toList()));
+            }
+        } else if (value instanceof Boolean[]) {
+            type = new ABooleanPrimitiveType();
+            if (length > 1 && value[0] != null) {
+                initializer =
+                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newABoolLiteralExp((Boolean) v)).collect(Collectors.toList()));
+            }
+        } else if (value instanceof String[]) {
+            type = new AStringPrimitiveType();
+            if (length > 1 && value[0] != null) {
+                initializer =
+                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newAStringLiteralExp((String) v)).collect(Collectors.toList()));
+            }
+        }
+
+        PStm localVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type, length, initializer));
+
+        final PType finalType = type;
+
+        List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
+                i -> new VariableFmi2Api<>(localVarStm, finalType, null, builder.getDynamicScope(),
+                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(i)),
+                        newAArrayIndexExp(newAIdentifierExp(name), Collections.singletonList(newAIntLiteralExp(i))))).collect(Collectors.toList());
+
+        add(localVarStm);
+        return new ArrayVariableFmi2Api(localVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name), items);
     }
 
     @Override
@@ -276,21 +330,17 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, loaderName, args, this);
     }
 
-    public BooleanVariableFmi2Api copy(String name, BooleanVariableFmi2Api booleanVariable) {
-        String varName = builder.getNameGenerator().getName(name);
-        PStm variableDeclaration = newVariable(varName, booleanVariable.getType(), booleanVariable.getReferenceExp().clone());
-        add(variableDeclaration);
-        return booleanVariable
-                .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
-    }
-
     @Override
-    public VariableFmi2Api copy(String name, VariableFmi2Api variable) {
-        if (variable instanceof BooleanVariableFmi2Api) {
-            return this.copy(name, (BooleanVariableFmi2Api) variable);
+    public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
+        if (variable instanceof BooleanVariableFmi2Api || variable instanceof DoubleVariableFmi2Api || variable instanceof IntVariableFmi2Api ||
+                variable instanceof StringVariableFmi2Api) {
+            String varName = builder.getNameGenerator().getName(name);
+            PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
+            add(variableDeclaration);
+            return (Var) variable
+                    .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
         }
-
-        throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass());
+        throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass().getName());
     }
 
     @Override

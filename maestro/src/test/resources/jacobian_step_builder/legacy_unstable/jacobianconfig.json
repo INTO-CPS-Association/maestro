@@ -1,0 +1,8 @@
+{
+  "variablesOfInterest": [],
+  "stabilisation": false,
+  "absoluteTolerance": 0,
+  "relativeTolerance": 0.01,
+  "stabilisationLoopMaxIterations": 5
+}
+

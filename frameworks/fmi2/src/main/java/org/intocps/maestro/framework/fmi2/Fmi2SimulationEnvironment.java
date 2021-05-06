@@ -189,7 +189,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
 
             for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                 Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
-                globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
 
                 // dependantInputs are the inputs on which the current output depends on internally
                 Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
@@ -209,11 +208,13 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
                     instanceRelations.add(r);
                 }
 
-                // externalInputTargets are the inputs that depends on the current output based on the provided connections.
+                // externalInputTargets are the inputs that depend on the current output based on the provided connections.
                 List<ModelConnection.Variable> externalInputTargets = connections.stream()
                         .filter(conn -> conn.from.instance.equals(instance) && conn.from.variable.equals(outputScalarVariable.name))
                         .map(conn -> conn.to).collect(Collectors.toList());
                 if (externalInputTargets.size() != 0) {
+                    // Log the current output as there is an input depending on it.
+                    globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
                     // externalInputs are all the external Inputs that depends on the current output
                     Map<LexIdentifier, Variable> externalInputs = new HashMap<>();
                     for (ModelConnection.Variable modelConnToVar : externalInputTargets) {

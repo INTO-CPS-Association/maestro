@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="REPLACE_MODEL_NAME"
+  guid="{00000000-0000-0000-0000-000000000000}"
+	description="A test FMU to test the JNI interface"
+	author="Kenneth Lausdahl"
+	version="1.0.0"
+	copyright="AU"
+	license="MIT"
+	generationTool="gcc"
+	generationDateAndTime="2009-12-08T14:33:22Z"
+	variableNamingConvention="flat"
+  numberOfEventIndicators="0">
+
+<CoSimulation
+  modelIdentifier="REPLACE_MODEL_IDENTIFIER"
+  canHandleVariableCommunicationStepSize="true"
+	needsExecutionTool="false"
+	canInterpolateInputs="false"
+	maxOutputDerivativeOrder="false"
+	canRunAsynchronuously="false"
+	canBeInstantiatedOnlyOncePerProcess="false"
+	canNotUseMemoryManagementFunctions="false"
+	canGetAndSetFMUstate="false"
+	canSerializeFMUstate="false"
+	providesDirectionalDerivative="false"/>
+
+<LogCategories>
+ 
+  <Category name="logError"/>
+  <Category name="logFmiCall"/>
+  <Category name="logEvent"/>
+
+	<!-- standard categories -->
+	<Category name="logEvents"/>
+	<Category name="logSingularLinearSystems"/>
+	<Category name="logNonlinearSystems"/>
+	<Category name="logDynamicStateSelection"/>
+	<Category name="logStatusWarning"/>
+	<Category name="logStatusDiscard"/>
+	<Category name="logStatusError"/>
+	<Category name="logStatusFatal"/>
+	<Category name="logStatusPending"/>
+	 <Category name="logAll"/>
+</LogCategories>
+
+<ModelVariables>
+  <!--ScalarVariable name="x" valueReference="0" description="the only state"
+                  causality="local" variability="continuous" initial="exact">
+    <Real start="1"/>
+  </ScalarVariable>
+  <ScalarVariable name="der(x)" valueReference="1"
+                  causality="local" variability="continuous" initial="calculated">
+    <Real derivative="1"/>
+  </ScalarVariable>
+  <ScalarVariable name="k" valueReference="2"
+                  causality="parameter" variability="fixed" initial="exact">
+    <Real start="1"/>
+  </ScalarVariable-->
+
+  <ScalarVariable name="maxlevel" valueReference="0"
+		description="the max tank level"
+		causality="calculatedParameter"
+		variability="tunable"
+		initial="calculated">
+    <Real />
+  </ScalarVariable>
+
+  <ScalarVariable name="minlevel" valueReference="1"
+		description="the min tank level"
+		causality="calculatedParameter"
+		variability="fixed"
+		initial="calculated">
+    <Real />
+  </ScalarVariable>
+
+  <ScalarVariable name="level" valueReference="3"
+		description="the tank level"
+		causality="input"
+		variability="tunable"
+		initial="approx">
+    <Real start="1"/>
+  </ScalarVariable>
+
+  <ScalarVariable name="valve" valueReference="4"
+		description="the tank valve state"
+		causality="output"
+		variability="tunable"
+		initial="calculated">
+    <Boolean/>
+  </ScalarVariable>
+  
+   <ScalarVariable name="valve2" valueReference="4"
+		description="the tank valve state"
+		causality="output"
+		variability="tunable"
+		initial="calculated">
+    <Boolean/>
+  </ScalarVariable>
+</ModelVariables>
+
+<ModelStructure>
+  <Derivatives>
+    <Unknown index="2" />
+  </Derivatives>
+  <InitialUnknowns>
+    <Unknown index="2"/>
+  </InitialUnknowns>
+</ModelStructure>
+
+</fmiModelDescription>

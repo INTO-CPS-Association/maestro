@@ -116,6 +116,7 @@ public class DataWriter {
             List<AStringLiteralExp> variablesNamesToLog =
                     this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getLogScalarVariableName()))
                             .collect(Collectors.toList());
+
             AVariableDeclaration datawriter_configuration = MableAstFactory
                     .newAVariableDeclaration(MableAstFactory.newAIdentifier(logHeadersVariableName),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), variablesNamesToLog.size(),

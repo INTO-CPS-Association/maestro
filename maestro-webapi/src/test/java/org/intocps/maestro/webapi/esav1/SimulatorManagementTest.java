@@ -4,10 +4,10 @@ package org.intocps.maestro.webapi.esav1;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.intocps.maestro.webapi.services.SimulatorManagementService;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -35,19 +35,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @ActiveProfiles("mocked_coe_service")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class SimulatorManagementTest {
 
     final static String baseUrl = "/api/esav1/orchestrator";
     private final static Logger logger = LoggerFactory.getLogger(SimulatorManagementTest.class);
-    @Autowired
+    //@Autowired <--- needs the @bean method-level annotation
     SimulatorManagementService service;
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         Mockito.reset(service);
         when(service.create(any())).thenReturn("localhost:8000");
@@ -56,7 +56,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void pingTest() throws Exception {
 
         Mockito.reset(service);
@@ -64,7 +64,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void createTest() throws Exception {
 
         String res = mockMvc.perform(post(baseUrl + "/").accept(APPLICATION_JSON).contentType(APPLICATION_JSON))
@@ -75,7 +75,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void createTestXml() throws Exception {
 
         String res = mockMvc.perform(post(baseUrl + "/").accept(APPLICATION_XML).contentType(APPLICATION_JSON))
@@ -86,7 +86,7 @@ public class SimulatorManagementTest {
 
 
     @Test
-    @Ignore("FIX ME")
+    @Disabled("FIX ME")
     public void createFailureTest() throws Exception {
 
         when(service.create(any())).thenThrow(new Exception());
@@ -96,7 +96,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void createDelete() throws Exception {
 
         String uid = UUID.randomUUID().toString();
@@ -109,7 +109,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("FIX ME")
+    @Disabled("FIX ME")
     public void createDeleteNoExisting() throws Exception {
 
         String uid = UUID.randomUUID().toString();
@@ -122,7 +122,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("FIX ME")
+    @Disabled("FIX ME")
     public void createDeleteFailure() throws Exception {
 
         String uid = UUID.randomUUID().toString();
@@ -136,7 +136,7 @@ public class SimulatorManagementTest {
 
 
     @Test
-    @Ignore("See #85")
+    @Disabled("See #85")
     public void terminate() throws Exception {
 
         mockMvc.perform(post(baseUrl + "/terminate").accept(APPLICATION_JSON).contentType(APPLICATION_JSON))
@@ -145,7 +145,7 @@ public class SimulatorManagementTest {
     }
 
     @Test
-    @Ignore("FIX ME")
+    @Disabled("FIX ME")
     public void terminateFailure() throws Exception {
 
         doThrow(new RuntimeException()).when(service).terminateApplication();

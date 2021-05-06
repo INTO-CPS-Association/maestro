@@ -1,9 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.maestro.fmi.ModelDescription;
 
 import java.net.URI;
 import java.util.Collection;
@@ -63,6 +63,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     StringVariableFmi2Api store(String name, String value);
 
     @Override
+    <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
+
+    @Override
     <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
@@ -72,10 +75,5 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
 
-    VariableFmi2Api copy(String var1, VariableFmi2Api bool);
-
-    //    @Override
-    //    <ValType extends Object, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>, RetVar extends VariableFmi2Api<Val>> RetVar copy(
-    //            String name, Var value);
-
+    <Var extends VariableFmi2Api> Var copy(String name, Var variable);
 }

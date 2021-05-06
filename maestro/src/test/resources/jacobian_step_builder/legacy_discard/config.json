@@ -1,0 +1,9 @@
+{
+  "parameters": {
+  },
+  "verifyAgainstProlog": false,
+  "stabilisation": false,
+  "fixedPointIteration": 5,
+  "absoluteTolerance": 0.0,
+  "relativeTolerance": 0.01
+}

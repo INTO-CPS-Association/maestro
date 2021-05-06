@@ -15,6 +15,7 @@ public class MablToMablAPI {
     private final MablApiBuilder mablApiBuilder;
     private BooleanBuilderFmi2Api booleanBuilderApi;
     private DataWriter dataWriter;
+    private VariableStep variableStep;
     private MathBuilderFmi2Api mathBuilderFmi2Api;
     private LoggerFmi2Api runtimeLogger;
 
@@ -44,6 +45,13 @@ public class MablToMablAPI {
         }
         mablApiBuilder.setRuntimeLogger(runtimeLogger);
         mablApiBuilder.addExternalLoadedModuleIdentifier(name);
+    }
+
+    public VariableStep getVariableStep() {
+        if (this.variableStep == null) {
+            this.variableStep = new VariableStep(this.mablApiBuilder.dynamicScope, this.mablApiBuilder);
+        }
+        return this.variableStep;
     }
 
     public DataWriter getDataWriter() {

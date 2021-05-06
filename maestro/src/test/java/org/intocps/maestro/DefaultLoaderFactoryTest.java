@@ -13,8 +13,8 @@ import org.intocps.maestro.interpreter.values.IntegerValue;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.util.Vector;
 
 public class DefaultLoaderFactoryTest {
 
-    @Test(expected = AnalysisException.class)
+    @Test
     public void javaClasspathLoadMissingArgTest() throws AnalysisException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
         String moduleDef = "module A{}";
         String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" +
@@ -37,8 +37,10 @@ public class DefaultLoaderFactoryTest {
         TypeChecker tc = new TypeChecker(reporter);
         ARootDocument parse = MablParserUtil.parse(CharStreams.fromString(moduleDef + spec), reporter);
         boolean tcRes = tc.typeCheck(Arrays.asList(parse), new Vector<>());
+        Throwable thrown = Assertions.assertThrows(AnalysisException.class, () ->  new MableInterpreter(new DefaultExternalValueFactory(new File("target"),
+                null)).execute(parse));
 
-        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
+        Assertions.assertEquals("Load failed", thrown.getMessage());
     }
 
     @Test
@@ -57,7 +59,7 @@ public class DefaultLoaderFactoryTest {
 
         MyCustomAValue.staticValue = 0;
         new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
-        Assert.assertEquals(999, MyCustomAValue.staticValue.intValue());
+        Assertions.assertEquals(999, MyCustomAValue.staticValue.intValue());
     }
 
     @Test
@@ -76,7 +78,7 @@ public class DefaultLoaderFactoryTest {
 
         MyCustomAValue.staticValue = 0;
         new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
-        Assert.assertEquals(1000, MyCustomAValue.staticValue.intValue());
+        Assertions.assertEquals(1000, MyCustomAValue.staticValue.intValue());
     }
 
     @Test
@@ -95,7 +97,7 @@ public class DefaultLoaderFactoryTest {
 
         MyCustomAValue.staticValue = 0;
         new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
-        Assert.assertEquals(999, MyCustomAValue.staticValue.intValue());
+        Assertions.assertEquals(999, MyCustomAValue.staticValue.intValue());
     }
 
     public static class MyCustomAValue extends ExternalModuleValue<Integer> {

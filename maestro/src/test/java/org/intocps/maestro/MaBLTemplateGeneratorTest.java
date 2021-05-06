@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepSizeAlgorithm;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -26,7 +26,7 @@ public class MaBLTemplateGeneratorTest {
                 new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
-        FixedStepSizeAlgorithm stepSizeAlgorithm = new FixedStepSizeAlgorithm(endTime, stepSize);
+        FixedStepAlgorithm stepSizeAlgorithm = new FixedStepAlgorithm(endTime, stepSize, 0.0);
 
         MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithm(stepSizeAlgorithm).setFramework(Framework.FMI2)
                 .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
@@ -47,7 +47,7 @@ public class MaBLTemplateGeneratorTest {
         simulationEnvironmentConfiguration.faultInjectInstances = Map.of("crtlInstance", "constraintid");
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
-        FixedStepSizeAlgorithm stepSizeAlgorithm = new FixedStepSizeAlgorithm(endTime, stepSize);
+        FixedStepAlgorithm stepSizeAlgorithm = new FixedStepAlgorithm(endTime, stepSize, 0.0);
 
         MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithm(stepSizeAlgorithm).setFramework(Framework.FMI2)
                 .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
