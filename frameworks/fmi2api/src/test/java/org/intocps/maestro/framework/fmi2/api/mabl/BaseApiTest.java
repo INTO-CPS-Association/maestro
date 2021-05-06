@@ -109,22 +109,42 @@ public abstract class BaseApiTest {
                     .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertEquals").build(), a, b);
         }
 
+        public void assertNotEquals(Fmi2Builder.Variable a, Fmi2Builder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
+        }
+
+        public void assertNotEquals(Object a, Fmi2Builder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
+        }
+
         @IValueLifecycleHandler.ValueLifecycle(name = "MDebugAssert")
         public static class MDebugAssertRuntime implements IValueLifecycleHandler {
 
             @Override
             public Either<Exception, Value> instantiate(List<Value> args) {
+                Map<String, Value> members = getMembers();
+
+                ExternalModuleValue<Map<String, Object>> val = new ExternalModuleValue<>(members, null) {
+
+                };
+                return Either.right(val);
+            }
+
+            private Map<String, Value> getMembers() {
                 Map<String, Value> members = new HashMap<>();
                 members.put("assertEquals", new FunctionValue.ExternalFunctionValue(a -> {
 
                     Assertions.assertTrue(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
                     return new VoidValue();
                 }));
+                members.put("assertNotEquals", new FunctionValue.ExternalFunctionValue(a -> {
 
-                ExternalModuleValue<Map<String, Object>> val = new ExternalModuleValue<>(members, null) {
-
-                };
-                return Either.right(val);
+                    Assertions.assertFalse(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
+                    return new VoidValue();
+                }));
+                return members;
             }
 
             @Override
@@ -134,7 +154,8 @@ public abstract class BaseApiTest {
 
             @Override
             public InputStream getMablModule() {
-                return new ByteArrayInputStream(("module " + MDebugAssert.class.getSimpleName() + "{" + "void assertEquals(?a, ?b);" + "" + "}")
+                return new ByteArrayInputStream(("module " + MDebugAssert.class.getSimpleName() + "{" +
+                        getMembers().keySet().stream().map(n -> "void" + " " + n + "(?a,?b)").collect(Collectors.joining(";", "", ";")) + "" + "}")
                         .getBytes(StandardCharsets.UTF_8));
             }
         }
