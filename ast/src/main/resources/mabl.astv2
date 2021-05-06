@@ -125,6 +125,7 @@ stateDesignator
 
 stm
     = {block} [body]:stm*
+    | {parallelBlock} [body]:stm*
     | {assigment} [target]:stateDesignator [exp]:exp
     | {localVariable} [declaration]:declaration.variable
     | {if} [test]:exp [then]:stm [else]:stm

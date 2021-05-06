@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 %exp->ref = "ref "+ [exp]
 
 %stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
+%stm->parallelBlock = "\n||{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
 %stm->localVariable = [declaration]
 %stm->if = "if( " +$ $[test]$ +" ) \n{\n" + $[then]$+ "\n}"+   ($[else]$!=null ?"\nelse \n{\n" +$[else]$ +"\n}":"")$

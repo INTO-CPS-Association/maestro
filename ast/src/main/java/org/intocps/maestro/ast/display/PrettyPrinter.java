@@ -7,6 +7,7 @@ import org.intocps.maestro.ast.analysis.QuestionAdaptor;
 import org.intocps.maestro.ast.node.*;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -95,7 +96,9 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         }
 
         if (node instanceof ABlockStm) {
-            printABlockStm((ABlockStm) node, indentation - 1, true);
+            printABlockStm(((ABlockStm) node).getBody(), indentation - 1, true, false);
+        } else if (node instanceof AParallelBlockStm) {
+            printABlockStm(((AParallelBlockStm) node).getBody(), indentation - 1, true, true);
         } else {
             node.apply(this, indentation);
         }
@@ -169,23 +172,28 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
 
     @Override
     public void caseABlockStm(ABlockStm node, Integer question) throws AnalysisException {
-        printABlockStm(node, question, false);
+        printABlockStm(node.getBody(), question, false, false);
     }
 
-    public void printABlockStm(ABlockStm node, Integer question, boolean skipBracket) throws AnalysisException {
-        if (node.getBody().isEmpty()) {
+    @Override
+    public void caseAParallelBlockStm(AParallelBlockStm node, Integer question) throws AnalysisException {
+        printABlockStm(node.getBody(), question, false, true);
+    }
+
+    public void printABlockStm(List<? extends PStm> body, Integer question, boolean skipBracket, boolean parallel) throws AnalysisException {
+        if (body.isEmpty()) {
             return;
         }
 
-        if (node.getBody().size() == 1) {
-            node.getBody().get(0).apply(this, question);
+        if (body.size() == 1) {
+            body.get(0).apply(this, question);
             return;
         }
         if (!skipBracket) {
-            sb.append(indent(question) + "{\n ");
+            sb.append(indent(question) + (parallel ? "||" : "") + "{\n ");
         }
 
-        Iterator<PStm> itr = node.getBody().iterator();
+        Iterator<? extends PStm> itr = body.iterator();
         while (itr.hasNext()) {
             itr.next().apply(this, question + 1);
             if (itr.hasNext()) {

@@ -653,9 +653,18 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     @Override
     public PType caseABlockStm(ABlockStm node, Context ctxt) throws AnalysisException {
 
+        return checkBlock(node, node.getBody(), ctxt);
+    }
+
+    @Override
+    public PType caseAParallelBlockStm(AParallelBlockStm node, Context ctxt) throws AnalysisException {
+        return checkBlock(node, node.getBody(), ctxt);
+    }
+
+    private AVoidType checkBlock(INode node, List<? extends INode> body, Context ctxt) throws AnalysisException {
         DeclarationList tdm = new DeclarationList();
         Context localCtxt = new LocalContext(tdm, ctxt);
-        for (INode bodyNode : node.getBody()) {
+        for (INode bodyNode : body) {
             if (bodyNode instanceof ALocalVariableStm) {
                 ALocalVariableStm stm = (ALocalVariableStm) bodyNode;
                 if (stm.getDeclaration() != null) {
@@ -672,6 +681,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         return store(node, MableAstFactory.newAVoidType());
     }
+
 
     @Override
     public PType caseALocalVariableStm(ALocalVariableStm node, Context ctxt) throws AnalysisException {

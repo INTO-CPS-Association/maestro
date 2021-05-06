@@ -5,13 +5,16 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.node.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
-
+    final static Logger logger = LoggerFactory.getLogger(ParseTree2AstConverter.class);
 
     @Override
     public INode visitCompilationUnit(MablParser.CompilationUnitContext ctx) {
@@ -136,15 +139,19 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         List<PStm> statements = processedBody.stream().map(PStm.class::cast).collect(Collectors.toList());
 
-        if (statements.stream().anyMatch(p -> p == null)) {
-            System.out.println("found null");
+        if (statements.stream().anyMatch(Objects::isNull)) {
+            logger.warn("found null");
         }
 
         block.setBody(statements);
-
-
         return block;
+    }
 
+    @Override
+    public INode visitParallelBlockStm(MablParser.ParallelBlockStmContext ctx) {
+        AParallelBlockStm parBlock = new AParallelBlockStm();
+        parBlock.setBody((((ABlockStm) this.visit(ctx.block())).getBody()));
+        return parBlock;
     }
 
     @Override

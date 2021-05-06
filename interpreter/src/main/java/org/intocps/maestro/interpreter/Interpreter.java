@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,24 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         Context ctxt = new Context(question);
         for (PStm stm : node.getBody()) {
             stm.apply(this, ctxt);
+        }
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseAParallelBlockStm(AParallelBlockStm node, org.intocps.maestro.interpreter.Context question) throws AnalysisException {
+        Context ctxt = new Context(question);
+        Optional<Optional<?>> errors = node.getBody().stream().parallel().map(s -> {
+            try {
+                s.apply(this, ctxt);
+            } catch (AnalysisException e) {
+                return Optional.of(e);
+            }
+            return Optional.empty();
+        }).findFirst();
+
+        if (errors.isPresent() && errors.get().isPresent()) {
+            throw (AnalysisException) errors.get().get();
         }
         return new VoidValue();
     }
@@ -472,10 +491,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAMultiplyBinaryExp(AMultiplyBinaryExp node, Context question) throws AnalysisException {
 
-        NumericValue x = (NumericValue) node.getLeft().apply(this,question).deref();
-        NumericValue y = (NumericValue) node.getRight().apply(this,question).deref();
+        NumericValue x = (NumericValue) node.getLeft().apply(this, question).deref();
+        NumericValue y = (NumericValue) node.getRight().apply(this, question).deref();
 
-        if(x instanceof RealValue || y instanceof RealValue){
+        if (x instanceof RealValue || y instanceof RealValue) {
             return new RealValue(x.realValue() * y.realValue());
         }
 

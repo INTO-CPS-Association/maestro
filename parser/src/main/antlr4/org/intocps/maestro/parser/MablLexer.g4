@@ -1,4 +1,4 @@
-lexer grammar MablLexer;
+    lexer grammar MablLexer;
 
 @header {
   //  package org.intocps.maestro.ast;
