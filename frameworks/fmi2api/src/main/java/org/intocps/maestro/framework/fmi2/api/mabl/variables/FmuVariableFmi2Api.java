@@ -61,8 +61,12 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     @Override
     public void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
-        scope.add(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance",
-                ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())));
+        if (comp instanceof ComponentVariableFmi2Api) {
+            scope.add(MableAstFactory
+                    .newExpressionStm(call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())));
+        } else {
+            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
+        }
     }
 
     @Override
