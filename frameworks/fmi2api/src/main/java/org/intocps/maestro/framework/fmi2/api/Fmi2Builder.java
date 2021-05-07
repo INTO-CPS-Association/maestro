@@ -376,6 +376,10 @@ public interface Fmi2Builder<S, B, E> {
 
         Fmi2ComponentVariable<S> instantiate(String name, Scope<S> scope);
 
+        void freeInstance(Fmi2ComponentVariable<S> comp);
+
+        void freeInstance(Scope<S> scope, Fmi2ComponentVariable<S> comp);
+
         void unload();
 
         void unload(Scope<S> scope);

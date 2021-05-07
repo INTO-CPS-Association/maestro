@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
@@ -18,7 +19,6 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmu2Variable<PStm> {
-
 
     private final ModelDescriptionContext modelDescriptionContext;
     private final MablApiBuilder builder;
@@ -52,6 +52,17 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         scope.add(newIf(newNotEqual(getReferenceExp().clone(), newNullExp()),
                 newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))),
                         newAAssignmentStm(getDesignator(), newNullExp())), null));
+    }
+
+    @Override
+    public void freeInstance(Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
+        freeInstance(builder.getDynamicScope(), comp);
+    }
+
+    @Override
+    public void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
+        scope.add(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance",
+                ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())));
     }
 
     @Override
