@@ -405,6 +405,10 @@ public interface Fmi2Builder<S, B, E> {
 
         void exitInitializationMode(Scope<T> scope);
 
+        void terminate(Scope<T> scope);
+
+        void terminate();
+
         /**
          * @param scope
          * @param currentCommunicationPoint
