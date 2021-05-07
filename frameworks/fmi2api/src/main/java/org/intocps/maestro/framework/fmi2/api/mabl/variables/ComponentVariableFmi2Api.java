@@ -4,6 +4,7 @@ import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -11,7 +12,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueExpresssionMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,7 +193,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     private void setupExperiment(Fmi2Builder.Scope<PStm> scope, PExp startTime, PExp endTime, Double tolerance) {
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETUPEXPERIMENT), new ArrayList<>(
                         Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance != null ? tolerance : 0d),
                                 startTime.clone(), newABoolLiteralExp(endTime != null),
@@ -278,7 +278,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
             PExp noSetFMUStatePriorToCurrentPoint) {
 
-        scope.add(newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        scope.add(newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 newACallExp(this.getReferenceExp().clone(), newAIdentifier("doStep"),
                         Arrays.asList(((VariableFmi2Api) currentCommunicationPoint).getReferenceExp().clone(),
                                 ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
@@ -289,11 +289,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         }
 
 
-        scope.add(newIf(newNotEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(),
+        scope.add(newIf(newNotEqual(((IMablScope) scope).getFmiStatusVariable().getReferenceExp().clone(),
                 builder.getFmiStatusConstant(MablApiBuilder.FmiStatus.FMI_OK).getReferenceExp().clone()), newABlockStm(
-                newIf(newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(),
+                newIf(newEqual(((IMablScope) scope).getFmiStatusVariable().getReferenceExp().clone(),
                         builder.getFmiStatusConstant(MablApiBuilder.FmiStatus.FMI_DISCARD).getReferenceExp().clone()), newABlockStm(
-                        newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+                        newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                                 newACallExp(this.getReferenceExp().clone(), newAIdentifier("getRealStatus"),
                                         Arrays.asList(newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
                                                 newARefExp(getCurrentTimeVar().getReferenceExp().clone())))),
@@ -316,7 +316,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 throw new RuntimeException("Attempting to call state transition function with non-state transition function type: " + type);
         }
 
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) this.dynamicScope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(type)));
         return stm;
     }
@@ -403,7 +403,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
             ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
 
-            AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+            AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, e.getValue().get(0)),
                             vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), valBuf.getReferenceExp().clone()));
 
@@ -621,7 +621,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     portToValue.apply(p).getValue(), valBuf.type));
         }
 
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
                         newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
         scope.add(stm);
@@ -676,7 +676,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
             selectedPorts = selectedPorts.stream().filter(filterList::contains).collect(Collectors.toList());
         }
-        if(selectedPorts.size() == 0){
+        if (selectedPorts.size() == 0) {
             logger.warn("No linked input variables for FMU instance: " + this.getName());
             return;
         }
@@ -817,7 +817,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 new StateMablVariableFmi2Api(stateVar, newANameType("FmiComponentState"), (IMablScope) scope, builder.getDynamicScope(),
                         newAIdentifierStateDesignator(stateName), newAIdentifierExp(stateName), builder, this);
 
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -859,7 +859,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             }
 
             Function<MablApiBuilder.FmiStatus, PExp> checkStatusEq =
-                    s -> newEqual(builder.getGlobalFmiStatus().getReferenceExp().clone(), builder.getFmiStatusConstant(s).getReferenceExp().clone());
+                    s -> newEqual(((IMablScope) scope).getFmiStatusVariable().getReferenceExp().clone(),
+                            builder.getFmiStatusConstant(s).getReferenceExp().clone());
 
             PExp exp = checkStatusEq.apply(statusesToFail[0]);
 
@@ -915,9 +916,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             };
 
             Set<String> identifiers = new HashSet<>();
-            if (node instanceof ABlockStm) {
+            if (node instanceof SBlockStm) {
 
-                for (PStm n : ((ABlockStm) node).getBody()) {
+                for (PStm n : ((SBlockStm) node).getBody()) {
                     String id = getLoadedIdentifier.apply(n);
                     if (id != null) {
                         identifiers.add(id);

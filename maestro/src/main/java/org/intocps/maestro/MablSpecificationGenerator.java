@@ -1,6 +1,7 @@
 package org.intocps.maestro;
 
 import org.antlr.v4.runtime.CharStreams;
+import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.NodeCollector;
@@ -270,10 +271,10 @@ public class MablSpecificationGenerator {
 
 
     private void replaceExpandedCall(ACallExp node, AConfigStm config, List<PStm> unfoled) {
-        if (node.parent().parent() instanceof ABlockStm) {
+        if (node.parent().parent() instanceof SBlockStm) {
 
             //construct a new block body replacing the original node with the new statements
-            ABlockStm block = (ABlockStm) node.parent().parent();
+            SBlockStm block = (SBlockStm) node.parent().parent();
             int oldIndex = block.getBody().indexOf(node.parent());
             List<PStm> newBlock = new Vector<>();
             for (int i = 0; i < oldIndex; i++) {
@@ -289,15 +290,15 @@ public class MablSpecificationGenerator {
             //set the new block body, move all children to this node
             block.setBody(newBlock);
         } else {
-            node.parent().parent().replaceChild(node.parent(), new ABlockStm(unfoled));
+            node.parent().parent().replaceChild(node.parent(), new ABasicBlockStm(unfoled));
         }
     }
 
     private AConfigStm findConfig(ACallExp node) {
         INode parentBlock = node.parent().parent();
 
-        if (parentBlock instanceof ABlockStm) {
-            ABlockStm block = (ABlockStm) parentBlock;
+        if (parentBlock instanceof SBlockStm) {
+            SBlockStm block = (SBlockStm) parentBlock;
 
             int index = block.getBody().indexOf(node.parent());
             if (index > 0) {
@@ -405,7 +406,7 @@ public class MablSpecificationGenerator {
      * @param simulationModule
      */
     private void handleInstanceMappingStatements(ASimulationSpecificationCompilationUnit simulationModule) {
-        if (simulationModule.getBody() instanceof ABlockStm) {
+        if (simulationModule.getBody() instanceof SBlockStm) {
             Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
             if (instanceMappings.isPresent()) {
                 instanceMappings.get().forEach(x -> ((Fmi2SimulationEnvironment) this.simulationEnvironment)

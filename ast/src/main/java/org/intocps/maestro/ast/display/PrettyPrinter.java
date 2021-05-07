@@ -1,5 +1,7 @@
 package org.intocps.maestro.ast.display;
 
+import org.intocps.maestro.ast.ABasicBlockStm;
+import org.intocps.maestro.ast.AParallelBlockStm;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -95,10 +97,8 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
             return;
         }
 
-        if (node instanceof ABlockStm) {
-            printABlockStm(((ABlockStm) node).getBody(), indentation - 1, true, false);
-        } else if (node instanceof AParallelBlockStm) {
-            printABlockStm(((AParallelBlockStm) node).getBody(), indentation - 1, true, true);
+        if (node instanceof SBlockStm) {
+            printABlockStm(((SBlockStm) node).getBody(), indentation - 1, true, node instanceof AParallelBlockStm);
         } else {
             node.apply(this, indentation);
         }
@@ -171,7 +171,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     }
 
     @Override
-    public void caseABlockStm(ABlockStm node, Integer question) throws AnalysisException {
+    public void caseABasicBlockStm(ABasicBlockStm node, Integer question) throws AnalysisException {
         printABlockStm(node.getBody(), question, false, false);
     }
 

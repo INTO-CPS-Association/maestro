@@ -191,7 +191,20 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     }
 
     @Override
-    public void caseABlockStm(ABlockStm node, Integer question) throws AnalysisException {
+    public void caseAParallelBlockStm(AParallelBlockStm node, Integer question) throws AnalysisException {
+        //TODO should be parallel
+        sb.append(indent(question));
+        sb.append("{\n");
+        for (PStm stm : node.getBody()) {
+            stm.apply(this, question + 1);
+            sb.append("\n");
+        }
+        sb.append(indent(question));
+        sb.append("}\n");
+    }
+
+    @Override
+    public void caseABasicBlockStm(ABasicBlockStm node, Integer question) throws AnalysisException {
         sb.append(indent(question));
         sb.append("{\n");
         for (PStm stm : node.getBody()) {

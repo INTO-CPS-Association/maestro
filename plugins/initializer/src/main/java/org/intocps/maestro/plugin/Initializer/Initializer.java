@@ -380,7 +380,7 @@ public class Initializer implements IMaestroExpansionPlugin {
         List<LexIdentifier> knownComponentNames = null;
         if (formalArguments.get(0) instanceof AIdentifierExp) {
             LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
-            ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
+            SBlockStm containingBlock = formalArguments.get(0).getAncestor(SBlockStm.class);
 
             Optional<AVariableDeclaration> compDecl =
                     containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)

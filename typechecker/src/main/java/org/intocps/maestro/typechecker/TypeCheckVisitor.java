@@ -650,9 +650,9 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return importedModules;
     }
 
-    @Override
-    public PType caseABlockStm(ABlockStm node, Context ctxt) throws AnalysisException {
 
+    @Override
+    public PType caseABasicBlockStm(ABasicBlockStm node, Context ctxt) throws AnalysisException {
         return checkBlock(node, node.getBody(), ctxt);
     }
 

@@ -145,6 +145,10 @@ public interface Fmi2Builder<S, B, E> {
 
         IfScope<T> enterIf(Predicate predicate);
 
+        Scoping<T> parallel();
+
+        Scoping<T> enterScope();
+
         Scope<T> leave();
 
 

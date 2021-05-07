@@ -130,7 +130,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     @Override
     public INode visitBlock(MablParser.BlockContext ctx) {
-        ABlockStm block = new ABlockStm();
+        ABasicBlockStm block = new ABasicBlockStm();
 
         List<INode> processedBody =
                 ctx.statement().stream().filter(p -> !(p instanceof MablParser.SemiContext)).map(this::visit).collect(Collectors.toList());
@@ -150,7 +150,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     @Override
     public INode visitParallelBlockStm(MablParser.ParallelBlockStmContext ctx) {
         AParallelBlockStm parBlock = new AParallelBlockStm();
-        parBlock.setBody((((ABlockStm) this.visit(ctx.block())).getBody()));
+        parBlock.setBody((((ABasicBlockStm) this.visit(ctx.block())).getBody()));
         return parBlock;
     }
 

@@ -58,7 +58,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
-    public Value caseABlockStm(ABlockStm node, Context question) throws AnalysisException {
+    public Value caseABasicBlockStm(ABasicBlockStm node, Context question) throws AnalysisException {
 
         Context ctxt = new Context(question);
         for (PStm stm : node.getBody()) {
