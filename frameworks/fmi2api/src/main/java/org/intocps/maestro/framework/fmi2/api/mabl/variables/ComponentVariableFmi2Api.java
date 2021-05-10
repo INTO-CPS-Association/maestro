@@ -167,7 +167,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         newAArrayIndexExp(indexExp, List.of(newAIntLiteralExp(i)))));
             }
             return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), getDeclaredScope(), builder.getDynamicScope(),
-                    ((AArrayStateDesignator) arrays.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), arrays);
+                    stateDesignator, indexExp.clone(), arrays);
         }
 
         List<VariableFmi2Api<Object>> variables = new ArrayList<>();

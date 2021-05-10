@@ -268,7 +268,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                                 List.of(newAIntLiteralExp(i)))));
             }
             return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), this, builder.getDynamicScope(),
-                    ((AArrayStateDesignator) arrays.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), arrays);
+                    stateDesignator, indexExp.clone(), arrays);
         }
 
         List<VariableFmi2Api<V>> variables = new ArrayList<>();
