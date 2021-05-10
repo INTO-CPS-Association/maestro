@@ -7,12 +7,12 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.intocps.fmi.*;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -371,8 +371,9 @@ public class Fmi2Interpreter {
             long elementsToUse = getUint(fcargs.get(1));
 
 
-            long[] scalarValueIndices = getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().
-                    mapToLong(NumericValue::longValue).toArray();
+            long[] scalarValueIndices =
+                    getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().mapToLong(NumericValue::longValue)
+                            .toArray();
 
 
             try {
@@ -547,8 +548,8 @@ public class Fmi2Interpreter {
                 if (res.status == Fmi2Status.OK) {
                     UpdatableValue ref = (UpdatableValue) fcargs.get(3);
 
-                    List<RealValue> values = Arrays.stream(ArrayUtils.toObject(res.result)).limit(elementsToUse).
-                            map(d -> new RealValue(d)).collect(Collectors.toList());
+                    List<RealValue> values = Arrays.stream(ArrayUtils.toObject(res.result)).limit(elementsToUse).map(d -> new RealValue(d))
+                            .collect(Collectors.toList());
 
                     ref.setValue(new ArrayValue<>(values));
                 }
@@ -694,7 +695,8 @@ public class Fmi2Interpreter {
 
             try {
                 component.getFmuLoggerOutputStream().close();
-            } catch (IOException e) {
+                component.getModule().freeInstance();
+            } catch (IOException | FmuInvocationException e) {
                 e.printStackTrace();
             }
 

@@ -348,6 +348,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 break;
             case EXITINITIALIZATIONMODE:
                 break;
+            case TERMINATE:
+                break;
             default:
                 throw new RuntimeException("Attempting to call state transition function with non-state transition function type: " + type);
         }
@@ -619,6 +621,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 return "getRealOutputDerivatives";
             case SETREALINPUTDERIVATIVES:
                 return "setRealInputDerivatives";
+            case TERMINATE:
+                return "terminate";
             default:
                 throw new RuntimeException("Attempting to call function that is type dependant without specifying type: " + fun);
         }
@@ -964,6 +968,21 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
+    public void terminate() {
+        this.terminate(builder.getDynamicScope());
+    }
+
+    @Override
+    public void terminate(Fmi2Builder.Scope<PStm> scope) {
+        PStm stm = stateTransitionFunction(FmiFunctionType.TERMINATE);
+        scope.add(stm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, "terminate", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
+    }
+
+    @Override
     public <V> void share(Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> values) {
         values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType())).entrySet().stream().forEach(map -> {
             PType type = map.getKey();
@@ -1175,6 +1194,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         SETUPEXPERIMENT,
         GETREALOUTPUTDERIVATIVES,
         SETREALINPUTDERIVATIVES
+        TERMINATE
     }
 
     static class FmiStatusErrorHandlingBuilder {
