@@ -1193,7 +1193,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         EXITINITIALIZATIONMODE,
         SETUPEXPERIMENT,
         GETREALOUTPUTDERIVATIVES,
-        SETREALINPUTDERIVATIVES
+        SETREALINPUTDERIVATIVES,
         TERMINATE
     }
 
