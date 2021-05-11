@@ -31,6 +31,7 @@ Feature Overview
 - Expansion plugins to assist with writing MaBL specifications
 - Supports iterative initialization of FMU connections forming strongly connected components
 - Supports Jacobi fixed step iteration with rollback
+- Supports Variable Step functionality without rollback
 - Provides CLI and Web-API with legacy (Maestro1) support
 - Provides live-logging via Web-API and websockets
 
@@ -39,7 +40,6 @@ Feature Overview
 Features in Progress
 --------------------
 - Stabilisation throughout simulation
-- Variable Step functionality
 - Distributed FMI capabilities
 - Slow-down simulation to real time
 - JVM FMU
