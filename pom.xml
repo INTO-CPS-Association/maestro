@@ -23,6 +23,8 @@
         <log4j2.version>2.13.2</log4j2.version>
         <fmu.api.version>1.0.12</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
+        <kotlin.version>1.5.0</kotlin.version>
+        <kotlin.jvmTarget>11</kotlin.jvmTarget>
     </properties>
 
     <repositories>
@@ -332,6 +334,18 @@
                 <artifactId>reflections</artifactId>
                 <!-- Downgraded to 0.9.11 due to issues with zip file closing https://github.com/ronmamo/reflections/issues/279-->
                 <version>0.9.11</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
+                <version>${kotlin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-test</artifactId>
+                <version>${kotlin.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -25,8 +25,7 @@ public class MablToMablAPI {
 
     public static Map<MablApiBuilder.FmiStatus, IntVariableFmi2Api> getFmiStatusVariables(TagNameGenerator nameGenerator) {
         Map<MablApiBuilder.FmiStatus, IntVariableFmi2Api> fmiStatusVariables = new HashMap<>();
-        Function<String, IntVariableFmi2Api> f =
-                (str) -> new IntVariableFmi2Api(null, null, null, null, newAIdentifierExp(nameGenerator.getName(str)));
+        Function<String, IntVariableFmi2Api> f = (str) -> new IntVariableFmi2Api(null, null, null, null, newAIdentifierExp(str));
         fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_OK, f.apply("FMI_STATUS_OK"));
         fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_WARNING, f.apply("FMI_STATUS_WARNING"));
         fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_DISCARD, f.apply("FMI_STATUS_DISCARD"));
