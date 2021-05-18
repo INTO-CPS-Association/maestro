@@ -37,12 +37,7 @@
             <version>2.1.5-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
-            <scope>compile</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>verificationsuite</artifactId>
