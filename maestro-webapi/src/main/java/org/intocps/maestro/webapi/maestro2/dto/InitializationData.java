@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InitializationData {
+public class InitializationData extends MultiModel {
 
     @JsonIgnore
     @JsonProperty("liveGraphColumns")
@@ -24,12 +24,6 @@ public class InitializationData {
     @JsonProperty("livestreamInterval")
     final Object livestreamInterval = null;
 
-    @JsonProperty("fmus")
-    final Map<String, String> fmus;
-    @JsonProperty("connections")
-    final Map<String, List<String>> connections;
-    @JsonProperty("parameters")
-    final Map<String, Object> parameters;
     @JsonProperty("livestream")
     final Map<String, List<String>> livestream;
     @JsonProperty("logVariables")
@@ -68,9 +62,7 @@ public class InitializationData {
             @JsonProperty("liveGraphColumns") final Object liveGraphColumns,
             @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount,
             @JsonProperty("livestreamInterval") final Object livestreamInterval) {
-        this.fmus = fmus;
-        this.connections = connections;
-        this.parameters = parameters;
+        super(fmus, connections, parameters);
         this.livestream = livestream;
         this.logVariables = logVariables;
         this.loggingOn = loggingOn;
@@ -87,18 +79,6 @@ public class InitializationData {
 
     public InitializeLogLevel getOverrideLogLevel() {
         return overrideLogLevel;
-    }
-
-    public Map<String, String> getFmus() {
-        return fmus;
-    }
-
-    public Map<String, List<String>> getConnections() {
-        return connections;
-    }
-
-    public Map<String, Object> getParameters() {
-        return parameters;
     }
 
     public Map<String, List<String>> getLivestream() {
