@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import core.MasterModel;
+import core.ScenarioLoader;
 import core.ScenarioModel;
 import org.intocps.maestro.webapi.ScenarioModelMapper;
 import org.intocps.maestro.webapi.dto.MasterModelDTO;
@@ -13,38 +14,36 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import scala.jdk.javaapi.CollectionConverters;
+import synthesizer.ConfParser.ScenarioConfGenerator;
 import synthesizer.LoopStrategy;
+
+import java.io.ByteArrayInputStream;
 
 @RestController
 @Component
 public class Maestro2ScenarioVerifierController {
 
-    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {"application/json"})
-    public MasterModelDTO generateAlgorithmFromScenario(@RequestBody ScenarioDTO scenario) {
+    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {"text/plain"})
+    public String generateAlgorithmFromScenario(@RequestBody String scenario) {
 
-        ScenarioModel scenarioModel = ScenarioModelMapper.Companion.scenarioDTOToScenarioModel(scenario);
+        MasterModel masterModel = ScenarioModelMapper.Companion.scenarioToMasterModel(scenario);
 
-        MasterModel masterModel = ScenarioModelMapper.Companion.scenarioModelToMasterModel(scenarioModel, LoopStrategy.maximum());
-
-        return new MasterModelDTO(null, null, CollectionConverters.asJava(masterModel.initialization().map(Object::toString)),
-                CollectionConverters.asJava(masterModel.cosimStep().map(Object::toString)),null);
-
+        return ScenarioConfGenerator.generate(masterModel, masterModel.name());
     }
 
     @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {"application/json"})
-    public MasterModelDTO generateAlgorithmFromMultiModel(@RequestBody MultiModelScenarioVerifier multiModel) {
+    public String generateAlgorithmFromMultiModel(@RequestBody MultiModelScenarioVerifier multiModel) {
 
-        ScenarioModel scenarioModel = ScenarioModelMapper.Companion.multiModelToScenarioModel(multiModel, 3);
+        MasterModel masterModel = ScenarioModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
 
-        MasterModel masterModel = ScenarioModelMapper.Companion.scenarioModelToMasterModel(scenarioModel, LoopStrategy.maximum());
-
-        return new MasterModelDTO(null, null, CollectionConverters.asJava(masterModel.initialization().map(Object::toString)),
-                CollectionConverters.asJava(masterModel.cosimStep().map(Object::toString)), null);
-
+        return ScenarioConfGenerator.generate(masterModel, masterModel.name());
     }
 
     @RequestMapping(value = "/executeAlgorithm", method = RequestMethod.POST, consumes = {"application/json"})
     public String executeAlgorithm(@RequestBody MasterModelWithMultiModelDTO mm) {
+
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(mm.getMasterModel().getBytes()));
+        MultiModelScenarioVerifier mms = mm.getMultiModel();
 
         return null;
     }
