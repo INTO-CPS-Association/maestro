@@ -18,6 +18,7 @@ import synthesizer.ConfParser.ScenarioConfGenerator;
 import synthesizer.LoopStrategy;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 
 @RestController
 @Component

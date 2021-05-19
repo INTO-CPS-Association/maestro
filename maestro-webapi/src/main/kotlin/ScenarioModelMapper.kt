@@ -5,40 +5,32 @@ import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier
-import scala.Enumeration
 import scala.jdk.javaapi.CollectionConverters
-import synthesizer.ConfParser.ScenarioConfGenerator
 import synthesizer.LoopStrategy
 import synthesizer.SynthesizerSimple
-import java.io.ByteArrayInputStream
-
 
 class ScenarioModelMapper {
     companion object {
-        fun scenarioModelToMasterModel(scenario: ScenarioModel, loopStrategy: Enumeration.Value): MasterModel { //
-            SynthesizerSimple(scenario, loopStrategy).apply {
-
-                //var masterModel = ScenarioLoader.load(scenario.toString().byteInputStream())
-                //TODO: loader throws exception
-
-                return MasterModel(
-                    "masterModel",
-                    scenario,
-                    null,
-                    this.synthesizeInitialization(),
-                    this.synthesizeStep(),
-                    null
-                )
-            }
+        private fun removeBraces(value: String): String {
+            return value.replace("[{}]".toRegex(), "")
         }
+
+        private val loopStrategy = LoopStrategy.maximum()
 
         fun scenarioToMasterModel(scenario: String): MasterModel {
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
-            val synthesizer = SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum())
+            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
             val initialization = synthesizer.synthesizeInitialization()
             val cosimStep = synthesizer.synthesizeStep()
 
-            return MasterModel(masterModel.name(), masterModel.scenario(), masterModel.instantiation(), initialization, cosimStep, masterModel.terminate())
+            return MasterModel(
+                masterModel.name(),
+                masterModel.scenario(),
+                masterModel.instantiation(),
+                initialization,
+                cosimStep,
+                masterModel.terminate()
+            )
 
         }
 
@@ -49,17 +41,16 @@ class ScenarioModelMapper {
                     val targetPortNameSplit = targetPortName.split(".")
                     ConnectionModel(
                         PortRef(
-                            sourcePortNameSplit[0].replace("[^A-Za-z0-9 ]".toRegex(), ""),
+                            removeBraces(sourcePortNameSplit[0]),
                             sourcePortNameSplit[2]
                         ),
                         PortRef(
-                            targetPortNameSplit[0].replace("[^A-Za-z0-9 ]".toRegex(), ""),
+                            removeBraces(targetPortNameSplit[0]),
                             targetPortNameSplit[2]
                         )
                     )
                 }
             }.flatten()
-
 
             val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration().apply {
                 this.fmus = multiModel.fmus;
@@ -75,7 +66,7 @@ class ScenarioModelMapper {
                 val inputs =
                     scalarVariables.filter { port -> port.causality.equals(ModelDescription.Causality.Input) }
                         .associate { port ->
-                            port.getName() to InputPortModel(if (multiModel.reactivity.any { portReactivity ->
+                            port.getName() to InputPortModel(if (multiModel.scenarioVerifier.reactivity.any { portReactivity ->
                                     portReactivity.key.contains(port.getName()) &&
                                             portReactivity.key.contains(entry.key) &&
                                             portReactivity.value
@@ -92,25 +83,34 @@ class ScenarioModelMapper {
                             )
                         }
 
-                entry.key.replace("[^A-Za-z0-9 ]".toRegex(), "") to FmuModel(
+                removeBraces(entry.key) to FmuModel(
                     scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(inputs).asScala()),
-                    scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()),
+                    scala.collection.immutable.Map.from(
+                        scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()
+                    ),
                     entry.value.canGetAndSetFmustate
                 )
             }
 
             val scenario = ScenarioModel(
-                scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()),
+                scala.collection.immutable.Map.from(
+                    scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()
+                ),
                 CollectionConverters.asScala(connectionModelList).toList(),
                 maxPossibleStepSize
             )
 
             val masterModel = ScenarioLoader.load(scenario.toString().byteInputStream())
-            val synthesizer = SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum())
-            val initialization = synthesizer.synthesizeInitialization()
-            val cosimStep = synthesizer.synthesizeStep()
+            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
 
-            return MasterModel(masterModel.name(), masterModel.scenario(), masterModel.instantiation(), initialization, cosimStep, masterModel.terminate())
+            return MasterModel(
+                masterModel.name(),
+                masterModel.scenario(),
+                masterModel.instantiation(),
+                synthesizer.synthesizeInitialization(),
+                synthesizer.synthesizeStep(),
+                masterModel.terminate()
+            )
         }
     }
 }
