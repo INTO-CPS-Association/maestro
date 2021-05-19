@@ -4,17 +4,23 @@ import core.*
 import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
-import org.intocps.maestro.webapi.dto.ScenarioDTO
 import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier
 import scala.Enumeration
 import scala.jdk.javaapi.CollectionConverters
+import synthesizer.ConfParser.ScenarioConfGenerator
+import synthesizer.LoopStrategy
 import synthesizer.SynthesizerSimple
+import java.io.ByteArrayInputStream
 
 
 class ScenarioModelMapper {
     companion object {
         fun scenarioModelToMasterModel(scenario: ScenarioModel, loopStrategy: Enumeration.Value): MasterModel { //
             SynthesizerSimple(scenario, loopStrategy).apply {
+
+                //var masterModel = ScenarioLoader.load(scenario.toString().byteInputStream())
+                //TODO: loader throws exception
+
                 return MasterModel(
                     "masterModel",
                     scenario,
@@ -26,61 +32,28 @@ class ScenarioModelMapper {
             }
         }
 
-        fun scenarioDTOToScenarioModel(scenarioDTO: ScenarioDTO): ScenarioModel {
-            val connectionModelList = scenarioDTO.connections.map { connection ->
-                connection.split(" -> ").let {
-                    val sourcePortNameSplit = it[0].split(".")
-                    val targetPortNameSplit = it[1].split(".")
-                    ConnectionModel(
-                        PortRef(
-                            sourcePortNameSplit[0],
-                            sourcePortNameSplit[1]
-                        ),
-                        PortRef(
-                            targetPortNameSplit[0],
-                            targetPortNameSplit[1]
-                        )
-                    )
-                }
-            }
+        fun scenarioToMasterModel(scenario: String): MasterModel {
+            val masterModel = ScenarioLoader.load(scenario.byteInputStream())
+            val synthesizer = SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum())
+            val initialization = synthesizer.synthesizeInitialization()
+            val cosimStep = synthesizer.synthesizeStep()
 
-            val fmuNameToFmuModel = scenarioDTO.fmus.entries.associate { fmuEntry ->
-                val inputs =
-                    fmuEntry.value.inputs.entries.associate { entry -> entry.key to InputPortModel(if (entry.value.reactive) Reactivity.reactive() else Reactivity.delayed()) }
-                val outputs = fmuEntry.value.outputs.entries.associate { entry ->
-                    entry.key to OutputPortModel(
-                        CollectionConverters.asScala(entry.value.dependenciesInit).toList(),
-                        CollectionConverters.asScala(entry.value.dependencies).toList()
-                    )
-                }
+            return MasterModel(masterModel.name(), masterModel.scenario(), masterModel.instantiation(), initialization, cosimStep, masterModel.terminate())
 
-
-                fmuEntry.key to FmuModel(
-                    scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(inputs).asScala()),
-                    scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()),
-                    fmuEntry.value.canRejectStep
-                )
-            }
-
-            return ScenarioModel(
-                scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()),
-                CollectionConverters.asScala(connectionModelList).toList(),
-                scenarioDTO.maxPossibleStepSize
-            )
         }
 
-        fun multiModelToScenarioModel(multiModel: MultiModelScenarioVerifier, maxPossibleStepSize: Int): ScenarioModel {
+        fun multiModelToMasterModel(multiModel: MultiModelScenarioVerifier, maxPossibleStepSize: Int): MasterModel {
             val connectionModelList = multiModel.connections.entries.map { (key, value) ->
                 val sourcePortNameSplit = key.split(".")
                 value.map { targetPortName ->
                     val targetPortNameSplit = targetPortName.split(".")
                     ConnectionModel(
                         PortRef(
-                            sourcePortNameSplit[0],
+                            sourcePortNameSplit[0].replace("[^A-Za-z0-9 ]".toRegex(), ""),
                             sourcePortNameSplit[2]
                         ),
                         PortRef(
-                            targetPortNameSplit[0],
+                            targetPortNameSplit[0].replace("[^A-Za-z0-9 ]".toRegex(), ""),
                             targetPortNameSplit[2]
                         )
                     )
@@ -119,18 +92,25 @@ class ScenarioModelMapper {
                             )
                         }
 
-                entry.key to FmuModel(
+                entry.key.replace("[^A-Za-z0-9 ]".toRegex(), "") to FmuModel(
                     scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(inputs).asScala()),
                     scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()),
                     entry.value.canGetAndSetFmustate
                 )
             }
 
-            return ScenarioModel(
+            val scenario = ScenarioModel(
                 scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()),
                 CollectionConverters.asScala(connectionModelList).toList(),
                 maxPossibleStepSize
             )
+
+            val masterModel = ScenarioLoader.load(scenario.toString().byteInputStream())
+            val synthesizer = SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum())
+            val initialization = synthesizer.synthesizeInitialization()
+            val cosimStep = synthesizer.synthesizeStep()
+
+            return MasterModel(masterModel.name(), masterModel.scenario(), masterModel.instantiation(), initialization, cosimStep, masterModel.terminate())
         }
     }
 }
