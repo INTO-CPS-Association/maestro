@@ -17,6 +17,7 @@ import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
+import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.maestro2.dto.*;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
@@ -154,8 +155,17 @@ public class Maestro2Broker {
 
     }
 
+    public void generateSpecification(ScenarioConfiguration config) throws Exception {
+        mabl.generateSpec(config);
+        postGenerate();
+    }
+
     public void generateSpecification(MaBLTemplateConfiguration config) throws Exception {
         mabl.generateSpec(config);
+        postGenerate();
+    }
+
+    private void postGenerate() throws Exception {
         mabl.expand();
         mabl.dump(workingDirectory);
         logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));

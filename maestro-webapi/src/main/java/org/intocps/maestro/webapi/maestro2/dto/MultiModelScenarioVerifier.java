@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MultiModelScenarioVerifier extends MultiModel{
-    @JsonProperty("ScenarioVerifier")
+    @JsonProperty("scenarioVerifier")
     public final ScenarioVerifier scenarioVerifier;
 
     public MultiModelScenarioVerifier(@JsonProperty("fmus") Map<String, String> fmus,
@@ -20,13 +20,17 @@ public class MultiModelScenarioVerifier extends MultiModel{
         @JsonProperty("reactivity")
         public final Map<String, Boolean> reactivity;
 
-        @JsonProperty("uppaal-verification")
-        public final boolean verify;
+        @JsonProperty("verification")
+        public final boolean verification;
 
+        @JsonProperty("visualization")
+        public final boolean visualization;
 
-        public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Boolean> reactivity, @JsonProperty("uppaal-verification") boolean verify) {
+        public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Boolean> reactivity, @JsonProperty("verification") boolean verification,
+                @JsonProperty("visualization") boolean visualization) {
             this.reactivity = reactivity;
-            this.verify = verify;
+            this.verification = verification;
+            this.visualization = visualization;
         }
     }
 }

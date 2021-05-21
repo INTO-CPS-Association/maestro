@@ -26,6 +26,7 @@ import org.intocps.maestro.plugin.IMaestroVerifier;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
+import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -293,22 +294,34 @@ public class Mabl {
         }
     }
 
-    public void generateSpec(MaBLTemplateConfiguration configuration) throws Exception {
-
-        if (configuration == null) {
-            throw new Exception("No configuration");
-        }
-        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+    private void processTemplate(ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit,
+            Fmi2SimulationEnvironment simulationEnvironment) throws Exception {
         List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
         List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
-        String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
-        environment = configuration.getSimulationEnvironment();
+        String template = PrettyPrinter.print(aSimulationSpecificationCompilationUnit);
+        environment = simulationEnvironment;
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
         moduleDocuments.add(document);
         document = this.mergeDocuments(moduleDocuments);
 
         postProcessParsing();
+    }
+
+    public void generateSpec(ScenarioConfiguration configuration) throws Exception {
+        if (configuration == null) {
+            throw new Exception("No configuration");
+        }
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+        processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
+    }
+
+    public void generateSpec(MaBLTemplateConfiguration configuration) throws Exception {
+        if (configuration == null) {
+            throw new Exception("No configuration");
+        }
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+        processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
     }
 
     //FIXME should be private
