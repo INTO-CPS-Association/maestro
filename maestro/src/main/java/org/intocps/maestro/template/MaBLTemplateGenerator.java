@@ -6,15 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.core.api.StepAlgorithm;
 import org.intocps.maestro.core.api.VariableStepAlgorithm;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +24,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
-import static org.intocps.maestro.ast.MableAstFactory.newAStringLiteralExp;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
@@ -155,8 +152,9 @@ public class MaBLTemplateGenerator {
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                                 MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
                                 Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
-                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(StringEscapeUtils
-                                                .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
+                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(
+                                                StringEscapeUtils
+                                                        .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
                 break;
 
             default:
@@ -205,6 +203,7 @@ public class MaBLTemplateGenerator {
         HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
         List<PStm> freeInstanceStatements = new ArrayList<>();
+        List<PStm> terminateStatements = new ArrayList<>();
         Map<String, String> instaceNameToInstanceLex = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Find parent lex
@@ -217,6 +216,8 @@ public class MaBLTemplateGenerator {
 
             stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
                     templateConfiguration.getLoggingOn(), entry.getValue().getFaultInject()));
+
+            terminateStatements.add(createFMUTerminateStatement(instanceLexName, entry.getValue().getFaultInject()));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex, entry.getValue().getFaultInject()));
         });
 
@@ -259,6 +260,9 @@ public class MaBLTemplateGenerator {
             stmMaintainer.addAll(algorithmStatements.body);
         }
 
+        // Terminate instances
+        stmMaintainer.addAllCleanup(terminateStatements);
+
         // Free instances
         stmMaintainer.addAllCleanup(freeInstanceStatements);
 
@@ -287,6 +291,7 @@ public class MaBLTemplateGenerator {
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
         return unit;
     }
+
 
     private static Collection<? extends PStm> createStatusVariables() {
         List<PStm> list = new ArrayList<>();
@@ -372,6 +377,14 @@ public class MaBLTemplateGenerator {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE), MableAstFactory.newABoleanPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
+    }
+
+    private static PStm createFMUTerminateStatement(String instanceLexName, Optional<FaultInject> faultInject) {
+        if (faultInject.isPresent()) {
+            instanceLexName = instanceLexName + "_original";
+        }
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"), Arrays.asList()));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName, Optional<FaultInject> faultInject) {
