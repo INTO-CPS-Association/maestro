@@ -24,4 +24,4 @@ data class MasterModelDTO(
     @JsonProperty("terminate") val terminate: String?,
 )
 
-data class MasterModelWithMultiModelDTO(@JsonProperty("masterModel") val masterModel: String, @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier)
+data class MasterAndMultiModelDTO(@JsonProperty("masterModel") val masterModel: String, @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier)

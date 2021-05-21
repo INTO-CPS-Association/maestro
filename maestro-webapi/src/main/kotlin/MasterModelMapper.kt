@@ -9,7 +9,7 @@ import scala.jdk.javaapi.CollectionConverters
 import synthesizer.LoopStrategy
 import synthesizer.SynthesizerSimple
 
-class ScenarioModelMapper {
+class MasterModelMapper {
     companion object {
         private fun removeBraces(value: String): String {
             return value.replace("[{}]".toRegex(), "")
@@ -18,23 +18,27 @@ class ScenarioModelMapper {
         private val loopStrategy = LoopStrategy.maximum()
 
         fun scenarioToMasterModel(scenario: String): MasterModel {
+            // Load master model without algorithm
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
+
+            // Generate algorithm part of the master model
             val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
             val initialization = synthesizer.synthesizeInitialization()
-            val cosimStep = synthesizer.synthesizeStep()
+            val coSimStep = synthesizer.synthesizeStep()
 
             return MasterModel(
                 masterModel.name(),
                 masterModel.scenario(),
                 masterModel.instantiation(),
                 initialization,
-                cosimStep,
+                coSimStep,
                 masterModel.terminate()
             )
 
         }
 
         fun multiModelToMasterModel(multiModel: MultiModelScenarioVerifier, maxPossibleStepSize: Int): MasterModel {
+            // Map multi model connections type to scenario connections type
             val connectionModelList = multiModel.connections.entries.map { (key, value) ->
                 val sourcePortNameSplit = key.split(".")
                 value.map { targetPortName ->
@@ -52,12 +56,14 @@ class ScenarioModelMapper {
                 }
             }.flatten()
 
+            // Instantiate a simulationConfiguration to be able to access fmu model descriptions
             val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration().apply {
                 this.fmus = multiModel.fmus;
                 this.connections = multiModel.connections;
                 if (this.fmus == null) throw Exception("Missing FMUs from multi-model")
             }
 
+            // Map fmus to fmu models
             val fmuNameToFmuModel = Fmi2SimulationEnvironment.of(
                 simulationConfiguration,
                 null
@@ -100,16 +106,15 @@ class ScenarioModelMapper {
                 maxPossibleStepSize
             )
 
-            val masterModel = ScenarioLoader.load(scenario.toString().byteInputStream())
-            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
-
+            // Generate the master model from the scenario
+            val synthesizer = SynthesizerSimple(scenario, loopStrategy)
             return MasterModel(
-                masterModel.name(),
-                masterModel.scenario(),
-                masterModel.instantiation(),
+                "fromMultiModel",
+                scenario,
+                CollectionConverters.asScala(listOf<InstantiationInstruction>()).toList(),
                 synthesizer.synthesizeInitialization(),
                 synthesizer.synthesizeStep(),
-                masterModel.terminate()
+                CollectionConverters.asScala(listOf<TerminationInstruction>()).toList()
             )
         }
     }
