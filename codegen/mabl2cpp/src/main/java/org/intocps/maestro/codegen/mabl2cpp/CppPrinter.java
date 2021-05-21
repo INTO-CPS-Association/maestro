@@ -183,7 +183,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
         sb.append("#import <stdint.h>\n");
         sb.append("#import <string>\n");
-        node.getImports().stream()
+        node.getImports().stream().filter(im -> !im.getText().equals("FMI2Component"))
                 .forEach(im -> sb.append("#import \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
         sb.append("void simulate()\n");
         node.getBody().apply(this, question);
@@ -306,7 +306,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
     @Override
     public void caseAStringPrimitiveType(AStringPrimitiveType node, Integer question) throws AnalysisException {
-        sb.append("std::string");
+        sb.append("const char*");
     }
 
     @Override
