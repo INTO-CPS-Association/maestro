@@ -18,7 +18,6 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -29,11 +28,10 @@ import scala.jdk.javaapi.CollectionConverters;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.net.URI;
-import java.util.*;
 import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -207,7 +205,7 @@ public class MaBLTemplateGenerator {
         Map<String, ComponentVariableFmi2Api> fmuInstances = fmus.stream()
                 .collect(Collectors.toMap(fmu -> fmu.getName().replaceAll("[{}]", ""), fmu -> fmu.instantiate(fmu.getName().replaceAll("[{}]", ""))));
 
-        //TODO: Check that all fmus can get and set states and that the scenario agrees (Can reject step).
+        //TODO: Check that all fmus can get and set states and that the scenario agrees (Can reject step)?
 
         MathBuilderFmi2Api math = builder.getMathBuilder();
         LoggerFmi2Api logger = builder.getLogger();

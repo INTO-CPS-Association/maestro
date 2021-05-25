@@ -7,7 +7,6 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.MasterModelMapper;
-import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.dto.MasterAndMultiModelDTO;
 import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,6 @@ import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 
 @RestController
 @Component
