@@ -18,6 +18,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -32,6 +33,7 @@ import java.util.*;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -208,25 +210,39 @@ public class MaBLTemplateGenerator {
         //TODO: Check that all fmus can get and set states and that the scenario agrees (Can reject step).
 
         MathBuilderFmi2Api math = builder.getMathBuilder();
-
         LoggerFmi2Api logger = builder.getLogger();
 
         BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
-
+        // generate initialization section
         mapInitializationActionsToMaBL(CollectionConverters.asJava(masterModel.scenario().connections()),
                 CollectionConverters.asJava(masterModel.initialization()), fmuInstances, dynamicScope, math, logger, booleanLogic);
 
-        DoubleVariableFmi2Api currentCommunicationPoint, defaultCommunicationStepSize;
-        currentCommunicationPoint = dynamicScope.store("currentCommunicationPoint", 0.0);
-        defaultCommunicationStepSize = dynamicScope.store("defaultCommunicationStepSize", (double) masterModel.scenario().maxPossibleStepSize());
+        // generate coSim step loop section
+        DoubleVariableFmi2Api currentCommunicationPoint = dynamicScope.store("current_communication_point", 0.0);
+        //TODO: Is maxPossibleStepSize == defaultCommunicationStepSize?? Should stepsize be set to the lowest step size taken during a CoSimStep or
+        // how should it be handled?
+        DoubleVariableFmi2Api stepSize = dynamicScope.store("step_size", (double) masterModel.scenario().maxPossibleStepSize());
+        DoubleVariableFmi2Api coSimEndTime = dynamicScope.store("coSim_end_time", 10.0);
 
-        //TODO: Setup simulation step loop
+        ScopeFmi2Api coSimStepScope = dynamicScope.enterWhile(currentCommunicationPoint.toMath().lessThan(coSimEndTime));
+        ArrayVariableFmi2Api<Double> fmuCommunicationPoints =
+                dynamicScope.store("fmu_communication_points", new Double[fmuInstances.entrySet().size()]);
 
-        mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(masterModel.scenario().connections()),
-                CollectionConverters.asJava(masterModel.cosimStep()), fmuInstances, dynamicScope, math, logger, booleanLogic,
-                currentCommunicationPoint, defaultCommunicationStepSize);
 
-        //TODO: unload fmus
+        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuStepSizes =
+                mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(masterModel.scenario().connections()),
+                        CollectionConverters.asJava(masterModel.cosimStep()), fmuInstances, dynamicScope, math, logger, booleanLogic,
+                        currentCommunicationPoint, stepSize, Set.of());
+
+        List<Fmi2Builder.DoubleVariable<PStm>> stepSizes = fmuStepSizes.values().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+        for (int i = 0; i < stepSizes.size(); i++) {
+            fmuCommunicationPoints.items().get(i).setValue(new DoubleExpressionValue(stepSizes.get(i).getExp()));
+        }
+
+        stepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationPoint));
+        coSimStepScope.leave();
+
+        fmus.forEach(fmu -> fmu.unload(dynamicScope));
 
         //org.intocps.maestro.ast.display.PrettyPrinter.print(builder.build());
 
@@ -239,6 +255,7 @@ public class MaBLTemplateGenerator {
 
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsToGet = new ArrayList<>();
 
+        //TODO: Handle enter and exit instructions
         initializationInstructions.forEach(instruction -> {
             if (instruction instanceof InitGet) {
                 handleGetInstruction(((InitGet) instruction).port(), portsToGet, fmuInstances);
@@ -255,13 +272,14 @@ public class MaBLTemplateGenerator {
         });
     }
 
-    private static void mapCoSimStepInstructionsToMaBL(List<ConnectionModel> connections, List<CosimStepInstruction> coSimStepInstructions,
-            Map<String, ComponentVariableFmi2Api> fmuInstances, DynamicActiveBuilderScope dynamicScope, MathBuilderFmi2Api math, LoggerFmi2Api logger,
-            BooleanBuilderFmi2Api booleanLogic, DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api defaultCommunicationStepSize) {
+    private static Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> mapCoSimStepInstructionsToMaBL(
+            List<ConnectionModel> connections, List<CosimStepInstruction> coSimStepInstructions, Map<String, ComponentVariableFmi2Api> fmuInstances,
+            DynamicActiveBuilderScope dynamicScope, MathBuilderFmi2Api math, LoggerFmi2Api logger, BooleanBuilderFmi2Api booleanLogic,
+            DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api stepSize, Set<Fmi2Builder.StateVariable<PStm>> priorFmuStates) {
 
+        //TODO: Handle tentative instructions
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsToGet = new ArrayList<>();
-        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuSteps = new HashMap<>();
-        List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
+        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmusWithStep = new HashMap<>();
         coSimStepInstructions.forEach(instruction -> {
             if (instruction instanceof core.Set) {
                 handleSetInstruction(((core.Set) instruction).port(), connections, portsToGet, fmuInstances);
@@ -272,28 +290,60 @@ public class MaBLTemplateGenerator {
             } else if (instruction instanceof SetTentative) {
 
             } else if (instruction instanceof Step) {
-                handleStepInstruction((Step) instruction, fmuInstances, fmuSteps, currentCommunicationPoint, defaultCommunicationStepSize);
+                handleStepInstruction((Step) instruction, fmuInstances, fmusWithStep, currentCommunicationPoint, stepSize);
 
             } else if (instruction instanceof SaveState) {
                 String instanceName = ((SaveState) instruction).fmu();
                 try {
-                    fmuStates.add(fmuInstances.get(instanceName).getState());
+                    priorFmuStates.add(fmuInstances.get(instanceName).getState());
                 } catch (XPathExpressionException e) {
                     throw new RuntimeException("Could not get state for fmu instance: " + instanceName);
                 }
             } else if (instruction instanceof RestoreState) {
-                fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                String restoreName = ((RestoreState) instruction).fmu();
+                priorFmuStates.stream().filter(state -> state.getName().equals(restoreName)).findAny().ifPresent(Fmi2Builder.StateVariable::set);
+
             } else if (instruction instanceof AlgebraicLoop) {
                 handleAlgebraicLoopCoSimStepInstruction((AlgebraicLoop) instruction, dynamicScope, connections, fmuInstances, math, logger,
-                        booleanLogic);
+                        booleanLogic, currentCommunicationPoint, stepSize, priorFmuStates);
             } else if (instruction instanceof StepLoop) {
-
+                handleStepLoopCoSimStepInstruction((StepLoop) instruction, dynamicScope, connections, fmuInstances, math, logger, booleanLogic,
+                        currentCommunicationPoint, stepSize, priorFmuStates);
             }
         });
+
+        return fmusWithStep;
+    }
+
+    private static void handleStepLoopCoSimStepInstruction(StepLoop instruction, DynamicActiveBuilderScope dynamicScope,
+            List<ConnectionModel> connections, Map<String, ComponentVariableFmi2Api> fmuInstances, MathBuilderFmi2Api math, LoggerFmi2Api logger,
+            BooleanBuilderFmi2Api booleanLogic, DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api defaultCommunicationStepSize,
+            Set<Fmi2Builder.StateVariable<PStm>> priorFmuStates) {
+
+        BooleanVariableFmi2Api stepAccepted = dynamicScope.store("stepAccepted", false);
+        ScopeFmi2Api stepAcceptedScope = dynamicScope.enterWhile(stepAccepted.toPredicate().not());
+
+        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmusWithSteps =
+                mapCoSimStepInstructionsToMaBL(connections, CollectionConverters.asJava(instruction.iterate()), fmuInstances, dynamicScope, math,
+                        logger, booleanLogic, currentCommunicationPoint, defaultCommunicationStepSize, Set.of());
+
+
+        stepAccepted.setValue(booleanLogic.allTrue("all_fmus_accepted_step_size",
+                fmusWithSteps.entrySet().stream().filter(entry -> instruction.untilStepAccept().contains(entry.getKey().getName()))
+                        .map(entry -> entry.getValue().getKey()).collect(Collectors.toList())));
+
+        dynamicScope.enterIf(stepAccepted.toPredicate().not()).enterThen();
+        {
+            mapCoSimStepInstructionsToMaBL(connections, CollectionConverters.asJava(instruction.ifRetryNeeded()), fmuInstances, dynamicScope, math,
+                    logger, booleanLogic, currentCommunicationPoint, defaultCommunicationStepSize, priorFmuStates);
+            dynamicScope.leave();
+        }
+
+        stepAcceptedScope.leave();
     }
 
     private static void handleStepInstruction(Step instruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
-            Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuSteps,
+            Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmusWithStep,
             DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api defaultCommunicationStepSize) {
 
         ComponentVariableFmi2Api instance = fmuInstances.get(instruction.fmu());
@@ -304,64 +354,67 @@ public class MaBLTemplateGenerator {
                     new DoubleVariableFmi2Api(null, null, null, null, DoubleExpressionValue.of(((AbsoluteStepSize) instruction.by()).H()).getExp()));
         } else if (instruction.by() instanceof RelativeStepSize) {
             ComponentVariableFmi2Api fmuInstance = fmuInstances.get(((RelativeStepSize) instruction.by()).fmu());
-            step = instance.step(currentCommunicationPoint, fmuSteps.get(fmuInstance).getValue());
+            step = instance.step(currentCommunicationPoint, fmusWithStep.get(fmuInstance).getValue());
             //TODO: Handle if fmu can not be located?
 
         } else {
             step = instance.step(currentCommunicationPoint, defaultCommunicationStepSize);
         }
 
-        fmuSteps.put(instance, step);
+        fmusWithStep.put(instance, step);
     }
 
     private static void handleAlgebraicLoopCoSimStepInstruction(AlgebraicLoop instruction, DynamicActiveBuilderScope dynamicScope,
             List<ConnectionModel> connections, Map<String, ComponentVariableFmi2Api> fmuInstances, MathBuilderFmi2Api math, LoggerFmi2Api logger,
-            BooleanBuilderFmi2Api booleanLogic) {
+            BooleanBuilderFmi2Api booleanLogic, DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api defaultCommunicationStepSize,
+            Set<Fmi2Builder.StateVariable<PStm>> priorFmuStates) {
 
-        //TODO: Handle hardcoded values
-        DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 0.1);
-        DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 0.1);
-        BooleanVariableFmi2Api convergenceReached = dynamicScope.store("has_converged", false);
-        IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
-        ScopeFmi2Api stabilisationScope = dynamicScope.enterWhile(
-                convergenceReached.toPredicate().not().and(stabilisation_loop_max_iterations.toMath().greaterThan(IntExpressionValue.of(0))));
+        //TODO: Fix hardcoded values
+        DoubleVariableFmi2Api absTol = dynamicScope.store("coSimStep_absolute_tolerance", 0.1);
+        DoubleVariableFmi2Api relTol = dynamicScope.store("coSimStep_relative_tolerance", 0.1);
+        BooleanVariableFmi2Api convergenceReached = dynamicScope.store("coSimStep_has_converged", false);
+        IntVariableFmi2Api convergence_loop_tries = dynamicScope.store("convergence_loop_tries", 5);
+        ScopeFmi2Api convergenceScope = dynamicScope
+                .enterWhile(convergenceReached.toPredicate().not().and(convergence_loop_tries.toMath().greaterThan(IntExpressionValue.of(0))));
 
-        //TODO: Handle step-get-set sequence
+
+        mapCoSimStepInstructionsToMaBL(connections, CollectionConverters.asJava(instruction.iterate()), fmuInstances, dynamicScope, math, logger,
+                booleanLogic, currentCommunicationPoint, defaultCommunicationStepSize, Set.of());
 
         generateCheckForConvergenceMaBLSection(absTol, relTol, convergenceReached, CollectionConverters.asJava(instruction.untilConverged()),
                 fmuInstances, dynamicScope, math, logger, booleanLogic);
 
-        stabilisationScope.leave();
 
+        dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
+        {
+            mapCoSimStepInstructionsToMaBL(connections, CollectionConverters.asJava(instruction.ifRetryNeeded()), fmuInstances, dynamicScope, math,
+                    logger, booleanLogic, currentCommunicationPoint, defaultCommunicationStepSize, priorFmuStates);
+            convergence_loop_tries.decrement();
+            dynamicScope.leave();
+        }
+        convergenceScope.leave();
     }
 
     private static void handleAlgebraicLoopInitializationInstruction(AlgebraicLoopInit instruction, DynamicActiveBuilderScope dynamicScope,
             List<ConnectionModel> connections, Map<String, ComponentVariableFmi2Api> fmuInstances, MathBuilderFmi2Api math, LoggerFmi2Api logger,
             BooleanBuilderFmi2Api booleanLogic) {
 
-        //TODO: Handle hardcoded values
-        DoubleVariableFmi2Api absTol = dynamicScope.store("absolute_tolerance", 0.1);
-        DoubleVariableFmi2Api relTol = dynamicScope.store("relative_tolerance", 0.1);
-        BooleanVariableFmi2Api convergenceReached = dynamicScope.store("has_converged", false);
-        IntVariableFmi2Api stabilisation_loop_max_iterations = dynamicScope.store("stabilisation_loop_max_iterations", 5);
-        ScopeFmi2Api stabilisationScope = dynamicScope.enterWhile(
-                convergenceReached.toPredicate().not().and(stabilisation_loop_max_iterations.toMath().greaterThan(IntExpressionValue.of(0))));
+        //TODO: Fix hardcoded values
+        DoubleVariableFmi2Api absTol = dynamicScope.store("initialization_absolute_tolerance", 0.1);
+        DoubleVariableFmi2Api relTol = dynamicScope.store("initialization_relative_tolerance", 0.1);
+        BooleanVariableFmi2Api convergenceReached = dynamicScope.store("initialization_has_converged", false);
+        IntVariableFmi2Api convergence_loop_tries = dynamicScope.store("convergence_loop_tries", 5);
+        ScopeFmi2Api convergenceScope = dynamicScope
+                .enterWhile(convergenceReached.toPredicate().not().and(convergence_loop_tries.toMath().greaterThan(IntExpressionValue.of(0))));
 
-        List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsToGet = new ArrayList<>();
-        CollectionConverters.asJava(instruction.iterate()).forEach(iterateInstruction -> {
-            if (iterateInstruction instanceof InitGet) {
-                handleGetInstruction(((InitGet) iterateInstruction).port(), portsToGet, fmuInstances);
-            }
-
-            if (iterateInstruction instanceof InitSet) {
-                handleSetInstruction(((InitSet) iterateInstruction).port(), connections, portsToGet, fmuInstances);
-            }
-        });
+        mapInitializationActionsToMaBL(connections, CollectionConverters.asJava(instruction.iterate()), fmuInstances, dynamicScope, math, logger,
+                booleanLogic);
 
         generateCheckForConvergenceMaBLSection(absTol, relTol, convergenceReached, CollectionConverters.asJava(instruction.untilConverged()),
                 fmuInstances, dynamicScope, math, logger, booleanLogic);
 
-        stabilisationScope.leave();
+        convergence_loop_tries.decrement();
+        convergenceScope.leave();
     }
 
     private static void generateCheckForConvergenceMaBLSection(DoubleVariableFmi2Api absTol, DoubleVariableFmi2Api relTol,
@@ -388,13 +441,13 @@ public class MaBLTemplateGenerator {
     }
 
     private static void handleSetInstruction(PortRef portRef, List<ConnectionModel> connections,
-            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsToGet, Map<String, ComponentVariableFmi2Api> fmuInstances) {
+            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet, Map<String, ComponentVariableFmi2Api> fmuInstances) {
         Optional<ConnectionModel> connectionModel = connections.stream()
                 .filter(connection -> connection.trgPort().port().equals(portRef.port()) && connection.trgPort().fmu().equals(portRef.fmu()))
                 .findAny();
 
         if (connectionModel.isPresent()) {
-            Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sourcePortWithValue = portsToGet.stream()
+            Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sourcePortWithValue = portsWithGet.stream()
                     .filter(entry -> entry.getKey().getLogScalarVariableName().contains(connectionModel.get().srcPort().fmu()) &&
                             entry.getKey().getLogScalarVariableName().contains(connectionModel.get().srcPort().port())).findAny();
 
