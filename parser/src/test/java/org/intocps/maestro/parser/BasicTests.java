@@ -4,9 +4,9 @@ import org.antlr.v4.runtime.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.INode;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 public class BasicTests {
 
     public static Collection<Object[]> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "basic_tests").toFile().listFiles()))
+        return Arrays.stream(Paths.get("src", "test", "resources", "basic_tests").toFile().listFiles()).sorted()
                 .map(f -> new Object[]{f.getName(), f}).collect(Collectors.toList());
     }
 

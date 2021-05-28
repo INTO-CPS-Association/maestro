@@ -32,7 +32,7 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
         if (!valid) {
             throw new IllegalStateException();
         }
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(owner.getReferenceExp().clone(), "setState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -53,7 +53,7 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
             throw new IllegalStateException();
         }
 
-        AAssigmentStm stm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(owner.getReferenceExp().clone(), "freeState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {

@@ -2,8 +2,8 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.node.ABlockStm;
 import org.intocps.maestro.ast.node.ALocalVariableStm;
+import org.intocps.maestro.ast.node.SBlockStm;
 
 import java.util.Optional;
 
@@ -16,11 +16,11 @@ public class ExpansionUtilities {
      * @param maxAncestorLevel
      * @return
      */
-    public static Optional<AVariableDeclaration> getVariableDeclaration(LexIdentifier name, ABlockStm containingBlock, int maxAncestorLevel) {
+    public static Optional<AVariableDeclaration> getVariableDeclaration(LexIdentifier name, SBlockStm containingBlock, int maxAncestorLevel) {
         return getVariableDeclaration(name, containingBlock, maxAncestorLevel, 0);
     }
 
-    public static Optional<AVariableDeclaration> getVariableDeclaration(LexIdentifier name, ABlockStm containingBlock, int maxAncestorLevel,
+    public static Optional<AVariableDeclaration> getVariableDeclaration(LexIdentifier name, SBlockStm containingBlock, int maxAncestorLevel,
             int currentAncestorLevel) {
         Optional<AVariableDeclaration> first =
                 containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
@@ -29,7 +29,7 @@ public class ExpansionUtilities {
         if (first.isPresent() || maxAncestorLevel == currentAncestorLevel) {
             return first;
         } else {
-            return getVariableDeclaration(name, containingBlock.getAncestor(ABlockStm.class), maxAncestorLevel, currentAncestorLevel + 1);
+            return getVariableDeclaration(name, containingBlock.getAncestor(SBlockStm.class), maxAncestorLevel, currentAncestorLevel + 1);
         }
     }
 }

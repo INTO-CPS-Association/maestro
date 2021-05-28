@@ -1,0 +1,18 @@
+int global=0;
+
+||{
+    //parallel branch 1
+    {
+        int c=10000;
+        while(c>0)
+        {
+            global=global+1;
+            c=c-1;
+        }
+    }
+
+    //parallel branch 2
+    global=999;
+}
+
+assert.assertNotEquals(global, 999);

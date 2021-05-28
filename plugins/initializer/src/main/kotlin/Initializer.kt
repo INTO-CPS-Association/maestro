@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import org.intocps.maestro.ast.*
 import org.intocps.maestro.ast.display.PrettyPrinter
-import org.intocps.maestro.ast.node.ABlockStm
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
 import org.intocps.maestro.ast.node.PExp
 import org.intocps.maestro.ast.node.PStm
+import org.intocps.maestro.ast.node.SBlockStm
 import org.intocps.maestro.core.Framework
 import org.intocps.maestro.core.messages.IErrorReporter
 import org.intocps.maestro.fmi.ModelDescription
@@ -152,7 +152,7 @@ class Initializer : IMaestroExpansionPlugin {
             val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
 
             //Verification against prolog should only be done if it turned on and there is no loops
-            if(this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
+            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
                 initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
 
 
@@ -183,7 +183,7 @@ class Initializer : IMaestroExpansionPlugin {
 
             instructions.forEach { i -> i.perform() }
 
-            if(stabilisationScope != null){
+            if (stabilisationScope != null) {
                 stabilisationLoop!!.decrement();
                 stabilisationScope.activate()
                 stabilisationScope.leave();
@@ -195,7 +195,7 @@ class Initializer : IMaestroExpansionPlugin {
             //Exit initialization Mode
             fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
 
-            val algorithm = builder.buildRaw() as ABlockStm
+            val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
 
             println(PrettyPrinter.print(algorithm))
@@ -243,7 +243,7 @@ class Initializer : IMaestroExpansionPlugin {
                 if (value is Int) {
                     value = value.toDouble()
                 }
-                val b : Double = value as Double
+                val b: Double = value as Double
                 comp.set(port, DoubleExpressionValue.of(b))
             }
             ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
@@ -255,9 +255,9 @@ class Initializer : IMaestroExpansionPlugin {
     }
 
     private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: ModelDescription.ScalarVariable) {
-        if(portsAlreadySet.containsKey(comp)){
+        if (portsAlreadySet.containsKey(comp)) {
             portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
-        }else{
+        } else {
             portsAlreadySet[comp] = setOf(port)
         }
     }
@@ -274,8 +274,9 @@ class Initializer : IMaestroExpansionPlugin {
             fmuCoSimInstruction(fmuInstances, p)
         } else {
             val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, c) }
-            val outputPorts = ports.filter { p -> p.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output }
-                .map { i -> i.scalarVariable }
+            val outputPorts =
+                ports.filter { p -> p.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output }
+                    .map { i -> i.scalarVariable }
             LoopSimInstruction(
                 dynamicScope,
                 maxConvergeAttempts!!,
@@ -429,7 +430,8 @@ class Initializer : IMaestroExpansionPlugin {
 
         init {
             val mapper = ObjectMapper()
-            val convertParameters: Map<String, Any>? = if (parameters == null) null else mapper.convertValue(parameters, Map::class.java) as Map<String, Any>
+            val convertParameters: Map<String, Any>? =
+                if (parameters == null) null else mapper.convertValue(parameters, Map::class.java) as Map<String, Any>
 
             modelParameters =
                 convertParameters?.map { (key, value) -> ModelParameter(ModelConnection.Variable.parse(key), value) }
@@ -459,7 +461,7 @@ class Initializer : IMaestroExpansionPlugin {
         ): Any {
             val parameterValue =
                 modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
-            return if(parameterValue != null) parameterValue.value else sv.type.start
+            return if (parameterValue != null) parameterValue.value else sv.type.start
         }
     }
 }

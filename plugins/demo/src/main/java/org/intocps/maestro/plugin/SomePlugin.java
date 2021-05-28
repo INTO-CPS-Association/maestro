@@ -1,10 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.ALessBinaryExp;
-import org.intocps.maestro.ast.AModuleDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -45,7 +42,7 @@ public class SomePlugin implements IMaestroExpansionPlugin {
         if (config instanceof DemoConfig) {
             return Collections.singletonList(new AWhileStm(
                     new ALessBinaryExp(new AIntLiteralExp(((DemoConfig) config).repeats), new AIntLiteralExp(((DemoConfig) config).repeats)),
-                    new ABlockStm()));
+                    new ABasicBlockStm()));
         }
         throw new ExpandException("Bad config type");
     }

@@ -3,10 +3,10 @@ package org.intocps.maestro.optimization;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
-import org.intocps.maestro.ast.node.ABlockStm;
 import org.intocps.maestro.ast.node.ALocalVariableStm;
 import org.intocps.maestro.ast.node.INode;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.SBlockStm;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,8 +22,7 @@ public class UnusedDeclarationOptimizer extends DepthFirstAnalysisAdaptor {
         LexIdentifier name = node.getDeclaration().getName();
         //so this is a statement and for it to be used anywhere it must be in a block so lets search the remainder of the block
 
-        //FIXME what about concurrent blocks
-        ABlockStm block = node.getAncestor(ABlockStm.class);
+        SBlockStm block = node.getAncestor(SBlockStm.class);
         if (block != null) {
 
             boolean used = false;
