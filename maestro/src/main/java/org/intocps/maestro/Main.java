@@ -75,6 +75,8 @@ public class Main {
         Option cgOpt =
                 Option.builder("cg").longOpt("codegen").hasArg(true).argName("name").desc("One of the code generators supported: [cpp]").build();
 
+        Option optimizationDisableOpt = Option.builder("nop").longOpt("disable-optimize").desc("Disable optimization").build();
+
         Options options = new Options();
         options.addOption(helpOpt);
         options.addOption(verboseOpt);
@@ -86,6 +88,7 @@ public class Main {
         options.addOption(expansionLimit);
         options.addOption(verifyOpt);
         options.addOption(cgOpt);
+        options.addOption(optimizationDisableOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -182,6 +185,10 @@ public class Main {
         if (cmd.hasOption(dumpLocation.getOpt())) {
             mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
             workingDirectory = new File(cmd.getOptionValue(dumpLocation.getOpt()));
+        }
+
+        if (!cmd.hasOption(optimizationDisableOpt.getOpt())) {
+            mabl.optimize();
         }
 
         Map.Entry<Boolean, Map<INode, PType>> typeCheckResult = mabl.typeCheck();
