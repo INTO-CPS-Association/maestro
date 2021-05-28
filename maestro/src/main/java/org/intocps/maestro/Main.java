@@ -232,16 +232,16 @@ public class Main {
      * @return
      */
     private static boolean hasErrorAndPrintErrorsAndWarnings(boolean verbose, IErrorReporter reporter) {
-        if (reporter.getErrorCount() > 0) {
-            reporter.printErrors(new PrintWriter(System.err, true));
-            return true;
-        }
-
         if (reporter.getWarningCount() > 0) {
             if (verbose) {
                 reporter.printWarnings(new PrintWriter(System.out, true));
             }
         }
+        if (reporter.getErrorCount() > 0) {
+            reporter.printErrors(new PrintWriter(System.err, true));
+            return true;
+        }
+
         return false;
     }
 
@@ -270,8 +270,8 @@ public class Main {
         initialize.put("parameters", simulationConfiguration.parameters);
 
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
-                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn).
-                setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
+                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)
+                .setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
                         ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize(), 0.0));
 
 
