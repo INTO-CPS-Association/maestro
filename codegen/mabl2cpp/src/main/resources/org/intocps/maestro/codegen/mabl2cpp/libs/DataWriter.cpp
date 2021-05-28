@@ -11,7 +11,7 @@ void DataWriterImpl::close() {
       myfile.close();
 
 }
-void * DataWriterImpl::writeHeader( int size,std::string * headers) {
+DataWriterConfig DataWriterImpl::writeHeader( int size,const char* * headers) {
 
 
      myfile.open ("outputs.csv");
@@ -28,7 +28,7 @@ return nullptr;
 
 }
 
-void DataWriterImpl::writeDataPoint(const char * fmt,void *,  double time, ...) {
+void DataWriterImpl::writeDataPoint(const char * fmt,DataWriterConfig,  double time, ...) {
     va_list args;
     va_start(args, time);
 
