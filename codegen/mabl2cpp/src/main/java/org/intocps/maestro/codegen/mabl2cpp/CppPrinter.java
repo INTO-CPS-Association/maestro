@@ -56,12 +56,16 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     @Override
     public void caseAUnloadExp(AUnloadExp node, Integer question) throws AnalysisException {
         //        sb.append("unload(");
-        //        for (int i = 0; i < node.getArgs().size(); i++) {
-        //            if (i > 0) {
-        //                sb.append(", ");
-        //            }
-        //            node.getArgs().get(i).apply(this, question);
-        //        }
+        for (int i = 0; i < node.getArgs().size(); i++) {
+
+            sb.append("delete ");
+
+            node.getArgs().get(i).apply(this, question);
+
+            sb.append(";\n" + indent(question));
+            node.getArgs().get(i).apply(this, question);
+            sb.append(" = nullptr");
+        }
         //        sb.append(");");
     }
 
