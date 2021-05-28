@@ -35,7 +35,20 @@ FMI2 load_FMI2(const char *guid, const char *path) {
     fmu->resource_path = fmuDest;
     fmu->resource_path.append("/resources");
     std::string library_base = fmuDest;
-    library_base.append("/binaries/darwin64/");
+
+    library_base.append("/binaries");
+
+    #ifdef _WIN32
+        library_base.append("/win64/");
+    #elif __APPLE__
+    #if TARGET_OS_MAC
+        library_base.append("/darwin64/");
+    #else
+        throwException(env, "Unsupported platform");
+    #endif
+    #elif __linux
+        library_base.append("/linux64/");
+    #endif
 
     //  std::string firstFile;
     for (const auto &entry : fs::directory_iterator(library_base.c_str())) {
@@ -106,4 +119,3 @@ Fmi2Impl::~Fmi2Impl() {
 
 
 }
-
