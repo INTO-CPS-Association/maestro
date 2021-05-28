@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer.ConversionUtilities;
+package org.intocps.maestro.plugin.initializer.ConversionUtilities;
 
 import java.util.List;
 import java.util.stream.Collector;

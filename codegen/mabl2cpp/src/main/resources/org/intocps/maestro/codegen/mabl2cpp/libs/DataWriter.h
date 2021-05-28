@@ -2,14 +2,14 @@
 #include <iostream>
 #include <iostream>
 #include <fstream>
+#include "DataWriterConfig.h"
 
-#define DataWriterConfig void *
 
 class DataWriterImpl {
 public:
     void writeDataPoint(const char* fmt, DataWriterConfig, double time...);
 
-    DataWriterConfig writeHeader( int count,std::string[]);
+    DataWriterConfig writeHeader( int count,const char**);
 
     void close();
 

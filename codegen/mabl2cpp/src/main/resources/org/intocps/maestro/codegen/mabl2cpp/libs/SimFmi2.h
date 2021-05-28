@@ -1,6 +1,7 @@
 
 #include "fmi2.h"
 #include <string>
+#include "unzip.h"
 class Fmi2Comp {
 
 
@@ -26,9 +27,13 @@ public:
 
     void freeInstance(fmi2Component c);
 
+    virtual ~Fmi2Impl();
+
 public:
     FMU fmu;
 std::string guid;
+    std::string library_path;
+    std::string resource_path;
 };
 
 

@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer;
+package org.intocps.maestro.plugin.initializer;
 
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
@@ -55,7 +55,8 @@ public class TopologicalPlugin {
         var internalRelations = relations.stream().filter(RelationsPredicates.internal()).collect(Collectors.toList());
 
         internalRelations = internalRelations.stream().filter(RelationsPredicates.inputSource()
-                .or(RelationsPredicates.outputSource().and(o -> externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource()))))
+                .or(RelationsPredicates
+                        .outputSource().and(o -> externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource()))))
                 .collect(Collectors.toList());
 
         var edges = new Vector<Edge11<Fmi2SimulationEnvironment.Variable, Fmi2SimulationEnvironment.Relation.InternalOrExternal>>();
