@@ -337,6 +337,26 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseAVariableDeclaration(AVariableDeclaration node, Context ctxt) throws AnalysisException {
+
+        //check shadowing
+        LexIdentifier shadowingOrigin = findShadowingOrigin(node, null, true);
+        boolean shadowReported = false;
+        if (shadowingOrigin != null) {
+            shadowReported = true;
+            errorReporter
+                    .report(0, "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
+                            node.getName().getSymbol());
+        }
+
+        if (!shadowReported) {
+            shadowingOrigin = findShadowingOrigin(node, null, false);
+            if (shadowingOrigin != null) {
+                errorReporter.warning(0,
+                        "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
+                        node.getName().getSymbol());
+            }
+        }
+
         PType type = node.getType().apply(this, ctxt);
 
 
@@ -394,6 +414,46 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
         return store(node, type);
+    }
+
+    private LexIdentifier findShadowingOrigin(AVariableDeclaration node, PStm currentStm, boolean caseSensitive) {
+
+        if (currentStm == null) {
+            currentStm = node.getAncestor(PStm.class);
+        }
+
+        ABlockStm block = (currentStm instanceof ABlockStm ? currentStm.parent() : currentStm).getAncestor(ABlockStm.class);
+
+        if (block == null) {
+            return null;
+        }
+
+        while (currentStm.parent() != null && currentStm.parent() instanceof PStm && currentStm.parent() != block) {
+            currentStm = (PStm) currentStm.parent();
+        }
+
+        if (currentStm.parent() == block) {
+            //only search from before this statement
+
+            for (int i = block.getBody().indexOf(currentStm) - 1; i >= 0 && i < block.getBody().size(); i--) {
+                PStm s = block.getBody().get(i);
+                if (s instanceof ALocalVariableStm) {
+                    String declName = ((ALocalVariableStm) s).getDeclaration().getName().getText();
+                    //match found is does shadow a name
+                    if ((caseSensitive && declName.equals(node.getName().getText())) ||
+                            (!caseSensitive && declName.equalsIgnoreCase(node.getName().getText()))) {
+                        return ((ALocalVariableStm) s).getDeclaration().getName();
+                    }
+                }
+            }
+            return findShadowingOrigin(node, block, caseSensitive);
+        } else {
+            if (currentStm.parent() != null && currentStm.parent() instanceof PStm) {
+                return findShadowingOrigin(node, (PStm) currentStm.parent(), caseSensitive);
+            }
+        }
+
+        return null;
     }
 
     private <T extends PType> T store(INode node, T type) {
