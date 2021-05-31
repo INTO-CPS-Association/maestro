@@ -55,10 +55,10 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                 int columnIndex = 0;
                 for (String columnVal : csvFileLines.get(i).split(ROW_SEPARATOR)) {
                     if (i == 0) {
-                        expectedCsvFileColumnsMap.put(columnVal, new ArrayList<>());
-                        columnNameToColumnIndex.put(columnIndex, columnVal);
+                        expectedCsvFileColumnsMap.put(columnVal.strip(), new ArrayList<>()); //Strip accidental white spaces
+                        columnNameToColumnIndex.put(columnIndex, columnVal.strip());
                     } else {
-                        expectedCsvFileColumnsMap.get(columnNameToColumnIndex.get(columnIndex)).add(columnVal);
+                        expectedCsvFileColumnsMap.get(columnNameToColumnIndex.get(columnIndex)).add(columnVal.strip());
                     }
                     columnIndex++;
                 }
@@ -117,15 +117,6 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                     assertionMsg += "Additional " + (mismatchedLines - 1) + " rows have mismatched values.";
                     Assertions.fail(assertionMsg);
                 }
-
-
-                //                // Compute diff. Get the Patch object. Patch is the container for computed deltas.
-                //                Patch patch = DiffUtils.diff(actual, expected);
-                //
-                //                for (Delta delta : patch.getDeltas()) {
-                //                    System.err.println(delta);
-                //                    Assertions.fail("Expected result and actual differ: " + delta);
-                //                }
             }
         } else {
 
