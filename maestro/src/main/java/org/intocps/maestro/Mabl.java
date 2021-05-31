@@ -27,6 +27,7 @@ import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.template.TemplateGeneratorFactory;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -312,7 +313,8 @@ public class Mabl {
         if (configuration == null) {
             throw new Exception("No configuration");
         }
-        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit =
+                Objects.requireNonNull(TemplateGeneratorFactory.getTemplateGenerator(configuration)).generateTemplate();
         processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
     }
 
