@@ -323,7 +323,6 @@ public class ScenarioConfigurationToMaBL implements IMaBLTemplateGenerator {
             DoubleVariableFmi2Api currentCommunicationPoint, DoubleVariableFmi2Api defaultCommunicationStepSize,
             Set<Fmi2Builder.StateVariable<PStm>> fmuStates) {
 
-        //TODO: Fix hardcoded values
         DoubleVariableFmi2Api stepAbsTol = dynamicScope.store("coSimStep_absolute_tolerance", convergenceAbsTol);
         DoubleVariableFmi2Api stepRelTol = dynamicScope.store("coSimStep_relative_tolerance", convergenceRelTol);
         BooleanVariableFmi2Api convergenceReached = dynamicScope.store("coSimStep_has_converged", false);
