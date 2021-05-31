@@ -11,9 +11,16 @@ data class FmuDTO(
 
 data class InputDTO(@JsonProperty("reactivity") val reactive: Boolean)
 
-data class OutputDTO(@JsonProperty("dependencies-init") val dependenciesInit: List<String>, @JsonProperty("dependencies") val dependencies: List<String>)
+data class OutputDTO(
+    @JsonProperty("dependencies-init") val dependenciesInit: List<String>,
+    @JsonProperty("dependencies") val dependencies: List<String>
+)
 
-data class ScenarioDTO(@JsonProperty("fmus") val fmus: Map<String, FmuDTO>, @JsonProperty("connections") val connections: List<String>, @JsonProperty("maxPossibleStepSize") val maxPossibleStepSize: Int)
+data class ScenarioDTO(
+    @JsonProperty("fmus") val fmus: Map<String, FmuDTO>,
+    @JsonProperty("connections") val connections: List<String>,
+    @JsonProperty("maxPossibleStepSize") val maxPossibleStepSize: Int
+)
 
 data class MasterModelDTO(
     @JsonProperty("name") val name: String?,
@@ -24,4 +31,19 @@ data class MasterModelDTO(
     @JsonProperty("terminate") val terminate: String?,
 )
 
-data class MasterAndMultiModelDTO(@JsonProperty("masterModel") val masterModel: String, @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier)
+data class ExecutionParameters(
+    @JsonProperty("convergenceRelativeTolerance") val convergenceRelativeTolerance: Double,
+    @JsonProperty("convergenceAbsoluteTolerance") val convergenceAbsoluteTolerance: Double,
+    @JsonProperty("convergenceAttempts") val convergenceAttempts: Int
+)
+
+data class MasterAndMultiModelDTO(
+    @JsonProperty("masterModel") val masterModel: String,
+    @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier
+)
+
+data class ExecutableMasterAndMultiModelTDO(
+    @JsonProperty("masterModel") val masterModel: String,
+    @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier,
+    @JsonProperty("executionParameters") val executionParameters: ExecutionParameters
+)
