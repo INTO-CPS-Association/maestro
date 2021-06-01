@@ -6,10 +6,10 @@ import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.ToParExp;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.ABlockStm;
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -53,7 +53,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("variableStepConfig"))), newAVoidType());
     private StepAlgorithm algorithm;
 
-    private List<String> imports =
+    private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
@@ -248,7 +248,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
                 // Get fmu states
-                if(everyFMUSupportsGetState){
+                if (everyFMUSupportsGetState) {
                     for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                         fmuStates.add(entry.getValue().getState());
                     }
@@ -362,8 +362,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     portsToShare.forEach(ComponentVariableFmi2Api::share);
                 }
 
-                if(everyFMUSupportsGetState) {
-                    // HANDLE DISCARD
+                if (everyFMUSupportsGetState) {
+                    // Discard
                     IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
                     {
 
@@ -386,7 +386,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                         // Validate step
                         PredicateFmi2Api notValidStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
                                 new DoubleVariableFmi2Api(null, null, dynamicScope, null,
-                                        currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate().not();
+                                        currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate()
+                                .not();
                         hasReducedStepSize = new BooleanVariableFmi2Api(null, null, dynamicScope, null,
                                 Objects.requireNonNull(variableStepInstance).hasReducedStepsize().getReferenceExp());
                         dynamicScope.enterIf(notValidStepPred);
@@ -400,18 +401,19 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                                 // Set step-size to suggested size
                                 currentStepSize.setValue(Objects.requireNonNull(variableStepInstance).getReducedStepSize());
 
-                                builder.getLogger().debug("## Invalid variable step-size! FMUs are rolled back and step-size reduced to: %f",
-                                        currentStepSize);
+                                builder.getLogger()
+                                        .debug("## Invalid variable step-size! FMUs are rolled back and step-size reduced to: %f", currentStepSize);
 
-                                anyDiscards.setValue(new BooleanVariableFmi2Api(null,null,dynamicScope,null,anyDiscards.toPredicate().not().getExp()));
+                                anyDiscards.setValue(
+                                        new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().not().getExp()));
 
                                 dynamicScope.leave();
                             }
                             reducedStepSizeScope.enterElse();
                             {
-                                builder.getLogger().debug("## The step could not be validated by the constraint at time %f. Continue nevertheless " +
-                                        "with" +
-                                        " next simulation step!", currentCommunicationTime);
+                                builder.getLogger()
+                                        .debug("## The step could not be validated by the constraint at time %f. Continue nevertheless " + "with" +
+                                                " next simulation step!", currentCommunicationTime);
                                 dynamicScope.leave();
                             }
 
@@ -437,7 +439,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                         }
                     }
 
-                    if(everyFMUSupportsGetState) {
+                    if (everyFMUSupportsGetState) {
                         dynamicScope.leave();
                     }
                 }
@@ -457,7 +459,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
 
             dataWriterInstance.close();
 
-            ABlockStm algorithm = (ABlockStm) builder.buildRaw();
+            SBlockStm algorithm = (SBlockStm) builder.buildRaw();
 
             algorithm.apply(new ToParExp());
             System.out.println(PrettyPrinter.print(algorithm));

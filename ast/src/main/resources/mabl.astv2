@@ -124,7 +124,7 @@ stateDesignator
     ;
 
 stm
-    = {block} [body]:stm*
+    = #block
     | {assigment} [target]:stateDesignator [exp]:exp
     | {localVariable} [declaration]:declaration.variable
     | {if} [test]:exp [then]:stm [else]:stm
@@ -134,6 +134,12 @@ stm
     | {break} [token]:parserToken
     | {instanceMapping} [identifier]:lex_identifier [name]:java_String
     | {config} [config]:java_String
+    ;
+
+#block { -> package='org.intocps.maestro.ast'
+    |[body]:stm* }
+    = {basic}
+    | {parallel}
     ;
 
 type

@@ -7,17 +7,6 @@ include(ExternalProject)
 
 project(zlib-download NONE)
 
-#ExternalProject_Add(zlib
-#        GIT_REPOSITORY git://github.com/madler/zlib.git
-#        GIT_TAG v1.2.11
-#        SOURCE_DIR "${CMAKE_BINARY_DIR}/zlib-src"
-#        BINARY_DIR "${CMAKE_BINARY_DIR}/zlib-build"
-#        CONFIGURE_COMMAND ""
-#        BUILD_COMMAND ""
-#        INSTALL_COMMAND ""
-#        TEST_COMMAND ""
-#        )
-
 FetchContent_Declare(intocpsfmi
   GIT_REPOSITORY git@github.com:INTO-CPS-Association/org.intocps.maestro.fmi.git
         GIT_TAG  Release/1.0.12
@@ -27,19 +16,14 @@ FetchContent_Declare(intocpsfmi
 FetchContent_Populate(intocpsfmi)
 set(intocpsfmi-src "intocpsfmi-src")
 
-#ExternalProject_Add(intocpsfmi
-#        GIT_REPOSITORY git@github.com:INTO-CPS-Association/org.intocps.maestro.fmi.git
-#        GIT_TAG  Release/1.0.12
-#        SOURCE_DIR "${CMAKE_BINARY_DIR}/intocpsfmi-src"
-#        BINARY_DIR "${CMAKE_BINARY_DIR}/intocpsfmi-build"
-#        CONFIGURE_COMMAND ""
-#        BUILD_COMMAND ""
-#        INSTALL_COMMAND ""
-#        TEST_COMMAND ""
-#        )
+FetchContent_Declare(libzip
+        GIT_REPOSITORY https://github.com/nih-at/libzip.git
+        GIT_TAG  v1.7.3
+        SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
 
-#add_subdirectory(zlib-src)
-#add_subdirectory(intocpsfmi-src)
+)
+
+FetchContent_MakeAvailable(libzip )
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,12 +41,14 @@ ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi/include
 add_executable(sim
     ${intocpsfmi-src}/jnifmuapi/src/main/native/src/sim_support.c
     libs/DataWriter.cpp
+    libs/BooleanLogic.cpp
     libs/Logger.cpp
     libs/SimFmi2.cpp
     libs/SimMath.cpp
     libs/MEnv.cpp
+    libs/unzip.cpp
     co-sim.cxx
     main.cpp)
 
-#target_link_libraries(sim zlibstatic)
+target_link_libraries(sim zip)
 target_compile_definitions(sim PRIVATE -DFMI_COSIMULATION)

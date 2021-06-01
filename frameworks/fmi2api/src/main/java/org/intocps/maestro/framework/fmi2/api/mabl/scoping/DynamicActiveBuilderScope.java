@@ -43,14 +43,29 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public IMablScope parallel() {
+        return activeScope.parallel();
+    }
+
+    @Override
     public ScopeFmi2Api leave() {
         return activeScope.leave();
     }
 
 
     @Override
+    public IntVariableFmi2Api getFmiStatusVariable() {
+        return this.activeScope.getFmiStatusVariable();
+    }
+
+    @Override
     public String getName(String prefix) {
         return activeScope.getName(prefix);
+    }
+
+    @Override
+    public IMablScope enterScope() {
+        return this.activeScope.enterScope();
     }
 
     @Override

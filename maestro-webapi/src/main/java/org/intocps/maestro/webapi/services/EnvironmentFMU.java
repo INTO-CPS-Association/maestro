@@ -4,7 +4,7 @@ import org.intocps.fmi.*;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.InvalidVariableStringException;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
-import org.intocps.maestro.plugin.Initializer.ModelParameter;
+import org.intocps.maestro.plugin.initializer.ModelParameter;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;

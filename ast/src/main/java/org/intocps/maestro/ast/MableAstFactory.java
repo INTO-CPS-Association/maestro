@@ -291,13 +291,13 @@ public class MableAstFactory {
         return stm;
     }
 
-    public static ABlockStm newABlockStm(List<? extends PStm> statements) {
-        ABlockStm stm = new ABlockStm();
+    public static ABasicBlockStm newABlockStm(List<? extends PStm> statements) {
+        ABasicBlockStm stm = new ABasicBlockStm();
         stm.setBody(statements.stream().filter(Objects::nonNull).collect(Collectors.toList()));
         return stm;
     }
 
-    public static ABlockStm newABlockStm(PStm... statements) {
+    public static ABasicBlockStm newABlockStm(PStm... statements) {
         return newABlockStm(Arrays.asList(statements));
     }
 

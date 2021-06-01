@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -183,7 +184,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.mablToMablAPI;
     }
 
-    public VariableStep getVariableStep(VariableFmi2Api config){
+    public VariableStep getVariableStep(VariableFmi2Api config) {
         if (this.variableStep == null) {
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "VariableStep", config);
             this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);
@@ -209,7 +210,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public RealTime getRealTimeModule() {
-        if (this.realTime == null){
+        if (this.realTime == null) {
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "RealTime");
             this.realTime = new RealTime(this.dynamicScope, this, runtimeModule);
         }
@@ -319,11 +320,11 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public PStm buildRaw() throws AnalysisException {
-        ABlockStm block = rootScope.getBlock().clone();
+        SBlockStm block = rootScope.getBlock().clone();
         if (block == null) {
             return null;
         }
-        ABlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
+        SBlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
         if (errorHandlingBlock == null) {
             return null;
         }
@@ -338,9 +339,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 @Override
                 public void defaultInPStm(PStm node) throws AnalysisException {
                     if (node.equals(module.getDeclaringStm())) {
-                        if (node.parent() instanceof ABlockStm) {
+                        if (node.parent() instanceof SBlockStm) {
                             //this is the scope where the logger is loaded. Check for unload
-                            LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
+                            LinkedList<PStm> body = ((SBlockStm) node.parent()).getBody();
                             boolean unloadFound = false;
                             for (int i = body.indexOf(node); i < body.size(); i++) {
                                 PStm stm = body.get(i);
@@ -391,13 +392,13 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return module;
     }
 
-    private ABlockStm getErrorHandlingBlock(ABlockStm block) throws AnalysisException {
-        AtomicReference<ABlockStm> errorHandingBlock = new AtomicReference<>();
+    private SBlockStm getErrorHandlingBlock(SBlockStm block) throws AnalysisException {
+        AtomicReference<SBlockStm> errorHandingBlock = new AtomicReference<>();
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
             public void caseAWhileStm(AWhileStm node) throws AnalysisException {
                 if (node.getBody().equals(mainErrorHandlingScope.getBlock())) {
-                    errorHandingBlock.set(((ABlockStm) node.getBody()));
+                    errorHandingBlock.set(((SBlockStm) node.getBody()));
 
                 }
                 super.caseAWhileStm(node);
@@ -408,9 +409,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
-        ABlockStm block = rootScope.getBlock().clone();
+        SBlockStm block = rootScope.getBlock().clone();
 
-        ABlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
+        SBlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
         /**
          * Automatically created unloads for all modules loaded by the builder.
@@ -421,9 +422,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 @Override
                 public void defaultInPStm(PStm node) throws AnalysisException {
                     if (node.equals(module.getDeclaringStm())) {
-                        if (node.parent() instanceof ABlockStm) {
+                        if (node.parent() instanceof SBlockStm) {
                             //this is the scope where the logger is loaded. Check for unload
-                            LinkedList<PStm> body = ((ABlockStm) node.parent()).getBody();
+                            LinkedList<PStm> body = ((SBlockStm) node.parent()).getBody();
                             boolean unloadFound = false;
                             for (int i = body.indexOf(node); i < body.size(); i++) {
                                 PStm stm = body.get(i);
@@ -498,14 +499,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     }
 
-    private void postClean(ABlockStm block) throws AnalysisException {
+    private void postClean(SBlockStm block) throws AnalysisException {
         //Post cleaning: Remove empty block statements
         block.apply(new DepthFirstAnalysisAdaptor() {
             @Override
-            public void caseABlockStm(ABlockStm node) throws AnalysisException {
+            public void caseABasicBlockStm(ABasicBlockStm node) throws AnalysisException {
                 if (node.getBody().isEmpty()) {
-                    if (node.parent() instanceof ABlockStm) {
-                        ABlockStm pb = (ABlockStm) node.parent();
+                    if (node.parent() instanceof SBlockStm) {
+                        SBlockStm pb = (SBlockStm) node.parent();
                         pb.getBody().remove(node);
                     } else if (node.parent() instanceof AIfStm) {
                         AIfStm ifStm = (AIfStm) node.parent();
@@ -515,7 +516,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                         }
                     }
                 } else {
-                    super.caseABlockStm(node);
+                    super.caseABasicBlockStm(node);
                 }
             }
         });

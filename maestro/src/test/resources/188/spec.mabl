@@ -7,6 +7,13 @@ import FMI2Component;
 import Logger;
 import Math;
 {
+int fmi_status_ok = 0;
+int fmi_status_warning = 1;
+int fmi_status_discard = 2;
+int fmi_status_error = 3;
+int fmi_status_fatal = 4;
+int fmi_status_pending = 5;
+
  	bool global_execution_continue = true;
 	Math math = load("Math");
 	Logger logger = load("Logger");
