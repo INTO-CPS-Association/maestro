@@ -218,12 +218,12 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     /**
      *
-     * @param identifyingName the name of the array
-     * @param mdArray non-jagged multidimensional array.
+     * @param identifyingName the name of the MaBL array
+     * @param mdArray non-jagged multidimensional Java array.
      * @param <V> data type
      * @return an ArrayVariable representing the multidimensional array
      */
-    private <V> ArrayVariableFmi2Api<V> createMDArray(String identifyingName, V[] mdArray) {
+    private <V> ArrayVariableFmi2Api<V> storeMDArray(String identifyingName, V[] mdArray) {
         List<Integer> arrayShape = new ArrayList<>();
         PType type;
         V[] subArr = mdArray;
@@ -248,22 +248,22 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
         add(arrayVariableStm);
 
-        return createMDArrayRecursively(mdArray, arrayVariableStm,
+        return instantiateMDArrayRecursively(mdArray, arrayVariableStm,
                 newAIdentifierStateDesignator(newAIdentifier(identifyingName)), newAIdentifierExp(identifyingName));
     }
 
     /**
      * @param array          multi dimensional array
-     * @param declaringStm   declaring statement of the outer array
-     * @param <V>            generic type
+     * @param declaringStm   declaring statement of the root array
+     * @param <V>            data type
      * @return an ArrayVariable representing the multidimensional array
      */
-    private <V> ArrayVariableFmi2Api<V> createMDArrayRecursively(V[] array, PStm declaringStm, PStateDesignatorBase stateDesignator, PExpBase indexExp) {
+    private <V> ArrayVariableFmi2Api<V> instantiateMDArrayRecursively(V[] array, PStm declaringStm, PStateDesignatorBase stateDesignator, PExpBase indexExp) {
 
         if (array.getClass().getComponentType().isArray()) {
             List<VariableFmi2Api> arrays = new ArrayList<>();
             for (int i = 0; i < array.length; i++) {
-                arrays.add(createMDArrayRecursively((V[]) array[i], declaringStm,
+                arrays.add(instantiateMDArrayRecursively((V[]) array[i], declaringStm,
                         newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)), newAArrayIndexExp(indexExp,
                                 List.of(newAIntLiteralExp(i)))));
             }
@@ -329,7 +329,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newAStringLiteralExp((String) v)).collect(Collectors.toList()));
             }
         } else if (value.getClass().getComponentType().isArray()) {
-            return createMDArray(name, value);
+            return storeMDArray(name, value);
         }
 
         PStm localVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type, length, initializer));
