@@ -7,12 +7,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class DerivativeEstimatorInstanceValue extends ModuleValue {
-    private static final Map<Integer, ScalarDerivativeEstimator> estimators = new HashMap<>(); //Keys corresponds to the values in indicesOfInterest
+    private static final Map<Long, ScalarDerivativeEstimator> estimators = new HashMap<>(); //Keys corresponds to the values in indicesOfInterest
 
-    public DerivativeEstimatorInstanceValue(List<Integer> indicesOfInterest, List<Integer> derivativeOrder, List<Integer> providedDerivativesOrder) {
+    public DerivativeEstimatorInstanceValue(List<Long> indicesOfInterest, List<Long> derivativeOrder, List<Long> providedDerivativesOrder) {
         super(createMembers(indicesOfInterest, derivativeOrder, providedDerivativesOrder));
         for (int i = 0; i < indicesOfInterest.size(); i++) {
-            estimators.put(indicesOfInterest.get(i), new ScalarDerivativeEstimator(derivativeOrder.get(i)));
+            estimators.put(indicesOfInterest.get(i), new ScalarDerivativeEstimator(derivativeOrder.get(i).intValue()));
         }
     }
 
@@ -24,8 +24,7 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
      * @param providedDerivativesOrder Any derivative order that is already provided and thus should not be estimated.
      * @return Component members
      */
-    private static Map<String, Value> createMembers(List<Integer> indicesOfInterest, List<Integer> derivativeOrders,
-            List<Integer> providedDerivativesOrder) {
+    private static Map<String, Value> createMembers(List<Long> indicesOfInterest, List<Long> derivativeOrders, List<Long> providedDerivativesOrder) {
         Map<String, Value> componentMembers = new HashMap<>();
         componentMembers.put("estimate", new FunctionValue.ExternalFunctionValue(fcargs -> {
             fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
@@ -35,11 +34,12 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
             List<Value> sharedDataDerivatives = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
 
             for (int i = 0; i < indicesOfInterest.size(); i++) {
-                Integer indexOfInterest = indicesOfInterest.get(i);
-                double dataOfInterest = ValueExtractionUtilities.getArrayValue(fcargs.get(1), RealValue.class).get(indexOfInterest).getValue();
+                Long indexOfInterest = indicesOfInterest.get(i);
+                double dataOfInterest =
+                        ValueExtractionUtilities.getArrayValue(fcargs.get(1), RealValue.class).get(indexOfInterest.intValue()).getValue();
 
                 List<Double> dataDerivativesOfInterest =
-                        ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest), Value.class).stream().map(v -> {
+                        ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest.intValue()), Value.class).stream().map(v -> {
                             if (v instanceof RealValue) {
                                 return ((RealValue) v).getValue();
                             } else {
@@ -54,8 +54,8 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
                 }
                 estimators.get(indexOfInterest).advance(provided, stepSize);
 
-                for (int derOrder = providedDerivativesOrder.get(i); derOrder < derivativeOrders.get(i); derOrder++) {
-                    ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest), Value.class)
+                for (int derOrder = providedDerivativesOrder.get(i).intValue(); derOrder < derivativeOrders.get(i); derOrder++) {
+                    ValueExtractionUtilities.getArrayValue(sharedDataDerivatives.get(indexOfInterest.intValue()), Value.class)
                             .set(derOrder, new RealValue(estimators.get(indexOfInterest).getDerivative(derOrder + 1)));
                 }
 
@@ -72,10 +72,10 @@ public class DerivativeEstimatorInstanceValue extends ModuleValue {
             estimators.forEach((indexOfInterest, estimator) -> {
                 estimator.rollback();
 
-                for (int derOrder = providedDerivativesOrder.get(indicesOfInterest.indexOf(indexOfInterest));
+                for (int derOrder = providedDerivativesOrder.get(indicesOfInterest.indexOf(indexOfInterest)).intValue();
                         derOrder < estimators.get(indexOfInterest).getOrder(); derOrder++) {
                     Double der = estimator.getDerivative(derOrder + 1);
-                    ValueExtractionUtilities.getArrayValue(sharedDataDerivativesForIndex.get(indexOfInterest), Value.class)
+                    ValueExtractionUtilities.getArrayValue(sharedDataDerivativesForIndex.get(indexOfInterest.intValue()), Value.class)
                             .set(derOrder, der != null ? new RealValue(der) : new NullValue());
                 }
             });

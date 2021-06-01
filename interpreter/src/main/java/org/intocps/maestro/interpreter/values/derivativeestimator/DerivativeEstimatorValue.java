@@ -1,6 +1,8 @@
 package org.intocps.maestro.interpreter.values.derivativeestimator;
+
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,15 +20,15 @@ public class DerivativeEstimatorValue extends ModuleValue {
             fcargs = fcargs.stream().map(Value::deref).collect(Collectors.toList());
             checkArgLength(fcargs, 3);
 
-            List<Integer> indicesOfInterest =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(0), NumericValue.class).stream().map(NumericValue::intValue).collect(
-                            Collectors.toList());
-            List<Integer> derivativeOrders =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), NumericValue.class).stream().map(NumericValue::intValue).collect(
-                    Collectors.toList());
-            List<Integer> providedDerivativeOrders =
-                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), NumericValue.class).stream().map(NumericValue::intValue).collect(
-                    Collectors.toList());
+            List<Long> indicesOfInterest =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(0), NumericValue.class).stream().map(NumericValue::longValue)
+                            .collect(Collectors.toList());
+            List<Long> derivativeOrders =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(1), NumericValue.class).stream().map(NumericValue::longValue)
+                            .collect(Collectors.toList());
+            List<Long> providedDerivativeOrders =
+                    ValueExtractionUtilities.getArrayValue(fcargs.get(2), NumericValue.class).stream().map(NumericValue::longValue)
+                            .collect(Collectors.toList());
 
             return new DerivativeEstimatorInstanceValue(indicesOfInterest, derivativeOrders, providedDerivativeOrders);
         }));

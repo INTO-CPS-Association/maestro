@@ -776,7 +776,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
      */
     private void setDerivativesForSharedPorts(List<PortFmi2Api> ports, Fmi2Builder.Scope<PStm> scope) {
         // Find all ports for which derivatives should be passed together with the derivatives and their order.
-        LinkedHashMap<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>> mapPortsToDerPortsWithOrder = ports.stream().map(port -> {
+        LinkedHashMap<PortFmi2Api, Map.Entry<PortFmi2Api, Integer>> mapPortsToDerPortsWithOrder =
+                ports.stream().filter(port -> port.getSourcePort() != null).map(port -> {
             try {
                 Map.Entry<PortFmi2Api, Integer> innerEntry;
                 // Find if port is in map of derivatives

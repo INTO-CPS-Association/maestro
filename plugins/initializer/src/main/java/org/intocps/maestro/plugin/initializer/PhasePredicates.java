@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.initializer;
+package org.intocps.maestro.plugin.Initializer;
 
 import org.intocps.maestro.fmi.ModelDescription;
 

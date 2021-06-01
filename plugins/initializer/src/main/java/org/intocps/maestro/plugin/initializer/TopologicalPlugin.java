@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.initializer;
+package org.intocps.maestro.plugin.Initializer;
 
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
