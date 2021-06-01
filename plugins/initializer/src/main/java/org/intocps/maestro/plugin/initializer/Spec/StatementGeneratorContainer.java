@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.Initializer.Spec;
+package org.intocps.maestro.plugin.initializer.Spec;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.AVariableDeclaration;
@@ -13,8 +13,8 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.IMaestroPlugin;
-import org.intocps.maestro.plugin.Initializer.ConversionUtilities.BooleanUtils;
-import org.intocps.maestro.plugin.Initializer.ModelParameter;
+import org.intocps.maestro.plugin.initializer.ConversionUtilities.BooleanUtils;
+import org.intocps.maestro.plugin.initializer.ModelParameter;
 
 import java.util.*;
 import java.util.function.BiFunction;

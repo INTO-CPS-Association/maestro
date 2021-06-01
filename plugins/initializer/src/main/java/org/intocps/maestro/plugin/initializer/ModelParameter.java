@@ -32,7 +32,7 @@
 *		Kenneth Lausdahl
 *		Casper Thule
 */
-package org.intocps.maestro.plugin.Initializer;
+package org.intocps.maestro.plugin.initializer;
 
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 
