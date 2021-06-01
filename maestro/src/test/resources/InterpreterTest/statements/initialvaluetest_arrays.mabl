@@ -1,0 +1,25 @@
+// 1d array
+int a1[1];
+assert.assertEquals(a1[0], 0);
+
+string b1[1];
+assert.assertEquals(b1[0], "");
+
+real c1[1];
+assert.assertEquals(c1[0], 0.0);
+
+bool d1[1];
+assert.assertEquals(d1[0], false);
+
+// 2d array
+int a2[1][2];
+assert.assertEquals(a2[0][1], 0);
+
+string b2[1][2];
+assert.assertEquals(b2[0][1], "");
+
+real c2[1][2];
+assert.assertEquals(c2[0][1], 0.0);
+
+bool d2[1][2];
+assert.assertEquals(d2[0][1], false);

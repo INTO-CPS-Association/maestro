@@ -30,7 +30,7 @@ public class ValueExtractionUtilities {
             }
 
             if (!clz.isAssignableFrom(array.getValues().get(0).getClass())) {
-                throw new InterpreterException("Array not containing the right type");
+                throw new InterpreterException("Array does not contain the right type");
             }
 
             return array.getValues();
