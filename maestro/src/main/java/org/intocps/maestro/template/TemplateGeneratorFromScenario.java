@@ -396,8 +396,8 @@ public class TemplateGeneratorFromScenario {
 
         if (connectionModel.isPresent()) {
             Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sourcePortWithValue = portsWithGet.stream().filter(entry ->
-                    entry.getKey().getLogScalarVariableName().contains(masterMRepToMultiMRep(connectionModel.get().srcPort().fmu())) &&
-                            entry.getKey().getLogScalarVariableName().contains(connectionModel.get().srcPort().port())).findAny();
+                    entry.getKey().aMablFmi2ComponentAPI.getName().contains(connectionModel.get().srcPort().fmu().toLowerCase(Locale.ROOT)) &&
+                            entry.getKey().getName().contains(connectionModel.get().srcPort().port().toLowerCase(Locale.ROOT))).findAny();
 
             if (sourcePortWithValue.isPresent()) {
                 ComponentVariableFmi2Api instance = fmuInstances.get(portRef.fmu());
@@ -414,8 +414,8 @@ public class TemplateGeneratorFromScenario {
         instance.share(portMap);
 
         Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> oldPortToGet = portsToGet.stream()
-                .filter(entry -> entry.getKey().getLogScalarVariableName().contains(portRef.fmu()) &&
-                        entry.getKey().getLogScalarVariableName().contains(portRef.port())).findAny();
+                .filter(entry -> entry.getKey().aMablFmi2ComponentAPI.getName().contains(portRef.fmu()) &&
+                        entry.getKey().getName().contains(portRef.port())).findAny();
 
         oldPortToGet.ifPresent(portsToGet::remove);
         portsToGet.add(portMap.entrySet().iterator().next());
