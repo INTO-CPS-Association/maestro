@@ -20,7 +20,6 @@ public class VariableStep {
 
 
     public VariableStep(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder) {
-
         this.dynamicScope = dynamicScope;
         this.mablApiBuilder = mablApiBuilder;
         this.moduleIdentifier = "variableStep";

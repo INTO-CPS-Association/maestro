@@ -69,7 +69,7 @@ public class FromMaBLToMaBLAPI {
     public static Map<String, ComponentVariableFmi2Api> GetComponentVariablesFrom(MablApiBuilder builder, PExp exp,
             Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
-        ABlockStm containingBlock = exp.getAncestor(ABlockStm.class);
+        SBlockStm containingBlock = exp.getAncestor(SBlockStm.class);
         Optional<AVariableDeclaration> componentDeclaration =
                 containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
                         .map(ALocalVariableStm::getDeclaration)

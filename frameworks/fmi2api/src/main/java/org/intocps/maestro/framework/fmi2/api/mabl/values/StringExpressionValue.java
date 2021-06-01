@@ -14,6 +14,10 @@ public class StringExpressionValue implements Fmi2Builder.ExpressionValue {
         this.exp = exp;
     }
 
+    public StringExpressionValue(String value) {
+        this.exp = newAStringLiteralExp(value);
+    }
+
     public static StringExpressionValue of(String v) {
         return new StringExpressionValue(newAStringLiteralExp(v));
     }

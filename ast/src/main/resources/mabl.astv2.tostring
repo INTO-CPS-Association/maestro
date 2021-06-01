@@ -14,10 +14,6 @@ import java.util.stream.Collectors;
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
-
-
-%declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 %declaration->module =   [name]+$" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
 
 
@@ -52,12 +48,13 @@ import java.util.stream.Collectors;
 %exp->#unary->minus = "-" + [exp]
 %exp->#unary->plus = "+" + [exp]
 %exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
+%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining("]["))$+"]"
 %exp->par = "("+ [exp] +")"
 %exp->null = "null"
 %exp->ref = "ref "+ [exp]
 
-%stm->block = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
+%stm->block->basic = "\n{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
+%stm->block->parallel = "\n||{"+ $$[body]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n",";\n"))$+"}\n"
 %stm->assigment = [target] + " = " [exp] +";"
 %stm->localVariable = [declaration]
 %stm->if = "if( " +$ $[test]$ +" ) \n{\n" + $[then]$+ "\n}"+   ($[else]$!=null ?"\nelse \n{\n" +$[else]$ +"\n}":"")$

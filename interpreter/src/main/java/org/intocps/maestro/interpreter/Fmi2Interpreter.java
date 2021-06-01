@@ -542,7 +542,6 @@ public class Fmi2Interpreter {
             int[] orders =
                     getArrayValue(fcargs.get(2), Optional.of(elementsToUse), NumericValue.class).stream().mapToInt(NumericValue::intValue).toArray();
 
-
             try {
                 FmuResult<double[]> res = component.getRealOutputDerivatives(scalarValueIndices, orders);
 

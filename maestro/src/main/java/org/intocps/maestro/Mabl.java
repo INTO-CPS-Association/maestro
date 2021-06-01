@@ -20,6 +20,7 @@ import org.intocps.maestro.core.StringAnnotationProcessor;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.optimization.UnusedDeclarationOptimizer;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.plugin.IMaestroVerifier;
@@ -223,6 +224,12 @@ public class Mabl {
             environment.check(reporter);
         }
 
+    }
+
+    public void optimize() throws AnalysisException {
+        if (document != null) {
+            document.apply(new UnusedDeclarationOptimizer());
+        }
     }
 
     public void expand() throws Exception {

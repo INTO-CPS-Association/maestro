@@ -13,3 +13,5 @@ void, { int mma[1][1]; int a[1]=mma[0];};
 void, {int mma[1][1]; int mmb[1][1]; bool a = mma[0][0] == mmb[0][0];};
 
 void, real derivatives[2][1];
+
+void, ||{int a;int b;}

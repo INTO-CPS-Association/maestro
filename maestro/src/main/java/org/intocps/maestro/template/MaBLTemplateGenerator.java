@@ -203,6 +203,7 @@ public class MaBLTemplateGenerator {
         HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
         List<PStm> freeInstanceStatements = new ArrayList<>();
+        List<PStm> terminateStatements = new ArrayList<>();
         Map<String, String> instaceNameToInstanceLex = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Find parent lex
@@ -215,6 +216,8 @@ public class MaBLTemplateGenerator {
 
             stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
                     templateConfiguration.getLoggingOn(), entry.getValue().getFaultInject()));
+
+            terminateStatements.add(createFMUTerminateStatement(instanceLexName, entry.getValue().getFaultInject()));
             freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex, entry.getValue().getFaultInject()));
         });
 
@@ -257,6 +260,9 @@ public class MaBLTemplateGenerator {
             stmMaintainer.addAll(algorithmStatements.body);
         }
 
+        // Terminate instances
+        stmMaintainer.addAllCleanup(terminateStatements);
+
         // Free instances
         stmMaintainer.addAllCleanup(freeInstanceStatements);
 
@@ -285,6 +291,7 @@ public class MaBLTemplateGenerator {
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
         return unit;
     }
+
 
     private static Collection<? extends PStm> createStatusVariables() {
         List<PStm> list = new ArrayList<>();
@@ -370,6 +377,14 @@ public class MaBLTemplateGenerator {
         return MableAstFactory.newALocalVariableStm(MableAstFactory
                 .newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE), MableAstFactory.newABoleanPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
+    }
+
+    private static PStm createFMUTerminateStatement(String instanceLexName, Optional<FaultInject> faultInject) {
+        if (faultInject.isPresent()) {
+            instanceLexName = instanceLexName + "_original";
+        }
+        return MableAstFactory.newExpressionStm(MableAstFactory
+                .newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"), Arrays.asList()));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName, Optional<FaultInject> faultInject) {

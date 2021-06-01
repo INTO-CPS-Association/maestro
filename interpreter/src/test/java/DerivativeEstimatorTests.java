@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+/**
+ * The values used and expected values in the following tests originates from Maestro 1 tests of the derivative estimator.
+ */
 public class DerivativeEstimatorTests {
 
     @Test
@@ -27,7 +30,7 @@ public class DerivativeEstimatorTests {
 
         //Assert
         Assertions.assertEquals(expectedXDot, xDot, assertionDelta, "xdot must be 0");
-        Assertions.assertEquals( expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 0");
+        Assertions.assertEquals(expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 0");
     }
 
     @Test
@@ -47,7 +50,7 @@ public class DerivativeEstimatorTests {
         Double xDotDot = estimator.getSecondDerivative();
 
         //Assert
-        Assertions.assertEquals( expectedXDot, xDot, assertionDelta, "xdot must be 1.0");
+        Assertions.assertEquals(expectedXDot, xDot, assertionDelta, "xdot must be 1.0");
         Assertions.assertEquals(expectedXDotDot, xDotDot, assertionDelta, "xdotdot must be 0");
     }
 
@@ -74,7 +77,7 @@ public class DerivativeEstimatorTests {
     }
 
     @Test
-    public void testCalculateDerivativesFromMableInterface() {
+    public void testCalculateDerivatives() {
         //Arrange
         double assertionDelta = 0.0001;
         RealValue x1 = new RealValue(4.0), x2 = new RealValue(9.0), x3 = new RealValue(25.0), expectedXDotDot = new RealValue(2.0), y1 =
@@ -130,10 +133,10 @@ public class DerivativeEstimatorTests {
 
         ArrayValue<RealValue> sharedDataStep1 = new ArrayValue<>(Arrays.asList(x, new RealValue(-1), y));
 
-        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(Arrays.asList(new ArrayValue<Value>(Arrays.asList(providedXDot,
-                new NullValue())),
-                new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue())),
-                new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue()))));
+        ArrayValue<ArrayValue> sharedDataDerivatives = new ArrayValue<>(
+                Arrays.asList(new ArrayValue<Value>(Arrays.asList(providedXDot, new NullValue())),
+                        new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue())),
+                        new ArrayValue<Value>(Arrays.asList(new NullValue(), new NullValue()))));
         ArrayValue<UnsignedIntegerValue> derivativeOrders = new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(2), new UnsignedIntegerValue(1)));
         ArrayValue<UnsignedIntegerValue> indicesOfInterest =
                 new ArrayValue<>(Arrays.asList(new UnsignedIntegerValue(0), new UnsignedIntegerValue(2)));
