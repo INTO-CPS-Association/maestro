@@ -1,26 +1,19 @@
 {
-  "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\ncrtl_crtlInstance = { \n  inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\nvalve = {dependencies-init=[], dependencies=[]}}\n }\nwt_wtInstance = { \n  inputs = {\nvalvecontrol = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valvecontrol], dependencies=[valvecontrol]}}\n }}\nconnections = [\ncrtl_crtlInstance.valve -> wt_wtInstance.valvecontrol\nwt_wtInstance.level -> crtl_crtlInstance.level]\n}\ninitialization = [{get: crtl_crtlInstance.valve}\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\ncosim-step = [{step: crtl_crtlInstance }\n\n{get: crtl_crtlInstance.valve}\n\n{step: wt_wtInstance }\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\n",
+  "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\nFMU_roller = { \n can-reject-step = true,\n inputs = {\nvalve = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valve], dependencies=[valve]}}\n }\nController_cont = { \n can-reject-step = true,\n inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\n}\n }}\nconnections = [\nFMU_roller.level -> Controller_cont.level]\n}\ninitialization = [{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n]\ncosim-step = [{save-state: Controller_cont}\n\n{save-state: FMU_roller}\n\n{loop: { \n until-step-accept: [Controller_cont,FMU_roller] \n iterate: [{step: Controller_cont }\n\n{step: FMU_roller }\n] \n if-retry-needed: [{restore-state: Controller_cont}\n\n{restore-state: FMU_roller}\n]} \n }\n\n{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n]\n",
   "multiModel": {
     "fmus": {
-      "{crtl}": "src/test/resources//watertankcontroller-c.fmu",
-      "{wt}": "src/test/resources//singlewatertank-20sim.fmu"
+      "{FMU}": "src/test/resources/rollback-test.fmu",
+      "{Controller}": "src/test/resources/rollback-end.fmu"
     },
     "connections": {
-      "{crtl}.crtlInstance.valve": [
-        "{wt}.wtInstance.valvecontrol"
-      ],
-      "{wt}.wtInstance.level": [
-        "{crtl}.crtlInstance.level"
+      "{FMU}.roller.level": [
+        "{Controller}.cont.level"
       ]
     },
-    "parameters": {
-      "{crtl}.crtlInstance.maxlevel": 2,
-      "{crtl}.crtlInstance.minlevel": 1
-    },
+    "parameters": {},
     "scenarioVerifier": {
       "reactivity": {
-        "{wt}.wtInstance.valvecontrol": false,
-        "{crtl}.crtlInstance.level": false
+        "{Controller}.cont.level": false
       },
       "verification": false,
       "visualization": false
@@ -28,10 +21,10 @@
   },
   "executionParameters": {
     "convergenceRelativeTolerance": 0.01,
-    "convergenceAbsoluteTolerance": 0.3,
+    "convergenceAbsoluteTolerance": 0.0,
     "convergenceAttempts": 5,
     "startTime": 0.0,
-    "endTime": 10.0,
+    "endTime": 1.0,
     "stepSize": 0.1
   }
 }

@@ -11,8 +11,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 public class JacobianStepBuilderTest extends FullSpecTest {
 
     /**
@@ -35,13 +33,11 @@ public class JacobianStepBuilderTest extends FullSpecTest {
      */
     @Override
     protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
-        if (Boolean.parseBoolean(System.getProperty("TEST_CREATE_OUTPUT_CSV_FILES", "false")) && actualCsvFile.exists()) {
-            System.out.println("Storing outputs csv file in specification directory to be used in future tests.");
-            Files.copy(actualCsvFile.toPath(), expectedCsvFile.toPath(), REPLACE_EXISTING);
-        }
+        CSVCompare(expectedCsvFile, actualCsvFile);
+    }
 
+    protected static void CSVCompare(File expectedCsvFile, File actualCsvFile) throws IOException{
         final String ROW_SEPARATOR = ",";
-
         boolean actualOutputsCsvExists = actualCsvFile.exists();
         boolean expectedOutputsCsvExists = expectedCsvFile.exists();
 
@@ -81,43 +77,46 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                 }
             }
 
+            String assertionMsg = "";
+
             // Validate that columns are equal
             if (actualCsvFileColumnsMap.keySet().size() != expectedCsvFileColumnsMap.keySet().size()) {
-                Assertions.fail("CSV files do not contain the same amount of columns");
-            }
-            if (!actualCsvFileColumnsMap.keySet().containsAll(expectedCsvFileColumnsMap.keySet())) {
-                Assertions.fail("CSV files do not contain the same columns");
-            }
+                assertionMsg = "CSV files do not contain the same amount of columns";
+            } else if (!actualCsvFileColumnsMap.keySet().containsAll(expectedCsvFileColumnsMap.keySet())) {
+                assertionMsg = "CSV files do not contain the same columns";
+            } else {
+                // Validate that columns contains the same elements
+                for (Map.Entry<String, List<String>> entry : expectedCsvFileColumnsMap.entrySet()) {
+                    List<String> expected = entry.getValue();
+                    List<String> actual = actualCsvFileColumnsMap.get(entry.getKey());
 
-            // Validate that columns contains the same elements
-            for (Map.Entry<String, List<String>> entry : expectedCsvFileColumnsMap.entrySet()) {
-                List<String> expected = entry.getValue();
-                List<String> actual = actualCsvFileColumnsMap.get(entry.getKey());
-
-
-                if (expected.size() != actual.size()) {
-                    Assertions.fail("The length of column " + entry.getKey() + " differs between expected and actual");
-                }
-
-                String assertionMsg = "";
-                int mismatchedLines = 0;
-                for (int i = 0; i < expected.size(); i++) {
-                    if (!expected.get(i).equals(actual.get(i))) {
-                        if (assertionMsg.isEmpty()) {
-                            assertionMsg =
-                                    "Mismatch between values on row " + (i+2) + " for column '" + entry.getKey() + "'. Actual: " + actual.get(i) +
-                                            " " +
-                                            "expected: " + expected.get(i) + ". ";
+                    if (expected.size() != actual.size()) {
+                        assertionMsg = "The length of column " + entry.getKey() + " differs between expected and actual";
+                        break;
+                    } else {
+                        int mismatchedLines = 0;
+                        for (int i = 0; i < expected.size(); i++) {
+                            if (!expected.get(i).equals(actual.get(i))) {
+                                if (assertionMsg.isEmpty()) {
+                                    assertionMsg = "Mismatch between values on row " + (i + 2) + " for column '" + entry.getKey() + "'. Actual: " +
+                                            actual.get(i) + " " + "expected: " + expected.get(i) + ". ";
+                                }
+                                mismatchedLines++;
+                            }
                         }
-                        mismatchedLines++;
+
+                        if (!assertionMsg.isEmpty()) {
+                            assertionMsg += "Additional " + (mismatchedLines - 1) + " rows have mismatched values.";
+                            break;
+                        }
                     }
                 }
-
-                if (!assertionMsg.isEmpty()) {
-                    assertionMsg += "Additional " + (mismatchedLines - 1) + " rows have mismatched values.";
-                    Assertions.fail(assertionMsg);
-                }
             }
+            if(!assertionMsg.isEmpty()){
+                System.out.println(assertionMsg);
+                Assertions.fail(assertionMsg);
+            }
+
         } else {
 
             StringBuilder sb = new StringBuilder();
@@ -129,7 +128,8 @@ public class JacobianStepBuilderTest extends FullSpecTest {
             if (!expectedOutputsCsvExists) {
                 sb.append("The expected outputs csv file does not exist.\n");
             }
-            System.out.println(sb.toString());
+            System.out.println(sb);
+            Assertions.fail(sb.toString());
         }
     }
 }

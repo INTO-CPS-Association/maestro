@@ -2,8 +2,8 @@
   "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\ncrtl_crtlInstance = { \n  inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\nvalve = {dependencies-init=[], dependencies=[]}}\n }\nwt_wtInstance = { \n  inputs = {\nvalvecontrol = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valvecontrol], dependencies=[valvecontrol]}}\n }}\nconnections = [\ncrtl_crtlInstance.valve -> wt_wtInstance.valvecontrol\nwt_wtInstance.level -> crtl_crtlInstance.level]\n}\ninitialization = [{get: crtl_crtlInstance.valve}\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\ncosim-step = [{step: crtl_crtlInstance }\n\n{get: crtl_crtlInstance.valve}\n\n{step: wt_wtInstance }\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\n",
   "multiModel": {
     "fmus": {
-      "{crtl}": "src/test/resources//watertankcontroller-c.fmu",
-      "{wt}": "src/test/resources//singlewatertank-20sim.fmu"
+      "{crtl}": "src/test/resources/watertankcontroller-c.fmu",
+      "{wt}": "src/test/resources/singlewatertank-20sim.fmu"
     },
     "connections": {
       "{crtl}.crtlInstance.valve": [
