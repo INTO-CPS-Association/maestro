@@ -54,7 +54,7 @@ public class Maestro2ScenarioVerifierController {
 
     @RequestMapping(value = "/executeAlgorithm", method = RequestMethod.POST, consumes = {"application/json"})
     public String executeAlgorithm(@RequestBody ExecutableMasterAndMultiModelTDO executableModel) throws Exception {
-
+        //TODO: Verify algorithm if UPAAL flag is set
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
         ErrorReporter reporter = new ErrorReporter();
         Maestro2Broker broker = new Maestro2Broker(createTempDir(), reporter);

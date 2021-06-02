@@ -27,7 +27,6 @@ public class TemplateGeneratorFromScenario {
     private static final String END_TIME_NAME = "END_TIME";
     private static final String STEP_SIZE_NAME = "STEP_SIZE";
     private static final String FMI2COMPONENT_TYPE = "FMI2Component";
-    private static final String COMPONENTS_ARRAY_NAME = "components";
     private static final String SCENARIO_MODEL_FMU_INSTANCE_DELIMITER = "_";
     private static final String MULTI_MODEL_FMU_INSTANCE_DELIMITER = ".";
 
@@ -78,11 +77,9 @@ public class TemplateGeneratorFromScenario {
                             return fmuFromScenario.get().instantiate(entry.getKey());
                         }));
 
-        //        Map<String, ComponentVariableFmi2Api> fmuInstances = fmus.stream()
-        //                .collect(Collectors.toMap(fmu -> fmu.getName().replaceAll("[{}]", ""), fmu -> fmu.instantiate(fmu.getName().replaceAll("[{}]", ""))));
-
-        dynamicScope.add(createComponentsArray(COMPONENTS_ARRAY_NAME,
-                fmuInstances.values().stream().map(ComponentVariableFmi2Api::getName).collect(Collectors.toSet())));
+        //TODO: Use initializer expansion plugin if no initializer sequence is passed.
+//        dynamicScope.add(createComponentsArray(COMPONENTS_ARRAY_NAME,
+//                fmuInstances.values().stream().map(ComponentVariableFmi2Api::getName).collect(Collectors.toSet())));
 
         dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(configuration.getMasterModel().scenario().connections()).stream()
                 .map(connection -> fmuInstances.get(connection.srcPort().fmu()).getPort(connection.srcPort().port())).collect(Collectors.toSet())));
@@ -121,8 +118,6 @@ public class TemplateGeneratorFromScenario {
         dataWriterInstance.close();
 
         fmus.forEach(fmu -> fmu.unload(dynamicScope));
-
-        //org.intocps.maestro.ast.display.PrettyPrinter.print(builder.build());
 
         return builder.build();
     }
@@ -455,6 +450,7 @@ public class TemplateGeneratorFromScenario {
         return toRemove.replaceAll("[{}]", "");
     }
 
+    //TODO: check that this can not be done directly in the builder if not create issue.
     private static PStm createComponentsArray(String lexName, Set<String> keySet) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(lexName),
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType(FMI2COMPONENT_TYPE)), keySet.size(), MableAstFactory.newAArrayInitializer(
