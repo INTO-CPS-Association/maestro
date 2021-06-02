@@ -24,10 +24,10 @@ data class ScenarioDTO(
 
 data class MasterModelDTO(
     @JsonProperty("name") val name: String?,
-    @JsonProperty("scenario") val scenario: String?,
+    @JsonProperty("scenario") val scenario: ScenarioDTO,
     @JsonProperty("instantiation") val instantiation: String?,
     @JsonProperty("initialization") val initialization: String?,
-    @JsonProperty("coSimStep") val coSimStep: String?,
+    @JsonProperty("coSimStep") val coSimStep: String,
     @JsonProperty("terminate") val terminate: String?,
 )
 
