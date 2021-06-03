@@ -1,0 +1,51 @@
+{
+  "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\nm2_mi2 = { \n can-reject-step = true,\n inputs = {\nx1 = {reactivity=reactive}\nv1 = {reactivity=reactive}},\n outputs = {\nfk = {dependencies-init=[x1,v1], dependencies=[x1,v1]}\nx2 = {dependencies-init=[x1,v1], dependencies=[x1,v1]}\nv2 = {dependencies-init=[x1,v1], dependencies=[x1,v1]}}\n }\nm1_mi1 = { \n can-reject-step = true,\n inputs = {\nfk = {reactivity=reactive}},\n outputs = {\nx1 = {dependencies-init=[], dependencies=[]}\nv1 = {dependencies-init=[], dependencies=[]}}\n }}\nconnections = [\nm2_mi2.fk -> m1_mi1.fk\nm1_mi1.x1 -> m2_mi2.x1\nm1_mi1.v1 -> m2_mi2.v1]\n}\ninitialization = [{get: m1_mi1.v1}\n\n{get: m1_mi1.x1}\n\n{set: m2_mi2.x1}\n\n{set: m2_mi2.v1}\n\n{get: m2_mi2.x2}\n\n{get: m2_mi2.fk}\n\n{set: m1_mi1.fk}\n\n{get: m2_mi2.v2}\n]\ncosim-step = [{save-state: m2_mi2}\n\n{save-state: m1_mi1}\n\n{loop: { \n until-step-accept: [m2_mi2,m1_mi1] \n iterate: [{loop: { \n until-converged: [m2_mi2.fk,m1_mi1.x1,m1_mi1.v1] \n iterate: [{set: m2_mi2.v1}\n\n{set: m2_mi2.x1}\n\n{step: m2_mi2 }\n\n{get-tentative: m2_mi2.fk}\n\n{set: m1_mi1.fk}\n\n{step: m1_mi1 }\n\n{get-tentative: m1_mi1.x1}\n\n{get-tentative: m1_mi1.v1}\n] \n if-retry-needed: [{restore-state: m2_mi2}\n\n{restore-state: m1_mi1}\n]} \n }\n] \n if-retry-needed: [{restore-state: m2_mi2}\n\n{restore-state: m1_mi1}\n]} \n }\n\n{get: m2_mi2.x2}\n\n{get: m2_mi2.v2}\n]\n",
+  "multiModel": {
+    "fmus": {
+      "{m2}": "src/test/resources/MassSpringDamper2.fmu",
+      "{m1}": "src/test/resources/MassSpringDamper1.fmu"
+    },
+    "connections": {
+      "{m2}.mi2.fk": [
+        "{m1}.mi1.fk"
+      ],
+      "{m1}.mi1.x1": [
+        "{m2}.mi2.x1"
+      ],
+      "{m1}.mi1.v1": [
+        "{m2}.mi2.v1"
+      ]
+    },
+    "parameters": {
+      "{m2}.mi2.m2": 1,
+      "{m2}.mi2.dc": 100,
+      "{m2}.mi2.d2": 2,
+      "{m2}.mi2.cc": 100,
+      "{m2}.mi2.c2": 1,
+      "{m2}.mi2.v2_initial": 0,
+      "{m2}.mi2.x2_initial": 0,
+      "{m1}.mi1.v1_initial": 0,
+      "{m1}.mi1.x1_initial": 1,
+      "{m1}.mi1.m1": 1,
+      "{m1}.mi1.d1": 1,
+      "{m1}.mi1.c1": 1
+    },
+    "scenarioVerifier": {
+      "reactivity": {
+        "{m1}.mi1.fk": true,
+        "{m2}.mi2.x1": true,
+        "{m2}.mi2.v1": true
+      },
+      "verification": false,
+      "visualization": false
+    }
+  },
+  "executionParameters": {
+    "convergenceRelativeTolerance": 0.01,
+    "convergenceAbsoluteTolerance": 0.0,
+    "convergenceAttempts": 5,
+    "startTime": 0.0,
+    "endTime": 10.0,
+    "stepSize": 0.001
+  }
+}

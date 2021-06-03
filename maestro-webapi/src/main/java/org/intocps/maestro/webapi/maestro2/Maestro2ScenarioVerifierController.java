@@ -76,6 +76,7 @@ public class Maestro2ScenarioVerifierController {
         broker.mabl.typeCheck();
         broker.mabl.verify(Framework.FMI2);
 
+        //TODO: How should errors and warnings be handled?
         if (reporter.getErrorCount() > 0) {
             throw new RuntimeException("Error occurred during spec generation: " + reporter);
         }
@@ -83,13 +84,13 @@ public class Maestro2ScenarioVerifierController {
         if (reporter.getWarningCount() > 0) {
             reporter.printWarnings(new PrintWriter(System.out, true));
         }
-        //org.intocps.maestro.ast.display.PrettyPrinter.print(broker.mabl.getMainSimulationUnit();
 
         new MableInterpreter(
                 new DefaultExternalValueFactory(broker.workingDirectory, IOUtils.toInputStream(broker.mabl.getRuntimeDataAsJsonString(),
                         StandardCharsets.UTF_8)))
                 .execute(broker.mabl.getMainSimulationUnit());
 
+        //TODO: What should be done after execution?
         return null;
     }
 

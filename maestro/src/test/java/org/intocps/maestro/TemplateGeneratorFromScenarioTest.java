@@ -102,6 +102,8 @@ public class TemplateGeneratorFromScenarioTest {
             errorReporter.printWarnings(new PrintWriter(System.out, true));
         }
 
+        //org.intocps.maestro.ast.display.PrettyPrinter.print(mabl.getMainSimulationUnit());
+
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
