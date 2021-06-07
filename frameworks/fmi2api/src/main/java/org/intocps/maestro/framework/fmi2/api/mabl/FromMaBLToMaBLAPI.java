@@ -36,7 +36,8 @@ public class FromMaBLToMaBLAPI {
             builder.getDynamicScope().add(dummyStm);
 
             FmuVariableFmi2Api fmu = new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
-                    builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null, null);
+                    builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
+                    new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
 
             ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
                     builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));

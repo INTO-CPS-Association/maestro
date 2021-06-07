@@ -157,7 +157,7 @@ class Initializer : IMaestroExpansionPlugin {
 
 
             //Set variables for all components in IniPhase
-            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase())
+            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
 
             //Enter initialization Mode
             logger.debug("Enter initialization Mode")
@@ -190,7 +190,7 @@ class Initializer : IMaestroExpansionPlugin {
             }
 
 
-            setRemainingInputs(fmuInstances)
+            setRemainingInputs(fmuInstances, builder)
 
             //Exit initialization Mode
             fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
@@ -205,7 +205,10 @@ class Initializer : IMaestroExpansionPlugin {
         }
     }
 
-    private fun setRemainingInputs(fmuInstances: MutableMap<String, ComponentVariableFmi2Api>) {
+    private fun setRemainingInputs(
+        fmuInstances: MutableMap<String, ComponentVariableFmi2Api>,
+        builder: MablApiBuilder
+    ) {
         for (comp in fmuInstances.values) {
             try {
                 val scalarVariables = comp.modelDescription.scalarVariables
@@ -219,7 +222,7 @@ class Initializer : IMaestroExpansionPlugin {
                         .toArray())
 
                 for (port in ports) {
-                    setParameterOnPort(port, comp)
+                    setParameterOnPort(port, comp, builder)
                 }
             } catch (e: Exception) {
                 throw ExpandException("Initializer failed to read scalarvariables", e)
@@ -233,24 +236,50 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setParameterOnPort(
         port: PortFmi2Api,
-        comp: ComponentVariableFmi2Api
+        comp: ComponentVariableFmi2Api,
+        builder: MablApiBuilder
     ) {
         val fmuName = comp.name
-        var value = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
-        when (port.scalarVariable.type.type!!) {
-            ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
-            ModelDescription.Types.Real -> {
-                if (value is Int) {
-                    value = value.toDouble()
+        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
+        if (value != null) {
+            when (port.scalarVariable.type.type!!) {
+                ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
+                ModelDescription.Types.Real -> {
+                    if (value is Int) {
+                        value = value.toDouble()
+                    }
+                    val b: Double = value as Double
+                    comp.set(port, DoubleExpressionValue.of(b))
                 }
-                val b: Double = value as Double
-                comp.set(port, DoubleExpressionValue.of(b))
+                ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
+                ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(value as String))
+                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
             }
-            ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
-            ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(value as String))
-            ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
-            else -> throw ExpandException("Not known type")
+        } else {
+            when (port.scalarVariable.type.type!!) {
+                ModelDescription.Types.Boolean -> {
+                    val v = builder.executionEnvironment.getBool(builder.executionEnvironment.getEnvName(comp, port))
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Real -> {
+                    val v = builder.executionEnvironment.getReal(builder.executionEnvironment.getEnvName(comp, port))
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Integer -> {
+                    val v = builder.executionEnvironment.getInt(builder.executionEnvironment.getEnvName(comp, port))
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.String -> {
+                    val v = builder.executionEnvironment.getString(builder.executionEnvironment.getEnvName(comp, port))
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
+            }
         }
+
+
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
@@ -312,7 +341,11 @@ class Initializer : IMaestroExpansionPlugin {
         fmuInstances: Map<String, ComponentVariableFmi2Api>
     ): Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Any>>> {
         val fmuToPorts = ports.groupBy { i -> i.instance.text }
-            .map { i -> i.key to i.value.map { p -> fmuInstances.getValue(i.key).getPort(p.scalarVariable.getName()) } }
+            .map { i ->
+                i.key to i.value.map { p ->
+                    fmuInstances.getValue(i.key).getPort(p.scalarVariable.getName())
+                }
+            }
             .toMap()
         return fmuToPorts.map { (fmu, ports) ->
             fmuInstances.getValue(fmu) to ports.map { port ->
@@ -338,12 +371,13 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
-        predicate: Predicate<ModelDescription.ScalarVariable>
+        predicate: Predicate<ModelDescription.ScalarVariable>,
+        builder: MablApiBuilder
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
             for (sv in comp.modelDescription.scalarVariables.filter { i -> predicate.test(i) }) {
                 val port = comp.getPort(sv.name)
-                setParameterOnPort(port, comp)
+                setParameterOnPort(port, comp, builder)
             }
         }
     }
@@ -431,10 +465,18 @@ class Initializer : IMaestroExpansionPlugin {
         init {
             val mapper = ObjectMapper()
             val convertParameters: Map<String, Any>? =
-                if (parameters == null) null else mapper.convertValue(parameters, Map::class.java) as Map<String, Any>
+                if (parameters == null) null else mapper.convertValue(
+                    parameters,
+                    Map::class.java
+                ) as Map<String, Any>
 
             modelParameters =
-                convertParameters?.map { (key, value) -> ModelParameter(ModelConnection.Variable.parse(key), value) }
+                convertParameters?.map { (key, value) ->
+                    ModelParameter(
+                        ModelConnection.Variable.parse(key),
+                        value
+                    )
+                }
             verifyAgainstProlog = verify?.asBoolean(false) ?: false
             this.stabilisation = stabilisation?.asBoolean(false) ?: false
             maxIterations = fixedPointIteration?.asInt(5) ?: 5
@@ -462,6 +504,16 @@ class Initializer : IMaestroExpansionPlugin {
             val parameterValue =
                 modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
             return if (parameterValue != null) parameterValue.value else sv.type.start
+        }
+
+        private fun findUseDefault(
+            compName: String,
+            sv: ModelDescription.ScalarVariable,
+            modelParameters: List<ModelParameter>?
+        ): Any? {
+            val parameterValue =
+                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
+            return if (parameterValue != null) null else sv.type.start
         }
     }
 }

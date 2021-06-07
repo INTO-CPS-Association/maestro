@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -14,19 +15,28 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
+import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.webapi.maestro2.dto.*;
+import org.intocps.maestro.webapi.maestro2.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
+import org.intocps.maestro.webapi.maestro2.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,19 +107,20 @@ public class Maestro2Broker {
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
-            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(), body.getStartTime());
+            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
+                    body.getStartTime());
         } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             algorithm = new VariableStepAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
                     ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(),
                     (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()), body.getStartTime());
 
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
-                        if (v instanceof InitializationData.ZeroCrossingConstraint) {
-                            config.variablesOfInterest.addAll(((InitializationData.ZeroCrossingConstraint) v).getPorts());
-                        } else if (v instanceof InitializationData.BoundedDifferenceConstraint) {
-                            config.variablesOfInterest.addAll(((InitializationData.BoundedDifferenceConstraint) v).getPorts());
-                        }
-                    });
+            ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
+                if (v instanceof InitializationData.ZeroCrossingConstraint) {
+                    config.variablesOfInterest.addAll(((InitializationData.ZeroCrossingConstraint) v).getPorts());
+                } else if (v instanceof InitializationData.BoundedDifferenceConstraint) {
+                    config.variablesOfInterest.addAll(((InitializationData.BoundedDifferenceConstraint) v).getPorts());
+                }
+            });
         } else {
             throw new Exception("Could not get algorithm from specification");
         }
@@ -119,12 +130,11 @@ public class Maestro2Broker {
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
                         .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
-                        .setLoggingOn(initializeRequest.isLoggingOn()).
-                        setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
+                        .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();
-        generateSpecification(configuration);
+        String runtimeJsonConfigString = generateSpecification(configuration, parameters);
 
         if (!mabl.typeCheck().getKey()) {
             throw new Exception("Specification did not type check");
@@ -150,25 +160,45 @@ public class Maestro2Broker {
                 (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
                         .stream()).collect(Collectors.toList()),
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
-                body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile);
+                body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
+                new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
 
     }
 
-    public void generateSpecification(MaBLTemplateConfiguration config) throws Exception {
+    public String generateSpecification(MaBLTemplateConfiguration config, Map<String, Object> parameters) throws Exception {
         mabl.generateSpec(config);
         mabl.expand();
         mabl.dump(workingDirectory);
+
+        //todo move to mabl
+        Map<String, Object> runtimeEnvParameters = parameters.entrySet().stream()
+                .collect(Collectors.toMap(map -> map.getKey().replace("{", "").replace("}", "").replace('.', '_'), map -> map.getValue()));
+
+        Object runtimeDataRaw = mabl.getRuntimeData();
+        if (runtimeDataRaw instanceof Map) {
+            //lets append the parameters
+            Map runtimeConfig = (Map) runtimeDataRaw;
+            runtimeConfig.put(DefaultExternalValueFactory.MEnvLifecycleHandler.ENVIRONMENT_VARIABLES, runtimeEnvParameters);
+            //re-dump the updated file
+            new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME), runtimeConfig);
+        }
+
+
         logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
+
+        return new ObjectMapper().writeValueAsString(runtimeDataRaw);
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,
-            File csvOutputFile) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+            File csvOutputFile,
+            InputStream config) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
-                    csvFilter);
+                    csvFilter, config);
         } else {
-            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter);
+            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter, config);
         }
         new MableInterpreter(factory).execute(mabl.getMainSimulationUnit());
     }
