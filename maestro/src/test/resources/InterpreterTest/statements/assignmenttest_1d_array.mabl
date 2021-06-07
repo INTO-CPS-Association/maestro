@@ -1,4 +1,0 @@
-int a[1];
-a[0] = 1;
-
-assert.assertEquals(a[0], 1);

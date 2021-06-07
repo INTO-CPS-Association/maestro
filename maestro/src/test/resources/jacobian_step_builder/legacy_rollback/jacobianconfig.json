@@ -1,5 +1,5 @@
 {
-  "variablesOfInterest": [],
+  "variablesOfInterest": ["{pump}.pump.mdot_out"],
   "stabilisation": false,
   "absoluteTolerance": 0.0,
   "relativeTolerance": 0.01,

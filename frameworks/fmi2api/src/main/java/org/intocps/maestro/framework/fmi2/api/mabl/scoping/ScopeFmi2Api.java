@@ -8,14 +8,11 @@ import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -229,6 +226,99 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
+    /**
+     * @param identifyingName the name of the MaBL array
+     * @param mdArray         non-jagged multidimensional Java array.
+     * @param <V>             data type
+     * @return an ArrayVariable representing the multidimensional array
+     */
+    private <V> ArrayVariableFmi2Api<V> storeMDArray(String identifyingName, V[] mdArray) {
+        List<Integer> arrayShape = new ArrayList<>();
+        PType type;
+        V[] subArr = mdArray;
+        while (subArr.getClass().getComponentType().isArray()) {
+            arrayShape.add(subArr.length);
+            subArr = (V[]) subArr[0];
+        }
+        arrayShape.add(subArr.length);
+
+        if (subArr instanceof Double[]) {
+            type = newARealNumericPrimitiveType();
+        } else if (subArr instanceof Integer[]) {
+            type = newAIntNumericPrimitiveType();
+        } else if (subArr instanceof Boolean[]) {
+            type = newABoleanPrimitiveType();
+        } else if (subArr instanceof String[]) {
+            type = newAStringPrimitiveType();
+        } else if (subArr instanceof Long[]) {
+            type = newAUIntNumericPrimitiveType();
+        } else {
+            throw new IllegalArgumentException();
+        }
+
+        PStm arrayVariableStm = newALocalVariableStm(newAVariableDeclarationMultiDimensionalArray(newAIdentifier(identifyingName), type, arrayShape));
+
+        add(arrayVariableStm);
+
+        return instantiateMDArrayRecursively(mdArray, arrayVariableStm, newAIdentifierStateDesignator(newAIdentifier(identifyingName)),
+                newAIdentifierExp(identifyingName));
+    }
+
+    /**
+     * @param array        multi dimensional array
+     * @param declaringStm declaring statement of the root array
+     * @param <V>          data type
+     * @return an ArrayVariable representing the multidimensional array
+     */
+    private <V> ArrayVariableFmi2Api<V> instantiateMDArrayRecursively(V[] array, PStm declaringStm, PStateDesignatorBase stateDesignator,
+            PExpBase indexExp) {
+
+        if (array.getClass().getComponentType().isArray()) {
+            List<VariableFmi2Api> arrays = new ArrayList<>();
+            for (int i = 0; i < array.length; i++) {
+                arrays.add(instantiateMDArrayRecursively((V[]) array[i], declaringStm, newAArayStateDesignator(stateDesignator, newAIntLiteralExp(i)),
+                        newAArrayIndexExp(indexExp, List.of(newAIntLiteralExp(i)))));
+            }
+            return new ArrayVariableFmi2Api(declaringStm, arrays.get(0).getType(), this, builder.getDynamicScope(), stateDesignator, indexExp.clone(),
+                    arrays);
+        }
+
+        List<VariableFmi2Api<V>> variables = new ArrayList<>();
+        for (int i = 0; i < array.length; i++) {
+            PType type;
+            Fmi2Builder.ExpressionValue value;
+
+            if (array instanceof Double[]) {
+                type = newARealNumericPrimitiveType();
+                value = new DoubleExpressionValue((Double) array[i]);
+            } else if (array instanceof Integer[]) {
+                type = newAIntNumericPrimitiveType();
+                value = new IntExpressionValue((Integer) array[i]);
+            } else if (array instanceof Boolean[]) {
+                type = newABoleanPrimitiveType();
+                value = new BooleanExpressionValue((Boolean) array[i]);
+            } else if (array instanceof String[]) {
+                type = newAStringPrimitiveType();
+                value = new StringExpressionValue((String) array[i]);
+            } else if (array instanceof Long[]) {
+                type = newAUIntNumericPrimitiveType();
+                value = new IntExpressionValue(((Long) array[i]).intValue());
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+            VariableFmi2Api<V> variableToAdd = new VariableFmi2Api<>(declaringStm, type, this, builder.getDynamicScope(),
+                    newAArayStateDesignator(stateDesignator.clone(), newAIntLiteralExp(i)),
+                    newAArrayIndexExp(indexExp.clone(), List.of(newAIntLiteralExp(i))));
+
+            variableToAdd.setValue(value);
+            variables.add(variableToAdd);
+        }
+
+        return new ArrayVariableFmi2Api<>(declaringStm, variables.get(0).getType(), this, builder.getDynamicScope(),
+                ((AArrayStateDesignator) variables.get(0).getDesignatorClone()).getTarget(), indexExp.clone(), variables);
+    }
+
     protected <V> ArrayVariableFmi2Api<V> store(Supplier<String> nameProvider, V[] value) {
         String name = nameProvider.get();
         int length = value.length;
@@ -238,27 +328,25 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         if (value instanceof Double[]) {
             type = new ARealNumericPrimitiveType();
             if (length > 1 && value[0] != null) {
-                initializer =
-                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newARealLiteralExp((Double) v)).collect(Collectors.toList()));
+                initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newARealLiteralExp((Double) v)).collect(Collectors.toList()));
             }
         } else if (value instanceof Integer[]) {
             type = new AIntNumericPrimitiveType();
             if (length > 1 && value[0] != null) {
-                initializer =
-                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newAIntLiteralExp((Integer) v)).collect(Collectors.toList()));
+                initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newAIntLiteralExp((Integer) v)).collect(Collectors.toList()));
             }
         } else if (value instanceof Boolean[]) {
             type = new ABooleanPrimitiveType();
             if (length > 1 && value[0] != null) {
-                initializer =
-                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newABoolLiteralExp((Boolean) v)).collect(Collectors.toList()));
+                initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newABoolLiteralExp((Boolean) v)).collect(Collectors.toList()));
             }
         } else if (value instanceof String[]) {
             type = new AStringPrimitiveType();
             if (length > 1 && value[0] != null) {
-                initializer =
-                        newAArrayInitializer(Arrays.asList(value).stream().map(v -> newAStringLiteralExp((String) v)).collect(Collectors.toList()));
+                initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newAStringLiteralExp((String) v)).collect(Collectors.toList()));
             }
+        } else if (value.getClass().getComponentType().isArray()) {
+            return storeMDArray(name, value);
         }
 
         PStm localVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), type, length, initializer));

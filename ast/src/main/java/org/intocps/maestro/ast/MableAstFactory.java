@@ -68,6 +68,16 @@ public class MableAstFactory {
         return newAVariableDeclaration(name, type, MableAstFactory.newAIntLiteralExp(size), initializer_);
     }
 
+    public static AVariableDeclaration newAVariableDeclarationMultiDimensionalArray(LexIdentifier name, PType type, List<Integer> shape) {
+        AVariableDeclaration variableDeclaration = new AVariableDeclaration();
+        variableDeclaration.setName(name);
+        variableDeclaration.setType(type);
+        List<AIntLiteralExp> size_ = shape.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList());
+        variableDeclaration.setSize(size_);
+
+        return variableDeclaration;
+    }
+
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, PExp size, PInitializer initializer_) {
         if (type instanceof AArrayType) {
             type = ((AArrayType) type).getType();

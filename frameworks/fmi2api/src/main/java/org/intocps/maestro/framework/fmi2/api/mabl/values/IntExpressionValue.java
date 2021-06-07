@@ -18,6 +18,10 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         this.exp = exp;
     }
 
+    public IntExpressionValue(int value) {
+        this.exp = newAIntLiteralExp(value);
+    }
+
     public static IntExpressionValue of(int i) {
         return new IntExpressionValue(newAIntLiteralExp(i));
     }

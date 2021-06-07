@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 %framework->config = "@FrameworkConfig(\"" + [name] + "\", \""+ [config] + "\")"
 
 %compilationUnit->importedModule = "imported "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))$ + [module]
-%compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + $[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n"))$ + [body]
+%compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + ($[frameworkConfigs]$.isEmpty()?"":$[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n")))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
 %declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 %exp->#unary->minus = "-" + [exp]
 %exp->#unary->plus = "+" + [exp]
 %exp->call = ""+ $ ($[object]$==null?"":$[object]$+".")+($[expand]$==null?"":$[expand]$.getText()+ " ")+ $[methodName]$ +"(" +$[args]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+"]"
+%exp->arrayIndex = ""+ $ $[array]$ +"[" +$[indices]$.stream().map(Object::toString).collect(Collectors.joining("]["))$+"]"
 %exp->par = "("+ [exp] +")"
 %exp->null = "null"
 %exp->ref = "ref "+ [exp]

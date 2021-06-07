@@ -10,6 +10,7 @@ import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.csv.CSVValue;
 import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
+import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.maestro.interpreter.values.utilities.ArrayUtilValue;
 import org.intocps.maestro.interpreter.values.variablestep.VariableStepValue;
@@ -194,6 +195,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
             String config = ((StringValue) args.get(0)).getValue();
             return Either.right(new VariableStepValue(config));
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "DerivativeEstimator")
+    public static class DerivativeEstimatorLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new DerivativeEstimatorValue());
         }
     }
 
