@@ -10,7 +10,7 @@ public class TemplateGenerator {
     public static ASimulationSpecificationCompilationUnit generateTemplate(ScenarioConfiguration configuration){
         try {
             return TemplateGeneratorFromScenario.generateTemplate(configuration);
-        } catch (AnalysisException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Unable to generate template");
         }
     }
