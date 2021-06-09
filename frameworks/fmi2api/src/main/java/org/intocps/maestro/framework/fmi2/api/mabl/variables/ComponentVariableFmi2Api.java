@@ -161,12 +161,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return this.getBuffer(this.sharedBuffer, type, "Share", 0, getDeclaredScope());
     }
 
-    private ArrayVariableFmi2Api<Object> getTentativeBuffer(PType type, IMablScope scope) {
-        tentativeBuffer.computeIfAbsent(scope, (s) -> new HashMap<>());
-        Map<PType, ArrayVariableFmi2Api<Object>> buffer = tentativeBuffer.getOrDefault(scope, new HashMap<>());
-        return this.getBuffer(buffer, type, "TentativeBuffer", 0, scope);
-    }
-
     private ArrayVariableFmi2Api createMDArrayRecursively(List<Integer> arraySizes, PStm declaringStm, PStateDesignatorBase stateDesignator,
             PExpBase indexExp) {
 
@@ -396,46 +390,48 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return (PortFmi2Api) this.getPorts(valueReference).get(0);
     }
 
-
+    //TODO: Move tentative buffer and global share buffer logic to its own module so that it is not coupled with the component logic?
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> getTentative(IMablScope scope, String... names) {
-        Fmi2Builder.Port[] ports = this.ports.stream()
+        // Get filtered port values
+        Fmi2Builder.Port[] filteredPorts = this.ports.stream()
                 .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.causality == ModelDescription.Causality.Output))
                 .toArray(Fmi2Builder.Port[]::new);
-
-        Map<PortFmi2Api, VariableFmi2Api<Object>> portToValueMap = get(scope, ports);
+        Map<PortFmi2Api, VariableFmi2Api<Object>> portToValueMap = get(scope, filteredPorts);
         if (portToValueMap.isEmpty()) {
             return Map.of();
         }
 
-        if (!tentativeBufferIndexMap.containsKey(scope)) {
-            tentativeBufferIndexMap.put(scope, new HashMap<>());
-        }
-
-        Map<PortFmi2Api, VariableFmi2Api<V>> portToValueMapToReturn = new HashMap<>();
-
+        // Get tentative buffer index map for the scope
+        tentativeBufferIndexMap.computeIfAbsent(scope, (s) -> new HashMap<>());
         Map<PortFmi2Api, Integer> portToVariableIndexMap = tentativeBufferIndexMap.get(scope);
 
-        PType type = portToValueMap.keySet().iterator().next().getType();
+        // Return a port value map where the value is an index in a tentative buffer for the given scope instead of the global IO buffer
+        return portToValueMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+            PType type = entry.getKey().getType();
+            PortFmi2Api port = entry.getKey();
+            VariableFmi2Api variable = entry.getValue();
+            VariableFmi2Api<V> varToReturn;
 
-        portToValueMap.forEach((port, variable) -> {
-            ArrayVariableFmi2Api<Object> buffer = getTentativeBuffer(type, scope);
-            VariableFmi2Api<Object> varToReturn;
+            // Get the tentative buffer for the given scope
+            tentativeBuffer.computeIfAbsent(scope, (s) -> new HashMap<>());
+            ArrayVariableFmi2Api<Object> buffer =
+                    this.getBuffer(tentativeBuffer.getOrDefault(scope, new HashMap<>()), type, "TentativeBuffer", 0, scope);
+
+            // Expand the buffer if the port has not been indexed
             if (!portToVariableIndexMap.containsKey(port)) {
                 portToVariableIndexMap.put(port, portToVariableIndexMap.entrySet().size());
                 ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
                 tentativeBuffer.get(scope).entrySet().removeIf(x -> x.getKey().toString().equals(type.toString()));
                 tentativeBuffer.get(scope).put(type, newBuf);
-                varToReturn = newBuf.items().get(newBuf.items().size() - 1);
+                varToReturn = (VariableFmi2Api<V>) newBuf.items().get(newBuf.items().size() - 1);
             } else {
-                varToReturn = buffer.items().get(portToVariableIndexMap.get(port));
+                varToReturn = (VariableFmi2Api<V>) buffer.items().get(portToVariableIndexMap.get(port));
             }
 
+            // Create the assignment from the IO buffer to the tentative buffer in MaBL
             scope.add(MableAstFactory.newAAssignmentStm(varToReturn.getDesignator(), variable.getExp()));
-
-            portToValueMapToReturn.put(port, (VariableFmi2Api<V>) varToReturn);
-        });
-
-        return portToValueMapToReturn;
+            return varToReturn;
+        }));
     }
 
     @Override
@@ -529,7 +525,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             try {
                 return p2.aMablFmi2ComponentAPI.getModelDescription().getCanInterpolateInputs();
             } catch (XPathExpressionException e) {
-                throw new RuntimeException("Exception occurred when accessing modeldescription.", e);
+                throw new RuntimeException("Exception occurred when accessing modeldescription: ", e);
             }
         })).collect(Collectors.toList());
 
@@ -593,7 +589,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             }
 
         } catch (InvocationTargetException | IllegalAccessException | XPathExpressionException e) {
-            throw new RuntimeException("Exception occurred when retrieving derivatives.", e);
+            throw new RuntimeException("Exception occurred when retrieving derivatives: ", e);
         }
 
         return derivativePortsToReturn;
@@ -818,7 +814,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 setDerivativesForSharedPorts(sortedPorts, scope);
             }
         } catch (XPathExpressionException e) {
-            throw new RuntimeException("Exception occurred when when setting derivatives.", e);
+            throw new RuntimeException("Exception occurred when when setting derivatives: ", e);
         }
     }
 
@@ -848,7 +844,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                         return null;
                     } catch (XPathExpressionException | IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException("Exception occurred when accessing modeldescription", e);
+                        throw new RuntimeException("Exception occurred when accessing modeldescription: ", e);
                     }
                 }).filter(Objects::nonNull).collect(LinkedHashMap::new, (map, item) -> map.put(item.getKey(), item.getValue()),  // Accumulator
                         Map::putAll);
@@ -1113,7 +1109,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         try {
             innerArraySize = modelDescriptionContext.getModelDescription().getMaxOutputDerivativeOrder();
         } catch (XPathExpressionException e) {
-            throw new RuntimeException("Exception occurred when accessing model description.", e);
+            throw new RuntimeException("Exception occurred when accessing model description: ", e);
         }
 
         String bufferName = ((AIdentifierExp) sharedBuffer.getReferenceExp()).getName().getText();
