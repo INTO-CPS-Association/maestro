@@ -16,7 +16,7 @@
         "{Controller}.cont.level": false
       },
       "verification": false,
-      "visualization": false
+      "traceVisualization": false
     }
   },
   "executionParameters": {

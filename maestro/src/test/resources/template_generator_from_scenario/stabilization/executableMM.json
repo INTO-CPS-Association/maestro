@@ -37,7 +37,7 @@
         "{m2}.mi2.v1": true
       },
       "verification": false,
-      "visualization": false
+      "traceVisualization": false
     }
   },
   "executionParameters": {

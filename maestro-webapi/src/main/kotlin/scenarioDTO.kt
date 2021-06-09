@@ -40,7 +40,7 @@ data class ExecutionParameters(
     @JsonProperty("stepSize") val stepSize: Double
 )
 
-data class MasterAndMultiModelDTO(
+data class MasterMultiModelDTO(
     @JsonProperty("masterModel") val masterModel: String,
     @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier
 )

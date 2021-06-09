@@ -23,14 +23,14 @@ public class MultiModelScenarioVerifier extends MultiModel{
         @JsonProperty("verification")
         public final boolean verification;
 
-        @JsonProperty("visualization")
-        public final boolean visualization;
+        @JsonProperty("traceVisualization")
+        public final boolean traceVisualization;
 
         public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Boolean> reactivity, @JsonProperty("verification") boolean verification,
                 @JsonProperty("visualization") boolean visualization) {
             this.reactivity = reactivity;
             this.verification = verification;
-            this.visualization = visualization;
+            this.traceVisualization = visualization;
         }
     }
 }

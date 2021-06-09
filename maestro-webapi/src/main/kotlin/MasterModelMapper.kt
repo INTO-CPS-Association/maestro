@@ -124,41 +124,6 @@ class MasterModelMapper {
                 }
             }.toMap()
 
-            // Map fmus to fmu models
-//            val fmuNameToFmuModel = Fmi2SimulationEnvironment.of(
-//                simulationConfiguration,
-//                null
-//            ).fmusWithModelDescriptions.associate { entry ->
-//                val scalarVariables = entry.value.scalarVariables
-//                val inputs =
-//                    scalarVariables.filter { port -> port.causality.equals(ModelDescription.Causality.Input) }
-//                        .associate { port ->
-//                            port.getName() to InputPortModel(if (multiModel.scenarioVerifier.reactivity.any { portReactivity ->
-//                                    portReactivity.key.contains(port.getName()) &&
-//                                            portReactivity.key.contains(entry.key) &&
-//                                            portReactivity.value
-//                                }) Reactivity.reactive() else Reactivity.delayed())
-//                        }
-//
-//                val outputs =
-//                    scalarVariables.filter { port -> port.causality.equals(ModelDescription.Causality.Output) }
-//                        .associate { port ->
-//                            val dependencies = port.outputDependencies.map { entry -> entry.key.getName() }
-//                            port.getName() to OutputPortModel(
-//                                CollectionConverters.asScala(dependencies).toList(),
-//                                CollectionConverters.asScala(dependencies).toList()
-//                            )
-//                        }
-//
-//                removeBraces(entry.key) to FmuModel(
-//                    scala.collection.immutable.Map.from(scala.jdk.CollectionConverters.MapHasAsScala(inputs).asScala()),
-//                    scala.collection.immutable.Map.from(
-//                        scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()
-//                    ),
-//                    entry.value.canGetAndSetFmustate
-//                )
-//            }
-
             val scenario = ScenarioModel(
                 scala.collection.immutable.Map.from(
                     scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()
