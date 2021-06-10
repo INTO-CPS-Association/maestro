@@ -293,10 +293,21 @@ public class TemplateGeneratorFromScenario {
                         executionParameters, connections, portsWithGet, currentStepSize);
 
         // Get step accepted boolean from each fmu instance of interest.
-        List<Fmi2Builder.BoolVariable<PStm>> accepted = fmusWithStep.entrySet().stream()
-                .filter(entry -> CollectionConverters.asJava(instruction.untilStepAccept()).stream()
-                        .anyMatch(name -> entry.getKey().getName().contains(name.toLowerCase(Locale.ROOT)))).map(entry -> entry.getValue().getKey())
-                .collect(Collectors.toList());
+        List<Fmi2Builder.BoolVariable<PStm>> accepted = new ArrayList<>();
+        List<String> acceptFmuRefs = CollectionConverters.asJava(instruction.untilStepAccept());
+        fmusWithStep.forEach((fmuInstance, stepWithAccept) -> {
+            if (acceptFmuRefs.stream().anyMatch(name -> fmuInstance.getName().contains(name.toLowerCase(Locale.ROOT)))) {
+                accepted.add(stepWithAccept.getKey());
+                dynamicScope.enterIf(stepWithAccept.getKey().toPredicate().not());
+                {
+                    loggerModule.trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", fmuInstance.getName(),
+                            currentCommunicationPoint, currentStepSize,
+                            new VariableFmi2Api<>(null, stepWithAccept.getValue().getType(), dynamicScope, dynamicScope, null,
+                                    stepWithAccept.getValue().getExp()));
+                }
+                dynamicScope.leave();
+            }
+        });
 
         stepAcceptedPredicate.setValue(booleanLogicModule.allTrue("all_fmus_accepted_step_size", accepted));
 
@@ -312,6 +323,9 @@ public class TemplateGeneratorFromScenario {
                 fmuCommunicationPoints.items().get(i).setValue(new DoubleExpressionValue(stepSizes.get(i).getExp()));
             }
             currentStepSize.setValue(mathModule.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationPoint));
+
+            loggerModule.trace("## Step size was not accepted by every fmu! It has been changed to the smallest accepted step size of: %f",
+                    currentStepSize);
         }
         dynamicScope.leave();
         stepAcceptedScope.leave();
@@ -356,7 +370,7 @@ public class TemplateGeneratorFromScenario {
                         isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTol, relTol));
                         dynamicScope.enterIf(isClose.toPredicate().not());
                         {
-                            loggerModule.trace("Unstable signal %s = %.15E during algebraic loop",
+                            loggerModule.trace("## Unstable signal %s = %.15E during algebraic loop in cosim step",
                                     masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
                                     portValue);
                             dynamicScope.leave();
@@ -389,6 +403,10 @@ public class TemplateGeneratorFromScenario {
             // Map retry instructions to MaBL
             mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded()), fmuInstances,
                     currentCommunicationPoint, fmuStates, executionParameters, connections, portMapVars, currentStepSize);
+
+            loggerModule.trace("## Convergence was not reached at sim-time: %f with step size: %f! %d convergence attempts remaining",
+                    currentCommunicationPoint, currentStepSize, convergeAttempts);
+
             convergeAttempts.decrement();
         }
         dynamicScope.leave();
@@ -421,7 +439,7 @@ public class TemplateGeneratorFromScenario {
                 isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTol, relTol));
                 dynamicScope.enterIf(isClose.toPredicate().not());
                 {
-                    loggerModule.trace("Unstable signal %s = %.15E during algebraic loop",
+                    loggerModule.trace("Unstable signal %s = %.15E during algebraic loop in initialization",
                             masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
                             portMap.getValue());
                     dynamicScope.leave();

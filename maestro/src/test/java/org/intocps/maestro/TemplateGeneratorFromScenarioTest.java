@@ -37,7 +37,9 @@ public class TemplateGeneratorFromScenarioTest {
      */
     private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
-                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
+                .map(f -> Arguments.arguments(f.getName(), f));
+        //        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
+        //                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
         //TODO: remove filter when stabilization scenario works
     }
 
@@ -60,25 +62,34 @@ public class TemplateGeneratorFromScenarioTest {
 
         // Setup values from JSON
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {
-        });
-        simulationConfiguration.connections = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
-        });
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes(StandardCharsets.UTF_8)));
-        Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {
-        });
-        Double relTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceRelativeTolerance")), new TypeReference<>() {
-        });
-        Double absTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAbsoluteTolerance")), new TypeReference<>() {
-        });
-        Integer convergenceAttempts = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")), new TypeReference<>() {
-        });
-        Double startTime = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("startTime")), new TypeReference<>() {
-        });
+        simulationConfiguration.fmus =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {
+                });
+        simulationConfiguration.connections =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
+                });
+        MasterModel masterModel =
+                ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes(StandardCharsets.UTF_8)));
+        Map<String, Object> parameters =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {
+                });
+        Double relTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceRelativeTolerance")),
+                new TypeReference<>() {
+                });
+        Double absTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAbsoluteTolerance")),
+                new TypeReference<>() {
+                });
+        Integer convergenceAttempts = jsonMapper
+                .readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")), new TypeReference<>() {
+                });
+        Double startTime =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("startTime")), new TypeReference<>() {
+                });
         Double endTime = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("endTime")), new TypeReference<>() {
         });
-        Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")), new TypeReference<>() {
-        });
+        Double stepSize =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")), new TypeReference<>() {
+                });
 
         // Setup scenarioConfiguration
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
