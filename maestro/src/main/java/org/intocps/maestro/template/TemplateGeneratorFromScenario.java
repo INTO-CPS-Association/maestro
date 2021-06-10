@@ -162,7 +162,7 @@ public class TemplateGeneratorFromScenario {
             Map<String, Object> portToValue = parameters.entrySet().stream()
                     .filter(entry -> removeBraces(entry.getKey()).contains(masterMRepresentationToMultiMRepresentation(instanceName)))
                     .collect(Collectors.toMap(e -> e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER)[2], Map.Entry::getValue));
-            // Convert each parameter to matching expression value
+            // Map each parameter to matching expression value
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =
                     portToValue.entrySet().stream().collect(Collectors.toMap(e -> fmuInstance.getPort(e.getKey()), e -> {
                         if (e.getValue() instanceof Double) {
@@ -221,7 +221,7 @@ public class TemplateGeneratorFromScenario {
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> tentativePortVars = new ArrayList<>();
 
         // Loop over step instructions and map them to MaBL
-        for (CosimStepInstruction instruction : coSimStepInstructions) {
+        coSimStepInstructions.forEach(instruction -> {
             if (instruction instanceof core.Set) {
                 mapSetInstruction(((core.Set) instruction).port(), sharedPortVars, fmuInstances, connections);
             } else if (instruction instanceof Get) {
@@ -258,11 +258,11 @@ public class TemplateGeneratorFromScenario {
                         .ifPresentOrElse(item -> {
                         }, () -> tentativePortVars.add(Map.entry(port, portValue))));
             } else if (instruction instanceof SetTentative) {
-                handleSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortVars, fmuInstances, connections);
+                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortVars, fmuInstances, connections);
             } else {
                 throw new RuntimeException("Unknown CoSimStep instruction: " + instruction.toString());
             }
-        }
+        });
 
         // Share any tentative port values and include them in shared port vars
         tentativePortVars.forEach(tentativePortMapEntry -> {
@@ -288,20 +288,20 @@ public class TemplateGeneratorFromScenario {
         ScopeFmi2Api stepAcceptedScope = dynamicScope.enterWhile(stepAcceptedPredicate.toPredicate().not());
 
         // Map iterate instructions to MaBL
-        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmusWithStep =
+        Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuInstanceWithStepVar =
                 mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(instruction.iterate()), fmuInstances, currentCommunicationPoint, fmuStates,
                         executionParameters, connections, portsWithGet, currentStepSize);
 
         // Get step accepted boolean from each fmu instance of interest.
-        List<Fmi2Builder.BoolVariable<PStm>> accepted = new ArrayList<>();
+        List<Fmi2Builder.BoolVariable<PStm>> acceptedStepVariables = new ArrayList<>();
         List<String> acceptFmuRefs = CollectionConverters.asJava(instruction.untilStepAccept());
-        fmusWithStep.forEach((fmuInstance, stepWithAccept) -> {
+        fmuInstanceWithStepVar.forEach((fmuInstance, stepWithAccept) -> {
             if (acceptFmuRefs.stream().anyMatch(name -> fmuInstance.getName().contains(name.toLowerCase(Locale.ROOT)))) {
-                accepted.add(stepWithAccept.getKey());
+                acceptedStepVariables.add(stepWithAccept.getKey());
                 dynamicScope.enterIf(stepWithAccept.getKey().toPredicate().not());
                 {
-                    loggerModule.trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", fmuInstance.getName(),
-                            currentCommunicationPoint, currentStepSize,
+                    loggerModule.trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f",
+                            fmuInstance.getName(), currentCommunicationPoint, currentStepSize,
                             new VariableFmi2Api<>(null, stepWithAccept.getValue().getType(), dynamicScope, dynamicScope, null,
                                     stepWithAccept.getValue().getExp()));
                 }
@@ -309,7 +309,7 @@ public class TemplateGeneratorFromScenario {
             }
         });
 
-        stepAcceptedPredicate.setValue(booleanLogicModule.allTrue("all_fmus_accepted_step_size", accepted));
+        stepAcceptedPredicate.setValue(booleanLogicModule.allTrue("all_fmus_accepted_step_size", acceptedStepVariables));
 
         dynamicScope.enterIf(stepAcceptedPredicate.toPredicate().not());
         {
@@ -318,13 +318,14 @@ public class TemplateGeneratorFromScenario {
                     fmuStates, executionParameters, connections, portsWithGet, currentStepSize);
 
             // Set the step size to the lowest accepted step-size
-            List<Fmi2Builder.DoubleVariable<PStm>> stepSizes = fmusWithStep.values().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+            List<Fmi2Builder.DoubleVariable<PStm>> stepSizes =
+                    fmuInstanceWithStepVar.values().stream().map(Map.Entry::getValue).collect(Collectors.toList());
             for (int i = 0; i < stepSizes.size(); i++) {
                 fmuCommunicationPoints.items().get(i).setValue(new DoubleExpressionValue(stepSizes.get(i).getExp()));
             }
             currentStepSize.setValue(mathModule.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationPoint));
 
-            loggerModule.trace("## Step size was not accepted by every fmu! It has been changed to the smallest accepted step size of: %f",
+            loggerModule.trace("## Step size was not accepted by every FMU! It has been changed to the smallest accepted step size of: %f",
                     currentStepSize);
         }
         dynamicScope.leave();
@@ -340,16 +341,16 @@ public class TemplateGeneratorFromScenario {
         Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuWithStep = new HashMap<>();
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> tentativePortMapVars = new ArrayList<>();
         List<PortRef> convergedPortRefs = CollectionConverters.asJava(algebraicLoopInstruction.untilConverged());
-        List<BooleanVariableFmi2Api> convergenceVariables = new ArrayList<>();
+        List<BooleanVariableFmi2Api> convergedVariables = new ArrayList<>();
 
         DoubleVariableFmi2Api absTol = dynamicScope.store("coSimStep_absolute_tolerance", executionParameters.getConvergenceAbsoluteTolerance());
         DoubleVariableFmi2Api relTol = dynamicScope.store("coSimStep_relative_tolerance", executionParameters.getConvergenceRelativeTolerance());
-        BooleanVariableFmi2Api convergencePredicate = dynamicScope.store("convergence_predicate", false);
-        IntVariableFmi2Api convergeAttempts = dynamicScope.store("coSimStep_convergence_attempts", executionParameters.getConvergenceAttempts());
+        BooleanVariableFmi2Api convergencePredicate = dynamicScope.store("coSimStep_convergence_predicate", false);
+        IntVariableFmi2Api convergenceAttempts = dynamicScope.store("coSimStep_convergence_attempts", executionParameters.getConvergenceAttempts());
 
         // Enter while loop
         ScopeFmi2Api convergenceScope = dynamicScope
-                .enterWhile(convergencePredicate.toPredicate().not().and(convergeAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
+                .enterWhile(convergencePredicate.toPredicate().not().and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
 
         // Handle and map each iterate instruction to MaBL
         for (CosimStepInstruction instruction : CollectionConverters.asJava(algebraicLoopInstruction.iterate())) {
@@ -363,27 +364,14 @@ public class TemplateGeneratorFromScenario {
 
                     // Check for convergence
                     convergedPortRefs.stream().filter(ref -> port.aMablFmi2ComponentAPI.getName().contains(ref.fmu().toLowerCase(Locale.ROOT)) &&
-                            port.getName().contains(ref.port().toLowerCase(Locale.ROOT))).findAny().ifPresent(portRef -> {
-                        BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
-                        VariableFmi2Api oldVariable = port.getSharedAsVariable();
-                        VariableFmi2Api<Object> newVariable = portValue;
-                        isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTol, relTol));
-                        dynamicScope.enterIf(isClose.toPredicate().not());
-                        {
-                            loggerModule.trace("## Unstable signal %s = %.15E during algebraic loop in cosim step",
-                                    masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
-                                    portValue);
-                            dynamicScope.leave();
-                        }
-                        convergenceVariables.add(isClose);
-                    });
+                            port.getName().contains(ref.port().toLowerCase(Locale.ROOT))).findAny().ifPresent(
+                            portRef -> convergedVariables.add(createCheckConvergenceSection(Map.entry(port, portValue), absTol, relTol, portRef)));
                 });
             } else if (instruction instanceof SetTentative) {
-                handleSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances, connections);
+                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances, connections);
             } else {
-                fmuWithStep =
-                        mapCoSimStepInstructionsToMaBL(List.of(instruction), fmuInstances, currentCommunicationPoint, fmuStates, executionParameters,
-                                connections, portMapVars, currentStepSize);
+                mapCoSimStepInstructionsToMaBL(List.of(instruction), fmuInstances, currentCommunicationPoint, fmuStates, executionParameters,
+                        connections, portMapVars, currentStepSize).forEach(fmuWithStep::put);
             }
         }
 
@@ -397,17 +385,17 @@ public class TemplateGeneratorFromScenario {
         });
 
         // Check if all instances have converged
-        convergencePredicate.setValue(booleanLogicModule.allTrue("convergence", convergenceVariables));
+        convergencePredicate.setValue(booleanLogicModule.allTrue("converged", convergedVariables));
         dynamicScope.enterIf(convergencePredicate.toPredicate().not());
         {
             // Map retry instructions to MaBL
             mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded()), fmuInstances,
                     currentCommunicationPoint, fmuStates, executionParameters, connections, portMapVars, currentStepSize);
 
-            loggerModule.trace("## Convergence was not reached at sim-time: %f with step size: %f! %d convergence attempts remaining",
-                    currentCommunicationPoint, currentStepSize, convergeAttempts);
+            loggerModule.trace("## Convergence was not reached at sim-time: %f with step size: %f... %d convergence attempts remaining",
+                    currentCommunicationPoint, currentStepSize, convergenceAttempts);
 
-            convergeAttempts.decrement();
+            convergenceAttempts.decrement();
         }
         dynamicScope.leave();
         convergenceScope.leave();
@@ -420,8 +408,8 @@ public class TemplateGeneratorFromScenario {
 
         DoubleVariableFmi2Api absTol = dynamicScope.store("initialization_absolute_tolerance", executionParameters.getConvergenceAbsoluteTolerance());
         DoubleVariableFmi2Api relTol = dynamicScope.store("initialization_relative_tolerance", executionParameters.getConvergenceRelativeTolerance());
-        BooleanVariableFmi2Api convergencePredicate = dynamicScope.store("convergence_predicate", false);
-        IntVariableFmi2Api convergenceAttempts = dynamicScope.store("converge_attempts", executionParameters.getConvergenceAttempts());
+        BooleanVariableFmi2Api convergencePredicate = dynamicScope.store("initialization_convergence_predicate", false);
+        IntVariableFmi2Api convergenceAttempts = dynamicScope.store("initialization_converge_attempts", executionParameters.getConvergenceAttempts());
         ScopeFmi2Api convergenceScope = dynamicScope
                 .enterWhile(convergencePredicate.toPredicate().not().and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
 
@@ -429,31 +417,36 @@ public class TemplateGeneratorFromScenario {
         mapInitializationActionsToMaBL(CollectionConverters.asJava(instruction.iterate()), fmuInstances, executionParameters, connections);
 
         // Generate convergence section
-        List<BooleanVariableFmi2Api> convergenceVariables = new ArrayList<>();
+        List<BooleanVariableFmi2Api> convergedVariables = new ArrayList<>();
         for (PortRef portRef : CollectionConverters.asJava(instruction.untilConverged())) {
             sharedPortVars.stream().filter(entry -> entry.getKey().aMablFmi2ComponentAPI.getName().contains(portRef.fmu().toLowerCase(Locale.ROOT)) &&
-                    entry.getKey().getName().contains(portRef.port().toLowerCase(Locale.ROOT))).findAny().ifPresent(portMap -> {
-                VariableFmi2Api oldVariable = portMap.getKey().getSharedAsVariable();
-                VariableFmi2Api<Object> newVariable = portMap.getValue();
-                BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
-                isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTol, relTol));
-                dynamicScope.enterIf(isClose.toPredicate().not());
-                {
-                    loggerModule.trace("Unstable signal %s = %.15E during algebraic loop in initialization",
-                            masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
-                            portMap.getValue());
-                    dynamicScope.leave();
-                }
-                convergenceVariables.add(isClose);
-            });
+                    entry.getKey().getName().contains(portRef.port().toLowerCase(Locale.ROOT))).findAny()
+                    .ifPresent(portMap -> convergedVariables.add(createCheckConvergenceSection(portMap, absTol, relTol, portRef)));
         }
 
-        convergencePredicate.setValue(booleanLogicModule.allTrue("convergence", convergenceVariables));
+        convergencePredicate.setValue(booleanLogicModule.allTrue("converged", convergedVariables));
         dynamicScope.enterIf(convergencePredicate.toPredicate().not());
         {
+            loggerModule.trace("## Convergence was not reached during initialization... %d convergence attempts remaining", convergenceAttempts);
             convergenceAttempts.decrement();
         }
         convergenceScope.leave();
+    }
+
+    private static BooleanVariableFmi2Api createCheckConvergenceSection(Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> portMap,
+            DoubleVariableFmi2Api absTolVar, DoubleVariableFmi2Api relTolVar, PortRef portRef) {
+        VariableFmi2Api oldVariable = portMap.getKey().getSharedAsVariable();
+        VariableFmi2Api<Object> newVariable = portMap.getValue();
+        BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
+        isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTolVar, relTolVar));
+        dynamicScope.enterIf(isClose.toPredicate().not());
+        {
+            loggerModule.trace("Unstable signal %s = %.15E during algebraic loop",
+                    masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
+                    portMap.getValue());
+            dynamicScope.leave();
+        }
+        return isClose;
     }
 
     private static Map.Entry<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> mapStepInstruction(
@@ -477,16 +470,16 @@ public class TemplateGeneratorFromScenario {
         return Map.entry(instance, step);
     }
 
-    private static void mapSetInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
+    private static void mapSetInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars,
             Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
-        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portsWithGet, connections);
+        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portMapVars, connections);
         if (sourcePortWithValue != null) {
             Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef, fmuInstances);
             instanceWithPort.getKey().set(instanceWithPort.getValue(), sourcePortWithValue.getKey().getSharedAsVariable());
         }
     }
 
-    private static void handleSetTentativeInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
+    private static void mapSetTentativeInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
             Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
         Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portsWithGet, connections);
         if (sourcePortWithValue != null) {
