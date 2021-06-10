@@ -2,6 +2,7 @@ package org.intocps.maestro.template;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -165,7 +166,7 @@ public class MaBLTemplateConfiguration {
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
 
-            if (stepAlgorithm != null && this.stepAlgorithmConfig == null) {
+            if (stepAlgorithm != null && this.stepAlgorithmConfig == null && !(stepAlgorithm instanceof FixedStepAlgorithm)) {
                 throw new RuntimeException("Algorithm configuration is missing");
             }
 
