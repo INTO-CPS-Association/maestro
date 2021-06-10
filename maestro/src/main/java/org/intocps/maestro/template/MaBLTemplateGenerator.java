@@ -249,14 +249,18 @@ public class MaBLTemplateGenerator {
 
         // Add the initializer expand stm
         if (templateConfiguration.getInitialize().getKey()) {
-            stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
+            if (templateConfiguration.getInitialize().getValue() != null) {
+                stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
+            }
             stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
         }
 
         // Add the algorithm expand stm
         if (algorithmStatements.body != null) {
-            stmMaintainer.add(new AConfigStm(
-                    StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
+            if (templateConfiguration.getStepAlgorithmConfig() != null) {
+                stmMaintainer.add(new AConfigStm(
+                        StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
+            }
             stmMaintainer.addAll(algorithmStatements.body);
         }
 

@@ -3,7 +3,6 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ArrayVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 
@@ -109,7 +108,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
         return this.aMablFmi2ComponentAPI.getOwner().getName() + "_" + this.aMablFmi2ComponentAPI.getName() + "_" + this.getName();
     }
 
-    public String getLogScalarVariableName() {
+    public String getMultiModelScalarVariableName() {
         return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getName() + "." + this.getName();
     }
 

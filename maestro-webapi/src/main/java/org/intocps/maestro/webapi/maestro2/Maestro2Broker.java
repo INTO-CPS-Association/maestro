@@ -1,7 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -15,7 +14,6 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
@@ -88,7 +86,9 @@ public class Maestro2Broker {
             }
         }
 
-
+        if (initializeRequest.getEnvironmentParameters() != null) {
+            initialize.put("environmentParameters", initializeRequest.getEnvironmentParameters());
+        }
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, this.reporter);
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
@@ -168,26 +168,10 @@ public class Maestro2Broker {
     public String generateSpecification(MaBLTemplateConfiguration config, Map<String, Object> parameters) throws Exception {
         mabl.generateSpec(config);
         mabl.expand();
+        mabl.setRuntimeEnvironmentVariables(parameters);
         mabl.dump(workingDirectory);
-
-        //todo move to mabl
-        Map<String, Object> runtimeEnvParameters = parameters.entrySet().stream()
-                .collect(Collectors.toMap(map -> map.getKey().replace("{", "").replace("}", "").replace('.', '_'), map -> map.getValue()));
-
-        Object runtimeDataRaw = mabl.getRuntimeData();
-        if (runtimeDataRaw instanceof Map) {
-            //lets append the parameters
-            Map runtimeConfig = (Map) runtimeDataRaw;
-            runtimeConfig.put(DefaultExternalValueFactory.MEnvLifecycleHandler.ENVIRONMENT_VARIABLES, runtimeEnvParameters);
-            //re-dump the updated file
-            new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
-                    .writeValue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME), runtimeConfig);
-        }
-
-
         logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
-
-        return new ObjectMapper().writeValueAsString(runtimeDataRaw);
+        return new ObjectMapper().writeValueAsString(mabl.getRuntimeData());
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,

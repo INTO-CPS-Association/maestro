@@ -164,6 +164,11 @@ public class MaBLTemplateConfiguration {
             config.visible = this.visible;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
+
+            if (stepAlgorithm != null && this.stepAlgorithmConfig == null) {
+                throw new RuntimeException("Algorithm configuration is missing");
+            }
+
             return config;
         }
     }

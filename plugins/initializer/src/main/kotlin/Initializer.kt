@@ -3,6 +3,7 @@ package org.intocps.maestro.plugin.initializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.NullNode
 import org.intocps.maestro.ast.*
 import org.intocps.maestro.ast.display.PrettyPrinter
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
@@ -69,6 +70,7 @@ class Initializer : IMaestroExpansionPlugin {
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
     var modelParameters: List<ModelParameter>? = null
+    var envParameters: List<String>? = null
     var compilationUnit: AImportedModuleCompilationUnit? = null
 
     // Convergence related variables
@@ -132,6 +134,7 @@ class Initializer : IMaestroExpansionPlugin {
             this.config = config as InitializationConfig
 
             this.modelParameters = config.modelParameters
+            this.envParameters = config.envParameters
 
             // Convergence related variables
             absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
@@ -240,38 +243,42 @@ class Initializer : IMaestroExpansionPlugin {
         builder: MablApiBuilder
     ) {
         val fmuName = comp.name
-        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
-        if (value != null) {
+//        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
+
+        val useEnvForPort = this.envParameters?.contains(port.multiModelScalarVariableName)
+        if (useEnvForPort == null || !useEnvForPort) {
+
+            var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
             when (port.scalarVariable.type.type!!) {
-                ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
+                ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
                 ModelDescription.Types.Real -> {
-                    if (value is Int) {
-                        value = value.toDouble()
+                    if (staticValue is Int) {
+                        staticValue = staticValue.toDouble()
                     }
-                    val b: Double = value as Double
+                    val b: Double = staticValue as Double
                     comp.set(port, DoubleExpressionValue.of(b))
                 }
-                ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
-                ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(value as String))
+                ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(staticValue as Int))
+                ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(staticValue as String))
                 ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
                 else -> throw ExpandException("Not known type")
             }
         } else {
             when (port.scalarVariable.type.type!!) {
                 ModelDescription.Types.Boolean -> {
-                    val v = builder.executionEnvironment.getBool(builder.executionEnvironment.getEnvName(comp, port))
+                    val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
                 ModelDescription.Types.Real -> {
-                    val v = builder.executionEnvironment.getReal(builder.executionEnvironment.getEnvName(comp, port))
+                    val v = builder.executionEnvironment.getReal(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
                 ModelDescription.Types.Integer -> {
-                    val v = builder.executionEnvironment.getInt(builder.executionEnvironment.getEnvName(comp, port))
+                    val v = builder.executionEnvironment.getInt(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
                 ModelDescription.Types.String -> {
-                    val v = builder.executionEnvironment.getString(builder.executionEnvironment.getEnvName(comp, port))
+                    val v = builder.executionEnvironment.getString(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
                 ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
@@ -406,6 +413,7 @@ class Initializer : IMaestroExpansionPlugin {
             root = root[0]
         }
         val parameters = root["parameters"]
+        val envParameters = root["environmentParameters"]
         val verify = root["verifyAgainstProlog"]
         val stabilisation = root["stabilisation"]
         val fixedPointIteration = root["fixedPointIteration"]
@@ -415,6 +423,7 @@ class Initializer : IMaestroExpansionPlugin {
         try {
             conf = InitializationConfig(
                 parameters,
+                if (envParameters is NullNode) null else envParameters,
                 verify,
                 stabilisation,
                 fixedPointIteration,
@@ -434,7 +443,7 @@ class Initializer : IMaestroExpansionPlugin {
         }
         compilationUnit = AImportedModuleCompilationUnit()
         compilationUnit!!.imports =
-            listOf("FMI2", "TypeConverter", "Math", "Logger").map { identifier: String? ->
+            listOf("FMI2", "TypeConverter", "Math", "Logger", "MEnv").map { identifier: String? ->
                 MableAstFactory.newAIdentifier(
                     identifier
                 )
@@ -448,6 +457,7 @@ class Initializer : IMaestroExpansionPlugin {
 
     class InitializationConfig(
         parameters: JsonNode?,
+        envParameters: JsonNode?,
         verify: JsonNode?,
         stabilisation: JsonNode?,
         fixedPointIteration: JsonNode?,
@@ -456,6 +466,7 @@ class Initializer : IMaestroExpansionPlugin {
     ) : IPluginConfiguration {
         var stabilisation = false
         val modelParameters: List<ModelParameter>?
+        val envParameters: List<String>?
         var verifyAgainstProlog = false
         var maxIterations = 0
         var absoluteTolerance = 0.0
@@ -477,6 +488,12 @@ class Initializer : IMaestroExpansionPlugin {
                         value
                     )
                 }
+
+            this.envParameters = if (envParameters == null) null else mapper.convertValue(
+                envParameters,
+                List::class.java
+            ) as List<String>
+
             verifyAgainstProlog = verify?.asBoolean(false) ?: false
             this.stabilisation = stabilisation?.asBoolean(false) ?: false
             maxIterations = fixedPointIteration?.asInt(5) ?: 5
@@ -506,14 +523,17 @@ class Initializer : IMaestroExpansionPlugin {
             return if (parameterValue != null) parameterValue.value else sv.type.start
         }
 
-        private fun findUseDefault(
-            compName: String,
-            sv: ModelDescription.ScalarVariable,
-            modelParameters: List<ModelParameter>?
-        ): Any? {
-            val parameterValue =
-                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
-            return if (parameterValue != null) null else sv.type.start
-        }
+//        /**
+//         * This functions either returns null if the parameter has a value or it returns the model description start value
+//         */
+//        private fun findUseDefault(
+//            compName: String,
+//            sv: ModelDescription.ScalarVariable,
+//            modelParameters: List<ModelParameter>?
+//        ): Any? {
+//            val parameterValue =
+//                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
+//            return if (parameterValue != null) null else sv.type.start
+//        }
     }
 }
