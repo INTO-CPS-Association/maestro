@@ -413,7 +413,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 Object val = data.get(key);
 
                 if (val instanceof Integer) {
-                    return new RealValue(((Integer) val).doubleValue());
+                    return new IntegerValue(((Integer) val).intValue());
                 } else {
                     throw new InterpreterException("Env key not found with the right type. Key '" + key + "' value '" + val + "'");
                 }
