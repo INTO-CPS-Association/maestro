@@ -54,7 +54,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
-        FixedstepConfig fixedstepConfig = (FixedstepConfig) config;
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
