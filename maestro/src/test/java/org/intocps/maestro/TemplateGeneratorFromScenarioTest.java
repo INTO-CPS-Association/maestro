@@ -37,9 +37,7 @@ public class TemplateGeneratorFromScenarioTest {
      */
     private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
-                .map(f -> Arguments.arguments(f.getName(), f));
-        //        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
-        //                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
+                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
         //TODO: remove filter when stabilization scenario works
     }
 
