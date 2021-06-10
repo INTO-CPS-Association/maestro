@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class JacobianStepBuilder implements IMaestroExpansionPlugin {
+public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
     final AFunctionDeclaration fixedStepFunc = newAFunctionDeclaration(newAIdentifier("fixedStepSize"),
@@ -471,8 +471,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public boolean requireConfig() {
-        return true;
+    public ConfigOption getConfigRequirement() {
+        return ConfigOption.Optional;
     }
 
     @Override

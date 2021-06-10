@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class DebugLogging implements IMaestroExpansionPlugin {
+public class DebugLogging extends BasicMaestroExpansionPlugin {
     final static String fixedStepStatus = "fix_status";
     final static Logger logger = LoggerFactory.getLogger(DebugLogging.class);
     private final static int FMI_OK = 0;

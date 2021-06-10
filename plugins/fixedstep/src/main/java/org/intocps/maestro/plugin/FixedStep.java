@@ -28,7 +28,7 @@ enum ExecutionPhase {
 }
 
 @SimulationFramework(framework = Framework.FMI2)
-public class FixedStep implements IMaestroExpansionPlugin {
+public class FixedStep extends BasicMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
 

@@ -261,9 +261,6 @@ public class MaBLTemplateGenerator {
             if (templateConfiguration.getStepAlgorithmConfig() != null) {
                 stmMaintainer.add(new AConfigStm(
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
-            } else {
-                //FIXME this is a hack because the expansion plugins cannot specify optional
-                stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(null)));
             }
             stmMaintainer.addAll(algorithmStatements.body);
         }

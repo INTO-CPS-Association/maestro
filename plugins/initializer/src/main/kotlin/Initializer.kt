@@ -31,8 +31,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFm
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
+import org.intocps.maestro.plugin.BasicMaestroExpansionPlugin
 import org.intocps.maestro.plugin.ExpandException
-import org.intocps.maestro.plugin.IMaestroExpansionPlugin
 import org.intocps.maestro.plugin.IPluginConfiguration
 import org.intocps.maestro.plugin.SimulationFramework
 import org.intocps.maestro.plugin.initializer.instructions.*
@@ -45,7 +45,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 
 @SimulationFramework(framework = Framework.FMI2)
-class Initializer : IMaestroExpansionPlugin {
+class Initializer : BasicMaestroExpansionPlugin {
     val f1 = MableAstFactory.newAFunctionDeclaration(
         LexIdentifier("initialize", null),
         listOf(
