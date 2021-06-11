@@ -422,8 +422,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             currentStm = node.getAncestor(PStm.class);
         }
 
-	//since the getAncestor function acts as an indentify function when the current node matches the requested type it is nessecarry to call parent
-        ABlockStm block = (currentStm instanceof ABlockStm ? currentStm.parent() : currentStm).getAncestor(ABlockStm.class);
+        //since the getAncestor function acts as an identity function when the current node matches the requested type it is nessesary to call parent
+        SBlockStm block = (currentStm instanceof SBlockStm ? currentStm.parent() : currentStm).getAncestor(SBlockStm.class);
 
         if (block == null) {
             return null;
