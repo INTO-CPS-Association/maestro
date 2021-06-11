@@ -358,7 +358,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
     }
 
     @IValueLifecycleHandler.ValueLifecycle(name = "MEnv")
-    protected class MEnvLifecycleHandler extends BaseLifecycleHandler {
+    public class MEnvLifecycleHandler extends BaseLifecycleHandler {
 
         public static final String ENVIRONMENT_VARIABLES = "environment_variables";
 
@@ -392,25 +392,59 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
                 Value.checkArgLength(a, 1);
 
-                return new BooleanValue((Boolean) data.get(((StringValue) a.get(0).deref()).getValue()));
+                String key = getEnvName(a);
+                Object val = data.get(key);
+
+
+                if (val instanceof Integer) {
+                    return new BooleanValue(((Integer) val) > 1);
+                } else if (val instanceof Boolean) {
+                    return new BooleanValue((Boolean) val);
+                } else {
+                    throw new InterpreterException("Env key not found with the right type. Key '" + key + "' value '" + val + "'");
+                }
+
             }));
             members.put("getInt", new FunctionValue.ExternalFunctionValue(a -> {
 
                 Value.checkArgLength(a, 1);
 
-                return new IntegerValue((Integer) data.get(((StringValue) a.get(0).deref()).getValue()));
+                String key = getEnvName(a);
+                Object val = data.get(key);
+
+                if (val instanceof Integer) {
+                    return new IntegerValue(((Integer) val).intValue());
+                } else {
+                    throw new InterpreterException("Env key not found with the right type. Key '" + key + "' value '" + val + "'");
+                }
+
             }));
             members.put("getReal", new FunctionValue.ExternalFunctionValue(a -> {
 
                 Value.checkArgLength(a, 1);
 
-                return new RealValue((Double) data.get(((StringValue) a.get(0).deref()).getValue()));
+                String key = getEnvName(a);
+                Object val = data.get(key);
+
+                if (val instanceof Integer) {
+                    return new RealValue(((Integer) val).doubleValue());
+                } else if (val instanceof Double) {
+                    return new RealValue((Double) val);
+                } else {
+                    throw new InterpreterException("Env key not found with the right type. Key '" + key + "' value '" + val + "'");
+                }
             }));
             members.put("getString", new FunctionValue.ExternalFunctionValue(a -> {
 
                 Value.checkArgLength(a, 1);
 
-                return new StringValue((String) data.get(((StringValue) a.get(0).deref()).getValue()));
+                String key = getEnvName(a);
+                Object val = data.get(key);
+                if (val instanceof String) {
+                    return new StringValue((String) val);
+                } else {
+                    throw new InterpreterException("Env key not found with the right type. Key '" + key + "' value '" + val + "'");
+                }
             }));
 
 
@@ -418,6 +452,11 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
             };
             return Either.right(val);
+        }
+
+
+        private String getEnvName(List<Value> a) {
+            return ((StringValue) a.get(0).deref()).getValue();
         }
     }
 

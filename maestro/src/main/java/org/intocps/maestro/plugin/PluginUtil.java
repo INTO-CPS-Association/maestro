@@ -15,7 +15,7 @@ public class PluginUtil {
     public static IPluginConfiguration getConfiguration(IMaestroExpansionPlugin plugin, AConfigStm configStm,
             File specificationFolder) throws IOException {
 
-        if (!plugin.requireConfig() || configStm == null) {
+        if (configStm == null) {
             return null;
         }
 

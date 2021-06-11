@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.newAIdentifier;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class SomePlugin implements IMaestroExpansionPlugin {
+public class SomePlugin extends BasicMaestroExpansionPlugin {
     final AFunctionDeclaration f1 = new AFunctionDeclaration(new LexIdentifier("initialize", null), new AVoidType(),
             Arrays.asList(new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("a", null)),
                     new AFormalParameter(new ANameType(new LexIdentifier("FMI2Component", null)), new LexIdentifier("b", null))));

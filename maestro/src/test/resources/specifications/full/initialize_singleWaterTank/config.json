@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "{crtl}.crtlInstance.maxlevel": 2,
+    "{x1}.crtlInstance.maxlevel": 2,
     "{crtl}.crtlInstance.minlevel": 1
   },
   "verifyAgainstProlog": true,

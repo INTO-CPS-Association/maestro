@@ -6,10 +6,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.StringVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 public class ExecutionEnvironmentFmi2Api {
     private final Fmi2Builder.RuntimeFunction realFunc;
@@ -56,5 +53,9 @@ public class ExecutionEnvironmentFmi2Api {
     public StringVariableFmi2Api getString(String id) {
         Fmi2Builder.Variable<PStm, StringExpressionValue> v = module.call(stringFunc, id);
         return (StringVariableFmi2Api) v;
+    }
+
+    public String getEnvName(ComponentVariableFmi2Api comp, PortFmi2Api port) {
+        return String.format("%s_%s_%s", comp.getOwner().getName(), comp.getName(), port.getName());
     }
 }

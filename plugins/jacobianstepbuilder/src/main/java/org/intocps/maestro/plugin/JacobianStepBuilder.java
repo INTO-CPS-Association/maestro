@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class JacobianStepBuilder implements IMaestroExpansionPlugin {
+public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
     final AFunctionDeclaration fixedStepFunc = newAFunctionDeclaration(newAIdentifier("fixedStepSize"),
@@ -51,10 +51,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
                     newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("variableStepConfig"))), newAVoidType());
-    private StepAlgorithm algorithm;
-
     private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
+    private StepAlgorithm algorithm;
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
@@ -130,10 +129,10 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             endTime.setValue(externalEndTime);
 
             // Import the external components into Fmi2API
-            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments.get(0), env);
+            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments.get(0), env);
 
             // Create bindings
-            FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
+            FromMaBLToMaBLAPI.createBindings(fmuInstances, env);
 
             // Create the logging
             DataWriter dataWriter = builder.getDataWriter();
@@ -151,7 +150,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                 List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
 
                 Set<String> scalarVariablesToShare = y.getPorts().stream()
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getLogScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .map(PortFmi2Api::getName).collect(Collectors.toSet());
                 scalarVariablesToShare.addAll(variablesToLog.stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
 
@@ -205,7 +204,7 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
             if (algorithm == StepAlgorithm.VARIABLESTEP) {
                 // Initialize variable step module
                 List<PortFmi2Api> ports = fmuInstances.values().stream().map(ComponentVariableFmi2Api::getPorts).flatMap(Collection::stream)
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getLogScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
                 variableStep = builder.getVariableStep(new StringVariableFmi2Api(null, null, null, null, formalArguments.get(4).clone()));
@@ -331,8 +330,9 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
                             isClose.setValue(math.checkConvergence(oldVariable, newVariable, absTol, relTol));
                             dynamicScope.enterIf(isClose.toPredicate().not());
                             {
-                                builder.getLogger().debug("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getLogScalarVariableName(),
-                                        entry.getValue(), currentCommunicationTime);
+                                builder.getLogger()
+                                        .debug("Unstable signal %s = %.15E at time: %.15E", entry.getKey().getMultiModelScalarVariableName(),
+                                                entry.getValue(), currentCommunicationTime);
                                 dynamicScope.leave();
                             }
 
@@ -471,8 +471,8 @@ public class JacobianStepBuilder implements IMaestroExpansionPlugin {
     }
 
     @Override
-    public boolean requireConfig() {
-        return true;
+    public ConfigOption getConfigRequirement() {
+        return ConfigOption.Optional;
     }
 
     @Override

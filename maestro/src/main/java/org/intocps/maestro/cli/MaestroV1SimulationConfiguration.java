@@ -9,7 +9,11 @@ import java.util.Map;
 public class MaestroV1SimulationConfiguration extends Fmi2SimulationEnvironmentConfiguration {
     @JsonProperty("parameters")
     public Map<String, Object> parameters;
-
+    /**
+     * Named list of parameter names as in {@link #parameters}
+     */
+    @JsonProperty("environmentParameters")
+    public List<String> environmentParameters;
     @JsonProperty("startTime")
     public double startTime;
     @JsonProperty("endTime")
