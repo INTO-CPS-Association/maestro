@@ -1,12 +1,16 @@
 package org.intocps.maestro.cli;
 
 import org.intocps.maestro.Mabl;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.codegen.mabl2cpp.MablCppCodeGenerator;
 import org.intocps.maestro.core.Framework;
 import picocli.CommandLine;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -54,8 +58,12 @@ public class ExportCmd implements Callable<Integer> {
 
         if (type == ExportType.Cpp) {
             if (runtime != null && runtime.exists() && !runtime.getParentFile().equals(output)) {
-                Files.copy(runtime.toPath(), new File(output, runtime.getName()).toPath());
+                Files.copy(runtime.toPath(), new File(output, runtime.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter("spec.mabl"));
+            writer.write(PrettyPrinter.print(util.mabl.getMainSimulationUnit()));
+            writer.close();
             new MablCppCodeGenerator(output).generate(util.mabl.getMainSimulationUnit(), util.typeCheckResult.getValue());
         }
 
