@@ -214,6 +214,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         }
     }
 
+    @IValueLifecycleHandler.ValueLifecycle(name = "ConsolePrinter")
+    public static class ConsolePrinterLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new ConsolePrinterValue());
+        }
+    }
+
     @IValueLifecycleHandler.ValueLifecycle(name = "CSV")
     public static class CsvLifecycleHandler extends BaseLifecycleHandler {
         @Override
