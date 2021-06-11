@@ -610,7 +610,8 @@ public class Fmi2Interpreter {
 
                 logger.debug(String.format("Loading native FMU. GUID: %s, NAME: %s", "" + guid, "" + name));
 
-                BufferedOutputStream fmuLogOutputStream = new BufferedOutputStream(new FileOutputStream(new File(workingDirectory, name + ".log")));
+                BufferedOutputStream fmuLogOutputStream =
+                        workingDirectory == null ? null : new BufferedOutputStream(new FileOutputStream(new File(workingDirectory, name + ".log")));
 
                 final String formatter = "{} {} {} {}";
                 String pattern = "%d{ISO8601} %-5p - %m%n";
@@ -621,6 +622,10 @@ public class Fmi2Interpreter {
                     public void log(String instanceName, Fmi2Status status, String category, String message) {
                         logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
                         {
+
+                            if (fmuLogOutputStream == null) {
+                                return;
+                            }
 
                             Log4jLogEvent.Builder builder = Log4jLogEvent.newBuilder()
                                     .setMessage(new ParameterizedMessage(formatter, category, status, instanceName, message));
