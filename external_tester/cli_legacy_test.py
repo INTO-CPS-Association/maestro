@@ -35,6 +35,9 @@ if not os.path.isfile(path):
     print('The path does not exist')
     sys.exit()
 
+actualResultsFileName = "actual_result.csv"
+expectedResultsFilePath = 'wt/result.csv'
+
 print("Testing CLI of: " + path)
 
 def legacyCliSimConfig():
@@ -48,8 +51,8 @@ def legacyCliSimConfig():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
-            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
+        if not testutils.compareCSV(expectedResultsFilePath, temporary.resultPath):
+            tempActualOutputs=temporary.dirPath + actualResultsFileName
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(temporary.resultPath, tempActualOutputs)
             raise Exception("Results files do not match")
@@ -70,8 +73,8 @@ def legacyCliStarttimeEndtime():
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
-        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
-            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
+        if not testutils.compareCSV(expectedResultsFilePath, temporary.resultPath):
+            tempActualOutputs=temporary.dirPath + actualResultsFileName
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(temporary.resultPath, tempActualOutputs)
             raise Exception("Results files do not match")

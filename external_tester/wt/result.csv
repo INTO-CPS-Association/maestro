@@ -1,5 +1,5 @@
 time,{crtl}.crtlInstance.valve,{wt}.wtInstance.level
-0.0,false,0.0
+0.0,false,1.0
 0.1,false,0.1099999999999999
 0.2,false,0.19999999999999996
 0.30000000000000004,false,0.30000000000000004

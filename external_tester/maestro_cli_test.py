@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import sys
+import sys, traceback
 import testutils
 import os
 import subprocess
@@ -35,6 +35,9 @@ if not os.path.isfile(path):
 # Interpreter outputs to directory from where it is executed.
 outputsFileName = "outputs.csv"
 
+tempResultsFileName = "actual_result.csv"
+expectedResultsFilePath = 'wt/result.csv'
+
 print("Testing CLI with specification generation of: " + path)
 
 def cliSpecGen():
@@ -51,12 +54,13 @@ def cliSpecGen():
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+        if not testutils.compareCSV(expectedResultsFilePath, outputs):
+            tempActualOutputs=temporary.dirPath + f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-            raise Exception("Results files do not match")
-
+            sys.exit(1)        
+            #raise Exception("Results files do not match")
+            
 cliSpecGen()
 
 
@@ -72,11 +76,12 @@ def cliRaw():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+        if not testutils.compareCSV(expectedResultsFilePath, outputs):
+            tempActualOutputs=temporary.dirPath +  f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-            raise Exception("Results files do not match")
+            sys.exit(1)
+            #raise Exception("Results files do not match")
 
 cliRaw()
 
@@ -93,10 +98,11 @@ def cliExpansion():
     else:
         print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+        if not testutils.compareCSV(expectedResultsFilePath, outputs):
+            tempActualOutputs=temporary.dirPath +  f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-            raise Exception("Results files do not match")
+            sys.exit(1)
+            #raise Exception("Results files do not match")
 
 cliExpansion()
