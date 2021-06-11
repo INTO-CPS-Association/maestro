@@ -50,7 +50,7 @@ public class FromMaBLToMaBLAPI {
         }
     }
 
-    public static void CreateBindings(Map<String, ComponentVariableFmi2Api> instances,
+    public static void createBindings(Map<String, ComponentVariableFmi2Api> instances,
             ISimulationEnvironment env) throws Fmi2Builder.Port.PortLinkException {
         for (Map.Entry<String, ComponentVariableFmi2Api> entry : instances.entrySet()) {
             for (IRelation relation : env.getRelations(entry.getKey()).stream()
@@ -67,7 +67,7 @@ public class FromMaBLToMaBLAPI {
     }
 
 
-    public static Map<String, ComponentVariableFmi2Api> GetComponentVariablesFrom(MablApiBuilder builder, PExp exp,
+    public static Map<String, ComponentVariableFmi2Api> getComponentVariablesFrom(MablApiBuilder builder, PExp exp,
             Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
         SBlockStm containingBlock = exp.getAncestor(SBlockStm.class);

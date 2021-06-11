@@ -129,10 +129,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             endTime.setValue(externalEndTime);
 
             // Import the external components into Fmi2API
-            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments.get(0), env);
+            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments.get(0), env);
 
             // Create bindings
-            FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env);
+            FromMaBLToMaBLAPI.createBindings(fmuInstances, env);
 
             // Create the logging
             DataWriter dataWriter = builder.getDataWriter();

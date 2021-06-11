@@ -36,7 +36,7 @@ import org.intocps.maestro.plugin.ExpandException
 import org.intocps.maestro.plugin.IPluginConfiguration
 import org.intocps.maestro.plugin.SimulationFramework
 import org.intocps.maestro.plugin.initializer.instructions.*
-import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery
+import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -126,10 +126,10 @@ class Initializer : BasicMaestroExpansionPlugin {
             endTimeVar.setValue(externalEndTime)
 
             // Import the external components into Fmi2API
-            val fmuInstances = FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments[0], env)
+            val fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env)
 
             // Create bindings
-            FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env)
+            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
 
             this.config = config as InitializationConfig
 

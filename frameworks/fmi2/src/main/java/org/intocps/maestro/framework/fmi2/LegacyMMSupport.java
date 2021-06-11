@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LegacyMMSupport {
-    public static Map<String, String> AdjustFmi2SimulationEnvironmentConfiguration(
+    public static Map<String, String> adjustFmi2SimulationEnvironmentConfiguration(
             Fmi2SimulationEnvironmentConfiguration config) throws EnvironmentException {
-        Map<String, String> instanceRemapping = CalculateInstanceRemapping(config.connections);
+        Map<String, String> instanceRemapping = calculateInstanceRemapping(config.connections);
 
         fixVariableToVariablesMap(instanceRemapping, config.connections);
         fixKeyInstanceToVariablesMap(instanceRemapping, config.variablesToLog);
@@ -93,7 +93,7 @@ public class LegacyMMSupport {
     }
 
 
-    public static Map<String, String> CalculateInstanceRemapping(Map<String, List<String>> connections) throws EnvironmentException {
+    public static Map<String, String> calculateInstanceRemapping(Map<String, List<String>> connections) throws EnvironmentException {
         HashMap<String, String> instanceRemapping = new HashMap<>();
         // Get all key instances pairs
         Set<KeyInstance> uniqueStrings = new HashSet<>();
