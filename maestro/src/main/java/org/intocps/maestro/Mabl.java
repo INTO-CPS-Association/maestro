@@ -20,6 +20,7 @@ import org.intocps.maestro.core.StringAnnotationProcessor;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.optimization.UnusedDeclarationOptimizer;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.plugin.IMaestroVerifier;
@@ -52,6 +53,8 @@ public class Mabl {
     private ARootDocument document;
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
+
+    private Map<String, Object> runtimeEnvironmentVariables;
 
     private ISimulationEnvironment environment;
 
@@ -223,6 +226,12 @@ public class Mabl {
 
     }
 
+    public void optimize() throws AnalysisException {
+        if (document != null) {
+            document.apply(new UnusedDeclarationOptimizer());
+        }
+    }
+
     public void expand() throws Exception {
 
         if (reporter.getErrorCount() != 0) {
@@ -321,7 +330,7 @@ public class Mabl {
     }
 
     public Object getRuntimeData() throws Exception {
-        return new MablRuntimeDataGenerator(getSimulationEnv()).getRuntimeData();
+        return new MablRuntimeDataGenerator(getSimulationEnv(), this.runtimeEnvironmentVariables).getRuntimeData();
     }
 
     public String getRuntimeDataAsJsonString() throws Exception {
@@ -332,6 +341,18 @@ public class Mabl {
         FileUtils.write(new File(folder, MAIN_SPEC_DEFAULT_FILENAME), PrettyPrinter.print(getMainSimulationUnit()), StandardCharsets.UTF_8);
         new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValue(new File(folder, MAIN_SPEC_DEFAULT_RUNTIME_FILENAME), getRuntimeData());
+    }
+
+    /**
+     * //FIXME Temporary function
+     * Temporary function. This should be removed once the API for expansion plugins is updated with the ability for them to report back
+     * required
+     * runtime extensions
+     *
+     * @param runtimeEnvironmentVariables
+     */
+    public void setRuntimeEnvironmentVariables(Map<String, Object> runtimeEnvironmentVariables) {
+        this.runtimeEnvironmentVariables = runtimeEnvironmentVariables;
     }
 
     public static class MableSettings {

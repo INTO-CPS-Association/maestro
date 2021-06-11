@@ -75,6 +75,8 @@ public class Main {
         Option cgOpt =
                 Option.builder("cg").longOpt("codegen").hasArg(true).argName("name").desc("One of the code generators supported: [cpp]").build();
 
+        Option optimizationDisableOpt = Option.builder("nop").longOpt("disable-optimize").desc("Disable optimization").build();
+
         Options options = new Options();
         options.addOption(helpOpt);
         options.addOption(verboseOpt);
@@ -86,6 +88,7 @@ public class Main {
         options.addOption(expansionLimit);
         options.addOption(verifyOpt);
         options.addOption(cgOpt);
+        options.addOption(optimizationDisableOpt);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd;
@@ -144,6 +147,7 @@ public class Main {
                 try {
                     MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config, reporter);
                     mabl.generateSpec(templateConfig);
+                    mabl.setRuntimeEnvironmentVariables(config.parameters);
                 } finally {
 
 
@@ -182,6 +186,10 @@ public class Main {
         if (cmd.hasOption(dumpLocation.getOpt())) {
             mabl.dump(new File(cmd.getOptionValue(dumpLocation.getOpt())));
             workingDirectory = new File(cmd.getOptionValue(dumpLocation.getOpt()));
+        }
+
+        if (!cmd.hasOption(optimizationDisableOpt.getOpt())) {
+            mabl.optimize();
         }
 
         Map.Entry<Boolean, Map<INode, PType>> typeCheckResult = mabl.typeCheck();
@@ -225,16 +233,16 @@ public class Main {
      * @return
      */
     private static boolean hasErrorAndPrintErrorsAndWarnings(boolean verbose, IErrorReporter reporter) {
-        if (reporter.getErrorCount() > 0) {
-            reporter.printErrors(new PrintWriter(System.err, true));
-            return true;
-        }
-
         if (reporter.getWarningCount() > 0) {
             if (verbose) {
                 reporter.printWarnings(new PrintWriter(System.out, true));
             }
         }
+        if (reporter.getErrorCount() > 0) {
+            reporter.printErrors(new PrintWriter(System.err, true));
+            return true;
+        }
+
         return false;
     }
 
@@ -261,10 +269,11 @@ public class Main {
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", simulationConfiguration.parameters);
+        initialize.put("environmentParameters", simulationConfiguration.environmentParameters);
 
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
-                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn).
-                setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
+                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)
+                .setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
                         ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize(), 0.0));
 
 

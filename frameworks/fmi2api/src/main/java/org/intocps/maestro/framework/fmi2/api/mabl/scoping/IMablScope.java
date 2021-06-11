@@ -10,18 +10,24 @@ import java.util.Collection;
 
 public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
+    IntVariableFmi2Api getFmiStatusVariable();
 
     String getName(String prefix);
 
+    @Override
+    IMablScope enterScope();
 
     @Override
-    public BooleanVariableFmi2Api store(boolean value);
+    BooleanVariableFmi2Api store(boolean value);
 
     @Override
     WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate);
 
     @Override
     IfMaBlScope enterIf(Fmi2Builder.Predicate predicate);
+
+    @Override
+    IMablScope parallel();
 
     @Override
     ScopeFmi2Api leave();

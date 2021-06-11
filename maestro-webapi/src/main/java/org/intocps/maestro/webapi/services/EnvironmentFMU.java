@@ -41,7 +41,7 @@ public class EnvironmentFMU implements IFmu {
         return environmentFMU;
     }
 
-    public static EnvironmentFMU CreateEnvironmentFMU(String fmuName, String instanceName) {
+    public static EnvironmentFMU createEnvironmentFMU(String fmuName, String instanceName) {
         environmentFMU = new EnvironmentFMU(fmuName, instanceName);
         return getInstance();
     }
@@ -88,7 +88,7 @@ public class EnvironmentFMU implements IFmu {
 
 
     public void createModelDescriptionXML() {
-        modelDescriptionXML = EnvironmentFMUModelDescription.CreateEnvironmentFMUModelDescription(inputs, outputs, fmuName);
+        modelDescriptionXML = EnvironmentFMUModelDescription.createEnvironmentFMUModelDescription(inputs, outputs, fmuName);
     }
 
     private Object start(ModelDescription.Type type) {

@@ -50,8 +50,9 @@ block
 
 statement
     : blockLabel=block                                          #blockStm
+    | '||' block                                                #parallelBlockStm
     | assignment                                                #assignmentStm
-    |  var=variableDeclarator ';'                               #localVariable
+    | var=variableDeclarator ';'                                #localVariable
     | IF parExpression then=statement (ELSE el=statement)?      #if
     | WHILE parExpression statement                             #while
     | statementExpression=expression  ';'                       #expressionStatement

@@ -2,20 +2,11 @@ package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.*;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
-import org.intocps.maestro.framework.fmi2.api.mabl.*;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +28,7 @@ enum ExecutionPhase {
 }
 
 @SimulationFramework(framework = Framework.FMI2)
-public class FixedStep implements IMaestroExpansionPlugin {
+public class FixedStep extends BasicMaestroExpansionPlugin {
 
     final static Logger logger = LoggerFactory.getLogger(FixedStep.class);
 
@@ -63,7 +54,6 @@ public class FixedStep implements IMaestroExpansionPlugin {
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
         logger.info("Unfolding with fixed step: {}", declaredFunction.toString());
-        FixedstepConfig fixedstepConfig = (FixedstepConfig) config;
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
             throw new ExpandException("Unknown function declaration");
@@ -91,7 +81,7 @@ public class FixedStep implements IMaestroExpansionPlugin {
 
             if (formalArguments.get(0) instanceof AIdentifierExp) {
                 LexIdentifier name = ((AIdentifierExp) formalArguments.get(0)).getName();
-                ABlockStm containingBlock = formalArguments.get(0).getAncestor(ABlockStm.class);
+                SBlockStm containingBlock = formalArguments.get(0).getAncestor(SBlockStm.class);
 
                 Optional<AVariableDeclaration> compDecl =
                         containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)

@@ -30,6 +30,10 @@ public class InitializationData {
     final Map<String, List<String>> connections;
     @JsonProperty("parameters")
     final Map<String, Object> parameters;
+
+    @JsonProperty("environmentParameters")
+    final List<String> environmentParameters;
+
     @JsonProperty("livestream")
     final Map<String, List<String>> livestream;
     @JsonProperty("logVariables")
@@ -67,7 +71,8 @@ public class InitializationData {
             @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel,
             @JsonProperty("liveGraphColumns") final Object liveGraphColumns,
             @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount,
-            @JsonProperty("livestreamInterval") final Object livestreamInterval) {
+            @JsonProperty("livestreamInterval") final Object livestreamInterval,
+            @JsonProperty("environmentParameters") final List<String> environmentParameters) {
         this.fmus = fmus;
         this.connections = connections;
         this.parameters = parameters;
@@ -83,6 +88,11 @@ public class InitializationData {
         this.global_relative_tolerance = global_relative_tolerance;
         this.algorithm = algorithm;
         this.overrideLogLevel = overrideLogLevel;
+        this.environmentParameters = environmentParameters;
+    }
+
+    public List<String> getEnvironmentParameters() {
+        return environmentParameters;
     }
 
     public InitializeLogLevel getOverrideLogLevel() {
@@ -270,8 +280,7 @@ public class InitializationData {
         public ZeroCrossingConstraint() {
         }
 
-        public ZeroCrossingConstraint(List<String> ports, Integer order,
-                Double abstol, Double safety) {
+        public ZeroCrossingConstraint(List<String> ports, Integer order, Double abstol, Double safety) {
             this.ports = ports;
             this.order = order;
             this.abstol = abstol;

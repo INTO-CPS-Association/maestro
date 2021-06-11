@@ -52,6 +52,7 @@ public class Issue188Tests {
 
     /**
      * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     *
      * @throws Exception
      */
     @Disabled
@@ -63,6 +64,7 @@ public class Issue188Tests {
 
     /**
      * Disabled as fmu.unLoad() can cause a crash of the test on some systems.
+     *
      * @throws Exception
      */
     @Disabled
@@ -70,7 +72,7 @@ public class Issue188Tests {
     public void fixedStepSimulationRelativeDirectoryFMU() throws Exception {
         File zipFile = new File("target/test-classes/maestro2/188/GATestController.fmu");
         File destDir = new File("target/test-classes/maestro2/188/GATestController");
-        ZipUtilities.UnzipToDirectory(zipFile, destDir);
+        ZipUtilities.unzipToDirectory(zipFile, destDir);
         File initializePath = new File(Issue188Tests.class.getClassLoader().getResource("maestro2/188/initializeRelativeDirectory.json").getPath());
         fixedStepSimulationParameterizedInitialize(initializePath);
     }

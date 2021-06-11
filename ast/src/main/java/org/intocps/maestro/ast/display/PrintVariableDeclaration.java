@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.node.AArrayType;
 
 public class PrintVariableDeclaration {
-    public static String VariableDeclarationToString(AVariableDeclaration variableDeclaration) {
+    public static String variableDeclarationToString(AVariableDeclaration variableDeclaration) {
         StringBuilder sb = new StringBuilder();
         if (variableDeclaration.getType() instanceof AArrayType) {
             AArrayType type = (AArrayType) variableDeclaration.getType();

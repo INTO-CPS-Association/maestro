@@ -1,0 +1,8 @@
+ simulation
+ {
+    ||{
+    int par_a=0;
+    int par_b=0;
+    }
+    int seq_c=0;
+ }

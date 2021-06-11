@@ -1,10 +1,10 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.node.ABlockStm;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 
@@ -36,7 +36,7 @@ public class JacobianFixedStep {
      * @param handler              (index, element) -> return what should happen
      * @return a block with the while
      */
-    static ABlockStm loopComponents(Consumer<List<PStm>> loopAccumulatingVars, PExp list, PExp size, BiFunction<PExp, PExp, List<PStm>> handler) {
+    static SBlockStm loopComponents(Consumer<List<PStm>> loopAccumulatingVars, PExp list, PExp size, BiFunction<PExp, PExp, List<PStm>> handler) {
         String indexVarName = "fix_indexing_" + loopCounter++;
         List<PStm> body = new Vector<>();
 

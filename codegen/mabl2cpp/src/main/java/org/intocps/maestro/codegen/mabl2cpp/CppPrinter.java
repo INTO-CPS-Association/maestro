@@ -56,12 +56,16 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     @Override
     public void caseAUnloadExp(AUnloadExp node, Integer question) throws AnalysisException {
         //        sb.append("unload(");
-        //        for (int i = 0; i < node.getArgs().size(); i++) {
-        //            if (i > 0) {
-        //                sb.append(", ");
-        //            }
-        //            node.getArgs().get(i).apply(this, question);
-        //        }
+        for (int i = 0; i < node.getArgs().size(); i++) {
+
+            sb.append("delete ");
+
+            node.getArgs().get(i).apply(this, question);
+
+            sb.append(";\n" + indent(question));
+            node.getArgs().get(i).apply(this, question);
+            sb.append(" = nullptr");
+        }
         //        sb.append(");");
     }
 
@@ -183,7 +187,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
         sb.append("#import <stdint.h>\n");
         sb.append("#import <string>\n");
-        node.getImports().stream()
+        node.getImports().stream().filter(im -> !im.getText().equals("FMI2Component"))
                 .forEach(im -> sb.append("#import \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
         sb.append("void simulate()\n");
         node.getBody().apply(this, question);
@@ -191,7 +195,20 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     }
 
     @Override
-    public void caseABlockStm(ABlockStm node, Integer question) throws AnalysisException {
+    public void caseAParallelBlockStm(AParallelBlockStm node, Integer question) throws AnalysisException {
+        //TODO should be parallel
+        sb.append(indent(question));
+        sb.append("{\n");
+        for (PStm stm : node.getBody()) {
+            stm.apply(this, question + 1);
+            sb.append("\n");
+        }
+        sb.append(indent(question));
+        sb.append("}\n");
+    }
+
+    @Override
+    public void caseABasicBlockStm(ABasicBlockStm node, Integer question) throws AnalysisException {
         sb.append(indent(question));
         sb.append("{\n");
         for (PStm stm : node.getBody()) {
@@ -306,7 +323,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
     @Override
     public void caseAStringPrimitiveType(AStringPrimitiveType node, Integer question) throws AnalysisException {
-        sb.append("std::string");
+        sb.append("const char*");
     }
 
     @Override
