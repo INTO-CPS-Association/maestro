@@ -36,6 +36,8 @@ def printSection(section):
 
 def terminate(p):
     p.terminate()
+    if(TEST_HAS_ERROR):
+        sys.exit(1)
     sys.exit()
 
 def terminateSocket(p):
@@ -66,6 +68,7 @@ def findJar():
 
     return result[0]
 
+TEST_HAS_ERROR = False
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
@@ -214,7 +217,9 @@ try:
 
     if not r.status_code == 200:
         raise Exception(f"Could not destroy: {r.text}")
-
+        
+except:
+    TEST_HAS_ERROR = True
 finally:
     terminateSocket(p)
     terminate(p)

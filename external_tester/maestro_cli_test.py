@@ -51,17 +51,15 @@ def cliSpecGen():
     if p.returncode != 0:
         raise Exception(f"Error executing {cmd}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
         if not testutils.compareCSV(expectedResultsFilePath, outputs):
             tempActualOutputs=temporary.dirPath + f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
-            shutil.copyfile(outputs, tempActualOutputs)
-            sys.exit(1)        
-            #raise Exception("Results files do not match")
+            shutil.copyfile(outputs, tempActualOutputs)      
+            raise Exception("Results files do not match")
             
-cliSpecGen()
+
 
 
 def cliRaw():
@@ -74,16 +72,14 @@ def cliRaw():
     if p.returncode != 0:
         raise Exception(f"Error executing {cmd}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
         if not testutils.compareCSV(expectedResultsFilePath, outputs):
             tempActualOutputs=temporary.dirPath +  f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-            sys.exit(1)
-            #raise Exception("Results files do not match")
+            raise Exception("Results files do not match")
 
-cliRaw()
+
 
 
 def cliExpansion():
@@ -96,13 +92,19 @@ def cliExpansion():
     if p.returncode != 0:
         raise Exception(f"Error executing {cmd}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
         if not testutils.compareCSV(expectedResultsFilePath, outputs):
             tempActualOutputs=temporary.dirPath +  f"/{tempResultsFileName}"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
-            sys.exit(1)
-            #raise Exception("Results files do not match")
+            raise Exception("Results files do not match")
 
+# try:
+#     cliExpansion()
+#     cliRaw()
+#     cliSpecGen()
+# except:
+#     sys.exit(1)
 cliExpansion()
+cliRaw()
+cliSpecGen()

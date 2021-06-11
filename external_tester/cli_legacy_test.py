@@ -49,7 +49,6 @@ def legacyCliSimConfig():
     if p.returncode != 0:
         raise Exception(f"Error executing: {cmd1}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
         if not testutils.compareCSV(expectedResultsFilePath, temporary.resultPath):
             tempActualOutputs=temporary.dirPath + actualResultsFileName
@@ -57,8 +56,6 @@ def legacyCliSimConfig():
             shutil.copyfile(temporary.resultPath, tempActualOutputs)
             raise Exception("Results files do not match")
 
-
-legacyCliSimConfig()
 
 def legacyCliStarttimeEndtime():
     testutils.printSection("Legacy CLI with starttime and endtime")
@@ -70,7 +67,6 @@ def legacyCliStarttimeEndtime():
     if p2.returncode != 0:
         raise Exception(f"Error executing {cmd2}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
 
         if not testutils.compareCSV(expectedResultsFilePath, temporary.resultPath):
@@ -79,5 +75,11 @@ def legacyCliStarttimeEndtime():
             shutil.copyfile(temporary.resultPath, tempActualOutputs)
             raise Exception("Results files do not match")
 
+# try:
+#     legacyCliSimConfig()
+#     legacyCliStarttimeEndtime()
+# except:
+#     sys.exit(1)
 
+legacyCliSimConfig()
 legacyCliStarttimeEndtime()
