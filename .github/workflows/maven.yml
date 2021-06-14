@@ -42,19 +42,16 @@ jobs:
         run: |
           cd external_tester
           python maestro_cli_test.py
-        continue-on-error: true
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
           python webapi_test.py
-        continue-on-error: true
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
           python cli_legacy_test.py
-        continue-on-error: true
       #- name: Threaded Web API test
       #  timeout-minutes: 5
       #  run: |
