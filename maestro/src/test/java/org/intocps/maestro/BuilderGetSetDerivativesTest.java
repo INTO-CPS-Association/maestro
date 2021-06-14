@@ -7,7 +7,6 @@ import org.intocps.fmi.FmuResult;
 import org.intocps.fmi.IFmiComponent;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.node.INode;
 import org.intocps.maestro.ast.node.PType;
@@ -82,7 +81,7 @@ public class BuilderGetSetDerivativesTest {
         // Get all ports
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
+                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
                             .map(PortFmi2Api::getName).collect(Collectors.toSet());
 
             y.get(scalarVariablesToShare.toArray(String[]::new));
@@ -137,7 +136,7 @@ public class BuilderGetSetDerivativesTest {
         // Get all ports and share them
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
+                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
                             .map(PortFmi2Api::getName).collect(Collectors.toSet());
 
             Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
@@ -191,7 +190,7 @@ public class BuilderGetSetDerivativesTest {
         // Get all ports and share them
         fmuInstances.forEach((x, y) -> {
             Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
+                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
                             .map(PortFmi2Api::getName).collect(Collectors.toSet());
 
             Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
@@ -333,7 +332,7 @@ public class BuilderGetSetDerivativesTest {
             // Get all ports and share them
             fmuInstances.forEach((x, y) -> {
                 Set<String> scalarVariablesToShare =
-                        y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getLogScalarVariableName())))
+                        y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
                                 .map(PortFmi2Api::getName).collect(Collectors.toSet());
 
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));

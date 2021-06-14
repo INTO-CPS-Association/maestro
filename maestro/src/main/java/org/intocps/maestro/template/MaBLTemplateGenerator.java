@@ -143,16 +143,16 @@ public class MaBLTemplateGenerator {
                 algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                                 MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
-                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
-                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             case VARIABLESTEP:
                 algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                                 MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
-                                Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
-                                        AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(
+                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(
                                                 StringEscapeUtils
                                                         .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
                 break;
@@ -249,14 +249,19 @@ public class MaBLTemplateGenerator {
 
         // Add the initializer expand stm
         if (templateConfiguration.getInitialize().getKey()) {
-            stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
+            if (templateConfiguration.getInitialize().getValue() != null) {
+                stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
+            }
+
             stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
         }
 
         // Add the algorithm expand stm
         if (algorithmStatements.body != null) {
-            stmMaintainer.add(new AConfigStm(
-                    StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
+            if (templateConfiguration.getStepAlgorithmConfig() != null) {
+                stmMaintainer.add(new AConfigStm(
+                        StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getStepAlgorithmConfig()))));
+            }
             stmMaintainer.addAll(algorithmStatements.body);
         }
 
@@ -277,7 +282,7 @@ public class MaBLTemplateGenerator {
                 Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
-                        newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME)));
+                        newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME), newAIdentifier("MEnv")));
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
@@ -403,7 +408,7 @@ public class MaBLTemplateGenerator {
     private static PStm createComponentsArray(String lexName, Set<String> keySet) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(lexName),
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType(FMI2COMPONENT_TYPE)), keySet.size(),
-                MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> AIdentifierExpFromString(x)).collect(Collectors.toList()))));
+                MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> aIdentifierExpFromString(x)).collect(Collectors.toList()))));
     }
 
     private static PStm createUnloadStatement(String moduleName) {
@@ -434,11 +439,11 @@ public class MaBLTemplateGenerator {
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
-                        Arrays.asList(AIdentifierExpFromString(componentsArrayLexName), AIdentifierExpFromString(startTimeLexName),
-                                AIdentifierExpFromString(endTimeLexName))));
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
+                                aIdentifierExpFromString(endTimeLexName))));
     }
 
-    public static AIdentifierExp AIdentifierExpFromString(String x) {
+    public static AIdentifierExp aIdentifierExpFromString(String x) {
         return MableAstFactory.newAIdentifierExp(MableAstFactory.newAIdentifier(x));
     }
 

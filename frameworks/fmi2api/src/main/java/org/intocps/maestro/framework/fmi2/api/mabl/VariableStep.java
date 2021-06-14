@@ -113,8 +113,7 @@ public class VariableStep {
             targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
                     newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_ISSTEPVALID),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), nextTime.getExp(),
-                                    supportsRollBack.getExp(),
-                                    MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))))));
+                                    supportsRollBack.getExp(), MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))))));
 
             this.dynamicScope.add(assignmentStms.toArray(AAssigmentStm[]::new));
             this.dynamicScope.add(targetVarStm);
@@ -152,8 +151,8 @@ public class VariableStep {
             PStm targetVarStm;
 
             String variableName = dynamicScope.getName("has_reduced_step_size");
-            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(),
-                    newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_HASREDUCEDSTEPSIZE),
+            targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
+                    newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_HASREDUCEDSTEPSIZE),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
 
             this.dynamicScope.add(targetVarStm);
@@ -169,8 +168,9 @@ public class VariableStep {
 
             String variableName = dynamicScope.getName("reduced_step_size");
             targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(),
-                    newAExpInitializer(newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETREDUCEDSTEPSIZE),
-                            Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
+                    newAExpInitializer(
+                            newACallExp(newAIdentifierExp(this.variableStep.getModuleIdentifier()), newAIdentifier(FUNCTION_GETREDUCEDSTEPSIZE),
+                                    Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier))))));
 
             this.dynamicScope.add(targetVarStm);
 
@@ -229,7 +229,7 @@ public class VariableStep {
 
             //port names variable
             List<AStringLiteralExp> portNames =
-                    ports.stream().map(p -> MableAstFactory.newAStringLiteralExp(p.getLogScalarVariableName())).collect(Collectors.toList());
+                    ports.stream().map(p -> MableAstFactory.newAStringLiteralExp(p.getMultiModelScalarVariableName())).collect(Collectors.toList());
 
             portNamesStm = MableAstFactory.newALocalVariableStm(MableAstFactory
                     .newAVariableDeclaration(MableAstFactory.newAIdentifier(portNamesIdentifier),

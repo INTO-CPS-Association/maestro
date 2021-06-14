@@ -1,0 +1,5 @@
+module ConsolePrinter
+{
+     void print(string message, ? values);
+     void println(string message, ? values);
+}

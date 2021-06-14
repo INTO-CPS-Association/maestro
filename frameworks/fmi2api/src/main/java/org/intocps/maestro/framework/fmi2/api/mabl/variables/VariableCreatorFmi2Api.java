@@ -33,7 +33,7 @@ public class VariableCreatorFmi2Api {
     }
 
 
-    public static PType FMITypeToMablType(ModelDescription.Types type) {
+    public static PType fmitypetomabltype(ModelDescription.Types type) {
         switch (type) {
             case Boolean:
                 return newABoleanPrimitiveType();
@@ -51,7 +51,7 @@ public class VariableCreatorFmi2Api {
     public static VariableFmi2Api createVariableForPort(TagNameGenerator nameGenerator, PortFmi2Api port, IMablScope scope,
             Fmi2Builder.DynamicActiveScope<PStm> dynamicScope) {
         var name = nameGenerator.getName(port.toLexName());
-        var type = MableAstFactory.newAArrayType(FMITypeToMablType(port.scalarVariable.type.type));
+        var type = MableAstFactory.newAArrayType(fmitypetomabltype(port.scalarVariable.type.type));
         var size = 1;
         PStm stm = MableBuilder.newVariable(name, type, size);
         scope.add(stm);

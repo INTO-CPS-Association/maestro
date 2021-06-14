@@ -45,6 +45,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private VariableStep variableStep;
     private DerivativeEstimator derivativeEstimator;
     private LoggerFmi2Api runtimeLogger;
+    private ConsolePrinter consolePrinter;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
     private ExternalResources externalResources = null;
 
@@ -207,6 +208,17 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
         return this.dataWriter;
+    }
+
+    public ConsolePrinter getConsolePrinter(){
+        if (this.consolePrinter == null) {
+            RuntimeModule<PStm> runtimeModule =
+                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var),
+                            "ConsolePrinter");
+            this.consolePrinter = new ConsolePrinter(this, runtimeModule);
+        }
+
+        return this.consolePrinter;
     }
 
     public RealTime getRealTimeModule() {

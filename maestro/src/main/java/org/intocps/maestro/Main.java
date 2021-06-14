@@ -147,6 +147,7 @@ public class Main {
                 try {
                     MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config, reporter);
                     mabl.generateSpec(templateConfig);
+                    mabl.setRuntimeEnvironmentVariables(config.parameters);
                 } finally {
 
 
@@ -268,6 +269,7 @@ public class Main {
 
         Map<String, Object> initialize = new HashMap<>();
         initialize.put("parameters", simulationConfiguration.parameters);
+        initialize.put("environmentParameters", simulationConfiguration.environmentParameters);
 
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)

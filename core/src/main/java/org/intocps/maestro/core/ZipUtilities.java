@@ -22,7 +22,7 @@ public class ZipUtilities {
         return destFile;
     }
 
-    public static void UnzipToDirectory(File zipFile, File destinationDirectory) throws IOException {
+    public static void unzipToDirectory(File zipFile, File destinationDirectory) throws IOException {
 
         byte[] buffer = new byte[1024];
         ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
