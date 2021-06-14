@@ -62,7 +62,6 @@ def compareCSV(expected, actual):
             return True
     else:
         print(f"ERROR: {expected} doest not exist!")
-        return False
 
 def compare(strPrefix, expected, actual):
     if os.path.exists(expected):
@@ -76,8 +75,7 @@ def compare(strPrefix, expected, actual):
             print("%s: Files match" % strPrefix)
             return True
     else:
-        print("ERROR: %s: No results file exists within wt. Results are not compared." % strPrefix)
-        return False
+        print("%s: No results file exists within wt. Results are not compared." % strPrefix)
 
 def convert(expected):
     # Converts the expected results.csv to the current OS line ending format as COE outputs using current OS line endings
