@@ -21,10 +21,13 @@ public class Main implements Callable<Integer> {
         System.exit(exitCode);
     }
 
+    public static boolean argumentHandler(String... args) {
+        return 0 == new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(args);
+    }
+
     @Override
     public Integer call() throws Exception {
         return null;
     }
-
 
 }

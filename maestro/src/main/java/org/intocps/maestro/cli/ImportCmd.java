@@ -20,7 +20,7 @@ import java.util.stream.Stream;
         "        \"necessary plugin extensions in the classpath", mixinStandardHelpOptions = true)
 public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> jsonFileFilter = f -> f.getName().toLowerCase().endsWith(".json");
-    @CommandLine.Parameters(description = "The valid import formats: ${COMPLETION-CANDIDATES}")
+    @CommandLine.Parameters(index = "0", description = "The valid import formats: ${COMPLETION-CANDIDATES}")
     ImportType type;
     @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
     boolean dumpIntermediate;
@@ -41,7 +41,7 @@ public class ImportCmd implements Callable<Integer> {
     boolean inlineFrameworkConfig;
     @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
-    @CommandLine.Parameters(description = "One or more specification files")
+    @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
     List<File> files;
     @CommandLine.Option(names = "-output", description = "Path to a directory where the imported spec will be stored")
     File output;
@@ -90,14 +90,14 @@ public class ImportCmd implements Callable<Integer> {
 
         if (type == ImportType.Sg1) {
             if (!importSg1(util, sourceFiles)) {
-                return -1;
+                return 1;
             }
         } else {
             throw new IllegalStateException("Unexpected value: " + type);
         }
 
         if (!util.expand()) {
-            return -1;
+            return 1;
         }
 
         if (output != null) {
@@ -109,12 +109,12 @@ public class ImportCmd implements Callable<Integer> {
         }
 
         if (!util.typecheck()) {
-            return -1;
+            return 1;
         }
 
         if (verify != null) {
             if (!util.verify(verify)) {
-                return -1;
+                return 1;
             }
         }
 
@@ -133,19 +133,16 @@ public class ImportCmd implements Callable<Integer> {
                 ObjectReader updater = mapper.readerForUpdating(config);
                 config = updater.readValue(jsonFile);
             }
-            try {
-                MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
-                util.mabl.generateSpec(templateConfig);
-                util.mabl.setRuntimeEnvironmentVariables(config.parameters);
-            } finally {
-                MablCliUtil.hasErrorAndPrintErrorsAndWarnings(util.verbose, util.reporter);
-            }
+            MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
+            util.mabl.generateSpec(templateConfig);
+            util.mabl.setRuntimeEnvironmentVariables(config.parameters);
+
+            return !MablCliUtil.hasErrorAndPrintErrorsAndWarnings(util.verbose, util.reporter);
 
         } else {
             System.err.println("Missing configuration file for " + spec.name() + ". Please specify a json file.");
             return false;
         }
-        return false;
     }
 
     enum ImportType {

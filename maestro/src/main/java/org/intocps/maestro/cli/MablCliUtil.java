@@ -77,7 +77,8 @@ public class MablCliUtil {
         return true;
     }
 
-    public boolean expand() {
+    public boolean expand() throws Exception {
+        mabl.expand();
         if (hasErrorAndPrintErrorsAndWarnings(verbose, reporter)) {
             return false;
         }

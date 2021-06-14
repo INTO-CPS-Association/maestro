@@ -10,15 +10,15 @@ public class Issue188Test {
             "CreateAndInterpretNewSpec() so the scenario is still covered.")
     @Test
     public void interpretSpec() throws Exception {
-        Assertions.assertTrue(Main.argumentHandler(new String[]{"-i", Issue188Test.class.getClassLoader().getResource("188/spec.mabl").getPath()}));
+        Assertions.assertTrue(Main.argumentHandler("-i", Issue188Test.class.getClassLoader().getResource("188/spec.mabl").getPath()));
     }
 
     @Test
     public void createAndInterpretNewSpec() throws Exception {
         String initializeJson = Issue188Test.class.getClassLoader().getResource("188/initialize.json").getPath();
         String simulateJson = Issue188Test.class.getClassLoader().getResource("188/simulate.json").getPath();
-        String dumpPath = "target/test-classes/188/dump";
-        Assertions.assertTrue(Main.argumentHandler(new String[]{"-sg1", initializeJson, simulateJson, "-ds", dumpPath}));
+        String dumpPath = "target/issue/188/dump";
+        Assertions.assertTrue(Main.argumentHandler("import", "sg1", initializeJson, simulateJson, "--dump-intermediate", "-output", dumpPath));
     }
 
 }
