@@ -100,10 +100,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
         try {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
-            settings.fmiErrorHandlingEnabled = false;
+            settings.fmiErrorHandlingEnabled = true;
             settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
             // Selected fun now matches funWithBuilder
-            MablApiBuilder builder = new MablApiBuilder(settings, true);
+            MablApiBuilder builder = new MablApiBuilder(settings, formalArguments.get(0));
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
             MathBuilderFmi2Api math = builder.getMathBuilder();

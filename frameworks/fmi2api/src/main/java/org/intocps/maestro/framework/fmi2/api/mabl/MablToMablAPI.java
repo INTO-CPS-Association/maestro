@@ -1,11 +1,11 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
+import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.node.ALocalVariableStm;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.RuntimeModuleVariable;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAIdentifierExp;
 import static org.intocps.maestro.ast.MableAstFactory.newANameType;
@@ -23,16 +23,49 @@ public class MablToMablAPI {
         this.mablApiBuilder = mablApiBuilder;
     }
 
-    public static Map<MablApiBuilder.FmiStatus, IntVariableFmi2Api> getFmiStatusVariables(TagNameGenerator nameGenerator) {
-        Map<MablApiBuilder.FmiStatus, IntVariableFmi2Api> fmiStatusVariables = new HashMap<>();
-        Function<String, IntVariableFmi2Api> f = (str) -> new IntVariableFmi2Api(null, null, null, null, newAIdentifierExp(str));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_OK, f.apply("FMI_STATUS_OK"));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_WARNING, f.apply("FMI_STATUS_WARNING"));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_DISCARD, f.apply("FMI_STATUS_DISCARD"));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_ERROR, f.apply("FMI_STATUS_ERROR"));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_FATAL, f.apply("FMI_STATUS_FATAL"));
-        fmiStatusVariables.put(MablApiBuilder.FmiStatus.FMI_PENDING, f.apply("FMI_STATUS_PENDING"));
-        return fmiStatusVariables;
+
+    public static AVariableDeclaration findDeclaration(INode node, PStm currentStm, boolean caseSensitive, String name) {
+
+        if (currentStm == null) {
+            currentStm = node.getAncestor(PStm.class);
+        }
+
+        //since the getAncestor function acts as an identity function when the current node matches the requested type it is nessesary to call parent
+        INode tmp = (currentStm instanceof SBlockStm ? currentStm.parent() : currentStm);
+        if (tmp == null) {
+            return null;
+        }
+        SBlockStm block = tmp.getAncestor(SBlockStm.class);
+
+        if (block == null) {
+            return null;
+        }
+
+        while (currentStm.parent() != null && currentStm.parent() instanceof PStm && currentStm.parent() != block) {
+            currentStm = (PStm) currentStm.parent();
+        }
+
+        if (currentStm.parent() == block) {
+            //only search from before this statement
+
+            for (int i = block.getBody().indexOf(currentStm) - 1; i >= 0 && i < block.getBody().size(); i--) {
+                PStm s = block.getBody().get(i);
+                if (s instanceof ALocalVariableStm) {
+                    String declName = ((ALocalVariableStm) s).getDeclaration().getName().getText();
+                    //match found is does shadow a name
+                    if ((caseSensitive && declName.equals(name)) || (!caseSensitive && declName.equalsIgnoreCase(name))) {
+                        return ((ALocalVariableStm) s).getDeclaration();
+                    }
+                }
+            }
+            return findDeclaration(node, block, caseSensitive, name);
+        } else {
+            if (currentStm.parent() != null && currentStm.parent() instanceof PStm) {
+                return findDeclaration(node, (PStm) currentStm.parent(), caseSensitive, name);
+            }
+        }
+
+        return null;
     }
 
     public void createExternalRuntimeLogger() {

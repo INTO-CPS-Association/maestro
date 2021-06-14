@@ -112,7 +112,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         return try {
             val setting = MablApiBuilder.MablSettings()
             setting.fmiErrorHandlingEnabled = false
-            val builder = MablApiBuilder(setting, true)
+            val builder = MablApiBuilder(setting, formalArguments[0])
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.mablToMablAPI.booleanBuilder
