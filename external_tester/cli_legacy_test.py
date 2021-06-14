@@ -5,8 +5,6 @@ import sys
 import testutils
 import argparse
 import os
-import tempfile
-import json
 import subprocess
 import glob
 
@@ -20,6 +18,33 @@ def findJar():
         raise FileNotFoundError("Could not automatically find jar file please specify manually")
 
     return result[0]
+
+def cliTest(tempDir, testCmd):
+    print("Cmd: " + testCmd)
+    p = subprocess.run(testCmd, shell=True)
+    if p.returncode != 0:
+        raise Exception(f"Error executing: {testCmd}")
+    else:
+        testutils.checkMablSpecExists(tempDir.mablSpecPath)
+        if not testutils.compareCSV(expectedResultsFilePath, tempDir.resultPath):
+            tempActualOutputs=tempDir.dirPath + actualResultsFileName
+            print("Copying outputs file to temporary directory: " + tempActualOutputs)
+            shutil.copyfile(tempDir.resultPath, tempActualOutputs)
+            raise Exception("Results files do not match")
+
+def legacyCliSimConfig():
+    testutils.printSection("Legacy CLI with Simulation Configuration")
+    temporary= testutils.createAndPrepareTempDirectory()
+    cmd1 = "java -jar {0} -o -c {1} -sc {2} -r {3}".format(path, temporary.initializationPath, testutils.simulationConfigurationPath, temporary.resultPath)
+    cliTest(temporary, cmd1)
+
+
+def legacyCliStarttimeEndtime():
+    testutils.printSection("Legacy CLI with starttime and endtime")
+    temporary=testutils.createAndPrepareTempDirectory()
+    simConfigParsed = testutils.retrieveSimulationConfiguration()
+    cmd2 = "java -jar {0} -o -c {1} -s {2} -e {3} -r {4}".format(path, temporary.initializationPath, simConfigParsed['startTime'], simConfigParsed['endTime'], temporary.resultPath)
+    cliTest(temporary, cmd2)
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Legacy CLI', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
@@ -35,46 +60,10 @@ if not os.path.isfile(path):
     print('The path does not exist')
     sys.exit()
 
+actualResultsFileName = "actual_result.csv"
+expectedResultsFilePath = 'wt/result.csv'
+
 print("Testing CLI of: " + path)
 
-def legacyCliSimConfig():
-    testutils.printSection("Legacy CLI with Simulation Configuration")
-    temporary= testutils.createAndPrepareTempDirectory()
-    cmd1 = "java -jar {0} -o -c {1} -sc {2} -r {3}".format(path, temporary.initializationPath, testutils.simulationConfigurationPath, temporary.resultPath)
-    print("Cmd: " + cmd1)
-    p = subprocess.run(cmd1, shell=True)
-    if p.returncode != 0:
-        raise Exception(f"Error executing: {cmd1}")
-    else:
-        print("SUCCESS")
-        testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
-            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
-            print("Copying outputs file to temporary directory: " + tempActualOutputs)
-            shutil.copyfile(temporary.resultPath, tempActualOutputs)
-            raise Exception("Results files do not match")
-
-
 legacyCliSimConfig()
-
-def legacyCliStarttimeEndtime():
-    testutils.printSection("Legacy CLI with starttime and endtime")
-    temporary=testutils.createAndPrepareTempDirectory()
-    simConfigParsed = testutils.retrieveSimulationConfiguration()
-    cmd2 = "java -jar {0} -o -c {1} -s {2} -e {3} -r {4}".format(path, temporary.initializationPath, simConfigParsed['startTime'], simConfigParsed['endTime'], temporary.resultPath)
-    print("Cmd: " + cmd2)
-    p2 = subprocess.run(cmd2, shell=True)
-    if p2.returncode != 0:
-        raise Exception(f"Error executing {cmd2}")
-    else:
-        print("SUCCESS")
-        testutils.checkMablSpecExists(temporary.mablSpecPath)
-
-        if not testutils.compareCSV("wt/result.csv", temporary.resultPath):
-            tempActualOutputs=temporary.dirPath + "/actual_" + temporary.resultPath
-            print("Copying outputs file to temporary directory: " + tempActualOutputs)
-            shutil.copyfile(temporary.resultPath, tempActualOutputs)
-            raise Exception("Results files do not match")
-
-
 legacyCliStarttimeEndtime()
