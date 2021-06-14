@@ -11,19 +11,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.intocps.maestro.Main;
+import org.intocps.maestro.cli.MablCmdVersionProvider;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
-import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
 import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
 import org.intocps.maestro.webapi.maestro2.dto.*;
-import org.intocps.maestro.fmi.ModelDescription;
-
 import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -335,7 +332,13 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
     public String version() {
-        final String message = "{\"version\":\"" + Main.getVersion() + "\"}";
+        final String message;
+        try {
+            message = "{\"version\":\"" + new MablCmdVersionProvider().getVersion()[0] + "\"}";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "unknown";
+        }
         return message;
     }
 
