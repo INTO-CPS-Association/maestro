@@ -7,7 +7,7 @@ on: [ workflow_dispatch, push, pull_request ]
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
-  PYTHON_VERISON: '3.8'
+  PYTHON_VERISON: '3.*'
 
 jobs:
   build:
@@ -36,19 +36,19 @@ jobs:
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py
+          pipenv run python maestro_cli_test.py
 
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python webapi_test.py
+          pipenv run python webapi_test.py
 
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python cli_legacy_test.py
+          pipenv run python cli_legacy_test.py
 
       #- name: Threaded Web API test
       #  timeout-minutes: 5
