@@ -14,7 +14,7 @@ wtTankPath = os.path.join(wtDirectory,'singlewatertank-20sim.fmu')
 wtExampleSpecRelativePath = os.path.join(wtDirectory,'example1.mabl')
 wtExampleConfigRelativePath = os.path.join(wtDirectory,'mm.json')
 pyPlotterPath = 'pythoncsvplotter.py'
-destDirAbsPath = os.path.abspath(os.path.join(os.path.dirname(os.getcwd()), 'docs', 'user', 'images', 'wt_example'))
+toDirectoryAbsPath = os.path.abspath(os.path.join(os.path.dirname(os.getcwd()), 'docs', 'user', 'images', 'wt_example'))
 newExampleSpecName = 'wt-example.mabl'
 newExampleConfigName = 'wt-example-config.json'
 startMsgPath = os.path.join(wtDirectory,'start_message.json')
@@ -78,10 +78,10 @@ def buildAndCopyPart1():
     with open(os.path.join(zip1tmpdirPath, newExampleSpecName), "w") as mabl_file:
         print(data, file=mabl_file)
     shutil.copy(pyPlotterPath, os.path.join(zip1tmpdirPath, 'part1pythoncsvplotter.py'))
-    shutil.copy(os.path.join(zip1tmpdirPath, newExampleSpecName), destDirAbsPath)
+    shutil.copy(os.path.join(zip1tmpdirPath, newExampleSpecName), toDirectoryAbsPath)
 
     # generate getting-started-part 1 zipfile
-    shutil.make_archive(os.path.join(destDirAbsPath, zip1name), 'zip', zip1tmpdirPath)
+    shutil.make_archive(os.path.join(toDirectoryAbsPath, zip1name), 'zip', zip1tmpdirPath)
     
     zip1tmpdir.cleanup()
 
@@ -91,29 +91,25 @@ def buildAndCopyPart2():
     zip2tmpdirPath = zip2tmpdir.name
     config = buildDocsConfig()
 
-    with open(os.path.join(destDirAbsPath, newExampleConfigName), 'w') as json_file:
+    with open(os.path.join(toDirectoryAbsPath, newExampleConfigName), 'w') as json_file:
         json.dump(config, json_file, indent=2)
     with open(os.path.join(zip2tmpdirPath, newExampleConfigName), 'w') as json_file:
         json.dump(config, json_file, indent=2)
     shutil.copy(pyPlotterPath, os.path.join(zip2tmpdirPath, 'part2pythoncsvplotter.py'))
 
     # generate getting-started-part 2 zipfile
-    shutil.make_archive(os.path.join(destDirAbsPath, zip2name), 'zip', zip2tmpdirPath)
+    shutil.make_archive(os.path.join(toDirectoryAbsPath, zip2name), 'zip', zip2tmpdirPath)
 
     # generate expanded specs and copy
     specGen(zip2tmpdirPath)
-    shutil.copy(os.path.join(zip2tmpdirPath, 'spec00000.mabl'), destDirAbsPath)
-    shutil.copy(os.path.join(zip2tmpdirPath, 'spec00002.mabl'), destDirAbsPath)
-    shutil.copy(os.path.join(zip2tmpdirPath, 'spec.runtime.json'), destDirAbsPath)
+    shutil.copy(os.path.join(zip2tmpdirPath, 'spec00000.mabl'), toDirectoryAbsPath)
+    shutil.copy(os.path.join(zip2tmpdirPath, 'spec00002.mabl'), toDirectoryAbsPath)
+    shutil.copy(os.path.join(zip2tmpdirPath, 'spec.runtime.json'), toDirectoryAbsPath)
 
     zip2tmpdir.cleanup()
 
-def copyMiscSources():
-    variableStepExamplePath = os.path.join(os.path.dirname(os.getcwd()), 'maestro', 'src', 'test', 'resources', 'variable_step', 'variableStepTest.mabl')
-    shutil.copy(variableStepExamplePath, destDirAbsPath)
 
 buildAndCopyPart1()
 buildAndCopyPart2()
-copyMiscSources()
 
 print("Successfully build doc sources!")

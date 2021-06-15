@@ -7,7 +7,7 @@ on: [ workflow_dispatch, push, pull_request ]
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
-  PYTHON_VERISON: '3.x'
+  PYTHON_VERSION: '3.x'
 
 jobs:
   build:
@@ -23,35 +23,43 @@ jobs:
         uses: actions/setup-java@v1.4.3
         with:
           java-version: ${{ env.JAVA_VERSION }}
+
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests
+
       - name: Maven Test
         run: mvn test
 
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ env.PYTHON_VERISON }}
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install pipenv
           cd external_tester
-          pip install -r requirements.txt
+          pipenv install
+
       - name: CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python maestro_cli_test.py
+          pipenv run python maestro_cli_test.py
+
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python webapi_test.py
+          pipenv run python webapi_test.py
+
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python cli_legacy_test.py
+          pipenv run python cli_legacy_test.py
+
       #- name: Threaded Web API test
       #  timeout-minutes: 5
       #  run: |
