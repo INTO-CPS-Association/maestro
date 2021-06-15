@@ -32,26 +32,43 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ env.PYTHON_VERISON }}
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
+          sudo apt-get install libpq-dev -y
           cd external_tester
-          pip install -r requirements.txt
+          pip install pipenv
+
+      - name: Cache pipenv virtualenv
+        id: cache-pipenv
+        uses: actions/cache@v2
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Install dependencies
+        if: steps.cache-pipenv.outputs.cache-hit != 'true'
+        run: pipenv install
+
       - name: CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
           python maestro_cli_test.py
+
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
           python webapi_test.py
+
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
           python cli_legacy_test.py
+
       #- name: Threaded Web API test
       #  timeout-minutes: 5
       #  run: |
