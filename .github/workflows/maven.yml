@@ -7,7 +7,7 @@ on: [ workflow_dispatch, push, pull_request ]
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
-  PYTHON_VERISON: '3.*'
+  PYTHON_VERSION: '3.x'
 
 jobs:
   build:
@@ -33,7 +33,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ env.PYTHON_VERISON }}
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python Dependencies
         run: |
