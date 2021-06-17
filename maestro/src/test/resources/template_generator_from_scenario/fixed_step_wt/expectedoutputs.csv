@@ -1,4 +1,4 @@
-time,crtl.crtl_crtlinstance.valve,wt.wt_wtinstance.level
+time,{crtl}.crtlinstance.valve,{wt}.wtinstance.level
 0.0 , false , 0.0
 0.1 , false , 0.1099999999999999
 0.2 , false , 0.19999999999999996

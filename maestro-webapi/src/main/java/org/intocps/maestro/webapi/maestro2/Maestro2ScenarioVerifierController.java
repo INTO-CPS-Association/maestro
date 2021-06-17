@@ -6,6 +6,7 @@ import core.ModelEncoding;
 import core.ScenarioGenerator;
 import core.ScenarioLoader;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -106,10 +107,10 @@ public class Maestro2ScenarioVerifierController {
             }
         }
 
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
         simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+
 
         if (simulationConfiguration.fmus == null) {
             throw new Exception("Missing FMUs from multi-model");
@@ -118,11 +119,13 @@ public class Maestro2ScenarioVerifierController {
         ErrorReporter reporter = new ErrorReporter();
         Maestro2Broker broker = new Maestro2Broker(tempDir, reporter);
         Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        broker.generateSpecification(new ScenarioConfiguration(environment, masterModel, executableModel.getMultiModel().getParameters(),
-                executableModel.getExecutionParameters().getConvergenceRelativeTolerance(),
-                executableModel.getExecutionParameters().getConvergenceAbsoluteTolerance(),
-                executableModel.getExecutionParameters().getConvergenceAttempts(), executableModel.getExecutionParameters().getStartTime(),
-                executableModel.getExecutionParameters().getEndTime(), executableModel.getExecutionParameters().getStepSize()));
+        broker.generateSpecification(
+                new ScenarioConfiguration(environment, executableModel.getMasterModel(), executableModel.getMultiModel().getParameters(),
+                        executableModel.getExecutionParameters().getConvergenceRelativeTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAbsoluteTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAttempts(), executableModel.getExecutionParameters().getStartTime(),
+                        executableModel.getExecutionParameters().getEndTime(), executableModel.getExecutionParameters().getStepSize(),
+                        Pair.of(Framework.FMI2, simulationConfiguration)));
 
         broker.mabl.typeCheck();
         broker.mabl.verify(Framework.FMI2);

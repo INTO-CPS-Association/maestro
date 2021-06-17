@@ -3,9 +3,9 @@ package org.intocps.maestro;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
-import core.ScenarioLoader;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -36,8 +36,8 @@ public class TemplateGeneratorFromScenarioTest {
      * @return
      */
     private static Stream<Arguments> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
-                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
+                return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
+                        .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
         //TODO: remove filter when stabilization scenario works
     }
 
@@ -66,8 +66,7 @@ public class TemplateGeneratorFromScenarioTest {
         simulationConfiguration.connections =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
                 });
-        MasterModel masterModel =
-                ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes(StandardCharsets.UTF_8)));
+        String masterModel = executableMM.get("masterModel").textValue();
         Map<String, Object> parameters =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {
                 });
@@ -93,7 +92,7 @@ public class TemplateGeneratorFromScenarioTest {
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
         ScenarioConfiguration scenarioConfiguration =
                 new ScenarioConfiguration(simulationEnvironment, masterModel, parameters, relTol, absTol, convergenceAttempts, startTime, endTime,
-                        stepSize);
+                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration));
 
         // ACT
         // This calls TemplateGeneratorFromScenario.generateTemplate which is the method to test
@@ -111,7 +110,7 @@ public class TemplateGeneratorFromScenarioTest {
         if (errorReporter.getWarningCount() > 0) {
             errorReporter.printWarnings(new PrintWriter(System.out, true));
         }
-
+        PrettyPrinter.print(mabl.getMainSimulationUnit());
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
