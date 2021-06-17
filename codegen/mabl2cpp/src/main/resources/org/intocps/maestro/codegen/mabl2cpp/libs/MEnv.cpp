@@ -29,7 +29,7 @@ MEnvImpl::MEnvImpl(const char *runtimeConfigPath) {
 fmi2Real MEnvImpl::getReal(const char *id) {
     auto value = std::getenv(id);
 
-    if (value == nullptr) {
+    if (value == nullptr && this->json.IsObject()) {
         if (this->json.HasMember(id)) {
             if (this->json[id].IsNumber()) {
                 if (this->json[id].IsDouble()) {
@@ -52,7 +52,7 @@ fmi2Real MEnvImpl::getReal(const char *id) {
 fmi2String MEnvImpl::getString(const char *id) {
     auto value = std::getenv(id);
 
-    if (value == nullptr) {
+    if (value == nullptr && this->json.IsObject()) {
         if (this->json.HasMember(id)) {
             if (this->json[id].IsString()) {
                     return this->json[id].GetString();
@@ -71,7 +71,7 @@ fmi2String MEnvImpl::getString(const char *id) {
 fmi2Boolean MEnvImpl::getBool(const char *id) {
     auto value = std::getenv(id);
 
-    if (value == nullptr) {
+    if (value == nullptr && this->json.IsObject()) {
         if (this->json.HasMember(id)) {
             if (this->json[id].IsInt()||this->json[id].IsBool()) {
                 if (this->json[id].IsBool()) {
@@ -95,7 +95,7 @@ fmi2Boolean MEnvImpl::getBool(const char *id) {
 fmi2Integer MEnvImpl::getInt(const char *id) {
     auto value = std::getenv(id);
 
-    if (value == nullptr) {
+    if (value == nullptr && this->json.IsObject()) {
         if (this->json.HasMember(id)) {
             if (this->json[id].IsNumber()) {
                 if (this->json[id].IsInt()) {
