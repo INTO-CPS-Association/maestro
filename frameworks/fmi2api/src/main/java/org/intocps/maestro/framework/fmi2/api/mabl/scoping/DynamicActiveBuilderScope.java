@@ -164,6 +164,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables) {
+        return activeScope.storeInArray(name, variables);
+    }
+
+    @Override
     public FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception {
         return activeScope.createFMU(name, loaderName, args);
     }

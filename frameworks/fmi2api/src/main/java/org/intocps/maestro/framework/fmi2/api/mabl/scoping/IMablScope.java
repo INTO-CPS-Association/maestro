@@ -76,6 +76,8 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
 
+    ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
+
     FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
 
     @Override

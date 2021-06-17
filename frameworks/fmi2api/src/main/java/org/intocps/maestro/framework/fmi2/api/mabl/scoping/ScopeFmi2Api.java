@@ -390,6 +390,19 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
+    @Override
+    public ArrayVariableFmi2Api storeInArray(String namePrefix, VariableFmi2Api[] variables) {
+        String name = getName(namePrefix);
+        PType type = variables[0].getType();
+        PInitializer initializer = newAArrayInitializer(Arrays.stream(variables).map(VariableFmi2Api::getExp).collect(Collectors.toList()));
+        PStm arrayVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), variables[0].getType(), variables.length, initializer));
+
+
+        add(arrayVarStm);
+        return new ArrayVariableFmi2Api(arrayVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name), Arrays.asList(variables));
+    }
+
     private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {
 
         if (!(tag instanceof ValueFmi2Api)) {
