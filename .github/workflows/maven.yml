@@ -19,10 +19,21 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up Java
         uses: actions/setup-java@v1.4.3
         with:
           java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python Pipenv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
 
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests
@@ -30,15 +41,8 @@ jobs:
       - name: Maven Test
         run: mvn test
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
       - name: Install Python Dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install pipenv
           cd external_tester
           pipenv install
 

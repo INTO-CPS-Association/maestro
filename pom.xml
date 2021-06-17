@@ -55,6 +55,7 @@
         <module>codegen</module>
         <module>fmi</module>
         <module>modeldefinitionchecker</module>
+        <module>external_tester</module>
     </modules>
 
     <build>
