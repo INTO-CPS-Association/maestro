@@ -15,6 +15,13 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Verbose")
     boolean verbose;
 
+    @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
+    boolean dumpIntermediate;
+    @CommandLine.Option(names = {"-nop", "--disable-optimize"}, description = "Disable spec optimization", negatable = true)
+    boolean disableOptimize;
+    @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
+    boolean preserveAnnotations;
+
     @CommandLine.Option(names = "-runtime", description = "Path to a runtime file which should be included in the export")
     File runtime;
 
@@ -30,15 +37,22 @@ public class InterpreterCmd implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Mabl.MableSettings settings = new Mabl.MableSettings();
-        settings.dumpIntermediateSpecs = false;
-        settings.preserveFrameworkAnnotations = false;
-        settings.inlineFrameworkConfig = true;
+        settings.dumpIntermediateSpecs = dumpIntermediate;
+        settings.preserveFrameworkAnnotations = preserveAnnotations;
+        settings.inlineFrameworkConfig = false;
 
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
 
         if (!util.parse(files)) {
             return -1;
+        }
+        if (!util.expand()) {
+            return 1;
+        }
+
+        if (output != null) {
+            util.mabl.dump(output);
         }
 
         if (!util.typecheck()) {
