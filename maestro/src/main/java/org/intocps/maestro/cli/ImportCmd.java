@@ -108,6 +108,10 @@ public class ImportCmd implements Callable<Integer> {
             util.mabl.optimize();
         }
 
+        if (output != null) {
+            util.mabl.dump(output);
+        }
+
         if (!util.typecheck()) {
             return 1;
         }
