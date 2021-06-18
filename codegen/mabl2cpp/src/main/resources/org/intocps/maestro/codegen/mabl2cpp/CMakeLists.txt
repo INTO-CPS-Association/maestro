@@ -5,6 +5,9 @@ project (sim C CXX)
 include(FetchContent)
 include(ExternalProject)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(zlib-download NONE)
 
 FetchContent_Declare(intocpsfmi
@@ -25,17 +28,22 @@ FetchContent_Declare(libzip
 
 FetchContent_MakeAvailable(libzip )
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+FetchContent_Declare(rapidjson
+        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+        GIT_TAG  v1.1.0
+        SOURCE_DIR "${CMAKE_BINARY_DIR}/rapidjson"
 
+        )
 
+FetchContent_MakeAvailable(rapidjson )
 
 include_directories(${PROJECT_SOURCE_DIR}
 #    ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi2/headers
 ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi/include
     ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared
     ${intocpsfmi-src}/jnifmuapi/src/main/native/src
-    libs)
+    libs
+    ${CMAKE_BINARY_DIR}/rapidjson/include)
 
 
 add_executable(sim

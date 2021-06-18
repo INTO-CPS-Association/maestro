@@ -86,6 +86,7 @@ public class MaBLTemplateGeneratorTest {
         mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         mabl.setRuntimeEnvironmentVariables((Map<String, Object>) configData.get("parameters"));
+        mabl.dump(workingDir);
 
 
         if (reporter.getErrorCount() > 0) {

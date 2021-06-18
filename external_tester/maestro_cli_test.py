@@ -52,7 +52,7 @@ def cliSpecGen():
     testutils.printSection("CLI with Specification Generation")
     temporary=testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+    cmd = "java -jar {0} import -output {1} --dump-intermediate sg1 {2} {3} -i -vi FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
     testWithCommand(outputs, cmd, temporary)
 
 
@@ -60,7 +60,7 @@ def cliRaw():
     testutils.printSection("CLI Raw")
     temporary=testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+    cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} {3} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
     testWithCommand(outputs, cmd, temporary)
 
 
@@ -68,7 +68,7 @@ def cliExpansion():
     testutils.printSection("CLI Expansion")
     temporary=testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
+    cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
     testWithCommand(outputs, cmd, temporary)
 
 print("Testing CLI with specification generation of: " + path)

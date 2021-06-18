@@ -2,13 +2,30 @@
 #include <iostream>
 
 #include "co-sim.hxx"
-
-int main () {
+int main(int argc, char *argv[]) {
 
     using namespace std;
     using namespace chrono;
+
+    string runtimeKey = "-runtime";
+    string helpKey = "-help";
+    string helpQKey = "-?";
+    string runtimeConfigPath;
+    for (int i = 0; i < argc; i++) {
+
+        string currentArg = argv[i];
+        transform(currentArg.begin(), currentArg.end(), currentArg.begin(), ::tolower);
+        if (runtimeKey == currentArg) {
+            if (i + 1 < argc) {
+                runtimeConfigPath = argv[i + 1];
+                i++;
+            }
+        }else if(helpKey == currentArg ||helpQKey == currentArg){
+            cout<< "Help\nsim \n\n\t-help, -?\tPrints this message\n\t-runtime\tPath to a runtime json file used for runtime configuration"<<endl;
+        }
+    }
     auto t1 = std::chrono::high_resolution_clock::now();
-    simulate();
+    simulate(runtimeConfigPath.c_str());
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto dur = t2-t1;

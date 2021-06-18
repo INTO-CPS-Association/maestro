@@ -46,7 +46,7 @@ public class Mabl {
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
     final IntermediateSpecWriter intermediateSpecWriter;
     private final File specificationFolder;
-    private final MableSettings settings = new MableSettings();
+    private final MableSettings settings;
     private final Set<ARootDocument> importedDocument = new HashSet<>();
     private boolean verbose;
     private List<Framework> frameworks;
@@ -59,8 +59,13 @@ public class Mabl {
     private ISimulationEnvironment environment;
 
     public Mabl(File specificationFolder, File debugOutputFolder) {
+        this(specificationFolder, debugOutputFolder, new MableSettings());
+    }
+
+    public Mabl(File specificationFolder, File debugOutputFolder, MableSettings settings) {
         this.specificationFolder = specificationFolder;
-        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
+        this.settings = settings;
+        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, settings.dumpIntermediateSpecs);
     }
 
     static Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
@@ -209,6 +214,7 @@ public class Mabl {
             }
 
             if (settings.inlineFrameworkConfig) {
+
                 this.intermediateSpecWriter.write(document);
             }
         }
