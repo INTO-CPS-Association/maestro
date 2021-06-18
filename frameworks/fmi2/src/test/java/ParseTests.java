@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class ParseTests {
     @Test
-    public void ParsesMultiModelMessage() throws Exception {
+    public void parsesMultiModelMessage() throws Exception {
         InputStream multimodelJson = this.getClass().getResourceAsStream("watertankmultimodel.json");
         IErrorReporter reporter = new IErrorReporter.SilentReporter();
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(multimodelJson, reporter);

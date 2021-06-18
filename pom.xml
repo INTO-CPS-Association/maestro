@@ -92,7 +92,12 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}
+                        </sourceDirectory>
+                        <sourceDirectory>${project.build.testSourceDirectory}
+                        </sourceDirectory>
+                    </sourceDirectories>
                     <checkstyleRules>
                         <module name="Checker">
                             <module name="TreeWalker">

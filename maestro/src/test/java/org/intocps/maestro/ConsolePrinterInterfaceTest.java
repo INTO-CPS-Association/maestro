@@ -30,7 +30,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void PrintTest() throws Exception {
+    public void printTest() throws Exception {
         // Arrange
         String msg = "Test value: ";
         int testVal = 1;
@@ -62,7 +62,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void PrintlnTest() throws Exception {
+    public void printLnTest() throws Exception {
         // Arrange
         String msg = "Test value: ";
         int intTestVal = 1;

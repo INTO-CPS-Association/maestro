@@ -29,7 +29,7 @@ public class PrologVerifierTest {
     }*/
 
     @Test
-    public void VerifyInitializationOrderNotValidWatertankTest() throws Exception {
+    public void verifyInitializationOrderNotValidWatertankTest() throws Exception {
         var prologVerifier = new InitializationPrologQuery();
         var unitRelationship = Fmi2SimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
         var components = Arrays.asList("crtlInstance", "wtInstance");

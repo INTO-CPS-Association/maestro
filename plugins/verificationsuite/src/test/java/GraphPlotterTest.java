@@ -1,9 +1,9 @@
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,7 @@ public class GraphPlotterTest {
     InputStream envThreeTankJson = this.getClass().getResourceAsStream("PrologVerifierTest/threetank_env.json");
 
     @Test
-    public void PlotGraphWatertankTest() throws Exception {
+    public void plotGraphWatertankTest() throws Exception {
         var graphDrawer = new GraphDrawer();
         var unitRelationship = Fmi2SimulationEnvironment.of(envWaterTankJson, new IErrorReporter.SilentReporter());
         var components = Arrays.asList("crtlInstance", "wtInstance");
@@ -30,7 +30,7 @@ public class GraphPlotterTest {
 
     //@Ignore
     @Test
-    public void PlotGraphThreeTankTest() throws Exception {
+    public void plotGraphThreeTankTest() throws Exception {
         var graphDrawer = new GraphDrawer();
         var unitRelationship = Fmi2SimulationEnvironment.of(envThreeTankJson, new IErrorReporter.SilentReporter());
         var components = Arrays.asList("controller", "tank1", "tank2");
@@ -41,7 +41,7 @@ public class GraphPlotterTest {
     }
 
     @Test
-    public void PlotGraphWithSimpleLoop() throws Exception {
+    public void plotGraphWithSimpleLoop() throws Exception {
         var graphDrawer = new GraphDrawer();
         var unitRelationship = Fmi2SimulationEnvironment.of(envThreeTankJson, new IErrorReporter.SilentReporter());
         var relations = new HashSet<Fmi2SimulationEnvironment.Relation>();
