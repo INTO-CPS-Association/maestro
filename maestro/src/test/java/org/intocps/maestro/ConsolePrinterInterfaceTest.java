@@ -70,8 +70,8 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
         double doubleTestVal = 1.0;
         boolean booleanTestVal = true;
         String stringTestVal = "s";
-        Set<String> toContain = Set.of(msg.concat(Integer.toString(intTestVal)), msg.concat(Double.toString(doubleTestVal)),
-                msg.concat(Boolean.toString(booleanTestVal)), msg.concat(stringTestVal));
+        Set<String> toContain = Set.of(msg.concat(String.format("%d", intTestVal)), msg.concat(String.format("%.1f", doubleTestVal)),
+                msg.concat(String.format("%b", booleanTestVal)), String.format("%s", msg.concat(stringTestVal)));
 
         IntVariableFmi2Api intTestValVar = dynamicScope.store("intTestVal", intTestVal);
         DoubleVariableFmi2Api doubleTestValVar = dynamicScope.store("doubleTestVal", doubleTestVal);
