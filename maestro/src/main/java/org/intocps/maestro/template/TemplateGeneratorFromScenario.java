@@ -27,11 +27,9 @@ public class TemplateGeneratorFromScenario {
     private static final String START_TIME_NAME = "start_time";
     private static final String END_TIME_NAME = "end_time";
     private static final String STEP_SIZE_NAME = "step_size";
-    private static final String REL_TOL_NAME = "relative_tolerance";
-    private static final String ABS_TOL_NAME = "absolute_tolerance";
-    private static final String CONV_ATT_NAME = "convergence_attempts";
     private static final String SCENARIO_MODEL_FMU_INSTANCE_DELIMITER = "_";
     private static final String SCENARIOVERIFIER_EXPANSION_MODULE_NAME = "ScenarioVerifier";
+    private static final String FRAMEWORK_MODULE_NAME = "FMI2";
     private static final String COMPONENTS_ARRAY_NAME = "components";
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(ScenarioConfiguration configuration) throws Exception {
@@ -42,7 +40,6 @@ public class TemplateGeneratorFromScenario {
         // This is not optimal and should be changed to the same format.
 
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.getMasterModel().getBytes()));
-        ErrorReporter reporter = new ErrorReporter();
 
         // Generate MaBL spec
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
@@ -72,13 +69,13 @@ public class TemplateGeneratorFromScenario {
                     return fmuFromScenario.get().instantiate(entry.getKey().split(ScenarioVerifier.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]);
                 }));
 
-        DoubleVariableFmi2Api stepSize = dynamicScope.store(STEP_SIZE_NAME, configuration.getExecutionParameters().getStepSize());
-        DoubleVariableFmi2Api startTime = dynamicScope.store(START_TIME_NAME, configuration.getExecutionParameters().getStartTime());
-        DoubleVariableFmi2Api endTime = dynamicScope.store(END_TIME_NAME, configuration.getExecutionParameters().getEndTime());
-        ArrayVariableFmi2Api components =
-                dynamicScope.storeInArray(COMPONENTS_ARRAY_NAME, fmuInstances.values().toArray(new ComponentVariableFmi2Api[0]));
+        // Store variables to be used by the scenario verifier
+        dynamicScope.store(STEP_SIZE_NAME, configuration.getExecutionParameters().getStepSize());
+        dynamicScope.store(START_TIME_NAME, configuration.getExecutionParameters().getStartTime());
+        dynamicScope.store(END_TIME_NAME, configuration.getExecutionParameters().getEndTime());
+        dynamicScope.storeInArray(COMPONENTS_ARRAY_NAME, fmuInstances.values().toArray(new ComponentVariableFmi2Api[0]));
 
-        // Add scenario verifier expansion plugin
+        // Setup and add scenario verifier config
         ScenarioVerifierConfig expansionConfig = new ScenarioVerifierConfig();
         expansionConfig.masterModel = configuration.getMasterModel();
         expansionConfig.parameters = configuration.getParameters();
@@ -89,6 +86,7 @@ public class TemplateGeneratorFromScenario {
         AConfigStm configStm = new AConfigStm(StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(expansionConfig)));
         dynamicScope.add(configStm);
 
+        // Add scenario verifier expansion plugin
         PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTEALGORITHM_FUNCTION_NAME),
@@ -108,12 +106,13 @@ public class TemplateGeneratorFromScenario {
         ASimulationSpecificationCompilationUnit unit = builder.build();
 
         // Add imports
-        unit.setImports(List.of(newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME), newAIdentifier("FMI2")));
+        unit.setImports(List.of(newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
 
         // Setup framework
-        unit.setFramework(Collections.singletonList(new LexIdentifier("FMI2", null)));
-        unit.setFrameworkConfigs(Collections.singletonList(new AConfigFramework(new LexIdentifier("FMI2", null),
-                StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(configuration.getFrameworkConfig())))));
+        unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));
+        unit.setFrameworkConfigs(Collections.singletonList(new AConfigFramework(new LexIdentifier(configuration.getFrameworkConfig().getKey().toString(),
+                null),
+                StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(configuration.getFrameworkConfig().getValue())))));
         PrettyPrinter.print(unit);
         return unit;
     }
