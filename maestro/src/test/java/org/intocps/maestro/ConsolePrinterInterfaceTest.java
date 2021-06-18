@@ -3,7 +3,6 @@ package org.intocps.maestro;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.framework.fmi2.api.mabl.BaseApiTest;
 import org.intocps.maestro.framework.fmi2.api.mabl.ConsolePrinter;
-import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
@@ -23,10 +22,10 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     private DynamicActiveBuilderScope dynamicScope;
 
     @BeforeEach
-    public void beforeEach(){
+    public void beforeEach() {
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;
-        builder = new MablApiBuilder(settings, false);
+        builder = new MablApiBuilder(settings);
         dynamicScope = builder.getDynamicScope();
     }
 
