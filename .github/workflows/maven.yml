@@ -87,7 +87,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Deploy
-        run: mvn -B -Prelease-sources-javadoc deploy
+        run: mvn -B -Prelease-sources-javadoc deploy -DskipTests -DskipITs
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
