@@ -28,11 +28,16 @@ FetchContent_Declare(libzip
 
 FetchContent_MakeAvailable(libzip )
 
+SET(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "Build rapidjson examples" FORCE)
+SET(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "Build rapidjson perftests and unittests" FORCE)
 FetchContent_Declare(rapidjson
         GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-        GIT_TAG  v1.1.0
+        GIT_TAG v1.1.0
         SOURCE_DIR "${CMAKE_BINARY_DIR}/rapidjson"
-
+        BUILD_COMMAND ""
+        CONFIGURE_COMMAND ""
+        INSTALL_COMMAND ""
+        TEST_COMMAND ""
         )
 
 FetchContent_MakeAvailable(rapidjson )

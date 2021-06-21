@@ -1,5 +1,7 @@
+#include <cmath>
 class M{}
-
+    public:
+    inline double min(double a, double b){return fmin(a,b);}
 ;
 
 

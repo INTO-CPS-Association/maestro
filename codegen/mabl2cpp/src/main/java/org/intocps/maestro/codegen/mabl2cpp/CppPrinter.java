@@ -97,7 +97,20 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
             sb.append("->");
 
         }
-        sb.append(node.getMethodName().getText() + "(");
+
+        if (isFmuComp) {
+            if (node.getMethodName().getText().equals("getState")) {
+                sb.append("getFMUstate(");
+            } else if (node.getMethodName().getText().equals("setState")) {
+                sb.append("setFMUstate(");
+            } else if (node.getMethodName().getText().equals("freeState")) {
+                sb.append("freeFMUstate(");
+            } else {
+                sb.append(node.getMethodName().getText() + "(");
+            }
+        } else {
+            sb.append(node.getMethodName().getText() + "(");
+        }
 
         if (isFmuComp) {
             node.getObject().apply(this, question);
