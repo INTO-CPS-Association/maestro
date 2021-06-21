@@ -58,7 +58,7 @@ public class Application {
                 } else if (file.isDirectory()) {
                     return file;
                 } else {
-                    git s return file.getParentFile();
+                    return file.getParentFile();
                 }
             };
 
