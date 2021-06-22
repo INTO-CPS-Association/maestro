@@ -28,7 +28,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_IllegalConfiguration1_Throws() throws Exception {
+    public void verifyVariabilityCausalityIllegalConfiguration1Throws() throws Exception {
         //setup illegal configuration
         variables.forEach(o -> {
             o.causality = ModelDescription.Causality.Parameter;
@@ -38,7 +38,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_IllegalConfiguration2_Throws() throws Exception {
+    public void verifyVariabilityCausalityIllegalConfiguration2Throws() throws Exception {
         //setup illegal configuration
         variables.forEach(o -> {
             o.causality = ModelDescription.Causality.Independent;
@@ -48,7 +48,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_IllegalConfiguration3_Throws() throws Exception {
+    public void verifyVariabilityCausalityIllegalConfiguration3Throws() throws Exception {
         //setup illegal configuration
         variables.forEach(o -> {
             o.causality = ModelDescription.Causality.Output;
@@ -58,7 +58,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_IllegalConfigurationInitial1_Throws() throws Exception {
+    public void verifyVariabilityCausalityIllegalConfigurationInitial1Throws() throws Exception {
         //setup illegal configuration
         variables.forEach(o -> {
             o.initial = ModelDescription.Initial.Exact;
@@ -68,7 +68,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_IllegalConfigurationInitial2_Throws() throws Exception {
+    public void verifyVariabilityCausalityIllegalConfigurationInitial2Throws() throws Exception {
         //setup illegal configuration
         variables.forEach(o -> {
             o.initial = ModelDescription.Initial.Exact;
@@ -78,7 +78,7 @@ public class ModelDescriptionValidatorTest {
     }
 
     @Test
-    public void VerifyVariabilityCausality_LegalConfiguration_Passes() throws Exception {
+    public void verifyVariabilityCausalityLegalConfigurationPasses() throws Exception {
         modelDescriptionValidator.verifyVariabilityCausality(variables);
     }
 

@@ -56,6 +56,7 @@
         <module>codegen</module>
         <module>fmi</module>
         <module>modeldefinitionchecker</module>
+        <!--        <module>external_tester</module>-->
     </modules>
 
     <build>
@@ -77,6 +78,48 @@
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.43</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}
+                        </sourceDirectory>
+                        <sourceDirectory>${project.build.testSourceDirectory}
+                        </sourceDirectory>
+                    </sourceDirectories>
+                    <checkstyleRules>
+                        <module name="Checker">
+                            <module name="TreeWalker">
+                                <module name="NeedBraces"/>
+                                <module name="PackageName">
+                                    <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+                                </module>
+                                <module name="MethodName">
+                                    <property name="format" value="^[a-z](_?[a-zA-Z0-9]+)*$"/>
+                                </module>
+                            </module>
+                        </module>
+                    </checkstyleRules>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>verify-style</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

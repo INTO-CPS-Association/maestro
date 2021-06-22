@@ -9,8 +9,8 @@ import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.initializer.Initializer;
 import org.intocps.maestro.plugin.initializer.TopologicalPlugin;
-import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery;
-import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.PrologGenerator;
+import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery;
+import org.intocps.maestro.plugin.verificationsuite.prologverifier.PrologGenerator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import scala.Console;
@@ -30,7 +30,7 @@ public class InitializerTest {
     InputStream envJson = this.getClass().getResourceAsStream("InitializePluginTest/env.json");
 
     @Test
-    public void ParseConfig() throws IOException {
+    public void parseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();
@@ -40,7 +40,7 @@ public class InitializerTest {
     }
 
     @Test
-    public void UnfoldCallsSpecGen() throws Exception {
+    public void unfoldCallsSpecGen() throws Exception {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();

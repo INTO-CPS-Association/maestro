@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
+package org.intocps.maestro.plugin.verificationsuite.prologverifier;
 
 import com.ugos.jiprolog.engine.*;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -33,11 +33,11 @@ public class InitializationPrologQuery {
             // consult file
             jip.consultFile(path + "/initialization.pl");
 
-            var init = prologGenerator.CreateInitOperationOrder(instantiationOrder);
-            var connections = prologGenerator.CreateConnections(
+            var init = prologGenerator.createInitOperationOrder(instantiationOrder);
+            var connections = prologGenerator.createConnections(
                     relations.stream().filter(o -> o.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External)
                             .collect(Collectors.toList()));
-            var fmus = prologGenerator.CreateFMUs(relations);
+            var fmus = prologGenerator.createFMUs(relations);
 
             queryTerm = jip.getTermParser().parseTerm(String.format("?- isInitSchedule(%s,%s, %s).", init, fmus, connections));
 

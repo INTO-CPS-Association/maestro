@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.function.Function;
 
 @SpringBootApplication
 public class Application {
@@ -51,8 +52,17 @@ public class Application {
                 simulationData = new SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
             }
 
-            //use parent to output as working directory, if no output is specified this will default to execution directory
-            File workingDirectory = outputFile.getParentFile();
+            Function<File, File> calculateWorkingDirectory = (file) -> {
+                if (file == null) {
+                    return new File(".");
+                } else if (file.isDirectory()) {
+                    return file;
+                } else {
+                    return file.getParentFile();
+                }
+            };
+
+            File workingDirectory = calculateWorkingDirectory.apply(outputFile);
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker mc = new Maestro2Broker(workingDirectory, reporter);
             mc.setVerbose(verbose);

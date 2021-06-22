@@ -48,7 +48,7 @@ public class Mabl {
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
     final IntermediateSpecWriter intermediateSpecWriter;
     private final File specificationFolder;
-    private final MableSettings settings = new MableSettings();
+    private final MableSettings settings;
     private final Set<ARootDocument> importedDocument = new HashSet<>();
     private boolean verbose;
     private List<Framework> frameworks;
@@ -56,11 +56,18 @@ public class Mabl {
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
 
+    private Map<String, Object> runtimeEnvironmentVariables;
+
     private ISimulationEnvironment environment;
 
     public Mabl(File specificationFolder, File debugOutputFolder) {
+        this(specificationFolder, debugOutputFolder, new MableSettings());
+    }
+
+    public Mabl(File specificationFolder, File debugOutputFolder, MableSettings settings) {
         this.specificationFolder = specificationFolder;
-        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
+        this.settings = settings;
+        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, settings.dumpIntermediateSpecs);
     }
 
     static Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
@@ -209,6 +216,7 @@ public class Mabl {
             }
 
             if (settings.inlineFrameworkConfig) {
+
                 this.intermediateSpecWriter.write(document);
             }
         }
@@ -342,7 +350,7 @@ public class Mabl {
     }
 
     public Object getRuntimeData() throws Exception {
-        return new MablRuntimeDataGenerator(getSimulationEnv()).getRuntimeData();
+        return new MablRuntimeDataGenerator(getSimulationEnv(), this.runtimeEnvironmentVariables).getRuntimeData();
     }
 
     public String getRuntimeDataAsJsonString() throws Exception {
@@ -353,6 +361,18 @@ public class Mabl {
         FileUtils.write(new File(folder, MAIN_SPEC_DEFAULT_FILENAME), PrettyPrinter.print(getMainSimulationUnit()), StandardCharsets.UTF_8);
         new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValue(new File(folder, MAIN_SPEC_DEFAULT_RUNTIME_FILENAME), getRuntimeData());
+    }
+
+    /**
+     * //FIXME Temporary function
+     * Temporary function. This should be removed once the API for expansion plugins is updated with the ability for them to report back
+     * required
+     * runtime extensions
+     *
+     * @param runtimeEnvironmentVariables
+     */
+    public void setRuntimeEnvironmentVariables(Map<String, Object> runtimeEnvironmentVariables) {
+        this.runtimeEnvironmentVariables = runtimeEnvironmentVariables;
     }
 
     public static class MableSettings {

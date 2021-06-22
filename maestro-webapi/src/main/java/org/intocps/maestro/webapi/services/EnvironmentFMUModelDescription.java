@@ -7,10 +7,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class EnvironmentFMUModelDescription {
-    public static String CreateEnvironmentFMUModelDescription(List<ModelDescription.ScalarVariable> inputs,
+    public static String createEnvironmentFMUModelDescription(List<ModelDescription.ScalarVariable> inputs,
             List<ModelDescription.ScalarVariable> outputs, String fmuName) {
-        return "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<fmiModelDescription \tfmiVersion=\"2.0\"\n" + "\t\t\t\t\t\tmodelName=\"" + fmuName + "\"\n" + "\t\t\t\t\t\tguid=\"{abb4bff1-d423-4e02-90d9-011f519869ff}\"\n" + "\t\t\t\t\t\tvariableNamingConvention=\"flat\"\n" + "\t\t\t\t\t\tnumberOfEventIndicators=\"0\">\n" + "\t<CoSimulation \tmodelIdentifier=\"" + fmuName + "\"\n" + "\t\t\t\t\tneedsExecutionTool=\"false\"\n" + "\t\t\t\t\tcanHandleVariableCommunicationStepSize=\"true\"\n" + "\t\t\t\t\tcanInterpolateInputs=\"false\"\n" + "\t\t\t\t\tmaxOutputDerivativeOrder=\"0\"\n" + "\t\t\t\t\tcanRunAsynchronuously=\"false\"\n" + "\t\t\t\t\tcanBeInstantiatedOnlyOncePerProcess=\"true\"\n" + "\t\t\t\t\tcanNotUseMemoryManagementFunctions=\"true\"\n" + "\t\t\t\t\tcanGetAndSetFMUstate=\"false\"\n" + "\t\t\t\t\tcanSerializeFMUstate=\"false\"\n" + "\t\t\t\t\tprovidesDirectionalDerivative=\"false\">\n" + "\t\t\t\t\t\n" + "\t\t</CoSimulation>\n" + "\n" + "\t<ModelVariables>\n" + (outputs != null ? createScalarVariables(
-                outputs) : "") + (inputs != null ? createScalarVariables(inputs) : "") +
+        return "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<fmiModelDescription \tfmiVersion=\"2.0\"\n" + "\t\t\t\t\t\tmodelName=\"" +
+                fmuName + "\"\n" + "\t\t\t\t\t\tguid=\"{abb4bff1-d423-4e02-90d9-011f519869ff}\"\n" +
+                "\t\t\t\t\t\tvariableNamingConvention=\"flat\"\n" + "\t\t\t\t\t\tnumberOfEventIndicators=\"0\">\n" +
+                "\t<CoSimulation \tmodelIdentifier=\"" + fmuName + "\"\n" + "\t\t\t\t\tneedsExecutionTool=\"false\"\n" +
+                "\t\t\t\t\tcanHandleVariableCommunicationStepSize=\"true\"\n" + "\t\t\t\t\tcanInterpolateInputs=\"false\"\n" +
+                "\t\t\t\t\tmaxOutputDerivativeOrder=\"0\"\n" + "\t\t\t\t\tcanRunAsynchronuously=\"false\"\n" +
+                "\t\t\t\t\tcanBeInstantiatedOnlyOncePerProcess=\"true\"\n" + "\t\t\t\t\tcanNotUseMemoryManagementFunctions=\"true\"\n" +
+                "\t\t\t\t\tcanGetAndSetFMUstate=\"false\"\n" + "\t\t\t\t\tcanSerializeFMUstate=\"false\"\n" +
+                "\t\t\t\t\tprovidesDirectionalDerivative=\"false\">\n" + "\t\t\t\t\t\n" + "\t\t</CoSimulation>\n" + "\n" + "\t<ModelVariables>\n" +
+                (outputs != null ? createScalarVariables(outputs) : "") + (inputs != null ? createScalarVariables(inputs) : "") +
                 //                "\t\t<ScalarVariable name=\"backwardRotate\" valueReference=\"1\" causality=\"parameter\" variability=\"fixed\"  initial=\"exact\" ><Real start=\"0.1\" /></ScalarVariable>\n" +
                 //                "    \n" +
                 //                "\t\t<ScalarVariable name=\"forwardRotate\" valueReference=\"2\" causality=\"parameter\" variability=\"fixed\"  initial=\"exact\" ><Real start=\"0.5\" /></ScalarVariable>\n" +
@@ -24,8 +32,8 @@ public class EnvironmentFMUModelDescription {
                 //                "\t\t<ScalarVariable name=\"servoLeftVal\" valueReference=\"6\" causality=\"output\" variability=\"continuous\" ><Real  /></ScalarVariable>\n" +
                 //                "    \n" +
                 //                "\t\t<ScalarVariable name=\"servoRightVal\" valueReference=\"7\" causality=\"output\" variability=\"continuous\" ><Real  /></ScalarVariable>\n" +
-                "    </ModelVariables>\n" + "\n" + "\t<ModelStructure>\n" + createOutputs(outputs,
-                1) + "\n" + "\t</ModelStructure>\n" + "</fmiModelDescription>\n";
+                "    </ModelVariables>\n" + "\n" + "\t<ModelStructure>\n" + createOutputs(outputs, 1) + "\n" + "\t</ModelStructure>\n" +
+                "</fmiModelDescription>\n";
 
     }
 
@@ -61,9 +69,9 @@ public class EnvironmentFMUModelDescription {
      */
     public static String createScalarVariable(ModelDescription.ScalarVariable sv) {
         return String
-                .format("<ScalarVariable " + "name=\"%s\" " + "valueReference=\"%s\" " + "causality=\"%s\" " + "variability=\"%s\"" + "%s>" + "%s" + "</ScalarVariable>",
-                        sv.name, sv.valueReference, causalityToString(sv.causality), variabilityToString(sv.variability), initialToString(sv.initial),
-                        typeDefinitionToString(sv.type));
+                .format("<ScalarVariable " + "name=\"%s\" " + "valueReference=\"%s\" " + "causality=\"%s\" " + "variability=\"%s\"" + "%s>" + "%s" +
+                                "</ScalarVariable>", sv.name, sv.valueReference, causalityToString(sv.causality), variabilityToString(sv.variability),
+                        initialToString(sv.initial), typeDefinitionToString(sv.type));
 
 
     }

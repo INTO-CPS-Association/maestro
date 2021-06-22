@@ -5,12 +5,10 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.node.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Vector;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
@@ -35,7 +33,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         Map<String, String> sources = new HashMap<>();
         sources.put("co-sim.cxx", printer.sb.toString());
 
-        sources.put("co-sim.hxx", "#ifndef COSIM\n#define COSIM\nvoid simulate();\n#endif");
+        sources.put("co-sim.hxx", "#ifndef COSIM\n#define COSIM\nvoid simulate(const char* __runtimeConfigPath);\n#endif");
         return sources;
     }
 
@@ -44,11 +42,16 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         AStringLiteralExp name = (AStringLiteralExp) node.getArgs().get(0);
 
         sb.append("load_" + name.getValue() + "(");
-        for (int i = 1; i < node.getArgs().size(); i++) {
+
+        //inject config path for MEnv
+        List<PExp> arguments = name.getValue().equals("MEnv") ? Stream.concat(node.getArgs().stream().limit(1),
+                Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
+                .collect(Collectors.toList()) : node.getArgs();
+        for (int i = 1; i < arguments.size(); i++) {
             if (i > 1) {
                 sb.append(", ");
             }
-            node.getArgs().get(i).apply(this, question);
+            arguments.get(i).apply(this, question);
         }
         sb.append(")");
     }
@@ -189,7 +192,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         sb.append("#import <string>\n");
         node.getImports().stream().filter(im -> !im.getText().equals("FMI2Component"))
                 .forEach(im -> sb.append("#import \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
-        sb.append("void simulate()\n");
+        sb.append("void simulate(const char* __runtimeConfigPath)\n");
         node.getBody().apply(this, question);
 
     }

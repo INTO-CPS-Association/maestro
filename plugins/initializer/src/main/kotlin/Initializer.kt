@@ -3,6 +3,7 @@ package org.intocps.maestro.plugin.initializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.NullNode
 import org.intocps.maestro.ast.*
 import org.intocps.maestro.ast.display.PrettyPrinter
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
@@ -30,12 +31,12 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFm
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
+import org.intocps.maestro.plugin.BasicMaestroExpansionPlugin
 import org.intocps.maestro.plugin.ExpandException
-import org.intocps.maestro.plugin.IMaestroExpansionPlugin
 import org.intocps.maestro.plugin.IPluginConfiguration
 import org.intocps.maestro.plugin.SimulationFramework
 import org.intocps.maestro.plugin.initializer.instructions.*
-import org.intocps.maestro.plugin.verificationsuite.PrologVerifier.InitializationPrologQuery
+import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -44,7 +45,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 
 @SimulationFramework(framework = Framework.FMI2)
-class Initializer : IMaestroExpansionPlugin {
+class Initializer : BasicMaestroExpansionPlugin {
     val f1 = MableAstFactory.newAFunctionDeclaration(
         LexIdentifier("initialize", null),
         listOf(
@@ -69,6 +70,7 @@ class Initializer : IMaestroExpansionPlugin {
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
     var modelParameters: List<ModelParameter>? = null
+    var envParameters: List<String>? = null
     var compilationUnit: AImportedModuleCompilationUnit? = null
 
     // Convergence related variables
@@ -110,7 +112,7 @@ class Initializer : IMaestroExpansionPlugin {
         return try {
             val setting = MablApiBuilder.MablSettings()
             setting.fmiErrorHandlingEnabled = false
-            val builder = MablApiBuilder(setting, true)
+            val builder = MablApiBuilder(setting, formalArguments[0])
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.mablToMablAPI.booleanBuilder
@@ -124,14 +126,15 @@ class Initializer : IMaestroExpansionPlugin {
             endTimeVar.setValue(externalEndTime)
 
             // Import the external components into Fmi2API
-            val fmuInstances = FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments[0], env)
+            val fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env)
 
             // Create bindings
-            FromMaBLToMaBLAPI.CreateBindings(fmuInstances, env)
+            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
 
             this.config = config as InitializationConfig
 
             this.modelParameters = config.modelParameters
+            this.envParameters = config.envParameters
 
             // Convergence related variables
             absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
@@ -157,7 +160,7 @@ class Initializer : IMaestroExpansionPlugin {
 
 
             //Set variables for all components in IniPhase
-            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase())
+            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
 
             //Enter initialization Mode
             logger.debug("Enter initialization Mode")
@@ -190,7 +193,7 @@ class Initializer : IMaestroExpansionPlugin {
             }
 
 
-            setRemainingInputs(fmuInstances)
+            setRemainingInputs(fmuInstances, builder)
 
             //Exit initialization Mode
             fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
@@ -205,7 +208,10 @@ class Initializer : IMaestroExpansionPlugin {
         }
     }
 
-    private fun setRemainingInputs(fmuInstances: MutableMap<String, ComponentVariableFmi2Api>) {
+    private fun setRemainingInputs(
+        fmuInstances: MutableMap<String, ComponentVariableFmi2Api>,
+        builder: MablApiBuilder
+    ) {
         for (comp in fmuInstances.values) {
             try {
                 val scalarVariables = comp.modelDescription.scalarVariables
@@ -219,7 +225,7 @@ class Initializer : IMaestroExpansionPlugin {
                         .toArray())
 
                 for (port in ports) {
-                    setParameterOnPort(port, comp)
+                    setParameterOnPort(port, comp, builder)
                 }
             } catch (e: Exception) {
                 throw ExpandException("Initializer failed to read scalarvariables", e)
@@ -233,24 +239,54 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setParameterOnPort(
         port: PortFmi2Api,
-        comp: ComponentVariableFmi2Api
+        comp: ComponentVariableFmi2Api,
+        builder: MablApiBuilder
     ) {
         val fmuName = comp.name
-        var value = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
-        when (port.scalarVariable.type.type!!) {
-            ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(value as Boolean))
-            ModelDescription.Types.Real -> {
-                if (value is Int) {
-                    value = value.toDouble()
+//        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
+
+        val useEnvForPort = this.envParameters?.contains(port.multiModelScalarVariableName)
+        if (useEnvForPort == null || !useEnvForPort) {
+
+            var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
+            when (port.scalarVariable.type.type!!) {
+                ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
+                ModelDescription.Types.Real -> {
+                    if (staticValue is Int) {
+                        staticValue = staticValue.toDouble()
+                    }
+                    val b: Double = staticValue as Double
+                    comp.set(port, DoubleExpressionValue.of(b))
                 }
-                val b: Double = value as Double
-                comp.set(port, DoubleExpressionValue.of(b))
+                ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(staticValue as Int))
+                ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(staticValue as String))
+                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
             }
-            ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(value as Int))
-            ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(value as String))
-            ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
-            else -> throw ExpandException("Not known type")
+        } else {
+            when (port.scalarVariable.type.type!!) {
+                ModelDescription.Types.Boolean -> {
+                    val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Real -> {
+                    val v = builder.executionEnvironment.getReal(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Integer -> {
+                    val v = builder.executionEnvironment.getInt(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.String -> {
+                    val v = builder.executionEnvironment.getString(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
+            }
         }
+
+
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
@@ -312,7 +348,11 @@ class Initializer : IMaestroExpansionPlugin {
         fmuInstances: Map<String, ComponentVariableFmi2Api>
     ): Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Any>>> {
         val fmuToPorts = ports.groupBy { i -> i.instance.text }
-            .map { i -> i.key to i.value.map { p -> fmuInstances.getValue(i.key).getPort(p.scalarVariable.getName()) } }
+            .map { i ->
+                i.key to i.value.map { p ->
+                    fmuInstances.getValue(i.key).getPort(p.scalarVariable.getName())
+                }
+            }
             .toMap()
         return fmuToPorts.map { (fmu, ports) ->
             fmuInstances.getValue(fmu) to ports.map { port ->
@@ -338,12 +378,13 @@ class Initializer : IMaestroExpansionPlugin {
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
-        predicate: Predicate<ModelDescription.ScalarVariable>
+        predicate: Predicate<ModelDescription.ScalarVariable>,
+        builder: MablApiBuilder
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
             for (sv in comp.modelDescription.scalarVariables.filter { i -> predicate.test(i) }) {
                 val port = comp.getPort(sv.name)
-                setParameterOnPort(port, comp)
+                setParameterOnPort(port, comp, builder)
             }
         }
     }
@@ -372,6 +413,7 @@ class Initializer : IMaestroExpansionPlugin {
             root = root[0]
         }
         val parameters = root["parameters"]
+        val envParameters = root["environmentParameters"]
         val verify = root["verifyAgainstProlog"]
         val stabilisation = root["stabilisation"]
         val fixedPointIteration = root["fixedPointIteration"]
@@ -381,6 +423,7 @@ class Initializer : IMaestroExpansionPlugin {
         try {
             conf = InitializationConfig(
                 parameters,
+                if (envParameters is NullNode) null else envParameters,
                 verify,
                 stabilisation,
                 fixedPointIteration,
@@ -400,7 +443,7 @@ class Initializer : IMaestroExpansionPlugin {
         }
         compilationUnit = AImportedModuleCompilationUnit()
         compilationUnit!!.imports =
-            listOf("FMI2", "TypeConverter", "Math", "Logger").map { identifier: String? ->
+            listOf("FMI2", "TypeConverter", "Math", "Logger", "MEnv").map { identifier: String? ->
                 MableAstFactory.newAIdentifier(
                     identifier
                 )
@@ -414,6 +457,7 @@ class Initializer : IMaestroExpansionPlugin {
 
     class InitializationConfig(
         parameters: JsonNode?,
+        envParameters: JsonNode?,
         verify: JsonNode?,
         stabilisation: JsonNode?,
         fixedPointIteration: JsonNode?,
@@ -422,6 +466,7 @@ class Initializer : IMaestroExpansionPlugin {
     ) : IPluginConfiguration {
         var stabilisation = false
         val modelParameters: List<ModelParameter>?
+        val envParameters: List<String>?
         var verifyAgainstProlog = false
         var maxIterations = 0
         var absoluteTolerance = 0.0
@@ -431,10 +476,24 @@ class Initializer : IMaestroExpansionPlugin {
         init {
             val mapper = ObjectMapper()
             val convertParameters: Map<String, Any>? =
-                if (parameters == null) null else mapper.convertValue(parameters, Map::class.java) as Map<String, Any>
+                if (parameters == null) null else mapper.convertValue(
+                    parameters,
+                    Map::class.java
+                ) as Map<String, Any>
 
             modelParameters =
-                convertParameters?.map { (key, value) -> ModelParameter(ModelConnection.Variable.parse(key), value) }
+                convertParameters?.map { (key, value) ->
+                    ModelParameter(
+                        ModelConnection.Variable.parse(key),
+                        value
+                    )
+                }
+
+            this.envParameters = if (envParameters == null) null else mapper.convertValue(
+                envParameters,
+                List::class.java
+            ) as List<String>
+
             verifyAgainstProlog = verify?.asBoolean(false) ?: false
             this.stabilisation = stabilisation?.asBoolean(false) ?: false
             maxIterations = fixedPointIteration?.asInt(5) ?: 5
@@ -463,5 +522,18 @@ class Initializer : IMaestroExpansionPlugin {
                 modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
             return if (parameterValue != null) parameterValue.value else sv.type.start
         }
+
+//        /**
+//         * This functions either returns null if the parameter has a value or it returns the model description start value
+//         */
+//        private fun findUseDefault(
+//            compName: String,
+//            sv: ModelDescription.ScalarVariable,
+//            modelParameters: List<ModelParameter>?
+//        ): Any? {
+//            val parameterValue =
+//                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
+//            return if (parameterValue != null) null else sv.type.start
+//        }
     }
 }

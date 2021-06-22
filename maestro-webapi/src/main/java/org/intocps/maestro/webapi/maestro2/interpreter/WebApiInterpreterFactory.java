@@ -11,6 +11,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,17 +21,18 @@ public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
 
     public WebApiInterpreterFactory(File workingDirectory, WebSocketSession ws, double interval, List<String> webSocketFilter, File csvOutputFile,
-            List<String> csvFilter) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        super(workingDirectory, null);
+            List<String> csvFilter,
+            InputStream config) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        super(workingDirectory, config);
 
         this.lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new WebDataWriterAndWebsocketLifecycleHandler(csvFilter, csvOutputFile, ws, webSocketFilter, interval));
     }
 
 
-    public WebApiInterpreterFactory(File workingDirectory, File csvOutputFile,
-            List<String> csvFilter) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        super(workingDirectory, null);
+    public WebApiInterpreterFactory(File workingDirectory, File csvOutputFile, List<String> csvFilter,
+            InputStream config) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        super(workingDirectory, config);
         this.lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new WebDataWriterLifecycleHandler(csvFilter, csvOutputFile));
     }

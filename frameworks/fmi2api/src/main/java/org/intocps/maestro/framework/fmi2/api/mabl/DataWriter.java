@@ -114,7 +114,7 @@ public class DataWriter {
             this.dataWriterInstanceConfigurationVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_configuration");
 
             List<AStringLiteralExp> variablesNamesToLog =
-                    this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getLogScalarVariableName()))
+                    this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getMultiModelScalarVariableName()))
                             .collect(Collectors.toList());
 
             AVariableDeclaration datawriter_configuration = MableAstFactory

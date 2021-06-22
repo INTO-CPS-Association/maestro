@@ -24,10 +24,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,12 +45,13 @@ public class Maestro2Broker {
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter) throws IOException {
         this.workingDirectory = workingDirectory;
-        this.mabl = new Mabl(workingDirectory, null);
+        Mabl.MableSettings mableSettings = new Mabl.MableSettings();
+        mableSettings.dumpIntermediateSpecs = false;
+        mableSettings.inlineFrameworkConfig = true;
+        this.mabl = new Mabl(workingDirectory, null, mableSettings);
         this.reporter = reporter;
 
         mabl.setReporter(this.reporter);
-        mabl.getSettings().dumpIntermediateSpecs = false;
-        mabl.getSettings().inlineFrameworkConfig = true;
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
@@ -67,7 +73,7 @@ public class Maestro2Broker {
         simulationConfiguration.livestream = initializeRequest.getLivestream();
 
 
-        Map<String, String> instanceRemapping = LegacyMMSupport.AdjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
+        Map<String, String> instanceRemapping = LegacyMMSupport.adjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
 
         Map<String, Object> initialize = new HashMap<>();
         Map<String, Object> parameters = initializeRequest.getParameters();
@@ -79,7 +85,9 @@ public class Maestro2Broker {
             }
         }
 
-
+        if (initializeRequest.getEnvironmentParameters() != null) {
+            initialize.put("environmentParameters", initializeRequest.getEnvironmentParameters());
+        }
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, this.reporter);
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
@@ -98,19 +106,20 @@ public class Maestro2Broker {
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
-            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(), body.getStartTime());
+            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
+                    body.getStartTime());
         } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             algorithm = new VariableStepAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
                     ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(),
                     (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()), body.getStartTime());
 
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
-                        if (v instanceof InitializationData.ZeroCrossingConstraint) {
-                            config.variablesOfInterest.addAll(((InitializationData.ZeroCrossingConstraint) v).getPorts());
-                        } else if (v instanceof InitializationData.BoundedDifferenceConstraint) {
-                            config.variablesOfInterest.addAll(((InitializationData.BoundedDifferenceConstraint) v).getPorts());
-                        }
-                    });
+            ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
+                if (v instanceof InitializationData.ZeroCrossingConstraint) {
+                    config.variablesOfInterest.addAll(((InitializationData.ZeroCrossingConstraint) v).getPorts());
+                } else if (v instanceof InitializationData.BoundedDifferenceConstraint) {
+                    config.variablesOfInterest.addAll(((InitializationData.BoundedDifferenceConstraint) v).getPorts());
+                }
+            });
         } else {
             throw new Exception("Could not get algorithm from specification");
         }
@@ -120,12 +129,11 @@ public class Maestro2Broker {
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
                         .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
-                        .setLoggingOn(initializeRequest.isLoggingOn()).
-                        setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
+                        .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();
-        generateSpecification(configuration);
+        String runtimeJsonConfigString = generateSpecification(configuration, parameters);
 
         if (!mabl.typeCheck().getKey()) {
             throw new Exception("Specification did not type check");
@@ -151,7 +159,8 @@ public class Maestro2Broker {
                 (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
                         .stream()).collect(Collectors.toList()),
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
-                body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile);
+                body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
+                new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
 
     }
 
@@ -167,18 +176,21 @@ public class Maestro2Broker {
 
     private void postGenerate() throws Exception {
         mabl.expand();
+        mabl.setRuntimeEnvironmentVariables(parameters);
         mabl.dump(workingDirectory);
         logger.debug(PrettyPrinter.printLineNumbers(mabl.getMainSimulationUnit()));
+        return new ObjectMapper().writeValueAsString(mabl.getRuntimeData());
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,
-            File csvOutputFile) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+            File csvOutputFile,
+            InputStream config) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
-                    csvFilter);
+                    csvFilter, config);
         } else {
-            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter);
+            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter, config);
         }
         new MableInterpreter(factory).execute(mabl.getMainSimulationUnit());
     }

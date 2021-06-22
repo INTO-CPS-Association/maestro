@@ -8,9 +8,12 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 
-#include <stdlib.h>
-
+#include <rapidjson/document.h>
+#include <fstream>
+#include <rapidjson/istreamwrapper.h>
+using namespace rapidjson;
 class MEnvImpl {
 private:
     bool to_bool(std::string str) {
@@ -21,49 +24,19 @@ private:
         return b;
     }
 
+    const char* runtimeConfigPath;
+    Document json;
+
 public:
-    fmi2Integer getInt(const char *id) {
-        auto value = std::getenv(id);
+    MEnvImpl(const char* runtimeConfigPath) ;
 
-        if (value == nullptr) {
-            std::cerr << "Environment variable '" << id << "' was not found" << std::endl;
-            throw -1;
+    fmi2Integer getInt(const char *id) ;
 
-        }
-        return std::stoi(value, nullptr, 0);
+    fmi2Boolean getBool(const char *id) ;
 
-    }
+    fmi2String getString(const char *id);
 
-    fmi2Boolean getBool(const char *id) {
-        auto value = std::getenv(id);
-        if (value == nullptr) {
-            std::cerr << "Environment variable '" << id << "' was not found" << std::endl;
-            throw -1;
-
-        }
-
-        return to_bool(value);
-    }
-
-    fmi2String getString(const char *id) {
-        auto value = std::getenv(id);
-        if (value == nullptr) {
-            std::cerr << "Environment variable '" << id << "' was not found" << std::endl;
-            throw -1;
-
-        }
-        return value;
-    }
-
-    fmi2Real getReal(const char *id) {
-        auto value = std::getenv(id);
-
-        if (value == nullptr) {
-            std::cerr << "Environment variable '" << id << "' was not found" << std::endl;
-            throw -1;
-        }
-        return atof(value);
-    }
+    fmi2Real getReal(const char *id) ;
 
 
 };
@@ -72,4 +45,4 @@ public:
 #define MEnv MEnvImpl*
 
 
-MEnv load_MEnv();
+MEnv load_MEnv(const char* runtimeConfigPath);

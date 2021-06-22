@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.initializer.Spec;
+package org.intocps.maestro.plugin.initializer.spec;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.AVariableDeclaration;
@@ -13,8 +13,8 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.maestro.plugin.IMaestroPlugin;
-import org.intocps.maestro.plugin.initializer.ConversionUtilities.BooleanUtils;
 import org.intocps.maestro.plugin.initializer.ModelParameter;
+import org.intocps.maestro.plugin.initializer.conversionutilities.BooleanUtils;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -123,7 +123,7 @@ public class StatementGeneratorContainer {
         return newIf(statusErrorExpressions(status.clone(), statusCodes), newABlockStm(thenStm), null);
     }
 
-    public SPrimitiveTypeBase FMITypeToMablType(ModelDescription.Types type) {
+    public SPrimitiveTypeBase fmiTypeToMablType(ModelDescription.Types type) {
         switch (type) {
             case Boolean:
                 return newABoleanPrimitiveType();
@@ -213,7 +213,7 @@ public class StatementGeneratorContainer {
             if (variable.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
                 var lexId = createLexIdentifier.apply(variable.scalarVariable.instance + variable.scalarVariable.getScalarVariable().name);
                 LoopStatements.add(newALocalVariableStm(
-                        newAVariableDeclaration(lexId, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
+                        newAVariableDeclaration(lexId, newAArrayType(fmiTypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
                                 null)));
                 loopValueArray.put(variable, lexId);
                 try {
@@ -263,7 +263,7 @@ public class StatementGeneratorContainer {
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
         return newALocalVariableStm(
-                newAVariableDeclaration(lexID, newAArrayType(FMITypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
+                newAVariableDeclaration(lexID, newAArrayType(fmiTypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
                         initializer));
     }
 
@@ -339,7 +339,7 @@ public class StatementGeneratorContainer {
         }
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        var arType = MableAstFactory.newAArrayType(FMITypeToMablType(type));
+        var arType = MableAstFactory.newAArrayType(fmiTypeToMablType(type));
         LexIdentifier lexID = createLexIdentifier.apply(arrayName);
         PStm stm = newALocalVariableStm(newAVariableDeclaration(lexID, arType, args.size(), initializer));
         statements.add(stm);
@@ -404,7 +404,7 @@ public class StatementGeneratorContainer {
             if (svVar == null) {
                 String id = instanceName + "SvValRef" + longs[i];
                 PStm stm = newALocalVariableStm(
-                        newAVariableDeclaration(createLexIdentifier.apply(id), FMITypeToMablType(fmiType), newAExpInitializer(assignmentExpression)));
+                        newAVariableDeclaration(createLexIdentifier.apply(id), fmiTypeToMablType(fmiType), newAExpInitializer(assignmentExpression)));
                 result.add(stm);
 
                 VariableLocation varLoc = new VariableLocation(id, fmiType);
@@ -463,7 +463,7 @@ public class StatementGeneratorContainer {
                                 name = instanceName + "SvValRef" + valRefs[i] + targetType;
                                 variable.typeMapping.put(targetType, name);
                                 ALocalVariableStm stm =
-                                        newALocalVariableStm(newAVariableDeclaration(new LexIdentifier(name, null), FMITypeToMablType(targetType)));
+                                        newALocalVariableStm(newAVariableDeclaration(new LexIdentifier(name, null), fmiTypeToMablType(targetType)));
                                 statements.add(stm);
                             }
 
@@ -670,7 +670,7 @@ public class StatementGeneratorContainer {
 
         // The array does not exist. Create it
         if (valueArray == null) {
-            var arType = newAArrayType(FMITypeToMablType(type));
+            var arType = newAArrayType(fmiTypeToMablType(type));
             valueArray = createLexIdentifier.apply(type.name() + "ValueSize" + longs.length);
             PStm stm = newALocalVariableStm(newAVariableDeclaration(valueArray, arType, longs.length, null));
             result.add(stm);

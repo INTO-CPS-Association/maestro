@@ -1,4 +1,4 @@
-package org.intocps.maestro.plugin.verificationsuite.PrologVerifier;
+package org.intocps.maestro.plugin.verificationsuite.prologverifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.fmi.ModelDescription;
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PrologGenerator {
-    public String CreateInitOperationOrder(List<Fmi2SimulationEnvironment.Variable> instantiationOrder) {
+    public String createInitOperationOrder(List<Fmi2SimulationEnvironment.Variable> instantiationOrder) {
         StringBuilder initOrder = new StringBuilder();
         instantiationOrder.forEach(o -> {
             try {
@@ -25,7 +25,7 @@ public class PrologGenerator {
         return fixListFormat(initOrder).toString();
     }
 
-    public String CreateFMUs(Set<Fmi2SimulationEnvironment.Relation> relations) {
+    public String createFMUs(Set<Fmi2SimulationEnvironment.Relation> relations) {
         StringBuilder fmuString = new StringBuilder();
         var fmuList = relations.stream().map(o -> o.getSource().scalarVariable.getInstance()).collect(Collectors.toSet());
         fmuList.forEach(fmu -> {
@@ -35,7 +35,7 @@ public class PrologGenerator {
         return fixListFormat(fmuString).toString();
     }
 
-    public String CreateConnections(List<Fmi2SimulationEnvironment.Relation> relations) {
+    public String createConnections(List<Fmi2SimulationEnvironment.Relation> relations) {
         StringBuilder connections = new StringBuilder();
         relations.forEach(relation -> {
             relation.getTargets().values().forEach(target -> {

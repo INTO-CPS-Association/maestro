@@ -8,6 +8,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -65,10 +66,9 @@ public class DocumentationGettingStartedExamplesTest {
 
         FileUtils.deleteDirectory(targetDirectory);
 
-        assert (Main.argumentHandler(
-                new String[]{"--verify", "FMI2", "--spec-generate1", configurationFile.getAbsolutePath(), "--verbose", "--dump" + "-intermediate",
-                        intermediateDirectory.getAbsolutePath(), "--dump", specificationDirectory.getAbsolutePath(), "--interpret",
-                        interpretSpecification.getAbsolutePath()}));
+        Assertions.assertTrue(
+                Main.argumentHandler("import", "sg1", "--verify", "FMI2", configurationFile.getAbsolutePath(), "--verbose", "-di", "-output",
+                        intermediateDirectory.getAbsolutePath(), "--interpret"));
 
 
     }

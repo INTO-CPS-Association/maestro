@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class TypeConverterPlugin implements IMaestroExpansionPlugin {
+public class TypeConverterPlugin extends BasicMaestroExpansionPlugin {
 
     final AFunctionDeclaration convertBoolean2Real = newAFunctionDeclaration(newAIdentifier("convertBoolean2Real"),
             Arrays.asList(newAFormalParameter(newABoleanPrimitiveType(), newAIdentifier("from")),

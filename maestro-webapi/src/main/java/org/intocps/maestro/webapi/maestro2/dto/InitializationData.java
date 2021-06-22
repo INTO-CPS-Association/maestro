@@ -75,6 +75,11 @@ public class InitializationData extends MultiModel {
         this.global_relative_tolerance = global_relative_tolerance;
         this.algorithm = algorithm;
         this.overrideLogLevel = overrideLogLevel;
+        this.environmentParameters = environmentParameters;
+    }
+
+    public List<String> getEnvironmentParameters() {
+        return environmentParameters;
     }
 
     public InitializeLogLevel getOverrideLogLevel() {
@@ -250,8 +255,7 @@ public class InitializationData extends MultiModel {
         public ZeroCrossingConstraint() {
         }
 
-        public ZeroCrossingConstraint(List<String> ports, Integer order,
-                Double abstol, Double safety) {
+        public ZeroCrossingConstraint(List<String> ports, Integer order, Double abstol, Double safety) {
             this.ports = ports;
             this.order = order;
             this.abstol = abstol;
