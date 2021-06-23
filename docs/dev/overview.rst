@@ -45,7 +45,7 @@ The imports :code:`FixedStep`, :code:`TypeConverter` and :code:`InitializerUsing
 Expansion plugins export functions as Function Declarations, from which the types can be derived.
 
 The imports :code:`FMI2` and :code:`CSV` refer to interpreter plugins.
-Interpreter plugins come with a companion MaBL modules that gives the type definitions. This is elaborated on below in :ref:`Executing a Specification`.
+Interpreter plugins come with a companion MaBL modules that gives the type definitions. This is elaborated on below in :ref:`executing_a_specification`.
 
 
 In this example, there are two statements to expand: :code:`external initialize(components,START_TIME, END_TIME)` and :code:`external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv")`.
@@ -136,6 +136,9 @@ The diagram below continues from where the diagram above ended, where AST repres
             MablSpecGen <-- verificationPlugin: OK
         end
     MablSpecGen -> MablSpecGen: verifiedSpecification = true
+
+
+.. _executing_a_specification:
 
 
 Executing a Specification
