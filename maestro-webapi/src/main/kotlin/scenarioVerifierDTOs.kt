@@ -50,3 +50,5 @@ data class ExecutableMasterAndMultiModelTDO(
     @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier,
     @JsonProperty("executionParameters") val executionParameters: ExecutionParameters
 )
+
+data class verificationDTO(@JsonProperty("success") val success: Boolean, @JsonProperty("detailsMessage") val detailsMessage: String?)
