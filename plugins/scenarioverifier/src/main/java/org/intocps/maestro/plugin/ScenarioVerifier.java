@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class ScenarioVerifier implements IMaestroExpansionPlugin {
+public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     final static Logger logger = LoggerFactory.getLogger(ScenarioVerifier.class);
     public static final String MASTER_MODEL_FMU_INSTANCE_DELIMITER = "_";
     public static final String MULTI_MODEL_FMU_INSTANCE_DELIMITER = ".";
@@ -54,9 +54,9 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
     private Double relTol;
     private Double absTol;
     private Integer convAtt;
-    public static final String EXECUTEALGORITHM_FUNCTION_NAME = "executeAlgorithm";
+    public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
 
-    private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTEALGORITHM_FUNCTION_NAME),
+    private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
@@ -107,18 +107,18 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             //TODO: Error handling on or off -> settings flag?
             settings.fmiErrorHandlingEnabled = false;
-            MablApiBuilder builder = new MablApiBuilder(settings, false);
+            MablApiBuilder builder = new MablApiBuilder(settings);
             dynamicScope = builder.getDynamicScope();
             mathModule = builder.getMathBuilder();
             loggerModule = builder.getLogger();
             booleanLogicModule = builder.getBooleanBuilder();
             DataWriter.DataWriterInstance dataWriterInstance = builder.getDataWriter().createDataWriterInstance();
 
-            // Get fmu instances
+            // Get FMU instances
             Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
-            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.GetComponentVariablesFrom(builder, formalArguments.get(0), env);
+            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments.get(0), env);
 
-            // Rename fmu instance-name keys to master model format: <fmu-name>_<instance-name>
+            // Rename FMU instance-name keys to master model format: <fmu-name>_<instance-name>
             Set<String> fmuKeys = new HashSet<>(fmuInstances.keySet());
             fmuKeys.forEach(key -> {
                 ComponentVariableFmi2Api fmuInstance = fmuInstances.get(key);
@@ -225,8 +225,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
             throw new RuntimeException("The multi model and master model do not agree on the number of fmu instances.");
         }
 
-        // Verify that fmu identifiers and fmu instance names matches and that reject step and get-set
-        // state agrees.
+        // Verify that fmu identifiers and fmu instance names matches and that reject step and get-set state agrees.
         for (Map.Entry<String, ComponentVariableFmi2Api> fmuInstance : fmuInstances.entrySet()) {
             boolean instanceMatch = false;
             // Find a match between identifiers
@@ -256,7 +255,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
                     parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
                             .collect(Collectors.toMap(e -> e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER)[2], Map.Entry::getValue));
 
-            // Map each parameter to matching expression value but only for ports with causality parameter and which are tunable
+            // Map each parameter to matching expression value but only for ports with the causality of parameter which are tunable
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =
                     portNameToValueMap.entrySet().stream().filter(e -> {
                         PortFmi2Api port = fmuInstance.getPort(e.getKey());
@@ -291,7 +290,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
             if (instruction instanceof InitGet) {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((InitGet) instruction).port(), fmuInstances);
                 portsWithGets.forEach((key, value) -> sharedPortVars.stream()
-                        .filter(entry -> entry.getKey().getLogScalarVariableName().contains(key.getLogScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(key.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> sharedPortVars.add(Map.entry(key, value))));
             } else if (instruction instanceof InitSet) {
@@ -325,7 +324,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
             } else if (instruction instanceof Get) {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((Get) instruction).port(), fmuInstances);
                 portsWithGets.forEach((key, value) -> sharedPortVars.stream()
-                        .filter(entry -> entry.getKey().getLogScalarVariableName().contains(key.getLogScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(key.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> sharedPortVars.add(Map.entry(key, value))));
             } else if (instruction instanceof Step) {
@@ -353,7 +352,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets =
                         mapGetTentativeInstruction(((GetTentative) instruction).port(), fmuInstances);
                 portsWithGets.forEach((port, portValue) -> tentativePortVars.stream()
-                        .filter(entry -> entry.getKey().getLogScalarVariableName().contains(port.getLogScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> tentativePortVars.add(Map.entry(port, portValue))));
             } else if (instruction instanceof SetTentative) {
@@ -365,10 +364,10 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
 
         // Share any tentative port values and include them in shared port vars
         tentativePortVars.forEach(tentativePortMapEntry -> {
-            fmuInstances.get(tentativePortMapEntry.getKey().getLogScalarVariableName().split("\\.")[1]).share(Map.ofEntries(tentativePortMapEntry));
+            fmuInstances.get(tentativePortMapEntry.getKey().getMultiModelScalarVariableName().split("\\.")[1]).share(Map.ofEntries(tentativePortMapEntry));
 
-            sharedPortVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getLogScalarVariableName()
-                    .contains(tentativePortMapEntry.getKey().getLogScalarVariableName())).findAny().ifPresentOrElse(item -> {
+            sharedPortVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
+                    .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny().ifPresentOrElse(item -> {
             }, () -> sharedPortVars.add(Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
         });
 
@@ -456,7 +455,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets =
                         mapGetTentativeInstruction(((GetTentative) instruction).port(), fmuInstances);
                 portsWithGets.forEach((port, portValue) -> {
-                    tentativePortMapVars.stream().filter(entry -> entry.getKey().getLogScalarVariableName().contains(port.getLogScalarVariableName()))
+                    tentativePortMapVars.stream().filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName()))
                             .findAny().ifPresentOrElse(item -> {
                     }, () -> tentativePortMapVars.add(Map.entry(port, portValue)));
 
@@ -480,8 +479,8 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
                     tentativePortMapEntry.getKey().aMablFmi2ComponentAPI.getName();
             fmuInstances.get(instanceName).share(Map.ofEntries(tentativePortMapEntry));
 
-            portMapVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getLogScalarVariableName()
-                    .contains(tentativePortMapEntry.getKey().getLogScalarVariableName())).findAny().ifPresentOrElse(item -> {
+            portMapVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
+                    .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny().ifPresentOrElse(item -> {
             }, () -> portMapVars.add(Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
         });
 
@@ -537,6 +536,8 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
         VariableFmi2Api oldVariable = portMap.getKey().getSharedAsVariable();
         VariableFmi2Api<Object> newVariable = portMap.getValue();
         BooleanVariableFmi2Api isClose = dynamicScope.store("isClose", false);
+
+        // Check for convergence and log if not close
         isClose.setValue(mathModule.checkConvergence(oldVariable, newVariable, absTolVar, relTolVar));
         dynamicScope.enterIf(isClose.toPredicate().not());
         {
@@ -556,7 +557,7 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
         ComponentVariableFmi2Api instance = fmuInstances.get(instruction.fmu());
         Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step;
 
-        // Step with the correct step size according to the instruction
+        // Step with the proper step size according to the instruction
         if (instruction.by() instanceof AbsoluteStepSize) {
             step = instance.step(currentCommunicationPoint,
                     new DoubleVariableFmi2Api(null, null, null, null, DoubleExpressionValue.of(((AbsoluteStepSize) instruction.by()).H()).getExp()));
@@ -572,8 +573,11 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
     private void mapSetInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars,
             Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
         Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portMapVars, connections);
+
+        // Create set call only if a source port with a prior get call is present.
         if (sourcePortWithValue != null) {
             Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef, fmuInstances);
+            // Set value from the shared value buffer.
             instanceWithPort.getKey().set(instanceWithPort.getValue(), sourcePortWithValue.getKey().getSharedAsVariable());
         }
     }
@@ -581,8 +585,11 @@ public class ScenarioVerifier implements IMaestroExpansionPlugin {
     private void mapSetTentativeInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
             Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
         Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portsWithGet, connections);
+
+        // Create set call only if a source port with a prior get call is present.
         if (sourcePortWithValue != null) {
             Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef, fmuInstances);
+            // Set value from the IO value buffer.
             instanceWithPort.getKey().set(instanceWithPort.getValue(), sourcePortWithValue.getValue());
         }
     }
