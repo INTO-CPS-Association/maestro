@@ -45,7 +45,7 @@ Part 1: First MaBL Specification
 --------------------------------
 This part presents a MaBL specification written by hand with descriptive comments.
 
-To follow this part download the :download:`getting started part1 resources <../images/wt_example/getting-started-part1.zip>` and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.
+To follow this part download the :download:`getting started part1 resources </user/images/wt_example/getting-started-part1.zip>` and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.
 
 The corresponding MaBL code, including descriptive comments, to execute this co-simulation is presented below:
 
