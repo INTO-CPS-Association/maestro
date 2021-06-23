@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -18,7 +19,11 @@ import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
-import org.intocps.maestro.webapi.maestro2.dto.*;
+import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
+import org.intocps.maestro.webapi.maestro2.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
+import org.intocps.maestro.webapi.maestro2.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +48,7 @@ public class Maestro2Broker {
     final File workingDirectory;
     final ErrorReporter reporter;
 
-    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) throws IOException {
+    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
         this.workingDirectory = workingDirectory;
         Mabl.MableSettings mableSettings = new Mabl.MableSettings();
         mableSettings.dumpIntermediateSpecs = false;
@@ -52,6 +57,41 @@ public class Maestro2Broker {
         this.reporter = reporter;
 
         mabl.setReporter(this.reporter);
+    }
+
+    public void buildAndRunExecutableModel(ExecutableMasterAndMultiModelTDO executableModel, File csvOutputFile) throws Exception {
+
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
+        simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
+        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+
+
+        Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
+        ScenarioConfiguration configuration =
+                new ScenarioConfiguration(simulationEnvironment, executableModel.getMasterModel(), executableModel.getMultiModel().getParameters(),
+                        executableModel.getExecutionParameters().getConvergenceRelativeTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAbsoluteTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAttempts(), executableModel.getExecutionParameters().getStartTime(),
+                        executableModel.getExecutionParameters().getEndTime(), executableModel.getExecutionParameters().getStepSize(),
+                        Pair.of(Framework.FMI2, simulationConfiguration));
+
+        String runtimeJsonConfigString = generateSpecification(configuration, null);
+
+        if (!mabl.typeCheck().getKey()) {
+            throw new Exception("Specification did not type check");
+        }
+
+        if (!mabl.verify(Framework.FMI2)) {
+            throw new Exception("Specification did not verify");
+        }
+
+        List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
+            ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+        }).collect(Collectors.toList());
+
+
+        executeInterpreter(null, connectedOutputs, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
@@ -164,17 +204,17 @@ public class Maestro2Broker {
 
     }
 
-    public void generateSpecification(ScenarioConfiguration config) throws Exception {
+    public String generateSpecification(ScenarioConfiguration config, Map<String, Object> parameters) throws Exception {
         mabl.generateSpec(config);
-        postGenerate();
+        return postGenerate(parameters);
     }
 
-    public void generateSpecification(MaBLTemplateConfiguration config) throws Exception {
+    public String generateSpecification(MaBLTemplateConfiguration config, Map<String, Object> parameters) throws Exception {
         mabl.generateSpec(config);
-        postGenerate();
+        return postGenerate(parameters);
     }
 
-    private void postGenerate() throws Exception {
+    private String postGenerate(Map<String, Object> parameters) throws Exception {
         mabl.expand();
         mabl.setRuntimeEnvironmentVariables(parameters);
         mabl.dump(workingDirectory);
