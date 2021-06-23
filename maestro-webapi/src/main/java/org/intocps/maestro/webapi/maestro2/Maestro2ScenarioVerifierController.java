@@ -9,10 +9,9 @@ import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.webapi.MasterModelMapper;
-import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.dto.MasterMultiModelDTO;
-import org.intocps.maestro.webapi.dto.verificationDTO;
+import org.intocps.maestro.webapi.dto.VerificationDTO;
 import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier;
 import org.intocps.maestro.webapi.util.Files;
 import org.intocps.maestro.webapi.util.ZipDirectory;
@@ -49,17 +48,19 @@ public class Maestro2ScenarioVerifierController {
     }
 
     @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE})
-    public verificationDTO verifyAlgorithm(@RequestBody String masterModelAsString) throws Exception {
-        //TODO: should the trace log be returned if present?
-
-        // Load the master model and verify the algorithm
+    public VerificationDTO verifyAlgorithm(@RequestBody String masterModelAsString) throws Exception {
+        // Load the master model, verify the algorithm and return success, detailed message and the resulting uppaal model.
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
-        int resultCode = verifyAlgorithm(masterModel, Files.createTempDir());
-        return new verificationDTO(resultCode == 0, verificationCodeToStringMessage(resultCode));
+        File tempDir = Files.createTempDir();
+        File uppaalFile = Path.of(tempDir.getPath(), "uppaal.xml").toFile();
+        int resultCode = verifyAlgorithm(masterModel, uppaalFile);
+        String uppaalFileAsString = java.nio.file.Files.readString(uppaalFile.toPath());
+        return new VerificationDTO(resultCode == 0, verificationCodeToStringMessage(resultCode), uppaalFileAsString);
     }
 
-    @RequestMapping(value = "/traceVisualization", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE})
-    public String traceVisualization(@RequestBody String masterModelAsString) throws Exception {
+    @RequestMapping(value = "/traceVisualization", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE},
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public void traceVisualization(@RequestBody String masterModelAsString, HttpServletResponse response) throws Exception {
         if (!VerifyTA.checkEnvironment()) {
             throw new Exception("Verification environment is not setup correctly");
         }
@@ -74,19 +75,28 @@ public class Maestro2ScenarioVerifierController {
                 throw new Exception("Unable to write encoded master model to file: " + e);
             }
             // This verifies the algorithm and writes to the trace file.
-            int resultCode =  VerifyTA.saveTraceToFile(uppaalFile, traceFile);
+            int resultCode = VerifyTA.saveTraceToFile(uppaalFile, traceFile);
 
-            // If verification result code is 1 one or more counter example has been found and written to the trace file from which a visualization
+            // If verification result code is 1 one or more counter examples have been found and written to the trace file from which a visualization
             // can be made.
             if (resultCode == 1) {
-                File outputFolder = Path.of(tempDir.getPath(), "video_trace").toFile();
+                Path videoTraceFolder = java.nio.file.Files.createDirectories(Path.of(tempDir.getPath(), "video_trace"));
                 ModelEncoding modelEncoding = new ModelEncoding(masterModel);
                 try (BufferedReader bufferedReader = new BufferedReader(new FileReader(traceFile))) {
                     TraceAnalyzer.AnalyseScenario(masterModel.name(), CollectionConverters.asScala(bufferedReader.lines().iterator()), modelEncoding,
-                            outputFolder.getPath());
+                            videoTraceFolder.toString());
 
                 } catch (Exception e) {
                     throw new Exception("Unable to generate trace visualization: " + e);
+                }
+
+                // Setting headers
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.addHeader("Content-Disposition", "attachment; filename=\"traceVisualization.zip\"");
+
+                // Return visualization in a zip file as it consist of multiple mp4 files.
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream())) {
+                    ZipDirectory.addDir(videoTraceFolder.toFile(), videoTraceFolder.toFile(), zipOutputStream);
                 }
             }
             // If the verification code is anything else than 1 it is not possible to visualize the trace and this is an "error" for this endpoint
@@ -97,11 +107,7 @@ public class Maestro2ScenarioVerifierController {
         } finally {
             FileUtils.deleteDirectory(tempDir);
         }
-
-        //TODO: Return mp4 file.
-        return null;
     }
-
 
     @RequestMapping(value = "/executeAlgorithm", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -111,7 +117,7 @@ public class Maestro2ScenarioVerifierController {
         if (executableModel.getMultiModel().scenarioVerifier.verification) {
             File tempDir = Files.createTempDir();
             MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
-            int resultCode = verifyAlgorithm(masterModel, tempDir);
+            int resultCode = verifyAlgorithm(masterModel, Path.of(tempDir.getPath(), "uppaal.xml").toFile());
             FileUtils.deleteDirectory(tempDir);
 
             if (resultCode != 0) {
@@ -129,12 +135,10 @@ public class Maestro2ScenarioVerifierController {
 
         File zipDir = Files.createTempDir();
         try {
-
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
 
             broker.buildAndRunExecutableModel(executableModel, new File(zipDir, "outputs.csv"));
-
 
             if (reporter.getErrorCount() > 0) {
                 throw new Exception("Error(s) occurred during MaBL specification generation: " + reporter);
@@ -146,13 +150,14 @@ public class Maestro2ScenarioVerifierController {
                 reporter.printWarnings(new PrintWriter(warningsLog));
             }
 
-            //setting headers
+            // Setting headers
             response.setStatus(HttpServletResponse.SC_OK);
             response.addHeader("Content-Disposition", "attachment; filename=\"results.zip\"");
-            //
-            ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
-            ZipDirectory.addDir(zipDir, zipDir, zipOutputStream);
-            zipOutputStream.close();
+
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream())) {
+                ZipDirectory.addDir(zipDir, zipDir, zipOutputStream);
+            }
+
         } finally {
             FileUtils.deleteDirectory(zipDir);
         }
@@ -170,10 +175,8 @@ public class Maestro2ScenarioVerifierController {
         throw new Exception("Unknown algorithm verification error code encountered: " + verificationCode);
     }
 
-    private int verifyAlgorithm(MasterModel masterModel, File dir) throws Exception {
+    private int verifyAlgorithm(MasterModel masterModel, File uppaalFile) throws Exception {
         if (VerifyTA.checkEnvironment()) {
-            File uppaalFile = Path.of(dir.getPath(), "uppaal.xml").toFile();
-
             try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
                 fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
             } catch (Exception e) {
