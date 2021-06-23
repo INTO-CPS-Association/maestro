@@ -24,6 +24,9 @@ public class InitializationData extends MultiModel {
     @JsonProperty("livestreamInterval")
     final Object livestreamInterval = null;
 
+    @JsonProperty("environmentParameters")
+    final List<String> environmentParameters;
+
     @JsonProperty("livestream")
     final Map<String, List<String>> livestream;
     @JsonProperty("logVariables")
@@ -61,7 +64,8 @@ public class InitializationData extends MultiModel {
             @JsonProperty("overrideLogLevel") final InitializeLogLevel overrideLogLevel,
             @JsonProperty("liveGraphColumns") final Object liveGraphColumns,
             @JsonProperty("liveGraphVisibleRowCount") final Object liveGraphVisibleRowCount,
-            @JsonProperty("livestreamInterval") final Object livestreamInterval) {
+            @JsonProperty("livestreamInterval") final Object livestreamInterval,
+            @JsonProperty("environmentParameters") final List<String> environmentParameters) {
         super(fmus, connections, parameters);
         this.livestream = livestream;
         this.logVariables = logVariables;

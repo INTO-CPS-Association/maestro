@@ -33,10 +33,10 @@ public class JacobianStepBuilderTest extends FullSpecTest {
      */
     @Override
     protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
-        CSVCompare(expectedCsvFile, actualCsvFile);
+        csvCompare(expectedCsvFile, actualCsvFile);
     }
 
-    protected static void CSVCompare(File expectedCsvFile, File actualCsvFile) throws IOException{
+    protected static void csvCompare(File expectedCsvFile, File actualCsvFile) throws IOException{
         final String ROW_SEPARATOR = ",";
         boolean actualOutputsCsvExists = actualCsvFile.exists();
         boolean expectedOutputsCsvExists = expectedCsvFile.exists();

@@ -226,7 +226,7 @@ public class MablSpecificationGenerator {
             intermediateSpecWriter.write(simulationModule);
         }
 
-        return expandExternals(importedDocumentList, simulationModule, reporter, plugins, depth + 1);
+        return expandExternals(importedDocumentList, simulationModule, reporter, plugins, runtimeConfigAdditions, depth + 1);
     }
 
     private void replaceCall(ACallExp callToBeReplaced, AFunctionDeclaration replacement, IMaestroExpansionPlugin replacementPlugin,

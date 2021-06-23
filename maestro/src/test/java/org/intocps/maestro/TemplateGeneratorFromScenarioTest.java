@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.FullSpecTest.getWorkingDirectory;
-import static org.intocps.maestro.JacobianStepBuilderTest.CSVCompare;
+import static org.intocps.maestro.JacobianStepBuilderTest.csvCompare;
 
 public class TemplateGeneratorFromScenarioTest {
     /**
@@ -119,6 +119,6 @@ public class TemplateGeneratorFromScenarioTest {
                 .execute(mabl.getMainSimulationUnit());
 
 
-        CSVCompare(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
+        csvCompare(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 }

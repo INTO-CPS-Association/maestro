@@ -8,7 +8,6 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
@@ -45,7 +44,7 @@ public class TemplateGeneratorFromScenario {
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         //TODO: Error handling on or off -> settings flag?
         settings.fmiErrorHandlingEnabled = false;
-        MablApiBuilder builder = new MablApiBuilder(settings, false);
+        MablApiBuilder builder = new MablApiBuilder(settings);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         List<FmuVariableFmi2Api> fmus = configuration.getSimulationEnvironment().getFmusWithModelDescriptions().stream()
@@ -89,9 +88,9 @@ public class TemplateGeneratorFromScenario {
         // Add scenario verifier expansion plugin
         PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTEALGORITHM_FUNCTION_NAME),
-                        Arrays.asList(AIdentifierExpFromString(COMPONENTS_ARRAY_NAME), AIdentifierExpFromString(STEP_SIZE_NAME),
-                                AIdentifierExpFromString(START_TIME_NAME), AIdentifierExpFromString(END_TIME_NAME))));
+                        MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTE_ALGORITHM_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
         dynamicScope.add(algorithmStm);
 
         // Terminate instances, free instances, unload FMUs
@@ -117,7 +116,7 @@ public class TemplateGeneratorFromScenario {
         return unit;
     }
 
-    private static AIdentifierExp AIdentifierExpFromString(String x) {
+    private static AIdentifierExp aIdentifierExpFromString(String x) {
         return MableAstFactory.newAIdentifierExp(MableAstFactory.newAIdentifier(x));
     }
 }
