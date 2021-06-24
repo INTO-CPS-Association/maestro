@@ -420,6 +420,9 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         if (currentStm == null) {
             currentStm = node.getAncestor(PStm.class);
+            if (currentStm == null) {
+                return null;
+            }
         }
 
         //since the getAncestor function acts as an identity function when the current node matches the requested type it is nessesary to call parent
