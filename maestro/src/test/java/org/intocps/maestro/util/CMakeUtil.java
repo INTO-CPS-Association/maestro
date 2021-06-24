@@ -7,10 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 public class CMakeUtil {
     private static final String OS = System.getProperty("os.name").toLowerCase();
+    private static Boolean ninjaFound;
+    boolean autoNinja = false;
     private boolean verbose = true;
 
     public static boolean hasCmake() {
@@ -33,6 +36,15 @@ public class CMakeUtil {
     public static boolean hasMake() {
 
         return checkSuccessful("make", "--version");
+
+    }
+
+    public static boolean hasNinja() {
+
+        if (ninjaFound == null) {
+            ninjaFound = checkSuccessful("ninja", "--version");
+        }
+        return ninjaFound;
 
     }
 
@@ -61,7 +73,17 @@ public class CMakeUtil {
             cmake = "/usr/local/bin/cmake";
         }
 
-        ProcessBuilder pb = new ProcessBuilder(cmake, ".");
+        List<String> cmds = new Vector<>();
+        cmds.add(cmake);
+
+        if (autoNinja && hasNinja()) {
+            cmds.add("-GNinja");
+        }
+
+        cmds.add(".");
+
+
+        ProcessBuilder pb = new ProcessBuilder(cmds);
         pb.directory(root);
 
         return runProcess(pb, verbose);
@@ -71,7 +93,15 @@ public class CMakeUtil {
     public boolean make(File root, String... goal) throws IOException, InterruptedException, CMakeGenerateException {
         String make = "make";
 
-        ProcessBuilder pb = new ProcessBuilder(make, "-j3");
+        List<String> cmds = new Vector<>();
+        if (autoNinja && hasNinja()) {
+            cmds.add("ninja");
+        } else {
+            cmds.add(make);
+            cmds.add("-j3");
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(cmds);
         for (String string : goal) {
             pb.command().add(string);
         }
