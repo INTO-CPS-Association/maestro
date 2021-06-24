@@ -13,6 +13,7 @@ project(zlib-download NONE)
 FetchContent_Declare(intocpsfmi
   GIT_REPOSITORY git@github.com:INTO-CPS-Association/org.intocps.maestro.fmi.git
         GIT_TAG  Release/1.0.12
+        GIT_SHALLOW ON
  SOURCE_DIR "${CMAKE_BINARY_DIR}/intocpsfmi-src"
 )
 
@@ -22,8 +23,8 @@ set(intocpsfmi-src "intocpsfmi-src")
 FetchContent_Declare(libzip
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
         GIT_TAG  v1.7.3
+        GIT_SHALLOW ON
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
-
 )
 
 FetchContent_MakeAvailable(libzip )
@@ -33,6 +34,7 @@ SET(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "Build rapidjson perftests and unittest
 FetchContent_Declare(rapidjson
         GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
         GIT_TAG v1.1.0
+     #   GIT_SHALLOW ON
         SOURCE_DIR "${CMAKE_BINARY_DIR}/rapidjson"
         BUILD_COMMAND ""
         CONFIGURE_COMMAND ""
@@ -40,7 +42,9 @@ FetchContent_Declare(rapidjson
         TEST_COMMAND ""
         )
 
-FetchContent_MakeAvailable(rapidjson )
+FetchContent_Populate(rapidjson)
+
+#file(CHMOD_RECURSE "${CMAKE_BINARY_DIR}/rapidjson" PERMISSIONS OWNER_READ OWNER_WRITE  GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE )
 
 include_directories(${PROJECT_SOURCE_DIR}
 #    ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi2/headers
