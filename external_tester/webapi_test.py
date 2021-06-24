@@ -169,9 +169,28 @@ def testSimulationController(basicUrl):
     if not r.status_code == 200:
         raise Exception(f"Could not destroy: {r.text}")
 
+
 def testScenarioVerifierController(basicUrl):
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
+
+    #Get plain results
+    testutils.printSection("GENERATE ALGORITHM FROM SCENARIO")
+    r = requests.get(f"{basicUrl}/generateAlgorithmFromScenario/")
+    if not r.status_code == 200:
+        raise Exception(f"Could not get plain results: {r.text}")
+
+    # print ("Result response code '%d" % (r.status_code))
+    # result_csv_path = "actual_result.csv"
+    # csv = r.text
+    # csvFilePath = os.path.join(tempDirectory, result_csv_path)
+    # with open(csvFilePath, "w+") as f:
+    #     f.write(csv.replace("\r\n", "\n"))
+        
+    # print("Wrote csv file to: " + csvFilePath)
+    # if not testutils.compareCSV("wt/result.csv", csvFilePath):
+    #     raise Exception("CSV files did not match!")
+
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
