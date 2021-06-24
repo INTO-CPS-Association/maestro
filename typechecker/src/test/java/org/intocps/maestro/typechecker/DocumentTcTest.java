@@ -27,7 +27,7 @@ public class DocumentTcTest {
     }
 
 
-    @ParameterizedTest(name = "{index} \"{1}\" in {0}")
+    @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
     public void test(String name, File spec) throws IOException, AnalysisException {
         IErrorReporter errorReporter = new ErrorReporter();
@@ -39,6 +39,10 @@ public class DocumentTcTest {
         errorReporter.printErrors(new PrintWriter(System.out, true));
         errorReporter.printWarnings(new PrintWriter(System.out, true));
 
-        Assertions.assertEquals(0, errorReporter.getErrorCount());
+        if (spec.getName().endsWith("success.mabl")) {
+            Assertions.assertEquals(0, errorReporter.getErrorCount());
+        } else {
+            Assertions.assertTrue(errorReporter.getErrorCount() > 0);
+        }
     }
 }
