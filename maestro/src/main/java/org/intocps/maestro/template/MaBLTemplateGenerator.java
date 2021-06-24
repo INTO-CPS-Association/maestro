@@ -152,9 +152,7 @@ public class MaBLTemplateGenerator {
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                                 MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
                                 Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME), newAStringLiteralExp(
-                                                StringEscapeUtils
-                                                        .escapeJava(((VariableStepAlgorithm) algorithm).getInitialisationDataForVariableStep())))));
+                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             default:

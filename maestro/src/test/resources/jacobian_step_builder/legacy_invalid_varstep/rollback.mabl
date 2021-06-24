@@ -30,7 +30,7 @@ int status = 0;
 Initializer.expand initialize(components,START_TIME, END_TIME);
 
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME, "src/test/resources/jacobian_step_builder/legacy_invalid_varstep/algorithm.json");
+JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME);
 pumpF.freeInstance(pump);
 sinkF.freeInstance(sink);
 

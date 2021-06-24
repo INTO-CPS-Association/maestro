@@ -198,7 +198,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.mablToMablAPI;
     }
 
-    public VariableStep getVariableStep(VariableFmi2Api config) {
+    public VariableStep getVariableStep(StringVariableFmi2Api config) {
         if (this.variableStep == null) {
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "VariableStep", config);
             this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);

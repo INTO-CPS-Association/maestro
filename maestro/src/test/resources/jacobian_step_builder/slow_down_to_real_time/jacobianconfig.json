@@ -4,6 +4,8 @@
   "absoluteTolerance": 1.0,
   "relativeTolerance": 1.0,
   "stabilisationLoopMaxIterations": 5,
-  "simulationProgramDelay": true
+  "simulationProgramDelay": true,
+  "setGetDerivatives": false,
+  "variableStepConfig": "src/test/resources/jacobian_step_builder/slow_down_to_real_time/algorithm.json"
 }
 

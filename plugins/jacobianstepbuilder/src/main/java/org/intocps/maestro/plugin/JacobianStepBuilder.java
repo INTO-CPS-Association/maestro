@@ -49,8 +49,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
-                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("variableStepConfig"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
     private StepAlgorithm algorithm;
@@ -207,7 +206,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
-                variableStep = builder.getVariableStep(new StringVariableFmi2Api(null, null, null, null, formalArguments.get(4).clone()));
+                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config", jacobianStepConfig.variableStepConfig));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }

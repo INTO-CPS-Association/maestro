@@ -3,5 +3,8 @@
   "stabilisation": false,
   "absoluteTolerance": 0.0,
   "relativeTolerance": 0.01,
-  "stabilisationLoopMaxIterations": 5
+  "stabilisationLoopMaxIterations": 5,
+  "simulationProgramDelay": false,
+  "setGetDerivatives": false,
+  "variableStepConfig": "src/test/resources/jacobian_step_builder/legacy_rollback/algorithm.json"
 }

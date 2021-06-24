@@ -6,19 +6,13 @@ public class VariableStepAlgorithm implements IStepAlgorithm {
     private final double minStepSize;
     private final double maxStepSize;
     private final double initialStepSize;
-    private final String initialisationDataForVariableStep;
 
-    public VariableStepAlgorithm(double endTime, Double[] stepSizes, Double initSize, String initDataForVarStep, double startTime) {
+    public VariableStepAlgorithm(double endTime, Double[] stepSizes, Double initSize, double startTime) {
         this.endTime = endTime;
         this.minStepSize = stepSizes[0];
         this.maxStepSize = stepSizes[1];
         this.initialStepSize = initSize;
-        this.initialisationDataForVariableStep = initDataForVarStep;
         this.startTime = startTime;
-    }
-
-    public String getInitialisationDataForVariableStep() {
-        return initialisationDataForVariableStep;
     }
 
     public double getMinStepSize() {

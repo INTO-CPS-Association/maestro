@@ -105,6 +105,7 @@ public class Maestro2Broker {
         config.relativeTolerance = initializeRequest.getGlobal_relative_tolerance();
         config.stabilisationLoopMaxIterations = 5;
         config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
+        config.variableStepConfig = (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm());
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
@@ -112,8 +113,7 @@ public class Maestro2Broker {
                     body.getStartTime());
         } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             algorithm = new VariableStepAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(),
-                    (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()), body.getStartTime());
+                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(), body.getStartTime());
 
             ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
                 if (v instanceof InitializationData.ZeroCrossingConstraint) {

@@ -30,7 +30,7 @@ int status = 0;
 @Config("@file: config.json");
 Initializer.expand initialize(components,START_TIME, END_TIME);
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME, "src/test/resources/jacobian_step_builder/variable_step_WT/algorithm.json");
+JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME);
 tankcontroller.freeInstance(ctrlInstance);
 SingleWatertank.freeInstance(wtInstance);
 

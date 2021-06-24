@@ -3,6 +3,9 @@
   "stabilisation": false,
   "absoluteTolerance": 1.0,
   "relativeTolerance": 1.0,
-  "stabilisationLoopMaxIterations": 5
+  "stabilisationLoopMaxIterations": 5,
+  "simulationProgramDelay": false,
+  "setGetDerivatives": false,
+  "variableStepConfig": "src/test/resources/jacobian_step_builder/variable_step_WT/algorithm.json"
 }
 
