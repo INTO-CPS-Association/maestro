@@ -223,7 +223,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.dataWriter;
     }
 
-    public ConsolePrinter getConsolePrinter(){
+    public ConsolePrinter getConsolePrinter() {
         if (this.consolePrinter == null) {
             RuntimeModule<PStm> runtimeModule =
                     this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var),
@@ -280,8 +280,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public MathBuilderFmi2Api getMathBuilder() {
         if (this.mathBuilderApi == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Math");
-            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
+            RuntimeModuleVariable runtimeModule = this.loadRuntimeModule("Math");
+
+            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule.getReferenceExp());
         }
         return this.mathBuilderApi;
 
@@ -400,16 +401,16 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(String name, Object... args) {
         return loadRuntimeModule(dynamicScope.getActiveScope(), name, args);
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
         return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
     }
 
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));

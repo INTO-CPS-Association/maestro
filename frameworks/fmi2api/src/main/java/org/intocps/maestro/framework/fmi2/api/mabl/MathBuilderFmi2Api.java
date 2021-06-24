@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.ARealNumericPrimitiveType;
+import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -16,40 +17,27 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class MathBuilderFmi2Api {
 
-    private static final String DEFAULT_MODULE_IDENTIFIER = "math";
+    //    private static final String DEFAULT_MODULE_IDENTIFIER = "math";
     private static final String FUNCTION_IS_CLOSE = "isClose";
-    private final String FUNCTION_MINREALFROMARRAY = "minRealFromArray";
+    private static final String FUNCTION_MINREALFROMARRAY = "minRealFromArray";
     private final DynamicActiveBuilderScope dynamicScope;
-    private final MablApiBuilder builder;
-    private boolean runtimeModuleMode;
-    private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
-    private String moduleIdentifier;
+    private final PExp referenceExp;
 
-
-    public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
-        this(dynamicScope, mablApiBuilder);
-        this.runtimeModuleMode = true;
-        this.runtimeModule = runtimeModule;
-        this.moduleIdentifier = this.runtimeModule.getName();
-    }
-
-    public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder) {
-        this.runtimeModuleMode = false;
+    //FIXME this class is made in a wrong way. It is actually a value of a runtime module but the class is completely custom and does not use the
+    // remove
+    // api. It should also be placed in the variables package
+    public MathBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, PExp referenceExp) {
         this.dynamicScope = dynamicScope;
-        this.builder = mablApiBuilder;
-        this.moduleIdentifier = DEFAULT_MODULE_IDENTIFIER;
+        this.referenceExp = referenceExp;
     }
-/*
-    public static Fmi2Builder.ProvidesReferenceExp add(Fmi2Builder.ProvidesReferenceExp left, Fmi2Builder.ProvidesReferenceExp right) {
-        return new ExpFmi2Api(newPlusExp(left.getReferenceExp(), right.getReferenceExp()));
-    }*/
+
 
     private BooleanVariableFmi2Api checkConvergenceInternal(Fmi2Builder.ProvidesTypedReferenceExp a, Fmi2Builder.ProvidesTypedReferenceExp b,
             Fmi2Builder.ProvidesTypedReferenceExp absoluteTolerance, Fmi2Builder.ProvidesTypedReferenceExp relativeTolerance) {
         String variableName = dynamicScope.getName("convergence");
 
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
-                newACallExp(newAIdentifierExp(this.moduleIdentifier), newAIdentifier(this.FUNCTION_IS_CLOSE),
+                newACallExp(this.referenceExp.clone(), newAIdentifier(FUNCTION_IS_CLOSE),
                         Arrays.asList(a.getExp(), b.getExp(), absoluteTolerance.getExp(), relativeTolerance.getExp())))));
         dynamicScope.add(stm);
         return new BooleanVariableFmi2Api(stm, dynamicScope.getActiveScope(), dynamicScope,
@@ -70,8 +58,7 @@ public class MathBuilderFmi2Api {
     public DoubleVariableFmi2Api minRealFromArray(ArrayVariableFmi2Api<Double> array) {
         String variableName = dynamicScope.getName("minVal");
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(), newAExpInitializer(
-                newACallExp(newAIdentifierExp(this.moduleIdentifier), newAIdentifier(this.FUNCTION_MINREALFROMARRAY),
-                        Collections.singletonList(array.getExp())))));
+                newACallExp(this.referenceExp.clone(), newAIdentifier(FUNCTION_MINREALFROMARRAY), Collections.singletonList(array.getExp())))));
 
         dynamicScope.add(stm);
         return new DoubleVariableFmi2Api(stm, dynamicScope.getActiveScope(), dynamicScope,
