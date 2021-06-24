@@ -3,6 +3,7 @@ import json
 import os
 import time
 import subprocess
+from typing import Text
 import requests
 import tempfile
 from contextlib import closing
@@ -12,6 +13,7 @@ import websocket
 import testutils
 import glob
 import socket
+import pathlib
 
 websocketopen = False
 socketFile = None
@@ -40,14 +42,6 @@ def ws_open(ws):
 def ws_close(ws):
     print("websocket closed")
 
-def on_message(ws, message):
-    print("MESSAGE: %s" % message)
-    def run(*args):
-        print("MESSAGE IN THREAD: %s" % message)
-        socketFile.write(message)
-
-    threading.Thread(target=run).start()
-
 def findJar():
     basePath = r"../maestro-webapi/target/"
     basePath = os.path.abspath(os.path.join(basePath, "maestro-webapi*.jar"))
@@ -57,6 +51,10 @@ def findJar():
     if len(result) == 0 or len(result) > 1:
         raise FileNotFoundError("Could not automatically find jar file please specify manually")
     return result[0]
+
+def ensureResponseOk(response):
+    if not response.status_code == 200:
+        raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")
 
 
 def testSimulationController(basicUrl):
@@ -171,25 +169,87 @@ def testSimulationController(basicUrl):
 
 
 def testScenarioVerifierController(basicUrl):
+    baseResourcePath = f"scenario_verifier_resources{os.path.sep}"
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
 
-    #Get plain results
+    #Test generate algorithm from scenario
     testutils.printSection("GENERATE ALGORITHM FROM SCENARIO")
-    r = requests.get(f"{basicUrl}/generateAlgorithmFromScenario/")
-    if not r.status_code == 200:
-        raise Exception(f"Could not get plain results: {r.text}")
+    gas_resourcesPath = f"{baseResourcePath}generate_from_scenario"
+    with open(f'{gas_resourcesPath}{os.path.sep}scenario.txt') as f:
+        payloadString = f.read()
 
-    # print ("Result response code '%d" % (r.status_code))
-    # result_csv_path = "actual_result.csv"
-    # csv = r.text
-    # csvFilePath = os.path.join(tempDirectory, result_csv_path)
-    # with open(csvFilePath, "w+") as f:
-    #     f.write(csv.replace("\r\n", "\n"))
-        
-    # print("Wrote csv file to: " + csvFilePath)
-    # if not testutils.compareCSV("wt/result.csv", csvFilePath):
-    #     raise Exception("CSV files did not match!")
+    response = requests.post(f"{basicUrl}/generateAlgorithmFromScenario", data=payloadString, headers={'Content-Type': 'text/plain'})
+    ensureResponseOk(response)
+
+    actualResult = f"{tempDirectory}{os.path.sep}actualResultFromScenario.txt"
+    expectedResult = f"{gas_resourcesPath}{os.path.sep}expectedResult.txt"
+
+    with open(actualResult, "w") as f:
+        f.write(response.text)
+
+    if(not testutils.compare("Generate from scenario", expectedResult, actualResult)):
+        raise Exception("Expected algorithm does not match the actual algorithm.")
+
+    #Test generate algorithm from multi model
+    testutils.printSection("GENERATE ALGORITHM FROM MULTI MODEL")
+    gamm_resourcesPath = f"{baseResourcePath}generate_from_multi_model"
+
+    # Set FMU path to be a relative path
+    config = json.load(open(f"{gamm_resourcesPath}{os.path.sep}multimodel.json"))
+    expectedJson = json.load(open(f"{gamm_resourcesPath}{os.path.sep}expectedResult.json"))
+    relativeFMUPathUri = pathlib.Path(os.path.abspath(f'{gamm_resourcesPath}{os.path.sep}rollback-test.fmu')).as_uri()
+    relativeControllerPathUri = pathlib.Path(os.path.abspath(f'{gamm_resourcesPath}{os.path.sep}rollback-end.fmu')).as_uri()
+    expectedJson["multiModel"]["fmus"]["{FMU}"]=relativeFMUPathUri
+    expectedJson["multiModel"]["fmus"]["{Controller}"]=relativeControllerPathUri
+    config["fmus"]["{FMU}"]=relativeFMUPathUri
+    config["fmus"]["{Controller}"]=relativeControllerPathUri
+
+    response = requests.post(f"{basicUrl}/generateAlgorithmFromMultiModel", json=config)
+    ensureResponseOk(response)
+    actualJson = response.json()
+
+    if(not actualJson == expectedJson):
+        print("ERROR: actual and expected json do not match")
+        print("Actual json:")
+        print(json.dumps(actualJson, indent=2))
+        print("Expected json:")
+        print(json.dumps(expectedJson, indent=2))
+        raise Exception("Actual json returned does not match the expected json")
+    else:
+        print("Actual json returned matches the expected json")
+
+    #Test execute algorithm
+    testutils.printSection("EXECUTE ALGORITHM")
+    ea_resourcesPath = f"{baseResourcePath}execute_algorithm{os.path.sep}"
+
+    executableModel = json.load(open(f"{ea_resourcesPath}executableModel.json"))
+    executableModel["multiModel"]["fmus"]["{FMU}"]=relativeFMUPathUri
+    executableModel["multiModel"]["fmus"]["{Controller}"]=relativeControllerPathUri
+
+    response = requests.post(f"{basicUrl}/executeAlgorithm", json=executableModel)
+    ensureResponseOk(response)
+
+    zipFilePath = f"{tempDirectory}{os.path.sep}actual_zip_result.zip"
+    chunk_size = 128
+    with open(zipFilePath, 'wb') as fd:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            fd.write(chunk)
+    print("Wrote zip file to: " + zipFilePath)
+
+    actualCSVFilePath = os.path.join(tempDirectory,"actual_result.csv")
+    expectedCSVFilePath = f"{ea_resourcesPath}expectedoutputs.csv"
+
+    with ZipFile(zipFilePath, 'r') as z:
+        with open(actualCSVFilePath, 'wb') as f:
+            f.write(z.read('outputs.csv'))
+
+    if not testutils.compareCSV(expectedCSVFilePath, actualCSVFilePath):
+        raise Exception("CSV files did not match!")
+
+    #Test verify algorithm
+    testutils.printSection("VERIFY ALGORITHM")
+    ea_resourcesPath = f"{baseResourcePath}execute_algorithm{os.path.sep}"
 
 
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
@@ -238,8 +298,8 @@ try:
         raise Exception("Unable to connect to host")
 
     print("Testing simulation controller..")
-    testSimulationController(basicUrl)
+    # testSimulationController(basicUrl)
     print("Testing scenario verifier controller..")
     testScenarioVerifierController(basicUrl)
 finally:
-    cleanUp(proc) 
+   cleanUp(proc) 

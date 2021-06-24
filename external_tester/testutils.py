@@ -76,7 +76,7 @@ def compare(strPrefix, expected, actual):
             print("%s: Files match" % strPrefix)
             return True
     else:
-        print("ERROR: %s: No results file exists within wt. Results are not compared." % strPrefix)
+        print("ERROR: %s: No results file exists. Results are not compared." % strPrefix)
         return False
 
 def convert(expected):

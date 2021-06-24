@@ -1,7 +1,7 @@
 {
     "fmus": {
-        "{FMU}": "file:///C:/Users/frdrk/Desktop/Repos/maestroDev/maestro/src/test/resources/rollback-test.fmu",
-        "{Controller}": "file:///C:/Users/frdrk/Desktop/Repos/maestroDev/maestro/src/test/resources/rollback-end.fmu"
+        "{FMU}": "/rollback-test.fmu",
+        "{Controller}": "/rollback-end.fmu"
     },
     "connections": {
         "{FMU}.roller.level": [
