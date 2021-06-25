@@ -32,7 +32,7 @@ import java.util.zip.ZipOutputStream;
 
 @RestController
 @Component
-public class Maestro2ScenarioVerifierController {
+public class Maestro2ScenarioController {
 
     @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE})
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
@@ -58,9 +58,9 @@ public class Maestro2ScenarioVerifierController {
         return new VerificationDTO(resultCode == 0, verificationCodeToStringMessage(resultCode), uppaalFileAsString);
     }
 
-    @RequestMapping(value = "/traceVisualization", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE},
+    @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public void traceVisualization(@RequestBody String masterModelAsString, HttpServletResponse response) throws Exception {
+    public void visualizeTrace(@RequestBody String masterModelAsString, HttpServletResponse response) throws Exception {
         if (!VerifyTA.checkEnvironment()) {
             throw new Exception("Verification environment is not setup correctly");
         }
@@ -77,8 +77,8 @@ public class Maestro2ScenarioVerifierController {
             // This verifies the algorithm and writes to the trace file.
             int resultCode = VerifyTA.saveTraceToFile(uppaalFile, traceFile);
 
-            // If verification result code is 1 one or more counter examples have been found and written to the trace file from which a visualization
-            // can be made.
+            // If verification result code is 1 violations of the scenarios' contract were found and a trace has been written to the trace file
+            // from which a visualization can be made.
             if (resultCode == 1) {
                 Path videoTraceFolder = java.nio.file.Files.createDirectories(Path.of(tempDir.getPath(), "video_trace"));
                 ModelEncoding modelEncoding = new ModelEncoding(masterModel);
@@ -167,7 +167,7 @@ public class Maestro2ScenarioVerifierController {
         if (verificationCode == 2) {
             return "Unable to verify algorithm - there is probably a syntax error.";
         } else if (verificationCode == 1) {
-            return "One or more counter examples found.";
+            return "Violations of the scenarios' contract were found - traces can be generated.";
         } else if (verificationCode == 0) {
             return "Algorithm successfully verified - no traces to visualize.";
         }
