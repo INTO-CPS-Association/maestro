@@ -6,6 +6,6 @@
   "stabilisationLoopMaxIterations": 5,
   "simulationProgramDelay": true,
   "setGetDerivatives": false,
-  "variableStepConfig": "src/test/resources/jacobian_step_builder/slow_down_to_real_time/algorithm.json"
+  "variableStepAlgorithm": "src/test/resources/jacobian_step_builder/slow_down_to_real_time/algorithm.json"
 }
 

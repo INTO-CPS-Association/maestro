@@ -9,16 +9,14 @@ import org.intocps.fmi.Fmi2Status;
 import org.intocps.fmi.FmiInvalidNativeStateException;
 import org.intocps.fmi.FmuResult;
 import org.intocps.fmi.IFmiComponent;
-import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
-import org.intocps.fmi.IFmu;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
-import org.intocps.maestro.interpreter.values.fmi.FmuValue;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +32,6 @@ public class VariableStepValue extends ModuleValue {
     public VariableStepValue(String configuration) {
         super(createMembers(configuration));
     }
-
 
     private static Set<InitializationMsgJson.Constraint> getConstraintsFromConfig(JsonNode config) {
         final Set<InitializationMsgJson.Constraint> constraints = new HashSet<>();
@@ -68,7 +65,7 @@ public class VariableStepValue extends ModuleValue {
     }
 
     private static Double getInitSizeFromConfig(JsonNode config) {
-        Double initsize = -1.0;
+        Double initsize;
         Object objInitsize = (new ObjectMapper()).convertValue(config.get("initsize"), new TypeReference<>() {
         });
 
@@ -77,6 +74,10 @@ public class VariableStepValue extends ModuleValue {
         } else if (objInitsize instanceof Integer) {
             initsize = Double.valueOf((Integer) objInitsize);
         }
+        else {
+            throw new InterpreterException("Initialization size must be an integer or double");
+        }
+
         return initsize;
     }
 

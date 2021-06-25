@@ -3,6 +3,9 @@
   "stabilisation": false,
   "absoluteTolerance": 1.0,
   "relativeTolerance": 1.0,
-  "stabilisationLoopMaxIterations": 5
+  "stabilisationLoopMaxIterations": 5,
+  "simulationProgramDelay": false,
+  "setGetDerivatives": false,
+  "variableStepAlgorithm": "src/test/resources/specifications/full/initialize_jacobianstepbuilder_unfold_loop/algorithm.json"
 }
 

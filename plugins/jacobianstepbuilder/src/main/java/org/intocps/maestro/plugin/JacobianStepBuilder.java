@@ -206,7 +206,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
-                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config", jacobianStepConfig.variableStepConfig));
+                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config", jacobianStepConfig.variableStepAlgorithm));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }

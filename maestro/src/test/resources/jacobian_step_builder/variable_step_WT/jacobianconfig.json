@@ -6,6 +6,6 @@
   "stabilisationLoopMaxIterations": 5,
   "simulationProgramDelay": false,
   "setGetDerivatives": false,
-  "variableStepConfig": "src/test/resources/jacobian_step_builder/variable_step_WT/algorithm.json"
+  "variableStepAlgorithm": "src/test/resources/jacobian_step_builder/variable_step_WT/algorithm.json"
 }
 

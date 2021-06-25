@@ -6,5 +6,5 @@
   "stabilisationLoopMaxIterations": 5,
   "simulationProgramDelay": false,
   "setGetDerivatives": false,
-  "variableStepConfig": "src/test/resources/jacobian_step_builder/legacy_rollback/algorithm.json"
+  "variableStepAlgorithm": "src/test/resources/jacobian_step_builder/legacy_rollback/algorithm.json"
 }

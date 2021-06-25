@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
@@ -105,7 +106,7 @@ public class Maestro2Broker {
         config.relativeTolerance = initializeRequest.getGlobal_relative_tolerance();
         config.stabilisationLoopMaxIterations = 5;
         config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
-        config.variableStepConfig = (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm());
+        config.variableStepAlgorithm = StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()));
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
