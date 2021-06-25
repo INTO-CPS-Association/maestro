@@ -53,9 +53,7 @@ public class Mabl {
     private ARootDocument document;
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
-
     private Map<String, Object> runtimeEnvironmentVariables;
-
     private ISimulationEnvironment environment;
 
     public Mabl(File specificationFolder, File debugOutputFolder) {
@@ -133,6 +131,14 @@ public class Mabl {
         return documents;
     }
 
+    public IErrorReporter getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(IErrorReporter reporter) {
+        this.reporter = reporter;
+    }
+
     private List<String> getResourceFiles(String path) throws IOException {
         return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
@@ -143,10 +149,6 @@ public class Mabl {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
-    }
-
-    public void setReporter(IErrorReporter reporter) {
-        this.reporter = reporter;
     }
 
     public void parse(List<File> sourceFiles) throws Exception {
