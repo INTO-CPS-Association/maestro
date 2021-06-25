@@ -14,6 +14,7 @@ import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -425,8 +426,19 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
 
+        Function<PStm, SBlockStm> findAncestorSBlockStm = (stm) -> {
+            //The getAncestor function acts as an identity function when the current node matches the requested type and therefore it is necessary to
+            // call parent
+            INode stm_ = stm instanceof SBlockStm ? stm.parent() : stm;
+            if (stm_ != null) {
+                return stm_.getAncestor(SBlockStm.class);
+            }
+            return null;
+        };
+        // In a regular simulation specification a block always has a parent. However, in a test specification a block does not necessary have a
+        // parent.
         //since the getAncestor function acts as an identity function when the current node matches the requested type it is nessesary to call parent
-        SBlockStm block = (currentStm instanceof SBlockStm ? currentStm.parent() : currentStm).getAncestor(SBlockStm.class);
+        SBlockStm block = findAncestorSBlockStm.apply(currentStm);
 
         if (block == null) {
             return null;
@@ -789,7 +801,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         PType type;
         if (def == null) {
-            errorReporter.report(0, "Use of undeclared variable", node.getName().getSymbol());
+            errorReporter.report(0, "Use of undeclared variable: " + node.getName(), node.getName().getSymbol());
             type = newAUnknownType();
         } else {
             type = checkedTypes.get(def).clone();

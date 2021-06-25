@@ -16,6 +16,7 @@ real STEP_SIZE = 0.1;
   	int FMI_STATUS_ERROR = 3;
   	int FMI_STATUS_FATAL = 4;
   	int FMI_STATUS_PENDING = 5;
+  	int status  =0;
 
 Math math = load("Math");
 FMI2 MassSpringDamper2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}", "src/test/resources/mass_spring_damper/MassSpringDamper2.fmu");

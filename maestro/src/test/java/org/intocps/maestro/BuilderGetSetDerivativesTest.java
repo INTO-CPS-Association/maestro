@@ -310,7 +310,7 @@ public class BuilderGetSetDerivativesTest {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             settings.fmiErrorHandlingEnabled = false;
             settings.setGetDerivatives = true;
-            MablApiBuilder builder = new MablApiBuilder(settings, true);
+            MablApiBuilder builder = new MablApiBuilder(settings, false);
             IMablScope scope = builder.getDynamicScope();
             FmuVariableFmi2Api pumpFMU = scope.createFMU("pumpFMU", new ModelDescription(pumpMDPath.toFile()), pumpPath.toUri());
             FmuVariableFmi2Api sinkFMU = scope.createFMU("sinkFMU", new ModelDescription(sinkMDPath.toFile()), sinkPath.toUri());

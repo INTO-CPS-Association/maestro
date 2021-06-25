@@ -1,6 +1,7 @@
 simulation
 import Initializer;
 import JacobianStepBuilder;
+import Math;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
@@ -8,12 +9,12 @@ real START_TIME = 0.0;
 real END_TIME = 10.0;
 real STEP_SIZE = 0.001;
 
-int fmi_status_ok = 0;
-int fmi_status_warning = 1;
-int fmi_status_discard = 2;
-int fmi_status_error = 3;
-int fmi_status_fatal = 4;
-int fmi_status_pending = 5;
+   	int FMI_STATUS_OK = 0;
+  	int FMI_STATUS_WARNING = 1;
+  	int FMI_STATUS_DISCARD = 2;
+  	int FMI_STATUS_ERROR = 3;
+  	int FMI_STATUS_FATAL = 4;
+  	int FMI_STATUS_PENDING = 5;
 
 
 Logger logger = load("Logger");
@@ -21,6 +22,7 @@ FMI2 m1 = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}", "src/test/resou
 FMI2 m2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}",  "src/test/resources/MassSpringDamper2.fmu");
 FMI2Component mi1 = m1.instantiate("mi1", false, false);;
 FMI2Component mi2 = m2.instantiate("mi2", false, false);;
+Math math = load("Math");
 
 
 FMI2Component components[2]={mi1, mi2};
@@ -33,7 +35,6 @@ int status = 0;
 
 while( (global_execution_continue) )
 {
-    int status = 0;
     status = mi1.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
     if( (status == 3 || status == 4) )
     {
@@ -143,7 +144,7 @@ while( (global_execution_continue) )
 JacobianStepBuilder.expand fixedStepSize(components,STEP_SIZE,START_TIME,END_TIME);
 m1.freeInstance(mi1);
 m2.freeInstance(mi2);
-
+unload(math);
 unload(m1);
 unload(m2);
 unload(logger);

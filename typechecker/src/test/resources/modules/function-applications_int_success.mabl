@@ -32,7 +32,7 @@ int r = g.identityInt(1);
 int i[1] = {1};
 //must fail int rr =g.identityIntArr(i);
 int[] rr =g.identityIntArrCStyle(i);
-int[] rr =g.identityIntArr(i);
+int[] rr2 =g.identityIntArr(i);
 int res = g.identityIntArrOut(ref i);
 
 unload(g);

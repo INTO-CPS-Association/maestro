@@ -19,7 +19,7 @@ string r = g.identityString("string");
 
 string i[1] = {"1"};
 string[] rr =g.identityStringArrCStyle(i);
-string[] rr =g.identityStringArr(i);
+string[] rr2 =g.identityStringArr(i);
 string res = g.identityStringArrOut(ref i);
 
 unload(g);

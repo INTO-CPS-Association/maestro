@@ -81,7 +81,7 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;
-        MablApiBuilder builder = new MablApiBuilder(settings, true);
+        MablApiBuilder builder = new MablApiBuilder(settings, false);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         FmuVariableFmi2Api sinkFMU = dynamicScope
@@ -163,7 +163,7 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;
-        MablApiBuilder builder = new MablApiBuilder(settings, true);
+        MablApiBuilder builder = new MablApiBuilder(settings, false);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         ArrayVariableFmi2Api<Double> sharedDataStep1 = dynamicScope.store("sharedDataStep1", new Double[]{x, -1.0, y});
