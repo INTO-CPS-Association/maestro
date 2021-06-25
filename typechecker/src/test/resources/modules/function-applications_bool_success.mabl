@@ -14,7 +14,7 @@ bool r = g.identityBool(true);
 
 bool i[1] = {true};
 bool[] rr =g.identityBoolArrCStyle(i);
-bool[] rr =g.identityBoolArr(i);
+bool[] rr2 =g.identityBoolArr(i);
 bool res = g.identityBoolArrOut(ref i);
 
 unload(g);

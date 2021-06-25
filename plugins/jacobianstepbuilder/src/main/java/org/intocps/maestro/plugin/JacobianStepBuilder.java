@@ -106,7 +106,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             MablApiBuilder builder = new MablApiBuilder(settings, formalArguments.get(0));
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-            MathBuilderFmi2Api math = builder.getMathBuilder();
+            MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
             BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
             RealTime realTimeModule = null;
             if (jacobianStepConfig.simulationProgramDelay) {
@@ -115,17 +115,17 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             // Convert raw MaBL to API
             DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
-            DoubleVariableFmi2Api currentStepSize = dynamicScope.store("current_step_size", 0.0);
+            DoubleVariableFmi2Api currentStepSize = dynamicScope.store("jac_current_step_size", 0.0);
             currentStepSize.setValue(externalStepSize);
 
-            DoubleVariableFmi2Api stepSize = dynamicScope.store("step_size", 0.0);
+            DoubleVariableFmi2Api stepSize = dynamicScope.store("jac_step_size", 0.0);
             stepSize.setValue(externalStepSize);
 
             DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
-            DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("current_communication_point", 0.0);
+            DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
             currentCommunicationTime.setValue(externalStartTime);
             DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTimeVar);
-            DoubleVariableFmi2Api endTime = dynamicScope.store("end_time", 0.0);
+            DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
             endTime.setValue(externalEndTime);
 
             // Import the external components into Fmi2API

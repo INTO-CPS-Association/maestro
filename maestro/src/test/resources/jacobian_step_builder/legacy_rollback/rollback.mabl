@@ -1,6 +1,7 @@
 simulation
 import Initializer;
 import JacobianStepBuilder;
+import Math;
 @Framework("FMI2");
 @FrameworkConfig("FMI2","@file: env.json");
 {
@@ -8,14 +9,15 @@ real START_TIME = 0.0;
 real END_TIME = 4.5;
 real STEP_SIZE = 0.1;
 
-int fmi_status_ok = 0;
-int fmi_status_warning = 1;
-int fmi_status_discard = 2;
-int fmi_status_error = 3;
-int fmi_status_fatal = 4;
-int fmi_status_pending = 5;
+   	int FMI_STATUS_OK = 0;
+  	int FMI_STATUS_WARNING = 1;
+  	int FMI_STATUS_DISCARD = 2;
+  	int FMI_STATUS_ERROR = 3;
+  	int FMI_STATUS_FATAL = 4;
+  	int FMI_STATUS_PENDING = 5;
 
 Logger logger = load("Logger");
+Math math = load("Math");
 FMI2 pumpF = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/pump.fmu");
 FMI2 sinkF = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/sink.fmu");
 FMI2Component pump = pumpF.instantiate("pump", false, false);;
@@ -34,6 +36,7 @@ JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_
 pumpF.freeInstance(pump);
 sinkF.freeInstance(sink);
 
+unload(math);
 unload(pumpF);
 unload(sinkF);
 unload(logger);

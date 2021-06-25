@@ -92,29 +92,36 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             }
         }
 
+        String global_execution_continue_varname = "global_execution_continue";
+        String status_varname = "status";
+
         if (createdFromExistingSpec) {
 
             AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "global_execution_continue");
             if (decl == null) {
-                globalExecutionContinue = rootScope.store("global_execution_continue", true);
+                globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
             } else {
                 globalExecutionContinue =
                         (BooleanVariableFmi2Api) createVariableExact(rootScope, newBoleanType(), newABoolLiteralExp(true), decl.getName().getText(),
                                 true);
             }
 
-            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "status");
+            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, status_varname);
             if (decl == null) {
-                globalFmiStatus = rootScope.store("status", FmiStatus.FMI_OK.getValue());
+                globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
             } else {
                 globalFmiStatus = (IntVariableFmi2Api) createVariableExact(rootScope, newIntType(), null, decl.getName().getText(), true);
             }
 
         } else {
-            globalExecutionContinue =
-                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
-            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
+
+            globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
+            globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
+            //            globalExecutionContinue =
+            //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
+            //            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
+
         mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
         this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
