@@ -6,6 +6,8 @@ import tempfile
 import pathlib
 import csv
 from collections import namedtuple
+import glob
+import socket
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -111,3 +113,24 @@ def checkMablSpecExists(mablSpecPath):
         print("MaBL Spec exists at: " + mablSpecPath)
     else:
         raise Exception(f"Mable spec does not exist at {mablSpecPath}")
+
+def findJar(relativePath):
+    # try and find the jar file
+    result = glob.glob(relativePath)
+    if len(result) == 0 or len(result) > 1:
+        raise FileNotFoundError("Could not automatically find jar file please specify manually")
+    return result[0]
+
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+def ensureResponseOk(response):
+    if not response.status_code == 200:
+        raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")

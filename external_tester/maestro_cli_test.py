@@ -5,18 +5,6 @@ import testutils
 import os
 import subprocess
 import shutil
-import glob
-
-def findJar():
-    basePath = r"../maestro/target/"
-    basePath = os.path.abspath(os.path.join(basePath, "maestro-*-jar-with-dependencies.jar"))
-
-    # try and find the jar file
-    result = glob.glob(basePath)
-    if len(result) == 0 or len(result) > 1:
-        raise FileNotFoundError("Could not automatically find jar file please specify manually")
-
-    return result[0]
 
 parser = argparse.ArgumentParser(prog='Example of Maestro CLI', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro CLI jar (Can be relative path)")
@@ -25,8 +13,8 @@ args = parser.parse_args()
 
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
-path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
+relativePath = os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar"))
+path = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
 
 if not os.path.isfile(path):
     print('The path does not exist')
@@ -47,6 +35,7 @@ def testWithCommand(outputs, cmd, temporary):
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
             raise Exception("Results files do not match")
+            
 
 def cliSpecGen():
     testutils.printSection("CLI with Specification Generation")
@@ -71,8 +60,8 @@ def cliExpansion():
     cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
     testWithCommand(outputs, cmd, temporary)
 
-print("Testing CLI with specification generation of: " + path)
 
+print("Testing CLI with specification generation of: " + path)
 cliRaw()
 cliSpecGen()
 cliExpansion()
