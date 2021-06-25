@@ -55,7 +55,7 @@ public class SvTest {
     }
 
     @Test
-    public void InputDiscreteAppTest() {
+    public void inputDiscreteAppTest() {
         Orch.SV_X_ sv = new Orch.SV_X_(new inputQuote(), new discreteQuote(), null, new Orch.Type(new StringQuote(), ""));
 
         Tuple res = Orch.Validate(sv);

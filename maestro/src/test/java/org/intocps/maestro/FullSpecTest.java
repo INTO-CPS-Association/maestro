@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepAlgorithm;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -19,6 +20,7 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -57,20 +59,6 @@ public class FullSpecTest {
             testJsonObject.autoGenerate = false;
         }
         return testJsonObject;
-    }
-
-    static File getWorkingDirectory(File base) throws IOException {
-        String s = "target/" + base.getAbsolutePath().substring(
-                base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
-
-        File workingDir = new File(s.replace('/', File.separatorChar));
-        if (workingDir.exists()) {
-            FileUtils.deleteDirectory(workingDir);
-        }
-        if (!workingDir.exists()) {
-            workingDir.mkdirs();
-        }
-        return workingDir;
     }
 
     private static List<String> fileToLines(InputStream filename) {
@@ -130,6 +118,20 @@ public class FullSpecTest {
         }
     }
 
+    File getWorkingDirectory(File base) throws IOException {
+        String s = Paths.get("target", this.getClass().getSimpleName()).toString() + File.separatorChar + base.getAbsolutePath().substring(
+                base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
+
+        File workingDir = new File(s.replace('/', File.separatorChar));
+        if (workingDir.exists()) {
+            FileUtils.deleteDirectory(workingDir);
+        }
+        if (!workingDir.exists()) {
+            workingDir.mkdirs();
+        }
+        return workingDir;
+    }
+
     protected void compareCSVs(File expectedCsvFile, File actualCsvFile) throws IOException {
         compareCsvResults(expectedCsvFile, actualCsvFile);
     }
@@ -140,13 +142,35 @@ public class FullSpecTest {
 
         File workingDirectory = getWorkingDirectory(directory);
 
+        IErrorReporter reporter = new ErrorReporter();
+        Mabl mabl = new Mabl(directory, workingDirectory);
+        mabl.setReporter(reporter);
+        mabl.setVerbose(true);
+
+        ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
+        postProcessSpec(directory, workingDirectory, mabl, spec);
+    }
+
+    protected void postProcessSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+        interpretSpec(directory, workingDirectory, mabl, spec);
+    }
+
+    protected void interpretSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+        new MableInterpreter(
+                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
+                .execute(spec);
+
+        compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
+    }
+
+    @NotNull
+    private ARootDocument generateSpec(Mabl mabl, File directory, File workingDirectory) throws Exception {
         File specFolder = new File(workingDirectory, "specs");
         specFolder.mkdirs();
 
         TestJsonObject testJsonObject = getTestJsonObject(directory);
         boolean useTemplate = testJsonObject != null && testJsonObject.autoGenerate;
 
-        IErrorReporter reporter = new ErrorReporter();
 
         for (String lib : Arrays.asList("CSV", "DataWriter", "FMI2", "Logger", "Math", "ArrayUtil")) {
             FileUtils.copyInputStreamToFile(TypeChecker.class.getResourceAsStream("/org/intocps/maestro/typechecker/" + lib + ".mabl"),
@@ -158,9 +182,6 @@ public class FullSpecTest {
             FileUtils.copyFile(input, new File(specFolder, input.getName()));
         }
 
-        Mabl mabl = new Mabl(directory, workingDirectory);
-        mabl.setReporter(reporter);
-        mabl.setVerbose(true);
 
         mabl.parse(getSpecificationFiles(specFolder));
         postParse(mabl);
@@ -177,7 +198,7 @@ public class FullSpecTest {
                     MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(testJsonObject.initialize, "{}")
                             .setFramework(Framework.FMI2).setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration);
 
-            Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, reporter);
+            Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, mabl.getReporter());
             if (testJsonObject.useLogLevels) {
                 builder.setLogLevels(environment.getLogLevels());
             }
@@ -199,24 +220,19 @@ public class FullSpecTest {
         mabl.verify(Framework.FMI2);
 
 
-        if (reporter.getErrorCount() > 0) {
-            reporter.printErrors(new PrintWriter(System.err, true));
+        if (mabl.getReporter().getErrorCount() > 0) {
+            mabl.getReporter().printErrors(new PrintWriter(System.err, true));
             Assertions.fail();
         }
-        if (reporter.getWarningCount() > 0) {
-            reporter.printWarnings(new PrintWriter(System.out, true));
+        if (mabl.getReporter().getWarningCount() > 0) {
+            mabl.getReporter().printWarnings(new PrintWriter(System.out, true));
         }
 
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
         System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
-
-
-        compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
+        return mabl.getMainSimulationUnit();
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {

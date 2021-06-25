@@ -47,12 +47,13 @@ public class Maestro2Broker {
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter) throws IOException {
         this.workingDirectory = workingDirectory;
-        this.mabl = new Mabl(workingDirectory, null);
+        Mabl.MableSettings mableSettings = new Mabl.MableSettings();
+        mableSettings.dumpIntermediateSpecs = false;
+        mableSettings.inlineFrameworkConfig = true;
+        this.mabl = new Mabl(workingDirectory, null, mableSettings);
         this.reporter = reporter;
 
         mabl.setReporter(this.reporter);
-        mabl.getSettings().dumpIntermediateSpecs = false;
-        mabl.getSettings().inlineFrameworkConfig = true;
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,

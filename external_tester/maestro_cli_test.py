@@ -35,68 +35,44 @@ if not os.path.isfile(path):
 # Interpreter outputs to directory from where it is executed.
 outputsFileName = "outputs.csv"
 
-print("Testing CLI with specification generation of: " + path)
-
-def cliSpecGen():
-    testutils.printSection("CLI with Specification Generation")
-    temporary=testutils.createAndPrepareTempDirectory()
-    outputs = os.path.join(temporary.dirPath, outputsFileName)
-    #cmd = "java -jar -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 {0} --dump-simple {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} -sg1 {2} {3} -i -v FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+def testWithCommand(outputs, cmd, temporary):
     print("Cmd: " + cmd)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
         raise Exception(f"Error executing {cmd}")
     else:
-        print("SUCCESS")
         testutils.checkMablSpecExists(temporary.mablSpecPath)
-
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
+        if not testutils.compareCSV('wt/result.csv', outputs):
+            tempActualOutputs=temporary.dirPath +  "actual_result.csv"
             print("Copying outputs file to temporary directory: " + tempActualOutputs)
             shutil.copyfile(outputs, tempActualOutputs)
             raise Exception("Results files do not match")
 
-cliSpecGen()
+def cliSpecGen():
+    testutils.printSection("CLI with Specification Generation")
+    temporary=testutils.createAndPrepareTempDirectory()
+    outputs = os.path.join(temporary.dirPath, outputsFileName)
+    cmd = "java -jar {0} import -output {1} --dump-intermediate sg1 {2} {3} -i -vi FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
+    testWithCommand(outputs, cmd, temporary)
 
 
 def cliRaw():
     testutils.printSection("CLI Raw")
     temporary=testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} {3} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
-    print("Cmd: " + cmd)
-    p = subprocess.run(cmd, shell=True)
-    if p.returncode != 0:
-        raise Exception(f"Error executing {cmd}")
-    else:
-        print("SUCCESS")
-        testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
-            print("Copying outputs file to temporary directory: " + tempActualOutputs)
-            shutil.copyfile(outputs, tempActualOutputs)
-            raise Exception("Results files do not match")
-
-cliRaw()
+    cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} {3} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
+    testWithCommand(outputs, cmd, temporary)
 
 
 def cliExpansion():
     testutils.printSection("CLI Expansion")
     temporary=testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
-    cmd = "java -jar {0} --dump-simple {1} --dump-intermediate {1} {2} -i -v FMI2".format(path, temporary.dirPath, testutils.mablExample)
-    print("Cmd: " + cmd)
-    p = subprocess.run(cmd, shell=True)
-    if p.returncode != 0:
-        raise Exception(f"Error executing {cmd}")
-    else:
-        print("SUCCESS")
-        testutils.checkMablSpecExists(temporary.mablSpecPath)
-        if not testutils.compareCSV("wt/result.csv", outputs):
-            tempActualOutputs=temporary.dirPath + "/actual_" + outputs
-            print("Copying outputs file to temporary directory: " + tempActualOutputs)
-            shutil.copyfile(outputs, tempActualOutputs)
-            raise Exception("Results files do not match")
+    cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
+    testWithCommand(outputs, cmd, temporary)
 
+print("Testing CLI with specification generation of: " + path)
+
+cliRaw()
+cliSpecGen()
 cliExpansion()

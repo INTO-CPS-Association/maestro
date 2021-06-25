@@ -82,4 +82,4 @@ Lastly the component should be unloaded by calling :code:`unload(varaibleStep)` 
     :lines: 93-183
 
 
-.. include:: runtime_components/runtime_plugins.rst
+.. include:: runtime_components/runtime_plugins.inc

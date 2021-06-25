@@ -1,20 +1,25 @@
 package org.intocps.maestro.parser;
 
-import java.util.List;
-
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
 
+import java.util.List;
+
 public class TreeUtils {
 
-    /** Platform dependent end-of-line marker */
+    /**
+     * Platform dependent end-of-line marker
+     */
     public static final String Eol = System.lineSeparator();
-    /** The literal indent char(s) used for pretty-printing */
+    /**
+     * The literal indent char(s) used for pretty-printing
+     */
     public static final String Indents = "  ";
     private static int level;
 
-    private TreeUtils() {}
+    private TreeUtils() {
+    }
 
     /**
      * Pretty print out a whole tree.  is used on the node payloads to get the text
@@ -26,7 +31,9 @@ public class TreeUtils {
     }
 
     private static String process(final Tree t, final List<String> ruleNames) {
-        if (t.getChildCount() == 0) return Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), false);
+        if (t.getChildCount() == 0) {
+            return Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), false);
+        }
         StringBuilder sb = new StringBuilder();
         sb.append(lead(level));
         level++;

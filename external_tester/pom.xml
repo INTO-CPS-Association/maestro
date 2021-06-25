@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.into-cps.maestro</groupId>
+        <artifactId>root</artifactId>
+        <version>2.1.5-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>external_tester</artifactId>
+    <version>2.1.5-SNAPSHOT</version>
+
+    <build>
+
+        <resources>
+            <resource>
+                <directory>${basedir}</directory>
+                <targetPath>${project.build.directory}/ext_test</targetPath>
+                <includes>
+                    <include>*.py</include>
+                    <include>wt/**</include>
+                    <include>requirements.txt</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                        <configuration>
+                            <finalName>unwanted</finalName>
+                            <classifier>unwanted</classifier>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>unpack-sigar</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/ext_test</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.into-cps.maestro</groupId>
+                                    <artifactId>maestro</artifactId>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <destFileName>maestro-cli.jar</destFileName>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.into-cps.maestro</groupId>
+                                    <artifactId>maestro-webapi</artifactId>
+                                    <destFileName>maestro-web.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+
+                    <execution>
+                        <id>external_test</id>
+                        <phase>integration-test</phase>
+                        <configuration>
+                            <tasks>
+                                <exec dir="${project.build.directory}/ext_test" executable="python3" failonerror="true">
+                                    <arg value="-m"/>
+                                    <arg value="venv"/>
+                                    <arg value=".venv"/>
+                                </exec>
+                                <exec dir="${project.build.directory}/ext_test" executable=".venv/bin/pip3"
+                                      failonerror="true">
+                                    <arg value="install"/>
+                                    <arg value="-r"/>
+                                    <arg value="requirements.txt"/>
+                                </exec>
+                                <exec dir="${project.build.directory}/ext_test" executable=".venv/bin/python3"
+                                      failonerror="true">
+                                    <arg value="maestro_cli_test.py"/>
+                                    <arg value="--path"/>
+                                    <arg value="maestro-cli.jar"/>
+                                </exec>
+
+                                <exec dir="${project.build.directory}/ext_test" executable=".venv/bin/python3"
+                                      failonerror="true">
+                                    <arg value="cli_legacy_test.py"/>
+                                    <arg value="--path"/>
+                                    <arg value="maestro-web.jar"/>
+                                </exec>
+
+                                <exec dir="${project.build.directory}/ext_test" executable=".venv/bin/python3"
+                                      failonerror="true">
+                                    <arg value="webapi_test.py"/>
+                                    <arg value="--path"/>
+                                    <arg value="maestro-web.jar"/>
+                                </exec>
+
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+
+
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.into-cps.maestro</groupId>
+            <artifactId>maestro</artifactId>
+            <version>2.1.5-SNAPSHOT</version>
+            <classifier>jar-with-dependencies</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro</groupId>
+            <artifactId>maestro-webapi</artifactId>
+            <version>2.1.5-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+
+</project>

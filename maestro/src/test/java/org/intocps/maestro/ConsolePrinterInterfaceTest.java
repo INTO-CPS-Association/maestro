@@ -3,7 +3,6 @@ package org.intocps.maestro;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.framework.fmi2.api.mabl.BaseApiTest;
 import org.intocps.maestro.framework.fmi2.api.mabl.ConsolePrinter;
-import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
@@ -23,15 +22,15 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     private DynamicActiveBuilderScope dynamicScope;
 
     @BeforeEach
-    public void beforeEach(){
+    public void beforeEach() {
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;
-        builder = new MablApiBuilder(settings, false);
+        builder = new MablApiBuilder(settings);
         dynamicScope = builder.getDynamicScope();
     }
 
     @Test
-    public void PrintTest() throws Exception {
+    public void printTest() throws Exception {
         // Arrange
         String msg = "Test value: ";
         int testVal = 1;
@@ -63,15 +62,15 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void PrintlnTest() throws Exception {
+    public void printLnTest() throws Exception {
         // Arrange
         String msg = "Test value: ";
         int intTestVal = 1;
         double doubleTestVal = 1.0;
         boolean booleanTestVal = true;
         String stringTestVal = "s";
-        Set<String> toContain = Set.of(msg.concat(Integer.toString(intTestVal)), msg.concat(Double.toString(doubleTestVal)),
-                msg.concat(Boolean.toString(booleanTestVal)), msg.concat(stringTestVal));
+        Set<String> toContain = Set.of(msg.concat(String.format("%d", intTestVal)), msg.concat(String.format("%.1f", doubleTestVal)),
+                msg.concat(String.format("%b", booleanTestVal)), String.format("%s", msg.concat(stringTestVal)));
 
         IntVariableFmi2Api intTestValVar = dynamicScope.store("intTestVal", intTestVal);
         DoubleVariableFmi2Api doubleTestValVar = dynamicScope.store("doubleTestVal", doubleTestVal);

@@ -30,7 +30,7 @@ public class InitializerTest {
     InputStream envJson = this.getClass().getResourceAsStream("InitializePluginTest/env.json");
 
     @Test
-    public void ParseConfig() throws IOException {
+    public void parseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();
@@ -40,7 +40,7 @@ public class InitializerTest {
     }
 
     @Test
-    public void UnfoldCallsSpecGen() throws Exception {
+    public void unfoldCallsSpecGen() throws Exception {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
         var prologGenerator = new PrologGenerator();

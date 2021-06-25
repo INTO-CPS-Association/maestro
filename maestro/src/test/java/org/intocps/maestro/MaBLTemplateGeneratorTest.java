@@ -29,7 +29,7 @@ import java.util.Map;
 public class MaBLTemplateGeneratorTest {
 
     @Test
-    public void GenerateSingleWaterTankTemplate() throws Exception {
+    public void generateSingleWaterTankTemplate() throws Exception {
         final double endTime = 10.0;
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
@@ -49,7 +49,7 @@ public class MaBLTemplateGeneratorTest {
     }
 
     @Test
-    public void GenerateSingleWaterTankTemplateMEnv() throws Exception {
+    public void generateSingleWaterTankTemplateMEnv() throws Exception {
         final double endTime = 10.0;
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
@@ -86,6 +86,7 @@ public class MaBLTemplateGeneratorTest {
         mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         mabl.setRuntimeEnvironmentVariables((Map<String, Object>) configData.get("parameters"));
+        mabl.dump(workingDir);
 
 
         if (reporter.getErrorCount() > 0) {
@@ -103,7 +104,7 @@ public class MaBLTemplateGeneratorTest {
     }
 
     @Test
-    public void GenerateSingleWaterTankFawultInjectTemplate() throws Exception {
+    public void generateSingleWaterTankFawultInjectTemplate() throws Exception {
         final double endTime = 10.0;
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();

@@ -49,7 +49,7 @@ import FmiComponentState;
     //state
     int getState(out FmiComponentState state);
     int setState(FmiComponentState state);
-    int freeState(FmiComponentState state);
+    int freeState(out FmiComponentState state);
 
 }
 

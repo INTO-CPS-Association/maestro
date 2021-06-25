@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.ABasicBlockStm;
+import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -16,6 +17,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,64 +49,77 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private LoggerFmi2Api runtimeLogger;
     private ConsolePrinter consolePrinter;
     private ExecutionEnvironmentFmi2Api executionEnvironment;
-    private ExternalResources externalResources = null;
 
-    /**
-     * @param enableDefaultExternalContext If false then it will create the error handling environment, i.e. FMI2 Status Variables and global execution.
-     *                                     If true it will use existing.
-     * @deprecated This is expected to be removed in the future.
-     */
-    @Deprecated
-    public MablApiBuilder(boolean enableDefaultExternalContext) {
-        this(new MablSettings(), new ExternalResources(enableDefaultExternalContext));
-    }
 
     public MablApiBuilder() {
-        this(new MablSettings(), false);
+        this(new MablSettings(), null);
     }
 
     public MablApiBuilder(MablSettings settings) {
-        this(settings, false);
+        this(settings, null);
     }
 
-    public MablApiBuilder(MablSettings settings, boolean enableDefaultExternalContext) {
-        this(settings, new ExternalResources(enableDefaultExternalContext));
-    }
 
     /**
      * Create a MablApiBuilder
      *
      * @param settings
      */
-    public MablApiBuilder(MablSettings settings, ExternalResources externalResources) {
-        BooleanVariableFmi2Api globalExecutionContinue1;
-        this.externalResources = externalResources;
+    public MablApiBuilder(MablSettings settings, INode lastNodePriorToBuilderTakeOver) {
+
+        boolean createdFromExistingSpec = lastNodePriorToBuilderTakeOver != null;
+
 
         this.settings = settings;
         rootScope = new ScopeFmi2Api(this);
 
         fmiStatusVariables = new HashMap<>();
-        if (this.externalResources.fmi2StatusVariables) {
-            fmiStatusVariables.putAll(MablToMablAPI.getFmiStatusVariables(this.nameGenerator));
-        } else {
-            fmiStatusVariables.put(FmiStatus.FMI_OK, rootScope.store("FMI_STATUS_OK", FmiStatus.FMI_OK.getValue()));
-            fmiStatusVariables.put(FmiStatus.FMI_WARNING, rootScope.store("FMI_STATUS_WARNING", FmiStatus.FMI_WARNING.getValue()));
-            fmiStatusVariables.put(FmiStatus.FMI_DISCARD, rootScope.store("FMI_STATUS_DISCARD", FmiStatus.FMI_DISCARD.getValue()));
-            fmiStatusVariables.put(FmiStatus.FMI_ERROR, rootScope.store("FMI_STATUS_ERROR", FmiStatus.FMI_ERROR.getValue()));
-            fmiStatusVariables.put(FmiStatus.FMI_FATAL, rootScope.store("FMI_STATUS_FATAL", FmiStatus.FMI_FATAL.getValue()));
-            fmiStatusVariables.put(FmiStatus.FMI_PENDING, rootScope.store("FMI_STATUS_PENDING", FmiStatus.FMI_PENDING.getValue()));
+        if (settings.fmiErrorHandlingEnabled) {
+            if (createdFromExistingSpec) {
+                //create new variables
+                Function<String, IntVariableFmi2Api> f = (str) -> new IntVariableFmi2Api(null, null, null, null, newAIdentifierExp(str));
+                for (FmiStatus s : FmiStatus.values()) {
+                    //if not existing then create
+                    AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, s.name());
+                    if (decl == null) {
+                        //create the status as it was not found
+                        fmiStatusVariables.put(s, rootScope.store(s.name(), s.getValue()));
+                    } else {
+                        //if exists then link to previous declaration
+                        fmiStatusVariables.put(s, f.apply(s.name()));
+                    }
+                }
+            }
         }
 
         String global_execution_continue_varname = "global_execution_continue";
         String status_varname = "status";
-        if (this.externalResources.continuationVariables) {
-            globalExecutionContinue = new BooleanVariableFmi2Api(null, null, null, newAIdentifierStateDesignator(global_execution_continue_varname),
-                    newAIdentifierExp(global_execution_continue_varname));
-            globalFmiStatus =
-                    new IntVariableFmi2Api(null, null, null, newAIdentifierStateDesignator(status_varname), newAIdentifierExp(status_varname));
+
+        if (createdFromExistingSpec) {
+
+            AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "global_execution_continue");
+            if (decl == null) {
+                globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
+            } else {
+                globalExecutionContinue =
+                        (BooleanVariableFmi2Api) createVariableExact(rootScope, newBoleanType(), newABoolLiteralExp(true), decl.getName().getText(),
+                                true);
+            }
+
+            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, status_varname);
+            if (decl == null) {
+                globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
+            } else {
+                globalFmiStatus = (IntVariableFmi2Api) createVariableExact(rootScope, newIntType(), null, decl.getName().getText(), true);
+            }
+
         } else {
+
             globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
             globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
+            //            globalExecutionContinue =
+            //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
+            //            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
 
         mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
@@ -112,8 +127,11 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
         this.mablToMablAPI = new MablToMablAPI(this);
 
-        if (this.externalResources.runtimeLogger) {
-            this.getMablToMablAPI().createExternalRuntimeLogger();
+        if (createdFromExistingSpec) {
+            AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "logger");
+            if (decl != null) {
+                this.getMablToMablAPI().createExternalRuntimeLogger();
+            }
         }
 
 
@@ -135,42 +153,42 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         if (!this.fmiStatusVariables.containsKey(status)) {
             switch (status) {
                 case FMI_OK: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_OK", FmiStatus.FMI_OK.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_OK.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_OK, var);
                 }
                 break;
                 case FMI_WARNING: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_WARNING", FmiStatus.FMI_WARNING.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_WARNING.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
                     break;
                 }
                 case FMI_DISCARD: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_DISCARD", FmiStatus.FMI_DISCARD.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_DISCARD.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
                 }
                 break;
                 case FMI_ERROR: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_ERROR", FmiStatus.FMI_ERROR.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
                     break;
                 }
                 case FMI_FATAL: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_FATAL", FmiStatus.FMI_FATAL.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_FATAL.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
                     break;
                 }
                 case FMI_PENDING: {
-                    IntVariableFmi2Api var = rootScope.store("FMI_STATUS_PENDING", FmiStatus.FMI_PENDING.getValue());
+                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_PENDING.getValue());
                     //relocate to top of scope
                     rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
@@ -242,8 +260,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     @SuppressWarnings("rawtypes")
     private Variable createVariable(IMablScope scope, PType type, PExp initialValue, String... prefixes) {
         String name = nameGenerator.getName(prefixes);
+        return createVariableExact(scope, type, initialValue, name, false);
+    }
+
+    private Variable createVariableExact(IMablScope scope, PType type, PExp initialValue, String name, boolean external) {
         PStm var = newVariable(name, type, initialValue);
-        scope.add(var);
+        if (!external) {
+            scope.add(var);
+        }
         if (type instanceof ARealNumericPrimitiveType) {
             return new DoubleVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof ABooleanPrimitiveType) {
@@ -263,8 +287,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public MathBuilderFmi2Api getMathBuilder() {
         if (this.mathBuilderApi == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Math");
-            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
+            RuntimeModuleVariable runtimeModule = this.loadRuntimeModule("Math");
+
+            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule.getReferenceExp());
         }
         return this.mathBuilderApi;
 
@@ -383,16 +408,16 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(String name, Object... args) {
         return loadRuntimeModule(dynamicScope.getActiveScope(), name, args);
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
         return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
     }
 
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));
@@ -581,9 +606,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.externalLoadedModuleIdentifier;
     }
 
-    public ExternalResources getExternalResources() {
-        return this.externalResources;
-    }
 
     public enum FmiStatus {
         FMI_OK(0),
@@ -614,33 +636,5 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
          * Automatically retrieves and sets derivatives if possible
          */
         public boolean setGetDerivatives = true;
-    }
-
-    public static class ExternalResources {
-
-        /**
-         * If true the following FMI2StatusFlags already exists and are available to the builder:
-         * OK, DISCARD, WARNING, ERROR, FATAL and PENDING
-         */
-        public final boolean fmi2StatusVariables;
-        /**
-         * If true the following continue-execution variables already exists and are available to the builder:
-         * OK, DISCARD, WARNING, ERROR, FATAL and PENDING
-         */
-        public final boolean continuationVariables;
-        public boolean runtimeLogger;
-
-        public ExternalResources(boolean enabled) {
-            if (enabled) {
-                this.runtimeLogger = true;
-                this.continuationVariables = true;
-                this.fmi2StatusVariables = true;
-
-            } else {
-                this.runtimeLogger = false;
-                this.fmi2StatusVariables = false;
-                this.continuationVariables = false;
-            }
-        }
     }
 }

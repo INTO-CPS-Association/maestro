@@ -2,6 +2,7 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.node.ARefExp;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
@@ -82,7 +83,7 @@ public class StateHandler {
         //free states
         Consumer<List<PStm>> freeAllStates = (list) -> componentNames.forEach(comp -> {
             list.add(newAAssignmentStm(getCompStatusDesignator.apply(comp),
-                    call(newAIdentifierExp((LexIdentifier) comp.clone()), "freeState", getCompStateDesignator.apply(comp))));
+                    call(newAIdentifierExp((LexIdentifier) comp.clone()), "freeState", new ARefExp(getCompStateDesignator.apply(comp)))));
             checkStatus.accept(Map.entry(true, "free state failed"), Map.entry(comp, list));
         });
 

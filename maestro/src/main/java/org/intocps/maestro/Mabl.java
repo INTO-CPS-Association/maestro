@@ -46,21 +46,24 @@ public class Mabl {
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
     final IntermediateSpecWriter intermediateSpecWriter;
     private final File specificationFolder;
-    private final MableSettings settings = new MableSettings();
+    private final MableSettings settings;
     private final Set<ARootDocument> importedDocument = new HashSet<>();
     private boolean verbose;
     private List<Framework> frameworks;
     private ARootDocument document;
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
-
     private Map<String, Object> runtimeEnvironmentVariables;
-
     private ISimulationEnvironment environment;
 
     public Mabl(File specificationFolder, File debugOutputFolder) {
+        this(specificationFolder, debugOutputFolder, new MableSettings());
+    }
+
+    public Mabl(File specificationFolder, File debugOutputFolder, MableSettings settings) {
         this.specificationFolder = specificationFolder;
-        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, debugOutputFolder != null);
+        this.settings = settings;
+        this.intermediateSpecWriter = new IntermediateSpecWriter(debugOutputFolder, settings.dumpIntermediateSpecs);
     }
 
     static Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
@@ -128,6 +131,14 @@ public class Mabl {
         return documents;
     }
 
+    public IErrorReporter getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(IErrorReporter reporter) {
+        this.reporter = reporter;
+    }
+
     private List<String> getResourceFiles(String path) throws IOException {
         return IOUtils.readLines(this.getClass().getClassLoader().getResourceAsStream(path), StandardCharsets.UTF_8);
     }
@@ -138,10 +149,6 @@ public class Mabl {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
-    }
-
-    public void setReporter(IErrorReporter reporter) {
-        this.reporter = reporter;
     }
 
     public void parse(List<File> sourceFiles) throws Exception {
@@ -209,6 +216,7 @@ public class Mabl {
             }
 
             if (settings.inlineFrameworkConfig) {
+
                 this.intermediateSpecWriter.write(document);
             }
         }

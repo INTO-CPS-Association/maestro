@@ -34,11 +34,8 @@ def printSection(section):
     print(section)
     print(hashes)
 
-def terminate(p):
+def cleanUp(p):
     p.terminate()
-    sys.exit()
-
-def terminateSocket(p):
     if socketFile:
         socketFile.close()
 
@@ -66,7 +63,6 @@ def findJar():
 
     return result[0]
 
-
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
@@ -81,7 +77,7 @@ path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
 
 port = args.port
 
-# CHeck if port is free
+# Check if port is free
 if is_port_in_use(port):
     print("Port %s in already in use. Choosing new port" % port)
     port = find_free_port()
@@ -89,8 +85,7 @@ if is_port_in_use(port):
 
 
 if not os.path.isfile(path):
-    print('The path does not exist')
-    sys.exit()
+    raise Exception(f"The path does not exist: {path}")
 
 print("Testing Web api of: " + path + "with port: " + str(port))
 
@@ -115,7 +110,7 @@ try:
             time.sleep(1)
             maxWait -= 1
 
-# Update paths to FMUs
+    # Update paths to FMUs
     config = testutils.retrieveConfiguration()
     print("CONFIG: %s" % json.dumps(config))
 
@@ -166,8 +161,9 @@ try:
     wsThread.join()
     socketFile.close()
 
-    printSection("WS COMPARE")
-    testutils.compare("WS", "wt/wsexpected.txt", wsResult)
+    printSection("WS OUTPUT COMPARE")
+    if(not testutils.compare("WS", "wt/wsexpected.txt", wsResult)):
+        raise Exception("Output files do not match.")
 
     #Get plain results
     printSection("PLAIN RESULT")
@@ -199,7 +195,7 @@ try:
     with open(zipFilePath, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=chunk_size):
             fd.write(chunk)
-    print("Wrote zip file file to: " + zipFilePath)
+    print("Wrote zip file to: " + zipFilePath)
     with closing(ZipFile(zipFilePath)) as archive:
         filesInZipCount = len(archive.infolist())
     if filesInZipCount < 2:
@@ -214,7 +210,6 @@ try:
 
     if not r.status_code == 200:
         raise Exception(f"Could not destroy: {r.text}")
-
+        
 finally:
-    terminateSocket(p)
-    terminate(p)
+    cleanUp(p) 

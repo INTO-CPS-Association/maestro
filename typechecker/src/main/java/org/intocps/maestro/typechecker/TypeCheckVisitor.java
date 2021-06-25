@@ -24,7 +24,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     private final Map<INode, PType> resolvedTypes = new HashMap<>();
     TypeComparator typeComparator;
     MableAstFactory astFactory;
-    Map<INode, PType> checkedTypes = new HashMap();
+    Map<INode, PType> checkedTypes = new HashMap<>();
 
     public TypeCheckVisitor(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;
@@ -95,6 +95,12 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
         PType type = node.getArray().apply(this, ctxt);
+
+        if (!typeComparator.compatible(AArrayType.class, type)) {
+            errorReporter.report(0, "Only array types can be indexed", null);
+            return store(node, MableAstFactory.newAUnknownType());
+        }
+
         PType iterationType = type.clone();
         //TODO: Step down through the types according to the size of the indicesLinkedList
         for (int i = 0; i < node.getIndices().size(); i++) {
@@ -203,7 +209,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 }
             }
         } else {
-            errorReporter.report(0, "Array initializer must not be empty", null);
+            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
         }
         return store(node, newAArrayType(type).clone());
     }
@@ -238,19 +244,56 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             // This is a module
             // Ensure that the object is of module type
             PType objectType = node.getObject().apply(this, ctxt);
+            PDeclaration decl = new DefinitionFinder(this.checkedTypes::get).find(node.getObject(), ctxt);
 
-            if (objectType instanceof AModuleType) {
-                def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
-            } else {
+            if (decl == null) {
                 errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
                         node.getMethodName().getSymbol());
             }
+            if (decl instanceof AModuleDeclaration) {
+                if (node.getExpand() != null) {
+                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+                } else {
+                    errorReporter.report(0, "Static calls not allowed on type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+                            node.getMethodName().getSymbol());
+                    return store(node, newAUnknownType());
+                }
+            } else if (decl instanceof AVariableDeclaration) {
+
+
+                //ok so its variable to lets see if its type is callable
+                if (objectType instanceof AModuleType) {
+                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+                }
+
+
+            }
+
+            //            if (node.getExpand() != null) {
+            //                //static call required
+            //                if (objectType instanceof AModuleType) {
+            //                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+            //                } else {
+            //                    errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+            //                            node.getMethodName().getSymbol());
+            //                }
+            //            } else {
+            //                //static call not allowed
+            //                if (objectType instanceof AVarType && ((AVarType) objectType).getType() instanceof AModuleType) {
+            //                    def = ctxt.findDeclaration(((AModuleType) ((AVarType) objectType).getType()).getName(), node.getMethodName());
+            //                } else {
+            //                    errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+            //                            node.getMethodName().getSymbol());
+            //                }
+            //            }
+
+
         } else {
             def = ctxt.findDeclaration(node.getMethodName());
         }
 
         if (def == null) {
-            errorReporter.report(0, "Call decleration not found: " + functionDisplayName, node.getMethodName().getSymbol());
+            errorReporter.report(0, "Call declaration not found: " + functionDisplayName, node.getMethodName().getSymbol());
         } else {
             PType type = checkedTypes.get(def).clone();
 
@@ -526,6 +569,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType checkNumeric(SBinaryExp node, Context ctxt) throws AnalysisException {
 
         PType left = node.getLeft().apply(this, ctxt);
+
 
         if (!typeComparator.compatible(SNumericPrimitiveType.class, left)) {
             errorReporter.report(2, "Type is not numeric: " + node.getLeft() + " - type: " + left, null);
