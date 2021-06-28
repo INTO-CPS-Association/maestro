@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -61,6 +62,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+
 
         logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
         JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
@@ -206,7 +208,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
-                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config", jacobianStepConfig.variableStepAlgorithm));
+                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config",
+                        StringEscapeUtils.escapeJava(jacobianStepConfig.variableStepAlgorithm)));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }

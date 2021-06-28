@@ -106,7 +106,7 @@ public class Maestro2Broker {
         config.relativeTolerance = initializeRequest.getGlobal_relative_tolerance();
         config.stabilisationLoopMaxIterations = 5;
         config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
-        config.variableStepAlgorithm = StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()));
+        config.variableStepAlgorithm = (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm());
 
         IStepAlgorithm algorithm;
         if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {

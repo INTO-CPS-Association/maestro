@@ -127,27 +127,12 @@ public class VariableStepValue extends ModuleValue {
         StepsizeInterval stepsizeInterval;
         Double initSize;
 
-        // Try to generate config from uri
-        JsonNode config = null;
-        try {
-            URI pathAsUri = URI.create((new URI(algorithmAsUriOrJson)).getRawPath());
-            if (!pathAsUri.isAbsolute()) {
-                pathAsUri = (new File(".")).toURI().resolve(pathAsUri);
-            }
-            config = (new ObjectMapper()).readTree(new String(Files.readAllBytes(Paths.get(pathAsUri))));
-        } catch (URISyntaxException | IOException e) {
-            if (e instanceof IOException) {
-                throw new InterpreterException("Configuration could not be passed", e);
-            }
-        }
-
         // Try to generate config from json
-        if (config == null) {
-            try {
-                config = (new ObjectMapper()).readTree(StringEscapeUtils.unescapeJava(algorithmAsUriOrJson));
-            } catch (JsonProcessingException e) {
-                throw new InterpreterException("Configuration could not be passed", e);
-            }
+        JsonNode config;
+        try {
+            config = (new ObjectMapper()).readTree(StringEscapeUtils.unescapeJava(algorithmAsUriOrJson));
+        } catch (JsonProcessingException e) {
+            throw new InterpreterException("Configuration could not be passed", e);
         }
 
         if (config != null) {
