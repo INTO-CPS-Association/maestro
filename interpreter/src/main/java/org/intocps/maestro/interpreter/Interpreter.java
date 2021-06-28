@@ -301,12 +301,12 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         Context callContext = question;
         if (node.getObject() != null) {
-            Value v = node.getObject().apply(this, question);
-            if (v == null) {
-                logger.error("The object is null: " + node.getObject().toString());
-                throw new InterpreterException("Unhanled node: " + node);
+            Value v = node.getObject().apply(this, question).deref();
+            if (v instanceof NullValue) {
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node.toString() + "\"");
+                throw new InterpreterException("Unhandled node: " + node);
             } else {
-                ModuleValue objectModule = (ModuleValue) v.deref();
+                ModuleValue objectModule = (ModuleValue) v;
                 callContext = new ModuleContext(objectModule, question);
             }
         }
