@@ -22,24 +22,20 @@ public class WhileMaBLScope extends ScopeFmi2Api implements Fmi2Builder.WhileSco
     }
 
     /**
-     * If fmiErrorHandling is enabled in the MablApiBuilder.settings then the leave operation on a while scope automatically created an subsequent if
-     * with an
-     * additional break if global_execution_continue is false in
-     * order to break out sufficiently.
+     * If fmiErrorHandling is enabled in the MablApiBuilder settings then
+     * the leave operation on a while scope automatically created a subsequent !global_execution_continue check
+     * with an additional break in order to break out successfully
      *
      * @return
      */
     @Override
     public ScopeFmi2Api leave() {
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            ScopeFmi2Api scopeToReturn = super.leave();
-            IfMaBlScope scope = scopeToReturn.enterIf(builder.getGlobalExecutionContinue().toPredicate().not());
-            ScopeFmi2Api then = scope.enterThen();
-            then.add(newBreak());
-            then.leave();
-            return scope.leave();
+            IMablScope notThenScope = super.leave().enterIf(builder.getGlobalExecutionContinue().toPredicate().not()).enterThen();
+            notThenScope.add(newBreak());
+            return notThenScope.leave();
         } else {
-            return leave();
+            return super.leave();
         }
     }
 }
