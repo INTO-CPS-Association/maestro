@@ -11,7 +11,7 @@ import io.swagger.annotations.ApiModel;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface IAlgorithmConfig {
     @JsonIgnore
-    StepAlgorithm getType();
+    StepAlgorithm getAlgorithmType();
     @JsonIgnore
     double getStepSize();
 }

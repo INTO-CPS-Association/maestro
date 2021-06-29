@@ -138,7 +138,7 @@ public class MaBLTemplateGenerator {
     public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig) {
         PStm algorithmStm;
 
-        switch (algorithmConfig.getType()) {
+        switch (algorithmConfig.getAlgorithmType()) {
             case FIXEDSTEP:
                 algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),

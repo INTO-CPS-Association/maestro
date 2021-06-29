@@ -20,8 +20,6 @@ public abstract class VarStepConstraint {
     public String type;
     public abstract void validate() throws Exception;
 
-
-
     @ApiModel(parent = VarStepConstraint.class)
     public static class SamplingConstraint extends VarStepConstraint {
         Integer base;

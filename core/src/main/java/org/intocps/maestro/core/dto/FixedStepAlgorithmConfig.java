@@ -19,7 +19,7 @@ public class FixedStepAlgorithmConfig implements IAlgorithmConfig {
     }
 
     @Override
-    public StepAlgorithm getType() {
+    public StepAlgorithm getAlgorithmType() {
         return StepAlgorithm.FIXEDSTEP;
     }
 

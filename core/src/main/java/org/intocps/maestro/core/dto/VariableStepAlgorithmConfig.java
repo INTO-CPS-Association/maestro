@@ -35,7 +35,7 @@ public class VariableStepAlgorithmConfig implements IAlgorithmConfig {
     }
 
     @Override
-    public StepAlgorithm getType() {
+    public StepAlgorithm getAlgorithmType() {
         return StepAlgorithm.VARIABLESTEP;
     }
 
