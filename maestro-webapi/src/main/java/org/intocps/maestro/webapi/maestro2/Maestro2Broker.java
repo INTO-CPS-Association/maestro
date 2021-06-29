@@ -16,7 +16,7 @@ import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.core.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
@@ -96,7 +96,7 @@ public class Maestro2Broker {
                         .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                                 Map.Entry::getValue));
 
-        // Setup algorithm
+        // Setup step config
         JacobianStepConfig config = new JacobianStepConfig();
         config.stabilisation = initializeRequest.isStabalizationEnabled();
         config.absoluteTolerance = initializeRequest.getGlobal_absolute_tolerance();

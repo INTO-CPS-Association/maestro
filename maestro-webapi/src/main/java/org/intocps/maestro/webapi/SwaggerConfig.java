@@ -1,7 +1,6 @@
 package org.intocps.maestro.webapi;
 
 import com.fasterxml.classmate.TypeResolver;
-import org.intocps.maestro.core.dto.InitializationData;
 import org.intocps.maestro.core.dto.VarStepConstraint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

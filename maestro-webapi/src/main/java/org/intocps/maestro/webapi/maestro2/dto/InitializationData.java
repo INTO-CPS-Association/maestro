@@ -1,9 +1,9 @@
-package org.intocps.maestro.core.dto;
+package org.intocps.maestro.webapi.maestro2.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import org.intocps.maestro.core.dto.IAlgorithmConfig;
 
 import java.net.URI;
 import java.util.HashMap;

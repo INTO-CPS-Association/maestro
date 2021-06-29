@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.plugin.PluginIdentification;
-import org.intocps.maestro.core.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 
 import java.util.Map;
