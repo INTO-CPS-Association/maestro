@@ -97,6 +97,8 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
             thenScope.leave();
         }
 
+        ((IMablScope) scope).registerComponentVariableFmi2Api(aMablFmi2ComponentAPI);
+
         return aMablFmi2ComponentAPI;
     }
 
