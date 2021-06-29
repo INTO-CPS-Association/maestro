@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -118,7 +119,7 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        ObjectMapper mapper = new ObjectMapper();//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
 
