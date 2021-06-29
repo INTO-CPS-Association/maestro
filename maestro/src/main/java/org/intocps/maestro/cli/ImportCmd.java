@@ -69,7 +69,7 @@ public class ImportCmd implements Callable<Integer> {
         algorithmConfig.startTime = 0.0;
         algorithmConfig.endTime = simulationConfiguration.endTime;
         algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(
-                ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize());
+                ((FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize());
 
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)

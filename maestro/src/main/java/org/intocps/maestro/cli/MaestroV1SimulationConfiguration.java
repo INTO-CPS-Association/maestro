@@ -1,6 +1,7 @@
 package org.intocps.maestro.cli;
 
 import com.fasterxml.jackson.annotation.*;
+import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 
 import java.util.List;
@@ -29,25 +30,4 @@ public class MaestroV1SimulationConfiguration extends Fmi2SimulationEnvironmentC
 
     @JsonProperty("algorithm")
     public IAlgorithmConfig algorithm;
-
-
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-    @JsonSubTypes({@JsonSubTypes.Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step")})
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public interface IAlgorithmConfig {
-    }
-
-    public static class FixedStepAlgorithmConfig implements IAlgorithmConfig {
-        @JsonProperty("size")
-        public final Double size;
-
-        @JsonCreator
-        public FixedStepAlgorithmConfig(@JsonProperty("size") Double size) {
-            this.size = size;
-        }
-
-        public Double getSize() {
-            return size;
-        }
-    }
 }
