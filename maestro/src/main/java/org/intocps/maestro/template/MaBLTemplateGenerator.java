@@ -7,11 +7,12 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.core.api.IStepAlgorithm;
+import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
+import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,10 +135,10 @@ public class MaBLTemplateGenerator {
         return statements;
     }
 
-    public static ExpandStatements generateAlgorithmStms(IStepAlgorithm algorithm) {
+    public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig) {
         PStm algorithmStm;
 
-        switch (algorithm.getType()) {
+        switch (algorithmConfig.getType()) {
             case FIXEDSTEP:
                 algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
                         .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
@@ -158,7 +159,7 @@ public class MaBLTemplateGenerator {
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
 
-        return new ExpandStatements(Arrays.asList(createRealVariable(STEP_SIZE_NAME, algorithm.getStepSize())), Arrays.asList(algorithmStm));
+        return new ExpandStatements(Arrays.asList(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), Arrays.asList(algorithmStm));
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -232,17 +233,18 @@ public class MaBLTemplateGenerator {
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToInstanceName.keySet()));
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
-        ExpandStatements algorithmStatements = null;
-        if (templateConfiguration.getAlgorithm() != null) {
-            algorithmStatements = generateAlgorithmStms(templateConfiguration.getAlgorithm());
-            if (algorithmStatements.variablesToTopOfMabl != null) {
-                stmMaintainer.addAll(algorithmStatements.variablesToTopOfMabl);
-            }
+        if (templateConfiguration.getStepAlgorithmConfig() == null) {
+            throw new RuntimeException("No step algorithm config found");
+        }
+        JacobianStepConfig jacobianStepConfig = (JacobianStepConfig) templateConfiguration.getStepAlgorithmConfig();
+        ExpandStatements algorithmStatements = generateAlgorithmStms(jacobianStepConfig.stepAlgorithm);
+        if (algorithmStatements.variablesToTopOfMabl != null) {
+            stmMaintainer.addAll(algorithmStatements.variablesToTopOfMabl);
         }
 
         // add variable statements for start time and end time.
-        stmMaintainer.add(createRealVariable(START_TIME_NAME, templateConfiguration.getAlgorithm().getStartTime()));
-        stmMaintainer.add(createRealVariable(END_TIME_NAME, templateConfiguration.getAlgorithm().getEndTime()));
+        stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
+        stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
 
         // Add the initializer expand stm
         if (templateConfiguration.getInitialize().getKey()) {

@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import picocli.CommandLine;
 
@@ -64,10 +65,15 @@ public class ImportCmd implements Callable<Integer> {
         initialize.put("parameters", simulationConfiguration.parameters);
         initialize.put("environmentParameters", simulationConfiguration.environmentParameters);
 
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = simulationConfiguration.endTime;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(
+                ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize());
+
         builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)
-                .setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
-                        ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize(), 0.0));
+                .setStepAlgorithmConfig(algorithmConfig);
 
 
         return builder.build();

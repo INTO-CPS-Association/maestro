@@ -1,4 +1,4 @@
-package org.intocps.maestro.webapi.maestro2.dto;
+package org.intocps.maestro.core.dto;
 
 import com.fasterxml.jackson.annotation.*;
 import io.swagger.annotations.ApiModel;
@@ -10,4 +10,8 @@ import io.swagger.annotations.ApiModel;
         @JsonSubTypes.Type(value = VariableStepAlgorithmConfig.class, name = "var-step")})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface IAlgorithmConfig {
+    @JsonIgnore
+    StepAlgorithm getType();
+    @JsonIgnore
+    double getStepSize();
 }

@@ -12,7 +12,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.StepAlgorithm;
+import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
@@ -209,7 +209,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         .collect(Collectors.toList());
 
                 variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config",
-                        StringEscapeUtils.escapeJava(jacobianStepConfig.variableStepAlgorithm)));
+                        StringEscapeUtils.escapeJava( (new ObjectMapper()).writeValueAsString(jacobianStepConfig.stepAlgorithm))));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }

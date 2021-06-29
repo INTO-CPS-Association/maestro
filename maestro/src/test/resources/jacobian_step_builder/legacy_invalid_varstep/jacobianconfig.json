@@ -6,5 +6,21 @@
   "stabilisationLoopMaxIterations": 5,
   "simulationProgramDelay": false,
   "setGetDerivatives": false,
-  "variableStepAlgorithm": "{\"type\":\"var-step\",\"size\":[0.001,0.2],\"initsize\":0.01,\"constraints\":{\"bd\":{\"type\":\"boundeddifference\",\"ports\":[\"{pump}.pump.mdot_out\"],\"abstol\":0.3}}}"
+  "stepAlgorithm": {
+    "type": "var-step",
+    "size": [
+      0.001,
+      0.2
+    ],
+    "initsize": 0.01,
+    "constraints": {
+      "bd": {
+        "type": "boundeddifference",
+        "ports": [
+          "{pump}.pump.mdot_out"
+        ],
+        "abstol": 0.3
+      }
+    }
+  }
 }

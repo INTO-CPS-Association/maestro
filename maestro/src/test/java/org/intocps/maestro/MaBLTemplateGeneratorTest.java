@@ -6,7 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -38,9 +38,13 @@ public class MaBLTemplateGeneratorTest {
                 new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
-        FixedStepAlgorithm stepSizeAlgorithm = new FixedStepAlgorithm(endTime, stepSize, 0.0);
 
-        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithm(stepSizeAlgorithm).setFramework(Framework.FMI2)
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = endTime;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(stepSize);
+
+        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithmConfig(algorithmConfig).setFramework(Framework.FMI2)
                 .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
 
 
@@ -58,7 +62,6 @@ public class MaBLTemplateGeneratorTest {
                 new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
-        FixedStepAlgorithm stepSizeAlgorithm = new FixedStepAlgorithm(endTime, stepSize, 0.0);
 
         Map<String, Object> config = new HashMap<>();
         config.put("environmentParameters", Arrays.asList("{x1}.crtlInstance.maxlevel"));
@@ -67,8 +70,11 @@ public class MaBLTemplateGeneratorTest {
         config.put("parameters", configData.get("parameters"));
 
         JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = endTime;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(stepSize);
         MaBLTemplateConfiguration mtc =
-                b.useInitializer(true, new ObjectMapper().writeValueAsString(config)).setStepAlgorithm(stepSizeAlgorithm).setFramework(Framework.FMI2)
+                b.useInitializer(true, new ObjectMapper().writeValueAsString(config)).setFramework(Framework.FMI2)
                         .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).setStepAlgorithmConfig(algorithmConfig).build();
 
 
@@ -114,9 +120,13 @@ public class MaBLTemplateGeneratorTest {
         simulationEnvironmentConfiguration.faultInjectInstances = Map.of("crtlInstance", "constraintid");
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
-        FixedStepAlgorithm stepSizeAlgorithm = new FixedStepAlgorithm(endTime, stepSize, 0.0);
 
-        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithm(stepSizeAlgorithm).setFramework(Framework.FMI2)
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = endTime;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(stepSize);
+
+        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithmConfig(algorithmConfig).setFramework(Framework.FMI2)
                 .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
 
 

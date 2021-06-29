@@ -1,6 +1,6 @@
 package org.intocps.maestro.webapi.controllers;
 
-import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.core.dto.InitializationData;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;

@@ -6,6 +6,34 @@
   "stabilisationLoopMaxIterations": 5,
   "simulationProgramDelay": false,
   "setGetDerivatives": false,
-  "variableStepAlgorithm": "{\"type\":\"var-step\",\"initsize\":0.1,\"size\":[1.0e-17,1],\"constraints\":{\"max\":{\"type\":\"zerocrossing\",\"ports\":[\"{tank}.wtInstance.level\",\"{ctrl}.ctrlInstance.maxlevel\"],\"order\":1,\"abstol\":0.01},\"min\":{\"type\":\"zerocrossing\",\"ports\":[\"{tank}.wtInstance.level\",\"{ctrl}.ctrlInstance.minlevel\"],\"order\":1,\"abstol\":0.01,\"safety\":1}}}"
+  "stepAlgorithm": {
+    "type": "var-step",
+    "initsize": 0.1,
+    "size": [
+      1.0e-17,
+      1
+    ],
+    "constraints": {
+      "max": {
+        "type": "zerocrossing",
+        "ports": [
+          "{tank}.wtInstance.level",
+          "{ctrl}.ctrlInstance.maxlevel"
+        ],
+        "order": 1,
+        "abstol": 0.01
+      },
+      "min": {
+        "type": "zerocrossing",
+        "ports": [
+          "{tank}.wtInstance.level",
+          "{ctrl}.ctrlInstance.minlevel"
+        ],
+        "order": 1,
+        "abstol": 0.01,
+        "safety": 1
+      }
+    }
+  }
 }
 

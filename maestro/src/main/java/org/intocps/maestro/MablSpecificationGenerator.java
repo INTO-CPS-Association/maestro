@@ -126,7 +126,6 @@ public class MablSpecificationGenerator {
 
         List<AImportedModuleCompilationUnit> pluginUnits =
                 plugins.stream().map(IMaestroExpansionPlugin::getDeclaredImportUnit).collect(Collectors.toList());
-        //                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
         List<ARootDocument> documentList = Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList());
         documentList.add(new ARootDocument(pluginUnits));
 
@@ -145,10 +144,6 @@ public class MablSpecificationGenerator {
         } else if (depth > configuration.maximumExpansionDepth) {
             throw new RuntimeException("Recursive external expansion larger than " + configuration.maximumExpansionDepth);
         }
-
-
-        //        Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = plugins.getTypesPlugins();
-
 
         //TODO: It is not necessary to check if it is expand as all CallExps are expand.
         // CallExps to runtime modules are part of Dot Exp.

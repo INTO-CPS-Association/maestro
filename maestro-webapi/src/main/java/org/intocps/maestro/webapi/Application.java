@@ -5,7 +5,7 @@ import org.apache.commons.cli.CommandLine;
 import org.intocps.maestro.MaestroV1CliProxy;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.webapi.maestro2.Maestro2Broker;
-import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.core.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
