@@ -3,7 +3,11 @@
 Runtime Components
 ==================
 
-The Variable Step Component
+Console Printer Component
+---------------------------
+The console printer component is used for printing directly to the system console.
+
+Variable Step Component
 ---------------------------
 The variable step component is used for calculating a variable step size during simulation. The component has the following methods:
 
