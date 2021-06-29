@@ -104,6 +104,8 @@ public class Maestro2Broker {
         config.stabilisationLoopMaxIterations = 5;
         config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
         config.stepAlgorithm = initializeRequest.getAlgorithm();
+        config.startTime = body.getStartTime();
+        config.endTime = body.getEndTime();
 
         if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
