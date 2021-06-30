@@ -27,7 +27,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void failOnInvalidTypeBeforeRuntimeTest() throws Exception {
+    public void failOnInvalidTypeBeforeRuntimeTest() {
         // Arrange
         String msg = "Invalid test variable: ";
         ConsolePrinter consolePrinter = builder.getConsolePrinter();
