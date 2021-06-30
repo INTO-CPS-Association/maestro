@@ -730,43 +730,45 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
-        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
-        for (int i = 0; i < sortedPorts.size(); i++) {
-            Fmi2Builder.Port p = sortedPorts.get(i);
-            PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
-            scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
-        }
-
-        PType type = sortedPorts.get(0).getType();
-        ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
-        for (int i = 0; i < sortedPorts.size(); i++) {
-            PortFmi2Api p = sortedPorts.get(i);
-            PStateDesignator designator = valBuf.items().get(i).getDesignator();
-
-
-            scope.addAll(BuilderUtil.createTypeConvertingAssignment(builder, scope, designator.clone(), portToValue.apply(p).getKey().clone(),
-                    portToValue.apply(p).getValue(), valBuf.type));
-        }
-
-        AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
-                call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), vrefBuf.getReferenceExp().clone(),
-                        newAUIntLiteralExp((long) sortedPorts.size()), valBuf.getReferenceExp().clone()));
-        scope.add(stm);
-
-        if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
-        }
-
-        try {
-            if (builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() &&
-                    type.equals(new ARealNumericPrimitiveType())) {
-                setDerivativesForSharedPorts(sortedPorts, scope);
+        // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
+        sortedPorts.stream().collect(Collectors.groupingBy(i -> i.getType().toString())).forEach((key, value) -> {
+            ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
+            PType type = value.get(0).getType();
+            for (int i = 0; i < value.size(); i++) {
+                Fmi2Builder.Port p = value.get(i);
+                PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
+                scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
             }
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException("Exception occurred when when setting derivatives.", e);
-        }
+
+            ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type);
+            for (int i = 0; i < value.size(); i++) {
+                PortFmi2Api p = value.get(i);
+                PStateDesignator designator = valBuf.items().get(i).getDesignator();
+
+                scope.addAll(BuilderUtil.createTypeConvertingAssignment(builder, scope, designator.clone(),
+                        portToValue.apply(p).getKey().clone(), portToValue.apply(p).getValue(), valBuf.type));
+            }
+
+            AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, value.get(0)),
+                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) value.size()), valBuf.getReferenceExp().clone()));
+            scope.add(stm);
+
+            if (builder.getSettings().fmiErrorHandlingEnabled) {
+                FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
+                        MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            }
+
+            try {
+                if (builder.getSettings().setGetDerivatives && modelDescriptionContext.getModelDescription().getCanInterpolateInputs() &&
+                        type.equals(new ARealNumericPrimitiveType())) {
+                    setDerivativesForSharedPorts(value, scope);
+                }
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException("Exception occurred when when setting derivatives.", e);
+            }
+        });
     }
 
     /**
@@ -984,11 +986,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     @Override
     public <V> void share(Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> values) {
-        values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType())).entrySet().stream().forEach(map -> {
-            PType type = map.getKey();
+        // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
+        values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType().toString())).entrySet().stream().forEach(map -> {
+            PType type = ((PortFmi2Api)map.getValue().get(0).getKey()).getType();
+
             Map<Fmi2Builder.Port, Fmi2Builder.Variable> data =
                     map.getValue().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
 
             data.keySet().stream().map(PortFmi2Api.class::cast).sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).forEach(port -> {
                 //this is the sorted set of assignments, these can be replaced by a memcopy later
