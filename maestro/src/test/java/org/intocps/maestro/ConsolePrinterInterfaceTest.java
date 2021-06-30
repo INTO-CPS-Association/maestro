@@ -27,18 +27,6 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void failOnInvalidTypeBeforeRuntimeTest() {
-        // Arrange
-        String msg = "Invalid test variable: ";
-        ConsolePrinter consolePrinter = builder.getConsolePrinter();
-        Integer[] arr = new Integer[]{1,2,3};
-        ArrayVariableFmi2Api<Integer> invalidVar = dynamicScope.store("InvalidValue", arr);
-
-        // Assert
-        Assertions.assertThrows(IllegalArgumentException.class, () -> consolePrinter.print(msg.concat("%d"), invalidVar));
-    }
-
-    @Test
     public void printTest() throws Exception {
         // Arrange
         String msg = "Test value: ";
