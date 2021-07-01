@@ -34,12 +34,12 @@
             <groupId>org.into-cps.vdmcheck.fmi2</groupId>
             <artifactId>vdmcheck2</artifactId>
             <version>1.0.3-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fujitsu</groupId>
-                    <artifactId>annotations</artifactId>
-                </exclusion>
-            </exclusions>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>com.fujitsu</groupId>-->
+<!--                    <artifactId>annotations</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
 
         <dependency>
