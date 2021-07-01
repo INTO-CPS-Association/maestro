@@ -17,6 +17,6 @@ public class FmuValidatorTest {
         URL fmuUrl = FmuValidatorTest.class.getClassLoader().getResource("watertankcontroller-c.fmu");
         IErrorReporter errorReporter = new ErrorReporter();
         Assertions.assertDoesNotThrow(() -> fmuValidator.validate("1", Objects.requireNonNull(fmuUrl).toURI(), errorReporter));
-        Assertions.assertNotEquals(0, errorReporter.getWarnings().size());
+        Assertions.assertEquals(2, errorReporter.getWarnings().size());
     }
 }
