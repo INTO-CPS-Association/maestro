@@ -1,0 +1,28 @@
+simulation 
+import FMI2;
+import ConsolePrinter;
+@Framework("FMI2");
+{
+    ConsolePrinter consoleprinter = load("ConsolePrinter");
+
+    string string_val = "a string";
+    consoleprinter.println("String value: %s", string_val);
+
+    int int_val = 1;
+    consoleprinter.print("Integer value: %d", int_val);
+
+    bool boolean_val = true;
+    consoleprinter.print("Boolean value: %b", boolean_val);
+
+    real double_val = 1.0;
+    consoleprinter.println("Double value: %.1f", double_val);
+
+    consoleprinter.println("All raw values: %d, %.1f, %b, %s", 1, 1.0, true, "a string");
+    
+    consoleprinter.println("All variables: %d, %.1f, %b, %s", int_val, double_val, boolean_val, string_val);
+
+    if( consoleprinter != null )
+    {
+        unload(consoleprinter);
+    }
+}

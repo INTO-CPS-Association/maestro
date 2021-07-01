@@ -47,7 +47,7 @@ public class MablCppCodeGenerator {
     private void copyLibraries(File outputDirectory) throws IOException {
 
 
-        String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv", "BooleanLogic", "DataWriterConfig", "unzip"};
+        String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv", "BooleanLogic", "DataWriterConfig", "unzip", "FmiComponentState"};
 
         for (String libraryName : libraries) {
             for (String ext : new String[]{"cpp", "h"}) {
@@ -55,7 +55,9 @@ public class MablCppCodeGenerator {
                 InputStream is = this.getClass().getResourceAsStream("libs/" + name);
                 File libs = new File(outputDirectory, "libs");
                 libs.mkdirs();
-                org.apache.commons.io.IOUtils.copy(is, new FileOutputStream(new File(libs, name)));
+                if (is != null) {
+                    org.apache.commons.io.IOUtils.copy(is, new FileOutputStream(new File(libs, name)));
+                }
             }
         }
     }

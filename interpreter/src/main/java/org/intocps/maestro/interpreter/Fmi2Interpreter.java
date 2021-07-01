@@ -19,10 +19,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -699,7 +696,10 @@ public class Fmi2Interpreter {
             FmuComponentValue component = (FmuComponentValue) fargs.get(0);
 
             try {
-                component.getFmuLoggerOutputStream().close();
+                OutputStream loggerOutputStream = component.getFmuLoggerOutputStream();
+                if (loggerOutputStream != null) {
+                    loggerOutputStream.close();
+                }
                 component.getModule().freeInstance();
             } catch (IOException | FmuInvocationException e) {
                 e.printStackTrace();

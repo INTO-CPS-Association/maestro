@@ -24,6 +24,7 @@ import java.util.stream.Stream;
         "        \"necessary plugin extensions in the classpath", mixinStandardHelpOptions = true)
 public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> jsonFileFilter = f -> f.getName().toLowerCase().endsWith(".json");
+    static final Predicate<File> mablFileFilter = f -> f.getName().toLowerCase().endsWith(".mabl");
     @CommandLine.Parameters(index = "0", description = "The valid import formats: ${COMPLETION-CANDIDATES}")
     ImportType type;
     @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
@@ -98,9 +99,19 @@ public class ImportCmd implements Callable<Integer> {
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
 
+        List<File> mablFiles = Stream.concat(
+                files.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mablFileFilter::test)))),
+                files.stream().filter(File::isFile).filter(mablFileFilter)).collect(Collectors.toList());
+
+        if (!util.parse(mablFiles)) {
+            System.err.println("Failed to parse some files");
+            return 1;
+        }
+
         List<File> sourceFiles = Stream.concat(
                 files.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(jsonFileFilter::test)))),
                 files.stream().filter(File::isFile).filter(jsonFileFilter)).collect(Collectors.toList());
+
 
         if (type == ImportType.Sg1) {
             if (!importSg1(util, sourceFiles)) {
@@ -161,6 +172,7 @@ public class ImportCmd implements Callable<Integer> {
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
             MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
+
             util.mabl.generateSpec(templateConfig);
             util.mabl.setRuntimeEnvironmentVariables(config.getParameters());
 

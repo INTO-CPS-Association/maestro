@@ -25,6 +25,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     private final MablApiBuilder builder;
     private final SBlockStm block;
     IntVariableFmi2Api fmiStatusVariable = null;
+    private final List<ComponentVariableFmi2Api> fmi2ComponentVariables = new ArrayList<>();
 
     public ScopeFmi2Api(MablApiBuilder builder) {
         this.builder = builder;
@@ -469,5 +470,24 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         } else {
             return this.parent.getFmiStatusVariable();
         }
+    }
+
+    @Override
+    public void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api) {
+        this.fmi2ComponentVariables.add(componentVariableFmi2Api);
+    }
+
+    @Override
+    public Set<ComponentVariableFmi2Api> getAllComponentFmi2Variables() {
+        HashSet<ComponentVariableFmi2Api> compFmi2Variables = new HashSet<>();
+        compFmi2Variables.addAll(this.fmi2ComponentVariables);
+        ScopeFmi2Api parentScope = this.parent;
+        while (parentScope != null) {
+            compFmi2Variables.addAll(parentScope.getAllComponentFmi2Variables());
+            parentScope = parentScope.parent;
+        }
+
+
+        return compFmi2Variables;
     }
 }

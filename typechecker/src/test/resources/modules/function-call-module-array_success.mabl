@@ -1,0 +1,17 @@
+module Global {
+ 	bool identityBool( bool a);
+}
+
+simulation
+import Global;
+{
+Global g = load("Global");
+Global globals[1]={g};
+bool r = globals[0].identityBool(true);
+
+
+
+unload(g);
+
+
+}
