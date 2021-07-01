@@ -10,7 +10,7 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2EnvironmentConfiguration;
@@ -18,6 +18,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.jetbrains.annotations.NotNull;
@@ -206,7 +207,13 @@ public class FullSpecTest {
             if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
                 Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
                         (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
-                builder.setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime, a.size, 0.0))
+
+                JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+                algorithmConfig.startTime = 0.0;
+                algorithmConfig.endTime = simulationConfiguration.endTime;
+                algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(a.size);
+
+                builder.setStepAlgorithmConfig(algorithmConfig)
                         .setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn);
             }
 

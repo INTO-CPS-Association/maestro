@@ -1,4 +1,4 @@
-package org.intocps.maestro.webapi.maestro2.dto;
+package org.intocps.maestro.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,5 +16,15 @@ public class FixedStepAlgorithmConfig implements IAlgorithmConfig {
 
     public Double getSize() {
         return size;
+    }
+
+    @Override
+    public StepAlgorithm getAlgorithmType() {
+        return StepAlgorithm.FIXEDSTEP;
+    }
+
+    @Override
+    public double getStepSize() {
+        return getSize();
     }
 }

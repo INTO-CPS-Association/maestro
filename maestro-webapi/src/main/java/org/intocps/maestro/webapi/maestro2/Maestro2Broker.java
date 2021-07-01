@@ -6,9 +6,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
-import org.intocps.maestro.core.api.IStepAlgorithm;
-import org.intocps.maestro.core.api.VariableStepAlgorithm;
+import org.intocps.maestro.core.dto.VarStepConstraint;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -17,10 +15,10 @@ import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.webapi.maestro2.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
-import org.intocps.maestro.webapi.maestro2.dto.VariableStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,40 +96,34 @@ public class Maestro2Broker {
                         .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                                 Map.Entry::getValue));
 
-        // Setup algorithm
+        // Setup step config
         JacobianStepConfig config = new JacobianStepConfig();
         config.stabilisation = initializeRequest.isStabalizationEnabled();
         config.absoluteTolerance = initializeRequest.getGlobal_absolute_tolerance();
         config.relativeTolerance = initializeRequest.getGlobal_relative_tolerance();
         config.stabilisationLoopMaxIterations = 5;
         config.simulationProgramDelay = initializeRequest.isSimulationProgramDelay();
+        config.stepAlgorithm = initializeRequest.getAlgorithm();
+        config.startTime = body.getStartTime();
+        config.endTime = body.getEndTime();
 
-        IStepAlgorithm algorithm;
-        if (initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
-            algorithm = new FixedStepAlgorithm(body.getEndTime(), ((FixedStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
-                    body.getStartTime());
-        } else if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            algorithm = new VariableStepAlgorithm(body.getEndTime(), ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getSize(),
-                    ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getInitsize(),
-                    (new ObjectMapper()).writeValueAsString(initializeRequest.getAlgorithm()), body.getStartTime());
-
+        if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
             ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
-                if (v instanceof InitializationData.ZeroCrossingConstraint) {
-                    config.variablesOfInterest.addAll(((InitializationData.ZeroCrossingConstraint) v).getPorts());
-                } else if (v instanceof InitializationData.BoundedDifferenceConstraint) {
-                    config.variablesOfInterest.addAll(((InitializationData.BoundedDifferenceConstraint) v).getPorts());
+                if (v instanceof VarStepConstraint.ZeroCrossingConstraint) {
+                    config.variablesOfInterest.addAll(((VarStepConstraint.ZeroCrossingConstraint) v).getPorts());
+                } else if (v instanceof VarStepConstraint.BoundedDifferenceConstraint) {
+                    config.variablesOfInterest.addAll(((VarStepConstraint.BoundedDifferenceConstraint) v).getPorts());
                 }
             });
-        } else {
+        } else if(!(initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig)) {
             throw new Exception("Could not get algorithm from specification");
         }
-
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
                         .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
                         .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
-                        .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithm(algorithm).setStepAlgorithmConfig(config);
+                        .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();

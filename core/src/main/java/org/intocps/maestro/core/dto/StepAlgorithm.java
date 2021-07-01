@@ -1,4 +1,4 @@
-package org.intocps.maestro.core.api;
+package org.intocps.maestro.core.dto;
 
 public enum StepAlgorithm {
     FIXEDSTEP,

@@ -1,11 +1,15 @@
 package org.intocps.maestro.cli;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import picocli.CommandLine;
 
@@ -53,22 +57,32 @@ public class ImportCmd implements Callable<Integer> {
             MaestroV1SimulationConfiguration simulationConfiguration) throws Exception {
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder = MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder();
 
-        if (simulationConfiguration.logLevels != null) {
+        if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.logLevels.entrySet().stream().collect(Collectors
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(Collectors
                     .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                             Map.Entry::getValue));
             builder.setLogLevels(removedFMUKeyFromLogLevels);
         }
 
         Map<String, Object> initialize = new HashMap<>();
-        initialize.put("parameters", simulationConfiguration.parameters);
-        initialize.put("environmentParameters", simulationConfiguration.environmentParameters);
+        initialize.put("parameters", simulationConfiguration.getParameters());
+        initialize.put("environmentParameters", simulationConfiguration.getEnvironmentParameters());
 
-        builder.setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
-                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn)
-                .setStepAlgorithm(new FixedStepAlgorithm(simulationConfiguration.endTime,
-                        ((MaestroV1SimulationConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm).getSize(), 0.0));
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = simulationConfiguration.getEndTime();
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) simulationConfiguration.getAlgorithm()).getSize());
+
+        Fmi2SimulationEnvironmentConfiguration environmentConfiguration = new Fmi2SimulationEnvironmentConfiguration();
+        environmentConfiguration.fmus = simulationConfiguration.getFmus();
+        environmentConfiguration.connections = simulationConfiguration.getConnections();
+        environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
+        environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
+
+        builder.setFrameworkConfig(Framework.FMI2, environmentConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
+                .setFramework(Framework.FMI2).setVisible(simulationConfiguration.isVisible()).setLoggingOn(simulationConfiguration.isLoggingOn())
+                .setStepAlgorithmConfig(algorithmConfig);
 
 
         return builder.build();
@@ -142,16 +156,25 @@ public class ImportCmd implements Callable<Integer> {
     private boolean importSg1(MablCliUtil util, List<File> files) throws Exception {
         if (!files.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            MaestroV1SimulationConfiguration config = new MaestroV1SimulationConfiguration();
 
+            //            for (File jsonFile : files) {
+            //                ObjectReader updater = mapper.readerForUpdating(config);
+            //                config = updater.readValue(jsonFile);
+            //            }
+            JsonNode rootNode = null;
             for (File jsonFile : files) {
-                ObjectReader updater = mapper.readerForUpdating(config);
-                config = updater.readValue(jsonFile);
+                JsonNode tempNode = mapper.readTree(jsonFile);
+
+                rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
+
             }
+
+            MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
+
             MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
 
             util.mabl.generateSpec(templateConfig);
-            util.mabl.setRuntimeEnvironmentVariables(config.parameters);
+            util.mabl.setRuntimeEnvironmentVariables(config.getParameters());
 
             return !MablCliUtil.hasErrorAndPrintErrorsAndWarnings(util.verbose, util.reporter);
 
@@ -163,5 +186,41 @@ public class ImportCmd implements Callable<Integer> {
 
     enum ImportType {
         Sg1
+    }
+
+    // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
+    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+
+        Iterator<String> fieldNames = updateNode.fieldNames();
+
+        while (fieldNames.hasNext()) {
+            String updatedFieldName = fieldNames.next();
+            JsonNode valueToBeUpdated = mainNode.get(updatedFieldName);
+            JsonNode updatedValue = updateNode.get(updatedFieldName);
+
+            // If the node is an @ArrayNode
+            if (valueToBeUpdated != null && valueToBeUpdated.isArray() && updatedValue.isArray()) {
+                // running a loop for all elements of the updated ArrayNode
+                for (int i = 0; i < updatedValue.size(); i++) {
+                    JsonNode updatedChildNode = updatedValue.get(i);
+                    // Create a new Node in the node that should be updated, if there was no corresponding node in it
+                    // Use-case - where the updateNode will have a new element in its Array
+                    if (valueToBeUpdated.size() <= i) {
+                        ((ArrayNode) valueToBeUpdated).add(updatedChildNode);
+                    }
+                    // getting reference for the node to be updated
+                    JsonNode childNodeToBeUpdated = valueToBeUpdated.get(i);
+                    merge(childNodeToBeUpdated, updatedChildNode);
+                }
+                // if the Node is an @ObjectNode
+            } else if (valueToBeUpdated != null && valueToBeUpdated.isObject()) {
+                merge(valueToBeUpdated, updatedValue);
+            } else {
+                if (mainNode instanceof ObjectNode) {
+                    ((ObjectNode) mainNode).replace(updatedFieldName, updatedValue);
+                }
+            }
+        }
+        return mainNode;
     }
 }
