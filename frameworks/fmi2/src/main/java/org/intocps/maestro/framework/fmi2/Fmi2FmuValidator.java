@@ -15,9 +15,15 @@ import java.util.List;
 public class Fmi2FmuValidator implements IFmuValidator {
     final static Logger logger = LoggerFactory.getLogger(Fmi2FmuValidator.class);
 
+    /**
+     * returns true if validation could be performed. I.e. true does NOT indicate that no errors were found.
+     * @param id validation id.
+     * @param path fmu path.
+     * @param reporter error reporter.
+     * @return indication if validation could be performed.
+     */
     @Override
     public boolean validate(String id, URI path, IErrorReporter reporter) {
-        logger.warn("Fmi2FmuValidator disabled");
         try {
             logger.trace("Validating: {} at {}", id, path);
             IFmu fmu = FmuFactory.create(null, path);
@@ -26,13 +32,13 @@ public class Fmi2FmuValidator implements IFmuValidator {
 
             onFailErrors.forEach(onFailError -> {
                 reporter.warning(onFailError.errno, onFailError.message, new LexToken(path + File.separator + "modelDescription" + ".xml", 0, 0));
-                logger.trace(onFailError.toString());
+                logger.warn(onFailError.toString());
             });
 
-            return onFailErrors.isEmpty();
+            return true;
 
         } catch (Exception e) {
-            logger.error("An unknown exception occurred during Fmi2FmUValidator: ", e);
+            logger.error("An exception occurred during Fmi2FmUValidator: ", e);
             return false;
         }
     }
