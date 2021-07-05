@@ -66,13 +66,13 @@ import java.util.Vector;
 public class ModelDescription {
     private static final boolean DEBUG = false;
     // final private File file;
-    final Document doc;
-    final XPath xpath;
-    List<ScalarVariable> scalarVariables = null;
-    List<ScalarVariable> outputs = null;
-    List<ScalarVariable> derivatives = null;
-    Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
-    List<ScalarVariable> initialUnknowns = null;
+    private final Document doc;
+    private final XPath xpath;
+    private List<ScalarVariable> scalarVariables = null;
+    private List<ScalarVariable> outputs = null;
+    private List<ScalarVariable> derivatives = null;
+    private Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
+    private List<ScalarVariable> initialUnknowns = null;
 
     public ModelDescription(File file) throws ParserConfigurationException, SAXException, IOException {
         this(getStream(file), new StreamSource(ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd")));
@@ -95,12 +95,12 @@ public class ModelDescription {
 
     }
 
-    static InputStream getStream(File file) throws IOException {
+    private static InputStream getStream(File file) throws IOException {
         byte[] bytes = IOUtils.toByteArray(new FileInputStream(file));
         return new ByteArrayInputStream(bytes);
     }
 
-    static void validateAgainstXSD(Source document, Source schemaSource) throws SAXException, IOException {
+    public static void validateAgainstXSD(Source document, Source schemaSource) throws SAXException, IOException {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         factory.setResourceResolver(new ResourceResolver());
 
@@ -111,7 +111,7 @@ public class ModelDescription {
 
     }
 
-    public static Node lookupSingle(Object doc, XPath xpath, String expression) throws XPathExpressionException {
+    private static Node lookupSingle(Object doc, XPath xpath, String expression) throws XPathExpressionException {
         NodeList list = lookup(doc, xpath, expression);
         if (list != null) {
             return list.item(0);
@@ -119,7 +119,7 @@ public class ModelDescription {
         return null;
     }
 
-    public static NodeList lookup(Object doc, XPath xpath, String expression) throws XPathExpressionException {
+    private static NodeList lookup(Object doc, XPath xpath, String expression) throws XPathExpressionException {
         XPathExpression expr = xpath.compile(expression);
 
         if (DEBUG) {
@@ -146,7 +146,7 @@ public class ModelDescription {
 
     }
 
-    public static String formateNodeWithAtt(Object o) {
+    private static String formateNodeWithAtt(Object o) {
         if (o instanceof Document) {
             return "Root document";
         } else if (o instanceof Node) {
@@ -294,10 +294,10 @@ public class ModelDescription {
         for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/LogCategories/Category"))) {
             NamedNodeMap attributes = n.getAttributes();
 
-            Node descritpionNode = attributes.getNamedItem("description");
+            Node descriptionNode = attributes.getNamedItem("description");
 
             categories.add(new LogCategory(attributes.getNamedItem("name").getNodeValue(),
-                    descritpionNode != null ? descritpionNode.getNodeValue() : null));
+                    descriptionNode != null ? descriptionNode.getNodeValue() : null));
 
         }
         return categories;
@@ -850,7 +850,7 @@ public class ModelDescription {
         }
     }
 
-    enum ModelStructureElementType {
+    private enum ModelStructureElementType {
         InitialUnknown,
         Outputs,
         Derivatives
