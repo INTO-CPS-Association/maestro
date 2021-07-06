@@ -1,12 +1,15 @@
 package org.intocps.maestro.fmi;
 
+import org.apache.commons.lang3.StringUtils
 import org.intocps.maestro.fmi.xml.NamedNodeMapIterator
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Document
+import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import org.xml.sax.SAXException
-import java.io.*
+import java.io.IOException
+import java.io.InputStream
 import java.util.*
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
@@ -27,14 +30,8 @@ open class BaseModelDescription
 ) constructor(xmlInputStream: InputStream, schemaSource: Source) {
     protected val DEBUG = false
 
-    protected var doc: Document
-    protected var xpath: XPath
-
-    protected var scalarVariables: List<ModelDescription.ScalarVariable>? = null
-    protected var outputs: List<ModelDescription.ScalarVariable>? = null
-    protected var derivatives: List<ModelDescription.ScalarVariable>? = null
-    protected var derivativesMap: Map<ModelDescription.ScalarVariable, ModelDescription.ScalarVariable> = HashMap()
-    protected var initialUnknowns: List<ModelDescription.ScalarVariable>? = null
+    protected val doc: Document
+    protected val xpath: XPath
 
     init {
         val docBuilderFactory = DocumentBuilderFactory.newInstance()
@@ -153,10 +150,26 @@ open class BaseModelDescription
         return categories
     }
 
-    fun mapNodeToBaseUnit(node: Node): BaseUnit{
+    // Default experiment attribute
+    fun getDefaultExperiment(): DefaultExperiment {
+        try {
+            return lookupSingle(doc, xpath, "fmiModelDescription/@DefaultExperiment").let { defaultExperimentNode ->
+                DefaultExperiment(
+                    defaultExperimentNode.attributes.getNamedItem("startTime")?.nodeValue?.toDouble(),
+                    defaultExperimentNode.attributes.getNamedItem("stopTime")?.nodeValue?.toDouble(),
+                    defaultExperimentNode.attributes.getNamedItem("tolerance")?.nodeValue?.toDouble(),
+                    defaultExperimentNode.attributes.getNamedItem("stepSize")?.nodeValue?.toDouble()
+                )
+            }
+        } catch (e: Exception) {
+            throw Exception("Default experiment cannot be parsed during model description parsing: $e")
+        }
+    }
+
+    fun parseBaseUnit(node: Node): BaseUnit {
         val baseUnitBuilder = BaseUnit.Builder()
         val attributesMapLength = node.attributes.length
-        for(i in 0..attributesMapLength){
+        for (i in 0..attributesMapLength) {
             val nodeName = node.attributes.item(i).nodeName
             val nodeValue = node.attributes.item(i).nodeValue
 
@@ -189,6 +202,7 @@ open class BaseModelDescription
     @Throws(Exception::class)
     open fun parse() {
     }
+
 
     @Throws(XPathExpressionException::class)
     protected fun lookupSingle(doc: Document, xpath: XPath, expression: String): Node {
@@ -241,6 +255,13 @@ open class BaseModelDescription
         return node.toString()
     }
 
+    data class DefaultExperiment(
+        val startTime: Double?,
+        val stopTime: Double?,
+        val tolerance: Double?,
+        val stepSize: Double?
+    )
+
     class BaseUnit private constructor(
         val kg: Int = 0,
         val m: Int = 0,
@@ -279,15 +300,28 @@ open class BaseModelDescription
         }
     }
 
-    open class Fmi2DisplayUnit internal constructor(
-        val name: String,
-        val factor: Double? = 1.0,
-        val offset: Double? = 0.0
-    )
-
     class LogCategory(val name: String, val description: String) {
         override fun toString(): String {
             return name
         }
+    }
+
+    enum class Initial {
+        Exact,
+        Approx,
+        Calculated
+    }
+
+    enum class Variability {
+        Constant,
+        Fixed,
+        Tunable,
+        Discrete,
+        Continuous
+    }
+
+    inline fun <reified T : Enum<T>> valueOf(type: String): T? {
+        return if(type.isEmpty()) null else java.lang.Enum.valueOf(T::class.java,
+            type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
     }
 }
