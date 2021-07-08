@@ -1,6 +1,9 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import core.ConnectionModel;
+import core.MasterModel;
+import core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -28,16 +31,14 @@ import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
+import scala.jdk.javaapi.CollectionConverters;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,8 +64,30 @@ public class Maestro2Broker {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
-        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+        // simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
 
+        // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+        List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
+        Map<String, List<String>> connectionsMap = new HashMap<>();
+        connections.forEach(connection -> {
+            String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
+            String trgFmuName = trgFmuAndInstance[0];
+            String trgInstanceName = trgFmuAndInstance[1];
+            String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
+            String srcFmuName = srcFmuAndInstance[0];
+            String srcInstanceName = srcFmuAndInstance[1];
+            String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
+            String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
+            if(connectionsMap.containsKey(muModelSrcName)){
+                connectionsMap.get(muModelSrcName).add(muModelTrgName);
+            }
+            else{
+                connectionsMap.put(muModelSrcName,new ArrayList<>(Collections.singletonList(muModelTrgName)));
+            }
+        });
+
+        simulationConfiguration.connections = connectionsMap;
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration =
