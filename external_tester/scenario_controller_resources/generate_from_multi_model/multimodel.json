@@ -1,0 +1,19 @@
+{
+    "fmus": {
+        "{FMU}": "/rollback-test.fmu",
+        "{Controller}": "/rollback-end.fmu"
+    },
+    "connections": {
+        "{FMU}.roller.level": [
+            "{Controller}.cont.level"
+    ]
+    },
+    "parameters": {},
+    "scenarioVerifier": {
+        "reactivity": {
+            "{Controller}.cont.level": false
+        },
+        "verification": false,
+        "traceVisualization": false
+    }
+}

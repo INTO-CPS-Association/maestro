@@ -375,7 +375,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         // Set step-size to lowest
                         currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
-                        builder.getLogger().debug("## Discard occurred! FMUs are rolledback and step-size reduced to: %f", currentStepSize);
+                        builder.getLogger().debug("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", currentStepSize);
 
                         dynamicScope.leave();
                     }

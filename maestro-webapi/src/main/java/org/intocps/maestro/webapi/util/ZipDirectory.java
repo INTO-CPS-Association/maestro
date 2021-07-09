@@ -73,24 +73,25 @@ public class ZipDirectory {
     public static void addDir(File root, File dirObj, ZipOutputStream out) throws IOException {
         File[] files = dirObj.listFiles();
 
-        assert files != null;
-        for (File file : files) {
-            if (file.isDirectory()) {
-                addDir(root, file, out);
-                continue;
-            }
-            logger.trace("Adding file to archive ({}):  {}", root.getName(), file.getAbsolutePath());
-            out.putNextEntry(new ZipEntry(file.getAbsolutePath().substring(root.getAbsolutePath().length() + 1)));
+        if(files != null){
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    addDir(root, file, out);
+                    continue;
+                }
+                logger.trace("Adding file to archive ({}):  {}", root.getName(), file.getAbsolutePath());
+                out.putNextEntry(new ZipEntry(file.getAbsolutePath().substring(root.getAbsolutePath().length() + 1)));
 
-            FileInputStream input = null;
+                FileInputStream input = null;
 
-            try {
-                input = new FileInputStream(file);
-                IOUtils.copy(input, out);
-            } finally {
-                IOUtils.closeQuietly(input);
+                try {
+                    input = new FileInputStream(file);
+                    IOUtils.copy(input, out);
+                } finally {
+                    IOUtils.closeQuietly(input);
+                }
+                out.closeEntry();
             }
-            out.closeEntry();
         }
     }
 }

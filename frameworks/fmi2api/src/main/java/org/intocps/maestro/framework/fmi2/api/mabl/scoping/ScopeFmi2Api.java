@@ -24,8 +24,8 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     final ScopeFmi2Api parent;
     private final MablApiBuilder builder;
     private final SBlockStm block;
-    IntVariableFmi2Api fmiStatusVariable = null;
     private final List<ComponentVariableFmi2Api> fmi2ComponentVariables = new ArrayList<>();
+    IntVariableFmi2Api fmiStatusVariable = null;
 
     public ScopeFmi2Api(MablApiBuilder builder) {
         this.builder = builder;
@@ -137,6 +137,26 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             addAll(insertAt, commands);
         }
     }
+
+    /**
+     * Attempts to find {@code item} and places {@code commands} after it.
+     * If {@code item} is not found, then {@code commands} is added at the top of the scope.
+     *
+     * @param item
+     * @param commands
+     */
+    @Override
+    public void addAfterOrTop(PStm item, PStm... commands) {
+        int index = block.getBody().indexOf(item);
+        int insertAt = index + 1;
+        if (insertAt > block.getBody().size()) {
+            add(commands);
+        } else {
+            addAll(insertAt, commands);
+        }
+
+    }
+
 
     @Override
     public ScopeFmi2Api activate() {
@@ -389,6 +409,19 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         add(var);
         return new IntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
+    }
+
+    @Override
+    public ArrayVariableFmi2Api storeInArray(String namePrefix, VariableFmi2Api[] variables) {
+        String name = getName(namePrefix);
+        PType type = variables[0].getType();
+        PInitializer initializer = newAArrayInitializer(Arrays.stream(variables).map(VariableFmi2Api::getExp).collect(Collectors.toList()));
+        PStm arrayVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), variables[0].getType(), variables.length, initializer));
+
+
+        add(arrayVarStm);
+        return new ArrayVariableFmi2Api(arrayVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name), Arrays.asList(variables));
     }
 
     private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {

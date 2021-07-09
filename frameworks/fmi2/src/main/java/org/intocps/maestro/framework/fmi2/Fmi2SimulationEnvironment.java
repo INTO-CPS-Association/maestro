@@ -96,6 +96,9 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public ComponentInfo getInstanceByLexName(String lexName) {
+        if(!this.instanceNameToInstanceComponentInfo.containsKey(lexName)){
+            throw new RuntimeException("Unable to locate instance named " + lexName + " in the simulation environment.");
+        }
         return this.instanceNameToInstanceComponentInfo.get(lexName);
     }
 

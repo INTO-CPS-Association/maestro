@@ -297,7 +297,7 @@ public class MaBLTemplateGenerator {
     }
 
 
-    private static Collection<? extends PStm> createStatusVariables() {
+    public static Collection<? extends PStm> createStatusVariables() {
         List<PStm> list = new ArrayList<>();
         BiFunction<String, Integer, PStm> createStatusVariable_ = (name, value) -> newALocalVariableStm(
                 newAVariableDeclaration(newLexIdentifier(name), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(value))));

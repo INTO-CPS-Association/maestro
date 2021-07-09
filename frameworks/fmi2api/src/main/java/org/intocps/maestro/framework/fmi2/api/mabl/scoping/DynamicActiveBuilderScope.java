@@ -95,6 +95,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public void addAfterOrTop(PStm item, PStm... commands) {
+        this.activeScope.addAfterOrTop(item, commands);
+    }
+
+    @Override
     public IMablScope activate() {
         return activeScope;
     }
@@ -162,6 +167,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations) {
         return activeScope.store(stabilisation_loop, stabilisation_loop_max_iterations);
+    }
+
+    @Override
+    public ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables) {
+        return activeScope.storeInArray(name, variables);
     }
 
     @Override
