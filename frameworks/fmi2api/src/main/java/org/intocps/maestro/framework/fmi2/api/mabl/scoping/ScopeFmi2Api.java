@@ -24,6 +24,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     final ScopeFmi2Api parent;
     private final MablApiBuilder builder;
     private final SBlockStm block;
+    private final List<ComponentVariableFmi2Api> fmi2ComponentVariables = new ArrayList<>();
     IntVariableFmi2Api fmiStatusVariable = null;
 
     public ScopeFmi2Api(MablApiBuilder builder) {
@@ -136,6 +137,26 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             addAll(insertAt, commands);
         }
     }
+
+    /**
+     * Attempts to find {@code item} and places {@code commands} after it.
+     * If {@code item} is not found, then {@code commands} is added at the top of the scope.
+     *
+     * @param item
+     * @param commands
+     */
+    @Override
+    public void addAfterOrTop(PStm item, PStm... commands) {
+        int index = block.getBody().indexOf(item);
+        int insertAt = index + 1;
+        if (insertAt > block.getBody().size()) {
+            add(commands);
+        } else {
+            addAll(insertAt, commands);
+        }
+
+    }
+
 
     @Override
     public ScopeFmi2Api activate() {
@@ -482,5 +503,24 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         } else {
             return this.parent.getFmiStatusVariable();
         }
+    }
+
+    @Override
+    public void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api) {
+        this.fmi2ComponentVariables.add(componentVariableFmi2Api);
+    }
+
+    @Override
+    public Set<ComponentVariableFmi2Api> getAllComponentFmi2Variables() {
+        HashSet<ComponentVariableFmi2Api> compFmi2Variables = new HashSet<>();
+        compFmi2Variables.addAll(this.fmi2ComponentVariables);
+        ScopeFmi2Api parentScope = this.parent;
+        while (parentScope != null) {
+            compFmi2Variables.addAll(parentScope.getAllComponentFmi2Variables());
+            parentScope = parentScope.parent;
+        }
+
+
+        return compFmi2Variables;
     }
 }

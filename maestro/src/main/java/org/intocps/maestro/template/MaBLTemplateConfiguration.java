@@ -2,8 +2,6 @@ package org.intocps.maestro.template;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.FixedStepAlgorithm;
-import org.intocps.maestro.core.api.IStepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -14,7 +12,6 @@ import java.util.Map;
 
 public class MaBLTemplateConfiguration {
     private Map<String, List<String>> logLevels;
-    private IStepAlgorithm stepAlgorithm;
     private Fmi2SimulationEnvironment simulationEnvironment;
     private Framework framework;
     private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
@@ -47,10 +44,6 @@ public class MaBLTemplateConfiguration {
         return this.frameworkConfig;
     }
 
-    public IStepAlgorithm getAlgorithm() {
-        return this.stepAlgorithm;
-    }
-
     public Fmi2SimulationEnvironment getUnitRelationship() {
         return this.simulationEnvironment;
     }
@@ -74,7 +67,6 @@ public class MaBLTemplateConfiguration {
     public static class MaBLTemplateConfigurationBuilder {
         private boolean loggingOn = false;
         private boolean visible = false;
-        private IStepAlgorithm stepAlgorithm = null;
         private Fmi2SimulationEnvironment simulationEnvironment = null;
         private Pair<Boolean, String> initialize = Pair.of(false, null);
         private Map<String, List<String>> logLevels;
@@ -131,13 +123,6 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
-        public MaBLTemplateConfigurationBuilder setStepAlgorithm(IStepAlgorithm stepAlgorithm) {
-            if (stepAlgorithm != null) {
-                this.stepAlgorithm = stepAlgorithm;
-            }
-            return this;
-        }
-
         public MaBLTemplateConfigurationBuilder useInitializer(boolean useInitializer, String config) {
             this.initialize = Pair.of(useInitializer, config);
             return this;
@@ -155,7 +140,6 @@ public class MaBLTemplateConfiguration {
         public MaBLTemplateConfiguration build() {
             //FIXME validate
             MaBLTemplateConfiguration config = new MaBLTemplateConfiguration();
-            config.stepAlgorithm = this.stepAlgorithm;
             config.initialize = this.initialize;
             config.logLevels = this.logLevels;
             config.framework = this.framework;
@@ -165,10 +149,6 @@ public class MaBLTemplateConfiguration {
             config.visible = this.visible;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
-
-            if (stepAlgorithm != null && this.stepAlgorithmConfig == null && !(stepAlgorithm instanceof FixedStepAlgorithm)) {
-                throw new RuntimeException("Algorithm configuration is missing");
-            }
 
             return config;
         }

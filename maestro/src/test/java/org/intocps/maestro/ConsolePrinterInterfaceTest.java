@@ -5,10 +5,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.BaseApiTest;
 import org.intocps.maestro.framework.fmi2.api.mabl.ConsolePrinter;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.StringVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,26 +59,86 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void printLnTest() throws Exception {
-        // Arrange
-        String msg = "Test value: ";
+    public void printRawValuesTest() throws Exception{
         int intTestVal = 1;
         double doubleTestVal = 1.0;
         boolean booleanTestVal = true;
-        String stringTestVal = "s";
-        Set<String> toContain = Set.of(msg.concat(String.format("%d", intTestVal)), msg.concat(String.format("%.1f", doubleTestVal)),
-                msg.concat(String.format("%b", booleanTestVal)), String.format("%s", msg.concat(stringTestVal)));
+        String stringTestVal = "a string";
 
-        IntVariableFmi2Api intTestValVar = dynamicScope.store("intTestVal", intTestVal);
-        DoubleVariableFmi2Api doubleTestValVar = dynamicScope.store("doubleTestVal", doubleTestVal);
-        BooleanVariableFmi2Api booleanTestValVar = dynamicScope.store("booleanTestVal", booleanTestVal);
-        StringVariableFmi2Api stringTestValVar = dynamicScope.store("stringTestVal", stringTestVal);
+        String msg = "All raw values: ";
+
+        String intTestValFormatted = String.format("%d", intTestVal);
+        String doubleTestValFormatted = String.format("%.1f", doubleTestVal);
+        String booleanTestValFormatted = String.format("%b", booleanTestVal);
+        String stringTestValFormatted = String.format("%s", stringTestVal);
+
+        String expectedResult =
+                msg.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ").concat(stringTestValFormatted);
 
         ConsolePrinter consolePrinter = builder.getConsolePrinter();
-        consolePrinter.println(msg.concat("%d"), intTestValVar);
-        consolePrinter.println(msg.concat("%.1f"), doubleTestValVar);
-        consolePrinter.println(msg.concat("%s"), stringTestValVar);
-        consolePrinter.println(msg.concat("%b"), booleanTestValVar);
+
+        consolePrinter.println(msg.concat("%d, ").concat("%.1f, ").concat("%b, ").concat("%s"), intTestVal, doubleTestVal, booleanTestVal, stringTestVal);
+
+        String spec = PrettyPrinter.print(builder.build());
+        // Create a stream to hold console output
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(bs);
+        // Save the old stream!
+        PrintStream old = System.out;
+        // Set new stream
+        System.setOut(ps);
+
+        // Act
+        check(spec, "");
+
+        // Put things back
+        System.out.flush();
+        System.setOut(old);
+        System.out.println(bs);
+
+        // Assert
+        String result = bs.toString();
+        Assertions.assertTrue(result.contains(expectedResult));
+    }
+
+    @Test
+    public void printLnTest() throws Exception {
+        // Arrange
+        String stringMsg = "String value: ";
+        String integerMsg = "Integer value: ";
+        String doubleMsg = "Double value: ";
+        String booleanMsg = "Boolean value: ";
+        String allValues = "All values: ";
+        int intTestVal = 1;
+        double doubleTestVal = 1.0;
+        boolean booleanTestVal = true;
+        String stringTestVal = "a string";
+
+        String intTestValFormatted = String.format("%d", intTestVal);
+        String doubleTestValFormatted = String.format("%.1f", doubleTestVal);
+        String booleanTestValFormatted = String.format("%b", booleanTestVal);
+        String stringTestValFormatted = String.format("%s", stringTestVal);
+
+        String allValuesConcat =
+                allValues.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ").concat(stringTestValFormatted);
+
+        Set<String> toContain = Set.of(integerMsg.concat(intTestValFormatted), doubleMsg.concat(doubleTestValFormatted),
+                booleanMsg.concat(booleanTestValFormatted), stringMsg.concat(stringTestValFormatted), allValuesConcat);
+
+
+
+        IntVariableFmi2Api intTestValVar = dynamicScope.store("int_val", intTestVal);
+        DoubleVariableFmi2Api doubleTestValVar = dynamicScope.store("double_val", doubleTestVal);
+        BooleanVariableFmi2Api booleanTestValVar = dynamicScope.store("boolean_val", booleanTestVal);
+        StringVariableFmi2Api stringTestValVar = dynamicScope.store("string_val", stringTestVal);
+
+        ConsolePrinter consolePrinter = builder.getConsolePrinter();
+        consolePrinter.println(integerMsg.concat("%d"), intTestValVar);
+        consolePrinter.println(doubleMsg.concat("%.1f"), doubleTestValVar);
+        consolePrinter.println(stringMsg.concat("%s"), stringTestValVar);
+        consolePrinter.println(booleanMsg.concat("%b"), booleanTestValVar);
+        consolePrinter.println(allValues.concat("%d, ").concat("%.1f, ").concat("%b, ").concat("%s"), intTestValVar, doubleTestValVar,
+                booleanTestValVar, stringTestValVar);
 
         String spec = PrettyPrinter.print(builder.build());
         // Create a stream to hold console output

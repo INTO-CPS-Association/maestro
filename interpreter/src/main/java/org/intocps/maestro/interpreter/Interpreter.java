@@ -301,8 +301,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         Context callContext = question;
         if (node.getObject() != null) {
-            ModuleValue objectModule = (ModuleValue) node.getObject().apply(this, question).deref();
-            callContext = new ModuleContext(objectModule, question);
+            Value v = node.getObject().apply(this, question).deref();
+            if (v instanceof NullValue) {
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node.toString() + "\"");
+                throw new InterpreterException("Unhandled node: " + node);
+            } else {
+                ModuleValue objectModule = (ModuleValue) v;
+                callContext = new ModuleContext(objectModule, question);
+            }
         }
 
         Value function = callContext.lookup(node.getMethodName());

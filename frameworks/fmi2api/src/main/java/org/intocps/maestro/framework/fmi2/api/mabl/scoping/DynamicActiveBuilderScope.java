@@ -7,6 +7,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Set;
 
 public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.DynamicActiveScope<PStm> {
 
@@ -91,6 +92,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public void addAfter(PStm item, PStm... commands) {
         this.activeScope.addAfter(item, commands);
+    }
+
+    @Override
+    public void addAfterOrTop(PStm item, PStm... commands) {
+        this.activeScope.addAfterOrTop(item, commands);
     }
 
     @Override
@@ -182,5 +188,16 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
         return activeScope.copy(name, variable);
+    }
+
+    @Override
+    public Set<ComponentVariableFmi2Api> getAllComponentFmi2Variables() {
+        return activeScope.getAllComponentFmi2Variables();
+    }
+
+    @Override
+    public void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api) {
+        activeScope.registerComponentVariableFmi2Api(componentVariableFmi2Api);
+
     }
 }

@@ -3,5 +3,24 @@
   "stabilisation": false,
   "absoluteTolerance": 0.0,
   "relativeTolerance": 0.01,
-  "stabilisationLoopMaxIterations": 5
+  "stabilisationLoopMaxIterations": 5,
+  "simulationProgramDelay": false,
+  "setGetDerivatives": false,
+  "stepAlgorithm": {
+    "type": "var-step",
+    "size": [
+      0.001,
+      0.2
+    ],
+    "initsize": 0.01,
+    "constraints": {
+      "bd": {
+        "type": "boundeddifference",
+        "ports": [
+          "{pump}.pump.mdot_out"
+        ],
+        "abstol": 0.3
+      }
+    }
+  }
 }

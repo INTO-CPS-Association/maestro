@@ -44,9 +44,15 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
-    final static Logger logger = LoggerFactory.getLogger(ScenarioVerifier.class);
     public static final String MASTER_MODEL_FMU_INSTANCE_DELIMITER = "_";
     public static final String MULTI_MODEL_FMU_INSTANCE_DELIMITER = ".";
+    public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
+    final static Logger logger = LoggerFactory.getLogger(ScenarioVerifier.class);
+    private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private MathBuilderFmi2Api mathModule;
     private LoggerFmi2Api loggerModule;
     private BooleanBuilderFmi2Api booleanLogicModule;
@@ -54,13 +60,6 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     private Double relTol;
     private Double absTol;
     private Integer convAtt;
-    public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
-
-    private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(func).collect(Collectors.toSet());
@@ -107,7 +106,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             //TODO: Error handling on or off -> settings flag?
             settings.fmiErrorHandlingEnabled = false;
-            MablApiBuilder builder = new MablApiBuilder(settings);
+            MablApiBuilder builder = new MablApiBuilder(settings, formalArguments.get(0));
             dynamicScope = builder.getDynamicScope();
             mathModule = builder.getMathBuilder();
             loggerModule = builder.getLogger();
@@ -364,7 +363,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
         // Share any tentative port values and include them in shared port vars
         tentativePortVars.forEach(tentativePortMapEntry -> {
-            fmuInstances.get(tentativePortMapEntry.getKey().getMultiModelScalarVariableName().split("\\.")[1]).share(Map.ofEntries(tentativePortMapEntry));
+            fmuInstances.get(tentativePortMapEntry.getKey().getMultiModelScalarVariableName().split("\\.")[1])
+                    .share(Map.ofEntries(tentativePortMapEntry));
 
             sharedPortVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
                     .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny().ifPresentOrElse(item -> {
@@ -455,14 +455,15 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets =
                         mapGetTentativeInstruction(((GetTentative) instruction).port(), fmuInstances);
                 portsWithGets.forEach((port, portValue) -> {
-                    tentativePortMapVars.stream().filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName()))
+                    tentativePortMapVars.stream()
+                            .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName()))
                             .findAny().ifPresentOrElse(item -> {
                     }, () -> tentativePortMapVars.add(Map.entry(port, portValue)));
 
                     // Check for convergence
                     convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getName(), port.getName())).findAny()
-                            .ifPresent(portRef -> convergedVariables.add(createCheckConvergenceSection(Map.entry(port, portValue), portRef,
-                                    absTolVar, relTolVar)));
+                            .ifPresent(portRef -> convergedVariables
+                                    .add(createCheckConvergenceSection(Map.entry(port, portValue), portRef, absTolVar, relTolVar)));
                 });
             } else if (instruction instanceof SetTentative) {
                 mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances, connections);

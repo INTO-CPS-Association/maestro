@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -11,7 +12,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.api.StepAlgorithm;
+import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
@@ -49,8 +50,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
-                    newAFormalParameter(newAStringPrimitiveType(), newAIdentifier("variableStepConfig"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
     private StepAlgorithm algorithm;
@@ -62,6 +62,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
     @Override
     public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
             ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+
 
         logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
         JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
@@ -106,7 +107,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             MablApiBuilder builder = new MablApiBuilder(settings, formalArguments.get(0));
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-            MathBuilderFmi2Api math = builder.getMathBuilder();
+            MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
             BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
             RealTime realTimeModule = null;
             if (jacobianStepConfig.simulationProgramDelay) {
@@ -115,17 +116,17 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             // Convert raw MaBL to API
             DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
-            DoubleVariableFmi2Api currentStepSize = dynamicScope.store("current_step_size", 0.0);
+            DoubleVariableFmi2Api currentStepSize = dynamicScope.store("jac_current_step_size", 0.0);
             currentStepSize.setValue(externalStepSize);
 
-            DoubleVariableFmi2Api stepSize = dynamicScope.store("step_size", 0.0);
+            DoubleVariableFmi2Api stepSize = dynamicScope.store("jac_step_size", 0.0);
             stepSize.setValue(externalStepSize);
 
             DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
-            DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("current_communication_point", 0.0);
+            DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
             currentCommunicationTime.setValue(externalStartTime);
             DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTimeVar);
-            DoubleVariableFmi2Api endTime = dynamicScope.store("end_time", 0.0);
+            DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
             endTime.setValue(externalEndTime);
 
             // Import the external components into Fmi2API
@@ -207,7 +208,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
-                variableStep = builder.getVariableStep(new StringVariableFmi2Api(null, null, null, null, formalArguments.get(4).clone()));
+                variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config",
+                        StringEscapeUtils.escapeJava( (new ObjectMapper()).writeValueAsString(jacobianStepConfig.stepAlgorithm))));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }

@@ -1,10 +1,8 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
-import org.intocps.maestro.ast.node.ALocalVariableStm;
-import org.intocps.maestro.ast.node.INode;
-import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.ast.node.SBlockStm;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.RuntimeModuleVariable;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAIdentifierExp;
@@ -103,7 +101,8 @@ public class MablToMablAPI {
 
     public MathBuilderFmi2Api getMathBuilder() {
         if (this.mathBuilderFmi2Api == null) {
-            this.mathBuilderFmi2Api = new MathBuilderFmi2Api(this.mablApiBuilder.dynamicScope, this.mablApiBuilder);
+            this.mathBuilderFmi2Api = new MathBuilderFmi2Api(this.mablApiBuilder.dynamicScope, this.mablApiBuilder,
+                    new AIdentifierExp(new LexIdentifier("math", null)));
         }
         return this.mathBuilderFmi2Api;
     }

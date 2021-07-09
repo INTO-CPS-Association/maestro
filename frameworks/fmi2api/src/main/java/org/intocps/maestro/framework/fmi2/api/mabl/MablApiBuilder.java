@@ -92,29 +92,36 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             }
         }
 
+        String global_execution_continue_varname = "global_execution_continue";
+        String status_varname = "status";
+
         if (createdFromExistingSpec) {
 
             AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "global_execution_continue");
             if (decl == null) {
-                globalExecutionContinue = rootScope.store("global_execution_continue", true);
+                globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
             } else {
                 globalExecutionContinue =
                         (BooleanVariableFmi2Api) createVariableExact(rootScope, newBoleanType(), newABoolLiteralExp(true), decl.getName().getText(),
                                 true);
             }
 
-            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "status");
+            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, status_varname);
             if (decl == null) {
-                globalFmiStatus = rootScope.store("status", FmiStatus.FMI_OK.getValue());
+                globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
             } else {
                 globalFmiStatus = (IntVariableFmi2Api) createVariableExact(rootScope, newIntType(), null, decl.getName().getText(), true);
             }
 
         } else {
-            globalExecutionContinue =
-                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
-            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
+
+            globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
+            globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
+            //            globalExecutionContinue =
+            //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
+            //            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
+
         mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
         this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope);
         this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
@@ -148,42 +155,42 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 case FMI_OK: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_OK.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_OK, var);
                 }
                 break;
                 case FMI_WARNING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_WARNING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
                     break;
                 }
                 case FMI_DISCARD: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_DISCARD.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
                 }
                 break;
                 case FMI_ERROR: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
                     break;
                 }
                 case FMI_FATAL: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_FATAL.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
                     break;
                 }
                 case FMI_PENDING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_PENDING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
                     break;
                 }
@@ -198,7 +205,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.mablToMablAPI;
     }
 
-    public VariableStep getVariableStep(VariableFmi2Api config) {
+    public VariableStep getVariableStep(StringVariableFmi2Api config) {
         if (this.variableStep == null) {
             RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "VariableStep", config);
             this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);
@@ -223,7 +230,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.dataWriter;
     }
 
-    public ConsolePrinter getConsolePrinter(){
+    public ConsolePrinter getConsolePrinter() {
         if (this.consolePrinter == null) {
             RuntimeModule<PStm> runtimeModule =
                     this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var),
@@ -280,8 +287,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public MathBuilderFmi2Api getMathBuilder() {
         if (this.mathBuilderApi == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("Math");
-            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
+            RuntimeModuleVariable runtimeModule = this.loadRuntimeModule("Math");
+
+            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule.getReferenceExp());
         }
         return this.mathBuilderApi;
 
@@ -400,16 +408,16 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(String name, Object... args) {
         return loadRuntimeModule(dynamicScope.getActiveScope(), name, args);
     }
 
     @Override
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
         return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
     }
 
-    public RuntimeModule<PStm> loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
+    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));

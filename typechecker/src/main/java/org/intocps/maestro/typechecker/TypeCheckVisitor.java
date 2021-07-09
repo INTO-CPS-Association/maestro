@@ -14,6 +14,7 @@ import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -23,7 +24,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     private final Map<INode, PType> resolvedTypes = new HashMap<>();
     TypeComparator typeComparator;
     MableAstFactory astFactory;
-    Map<INode, PType> checkedTypes = new HashMap();
+    Map<INode, PType> checkedTypes = new HashMap<>();
 
     public TypeCheckVisitor(IErrorReporter errorReporter) {
         this.errorReporter = errorReporter;
@@ -94,6 +95,12 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
         PType type = node.getArray().apply(this, ctxt);
+
+        if (!typeComparator.compatible(AArrayType.class, type)) {
+            errorReporter.report(0, "Only array types can be indexed", null);
+            return store(node, MableAstFactory.newAUnknownType());
+        }
+
         PType iterationType = type.clone();
         //TODO: Step down through the types according to the size of the indicesLinkedList
         for (int i = 0; i < node.getIndices().size(); i++) {
@@ -202,7 +209,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 }
             }
         } else {
-            errorReporter.report(0, "Array initializer must not be empty", null);
+            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
         }
         return store(node, newAArrayType(type).clone());
     }
@@ -237,19 +244,56 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             // This is a module
             // Ensure that the object is of module type
             PType objectType = node.getObject().apply(this, ctxt);
+            PDeclaration decl = new DefinitionFinder(this.checkedTypes::get).find(node.getObject(), ctxt);
 
-            if (objectType instanceof AModuleType) {
-                def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
-            } else {
+            if (decl == null) {
                 errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
                         node.getMethodName().getSymbol());
             }
+            if (decl instanceof AModuleDeclaration) {
+                if (node.getExpand() != null) {
+                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+                } else {
+                    errorReporter.report(0, "Static calls not allowed on type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+                            node.getMethodName().getSymbol());
+                    return store(node, newAUnknownType());
+                }
+            } else if (decl instanceof AVariableDeclaration) {
+
+
+                //ok so its variable to lets see if its type is callable
+                if (objectType instanceof AModuleType) {
+                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+                }
+
+
+            }
+
+            //            if (node.getExpand() != null) {
+            //                //static call required
+            //                if (objectType instanceof AModuleType) {
+            //                    def = ctxt.findDeclaration(((AModuleType) objectType).getName(), node.getMethodName());
+            //                } else {
+            //                    errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+            //                            node.getMethodName().getSymbol());
+            //                }
+            //            } else {
+            //                //static call not allowed
+            //                if (objectType instanceof AVarType && ((AVarType) objectType).getType() instanceof AModuleType) {
+            //                    def = ctxt.findDeclaration(((AModuleType) ((AVarType) objectType).getType()).getName(), node.getMethodName());
+            //                } else {
+            //                    errorReporter.report(0, "Unknown object type: '" + node.getObject() + "' in function call: " + functionDisplayName,
+            //                            node.getMethodName().getSymbol());
+            //                }
+            //            }
+
+
         } else {
             def = ctxt.findDeclaration(node.getMethodName());
         }
 
         if (def == null) {
-            errorReporter.report(0, "Call decleration not found: " + functionDisplayName, node.getMethodName().getSymbol());
+            errorReporter.report(0, "Call declaration not found: " + functionDisplayName, node.getMethodName().getSymbol());
         } else {
             PType type = checkedTypes.get(def).clone();
 
@@ -337,6 +381,26 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseAVariableDeclaration(AVariableDeclaration node, Context ctxt) throws AnalysisException {
+
+        //check shadowing
+        LexIdentifier shadowingOrigin = findShadowingOrigin(node, null, true);
+        boolean shadowReported = false;
+        if (shadowingOrigin != null) {
+            shadowReported = true;
+            errorReporter
+                    .report(0, "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
+                            node.getName().getSymbol());
+        }
+
+        if (!shadowReported) {
+            shadowingOrigin = findShadowingOrigin(node, null, false);
+            if (shadowingOrigin != null) {
+                errorReporter.warning(0,
+                        "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
+                        node.getName().getSymbol());
+            }
+        }
+
         PType type = node.getType().apply(this, ctxt);
 
 
@@ -396,6 +460,61 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return store(node, type);
     }
 
+    private LexIdentifier findShadowingOrigin(AVariableDeclaration node, PStm currentStm, boolean caseSensitive) {
+
+        if (currentStm == null) {
+            currentStm = node.getAncestor(PStm.class);
+            if (currentStm == null) {
+                return null;
+            }
+        }
+
+        Function<PStm, SBlockStm> findAncestorSBlockStm = (stm) -> {
+            //The getAncestor function acts as an identity function when the current node matches the requested type and therefore it is necessary to
+            // call parent
+            INode stm_ = stm instanceof SBlockStm ? stm.parent() : stm;
+            if (stm_ != null) {
+                return stm_.getAncestor(SBlockStm.class);
+            }
+            return null;
+        };
+        // In a regular simulation specification a block always has a parent. However, in a test specification a block does not necessary have a
+        // parent.
+        //since the getAncestor function acts as an identity function when the current node matches the requested type it is nessesary to call parent
+        SBlockStm block = findAncestorSBlockStm.apply(currentStm);
+
+        if (block == null) {
+            return null;
+        }
+
+        while (currentStm.parent() != null && currentStm.parent() instanceof PStm && currentStm.parent() != block) {
+            currentStm = (PStm) currentStm.parent();
+        }
+
+        if (currentStm.parent() == block) {
+            //only search from before this statement
+
+            for (int i = block.getBody().indexOf(currentStm) - 1; i >= 0 && i < block.getBody().size(); i--) {
+                PStm s = block.getBody().get(i);
+                if (s instanceof ALocalVariableStm) {
+                    String declName = ((ALocalVariableStm) s).getDeclaration().getName().getText();
+                    //match found is does shadow a name
+                    if ((caseSensitive && declName.equals(node.getName().getText())) ||
+                            (!caseSensitive && declName.equalsIgnoreCase(node.getName().getText()))) {
+                        return ((ALocalVariableStm) s).getDeclaration().getName();
+                    }
+                }
+            }
+            return findShadowingOrigin(node, block, caseSensitive);
+        } else {
+            if (currentStm.parent() != null && currentStm.parent() instanceof PStm) {
+                return findShadowingOrigin(node, (PStm) currentStm.parent(), caseSensitive);
+            }
+        }
+
+        return null;
+    }
+
     private <T extends PType> T store(INode node, T type) {
         checkedTypes.put(node, type);
         return type;
@@ -450,6 +569,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType checkNumeric(SBinaryExp node, Context ctxt) throws AnalysisException {
 
         PType left = node.getLeft().apply(this, ctxt);
+
 
         if (!typeComparator.compatible(SNumericPrimitiveType.class, left)) {
             errorReporter.report(2, "Type is not numeric: " + node.getLeft() + " - type: " + left, null);
@@ -725,7 +845,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         PType type;
         if (def == null) {
-            errorReporter.report(0, "Use of undeclared variable", node.getName().getSymbol());
+            errorReporter.report(0, "Use of undeclared variable: " + node.getName(), node.getName().getSymbol());
             type = newAUnknownType();
         } else {
             type = checkedTypes.get(def).clone();

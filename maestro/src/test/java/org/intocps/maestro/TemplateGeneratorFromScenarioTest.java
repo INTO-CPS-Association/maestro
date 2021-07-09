@@ -19,11 +19,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.*;
+import java.io.File;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.FullSpecTest.getWorkingDirectory;
@@ -36,8 +39,8 @@ public class TemplateGeneratorFromScenarioTest {
      * @return
      */
     private static Stream<Arguments> data() {
-                return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
-                        .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "template_generator_from_scenario").toFile().listFiles()))
+                .filter(n -> !n.getName().equals("stabilization")).map(f -> Arguments.arguments(f.getName(), f));
         //TODO: remove filter when stabilization scenario works
     }
 
@@ -46,7 +49,7 @@ public class TemplateGeneratorFromScenarioTest {
     public void generateMaBLSpecFromExecutableScenario(String name, File directory) throws Exception {
 
         // ARRANGE
-        File workingDirectory = getWorkingDirectory(directory);
+        File workingDirectory = getWorkingDirectory(directory, this.getClass());
         IErrorReporter errorReporter = new ErrorReporter();
         Mabl mabl = new Mabl(directory, workingDirectory);
         mabl.setReporter(errorReporter);

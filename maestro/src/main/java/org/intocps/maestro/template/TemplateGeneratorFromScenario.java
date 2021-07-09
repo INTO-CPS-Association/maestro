@@ -10,7 +10,8 @@ import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.ScenarioVerifier;
 import org.intocps.maestro.plugin.ScenarioVerifierConfig;
 import scala.jdk.javaapi.CollectionConverters;
@@ -43,7 +44,7 @@ public class TemplateGeneratorFromScenario {
         // Generate MaBL spec
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         //TODO: Error handling on or off -> settings flag?
-        settings.fmiErrorHandlingEnabled = false;
+        settings.fmiErrorHandlingEnabled = true;
         MablApiBuilder builder = new MablApiBuilder(settings);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
@@ -109,9 +110,9 @@ public class TemplateGeneratorFromScenario {
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));
-        unit.setFrameworkConfigs(Collections.singletonList(new AConfigFramework(new LexIdentifier(configuration.getFrameworkConfig().getKey().toString(),
-                null),
-                StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(configuration.getFrameworkConfig().getValue())))));
+        unit.setFrameworkConfigs(Collections.singletonList(
+                new AConfigFramework(new LexIdentifier(configuration.getFrameworkConfig().getKey().toString(), null),
+                        StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(configuration.getFrameworkConfig().getValue())))));
         PrettyPrinter.print(unit);
         return unit;
     }

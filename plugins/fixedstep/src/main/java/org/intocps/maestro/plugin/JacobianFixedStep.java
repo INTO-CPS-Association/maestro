@@ -249,7 +249,7 @@ public class JacobianFixedStep {
                                                                         newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
                                                                         newARefExp(newAIdentifierExp("fix_recover_real_status")))),
                                                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
-                                                                call("Math", "min", newAIdentifierExp(fix_recoveryStepSize),
+                                                                call("math", "min", newAIdentifierExp(fix_recoveryStepSize),
                                                                         newMinusExp(newAIdentifierExp("fix_recover_real_status"),
                                                                                 newAIdentifierExp("time")))), newExpressionStm(
                                                                 simLog(LogUtil.SimLogLevel.DEBUG, "Recovery time set to: %f",

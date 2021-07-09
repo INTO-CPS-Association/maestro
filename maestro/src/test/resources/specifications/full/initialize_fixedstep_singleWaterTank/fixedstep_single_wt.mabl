@@ -14,6 +14,7 @@ real STEP_SIZE = 0.1;
   	int FMI_STATUS_ERROR = 3;
   	int FMI_STATUS_FATAL = 4;
   	int FMI_STATUS_PENDING = 5;
+  	int status = 0;
 
 
 DataWriter dataWriter = load("DataWriter");
