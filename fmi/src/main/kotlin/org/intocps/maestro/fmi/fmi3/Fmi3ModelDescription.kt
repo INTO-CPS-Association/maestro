@@ -16,6 +16,7 @@ import javax.xml.xpath.XPathExpressionException
 
 class Fmi3ModelDescription : BaseModelDescription {
     private var variables: Collection<Fmi3Variable>? = null
+    private var typeDefinitions: Collection<Fmi3TypeDefinition>? = null
 
     constructor(file: File) : super(
         ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
@@ -124,11 +125,12 @@ class Fmi3ModelDescription : BaseModelDescription {
     // Type definitions attribute
     @Throws(XPathExpressionException::class)
     fun getTypeDefinitions(): Collection<Fmi3TypeDefinition> {
-        return lookup(doc, xpath, "fmiModelDescription/@TypeDefinitions").let { typeDefNodes ->
+        return typeDefinitions ?: lookup(doc, xpath, "fmiModelDescription/@TypeDefinitions").let { typeDefNodes ->
             val typeDefinitions = mutableListOf<Fmi3TypeDefinition>()
             for (i in 0..typeDefNodes.length) {
                 typeDefNodes.item(i).apply { typeDefinitions.add(parseTypeDefinition(this)) }
             }
+            this.typeDefinitions = typeDefinitions
             typeDefinitions
         }
     }
@@ -143,7 +145,7 @@ class Fmi3ModelDescription : BaseModelDescription {
             }
             //TODO: if(!validateVariabilityCausality(modelVariables))
             variables = modelVariables
-            return modelVariables
+            modelVariables
         }
     }
 
@@ -168,8 +170,9 @@ class Fmi3ModelDescription : BaseModelDescription {
     override fun parse() {
     }
 
-    //TODO: Validate the combination of variability and causality for variables?
-    private fun validateVariabilityCausality(variables: Collection<Fmi3Variable>): Boolean {
+    //TODO: Validate that variable declaration conforms to the spec?
+    // i.e: valid combination of variability and causality, each variable has a unique name etc.?
+    private fun validateSpecConformity(variables: Collection<Fmi3Variable>): Boolean {
 
         return true
     }
@@ -203,31 +206,48 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseFloatVariable(node: Node, typeIdentifier: Fmi3TypeIdentifiers): FloatVariable {
         try {
+            val initial = (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                if (it.isEmpty()) null else valueOf<Initial>(it)
+            }
+            val causality = (node.attributes.getNamedItem("causality")?.nodeValue ?: "").let {
+                if (it.isEmpty()) Fmi3Causality.Local else valueOf(it) // Default causality is local
+            }
+            val variability = (node.attributes.getNamedItem("variability")?.nodeValue ?: "").let {
+                if (it.isEmpty()) Variability.Continuous else valueOf(it) // Default variability for float is continuous
+            }
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val typeDefinition = getTypeDefinitions().find { typeDef ->
+                declaredType.isNotEmpty() && typeDef.type.equals(
+                    valueOf<Fmi3TypeIdentifiers>(declaredType)
+                )
+            }
+            val quantity = node.attributes.getNamedItem("quantity")?.nodeValue
+                ?: (typeDefinition?.type as Fmi3TypeDefinition.FloatType).quantity
             return FloatVariable(
-                node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
-                node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
-                typeIdentifier,
-                node.attributes.getNamedItem("declaredType").nodeValue,
-                valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
-                node.attributes.getNamedItem("quantity")?.nodeValue,
-                node.attributes.getNamedItem("unit")?.nodeValue,
-                node.attributes.getNamedItem("displayUnit")?.nodeValue,
-                node.attributes.getNamedItem("relativeQuantity")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("unbounded")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("min")?.nodeValue?.toDouble(),
-                node.attributes.getNamedItem("max")?.nodeValue?.toDouble(),
-                node.attributes.getNamedItem("nominal")?.nodeValue?.toDouble(),
-                node.attributes.getNamedItem("start")?.nodeValue, //TODO: Implement parsing of start
-                node.attributes.getNamedItem("derivative")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("reinit")?.nodeValue?.toBoolean()
-            )
+                    node.attributes.getNamedItem("name").nodeValue,
+                    node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
+                    node.attributes.getNamedItem("description")?.nodeValue,
+                    causality,
+                    variability,
+                    node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
+                    node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                    node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
+                    node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                    typeIdentifier,
+                    declaredType,
+                    initial,
+                    node.attributes.getNamedItem("quantity")?.nodeValue,
+                    node.attributes.getNamedItem("unit")?.nodeValue,
+                    node.attributes.getNamedItem("displayUnit")?.nodeValue,
+                    node.attributes.getNamedItem("relativeQuantity")?.nodeValue?.toBoolean(),
+                    node.attributes.getNamedItem("unbounded")?.nodeValue?.toBoolean(),
+                    node.attributes.getNamedItem("min")?.nodeValue?.toDouble(),
+                    node.attributes.getNamedItem("max")?.nodeValue?.toDouble(),
+                    node.attributes.getNamedItem("nominal")?.nodeValue?.toDouble(),
+                    node.attributes.getNamedItem("start")?.nodeValue, //TODO: Implement parsing of start
+                    node.attributes.getNamedItem("derivative")?.nodeValue?.toUInt(),
+                    node.attributes.getNamedItem("reinit")?.nodeValue?.toBoolean()
+                )
         } catch (e: Exception) {
             throw Exception("Unable to parse type ${node.nodeName} to Fmi3FloatVariable: $e")
         }
@@ -235,18 +255,20 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseIntVariable(node: Node, typeIdentifier: Fmi3TypeIdentifiers): IntVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return IntVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 typeIdentifier,
-                node.attributes.getNamedItem("declaredType").nodeValue,
+                node.attributes.getNamedItem("declaredType")?.nodeValue,
                 valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
                 node.attributes.getNamedItem("quantity")?.nodeValue,
                 node.attributes.getNamedItem("min")?.nodeValue?.toDouble(),
@@ -260,18 +282,20 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseBooleanVariable(node: Node): BooleanVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return BooleanVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeIdentifiers.BooleanType,
-                node.attributes.getNamedItem("declaredType").nodeValue,
+                node.attributes.getNamedItem("declaredType")?.nodeValue,
                 valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
                 node.attributes.getNamedItem("start")?.nodeValue //TODO: Implement parsing of start
             )
@@ -282,14 +306,16 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseStringVariable(node: Node): StringVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return StringVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeIdentifiers.StringType
@@ -301,18 +327,20 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseBinaryVariable(node: Node): BinaryVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return BinaryVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeIdentifiers.BinaryType,
-                node.attributes.getNamedItem("declaredType").nodeValue,
+                node.attributes.getNamedItem("declaredType")?.nodeValue,
                 valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
                 node.attributes.getNamedItem("mimeType")?.nodeValue,
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt(),
@@ -325,18 +353,20 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseEnumerationVariable(node: Node): EnumerationVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return EnumerationVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeIdentifiers.EnumerationType,
-                node.attributes.getNamedItem("declaredType").nodeValue,
+                node.attributes.getNamedItem("declaredType")?.nodeValue,
                 node.attributes.getNamedItem("quantity")?.nodeValue,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong(),
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong(),
@@ -349,18 +379,20 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     private fun parseClockVariable(node: Node): ClockVariable {
         try {
+            val causality = node.attributes.getNamedItem("causality")?.nodeValue ?: ""
+            val variability = node.attributes.getNamedItem("variability")?.nodeValue ?: ""
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
-                node.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
                 node.attributes.getNamedItem("description")?.nodeValue,
-                valueOf<Fmi3Causality>(node.attributes.getNamedItem("causality")?.nodeValue ?: ""),
-                valueOf<Variability>(node.attributes.getNamedItem("variability")?.nodeValue ?: ""),
+                if (causality.isEmpty()) Fmi3Causality.Local else valueOf(causality), // Default causality is local
+                if (variability.isEmpty()) Variability.Discrete else valueOf(variability), //Default variability for float is discrete
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
-                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
+                node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeIdentifiers.ClockType,
-                node.attributes.getNamedItem("declaredType").nodeValue,
+                node.attributes.getNamedItem("declaredType")?.nodeValue,
                 node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("interval")?.nodeValue, //TODO: Implement parsing of interval
@@ -493,7 +525,7 @@ class Fmi3ModelDescription : BaseModelDescription {
             binaryType = Fmi3TypeDefinition.BinaryType(
                 node.attributes.getNamedItem("name").nodeValue,
                 node.attributes.getNamedItem("description")?.nodeValue,
-                node.attributes.getNamedItem("mimeType")?.nodeValue,
+                node.attributes.getNamedItem("mimeType")?.nodeValue ?: "application/octet-stream",
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt()
             )
         } catch (e: Exception) {

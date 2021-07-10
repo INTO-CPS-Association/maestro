@@ -4,28 +4,28 @@ import org.intocps.maestro.fmi.BaseModelDescription
 
 abstract class Fmi3Variable protected constructor(
     val name: String,
-    val valueReference: UInt?,
+    val valueReference: UInt,
     val description: String?,
-    val causality: Fmi3Causality?,
-    val variability: BaseModelDescription.Variability?,
+    val causality: Fmi3Causality,
+    val variability: BaseModelDescription.Variability,
     val canHandleMultipleSetPerTimeInstant: Boolean?,
     val intermediateUpdate: Boolean?,
     val previous: UInt?,
     val clocks:  Any?, // Value references to clock variables
-    val type: Fmi3TypeDefinition.Fmi3TypeIdentifiers // This is for easier type identification and is not part of the official spec
+    val typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers // This is for easier type identification and is not part of the official spec
 )
 
 class FloatVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val quantity: String?,
@@ -49,20 +49,20 @@ class FloatVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class IntVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val quantity: String?,
@@ -79,20 +79,20 @@ class IntVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class BooleanVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val start: Any?
@@ -106,20 +106,20 @@ class BooleanVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class StringVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -130,20 +130,20 @@ class StringVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class BinaryVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val mimeType: String?,
@@ -159,20 +159,20 @@ class BinaryVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class EnumerationVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val quantity: String?,
     val min: Long?,
@@ -188,20 +188,20 @@ class EnumerationVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 class ClockVariable(
     name: String,
-    valueReference: UInt?,
+    valueReference: UInt,
     description: String?,
-    causality: Fmi3Causality?,
-    variability: BaseModelDescription.Variability?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
     canHandleMultipleSetPerTimeInstant: Boolean?,
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    type: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
     val declaredType: String?,
     val canBeDeactivated: Boolean?,
     val priority: UInt?,
@@ -222,7 +222,7 @@ class ClockVariable(
     intermediateUpdate,
     previous,
     clocks,
-    type
+    typeIdentifier
 )
 
 enum class Fmi3Causality {
