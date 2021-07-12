@@ -12,7 +12,7 @@ abstract class Fmi3Variable protected constructor(
     val intermediateUpdate: Boolean?,
     val previous: UInt?,
     val clocks:  Any?, // Value references to clock variables
-    val typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers // This is for easier type identification and is not part of the official spec
+    val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
 )
 
 class FloatVariable(
@@ -25,7 +25,7 @@ class FloatVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val quantity: String?,
@@ -36,9 +36,39 @@ class FloatVariable(
     val min: Double?,
     val max: Double?,
     val nominal: Double?,
-    val start: Any?,
+    val start: Collection<Double>?,
     val derivative: UInt?,
     val reinit: Boolean?
+) : Fmi3Variable(
+    name,
+    valueReference,
+    description,
+    causality,
+    variability,
+    canHandleMultipleSetPerTimeInstant,
+    intermediateUpdate,
+    previous,
+    clocks,
+    typeIdentifier
+)
+
+class Int64Variable(
+    name: String,
+    valueReference: UInt,
+    description: String?,
+    causality: Fmi3Causality,
+    variability: BaseModelDescription.Variability,
+    canHandleMultipleSetPerTimeInstant: Boolean?,
+    intermediateUpdate: Boolean?,
+    previous: UInt?,
+    clocks: Any?, // Value references to clock variables
+    typeIdentifier: Fmi3TypeEnum,
+    val declaredType: String?,
+    val initial: BaseModelDescription.Initial?,
+    val quantity: String?,
+    val min: Long?,
+    val max: Long?,
+    val start: List<Long>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -62,13 +92,13 @@ class IntVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val quantity: String?,
-    val min: Double?,
-    val max: Double?,
-    val start: Any?
+    val min: Int?,
+    val max: Int?,
+    val start: List<Int>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -92,10 +122,10 @@ class BooleanVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
-    val start: Any?
+    val start: List<Boolean>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -119,7 +149,8 @@ class StringVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers
+    typeIdentifier: Fmi3TypeEnum,
+    val start: List<String>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -143,12 +174,12 @@ class BinaryVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val initial: BaseModelDescription.Initial?,
     val mimeType: String?,
     val maxSize: UInt?,
-    val start: Any?
+    val start: List<ByteArray>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -172,12 +203,12 @@ class EnumerationVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val quantity: String?,
     val min: Long?,
     val max: Long?,
-    val start: Any?
+    val start: List<Long>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -201,7 +232,7 @@ class ClockVariable(
     intermediateUpdate: Boolean?,
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
-    typeIdentifier: Fmi3TypeDefinition.Fmi3TypeIdentifiers,
+    typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val canBeDeactivated: Boolean?,
     val priority: UInt?,

@@ -1,76 +1,91 @@
 package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
 
-data class Fmi3TypeDefinition(val typeIdentifier: Fmi3TypeIdentifiers, val type: Fmi3Type) {
+data class FloatTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum,
+    val quantity: String?,
+    val unit: String?,
+    val displayUnit: String?,
+    val relativeQuantity: Boolean?,
+    val unbounded: Boolean?,
+    val min: Double?,
+    val max: Double?,
+    val nominal: Double?
+) : IFmi3TypeDefinition
 
-    data class FloatType(
-        override val name: String,
-        override val description: String?,
-        val quantity: String?,
-        val unit: String?,
-        val displayUnit: String?,
-        val relativeQuantity: Boolean?,
-        val unbounded: Boolean?,
-        val min: Double?,
-        val max: Double?,
-        val nominal: Double?
-    ) : Fmi3Type
+data class IntTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum,
+    val quantity: String?,
+    val min: Int?,
+    val max: Int?
+) : IFmi3TypeDefinition
 
-    data class IntType(
-        override val name: String,
-        override val description: String?,
-        val quantity: String?,
-        val min: Double?,
-        val max: Double?
-    ) : Fmi3Type
+data class Int64TypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum,
+    val quantity: String?,
+    val min: Long?,
+    val max: Long?
+) : IFmi3TypeDefinition
 
-    data class BooleanType(
-        override val name: String,
-        override val description: String?,
-    ) : Fmi3Type
+data class BooleanTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.BooleanType
+) : IFmi3TypeDefinition
 
-    data class StringType(
-        override val name: String,
-        override val description: String?,
-    ) : Fmi3Type
+data class StringTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.StringType
+) : IFmi3TypeDefinition
 
-    data class BinaryType(
-        override val name: String,
-        override val description: String?,
-        val mimeType: String = "application/octet-stream",
-        val maxSize: UInt?
-    ) : Fmi3Type
+data class BinaryTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.BinaryType,
+    val mimeType: String = "application/octet-stream",
+    val maxSize: UInt?
+) : IFmi3TypeDefinition
 
-    data class EnumerationType(
-        override val name: String,
-        override val description: String?,
-        val quantity: String?
-    ) : Fmi3Type
+data class EnumerationTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.EnumerationType,
+    val quantity: String?
+) : IFmi3TypeDefinition
 
-    data class ClockType(
-        override val name: String,
-        override val description: String?,
-        val canBeDeactivated: Boolean? = false,
-        val priority: UInt?,
-        val interval: Any?, //TODO: Implement interval -> It declares the clock type
-        val intervalDecimal: Float?,
-        val shiftDecimal: Float? = (0).toFloat(),
-        val supportsFraction: Boolean? = false,
-        val resolution: ULong?,
-        val intervalCounter: ULong?,
-        val shiftCounter: ULong? = (0).toULong()
-    ) : Fmi3Type
+data class ClockTypeDefinition(
+    override val name: String,
+    override val description: String?,
+    override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.ClockType,
+    val canBeDeactivated: Boolean? = false,
+    val priority: UInt?,
+    val interval: Any?, //TODO: Implement interval -> It declares the clock type
+    val intervalDecimal: Float?,
+    val shiftDecimal: Float? = (0).toFloat(),
+    val supportsFraction: Boolean? = false,
+    val resolution: ULong?,
+    val intervalCounter: ULong?,
+    val shiftCounter: ULong? = (0).toULong()
+) : IFmi3TypeDefinition
 
-    interface Fmi3Type {
-        val name: String
-        val description: String?
-    }
+interface IFmi3TypeDefinition {
+    val name: String
+    val description: String?
+    var typeIdentifier: Fmi3TypeEnum
+}
 
-    enum class Fmi3TypeIdentifiers {
-        Float32Type, Float64Type, Int8Type, UInt8Type, Int16Type, UInt16Type, Int32Type, UInt32Type, Int64Type,
-        UInt64Type, BooleanType, StringType, BinaryType, EnumerationType, ClockType;
+enum class Fmi3TypeEnum {
+    Float32Type, Float64Type, Int8Type, UInt8Type, Int16Type, UInt16Type, Int32Type, UInt32Type, Int64Type,
+    UInt64Type, BooleanType, StringType, BinaryType, EnumerationType, ClockType;
 
-        companion object {
-            fun fromVariableTypeAsString(variableTypeIdentifier: String): Fmi3TypeIdentifiers = valueOf(variableTypeIdentifier.plus("Type"))
-        }
+    companion object {
+        fun fromVariableTypeAsString(variableTypeAsString: String): Fmi3TypeEnum =
+            valueOf(variableTypeAsString.plus("Type"))
     }
 }

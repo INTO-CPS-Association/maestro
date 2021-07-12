@@ -5,9 +5,13 @@ import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import org.w3c.dom.ls.LSInput
+import org.w3c.dom.ls.LSResourceResolver
 import org.xml.sax.SAXException
+import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.Reader
 import java.util.*
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
@@ -91,7 +95,7 @@ abstract class BaseModelDescription
         return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@variableNamingConvention")
     }
 
-    // Capabilities common between the interfaces for CoSimulation, ModelExchange and ScheduledExecution (FMI3)
+    // Attributes common between the interfaces for CoSimulation, ModelExchange and ScheduledExecution (FMI3)
     @Throws(XPathExpressionException::class)
     fun getNeedsExecutionTool(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@needsExecutionTool")
@@ -133,7 +137,7 @@ abstract class BaseModelDescription
         return name.nodeValue.toBoolean()
     }
 
-    // Log categories element
+    // Log categories attribute
     @Throws(XPathExpressionException::class)
     fun getLogCategories(): List<LogCategory> {
         val categories: MutableList<LogCategory> = Vector()
@@ -167,7 +171,7 @@ abstract class BaseModelDescription
     @Throws(SAXException::class, IOException::class)
     fun validateAgainstXSD(document: Source, schemaSource: Source) {
         SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
-            this.resourceResolver = ModelDescription.ResourceResolver()
+            this.resourceResolver = ResourceResolver()
             this.newSchema(schemaSource).newValidator().validate(document)
         }
     }
@@ -177,8 +181,8 @@ abstract class BaseModelDescription
     open fun parse() {
     }
 
-    protected fun parseBaseUnit(node: Node): BaseUnit {
-        val baseUnitBuilder = BaseUnit.Builder()
+    protected fun parseBaseUnit(node: Node): FmiUnit {
+        val baseUnitBuilder = FmiUnit.Builder()
         val attributesMapLength = node.attributes.length
         for (i in 0..attributesMapLength) {
             val nodeName = node.attributes.item(i).nodeName
@@ -258,7 +262,7 @@ abstract class BaseModelDescription
         val stepSize: Double?
     )
 
-    class BaseUnit private constructor(
+    class FmiUnit private constructor(
         val kg: Int = 0,
         val m: Int = 0,
         val s: Int = 0,
@@ -292,7 +296,7 @@ abstract class BaseModelDescription
             fun setRad(rad: Int) = apply { this.rad = rad }
             fun setFactor(factor: Double) = apply { this.factor = factor }
             fun setOffset(offset: Double) = apply { this.offset = offset }
-            fun build() = BaseUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
+            fun build() = FmiUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
         }
     }
 
@@ -319,5 +323,87 @@ abstract class BaseModelDescription
     inline fun <reified T : Enum<T>> valueOf(type: String): T {
         return java.lang.Enum.valueOf(T::class.java,
             type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
+    }
+
+    class ResourceResolver : LSResourceResolver {
+        override fun resolveResource(
+            type: String,
+            namespaceURI: String,
+            publicId: String,
+            systemId: String,
+            baseURI: String
+        ): LSInput {
+
+            // note: in this sample, the XSD's are expected to be in the root of the classpath
+            val resourceAsStream = this.javaClass.classLoader.getResourceAsStream(systemId)
+            return Input(publicId, systemId, resourceAsStream)
+        }
+    }
+
+    class Input(private var publicId: String, private var systemId: String, input: InputStream?) :
+        LSInput {
+        var inputStream: BufferedInputStream? = if (input == null) null else BufferedInputStream(input)
+
+        override fun getPublicId(): String {
+            return publicId
+        }
+
+        override fun setPublicId(publicId: String) {
+            this.publicId = publicId
+        }
+
+        override fun getBaseURI(): String? {
+            return null
+        }
+
+        override fun setBaseURI(baseURI: String) {}
+
+        override fun getByteStream(): InputStream? {
+            return null
+        }
+
+        override fun setByteStream(byteStream: InputStream) {}
+
+        override fun getCertifiedText(): Boolean {
+            return false
+        }
+
+        override fun setCertifiedText(certifiedText: Boolean) {}
+
+        override fun getCharacterStream(): Reader? {
+            return null
+        }
+
+        override fun setCharacterStream(characterStream: Reader) {}
+
+        override fun getEncoding(): String? {
+            return null
+        }
+
+        override fun setEncoding(encoding: String) {}
+        override fun getStringData(): String? {
+            synchronized(inputStream!!) {
+                return try {
+                    val input = ByteArray(inputStream!!.available())
+                    inputStream!!.read(input)
+                    String(input)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    println("Exception $e")
+                    null
+                }
+            }
+        }
+
+        override fun setStringData(stringData: String) {}
+
+        override fun getSystemId(): String {
+            return systemId
+        }
+
+        override fun setSystemId(systemId: String) {
+            this.systemId = systemId
+        }
+
     }
 }
