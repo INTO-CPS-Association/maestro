@@ -1,10 +1,8 @@
 package org.intocps.maestro.fmi;
 
-import org.apache.commons.lang3.StringUtils
 import org.intocps.maestro.fmi.xml.NamedNodeMapIterator
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Document
-import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import org.xml.sax.SAXException
@@ -22,7 +20,7 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathExpressionException
 import javax.xml.xpath.XPathFactory
 
-open class BaseModelDescription
+abstract class BaseModelDescription
 @Throws(
     SAXException::class,
     IOException::class,
@@ -166,7 +164,20 @@ open class BaseModelDescription
         }
     }
 
-    fun parseBaseUnit(node: Node): BaseUnit {
+    @Throws(SAXException::class, IOException::class)
+    fun validateAgainstXSD(document: Source, schemaSource: Source) {
+        SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
+            this.resourceResolver = ModelDescription.ResourceResolver()
+            this.newSchema(schemaSource).newValidator().validate(document)
+        }
+    }
+
+    @Synchronized
+    @Throws(Exception::class)
+    open fun parse() {
+    }
+
+    protected fun parseBaseUnit(node: Node): BaseUnit {
         val baseUnitBuilder = BaseUnit.Builder()
         val attributesMapLength = node.attributes.length
         for (i in 0..attributesMapLength) {
@@ -189,20 +200,6 @@ open class BaseModelDescription
         }
         return baseUnitBuilder.build()
     }
-
-    @Throws(SAXException::class, IOException::class)
-    fun validateAgainstXSD(document: Source, schemaSource: Source) {
-        SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
-            this.resourceResolver = ModelDescription.ResourceResolver()
-            this.newSchema(schemaSource).newValidator().validate(document)
-        }
-    }
-
-    @Synchronized
-    @Throws(Exception::class)
-    open fun parse() {
-    }
-
 
     @Throws(XPathExpressionException::class)
     protected fun lookupSingle(doc: Document, xpath: XPath, expression: String): Node {
