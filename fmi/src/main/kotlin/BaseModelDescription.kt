@@ -217,7 +217,6 @@ abstract class BaseModelDescription
         if (DEBUG) {
             println("Starting from: " + formatNodeWithAtt(doc as Any))
         }
-        //TODO: Can this be null?
         val list = expr.evaluate(doc, XPathConstants.NODESET) as NodeList
         if (DEBUG) {
             print("\tFound: ")
@@ -317,8 +316,8 @@ abstract class BaseModelDescription
         Continuous
     }
 
-    inline fun <reified T : Enum<T>> valueOf(type: String): T? {
-        return if(type.isEmpty()) null else java.lang.Enum.valueOf(T::class.java,
+    inline fun <reified T : Enum<T>> valueOf(type: String): T {
+        return java.lang.Enum.valueOf(T::class.java,
             type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
     }
 }

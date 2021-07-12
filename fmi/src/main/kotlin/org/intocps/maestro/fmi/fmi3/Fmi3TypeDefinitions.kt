@@ -36,7 +36,7 @@ data class Fmi3TypeDefinition(val typeIdentifier: Fmi3TypeIdentifiers, val type:
     data class BinaryType(
         override val name: String,
         override val description: String?,
-        val mimeType: String?,
+        val mimeType: String = "application/octet-stream",
         val maxSize: UInt?
     ) : Fmi3Type
 
