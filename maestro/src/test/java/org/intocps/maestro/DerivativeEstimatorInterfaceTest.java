@@ -7,7 +7,7 @@ import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.PInitializer;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.DerivativeEstimator;
@@ -85,7 +85,7 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         FmuVariableFmi2Api sinkFMU = dynamicScope
-                .createFMU("sinkFMU", new ModelDescription(Paths.get(dirPath.toString(), "sink_modelDescription.xml").toFile()),
+                .createFMU("sinkFMU", new Fmi2ModelDescription(Paths.get(dirPath.toString(), "sink_modelDescription.xml").toFile()),
                         Paths.get(dirPath.toString(), "sink_mocked.fmu").toUri());
 
         ComponentVariableFmi2Api sink = sinkFMU.instantiate("sink");

@@ -1,4 +1,4 @@
-package org.intocps.maestro.fmi;
+package org.intocps.maestro.fmi
 
 import org.intocps.maestro.fmi.xml.NamedNodeMapIterator
 import org.intocps.maestro.fmi.xml.NodeIterator
@@ -24,15 +24,17 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathExpressionException
 import javax.xml.xpath.XPathFactory
 
-abstract class BaseModelDescription
+abstract class ModelDescription
 @Throws(
     SAXException::class,
     IOException::class,
     ParserConfigurationException::class
 ) constructor(xmlInputStream: InputStream, schemaSource: Source) {
-    protected val DEBUG = false
+    private val DEBUG = false
 
+    @JvmField
     protected val doc: Document
+    @JvmField
     protected val xpath: XPath
 
     init {
@@ -47,59 +49,59 @@ abstract class BaseModelDescription
     // Top level attributes
     @Throws(XPathExpressionException::class)
     fun getFmiVersion(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@fmiVersion")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@fmiVersion") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getModelName(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@modelName")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@modelName") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getModelDescription(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@description")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@description") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getAuthor(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@author")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@author") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getVersion(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@version")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@version") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getCopyright(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@copyright")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@copyright") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getLicense(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@license")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@license") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getGenerationTool(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@generationTool")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@generationTool") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getGenerationDateAndTime(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@generationDateAndTime")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@generationDateAndTime") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getVariableNamingConvention(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@variableNamingConvention")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/@variableNamingConvention") ?: ""
     }
 
     // Attributes common between the interfaces for CoSimulation, ModelExchange and ScheduledExecution (FMI3)
     @Throws(XPathExpressionException::class)
     fun getNeedsExecutionTool(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@needsExecutionTool")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
@@ -109,32 +111,30 @@ abstract class BaseModelDescription
             xpath,
             "fmiModelDescription/CoSimulation/@canBeInstantiatedOnlyOncePerProcess"
         )
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getCanGetAndSetFmustate(): Boolean {
         val name =
             lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canGetAndSetFMUstate")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getMaxOutputDerivativeOrder(): Int {
         val name =
             lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@maxOutputDerivativeOrder")
-        return name.nodeValue.toInt()
+        return name?.nodeValue?.toInt() ?: 0
     }
 
     // Attributes specific to the CoSimulation element
     @Throws(XPathExpressionException::class)
     fun getCanHandleVariableCommunicationStepSize(): Boolean {
         val name = lookupSingle(
-            doc,
-            xpath,
-            "fmiModelDescription/CoSimulation/@canHandleVariableCommunicationStepSize"
+            doc, xpath, "fmiModelDescription/CoSimulation/@canHandleVariableCommunicationStepSize"
         )
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     // Log categories attribute
@@ -153,10 +153,13 @@ abstract class BaseModelDescription
     }
 
     // Default experiment attribute
-    fun getDefaultExperiment(): DefaultExperiment {
+    fun getDefaultExperiment(): DefaultExperiment? {
         try {
             return lookupSingle(doc, xpath, "fmiModelDescription/@DefaultExperiment").let { defaultExperimentNode ->
-                DefaultExperiment(
+                if (defaultExperimentNode == null) {
+                    return@let null
+                }
+                return@let DefaultExperiment(
                     defaultExperimentNode.attributes.getNamedItem("startTime")?.nodeValue?.toDouble(),
                     defaultExperimentNode.attributes.getNamedItem("stopTime")?.nodeValue?.toDouble(),
                     defaultExperimentNode.attributes.getNamedItem("tolerance")?.nodeValue?.toDouble(),
@@ -168,11 +171,13 @@ abstract class BaseModelDescription
         }
     }
 
-    @Throws(SAXException::class, IOException::class)
-    fun validateAgainstXSD(document: Source, schemaSource: Source) {
-        SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
-            this.resourceResolver = ResourceResolver()
-            this.newSchema(schemaSource).newValidator().validate(document)
+    companion object {
+        @Throws(SAXException::class, IOException::class)
+        fun validateAgainstXSD(document: Source, schemaSource: Source) {
+            SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
+                this.resourceResolver = ResourceResolver()
+                this.newSchema(schemaSource).newValidator().validate(document)
+            }
         }
     }
 
@@ -206,20 +211,20 @@ abstract class BaseModelDescription
     }
 
     @Throws(XPathExpressionException::class)
-    protected fun lookupSingle(doc: Document, xpath: XPath, expression: String): Node {
+    protected fun lookupSingle(doc: Any, xpath: XPath, expression: String): Node? {
         return lookup(doc, xpath, expression).item(0)
     }
 
     @Throws(XPathExpressionException::class)
-    protected fun lookupSingleNodeValue(doc: Document, xpath: XPath, expression: String): String {
-        return lookupSingle(doc, xpath, expression).nodeValue
+    protected fun lookupSingleNodeValue(doc: Any, xpath: XPath, expression: String): String? {
+        return lookupSingle(doc, xpath, expression)?.nodeValue
     }
 
     @Throws(XPathExpressionException::class)
-    protected fun lookup(doc: Document, xpath: XPath, expression: String): NodeList {
+    protected fun lookup(doc: Any, xpath: XPath, expression: String): NodeList {
         val expr = xpath.compile(expression)
         if (DEBUG) {
-            println("Starting from: " + formatNodeWithAtt(doc as Any))
+            println("Starting from: " + formatNodeWithAtt(doc))
         }
         val list = expr.evaluate(doc, XPathConstants.NODESET) as NodeList
         if (DEBUG) {
@@ -240,6 +245,11 @@ abstract class BaseModelDescription
         return list
     }
 
+    inline fun <reified T : Enum<T>> valueOf(type: String): T {
+        return java.lang.Enum.valueOf(T::class.java,
+            type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
+    }
+
     private fun formatNodeWithAtt(node: Any): String {
         if (node is Document) {
             return "Root document"
@@ -253,6 +263,20 @@ abstract class BaseModelDescription
             return tmp.toString()
         }
         return node.toString()
+    }
+
+    enum class Initial {
+        Exact,
+        Approx,
+        Calculated
+    }
+
+    enum class Variability {
+        Constant,
+        Fixed,
+        Tunable,
+        Discrete,
+        Continuous
     }
 
     data class DefaultExperiment(
@@ -306,37 +330,18 @@ abstract class BaseModelDescription
         }
     }
 
-    enum class Initial {
-        Exact,
-        Approx,
-        Calculated
-    }
-
-    enum class Variability {
-        Constant,
-        Fixed,
-        Tunable,
-        Discrete,
-        Continuous
-    }
-
-    inline fun <reified T : Enum<T>> valueOf(type: String): T {
-        return java.lang.Enum.valueOf(T::class.java,
-            type.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() })
-    }
-
     class ResourceResolver : LSResourceResolver {
         override fun resolveResource(
-            type: String,
-            namespaceURI: String,
-            publicId: String,
-            systemId: String,
-            baseURI: String
+            type: String?,
+            namespaceURI: String?,
+            publicId: String?,
+            systemId: String?,
+            baseURI: String?
         ): LSInput {
 
             // note: in this sample, the XSD's are expected to be in the root of the classpath
             val resourceAsStream = this.javaClass.classLoader.getResourceAsStream(systemId)
-            return Input(publicId, systemId, resourceAsStream)
+            return Input(publicId ?: "", systemId ?: "", resourceAsStream)
         }
     }
 

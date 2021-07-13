@@ -1,14 +1,14 @@
 package org.intocps.maestro.webapi.services;
 
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class EnvironmentFMUModelDescription {
-    public static String createEnvironmentFMUModelDescription(List<ModelDescription.ScalarVariable> inputs,
-            List<ModelDescription.ScalarVariable> outputs, String fmuName) {
+    public static String createEnvironmentFMUModelDescription(List<Fmi2ModelDescription.ScalarVariable> inputs,
+            List<Fmi2ModelDescription.ScalarVariable> outputs, String fmuName) {
         return "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" + "<fmiModelDescription \tfmiVersion=\"2.0\"\n" + "\t\t\t\t\t\tmodelName=\"" +
                 fmuName + "\"\n" + "\t\t\t\t\t\tguid=\"{abb4bff1-d423-4e02-90d9-011f519869ff}\"\n" +
                 "\t\t\t\t\t\tvariableNamingConvention=\"flat\"\n" + "\t\t\t\t\t\tnumberOfEventIndicators=\"0\">\n" +
@@ -37,7 +37,7 @@ public class EnvironmentFMUModelDescription {
 
     }
 
-    public static String createOutputs(List<ModelDescription.ScalarVariable> outputs, int startIndex) {
+    public static String createOutputs(List<Fmi2ModelDescription.ScalarVariable> outputs, int startIndex) {
         String returnString = "";
 
         if (outputs != null && outputs.size() > 0) {
@@ -55,7 +55,7 @@ public class EnvironmentFMUModelDescription {
         return String.join("\n\n", emptyDependencies);
     }
 
-    public static String createScalarVariables(List<ModelDescription.ScalarVariable> scalarVariables) {
+    public static String createScalarVariables(List<Fmi2ModelDescription.ScalarVariable> scalarVariables) {
         String svsString = scalarVariables.stream().map(sv -> createScalarVariable(sv)).collect(Collectors.joining("\n\n"));
         return svsString;
     }
@@ -67,7 +67,7 @@ public class EnvironmentFMUModelDescription {
      * @param sv
      * @return
      */
-    public static String createScalarVariable(ModelDescription.ScalarVariable sv) {
+    public static String createScalarVariable(Fmi2ModelDescription.ScalarVariable sv) {
         return String
                 .format("<ScalarVariable " + "name=\"%s\" " + "valueReference=\"%s\" " + "causality=\"%s\" " + "variability=\"%s\"" + "%s>" + "%s" +
                                 "</ScalarVariable>", sv.name, sv.valueReference, causalityToString(sv.causality), variabilityToString(sv.variability),
@@ -76,7 +76,7 @@ public class EnvironmentFMUModelDescription {
 
     }
 
-    private static String initialToString(ModelDescription.Initial initial) {
+    private static String initialToString(Fmi2ModelDescription.Initial initial) {
         String initialString = "";
 
         if (initial != null) {
@@ -95,7 +95,7 @@ public class EnvironmentFMUModelDescription {
         return initialString;
     }
 
-    public static String typeDefinitionToString(ModelDescription.Type type) {
+    public static String typeDefinitionToString(Fmi2ModelDescription.Type type) {
         StringBuilder typeDefinitionBuilder = new StringBuilder();
         typeDefinitionBuilder.append(String.format("<%s ", type.type.toString()));
         if (type.start != null) {
@@ -105,7 +105,7 @@ public class EnvironmentFMUModelDescription {
         return typeDefinitionBuilder.toString();
     }
 
-    public static String variabilityToString(ModelDescription.Variability variability) {
+    public static String variabilityToString(Fmi2ModelDescription.Variability variability) {
         switch (variability) {
             case Constant:
                 return "constant";
@@ -121,7 +121,7 @@ public class EnvironmentFMUModelDescription {
         return null;
     }
 
-    public static String causalityToString(ModelDescription.Causality causality) {
+    public static String causalityToString(Fmi2ModelDescription.Causality causality) {
         switch (causality) {
             case Parameter:
                 return "parameter";

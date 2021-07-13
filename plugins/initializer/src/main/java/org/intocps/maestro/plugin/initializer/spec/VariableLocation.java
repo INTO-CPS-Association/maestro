@@ -1,27 +1,27 @@
 package org.intocps.maestro.plugin.initializer.spec;
 
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class VariableLocation {
-    public Map<ModelDescription.Types, String> typeMapping = new HashMap<>();
+    public Map<Fmi2ModelDescription.Types, String> typeMapping = new HashMap<>();
     String variableId;
-    ModelDescription.Types fmiType;
+    Fmi2ModelDescription.Types fmiType;
 
-    public VariableLocation(String variableId, ModelDescription.Types fmiType) {
+    public VariableLocation(String variableId, Fmi2ModelDescription.Types fmiType) {
         this.variableId = variableId;
         this.fmiType = fmiType;
     }
 
-    public void setTypeRemapping(ModelDescription.Types type, String variableId) {
+    public void setTypeRemapping(Fmi2ModelDescription.Types type, String variableId) {
         if (!typeMapping.containsKey(type)) {
             typeMapping.put(type, variableId);
         }
     }
 
-    public String getTypeMapping(ModelDescription.Types type) {
+    public String getTypeMapping(Fmi2ModelDescription.Types type) {
         return typeMapping.get(type);
     }
 
@@ -29,7 +29,7 @@ public class VariableLocation {
         return variableId;
     }
 
-    public ModelDescription.Types getFmiType() {
+    public Fmi2ModelDescription.Types getFmiType() {
         return this.fmiType;
     }
 }

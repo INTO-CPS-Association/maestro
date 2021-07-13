@@ -8,7 +8,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FaultInject;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -78,7 +78,7 @@ public class MaBLTemplateGenerator {
         return proposedName;
     }
 
-    public static PStm createFMULoad(String fmuLexName, Map.Entry<String, ModelDescription> entry,
+    public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
 
         String path = uriFromFMUName.toString();
@@ -187,7 +187,7 @@ public class MaBLTemplateGenerator {
         // Create FMU load statements
         List<PStm> unloadFmuStatements = new ArrayList<>();
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
-        for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
+        for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
 
             stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));

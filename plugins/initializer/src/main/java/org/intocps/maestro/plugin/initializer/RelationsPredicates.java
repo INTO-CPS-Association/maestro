@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.initializer;
 
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.function.Predicate;
 
@@ -19,11 +19,11 @@ public class RelationsPredicates {
     }
 
     public static Predicate<Fmi2SimulationEnvironment.Relation> inputSource() {
-        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input);
+        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Input);
     }
 
     public static Predicate<Fmi2SimulationEnvironment.Relation> outputSource() {
-        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output);
+        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output);
     }
 
 }

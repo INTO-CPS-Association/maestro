@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -68,14 +68,14 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         ports = modelDescriptionContext.nameToSv.values().stream().map(sv -> new PortFmi2Api(this, sv))
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
-        outputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Output)
+        outputPorts = ports.stream().filter(p -> p.scalarVariable.causality == Fmi2ModelDescription.Causality.Output)
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
-        inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == ModelDescription.Causality.Input)
+        inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == Fmi2ModelDescription.Causality.Input)
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
     }
 
-    public ModelDescription getModelDescription() {
+    public Fmi2ModelDescription getModelDescription() {
         return modelDescriptionContext.getModelDescription();
     }
 
@@ -402,7 +402,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         Map<PortFmi2Api, VariableFmi2Api<V>> results = new HashMap<>();
 
-        Map<ModelDescription.Type, List<PortFmi2Api>> typeToSortedPorts = new HashMap<>();
+        Map<Fmi2ModelDescription.Type, List<PortFmi2Api>> typeToSortedPorts = new HashMap<>();
         ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
 
         selectedPorts.stream().map(p -> p.scalarVariable.getType().type).distinct()
@@ -410,7 +410,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         .sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList()))
                 .forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable.getType(), l));
 
-        for (Map.Entry<ModelDescription.Type, List<PortFmi2Api>> e : typeToSortedPorts.entrySet()) {
+        for (Map.Entry<Fmi2ModelDescription.Type, List<PortFmi2Api>> e : typeToSortedPorts.entrySet()) {
             for (int i = 0; i < e.getValue().size(); i++) {
                 PortFmi2Api p = e.getValue().get(i);
                 PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
@@ -562,8 +562,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
         Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName()) &&
-                (p.scalarVariable.causality == ModelDescription.Causality.Output ||
-                        p.scalarVariable.causality == ModelDescription.Causality.Parameter)).toArray(Fmi2Builder.Port[]::new);
+                (p.scalarVariable.causality == Fmi2ModelDescription.Causality.Output ||
+                        p.scalarVariable.causality == Fmi2ModelDescription.Causality.Parameter)).toArray(Fmi2Builder.Port[]::new);
         return get(builder.getDynamicScope(), ports);
     }
 
@@ -632,7 +632,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return createFunctionName(fun, p.scalarVariable.getType().type);
     }
 
-    private String createFunctionName(FmiFunctionType f, ModelDescription.Types type) {
+    private String createFunctionName(FmiFunctionType f, Fmi2ModelDescription.Types type) {
         String functionName = "";
         switch (f) {
             case GET:
@@ -782,7 +782,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     try {
                         Map.Entry<PortFmi2Api, Integer> innerEntry;
                         // Find if port is in map of derivatives
-                        Optional<Map.Entry<ModelDescription.ScalarVariable, ModelDescription.ScalarVariable>> derivativePortEntry =
+                        Optional<Map.Entry<Fmi2ModelDescription.ScalarVariable, Fmi2ModelDescription.ScalarVariable>> derivativePortEntry =
                                 port.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getDerivativesMap().entrySet().stream()
                                         .filter(e -> e.getKey().getValueReference().equals(port.getSourcePort().getPortReferenceValue())).findAny();
 
@@ -1179,7 +1179,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     public List<PortFmi2Api> getAllConnectedOutputs() {
-        return this.ports.stream().filter(x -> x.scalarVariable.causality == ModelDescription.Causality.Output && x.getTargetPorts().size() > 0)
+        return this.ports.stream().filter(x -> x.scalarVariable.causality == Fmi2ModelDescription.Causality.Output && x.getTargetPorts().size() > 0)
                 .collect(Collectors.toList());
     }
 

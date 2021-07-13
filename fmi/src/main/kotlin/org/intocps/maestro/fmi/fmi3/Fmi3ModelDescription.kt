@@ -1,8 +1,8 @@
 package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
-import org.intocps.maestro.fmi.BaseModelDescription
 import org.intocps.maestro.fmi.ModelDescription
+import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException
 import javax.xml.transform.stream.StreamSource
 import javax.xml.xpath.XPathExpressionException
 
-class Fmi3ModelDescription : BaseModelDescription {
+class Fmi3ModelDescription : ModelDescription {
     private var variables: Collection<Fmi3Variable>? = null
     private var typeDefinitions: Collection<IFmi3TypeDefinition>? = null
     private var modelStructureElements: Collection<Fmi3ModelStructureElement>? = null
@@ -24,7 +24,7 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     constructor(file: File) : super(
         ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
-            ModelDescription::class.java.classLoader.getResourceAsStream(
+            Fmi2ModelDescription::class.java.classLoader.getResourceAsStream(
                 "fmi2ModelDescription.xsd"
             )
         )
@@ -32,7 +32,7 @@ class Fmi3ModelDescription : BaseModelDescription {
 
     constructor(file: InputStream) : super(
         file,
-        StreamSource(ModelDescription::class.java.classLoader.getResourceAsStream("fmi2ModelDescription.xsd"))
+        StreamSource(Fmi2ModelDescription::class.java.classLoader.getResourceAsStream("fmi2ModelDescription.xsd"))
     )
 
     fun getScalarVariables(): List<Fmi3ScalarVariable> {
@@ -143,61 +143,61 @@ class Fmi3ModelDescription : BaseModelDescription {
     @Throws(XPathExpressionException::class)
     fun getCanSerializeFmustate(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canSerializeFMUstate")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getProvidesDirectionalDerivatives(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesDirectionalDerivatives")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getProvidesAdjointDerivatives(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesAdjointDerivatives")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean()  ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getProvidesPerElementDependencies(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesPerElementDependencies")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
     fun getProvidesIntermediateUpdate(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesIntermediateUpdate")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean()  ?: false
     }
 
     @Throws(XPathExpressionException::class)
-    fun getRecommendedIntermediateInputSmoothness(): Int {
+    fun getRecommendedIntermediateInputSmoothness(): Int? {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@recommendedIntermediateInputSmoothness")
-        return name.nodeValue.toInt()
+        return name?.nodeValue?.toInt()
     }
 
     // Specific CoSimulation attributes
     @Throws(XPathExpressionException::class)
     fun getModelIdentifier(): String {
-        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/CoSimulation/@modelIdentifier")
+        return lookupSingleNodeValue(doc, xpath, "fmiModelDescription/CoSimulation/@modelIdentifier") ?: ""
     }
 
     @Throws(XPathExpressionException::class)
     fun getCanReturnEarlyAfterIntermediateUpdate(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canReturnEarlyAfterIntermediateUpdate")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean()  ?: false
     }
 
     @Throws(XPathExpressionException::class)
-    fun getFixedInternalStepSize(): Double {
+    fun getFixedInternalStepSize(): Double? {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@fixedInternalStepSize")
-        return name.nodeValue.toDouble()
+        return name?.nodeValue?.toDouble()
     }
 
     @Throws(XPathExpressionException::class)
     fun getHasEventMode(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@hasEventMode")
-        return name.nodeValue.toBoolean()
+        return name?.nodeValue?.toBoolean()  ?: false
     }
 
     // Unit definitions attribute

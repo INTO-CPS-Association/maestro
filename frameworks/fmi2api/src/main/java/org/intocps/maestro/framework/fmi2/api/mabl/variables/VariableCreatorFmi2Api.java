@@ -5,7 +5,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -33,7 +33,7 @@ public class VariableCreatorFmi2Api {
     }
 
 
-    public static PType fmitypetomabltype(ModelDescription.Types type) {
+    public static PType fmitypetomabltype(Fmi2ModelDescription.Types type) {
         switch (type) {
             case Boolean:
                 return newABoleanPrimitiveType();
@@ -70,7 +70,7 @@ public class VariableCreatorFmi2Api {
 
         IFmu fmu = FmuFactory.create(null, URI.create(path));
         //check schema. The constructor checks the schema
-        ModelDescription modelDescription = new ModelDescription(fmu.getModelDescription());
+        Fmi2ModelDescription modelDescription = new Fmi2ModelDescription(fmu.getModelDescription());
 
         return createFMU(builder, nameGenerator, dynamicScope, name, modelDescription, uriPath, scope);
     }
@@ -97,7 +97,7 @@ public class VariableCreatorFmi2Api {
         IFmu fmu = (IFmu) VariableCreatorFmi2Api.class.getClassLoader().loadClass(className).getConstructor().newInstance();
 
         FmuVariableFmi2Api fmuVar =
-                new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(new ModelDescription(fmu.getModelDescription())), var,
+                new FmuVariableFmi2Api(name, builder, new ModelDescriptionContext(new Fmi2ModelDescription(fmu.getModelDescription())), var,
                         MableAstFactory.newANameType("FMI2"), scope, dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)),
                         newAIdentifierExp(uniqueName));
 
@@ -125,7 +125,7 @@ public class VariableCreatorFmi2Api {
     }
 
     public static FmuVariableFmi2Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
-            String name, ModelDescription modelDescription, URI uriPath,
+            String name, Fmi2ModelDescription modelDescription, URI uriPath,
             IMablScope scope) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         String path = uriPath.toString();
         if (uriPath.getScheme() != null && uriPath.getScheme().equals("file")) {
