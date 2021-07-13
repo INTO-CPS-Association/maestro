@@ -186,10 +186,10 @@ abstract class ModelDescription
     open fun parse() {
     }
 
-    protected fun parseBaseUnit(node: Node): FmiUnit {
-        val baseUnitBuilder = FmiUnit.Builder()
+    protected fun parseBaseUnit(node: Node): BaseUnit {
+        val baseUnitBuilder = BaseUnit.Builder()
         val attributesMapLength = node.attributes.length
-        for (i in 0..attributesMapLength) {
+        for (i in 0 until attributesMapLength) {
             val nodeName = node.attributes.item(i).nodeName
             val nodeValue = node.attributes.item(i).nodeValue
 
@@ -286,7 +286,7 @@ abstract class ModelDescription
         val stepSize: Double?
     )
 
-    class FmiUnit private constructor(
+    class BaseUnit private constructor(
         val kg: Int = 0,
         val m: Int = 0,
         val s: Int = 0,
@@ -320,7 +320,7 @@ abstract class ModelDescription
             fun setRad(rad: Int) = apply { this.rad = rad }
             fun setFactor(factor: Double) = apply { this.factor = factor }
             fun setOffset(offset: Double) = apply { this.offset = offset }
-            fun build() = FmiUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
+            fun build() = BaseUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
         }
     }
 

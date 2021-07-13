@@ -9,32 +9,31 @@
 		<version>2.1.6-SNAPSHOT</version>
 	</parent>
 
+    <properties>
+        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+    </properties>
+
 	<artifactId>fmi</artifactId>
 
 	<name>FMI model definition API</name>
 
     <dependencies>
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.into-cps.fmi</groupId>
 			<artifactId>fmi2</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
 		<dependency>
 			<groupId>commons-beanutils</groupId>

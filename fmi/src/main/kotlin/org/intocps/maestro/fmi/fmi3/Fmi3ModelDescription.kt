@@ -2,7 +2,6 @@ package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
 import org.intocps.maestro.fmi.ModelDescription
-import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
@@ -20,19 +19,19 @@ class Fmi3ModelDescription : ModelDescription {
     private var scalarVariables: List<Fmi3ScalarVariable>? = null
     private var outputs: List<Fmi3ScalarVariable>? = null
     private var derivatives: List<Fmi3ScalarVariable>? = null
-    private var derivativesMap: Map<Fmi3ScalarVariable, Fmi3ScalarVariable>? = null
+    private var derivativeToDerivativeSource: Map<Fmi3ScalarVariable, Fmi3ScalarVariable>? = null
 
     constructor(file: File) : super(
         ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
-            Fmi2ModelDescription::class.java.classLoader.getResourceAsStream(
-                "fmi2ModelDescription.xsd"
+            Fmi3ModelDescription::class.java.classLoader.getResourceAsStream(
+                "fmi3ModelDescription.xsd"
             )
         )
     )
 
     constructor(file: InputStream) : super(
         file,
-        StreamSource(Fmi2ModelDescription::class.java.classLoader.getResourceAsStream("fmi2ModelDescription.xsd"))
+        StreamSource(Fmi3ModelDescription::class.java.classLoader.getResourceAsStream("fmi3ModelDescription.xsd"))
     )
 
     fun getScalarVariables(): List<Fmi3ScalarVariable> {
@@ -56,10 +55,10 @@ class Fmi3ModelDescription : ModelDescription {
         }
     }
 
-    fun getDerivativesMap(): Map<Fmi3ScalarVariable, Fmi3ScalarVariable> {
-        return derivativesMap ?: run {
+    fun getDerivativeToDerivativeSourceMap(): Map<Fmi3ScalarVariable, Fmi3ScalarVariable> {
+        return derivativeToDerivativeSource ?: run {
             parse()
-            return derivativesMap ?: mapOf()
+            return derivativeToDerivativeSource ?: mapOf()
         }
     }
 
@@ -69,6 +68,8 @@ class Fmi3ModelDescription : ModelDescription {
         InvocationTargetException::class,
         IllegalAccessException::class
     )
+
+
     override fun parse() {
         // Create local mutable model structure list so that elements can be removed when they have been visited
         val modelStructure: MutableList<Fmi3ModelStructureElement> = getModelStructure().toMutableList()
@@ -80,7 +81,7 @@ class Fmi3ModelDescription : ModelDescription {
             interMediateVariableList.forEach { variable ->
                 modelStructure.filter { modelElement ->
                     modelElement.valueReference == variable.variable.valueReference
-                }.onEach { modelElement ->
+                }.also { modelStructure.removeAll(it) }.forEach { modelElement ->
                     // As per the specification the dependencies list matches the dependenciesKind list and if dependenciesKind is present so is dependencies.
                     // Therefore they can be zipped and mapped. If dependencies is not present an empty map is created.
                     val dependencyScalarVariableToDependencyKinds: Map<Fmi3ScalarVariable, Fmi3DependencyKind>
@@ -99,19 +100,18 @@ class Fmi3ModelDescription : ModelDescription {
                         Fmi3ModelStructureElementEnum.Output -> variable.outputDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
-                        Fmi3ModelStructureElementEnum.ContinuousSateDerivative -> variable.derivativesDependencies.putAll(
+                        Fmi3ModelStructureElementEnum.ContinuousStateDerivative -> variable.derivativesDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
-                        Fmi3ModelStructureElementEnum.ClockedState -> TODO()
+                        Fmi3ModelStructureElementEnum.ClockedState -> {
+                        } //TODO: Implement
                         Fmi3ModelStructureElementEnum.InitialUnknown -> variable.initialUnknownsDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
 
-                        Fmi3ModelStructureElementEnum.EventIndicator -> TODO()
+                        Fmi3ModelStructureElementEnum.EventIndicator -> {
+                        } //TODO: Implement
                     }
-                }.apply {
-                    // Remove visited model elements as the information from these has now been added to a scalar variable.
-                    modelStructure.removeAll(this)
                 }
             }
         }.apply {
@@ -124,8 +124,12 @@ class Fmi3ModelDescription : ModelDescription {
                         (sc.variable as FloatVariable).derivative != null
             }.also {
                 try {
-                    derivativesMap =
-                        it.associateBy { this.find { sc -> sc.variable.valueReference == (sc.variable as FloatVariable).derivative }!! }
+                    derivativeToDerivativeSource =
+                        it.associateBy {
+                            this.find { sc ->
+                                sc.variable.valueReference == (it.variable as FloatVariable).derivative
+                            }!!
+                        }
                 } catch (e: Exception) {
                     throw Exception("Unable to associate derivative with derivative source: $e")
                 }
@@ -155,7 +159,7 @@ class Fmi3ModelDescription : ModelDescription {
     @Throws(XPathExpressionException::class)
     fun getProvidesAdjointDerivatives(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesAdjointDerivatives")
-        return name?.nodeValue?.toBoolean()  ?: false
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
@@ -167,7 +171,7 @@ class Fmi3ModelDescription : ModelDescription {
     @Throws(XPathExpressionException::class)
     fun getProvidesIntermediateUpdate(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@providesIntermediateUpdate")
-        return name?.nodeValue?.toBoolean()  ?: false
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
@@ -185,7 +189,7 @@ class Fmi3ModelDescription : ModelDescription {
     @Throws(XPathExpressionException::class)
     fun getCanReturnEarlyAfterIntermediateUpdate(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canReturnEarlyAfterIntermediateUpdate")
-        return name?.nodeValue?.toBoolean()  ?: false
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     @Throws(XPathExpressionException::class)
@@ -197,18 +201,18 @@ class Fmi3ModelDescription : ModelDescription {
     @Throws(XPathExpressionException::class)
     fun getHasEventMode(): Boolean {
         val name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@hasEventMode")
-        return name?.nodeValue?.toBoolean()  ?: false
+        return name?.nodeValue?.toBoolean() ?: false
     }
 
     // Unit definitions attribute
     @Throws(XPathExpressionException::class)
     fun getUnitDefinitions(): Collection<Fmi3Unit> {
-        return NodeIterator(lookup(doc, xpath, "fmiModelDescription/UnitDefinitions/@Unit")).map { unitNode ->
+        return NodeIterator(lookup(doc, xpath, "fmiModelDescription/UnitDefinitions/Unit")).map { unitNode ->
             Fmi3Unit.Builder().apply {
                 setName(unitNode.attributes.getNamedItem("name").nodeValue)
                 val displayUnits = mutableListOf<Fmi3Unit.Fmi3DisplayUnit>()
-                NodeIterator(unitNode.childNodes).forEach { childNode ->
-                    when (childNode.localName) {
+                NodeIterator(lookup(unitNode, xpath, "*")).forEach { childNode ->
+                    when (childNode.nodeName) {
                         "BaseUnit" -> {
                             setBaseUnit(parseBaseUnit(childNode))
                         }
@@ -227,10 +231,10 @@ class Fmi3ModelDescription : ModelDescription {
     // Type definitions attribute
     @Throws(XPathExpressionException::class)
     fun getTypeDefinitions(): Collection<IFmi3TypeDefinition> {
-        return typeDefinitions ?: lookup(doc, xpath, "fmiModelDescription/@TypeDefinitions").let { typeDefNodes ->
+        return typeDefinitions ?: lookupSingle(doc, xpath, "fmiModelDescription/TypeDefinitions").let { typeDefNodes ->
             val typeDefinitions = mutableListOf<IFmi3TypeDefinition>()
-            for (i in 0..typeDefNodes.length) {
-                typeDefNodes.item(i).apply { typeDefinitions.add(parseTypeDefinition(this)) }
+            NodeIterator(lookup(typeDefNodes as Node, xpath, "*")).forEach {
+                it.apply { typeDefinitions.add(parseTypeDefinition(this)) }
             }
             this.typeDefinitions = typeDefinitions
             return typeDefinitions
@@ -240,10 +244,10 @@ class Fmi3ModelDescription : ModelDescription {
     // Model variables attribute
     @Throws(XPathExpressionException::class)
     fun getModelVariables(): Collection<Fmi3Variable> {
-        return variables ?: lookup(doc, xpath, "fmiModelDescription/@ModelVariables").let { modelVariablesNode ->
+        return variables ?: lookupSingle(doc, xpath, "fmiModelDescription/ModelVariables").let { modelVariablesNode ->
             val modelVariables = mutableListOf<Fmi3Variable>()
-            for (i in 0..modelVariablesNode.length) {
-                modelVariablesNode.item(i).apply { modelVariables.add(parseModelVariable(this)) }
+            NodeIterator(lookup(modelVariablesNode as Node, xpath, "*")).forEach {
+                it.apply { modelVariables.add(parseModelVariable(this)) }
             }
             variables = modelVariables
             return modelVariables
@@ -253,14 +257,14 @@ class Fmi3ModelDescription : ModelDescription {
     // Model structure attribute
     @Throws(XPathExpressionException::class)
     fun getModelStructure(): Collection<Fmi3ModelStructureElement> {
-        return modelStructureElements ?: lookup(
+        return modelStructureElements ?: lookupSingle(
             doc,
             xpath,
-            "fmiModelDescription/@ModelStructure"
+            "fmiModelDescription/ModelStructure"
         ).let { modelStructureNode ->
             val modelStructureElements = mutableListOf<Fmi3ModelStructureElement>()
-            for (i in 0..modelStructureNode.length) {
-                modelStructureNode.item(i).apply { modelStructureElements.add(parseModelStructureElement(this)) }
+            NodeIterator(lookup(modelStructureNode as Node, xpath, "*")).forEach {
+                it.apply { modelStructureElements.add(parseModelStructureElement(this)) }
             }
             this.modelStructureElements = modelStructureElements
             return modelStructureElements
@@ -314,11 +318,10 @@ class Fmi3ModelDescription : ModelDescription {
     private fun parseFloatVariable(node: Node, typeIdentifier: Fmi3TypeEnum): FloatVariable {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
-            // that has its value declared in the type definition, the type definition value is used.
+            // the value of the type definition is used if present.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as FloatTypeDefinition else null
+            val typeDefinition: FloatTypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as FloatTypeDefinition?
 
             return FloatVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -350,10 +353,11 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("nominal")?.nodeValue?.toDouble() ?: typeDefinition?.nominal,
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toDouble() },
                 node.attributes.getNamedItem("derivative")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("reinit")?.nodeValue?.toBoolean()
+                node.attributes.getNamedItem("reinit")?.nodeValue?.toBoolean(),
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3FloatVariable: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -362,9 +366,8 @@ class Fmi3ModelDescription : ModelDescription {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as IntTypeDefinition else null
+            val typeDefinition: IntTypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as IntTypeDefinition?
 
             return IntVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -386,10 +389,11 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toInt() ?: typeDefinition?.min,
                 node.attributes.getNamedItem("max")?.nodeValue?.toInt() ?: typeDefinition?.max,
-                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toInt() }
+                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toInt() },
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3IntVariable: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -398,9 +402,8 @@ class Fmi3ModelDescription : ModelDescription {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as Int64TypeDefinition else null
+            val typeDefinition: Int64TypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as Int64TypeDefinition?
 
             return Int64Variable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -422,10 +425,11 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong() ?: typeDefinition?.min,
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong() ?: typeDefinition?.max,
-                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() }
+                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() },
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3IntVariable: $e")
+            throw Exception("Unable to parse type ${node.nodeName} : $e")
         }
     }
 
@@ -448,10 +452,11 @@ class Fmi3ModelDescription : ModelDescription {
                 Fmi3TypeEnum.BooleanType,
                 node.attributes.getNamedItem("declaredType")?.nodeValue,
                 valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
-                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toBoolean() }
+                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toBoolean() },
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3BoolVariable: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -479,10 +484,11 @@ class Fmi3ModelDescription : ModelDescription {
                             .apply { startValues.add(this?.nodeValue ?: "") }
                     }
                     return@let startValues
-                }
+                },
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3StringVariable: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -491,9 +497,8 @@ class Fmi3ModelDescription : ModelDescription {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as BinaryTypeDefinition else null
+            val typeDefinition: BinaryTypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as BinaryTypeDefinition?
 
             return BinaryVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -515,10 +520,11 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("mimeType")?.nodeValue ?: typeDefinition?.mimeType,
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt() ?: typeDefinition?.maxSize,
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")
-                    ?.map { value -> value.toByteArray() } //TODO: this might fail?
+                    ?.map { value -> value.toByteArray() }, //TODO: this might fail?
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3BinaryVariable: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -527,9 +533,8 @@ class Fmi3ModelDescription : ModelDescription {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as EnumerationTypeDefinition else null
+            val typeDefinition: EnumerationTypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as EnumerationTypeDefinition?
 
             return EnumerationVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -550,10 +555,11 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong(),
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong(),
-                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() }
+                node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() },
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3EnumerationVariable: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -562,9 +568,8 @@ class Fmi3ModelDescription : ModelDescription {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
             val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
-            val typeDefinition = if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
-                typeDef.typeIdentifier == valueOf<Fmi3TypeEnum>(declaredType)
-            } as ClockTypeDefinition else null
+            val typeDefinition: ClockTypeDefinition? =
+                getTypeDefinitionFromDeclaredType(declaredType) as ClockTypeDefinition?
 
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -597,31 +602,35 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("intervalCounter")?.nodeValue?.toULong()
                     ?: typeDefinition?.intervalCounter,
                 node.attributes.getNamedItem("shiftCounter")?.nodeValue?.toULong() ?: typeDefinition?.shiftCounter
-                ?: (0).toULong()
+                ?: (0).toULong(),
+                getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3ClockVariable: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
     private fun parseTypeDefinition(node: Node): IFmi3TypeDefinition {
-        return when (node.nodeName) {
-            Fmi3TypeEnum.Float32Type.toString() -> parseFloatType(node, Fmi3TypeEnum.Float32Type)
-            Fmi3TypeEnum.Float64Type.toString() -> parseFloatType(node, Fmi3TypeEnum.Float64Type)
-            Fmi3TypeEnum.Int8Type.toString() -> parseIntType(node, Fmi3TypeEnum.Int8Type)
-            Fmi3TypeEnum.UInt8Type.toString() -> parseIntType(node, Fmi3TypeEnum.UInt8Type)
-            Fmi3TypeEnum.Int16Type.toString() -> parseIntType(node, Fmi3TypeEnum.Int16Type)
-            Fmi3TypeEnum.UInt16Type.toString() -> parseIntType(node, Fmi3TypeEnum.UInt16Type)
-            Fmi3TypeEnum.Int32Type.toString() -> parseIntType(node, Fmi3TypeEnum.Int32Type)
-            Fmi3TypeEnum.UInt32Type.toString() -> parseIntType(node, Fmi3TypeEnum.UInt32Type)
-            Fmi3TypeEnum.Int64Type.toString() -> parseInt64Type(node, Fmi3TypeEnum.Int64Type)
-            Fmi3TypeEnum.UInt64Type.toString() -> parseInt64Type(node, Fmi3TypeEnum.UInt64Type)
-            Fmi3TypeEnum.BooleanType.toString() -> parseBooleanType(node)
-            Fmi3TypeEnum.StringType.toString() -> parseStringType(node)
-            Fmi3TypeEnum.BinaryType.toString() -> parseBinaryType(node)
-            Fmi3TypeEnum.EnumerationType.toString() -> parseEnumerationType(node)
-            Fmi3TypeEnum.ClockType.toString() -> parseClockType(node)
-            else -> throw Exception("Unknown type definition during model description parsing: ${node.nodeName}")
+        try {
+            return when (valueOf<Fmi3TypeEnum>(node.nodeName)) {
+                Fmi3TypeEnum.Float32Type -> parseFloatType(node, Fmi3TypeEnum.Float32Type)
+                Fmi3TypeEnum.Float64Type -> parseFloatType(node, Fmi3TypeEnum.Float64Type)
+                Fmi3TypeEnum.Int8Type -> parseIntType(node, Fmi3TypeEnum.Int8Type)
+                Fmi3TypeEnum.UInt8Type -> parseIntType(node, Fmi3TypeEnum.UInt8Type)
+                Fmi3TypeEnum.Int16Type -> parseIntType(node, Fmi3TypeEnum.Int16Type)
+                Fmi3TypeEnum.UInt16Type -> parseIntType(node, Fmi3TypeEnum.UInt16Type)
+                Fmi3TypeEnum.Int32Type -> parseIntType(node, Fmi3TypeEnum.Int32Type)
+                Fmi3TypeEnum.UInt32Type -> parseIntType(node, Fmi3TypeEnum.UInt32Type)
+                Fmi3TypeEnum.Int64Type -> parseInt64Type(node, Fmi3TypeEnum.Int64Type)
+                Fmi3TypeEnum.UInt64Type -> parseInt64Type(node, Fmi3TypeEnum.UInt64Type)
+                Fmi3TypeEnum.BooleanType -> parseBooleanType(node)
+                Fmi3TypeEnum.StringType -> parseStringType(node)
+                Fmi3TypeEnum.BinaryType -> parseBinaryType(node)
+                Fmi3TypeEnum.EnumerationType -> parseEnumerationType(node)
+                Fmi3TypeEnum.ClockType -> parseClockType(node)
+            }
+        } catch (e: Exception) {
+            throw Exception("Unknown type definition during model description parsing: ${node.nodeName}")
         }
     }
 
@@ -642,7 +651,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("shiftCounter")?.nodeValue?.toULong()
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3ClockType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -655,7 +664,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3EnumerationType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -669,7 +678,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt()
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3BinaryType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -681,7 +690,7 @@ class Fmi3ModelDescription : ModelDescription {
                 Fmi3TypeEnum.StringType
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3StringType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -708,7 +717,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("max")?.nodeValue?.toInt()
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3IntType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -723,7 +732,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong()
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3IntType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -743,7 +752,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("nominal")?.nodeValue?.toDouble()
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} to Fmi3FloatType: $e")
+            throw Exception("Unable to parse type ${node.nodeName}: $e")
         }
     }
 
@@ -753,6 +762,21 @@ class Fmi3ModelDescription : ModelDescription {
         val factor = node.attributes.getNamedItem("factor")?.nodeValue?.toDouble()
         val offset = node.attributes.getNamedItem("offset")?.nodeValue?.toDouble()
         return Fmi3Unit.Fmi3DisplayUnit(inverse, name, factor, offset)
+    }
+
+    private fun getDimensionsFromVariableNode(node: Node): List<Dimension> {
+        return NodeIterator(lookup(node, xpath, "Dimension")).map { dimensionNode ->
+            Dimension(
+                dimensionNode.attributes.getNamedItem("valueReference")?.nodeValue?.toUInt(),
+                dimensionNode.attributes.getNamedItem("start")?.nodeValue?.split(" ")
+                    ?.map { value -> value.toLong() })
+        }
+    }
+
+    private fun getTypeDefinitionFromDeclaredType(declaredType: String): IFmi3TypeDefinition? {
+        return if (declaredType.isNotEmpty()) getTypeDefinitions().find { typeDef ->
+            typeDef.name == declaredType
+        } else null
     }
 
     data class Fmi3ScalarVariable(

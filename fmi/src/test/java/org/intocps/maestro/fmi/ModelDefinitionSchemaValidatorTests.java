@@ -47,7 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class ModelDefinitionSchemaValidatorTests {
-    //TODO: What is this test accomplishing?
+    //TODO: What is this testing?
     @Test
     public void test() throws IOException, SAXException {
         File f = new File("src/test/resources/modelDescription.xml".replace('/', File.separatorChar));
@@ -74,7 +74,5 @@ public class ModelDefinitionSchemaValidatorTests {
 
             Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
         });
-
-
     }
 }

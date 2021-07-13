@@ -11,9 +11,11 @@ abstract class Fmi3Variable protected constructor(
     val canHandleMultipleSetPerTimeInstant: Boolean?,
     val intermediateUpdate: Boolean?,
     val previous: UInt?,
-    val clocks:  Any?, // Value references to clock variables
+    val clocks: Any?, // Value references to clock variables
     val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
 )
+
+data class Dimension(val valueReference: UInt?, val start: List<Long>?)
 
 class FloatVariable(
     name: String,
@@ -38,7 +40,8 @@ class FloatVariable(
     val nominal: Double?,
     val start: Collection<Double>?,
     val derivative: UInt?,
-    val reinit: Boolean?
+    val reinit: Boolean?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -68,7 +71,8 @@ class Int64Variable(
     val quantity: String?,
     val min: Long?,
     val max: Long?,
-    val start: List<Long>?
+    val start: List<Long>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -98,7 +102,8 @@ class IntVariable(
     val quantity: String?,
     val min: Int?,
     val max: Int?,
-    val start: List<Int>?
+    val start: List<Int>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -125,7 +130,8 @@ class BooleanVariable(
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String?,
     val initial: ModelDescription.Initial?,
-    val start: List<Boolean>?
+    val start: List<Boolean>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -150,7 +156,8 @@ class StringVariable(
     previous: UInt?,
     clocks: Any?, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val start: List<String>?
+    val start: List<String>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -179,7 +186,8 @@ class BinaryVariable(
     val initial: ModelDescription.Initial?,
     val mimeType: String?,
     val maxSize: UInt?,
-    val start: List<ByteArray>?
+    val start: List<ByteArray>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -208,7 +216,8 @@ class EnumerationVariable(
     val quantity: String?,
     val min: Long?,
     val max: Long?,
-    val start: List<Long>?
+    val start: List<Long>?,
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -242,7 +251,8 @@ class ClockVariable(
     val supportsFraction: Boolean? = false,
     val resolution: ULong?,
     val intervalCounter: ULong?,
-    val shiftCounter: ULong? = (0).toULong()
+    val shiftCounter: ULong? = (0).toULong(),
+    val dimensions: List<Dimension>?
 ) : Fmi3Variable(
     name,
     valueReference,
