@@ -277,7 +277,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                         } else {
                             throw new RuntimeException("Unable to set parameter of class: " + e.getValue().getClass().toString());
                         }
-                    })); fmuInstance.set(new PortValueExpresssionMapImpl(PortToExpressionValue));
+                    }));
+            fmuInstance.set(new PortValueExpresssionMapImpl(PortToExpressionValue));
         });
     }
 
