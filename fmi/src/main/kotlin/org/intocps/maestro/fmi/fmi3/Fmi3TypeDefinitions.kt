@@ -65,7 +65,7 @@ data class ClockTypeDefinition(
     override var typeIdentifier: Fmi3TypeEnum = Fmi3TypeEnum.ClockType,
     val canBeDeactivated: Boolean? = false,
     val priority: UInt?,
-    val interval: Any?, //TODO: Implement interval -> It declares the clock type
+    val interval: Fmi3ClockInterval,
     val intervalDecimal: Float?,
     val shiftDecimal: Float? = (0).toFloat(),
     val supportsFraction: Boolean? = false,
@@ -78,6 +78,10 @@ interface IFmi3TypeDefinition {
     val name: String
     val description: String?
     var typeIdentifier: Fmi3TypeEnum
+}
+
+enum class Fmi3ClockInterval {
+    Constant, Fixed, Calculated, Tunable, Changing, Countdown, Triggered
 }
 
 enum class Fmi3TypeEnum {

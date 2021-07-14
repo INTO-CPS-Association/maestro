@@ -11,7 +11,7 @@ abstract class Fmi3Variable protected constructor(
     val canHandleMultipleSetPerTimeInstant: Boolean? = null,
     val intermediateUpdate: Boolean? = false,
     val previous: UInt? = null,
-    val clocks: Any? = null, // Value references to clock variables
+    val clocks: List<UInt>? = null,
     val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
 )
 
@@ -26,7 +26,7 @@ class FloatVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val initial: ModelDescription.Initial? = null,
@@ -64,7 +64,7 @@ class Int64Variable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val initial: ModelDescription.Initial? = null,
@@ -95,7 +95,7 @@ class IntVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val initial: ModelDescription.Initial? = null,
@@ -126,7 +126,7 @@ class BooleanVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val initial: ModelDescription.Initial? = null,
@@ -154,7 +154,7 @@ class StringVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val start: List<String>? = null,
     val dimensions: List<Dimension>? = null
@@ -180,7 +180,7 @@ class BinaryVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val initial: ModelDescription.Initial? = null,
@@ -210,7 +210,7 @@ class EnumerationVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val quantity: String? = null,
@@ -240,12 +240,12 @@ class ClockVariable(
     canHandleMultipleSetPerTimeInstant: Boolean? = null,
     intermediateUpdate: Boolean? = false,
     previous: UInt? = null,
-    clocks: Any? = null, // Value references to clock variables
+    clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
     val canBeDeactivated: Boolean? = false,
     val priority: UInt? = null,
-    val interval: Any? = null, //TODO: Implement interval -> It declares the clock type
+    val interval: Fmi3ClockInterval,
     val intervalDecimal: Float? = null,
     val shiftDecimal: Float? = (0).toFloat(),
     val supportsFraction: Boolean? = false,

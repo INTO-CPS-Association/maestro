@@ -336,7 +336,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 typeIdentifier,
                 declaredType,
                 (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
@@ -382,7 +382,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 typeIdentifier,
                 declaredType,
                 (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
@@ -420,7 +420,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 typeIdentifier,
                 declaredType,
                 (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
@@ -452,7 +452,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.BooleanType,
                 node.attributes.getNamedItem("declaredType")?.nodeValue,
                 (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
@@ -481,7 +481,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.StringType,
                 node.attributes.let { att ->
                     val startValues: MutableList<String> = mutableListOf()
@@ -519,7 +519,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.BinaryType,
                 declaredType,
                 (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
@@ -557,7 +557,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.EnumerationType,
                 declaredType,
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
@@ -579,6 +579,8 @@ class Fmi3ModelDescription : ModelDescription {
             val typeDefinition: ClockTypeDefinition? =
                 getTypeDefinitionFromDeclaredType(declaredType ?: "") as ClockTypeDefinition?
 
+            val interval = node.attributes.getNamedItem("interval")?.nodeValue
+
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
                 node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
@@ -592,14 +594,13 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canHandleMultipleSetPerTimeInstant")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("intermediateUpdate")?.nodeValue?.toBoolean() ?: false,
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
+                node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.ClockType,
                 declaredType,
                 node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean()
                     ?: typeDefinition?.canBeDeactivated,
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
-                node.attributes.getNamedItem("interval")?.nodeValue
-                    ?: typeDefinition?.interval, //TODO: Implement parsing of interval
+                if(interval == null) typeDefinition!!.interval else valueOf(interval),
                 node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat()
                     ?: typeDefinition?.intervalDecimal,
                 node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat() ?: typeDefinition?.shiftDecimal
@@ -650,7 +651,7 @@ class Fmi3ModelDescription : ModelDescription {
                 Fmi3TypeEnum.ClockType,
                 node.attributes.getNamedItem("canBeDeactivated")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt(),
-                node.attributes.getNamedItem("interval")?.nodeValue,
+                valueOf(node.attributes.getNamedItem("interval")!!.nodeValue),
                 node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat(),
                 node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat(),
                 node.attributes.getNamedItem("supportsFraction")?.nodeValue?.toBoolean(),
