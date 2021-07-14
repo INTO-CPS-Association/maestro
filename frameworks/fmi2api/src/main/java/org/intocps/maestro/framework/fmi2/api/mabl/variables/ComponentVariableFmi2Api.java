@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toSet;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -775,6 +776,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
+        Set<String> selectedPortsCopy = selectedPorts.stream().map(PortFmi2Api::getName).collect(toSet());
+        selectedPortsCopy.removeAll(ports.stream().map(PortFmi2Api::getName).collect(toSet()));
+        if (selectedPortsCopy.size() > 0) {
+            throw new RuntimeException("Unable to set port(s) that is not declared in the FMU: " + String.join(", ", selectedPortsCopy));
+        }
 
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
