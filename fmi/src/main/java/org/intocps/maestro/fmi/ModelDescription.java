@@ -384,9 +384,9 @@ public class ModelDescription {
 
         ders.forEach(der -> {
             ScalarVariable derSource = indexMap.get(Integer.parseInt((String) ((RealType) der.type).derivative));
-			if (derSource.causality == Causality.Output) {
-				derivativesMap.put(derSource, der);
-			}
+            if (derSource.causality == Causality.Output) {
+                derivativesMap.put(derSource, der);
+            }
         });
 
         for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/ModelStructure/Outputs/Unknown"))) {
@@ -488,9 +488,9 @@ public class ModelDescription {
         Node attribute = node.getAttributes().getNamedItem("declaredType");
         if (attribute != null) {
             String declaredType = attribute.getNodeValue();
-			if (typeDefinitions.containsKey(declaredType)) {
-				typeDefinitions.get(declaredType).setDefaults(type);
-			}
+            if (typeDefinitions.containsKey(declaredType)) {
+                typeDefinitions.get(declaredType).setDefaults(type);
+            }
         }
     }
 
@@ -603,9 +603,9 @@ public class ModelDescription {
             case Enumeration:
                 type = new EnumerationType();
             case Integer:
-				if (type == null) {
-					type = new IntegerType();
-				}
+                if (type == null) {
+                    type = new IntegerType();
+                }
                 copyDefaults(type, child, typeDefinitions);
                 parseIntegerType((IntegerType) type, child, false);
                 break;
@@ -725,19 +725,19 @@ public class ModelDescription {
                                 break;
                         }
 
-						if (other.initial != null) {
-							switch (other.initial) {
-								case Approx:
-									break;
-								case Calculated:
-									break;
-								case Exact:
-									handler.get(sc).put(other, ScalarVariable.DependencyKind.Dependent);
-									break;
-								default:
-									break;
-							}
-						}
+                        if (other.initial != null) {
+                            switch (other.initial) {
+                                case Approx:
+                                    break;
+                                case Calculated:
+                                    break;
+                                case Exact:
+                                    handler.get(sc).put(other, ScalarVariable.DependencyKind.Dependent);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
 
                     }
                 }
@@ -1028,7 +1028,7 @@ public class ModelDescription {
     public static class ResourceResolver implements LSResourceResolver {
 
         @Override
-		public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
+        public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
 
             // note: in this sample, the XSD's are expected to be in the root of the classpath
             InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(systemId);
@@ -1051,62 +1051,62 @@ public class ModelDescription {
         }
 
         @Override
-		public String getPublicId() {
+        public String getPublicId() {
             return publicId;
         }
 
         @Override
-		public void setPublicId(String publicId) {
+        public void setPublicId(String publicId) {
             this.publicId = publicId;
         }
 
         @Override
-		public String getBaseURI() {
+        public String getBaseURI() {
             return null;
         }
 
         @Override
-		public void setBaseURI(String baseURI) {
+        public void setBaseURI(String baseURI) {
         }
 
         @Override
-		public InputStream getByteStream() {
+        public InputStream getByteStream() {
             return null;
         }
 
         @Override
-		public void setByteStream(InputStream byteStream) {
+        public void setByteStream(InputStream byteStream) {
         }
 
         @Override
-		public boolean getCertifiedText() {
+        public boolean getCertifiedText() {
             return false;
         }
 
         @Override
-		public void setCertifiedText(boolean certifiedText) {
+        public void setCertifiedText(boolean certifiedText) {
         }
 
         @Override
-		public Reader getCharacterStream() {
+        public Reader getCharacterStream() {
             return null;
         }
 
         @Override
-		public void setCharacterStream(Reader characterStream) {
+        public void setCharacterStream(Reader characterStream) {
         }
 
         @Override
-		public String getEncoding() {
+        public String getEncoding() {
             return null;
         }
 
         @Override
-		public void setEncoding(String encoding) {
+        public void setEncoding(String encoding) {
         }
 
         @Override
-		public String getStringData() {
+        public String getStringData() {
             synchronized (inputStream) {
                 try {
                     byte[] input = new byte[inputStream.available()];
@@ -1122,16 +1122,16 @@ public class ModelDescription {
         }
 
         @Override
-		public void setStringData(String stringData) {
+        public void setStringData(String stringData) {
         }
 
         @Override
-		public String getSystemId() {
+        public String getSystemId() {
             return systemId;
         }
 
         @Override
-		public void setSystemId(String systemId) {
+        public void setSystemId(String systemId) {
             this.systemId = systemId;
         }
 

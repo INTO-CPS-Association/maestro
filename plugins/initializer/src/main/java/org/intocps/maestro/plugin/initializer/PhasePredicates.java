@@ -7,7 +7,6 @@ import static org.intocps.maestro.fmi.ModelDescription.*;
 import java.util.function.Predicate;
 
 
-
 public class PhasePredicates {
     public static Predicate<ModelDescription.ScalarVariable> iniPhase() {
         return o -> ((o.initial == Initial.Exact || o.initial == Initial.Approx) && o.variability != Variability.Constant) ||
@@ -19,7 +18,8 @@ public class PhasePredicates {
     }
 
     public static Predicate<ScalarVariable> inPhase() {
-        return o -> (o.causality == Causality.Input && o.initial == Initial.Calculated || o.causality == Causality.Parameter && o.variability == Variability.Tunable);
+        return o -> (o.causality == Causality.Input && o.initial == Initial.Calculated ||
+                o.causality == Causality.Parameter && o.variability == Variability.Tunable);
     }
 
     public static Predicate<ScalarVariable> initPhase() {
