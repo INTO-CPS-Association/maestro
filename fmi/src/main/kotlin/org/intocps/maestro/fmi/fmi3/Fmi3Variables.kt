@@ -5,13 +5,13 @@ import org.intocps.maestro.fmi.ModelDescription
 abstract class Fmi3Variable protected constructor(
     val name: String,
     val valueReference: UInt,
-    val description: String?,
+    val description: String? = null,
     val causality: Fmi3Causality,
     val variability: ModelDescription.Variability,
-    val canHandleMultipleSetPerTimeInstant: Boolean?,
-    val intermediateUpdate: Boolean?,
-    val previous: UInt?,
-    val clocks: Any?, // Value references to clock variables
+    val canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    val intermediateUpdate: Boolean? = false,
+    val previous: UInt? = null,
+    val clocks: Any? = null, // Value references to clock variables
     val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
 )
 
@@ -20,28 +20,28 @@ data class Dimension(val valueReference: UInt?, val start: List<Long>?)
 class FloatVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val initial: ModelDescription.Initial?,
-    val quantity: String?,
-    val unit: String?,
-    val displayUnit: String?,
-    val relativeQuantity: Boolean?,
-    val unbounded: Boolean?,
-    val min: Double?,
-    val max: Double?,
-    val nominal: Double?,
-    val start: Collection<Double>?,
-    val derivative: UInt?,
-    val reinit: Boolean?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val initial: ModelDescription.Initial? = null,
+    val quantity: String? = null,
+    val unit: String? = null,
+    val displayUnit: String? = null,
+    val relativeQuantity: Boolean? = false,
+    val unbounded: Boolean? = false,
+    val min: Double? = null,
+    val max: Double? = null,
+    val nominal: Double? = null,
+    val start: Collection<Double>? = null,
+    val derivative: UInt? = null,
+    val reinit: Boolean? = false,
+    val dimensions: List<Dimension>?  = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -58,21 +58,21 @@ class FloatVariable(
 class Int64Variable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val initial: ModelDescription.Initial?,
-    val quantity: String?,
-    val min: Long?,
-    val max: Long?,
-    val start: List<Long>?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val initial: ModelDescription.Initial? = null,
+    val quantity: String? = null,
+    val min: Long? = null,
+    val max: Long? = null,
+    val start: List<Long>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -89,21 +89,21 @@ class Int64Variable(
 class IntVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val initial: ModelDescription.Initial?,
-    val quantity: String?,
-    val min: Int?,
-    val max: Int?,
-    val start: List<Int>?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val initial: ModelDescription.Initial? = null,
+    val quantity: String? = null,
+    val min: Int? = null,
+    val max: Int? = null,
+    val start: List<Int>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -120,18 +120,18 @@ class IntVariable(
 class BooleanVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val initial: ModelDescription.Initial?,
-    val start: List<Boolean>?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val initial: ModelDescription.Initial? = null,
+    val start: List<Boolean>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -148,16 +148,16 @@ class BooleanVariable(
 class StringVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val start: List<String>?,
-    val dimensions: List<Dimension>?
+    val start: List<String>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -174,20 +174,20 @@ class StringVariable(
 class BinaryVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val initial: ModelDescription.Initial?,
-    val mimeType: String?,
-    val maxSize: UInt?,
-    val start: List<ByteArray>?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val initial: ModelDescription.Initial? = null,
+    val mimeType: String? = null,
+    val maxSize: UInt? = null,
+    val start: List<ByteArray>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -204,20 +204,20 @@ class BinaryVariable(
 class EnumerationVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val quantity: String?,
-    val min: Long?,
-    val max: Long?,
-    val start: List<Long>?,
-    val dimensions: List<Dimension>?
+    val declaredType: String? = null,
+    val quantity: String? = null,
+    val min: Long? = null,
+    val max: Long? = null,
+    val start: List<Long>? = null,
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -234,25 +234,25 @@ class EnumerationVariable(
 class ClockVariable(
     name: String,
     valueReference: UInt,
-    description: String?,
+    description: String? = null,
     causality: Fmi3Causality,
     variability: ModelDescription.Variability,
-    canHandleMultipleSetPerTimeInstant: Boolean?,
-    intermediateUpdate: Boolean?,
-    previous: UInt?,
-    clocks: Any?, // Value references to clock variables
+    canHandleMultipleSetPerTimeInstant: Boolean? = null,
+    intermediateUpdate: Boolean? = false,
+    previous: UInt? = null,
+    clocks: Any? = null, // Value references to clock variables
     typeIdentifier: Fmi3TypeEnum,
-    val declaredType: String?,
-    val canBeDeactivated: Boolean?,
-    val priority: UInt?,
-    val interval: Any?, //TODO: Implement interval -> It declares the clock type
-    val intervalDecimal: Float?,
+    val declaredType: String? = null,
+    val canBeDeactivated: Boolean? = false,
+    val priority: UInt? = null,
+    val interval: Any? = null, //TODO: Implement interval -> It declares the clock type
+    val intervalDecimal: Float? = null,
     val shiftDecimal: Float? = (0).toFloat(),
     val supportsFraction: Boolean? = false,
-    val resolution: ULong?,
-    val intervalCounter: ULong?,
+    val resolution: ULong? = null,
+    val intervalCounter: ULong? = null,
     val shiftCounter: ULong? = (0).toULong(),
-    val dimensions: List<Dimension>?
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,

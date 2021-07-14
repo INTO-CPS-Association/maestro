@@ -1,9 +1,8 @@
 package org.intocps.maestro.fmi.fmi3
 
 import org.intocps.maestro.fmi.ModelDescription
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.*
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -13,7 +12,6 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.stream.Stream
 import javax.xml.transform.stream.StreamSource
-import kotlin.Exception
 
 class Fmi3ModelDescriptionTests {
 
@@ -33,6 +31,7 @@ class Fmi3ModelDescriptionTests {
 
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("modelDescriptionProvider")
+    @Order(0)
     fun validateVALIDModelDescriptionTest(name: String, modelDescription: File) {
         assertDoesNotThrow("All reference model descriptions should be able to be validated") {
             val mdAsStream = modelDescription.inputStream()
@@ -43,7 +42,8 @@ class Fmi3ModelDescriptionTests {
     }
 
     @Test
-    fun validateUNVALIDModelDescriptionTest() {
+    @Order(1)
+    fun validateINVALIDModelDescriptionTest() {
         assertThrows<Exception>("Model description with error should not be able to be validated") {
             val mdAsStream =
                 Paths.get(resourcePath.toString(), "Fmi3ModelDescriptionWithError", "InvalidMD.xml").toFile()
@@ -56,32 +56,28 @@ class Fmi3ModelDescriptionTests {
 
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("modelDescriptionProvider")
-    fun parseModelDescriptionTest(name: String, modelDescription: File) {
-        assertDoesNotThrow{
-            val mdAsStream = ByteArrayInputStream(modelDescription.readBytes())
-            Fmi3ModelDescription(mdAsStream)
-        }
-    }
-
-    @Test
-    fun getScalarVariablesFromModelDescriptionTest() {
+    fun getScalarVariablesFromModelDescriptionTest(name: String, modelDescription: File) {
         // ARRANGE
-        val expectedListLength = 7
-        val mdAsStream = ByteArrayInputStream(Paths.get(resourcePath.toString(),"Fmi3ReferenceFmuModelDescriptions", "BouncingBallMD.xml").toFile().readBytes())
-        val modelDescription = Fmi3ModelDescription(mdAsStream)
+        val mdAsStream = ByteArrayInputStream(modelDescription.readBytes())
 
         // ACT
-        val scalarVariables = modelDescription.getScalarVariables()
+        val scalarVariables = Fmi3ModelDescription(mdAsStream).getScalarVariables()
 
         // ASSERT
-        Assertions.assertEquals(expectedListLength, scalarVariables.size)
+        Assertions.assertTrue(scalarVariables.isNotEmpty())
     }
 
     @Test
     fun getUnitDefinitionsTest() {
         // ARRANGE
         val expectedListLength = 3
-        val mdAsStream = ByteArrayInputStream(Paths.get(resourcePath.toString(),"Fmi3ReferenceFmuModelDescriptions", "BouncingBallMD.xml").toFile().readBytes())
+        val mdAsStream = ByteArrayInputStream(
+            Paths.get(
+                resourcePath.toString(),
+                "Fmi3ReferenceFmuModelDescriptions",
+                "BouncingBallMD.xml"
+            ).toFile().readBytes()
+        )
         val modelDescription = Fmi3ModelDescription(mdAsStream)
 
         // ACT
@@ -89,5 +85,102 @@ class Fmi3ModelDescriptionTests {
 
         // ASSERT
         Assertions.assertEquals(expectedListLength, unitDefinitions.size)
+    }
+
+    @Test
+    fun getLogCategoriesTest() {
+        // ARRANGE
+        val mdAsStream = ByteArrayInputStream(
+            Paths.get(
+                resourcePath.toString(),
+                "Fmi3ReferenceFmuModelDescriptions",
+                "BouncingBallMD.xml"
+            ).toFile().readBytes()
+        )
+
+        // ACT
+        val logCategories = Fmi3ModelDescription(mdAsStream).getLogCategories()
+
+        // ASSERT
+        Assertions.assertTrue(logCategories.isNotEmpty())
+    }
+
+    @ParameterizedTest(name = "{index} \"{0}\"")
+    @MethodSource("modelDescriptionProvider")
+    fun getDefaultExperimentTest(name: String, modelDescription: File) {
+        // ARRANGE
+        val mdAsStream = ByteArrayInputStream(modelDescription.readBytes())
+
+        // ACT
+        val defaultExperiment = Fmi3ModelDescription(mdAsStream).getDefaultExperiment()
+
+        // ASSERT
+        Assertions.assertTrue(defaultExperiment != null)
+    }
+
+    @Test
+    fun getModelIdentifierTest() {
+        // ARRANGE
+        val mdAsStream = ByteArrayInputStream(
+            Paths.get(
+                resourcePath.toString(),
+                "Fmi3ReferenceFmuModelDescriptions",
+                "BouncingBallMD.xml"
+            ).toFile().readBytes()
+        )
+
+        // ACT
+        val modelIdentifier = Fmi3ModelDescription(mdAsStream).getModelIdentifier()
+
+        // ASSERT
+        Assertions.assertTrue(modelIdentifier.isNotEmpty())
+    }
+
+    @Test
+    fun scalarVariablesAsExpectedTest() {
+        // ARRANGE
+        val mdAsStream = ByteArrayInputStream(
+            Paths.get(
+                resourcePath.toString(),
+                "Fmi3ReferenceFmuModelDescriptions",
+                "BouncingBallMD.xml"
+            ).toFile().readBytes()
+        )
+        val expectedVariable = FloatVariable(
+            name = "der(h)",
+            valueReference = (2).toUInt(),
+            description = "Derivative of h",
+            causality = Fmi3Causality.Local,
+            variability = ModelDescription.Variability.Continuous,
+            derivative = (1).toUInt(),
+            unit = "m/s",
+            quantity = "Velocity",
+            declaredType = "Velocity",
+            typeIdentifier = Fmi3TypeEnum.Float64Type
+        )
+        val expectedDependencyKind = Fmi3DependencyKind.Constant
+        val expectedDependencyValueRef = (3).toUInt()
+
+        // ACT
+        val scalarVariables = Fmi3ModelDescription(mdAsStream).getScalarVariables()
+        val actualVariable = scalarVariables[2].variable as FloatVariable
+        val initialUnknownDependency = scalarVariables[2].initialUnknownsDependencies.entries.iterator().next()
+        val variablesAreEqual =
+            actualVariable.name == expectedVariable.name &&
+                    actualVariable.valueReference == expectedVariable.valueReference &&
+                    actualVariable.description == expectedVariable.description &&
+                    actualVariable.causality == expectedVariable.causality &&
+                    actualVariable.variability == expectedVariable.variability &&
+                    actualVariable.derivative == expectedVariable.derivative &&
+                    actualVariable.unit == expectedVariable.unit &&
+                    actualVariable.quantity == expectedVariable.quantity &&
+                    actualVariable.declaredType == expectedVariable.declaredType &&
+                    actualVariable.typeIdentifier == expectedVariable.typeIdentifier
+
+        // ASSERT
+        Assertions.assertTrue(
+            variablesAreEqual && initialUnknownDependency.value == expectedDependencyKind &&
+                    initialUnknownDependency.key.variable.valueReference == expectedDependencyValueRef
+        )
     }
 }

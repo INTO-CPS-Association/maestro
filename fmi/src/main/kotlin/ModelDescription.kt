@@ -155,7 +155,7 @@ abstract class ModelDescription
     // Default experiment attribute
     fun getDefaultExperiment(): DefaultExperiment? {
         try {
-            return lookupSingle(doc, xpath, "fmiModelDescription/@DefaultExperiment").let { defaultExperimentNode ->
+            return lookupSingle(doc, xpath, "fmiModelDescription/DefaultExperiment").let { defaultExperimentNode ->
                 if (defaultExperimentNode == null) {
                     return@let null
                 }

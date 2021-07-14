@@ -319,9 +319,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // the value of the type definition is used if present.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: FloatTypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as FloatTypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as FloatTypeDefinition?
 
             return FloatVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -357,7 +357,7 @@ class Fmi3ModelDescription : ModelDescription {
                 getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName}: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -365,9 +365,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: IntTypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as IntTypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as IntTypeDefinition?
 
             return IntVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -384,8 +384,10 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 typeIdentifier,
-                node.attributes.getNamedItem("declaredType")?.nodeValue,
-                valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
+                declaredType,
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toInt() ?: typeDefinition?.min,
                 node.attributes.getNamedItem("max")?.nodeValue?.toInt() ?: typeDefinition?.max,
@@ -393,7 +395,7 @@ class Fmi3ModelDescription : ModelDescription {
                 getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName}: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -401,9 +403,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: Int64TypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as Int64TypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as Int64TypeDefinition?
 
             return Int64Variable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -420,8 +422,10 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 typeIdentifier,
-                node.attributes.getNamedItem("declaredType")?.nodeValue,
-                valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
+                declaredType,
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong() ?: typeDefinition?.min,
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong() ?: typeDefinition?.max,
@@ -429,7 +433,7 @@ class Fmi3ModelDescription : ModelDescription {
                 getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName} : $e")
+            throw Exception("Unable to parse variable ${node.nodeName} : $e")
         }
     }
 
@@ -451,12 +455,14 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeEnum.BooleanType,
                 node.attributes.getNamedItem("declaredType")?.nodeValue,
-                valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toBoolean() },
                 getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
-            throw Exception("Unable to parse type ${node.nodeName}: $e")
+            throw Exception("Unable to parse variable ${node.nodeName}: $e")
         }
     }
 
@@ -479,7 +485,7 @@ class Fmi3ModelDescription : ModelDescription {
                 Fmi3TypeEnum.StringType,
                 node.attributes.let { att ->
                     val startValues: MutableList<String> = mutableListOf()
-                    for (i in 0..att.length) {
+                    for (i in 0 until att.length) {
                         att.item(i).takeIf { node -> node.nodeName.equals("start") }
                             .apply { startValues.add(this?.nodeValue ?: "") }
                     }
@@ -496,9 +502,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: BinaryTypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as BinaryTypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as BinaryTypeDefinition?
 
             return BinaryVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -515,8 +521,10 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeEnum.BinaryType,
-                node.attributes.getNamedItem("declaredType")?.nodeValue,
-                valueOf<Initial>(node.attributes.getNamedItem("initial")?.nodeValue ?: ""),
+                declaredType,
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("mimeType")?.nodeValue ?: typeDefinition?.mimeType,
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt() ?: typeDefinition?.maxSize,
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")
@@ -532,9 +540,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: EnumerationTypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as EnumerationTypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as EnumerationTypeDefinition?
 
             return EnumerationVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -551,7 +559,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeEnum.EnumerationType,
-                node.attributes.getNamedItem("declaredType")?.nodeValue,
+                declaredType,
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong(),
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong(),
@@ -567,9 +575,9 @@ class Fmi3ModelDescription : ModelDescription {
         try {
             // If a type is declared and it exists in the type definitions then if no value is declared for a variable
             // that has its value declared in the type definition, the type definition value is used.
-            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue ?: ""
+            val declaredType = node.attributes.getNamedItem("declaredType")?.nodeValue
             val typeDefinition: ClockTypeDefinition? =
-                getTypeDefinitionFromDeclaredType(declaredType) as ClockTypeDefinition?
+                getTypeDefinitionFromDeclaredType(declaredType ?: "") as ClockTypeDefinition?
 
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -586,7 +594,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue, //TODO: Implement parsing of clocks
                 Fmi3TypeEnum.ClockType,
-                node.attributes.getNamedItem("declaredType")?.nodeValue,
+                declaredType,
                 node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean()
                     ?: typeDefinition?.canBeDeactivated,
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
