@@ -13,9 +13,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public class SetUndeclaredPortsTest {
+public class SetPortsTest {
     @Test
-    public void test() throws Exception {
+    public void undeclaredPortsTest() throws Exception {
         // ARRANGE
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;

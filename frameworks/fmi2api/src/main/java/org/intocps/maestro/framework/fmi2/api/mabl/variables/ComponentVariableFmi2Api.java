@@ -776,10 +776,16 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
-        Set<String> selectedPortsCopy = selectedPorts.stream().map(PortFmi2Api::getName).collect(toSet());
-        selectedPortsCopy.removeAll(ports.stream().map(PortFmi2Api::getName).collect(toSet()));
-        if (selectedPortsCopy.size() > 0) {
-            throw new RuntimeException("Unable to set port(s) that is not declared in the FMU: " + String.join(", ", selectedPortsCopy));
+
+        Set<String> selectedPortsAsStrings = selectedPorts.stream()
+                .map(p -> p.getName() + "-" + p.aMablFmi2ComponentAPI.getName() + "-" + p.aMablFmi2ComponentAPI.getOwner().getName())
+                .collect(toSet());
+        selectedPortsAsStrings.removeAll(
+                ports.stream().map(p -> p.getName() + "-" + p.aMablFmi2ComponentAPI.getName() + "-" + p.aMablFmi2ComponentAPI.getOwner().getName())
+                        .collect(toSet()));
+        if (selectedPortsAsStrings.size() > 0) {
+            throw new RuntimeException("Unable to set port(s) that is not declared in the FMU: " +
+                    selectedPortsAsStrings.stream().map(name -> name.split("-")[0]).collect(Collectors.joining(", ")));
         }
 
         List<PortFmi2Api> sortedPorts =
