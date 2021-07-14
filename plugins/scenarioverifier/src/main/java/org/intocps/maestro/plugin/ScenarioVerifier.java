@@ -147,7 +147,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                     new DoubleVariableFmi2Api(null, null, null, null, endTimeVar), configuration.relTol));
 
             // Generate set parameters section
-            setParameters(fmuInstances, configuration.parameters);
+            setSEA(fmuInstances, configuration.parameters);
 
             // Generate initialization section
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars =
@@ -248,7 +248,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         }
     }
 
-    private void setParameters(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {
+    private void setSEA(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {
         fmuInstances.forEach((instanceName, fmuInstance) -> {
             Map<String, Object> portNameToValueMap =
                     parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
@@ -258,10 +258,13 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =
                     portNameToValueMap.entrySet().stream().filter(e -> {
                         PortFmi2Api port = fmuInstance.getPort(e.getKey());
-                        boolean isParameter = port.scalarVariable.causality.equals(ModelDescription.Causality.Parameter);
-                        //boolean isTunable = port.scalarVariable.variability.equals(ModelDescription.Variability.Tunable);
+                        boolean isTunableParameter = port.scalarVariable.variability.equals(ModelDescription.Variability.Tunable) &&
+                                port.scalarVariable.causality.equals(ModelDescription.Causality.Parameter);
+                        boolean isEligibleVariable = port.scalarVariable.variability != ModelDescription.Variability.Constant &&
+                                (port.scalarVariable.initial.equals(ModelDescription.Initial.Exact) ||
+                                        port.scalarVariable.initial.equals(ModelDescription.Initial.Approx));
                         //TODO: log/notify if port in 'parameters' either does not have the causality of parameter or is not tunable.
-                        return isParameter;
+                        return isTunableParameter || isEligibleVariable;
                     }).collect(Collectors.toMap(e -> fmuInstance.getPort(e.getKey()), e -> {
                         if (e.getValue() instanceof Double) {
                             return DoubleExpressionValue.of((Double) e.getValue());
@@ -274,8 +277,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                         } else {
                             throw new RuntimeException("Unable to set parameter of class: " + e.getValue().getClass().toString());
                         }
-                    }));
-            fmuInstance.set(new PortValueExpresssionMapImpl(PortToExpressionValue));
+                    })); fmuInstance.set(new PortValueExpresssionMapImpl(PortToExpressionValue));
         });
     }
 
