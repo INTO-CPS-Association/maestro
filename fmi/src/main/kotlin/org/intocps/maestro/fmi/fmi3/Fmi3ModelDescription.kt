@@ -104,13 +104,15 @@ class Fmi3ModelDescription : ModelDescription {
                             dependencyScalarVariableToDependencyKinds
                         )
                         Fmi3ModelStructureElementEnum.ClockedState -> {
-                        } //TODO: Implement
+                            //TODO: Implement
+                        }
                         Fmi3ModelStructureElementEnum.InitialUnknown -> variable.initialUnknownsDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
 
                         Fmi3ModelStructureElementEnum.EventIndicator -> {
-                        } //TODO: Implement
+                            variable.eventIndicators.putAll(dependencyScalarVariableToDependencyKinds)
+                        }
                     }
                 }
             }
@@ -528,7 +530,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("mimeType")?.nodeValue ?: typeDefinition?.mimeType,
                 node.attributes.getNamedItem("maxSize")?.nodeValue?.toUInt() ?: typeDefinition?.maxSize,
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")
-                    ?.map { value -> value.toByteArray() }, //TODO: this might fail?
+                    ?.map { value -> value.toByteArray() },
                 getDimensionsFromVariableNode(node)
             )
         } catch (e: Exception) {
@@ -600,7 +602,7 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean()
                     ?: typeDefinition?.canBeDeactivated,
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
-                if(interval == null) typeDefinition!!.interval else valueOf(interval),
+                if (interval == null) typeDefinition!!.interval else valueOf(interval),
                 node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat()
                     ?: typeDefinition?.intervalDecimal,
                 node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat() ?: typeDefinition?.shiftDecimal
@@ -792,7 +794,8 @@ class Fmi3ModelDescription : ModelDescription {
         val variable: Fmi3Variable,
         val outputDependencies: MutableMap<Fmi3ScalarVariable, Fmi3DependencyKind> = mutableMapOf(),
         val derivativesDependencies: MutableMap<Fmi3ScalarVariable, Fmi3DependencyKind> = mutableMapOf(),
-        val initialUnknownsDependencies: MutableMap<Fmi3ScalarVariable, Fmi3DependencyKind> = mutableMapOf()
+        val initialUnknownsDependencies: MutableMap<Fmi3ScalarVariable, Fmi3DependencyKind> = mutableMapOf(),
+        val eventIndicators: MutableMap<Fmi3ScalarVariable, Fmi3DependencyKind> = mutableMapOf()
     )
 
 }
