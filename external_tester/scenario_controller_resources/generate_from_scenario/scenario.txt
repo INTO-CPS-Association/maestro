@@ -1,0 +1,46 @@
+name = "Example master that has a loop within a loop"
+scenario = {
+    fmus = {
+        msd1 = {
+            can-reject-step = true,
+            inputs = {
+                fk = {reactivity=reactive}
+            }
+            outputs = {
+                x1 = {dependencies-init=[], dependencies=[]}
+                v1 = {dependencies-init=[], dependencies=[]}
+            }
+        }
+        msd2 = {
+            can-reject-step = true,
+            inputs = {
+                x1 = {reactivity=delayed}
+                v1 = {reactivity=reactive}
+                G = {reactivity=reactive}
+            }
+            outputs = {
+                fk = {dependencies-init=[x1, v1], dependencies=[x1, v1]}
+                z = {dependencies-init=[], dependencies=[]}
+            }
+        }
+        msd3 = {
+            can-reject-step = true,
+            inputs = {
+                z = {reactivity=delayed}
+            }
+            outputs = {
+                G = {dependencies-init=[z], dependencies=[z]}
+            }
+        }
+    }
+    connections = [
+        msd1.x1 -> msd2.x1
+        msd1.v1 -> msd2.v1
+        msd2.fk -> msd1.fk
+        msd2.z -> msd3.z
+        msd3.G -> msd2.G
+    ]
+    max-possible-step-size = 3 # This means all possible steps that the master can take at each cosimstep.
+}
+initialization = []
+cosim-step = []

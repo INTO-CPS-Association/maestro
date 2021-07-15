@@ -45,6 +45,8 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     @Override
     void addAfter(PStm item, PStm... commands);
 
+    void addAfterOrTop(PStm item, PStm... commands);
+
     @Override
     IMablScope activate();
 
@@ -77,7 +79,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
 
-    FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception;
+    ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
+
+    FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;

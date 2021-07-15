@@ -6,11 +6,11 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.5-SNAPSHOT</version>
+        <version>2.1.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>external_tester</artifactId>
-    <version>2.1.5-SNAPSHOT</version>
+    <version>2.1.6-SNAPSHOT</version>
 
     <build>
 
@@ -145,13 +145,13 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>maestro</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
+            <version>2.1.6-SNAPSHOT</version>
             <classifier>jar-with-dependencies</classifier>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>maestro-webapi</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
+            <version>2.1.6-SNAPSHOT</version>
         </dependency>
 
     </dependencies>

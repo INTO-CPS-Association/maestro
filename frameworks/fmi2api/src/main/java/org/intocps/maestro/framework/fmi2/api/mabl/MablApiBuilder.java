@@ -155,42 +155,42 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 case FMI_OK: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_OK.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_OK, var);
                 }
                 break;
                 case FMI_WARNING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_WARNING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
                     break;
                 }
                 case FMI_DISCARD: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_DISCARD.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
                 }
                 break;
                 case FMI_ERROR: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
                     break;
                 }
                 case FMI_FATAL: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_FATAL.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
                     break;
                 }
                 case FMI_PENDING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_PENDING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfter(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
                     break;
                 }
