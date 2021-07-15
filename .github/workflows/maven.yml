@@ -3,7 +3,13 @@
 
 name: Maestro2
 
-on: [ workflow_dispatch, push, pull_request ]
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - master
+  pull_request:
+
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: snapshots
