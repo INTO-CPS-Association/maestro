@@ -81,7 +81,7 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
 
-    FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
+    FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception;
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;

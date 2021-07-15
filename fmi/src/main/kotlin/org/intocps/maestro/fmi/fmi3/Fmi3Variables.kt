@@ -1,5 +1,6 @@
 package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
 
+import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.fmi.ModelDescription
 
 abstract class Fmi3Variable protected constructor(

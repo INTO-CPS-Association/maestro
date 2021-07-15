@@ -393,7 +393,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> getTentative(IMablScope scope, String... names) {
         // Get filtered port values
         Fmi2Builder.Port[] filteredPorts = this.ports.stream()
-                .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.causality == ModelDescription.Causality.Output))
+                .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.causality == Fmi2ModelDescription.Causality.Output))
                 .toArray(Fmi2Builder.Port[]::new);
         Map<PortFmi2Api, VariableFmi2Api<Object>> portToValueMap = get(scope, filteredPorts);
         if (portToValueMap.isEmpty()) {

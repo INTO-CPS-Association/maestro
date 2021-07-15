@@ -14,7 +14,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
@@ -258,7 +258,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =
                     portNameToValueMap.entrySet().stream().filter(e -> {
                         PortFmi2Api port = fmuInstance.getPort(e.getKey());
-                        boolean isParameter = port.scalarVariable.causality.equals(ModelDescription.Causality.Parameter);
+                        boolean isParameter = port.scalarVariable.causality.equals(Fmi2ModelDescription.Causality.Parameter);
                         //boolean isTunable = port.scalarVariable.variability.equals(ModelDescription.Variability.Tunable);
                         //TODO: log/notify if port in 'parameters' either does not have the causality of parameter or is not tunable.
                         return isParameter;
