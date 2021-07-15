@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -58,6 +59,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
     private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePortsToShare;
     private List<String> variabesToLog;
+    private static final String LOGLEVELS_POSTFIX = "_log_levels";
+    private final static String CATEGORY_STATUS = "category_status";
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
@@ -213,6 +216,34 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return new ArrayVariableFmi2Api<>(var, type, scope, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(ioBufName)),
                 newAIdentifierExp(ioBufName), items);
 
+    }
+
+    @Override
+    public void setDebugLogging(List<String> categories, boolean enableLogging) {
+        AArrayInitializer loglevelsArrayInitializer = null;
+        String arrayName = name + LOGLEVELS_POSTFIX;
+        IMablScope scope = builder.getDynamicScope().getActiveScope();
+        if (!categories.isEmpty()) {
+            loglevelsArrayInitializer =
+                    newAArrayInitializer(categories.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
+        }
+        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
+                .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
+                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), categories.size(), loglevelsArrayInitializer));
+
+        LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
+
+        ALocalVariableStm callStm = newALocalVariableStm(newAVariableDeclaration(statusIdentifier, newAIntNumericPrimitiveType(), newAExpInitializer(
+                newACallExp(newAIdentifierExp(name), newAIdentifier("setDebugLogging"),
+                        Arrays.asList(newABoolLiteralExp(enableLogging), MableAstFactory.newAIntLiteralExp(categories.size()),
+                                MableAstFactory.newAIdentifierExp(arrayName))))));
+
+
+        AIfStm ifStm = newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
+                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))),
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)), null);
+
+        scope.add(arrayContent, callStm, ifStm);
     }
 
     @Override
