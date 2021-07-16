@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * Only works for a single websocket.
  */
@@ -33,6 +34,9 @@ public class WebsocketDataWriter implements IDataListener {
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         Map<Integer, String> ith = DataListenerUtilities.indicesToHeaders(headers, filter);
+        ith = ith.entrySet().stream().collect(Collectors
+                .toMap(Map.Entry::getKey, (e) -> org.intocps.maestro.webapi.maestro2.Maestro2SimulationController.revertInstanceName(e.getValue())));
+
         List<Integer> ioi = new ArrayList<>(ith.keySet());
         List<String> hoi = new ArrayList<>(ith.values());
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);

@@ -40,15 +40,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.io.*;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
 
@@ -59,6 +55,7 @@ public class Maestro2SimulationController {
     public static final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
+    private static final Map<String, String> instanceNameRemap = new HashMap<>();
 
     public void overrideRootLoggerLogLevel(Level level) {
         if (level == null) {
@@ -119,17 +116,16 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data: {}", body1);
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+                false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         InitializationData body = mapper.readValue(body1, InitializationData.class);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
-
-        if (logic == null) {
-            throw new Exception("Session has not been created.");
-        }
 
         if (body == null) {
             throw new Exception("Could not parse configuration: ");
         }
+
+        instanceNameRemap.putAll(fixLeadingNumeralsInInstanceNames(body));
 
         if (body.getOverrideLogLevel() != null) {
             overrideRootLoggerLogLevel(convertLogLevel(body.getOverrideLogLevel()));
@@ -180,7 +176,6 @@ public class Maestro2SimulationController {
         if (body.isHasExternalSignals()) {
             throw new NotImplementedException("HasExternalSignals is not implemented");
         }
-
 
         logger.trace("Initialization completed");
         logic.setInitializationData(body);
@@ -290,6 +285,116 @@ public class Maestro2SimulationController {
 
     }
 
+    public static String revertInstanceName(String instanceName) {
+        for (Map.Entry<String, String> instanceNameMapEntry : instanceNameRemap.entrySet()) {
+            if (instanceName.contains(instanceNameMapEntry.getValue())) {
+                // Replace remapped instance name with old instance name
+                return instanceName.replace(instanceNameMapEntry.getValue(), instanceNameMapEntry.getKey());
+            }
+        }
+        return instanceName;
+    }
+
+    public static void revertInstanceNames(List<String> instanceNames) {
+        for (int i = 0; i < instanceNames.size(); i++) {
+            instanceNames.set(i, revertInstanceName(instanceNames.get(i)));
+        }
+    }
+
+    private void revertInstanceRemappingInOutputCSV(String csvFilePath) throws IOException {
+
+        // Read output csv
+        List<List<String>> records = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+            }
+        }
+        // Replace transformed instance name in header with old name
+        revertInstanceNames(records.get(0));
+
+        // Write to output csv
+        try (FileWriter csvWriter = new FileWriter(csvFilePath)) {
+            for (List<String> rowData : records) {
+                csvWriter.append(String.join(",", rowData));
+                csvWriter.append("\n");
+            }
+        }
+    }
+
+    public static Map<String, String> fixLeadingNumeralsInInstanceNames(InitializationData initData) {
+        Map<String, String> instanceNamesRemapped = new HashMap<>(leadingNumeralsInInstanceToWord(initData.getConnections()));
+        instanceNamesRemapped.putAll(leadingNumeralsInInstanceToWord(initData.getLogVariables()));
+        instanceNamesRemapped.putAll(leadingNumeralsInInstanceToWord(initData.getLivestream()));
+        return instanceNamesRemapped;
+    }
+
+    private static Map<String, String> instanceWithLeadingDigitToInstanceWithDigitAsWord(Set<String> instanceNames) {
+        return instanceNames.stream().collect(Collectors.toMap((s) -> s, Maestro2SimulationController::replaceDigitWithWord));
+    }
+
+    private static Map<String, String> leadingNumeralsInInstanceToWord(Map<String, List<String>> mapping) {
+        if(mapping == null || mapping.entrySet().isEmpty()){
+            return Map.of();
+        }
+        Map<String, String> instanceNamesRemapped = instanceWithLeadingDigitToInstanceWithDigitAsWord(
+                Stream.concat(mapping.keySet().stream(), mapping.values().stream().flatMap(List::stream)).filter(k -> k.split("\\.").length > 1)
+                        .map(k -> k.split("\\" + ".")[1]).collect(Collectors.toSet()));
+
+        // Replace values in mapping entry set
+        Map<String, List<String>> intermediateMap = new HashMap<>(mapping);
+        for (Map.Entry<String, List<String>> entry : intermediateMap.entrySet()) {
+            String key = entry.getKey();
+
+            // Remap key instance
+            String[] keyElements = entry.getKey().split("\\.");
+            if (keyElements.length > 1) {
+                mapping.remove(entry.getKey());
+
+                for (Map.Entry<String, String> instanceNameMapEntry : instanceNamesRemapped.entrySet()) {
+                    if (key.contains(instanceNameMapEntry.getKey())) {
+                        key = key.replace(instanceNameMapEntry.getKey(), instanceNameMapEntry.getValue());
+                        break;
+                    }
+                }
+            }
+
+            // Remap value instances
+            List<String> value = new ArrayList<>(entry.getValue()).stream().map(s -> {
+                for (Map.Entry<String, String> instanceNameMapEntry : instanceNamesRemapped.entrySet()) {
+                    if (s.contains(instanceNameMapEntry.getKey())) {
+                        return s.replace(instanceNameMapEntry.getKey(), instanceNameMapEntry.getValue());
+                    }
+                }
+                return s;
+            }).collect(Collectors.toList());
+
+            mapping.put(key, value);
+        }
+        return instanceNamesRemapped;
+    }
+
+    private static String replaceDigitWithWord(String toReplace) {
+        String[] wordDigits = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
+        String[] digits = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+        String[] stringSplit = toReplace.split("");
+        for (int i = 0; i < stringSplit.length; i++) {
+            for (int j = 0; j < digits.length; j++) {
+                if (stringSplit[i].equalsIgnoreCase(digits[j])) {
+                    if (i + 1 < stringSplit.length) {
+                        toReplace = toReplace.substring(0, i + 1) + stringSplit[i + 1].toUpperCase() + toReplace.substring(i + 2, stringSplit.length);
+                    }
+                    toReplace = toReplace.replaceFirst(stringSplit[i], wordDigits[j]);
+                    return toReplace;
+                }
+            }
+        }
+        return toReplace;
+    }
+
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
     public void stop(@PathVariable String sessionId) {
         throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
@@ -301,11 +406,13 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET)
     public ResponseEntity<Resource> getResultPlain(@PathVariable String sessionId) throws Exception {
-        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
+        SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
 
         if (sessionLogic == null) {
             throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
         }
+
+        revertInstanceRemappingInOutputCSV(Path.of(sessionLogic.rootDirectory.toString(), "outputs.csv").toString());
 
         ByteArrayResource resource = new ByteArrayResource(FileUtils.readFileToByteArray(new File(sessionLogic.rootDirectory, "outputs.csv")));
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN)
@@ -314,11 +421,13 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/zip", method = RequestMethod.GET, produces = "application/zip")
     public void getResultZip(@PathVariable String sessionId, HttpServletResponse response) throws Exception {
-        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
+        SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
 
         if (sessionLogic == null) {
             throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
         }
+
+        revertInstanceRemappingInOutputCSV(Path.of(sessionLogic.rootDirectory.toString(), "outputs.csv").toString());
 
         //setting headers
         response.setStatus(HttpServletResponse.SC_OK);
@@ -331,7 +440,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/destroy/{sessionId}", method = RequestMethod.GET)
     public void destroy(@PathVariable String sessionId) throws Exception {
-        this.sessionController.deleteSession(sessionId);
+        sessionController.deleteSession(sessionId);
     }
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
