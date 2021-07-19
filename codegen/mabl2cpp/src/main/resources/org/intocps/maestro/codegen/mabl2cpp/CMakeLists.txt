@@ -20,10 +20,20 @@ FetchContent_Declare(intocpsfmi
 FetchContent_Populate(intocpsfmi)
 set(intocpsfmi-src "intocpsfmi-src")
 
+
+SET(BUILD_TOOLS OFF CACHE BOOL "Build tools in the src directory (zipcmp, zipmerge, ziptool)")
+SET(BUILD_REGRESS OFF CACHE BOOL "Build regression tests")
+SET(BUILD_EXAMPLES OFF CACHE BOOL "Build examples")
+SET(BUILD_DOC OFF CACHE BOOL "Build documentation")
+
+
+
 FetchContent_Declare(libzip
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
         GIT_TAG  v1.7.3
         GIT_SHALLOW ON
+        INSTALL_COMMAND ""
+        BUILD_COMMAND ""
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
 )
 
@@ -47,11 +57,10 @@ FetchContent_Populate(rapidjson)
 #file(CHMOD_RECURSE "${CMAKE_BINARY_DIR}/rapidjson" PERMISSIONS OWNER_READ OWNER_WRITE  GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE )
 
 include_directories(${PROJECT_SOURCE_DIR}
-#    ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi2/headers
-${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared/fmi/include
-    ${intocpsfmi-src}/jnifmuapi/src/main/native/src/external/shared
-    ${intocpsfmi-src}/jnifmuapi/src/main/native/src
-    libs
+    ${intocpsfmi_SOURCE_DIR}/jnifmuapi/src/main/native/src/external/shared/fmi/include
+    ${intocpsfmi_SOURCE_DIR}/jnifmuapi/src/main/native/src/external/shared
+    ${intocpsfmi_SOURCE_DIR}/jnifmuapi/src/main/native/src
+    ${PROJECT_SOURCE_DIR}/libs
     ${CMAKE_BINARY_DIR}/rapidjson/include)
 
 
@@ -64,8 +73,12 @@ add_executable(sim
     libs/SimMath.cpp
     libs/MEnv.cpp
     libs/unzip.cpp
+    libs/VariableStep.cpp
     co-sim.cxx
     main.cpp)
 
 target_link_libraries(sim zip)
 target_compile_definitions(sim PRIVATE -DFMI_COSIMULATION)
+
+
+install(TARGETS sim RUNTIME DESTINATION bin)

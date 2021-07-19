@@ -66,7 +66,47 @@ public class CMakeUtil {
 
     }
 
-    public boolean generate(File root) throws IOException, InterruptedException, CMakeGenerateException {
+    public static boolean runProcess(ProcessBuilder pb, boolean verbose) throws IOException, InterruptedException, CMakeGenerateException {
+        final Process p = pb.start();
+
+        if (verbose) {
+            Thread outThread = new Thread(() -> {
+                BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+                String tmp = null;
+                try {
+                    while ((tmp = out.readLine()) != null) {
+                        System.out.println(tmp);
+                    }
+                } catch (IOException e) {
+                    return;
+                }
+            });
+
+            outThread.setDaemon(true);
+            outThread.start();
+        }
+
+        p.waitFor();
+
+        List<String> errors = IOUtils.readLines(p.getErrorStream());
+
+        boolean res = p.exitValue() == 0;
+
+        if (!res) {
+            if (!errors.isEmpty()) {
+                StringBuffer sb = new StringBuffer();
+                for (String string : errors) {
+                    sb.append(string);
+                    sb.append("\n");
+                }
+                throw new CMakeGenerateException(sb.toString());
+            }
+        }
+        return res;
+    }
+
+    public boolean generate(File source, File build, File install) throws IOException, InterruptedException, CMakeGenerateException {
         String cmake = "cmake";
 
         if (isMac()) {
@@ -80,11 +120,22 @@ public class CMakeUtil {
             cmds.add("-GNinja");
         }
 
-        cmds.add(".");
+        if (install != null) {
+            cmds.add("-DCMAKE_INSTALL_PREFIX=" + install.getAbsolutePath());
+        }
+
+
+        if (build == null) {
+            cmds.add(".");
+        } else {
+            cmds.add("-B" + build.getAbsolutePath());
+        }
+
+        cmds.add("-S" + source.getAbsolutePath());
 
 
         ProcessBuilder pb = new ProcessBuilder(cmds);
-        pb.directory(root);
+        pb.directory(source);
 
         return runProcess(pb, verbose);
 
@@ -126,46 +177,6 @@ public class CMakeUtil {
 
         return runProcess(pb, verbose);
 
-    }
-
-    public boolean runProcess(ProcessBuilder pb, boolean verbose) throws IOException, InterruptedException, CMakeGenerateException {
-        final Process p = pb.start();
-
-        if (verbose) {
-            Thread outThread = new Thread(() -> {
-                BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-                String tmp = null;
-                try {
-                    while ((tmp = out.readLine()) != null) {
-                        System.out.println(tmp);
-                    }
-                } catch (IOException e) {
-                    return;
-                }
-            });
-
-            outThread.setDaemon(true);
-            outThread.start();
-        }
-
-        p.waitFor();
-
-        List<String> errors = IOUtils.readLines(p.getErrorStream());
-
-        boolean res = p.exitValue() == 0;
-
-        if (!res) {
-            if (!errors.isEmpty()) {
-                StringBuffer sb = new StringBuffer();
-                for (String string : errors) {
-                    sb.append(string);
-                    sb.append("\n");
-                }
-                throw new CMakeGenerateException(sb.toString());
-            }
-        }
-        return res;
     }
 
     public boolean isVerbose() {

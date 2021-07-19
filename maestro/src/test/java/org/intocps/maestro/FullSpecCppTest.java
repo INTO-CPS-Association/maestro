@@ -11,7 +11,6 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.util.CMakeUtil;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@Disabled("Problem with cmake generated files and their permissions")
+//@Disabled("Problem with cmake generated files and their permissions")
 public class FullSpecCppTest extends FullSpecTest {
     public static final List<String> CACHE_FOLDERS = Arrays.asList("libzip", "rapidjson", "intocpsfmi-src");
     static final File baseProjectPath = Paths.get("target", FullSpecCppTest.class.getSimpleName(), "_base").toFile();
@@ -44,16 +43,19 @@ public class FullSpecCppTest extends FullSpecTest {
         new MablCppCodeGenerator(baseProjectPath).generate(mabl.getMainSimulationUnit(), mabl.typeCheck().getValue());
         CMakeUtil cMakeUtil = new CMakeUtil().setVerbose(true);
         if (CMakeUtil.hasCmake()) {
-            cMakeUtil.generate(baseProjectPath);
+            File build = new File(baseProjectPath, "build");
+            cMakeUtil.generate(baseProjectPath, build, null);
             if (CMakeUtil.hasMake()) {
-                cMakeUtil.make(baseProjectPath);
+                cMakeUtil.make(build);
             }
         }
     }
 
     @Override
     protected void postProcessSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
-
+        //        if (true || true) {
+        //            return;
+        //        }
         mabl.optimize();
         Map.Entry<Boolean, Map<INode, PType>> tc = mabl.typeCheck();
         Assumptions.assumeTrue(tc.getKey(), "TC should pass");
@@ -62,9 +64,10 @@ public class FullSpecCppTest extends FullSpecTest {
         CMakeUtil cMakeUtil = new CMakeUtil().setVerbose(true);
         if (CMakeUtil.hasCmake()) {
             copyCache(baseProjectPath, projectFolder);
-            cMakeUtil.generate(projectFolder);
+            File build = new File(projectFolder, "build");
+            cMakeUtil.generate(projectFolder, build, projectFolder);
             if (CMakeUtil.hasMake()) {
-                cMakeUtil.make(projectFolder);
+                cMakeUtil.make(build, "install", "clean");
             }
         }
     }
