@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include "DataWriterConfig.h"
-
+#include <stdarg.h>
 
 class DataWriterImpl {
 public:
