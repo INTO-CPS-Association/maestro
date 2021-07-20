@@ -18,6 +18,8 @@
 /* zip file handling */
 #include <zip.h>
 
+#include <cassert>
+
 /* constants */
 #define ERR_SIZE 256
 #define COPY_BUF_SIZE 2048
