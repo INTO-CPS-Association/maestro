@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(zlib-download NONE)
 
 FetchContent_Declare(intocpsfmi
-  GIT_REPOSITORY git@github.com:INTO-CPS-Association/org.intocps.maestro.fmi.git
+  GIT_REPOSITORY https://github.com/INTO-CPS-Association/org.intocps.maestro.fmi.git
         GIT_TAG  Release/1.0.12
         GIT_SHALLOW ON
  SOURCE_DIR "${CMAKE_BINARY_DIR}/intocpsfmi-src"
