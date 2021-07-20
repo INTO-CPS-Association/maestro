@@ -148,10 +148,10 @@ public class FullSpecTest {
         mabl.setVerbose(true);
 
         ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
-        postProcessSpec(directory, workingDirectory, mabl, spec);
+        postProcessSpec(name, directory, workingDirectory, mabl, spec);
     }
 
-    protected void postProcessSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
         interpretSpec(directory, workingDirectory, mabl, spec);
     }
 

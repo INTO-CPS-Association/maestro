@@ -10,7 +10,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MablCppCodeGenerator {
 
@@ -20,10 +22,11 @@ public class MablCppCodeGenerator {
         this.outputDirectory = outputDirectory;
     }
 
-    public void generate(INode spec, Map<INode, PType> types) throws IOException, AnalysisException {
+    public List<File> generate(INode spec, Map<INode, PType> types) throws IOException, AnalysisException {
         this.outputDirectory.mkdirs();
 
         Map<String, String> sources = CppPrinter.print(spec, types);
+
 
         for (Map.Entry<String, String> source : sources.entrySet()) {
             IOUtils.write(source.getValue(), new FileOutputStream(new File(outputDirectory, source.getKey())), StandardCharsets.UTF_8);
@@ -32,6 +35,8 @@ public class MablCppCodeGenerator {
 
         copyLibraries(this.outputDirectory);
         createCMakeProject(this.outputDirectory);
+
+        return sources.keySet().stream().map(name -> new File(outputDirectory, name)).collect(Collectors.toList());
     }
 
     private void createCMakeProject(File outputDirectory) throws IOException {
