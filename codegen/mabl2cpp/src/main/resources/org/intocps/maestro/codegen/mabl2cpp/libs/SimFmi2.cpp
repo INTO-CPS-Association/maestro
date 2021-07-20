@@ -16,6 +16,13 @@ extern "C" {
 FMI2 load_FMI2(const char *guid, const char *path) {
     using namespace std;
     using namespace chrono;
+
+    if(!std::filesystem::exists(path))
+    {
+        std::cerr  << "FMU path not found. Cannot load it. "<<path<<std::endl;
+        return nullptr;
+    }
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::string fmuDest = fs::temp_directory_path();
