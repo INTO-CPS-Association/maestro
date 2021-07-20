@@ -25,15 +25,13 @@ SET(BUILD_TOOLS OFF CACHE BOOL "Build tools in the src directory (zipcmp, zipmer
 SET(BUILD_REGRESS OFF CACHE BOOL "Build regression tests")
 SET(BUILD_EXAMPLES OFF CACHE BOOL "Build examples")
 SET(BUILD_DOC OFF CACHE BOOL "Build documentation")
-
-
+SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 
 FetchContent_Declare(libzip
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
         GIT_TAG  v1.7.3
         GIT_SHALLOW ON
-        INSTALL_COMMAND ""
-        BUILD_COMMAND ""
+
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
 )
 
@@ -81,4 +79,6 @@ target_link_libraries(sim zip)
 target_compile_definitions(sim PRIVATE -DFMI_COSIMULATION)
 
 
-install(TARGETS sim RUNTIME DESTINATION bin)
+install(TARGETS sim
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION bin)
