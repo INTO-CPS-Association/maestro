@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <zip.h>
 #include <filesystem>
+#include <algorithm> //Not part of string, use "algorithms" replace()
+#include <cstring> //memcopy
 
 namespace fs = std::filesystem;
 extern "C" {
@@ -109,7 +111,7 @@ Fmi2Comp *Fmi2Impl::instantiate(fmi2String instanceName, fmi2Boolean visible, fm
 
 Fmi2Impl::~Fmi2Impl() {
 #ifdef _WIN32
-    FreeLibrary(ptr->dllHandle);
+    FreeLibrary(this->fmu.dllHandle);
 #elif __APPLE__
 
 #include "TargetConditionals.h"
@@ -121,7 +123,7 @@ Fmi2Impl::~Fmi2Impl() {
     throwException(env, "Unsupported platform");
 #endif
 #elif __linux
-    dlclose(ptr->dllHandle);
+    dlclose(this->fmu.dllHandle);
 #endif
 
 

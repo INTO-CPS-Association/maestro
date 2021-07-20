@@ -1,6 +1,6 @@
 
 #include <iostream>
-
+#include <stdarg.h>
 
 class LoggerImpl{
 public:
