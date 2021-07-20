@@ -3,7 +3,7 @@
 //
 
 #include "VariableStep.h"
-
+#include <cassert>
 
 VariableStep load_VariableStep(const char *path) {
     return new VariableStepImpl();
