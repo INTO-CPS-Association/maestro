@@ -1,8 +1,10 @@
 package org.intocps.maestro.codegen.mabl2cpp;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 
 import java.util.*;
@@ -33,7 +35,10 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         Map<String, String> sources = new HashMap<>();
         sources.put("co-sim.cxx", printer.sb.toString());
 
-        sources.put("co-sim.hxx", "#ifndef COSIM\n#define COSIM\nvoid simulate(const char* __runtimeConfigPath);\n#endif");
+        String specSha1 = DigestUtils.sha1Hex(PrettyPrinter.print(node));
+        sources.put("co-sim.hxx",
+                "#ifndef COSIM\n#define COSIM\nvoid simulate(const char* __runtimeConfigPath);\n#define SPEC_SHA1 \"" + specSha1 + "\"\n#define " +
+                        "SPEC_GEN_TIME \"" + new Date() + "\"\n#endif");
         return sources;
     }
 
@@ -44,8 +49,9 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         sb.append("load_" + name.getValue() + "(");
 
         //inject config path for MEnv
-        List<PExp> arguments = name.getValue().equals("MEnv") ? Stream.concat(node.getArgs().stream().limit(1),
-                Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
+        List<PExp> arguments = name.getValue().equals("MEnv") || name.getValue().equals("DataWriter") ? Stream
+                .concat(node.getArgs().stream().limit(1),
+                        Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
                 .collect(Collectors.toList()) : node.getArgs();
         for (int i = 1; i < arguments.size(); i++) {
             if (i > 1) {
@@ -81,6 +87,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     public void caseACallExp(ACallExp node, Integer question) throws AnalysisException {
 
         boolean isFmuComp = false;
+        boolean isFmu = false;
         boolean isDataWriter = false;
 
         if (node.getObject() != null) {
@@ -88,6 +95,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
             PType objType = types.get(node.getObject());
             isFmuComp = (objType instanceof AModuleType && ((AModuleType) objType).getName().getText().equals("FMI2Component"));
+            isFmu = (objType instanceof AModuleType && ((AModuleType) objType).getName().getText().equals("FMI2"));
             isDataWriter = (objType instanceof AModuleType && ((AModuleType) objType).getName().getText().equals("DataWriter"));
             if (isFmuComp) {
                 sb.append("->");
@@ -192,6 +200,9 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
 
                 sb.replace(index + 1, index + numberToReplace.length() + 1, " " + newValue);
+            } else if (isFmu && node.getMethodName().getText().equals("freeInstance")) {
+                sb.append("->");
+                sb.append("comp");
             }
 
         }
