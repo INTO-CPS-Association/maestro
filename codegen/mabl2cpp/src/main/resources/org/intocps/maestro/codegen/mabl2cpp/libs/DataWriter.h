@@ -7,20 +7,23 @@
 
 class DataWriterImpl {
 public:
-    void writeDataPoint(const char* fmt, DataWriterConfig, double time...);
+    DataWriterImpl(const char *runtimeConfigPath);
 
-    DataWriterConfig writeHeader( int count,const char**);
+    void writeDataPoint(const char *fmt, DataWriterConfig, double time...);
+
+    DataWriterConfig writeHeader(int count, const char **);
 
     void close();
 
-    private:
+private:
     std::ofstream myfile;
+    std::string filePath;
 };
 
 #define DataWriter DataWriterImpl*
 
 
-DataWriter load_DataWriter();
+DataWriter load_DataWriter(const char *runtimeConfigPath);
 
 
 
