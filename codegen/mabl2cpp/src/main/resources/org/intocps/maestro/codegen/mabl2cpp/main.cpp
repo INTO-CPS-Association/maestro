@@ -1,5 +1,7 @@
 #include <chrono>
 #include <iostream>
+#include <cstring>
+#include <algorithm>
 
 #include "co-sim.hxx"
 int main(int argc, char *argv[]) {
