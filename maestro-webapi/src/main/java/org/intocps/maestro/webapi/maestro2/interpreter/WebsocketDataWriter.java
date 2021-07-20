@@ -34,8 +34,10 @@ public class WebsocketDataWriter implements IDataListener {
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         Map<Integer, String> ith = DataListenerUtilities.indicesToHeaders(headers, filter);
-        ith = ith.entrySet().stream().collect(Collectors
-                .toMap(Map.Entry::getKey, (e) -> org.intocps.maestro.webapi.maestro2.Maestro2SimulationController.revertInstanceName(e.getValue())));
+
+        // Revert instance name transformation if any has been applied (e.g. if leading numerals was present in the instance name)
+        ith = ith.entrySet().stream().collect(
+                Collectors.toMap(Map.Entry::getKey, (e) -> org.intocps.maestro.framework.fmi2.LegacyMMSupport.revertInstanceName(e.getValue())));
 
         List<Integer> ioi = new ArrayList<>(ith.keySet());
         List<String> hoi = new ArrayList<>(ith.values());

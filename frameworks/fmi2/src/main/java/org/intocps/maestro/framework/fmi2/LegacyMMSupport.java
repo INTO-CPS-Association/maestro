@@ -9,6 +9,9 @@ import java.util.stream.Stream;
 
 
 public class LegacyMMSupport {
+    private static final Map<String, String> originalNamesToNewNamesForInstances = new HashMap<>();
+    private static final String MM_DELIMITER_REGEX = "\\.";
+
     public static Map<String, String> adjustFmi2SimulationEnvironmentConfiguration(
             Fmi2SimulationEnvironmentConfiguration config) throws EnvironmentException {
         // Calculate the instance remapping
@@ -34,9 +37,93 @@ public class LegacyMMSupport {
                     newMap.put(entry_.toKeyInstance(), entry.getValue());
                 }
             }
-            objectsToRemove.forEach(x -> variables.remove(x));
+            objectsToRemove.forEach(variables::remove);
             variables.putAll(newMap);
         }
+    }
+
+
+    public static String revertInstanceName(String instanceName) {
+        for (Map.Entry<String, String> instanceNameMapEntry : originalNamesToNewNamesForInstances.entrySet()) {
+            if (instanceName.contains(instanceNameMapEntry.getValue())) {
+                // Replace transformed instance name with original instance name
+                return instanceName.replace(instanceNameMapEntry.getValue(), instanceNameMapEntry.getKey());
+            }
+        }
+        return instanceName;
+    }
+
+    public static void fixLeadingNumeralsInInstanceNames(Fmi2SimulationEnvironmentConfiguration config) {
+        transformLeadingNumeralsInInstanceToWord(config.logVariables);
+        transformLeadingNumeralsInInstanceToWord(config.livestream);
+        transformLeadingNumeralsInInstanceToWord(config.connections);
+        transformLeadingNumeralsInInstanceToWord(config.variablesToLog);
+    }
+
+    private static void transformLeadingNumeralsInInstanceToWord(Map<String, List<String>> mapping) {
+        if (mapping == null || mapping.entrySet().isEmpty()) {
+            return;
+        }
+        // Stream, flatmap, combine and filter all strings in mapping to create new mapping of original instance name to new instance name
+        Map<String, String> originalNamesToNewNames = Stream.concat(mapping.keySet().stream(), mapping.values().stream().flatMap(List::stream))
+                .filter(k -> k.split(MM_DELIMITER_REGEX).length > 1).map(k -> k.split(MM_DELIMITER_REGEX)[1])
+                .collect(Collectors.toMap((s) -> s, LegacyMMSupport::replaceDigitWithWord, (s1, s2) -> s1));
+
+        // Replace values in mapping entry set
+        Map<String, List<String>> intermediateMap = new HashMap<>(mapping);
+        for (Map.Entry<String, List<String>> entry : intermediateMap.entrySet()) {
+            String key = entry.getKey();
+
+            // Transform key instance
+            String[] keyElements = entry.getKey().split(MM_DELIMITER_REGEX);
+            // First element in array is the fmu name, second is the instance name
+            if (keyElements.length > 1) {
+                mapping.remove(entry.getKey());
+
+                for (Map.Entry<String, String> instanceNameMapEntry : originalNamesToNewNames.entrySet()) {
+                    if (key.contains(instanceNameMapEntry.getKey())) {
+                        key = key.replace(instanceNameMapEntry.getKey(), instanceNameMapEntry.getValue());
+                        break;
+                    }
+                }
+            }
+
+            // Transform value instances
+            List<String> value = new ArrayList<>(entry.getValue()).stream().map(s -> {
+                for (Map.Entry<String, String> instanceNameMapEntry : originalNamesToNewNames.entrySet()) {
+                    if (s.contains(instanceNameMapEntry.getKey())) {
+                        return s.replace(instanceNameMapEntry.getKey(), instanceNameMapEntry.getValue());
+                    }
+                }
+                return s;
+            }).collect(Collectors.toList());
+
+            // Replace value(s) in existing mapping
+            mapping.put(key, value);
+        }
+
+        // Add mapping from original instance name to new instance name
+        originalNamesToNewNamesForInstances.putAll(originalNamesToNewNames);
+    }
+
+    private static String replaceDigitWithWord(String replaceDigitWithWord) {
+        String[] wordDigits = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
+        String[] digits = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+        String[] stringSplit = replaceDigitWithWord.split("");
+        for (int i = 0; i < stringSplit.length; i++) {
+            for (int j = 0; j < digits.length; j++) {
+                if (stringSplit[i].equalsIgnoreCase(digits[j])) {
+                    if (i + 1 < stringSplit.length) {
+                        replaceDigitWithWord = replaceDigitWithWord.substring(0, i + 1) + stringSplit[i + 1].toUpperCase() +
+                                replaceDigitWithWord.substring(i + 2, stringSplit.length);
+                    }
+                    replaceDigitWithWord = replaceDigitWithWord.replaceFirst(stringSplit[i], wordDigits[j]);
+                    return replaceDigitWithWord;
+                }
+            }
+        }
+        return replaceDigitWithWord;
     }
 
     public static <T> void fixVariableToXMap(Map<String, String> remappings, Map<String, T> variables) throws EnvironmentException {

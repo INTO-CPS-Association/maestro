@@ -1,5 +1,6 @@
 package org.intocps.maestro.interpreter.values.csv;
 
+import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.datawriter.DataFileRotater;
@@ -34,6 +35,9 @@ public class CsvDataWriter implements IDataListener {
                 instance.indicesOfInterest.add(i);
             }
         }
+
+        // Revert instance name transformation if any has been applied (e.g. if leading numerals was present in the instance name)
+        instance.headersOfInterest.replaceAll(LegacyMMSupport::revertInstanceName);
 
         try {
             PrintWriter writer = new PrintWriter(new FileOutputStream(dataFileRotater.getNextOutputFile()));
