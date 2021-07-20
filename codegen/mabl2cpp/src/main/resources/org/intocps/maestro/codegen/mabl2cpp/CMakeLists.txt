@@ -78,6 +78,14 @@ add_executable(sim
 target_link_libraries(sim zip)
 target_compile_definitions(sim PRIVATE -DFMI_COSIMULATION)
 
+if (UNIX)
+	if(APPLE)
+
+	else()
+		target_link_libraries(sim rt dl)
+	endif()
+endif()
+
 
 install(TARGETS sim
         RUNTIME DESTINATION bin

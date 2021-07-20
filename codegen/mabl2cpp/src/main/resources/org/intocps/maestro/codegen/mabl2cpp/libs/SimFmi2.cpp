@@ -27,14 +27,15 @@ FMI2 load_FMI2(const char *guid, const char *path) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    std::string fmuDest = fs::temp_directory_path();
+    auto fmuDest = std::filesystem::path(fs::temp_directory_path());
 
     std::string id=guid;
     std::replace(id.begin(),id.end(),'{','_');
     std::replace(id.begin(),id.end(),'}','_');
-    fmuDest.append(id);
-    std::filesystem::remove_all(fmuDest.c_str());
+    fmuDest =fmuDest/id;
+    std::filesystem::remove_all(fmuDest);
     fs::create_directory(fmuDest);
+    
 
     std::cout << "Unpacked fmu " << path << " to " << fmuDest << std::endl;
 

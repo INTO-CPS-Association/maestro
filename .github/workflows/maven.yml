@@ -16,13 +16,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-    steps:
-      - uses: actions/checkout@v2
+        os: [ windows-latest,ubuntu-latest ] #ubuntu-latest,, macos-latest
 
-      - name: zlib
-        if: matrix.os == 'windows-latest'
-        run: powershell -Command "(New-Object Net.WebClient).DownloadFile('https://git.io/JnHTY')"; ./install_zlib.bat; del install_zlib.bat
+    steps:
+      # https://github.com/msys2/setup-msys2
+      #      - uses: msys2/setup-msys2@v2
+      #        if: matrix.os == 'windows-latest'
+      #        name: MSYS
+      #        with:
+      #          path-type: inherit
+      #          msystem: MINGW64
+      #          install: >-
+      #            mingw-w64-x86_64-toolchain
+      #            mingw-w64-x86_64-cmake
+      #            mingw-w64-x86_64-ninja
 
       - name: Set up Java
         uses: actions/setup-java@v1.4.3
@@ -39,11 +46,38 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pipenv
 
+      - uses: actions/checkout@v2
+
       - name: Maven Build
-        run: mvn -B package --file pom.xml -DskipTests
+        run: mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" -B package --file pom.xml -DskipTests
 
       - name: Maven Test
-        run: mvn test
+        #        if: matrix.os == 'windows-latest'
+        #        shell: msys2 {0}
+        run: mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" test
+
+      #      - name: Maven Test
+      #        if: matrix.os != 'windows-latest'
+      #        run: mvn test -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+      - name: upload test reports win
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() && matrix.os == 'windows-latest'}}
+        with:
+          name: surfire-win
+          path: |
+            **/target/surefire-reports/*
+          retention-days: 1
+
+      - name: upload test reports ubuntu
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() && matrix.os == 'ubuntu-latest'}}
+        with:
+          name: surfire-ubuntu
+          path: |
+            **/target/surefire-reports/*
+          retention-days: 1
+
 
       - name: Install Python Dependencies
         run: |

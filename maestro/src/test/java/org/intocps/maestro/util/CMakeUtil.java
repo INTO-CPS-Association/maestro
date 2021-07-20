@@ -106,6 +106,14 @@ public class CMakeUtil {
         return res;
     }
 
+    String toPath(File file) {
+        if (isWindows()) {
+            return ("/" + file.getAbsolutePath()).replace(":", "").replace('\\', '/').replace("//", "/");
+        } else {
+            return file.getAbsolutePath();
+        }
+    }
+
     public boolean generate(File source, File build, File install) throws IOException, InterruptedException, CMakeGenerateException {
         String cmake = "cmake";
 
@@ -118,22 +126,32 @@ public class CMakeUtil {
 
         if (autoNinja && hasNinja()) {
             cmds.add("-GNinja");
+        } else if (isWindows()) {
+            cmds.add("-G'MinGW Makefiles'");
         }
 
         if (install != null) {
-            cmds.add("-DCMAKE_INSTALL_PREFIX=" + install.getAbsolutePath());
+            cmds.add("-DCMAKE_INSTALL_PREFIX=" + toPath(install));
         }
 
 
         if (build == null) {
             cmds.add(".");
         } else {
-            cmds.add("-B" + build.getAbsolutePath());
+            cmds.add("-B" + toPath(build));
         }
 
-        cmds.add("-S" + source.getAbsolutePath());
+        cmds.add("-S" + toPath(source));
 
+        if (isWindows()) {
+            String arg = String.join(" ", cmds);
+            cmds.clear();
+            cmds.add("C:\\msys64\\usr\\bin\\bash.exe");
+            cmds.add("-c");
+            cmds.add("\"" + arg + "\"");
 
+        }
+        System.out.println(String.join(" ", cmds));
         ProcessBuilder pb = new ProcessBuilder(cmds);
         pb.directory(source);
 
