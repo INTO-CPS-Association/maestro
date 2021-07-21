@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
                 i++;
             }
         }else if(helpKey == currentArg ||helpQKey == currentArg){
-            cout<< "Help\nsim \n\n\t-help, -?\tPrints this message\n\t-runtime\tPath to a runtime json file used for runtime configuration\n\t-source\tTo show the pretty printed SHA1 checksum of the input spec"<<endl;
+            cout<< "Help\nsim \n\n\t-help, -?\tPrints this message\n\t-runtime\tPath to a runtime json file used for runtime configuration\n\t-sha1\tTo show the pretty printed SHA1 checksum of the input spec"<<endl;
             return 0;
         }else if(sourceKey == currentArg){
             cout << SPEC_SHA1 << " " SPEC_GEN_TIME << endl;
