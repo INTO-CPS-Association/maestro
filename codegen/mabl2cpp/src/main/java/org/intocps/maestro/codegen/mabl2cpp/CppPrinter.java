@@ -212,10 +212,10 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     @Override
     public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node, Integer question) throws AnalysisException {
 
-        sb.append("#import <stdint.h>\n");
-        sb.append("#import <string>\n");
+        sb.append("#include <stdint.h>\n");
+        sb.append("#include <string>\n");
         node.getImports().stream().filter(im -> !im.getText().equals("FMI2Component"))
-                .forEach(im -> sb.append("#import \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
+                .forEach(im -> sb.append("#include \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
         sb.append("void simulate(const char* __runtimeConfigPath)\n");
         node.getBody().apply(this, question);
 
@@ -259,6 +259,10 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         if (node.getInitializer() != null) {
             sb.append(" = ");
             node.getInitializer().apply(this, question);
+        }
+        if (!node.getSize().isEmpty() && node.getInitializer() == null) {
+            //linux seems to have problem with these none initialized arrays
+            sb.append(" = {}");
         }
         sb.append(";");
     }
