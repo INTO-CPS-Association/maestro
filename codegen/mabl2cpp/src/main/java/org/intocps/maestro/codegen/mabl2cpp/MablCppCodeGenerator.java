@@ -46,6 +46,8 @@ public class MablCppCodeGenerator {
         IOUtils.write(cmakeLists, new FileOutputStream(new File(outputDirectory, "CMakeLists.txt")), StandardCharsets.UTF_8);
         org.apache.commons.io.IOUtils
                 .copy(this.getClass().getResourceAsStream("main.cpp"), new FileOutputStream(new File(outputDirectory, "main" + ".cpp")));
+        org.apache.commons.io.IOUtils
+                .copy(this.getClass().getResourceAsStream("readme.md"), new FileOutputStream(new File(outputDirectory, "readme.md")));
 
     }
 
