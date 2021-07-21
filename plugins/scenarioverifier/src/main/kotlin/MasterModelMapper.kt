@@ -1,10 +1,10 @@
-package org.intocps.maestro.webapi
+package org.intocps.maestro.plugin
 
 import core.*
 import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
-import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier
+import org.intocps.maestro.core.dto.MultiModelScenarioVerifier
 import scala.jdk.javaapi.CollectionConverters
 import synthesizer.LoopStrategy
 import synthesizer.SynthesizerSimple
