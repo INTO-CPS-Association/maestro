@@ -54,10 +54,7 @@ jobs:
       - name: Maven Test
         #        if: matrix.os == 'windows-latest'
         #        shell: msys2 {0}
-        run: |
-          set(ENV{CC} gcc)
-          set(ENV{CXX} g++)
-          mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" test
+        run: mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" test
 
       #      - name: Maven Test
       #        if: matrix.os != 'windows-latest'
