@@ -145,10 +145,14 @@ public class FullSpecTest {
         IErrorReporter reporter = new ErrorReporter();
         Mabl mabl = new Mabl(directory, workingDirectory);
         mabl.setReporter(reporter);
-        mabl.setVerbose(true);
+        mabl.setVerbose(getMablVerbose());
 
         ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
         postProcessSpec(name, directory, workingDirectory, mabl, spec);
+    }
+
+    protected boolean getMablVerbose() {
+        return true;
     }
 
     protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
