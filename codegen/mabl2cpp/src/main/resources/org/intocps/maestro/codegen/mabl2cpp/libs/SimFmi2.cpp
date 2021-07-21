@@ -15,6 +15,15 @@ extern "C" {
 }
 
 
+bool hasEnding (std::string const &fullString, std::string const &ending) {
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
+}
+
+
 FMI2 load_FMI2(const char *guid, const char *path) {
     using namespace std;
     using namespace chrono;
@@ -35,7 +44,7 @@ FMI2 load_FMI2(const char *guid, const char *path) {
     fmuDest =fmuDest/id;
     std::filesystem::remove_all(fmuDest);
     fs::create_directory(fmuDest);
-    
+
 
     std::cout << "Unpacked fmu " << path << " to " << fmuDest << std::endl;
 
@@ -51,22 +60,42 @@ FMI2 load_FMI2(const char *guid, const char *path) {
     #ifdef _WIN32
         library_base.append("/win64/");
     #elif __APPLE__
-    #if TARGET_OS_MAC
-        library_base.append("/darwin64/");
-    #else
-        throwException(env, "Unsupported platform");
-    #endif
+        #if TARGET_OS_MAC
+            library_base.append("/darwin64/");
+        #else
+            throwException(env, "Unsupported platform");
+        #endif
     #elif __linux
         library_base.append("/linux64/");
     #endif
 
+    const char* extension =".dylib";
+    #ifdef _WIN32
+            extension =".dll";
+        #elif __APPLE__
+            extension =".dylib";
+        #elif __linux
+            extension =".so";
+    #endif
+
+
     //  std::string firstFile;
+    bool modelLibFound=false;
     for (const auto &entry : fs::directory_iterator(library_base.c_str())) {
         //std::cout << entry.path() << std::endl;
         fmu->library_path = entry.path();
-        break;
+        if(hasEnding(fmu->library_path,extension)){
+            modelLibFound=true;
+            break;
+        }
     }
 
+    if(!modelLibFound)
+    {
+        std::cerr  << "FMU does not contain any suitable library. Cannot load it. " << path << std::endl;
+        return nullptr;
+    }
+    std::cout << "Loading library: "<< fmu->library_path << std::endl;
 
     fmu->guid = guid;
     auto success = loadDll(fmu->library_path.c_str(), &fmu->fmu);

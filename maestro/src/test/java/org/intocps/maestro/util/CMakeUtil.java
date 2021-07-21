@@ -107,11 +107,11 @@ public class CMakeUtil {
     }
 
     String toPath(File file) {
-        if (isWindows()) {
-            return ("/" + file.getAbsolutePath()).replace(":", "").replace('\\', '/').replace("//", "/");
-        } else {
-            return file.getAbsolutePath();
-        }
+        //        if (isWindows()) {
+        //            return ("/" + file.getAbsolutePath()).replace(":", "").replace('\\', '/').replace("//", "/");
+        //        } else {
+        return file.getAbsolutePath();
+        //        }
     }
 
     public boolean generate(File source, File build, File install) throws IOException, InterruptedException, CMakeGenerateException {
@@ -143,16 +143,21 @@ public class CMakeUtil {
 
         cmds.add("-S" + toPath(source));
 
-        if (isWindows()) {
-            String arg = String.join(" ", cmds);
-            cmds.clear();
-            cmds.add("C:\\msys64\\usr\\bin\\bash.exe");
-            cmds.add("-c");
-            cmds.add("\"" + arg + "\"");
-
-        }
+        //        if (isWindows()) {
+        //            String arg = String.join(" ", cmds);
+        //            cmds.clear();
+        //            cmds.add("C:\\msys64\\usr\\bin\\bash.exe");
+        //            cmds.add("-c");
+        //            cmds.add("\"" + arg + "\"");
+        //
+        //        }
         System.out.println(String.join(" ", cmds));
         ProcessBuilder pb = new ProcessBuilder(cmds);
+
+        if (isWindows()) {
+            pb.environment().put("Path", "C:\\msys64\\usr\\bin\\;" + pb.environment().get("Path"));
+        }
+
         pb.directory(source);
 
         return runProcess(pb, verbose);
