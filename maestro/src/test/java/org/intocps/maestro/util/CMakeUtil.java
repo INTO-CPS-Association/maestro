@@ -24,12 +24,17 @@ public class CMakeUtil {
 
     private static boolean checkSuccessful(String... cmd) {
         ProcessBuilder pb = new ProcessBuilder(cmd);
+        Process process = null;
         try {
-            Process process = pb.start();
-            process.waitFor(2, TimeUnit.SECONDS);
-            return process.exitValue() == 0;
+            process = pb.start();
+            process.waitFor(10, TimeUnit.SECONDS);
+            return !process.isAlive() && process.exitValue() == 0;
         } catch (IOException | InterruptedException e) {
             return false;
+        } finally {
+            if (process != null && process.isAlive()) {
+                process.destroyForcibly();
+            }
         }
     }
 
