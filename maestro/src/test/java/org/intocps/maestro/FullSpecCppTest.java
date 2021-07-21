@@ -163,7 +163,7 @@ public class FullSpecCppTest extends FullSpecTest {
                         directory.getAbsoluteFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
                 System.out.println("Simulation working dir: " + simulationWorkingDir);
                 pb.directory(simulationWorkingDir);
-                Assertions.assertTrue(CMakeUtil.runProcess(pb, true), "Simulation did not complete without errors");
+                Assertions.assertTrue(CMakeUtil.runProcess(pb, true), "Simulation did not complete without errors (" + name + ")");
             }
         } else {
             System.out.println("runtime testing not possible. Fmus does not support this platform.");
