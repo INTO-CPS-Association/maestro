@@ -27,6 +27,12 @@ outputsFileName = "outputs.csv"
 
 SCR_path = "scenario_controller_resources"
 
+def validateAlgorithmExecution(outputcsv, expectedcsv):
+    if os.path.exists(outputcsv) and testutils.compareCSV(outputcsv, expectedcsv):
+        print("Succesfully executed the algorithm and returned output")
+    else:
+        Exception("Output returned from executing the algorithm did not match the expected output")
+
 def validateCliSpecResult(outputs, temporary):
     testutils.checkMablSpecExists(temporary.mablSpecPath)
     if not testutils.compareCSV('wt/result.csv', outputs):
@@ -63,7 +69,7 @@ def cliGenerateAlgorithmFromScenario():
     temporary = tempfile.mkdtemp()
     print(f"Temporary directory: {temporary}")
     scenarioPath = os.path.join(SCR_path, "generate_from_scenario", "scenario.conf")
-    cmd = "java -jar {0} generateAlgorithm {1} -output {2}".format(path, scenarioPath, temporary)
+    cmd = "java -jar {0} generate-algorithm {1} -output {2}".format(path, scenarioPath, temporary)
     func = lambda: print("Succesfully generated algorithm from scenario") if(os.path.exists(os.path.join(temporary, "algorithm.conf"))) else lambda: (Exception("Algorithm was not returned"))
     testutils.testCliCommandWithFunc(cmd, func)
 
@@ -83,29 +89,53 @@ def cliGenerateAlgorithmFromMultiModel():
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multiModel, jsonFile)
     
-    cmd = "java -jar {0} generateAlgorithm {1} -output {2}".format(path, multiModelPath, temporary)
-    func = lambda: print("Succesfully generated algorithm from multi model") if(os.path.exists(os.path.join(temporary, "algorithm.conf"))) else lambda: (Exception("Algorithm was not returned"))
+    cmd = "java -jar {0} generate-algorithm {1} -output {2}".format(path, multiModelPath, temporary)
+    func = lambda: validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))
     testutils.testCliCommandWithFunc(cmd, func)
 
-def cliExecuteAlgorithm():
-    testutils.printSection("CLI execute algorithm")
+def cliExecuteAlgorithmFromExtendedMultiModel():
+    testutils.printSection("CLI execute algorithm from multi model")
     temporary = tempfile.mkdtemp()
     print(f"Temporary directory: {temporary}")
     resourcesPath = os.path.join(SCR_path, "execute_algorithm")
 
-    executableModelPath = os.path.join(temporary, "executableModel.json")
+    multiModelPath = os.path.join(temporary, "multimodel.json")
+    executionParametersPath = os.path.join(resourcesPath, "executionParameters.json")
 
-    with open(os.path.join(resourcesPath,"executableModel.json"), "r") as jsonFile:
-        executableModel = json.load(jsonFile)
+    with open(os.path.join(resourcesPath,"extendedmultimodel.json"), "r") as jsonFile:
+        multimodel = json.load(jsonFile)
 
-    executableModel["multiModel"]["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-test.fmu"))).as_uri()
-    executableModel["multiModel"]["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-end.fmu"))).as_uri()
+    multimodel["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-test.fmu"))).as_uri()
+    multimodel["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-end.fmu"))).as_uri()
 
-    with open(executableModelPath, "w+") as jsonFile:
-        json.dump(executableModel, jsonFile)
+    with open(multiModelPath, "w+") as jsonFile:
+        json.dump(multimodel, jsonFile)
 
-    cmd = "java -jar {0} executeAlgorithm {1} -output {2} -di".format(path, executableModelPath, temporary)
-    func = lambda: print("Succesfully executed the algorithm and returned output") if(os.path.exists(os.path.join(temporary, "outputs.csv"))) else lambda: (Exception("No output was returned from executing the algorithm"))
+    cmd = "java -jar {0} execute-algorithm -em {1} -ep {2} -output {3} -di".format(path, multiModelPath, executionParametersPath, temporary)
+    func = lambda: validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))
+    testutils.testCliCommandWithFunc(cmd, func)
+
+def cliExecuteAlgorithmFromMasterModel():
+    testutils.printSection("CLI execute algorithm from master model")
+    temporary = tempfile.mkdtemp()
+    print(f"Temporary directory: {temporary}")
+    resourcesPath = os.path.join(SCR_path, "execute_algorithm")
+
+    multiModelPath = os.path.join(temporary, "multimodel.json")
+    executionParametersPath = os.path.join(resourcesPath, "executionParameters.json")
+    masterModelPath = os.path.join(resourcesPath, "masterModel.conf")
+
+    with open(os.path.join(resourcesPath,"multimodel.json"), "r") as jsonFile:
+        multimodel = json.load(jsonFile)
+
+    multimodel["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-test.fmu"))).as_uri()
+    multimodel["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-end.fmu"))).as_uri()
+
+    with open(multiModelPath, "w+") as jsonFile:
+        json.dump(multimodel, jsonFile)
+
+    cmd = "java -jar {0} execute-algorithm -em {1} -ep {2} -al {3} -output {4} -di".format(path, multiModelPath, executionParametersPath, masterModelPath, temporary)
+    func = lambda: print("Succesfully executed the algorithm and returned output") if(validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))) else lambda: (Exception("No output was returned from executing the algorithm"))
     testutils.testCliCommandWithFunc(cmd, func)
 
 
@@ -115,4 +145,5 @@ cliSpecGen()
 cliExpansion()
 cliGenerateAlgorithmFromScenario()
 cliGenerateAlgorithmFromMultiModel()
-cliExecuteAlgorithm()
+cliExecuteAlgorithmFromExtendedMultiModel()
+cliExecuteAlgorithmFromMasterModel()

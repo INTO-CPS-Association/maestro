@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "visualizeTraces", description = "Visualizes traces for an algorithm that cannot be verified successfully.",
+@CommandLine.Command(name = "visualize-traces", description = "Visualizes traces for an algorithm that cannot be verified successfully.",
         mixinStandardHelpOptions = true)
 public class VisualizeTracesCmd implements Callable<Integer> {
     @CommandLine.Parameters(description = "A master model (scenario + algorithm) on .conf format")

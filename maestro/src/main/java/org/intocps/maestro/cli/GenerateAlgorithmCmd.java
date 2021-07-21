@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "generateAlgorithm", description = "Generates an algorithm from a scenario or multi-model.", mixinStandardHelpOptions =
+@CommandLine.Command(name = "generate-algorithm", description = "Generates an algorithm from a scenario or multi-model.", mixinStandardHelpOptions =
         true)
 public class GenerateAlgorithmCmd  implements Callable<Integer> {
     @CommandLine.Parameters(description = "A scenario (.conf) or a multi-model (.json)")

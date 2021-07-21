@@ -13,7 +13,7 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "verifyAlgorithm", description = "Verifies an algorithm generated from a scenario.",
+@CommandLine.Command(name = "verify-algorithm", description = "Verifies an algorithm generated from a scenario.",
         mixinStandardHelpOptions = true)
 public class VerifyAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Parameters(description = "A master model (scenario + algorithm) on .conf format")

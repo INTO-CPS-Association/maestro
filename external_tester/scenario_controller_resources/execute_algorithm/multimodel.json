@@ -1,0 +1,12 @@
+{
+    "fmus": {
+        "{FMU}": "/rollback-test.fmu",
+        "{Controller}": "/rollback-end.fmu"
+    },
+    "connections": {
+        "{FMU}.roller.level": [
+            "{Controller}.cont.level"
+    ]
+    },
+    "parameters": {}
+}
