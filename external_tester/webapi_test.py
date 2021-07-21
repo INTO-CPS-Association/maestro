@@ -150,7 +150,7 @@ def testScenarioController(basicUrl):
     #Test generate algorithm from scenario
     testutils.printSection("GENERATE ALGORITHM FROM SCENARIO")
     gas_resourcesPath = os.path.join(baseResourcePath, "generate_from_scenario")
-    with open(os.path.join(gas_resourcesPath, "scenario.txt")) as f:
+    with open(os.path.join(gas_resourcesPath, "scenario.conf")) as f:
         payloadString = f.read()
 
     response = requests.post(f"{basicUrl}/generateAlgorithmFromScenario", data=payloadString, headers={'Content-Type': 'text/plain'})
