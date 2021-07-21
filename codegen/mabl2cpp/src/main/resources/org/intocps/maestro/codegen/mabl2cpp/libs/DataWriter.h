@@ -1,9 +1,16 @@
+//
+// Created by Kenneth Guldbrandt Lausdahl on 18/05/2021.
+//
+#ifndef DATAWRITER_H
+#define DATAWRITER_H
 
 #include <iostream>
 #include <iostream>
 #include <fstream>
 #include "DataWriterConfig.h"
 #include <stdarg.h>
+
+
 
 class DataWriterImpl {
 public:
@@ -25,5 +32,5 @@ private:
 
 DataWriter load_DataWriter(const char *runtimeConfigPath);
 
-
+#endif
 

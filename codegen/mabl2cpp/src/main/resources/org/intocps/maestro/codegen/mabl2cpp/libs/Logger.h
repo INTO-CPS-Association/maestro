@@ -1,6 +1,14 @@
+//
+// Created by Kenneth Guldbrandt Lausdahl on 18/05/2021.
+//
+#ifndef LOGGER_H
+#define LOGGER_H
+
 
 #include <iostream>
 #include <stdarg.h>
+
+
 
 class LoggerImpl{
 public:
@@ -30,3 +38,5 @@ public:
 
 
 Logger load_Logger();
+
+#endif
