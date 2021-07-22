@@ -132,7 +132,8 @@ public class CMakeUtil {
         if (autoNinja && hasNinja()) {
             cmds.add("-GNinja");
         } else if (isWindows()) {
-            cmds.add("-GMinGW Makefiles");
+            cmds.add("-GMSYS Makefiles");
+            //            cmds.add("\"MSYS Makefiles\"");
         }
 
         if (install != null) {
@@ -148,20 +149,7 @@ public class CMakeUtil {
 
         cmds.add("-S" + toPath(source));
 
-        //        if (isWindows()) {
-        //            String arg = String.join(" ", cmds);
-        //            cmds.clear();
-        //            cmds.add("C:\\msys64\\usr\\bin\\bash.exe");
-        //            cmds.add("-c");
-        //            cmds.add("\"" + arg + "\"");
-        //
-        //        }
-        System.out.println(String.join(" ", cmds));
         ProcessBuilder pb = new ProcessBuilder(cmds);
-
-        if (isWindows()) {
-            pb.environment().put("Path", "C:\\msys64\\usr\\bin\\;" + pb.environment().get("Path"));
-        }
 
         pb.directory(source);
 

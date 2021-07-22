@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-latest ] #ubuntu-latest,, macos-latest
+        os: [ ubuntu-latest,windows-latest ] #ubuntu-latest,, macos-latest
 
     steps:
       # https://github.com/msys2/setup-msys2
@@ -45,6 +45,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pipenv
+
+      - name: Put MSYS2_MinGW64 on PATH for windows
+        if: matrix.os == 'windows-latest'
+        # there is not yet an environment variable for this path from msys2/setup-msys2
+        run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - uses: actions/checkout@v2
 
