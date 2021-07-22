@@ -8,6 +8,8 @@ import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivati
 import org.intocps.maestro.fmi.ModelDescription;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class VariableStepConfigValue extends Value {
 
@@ -22,7 +24,8 @@ public class VariableStepConfigValue extends Value {
     private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
-            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize, Double maxStepSize) throws InterpreterException {
+            Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize,
+            Double maxStepSize) throws InterpreterException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
         Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
@@ -41,22 +44,44 @@ public class VariableStepConfigValue extends Value {
         dataPoints = convertValuesToDataPoint(portValues);
     }
 
+    public void addDerivatives(List<List<RealValue>> derivatives, double time) {
+        if (derivatives.size() != dataPoints.size()) {
+            throw new InterpreterException("The size of the derivatives array should be match the size of the data points array");
+        }
+        if (time < currTime) {
+            throw new InterpreterException("'addDataPoint' needs to be called before 'addDerivatives'");
+        }
+        if (time > currTime) {
+            throw new InterpreterException("Simulation time for derivatives is ahead of simulation time for data points");
+        }
+
+        for (int i = 0; i < dataPoints.size(); i++) {
+            List<RealValue> ders = derivatives.get(i);
+            if (!ders.isEmpty()) {
+                StepVal dataPoint = dataPoints.get(i);
+                dataPoint.ders = ders.stream().map(RealValue::getValue).collect(Collectors.toList());
+            }
+        }
+    }
+
     public double getStepSize() {
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
         Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentPortValues = new HashMap<>();
+
         instances.forEach((mi, fsi) -> {
             Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
             Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
                     sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
                             .ifPresent(val -> {
-                                ScalarDerivativeEstimator derEst = derivativeEstimators.get(sv);
-                                derEst.advance(new Double[]{(Double) val.getValue(), null, null}, stepSize);
-                                derivatives.putIfAbsent(sv, new HashMap<>() {{
-                                    put(1, derEst.getFirstDerivative());
-                                    put(2, derEst.getSecondDerivative());
-                                }});
-
+                                if (!val.ders.isEmpty()) {
+                                    derivatives.putIfAbsent(sv, IntStream.range(0, val.ders.size()).boxed()
+                                            .collect(Collectors.toMap((i) -> i + 1, (i) -> val.ders.get(i))));
+                                } else {
+                                    ScalarDerivativeEstimator derEst = derivativeEstimators.get(sv);
+                                    derEst.advance(new Double[]{(Double) val.getValue(), null, null}, stepSize);
+                                    derivatives.putIfAbsent(sv, Map.of(1, derEst.getFirstDerivative(), 2, derEst.getSecondDerivative()));
+                                }
                                 portValues.putIfAbsent(sv, val.getValue());
                             }));
             currentDerivatives.put(mi, derivatives);
@@ -74,7 +99,7 @@ public class VariableStepConfigValue extends Value {
     }
 
     public boolean hasReducedStepSize() {
-        if(stepValidationResult == null){
+        if (stepValidationResult == null) {
             throw new InterpreterException("'isStepValid' needs to be called before 'hasReducedStepSize'");
         }
 
@@ -82,7 +107,7 @@ public class VariableStepConfigValue extends Value {
     }
 
     public Double getReducedStepSize() {
-        if(stepValidationResult == null){
+        if (stepValidationResult == null) {
             throw new InterpreterException("'isStepValid' needs to be called before 'reducedStepSize'");
         }
 
@@ -122,12 +147,12 @@ public class VariableStepConfigValue extends Value {
         instances.forEach((mi, fsi) -> {
             Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
-                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().equals((mi.key + "." + mi.instanceName + "." + sv.name))))
-                            .findFirst()).ifPresent(val -> {
-                        // if key not absent something is wrong?
-                        portValues.putIfAbsent(sv, val.getValue());
+                    sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().equals((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
+                            .ifPresent(val -> {
+                                // if key not absent something is wrong?
+                                portValues.putIfAbsent(sv, val.getValue());
 
-                    }));
+                            }));
             values.put(mi, portValues);
         });
         return values;
@@ -137,10 +162,19 @@ public class VariableStepConfigValue extends Value {
     public static class StepVal {
         private String name;
         private Object value;
+        private List<Double> ders = List.of();
 
         public StepVal(String name, Object value) {
             this.name = name;
             this.value = value;
+        }
+
+        public List<Double> getDerivatives() {
+            return ders;
+        }
+
+        public void setDerivatives(List<Double> ders) {
+            this.ders = ders;
         }
 
         public String getName() {
