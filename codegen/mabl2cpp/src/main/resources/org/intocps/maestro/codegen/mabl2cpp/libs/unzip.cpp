@@ -24,6 +24,13 @@
 #define ERR_SIZE 256
 #define COPY_BUF_SIZE 2048
 
+#ifdef _WIN32
+//windows does not support mode
+int mkdir(const char *path, mode_t mode){
+    return mkdir(path);
+}
+#endif
+
 void inline configure_path_buffer(char *dest, const char *extract_to, const char *path) {
     if (extract_to) {
         strcpy(dest, extract_to);
