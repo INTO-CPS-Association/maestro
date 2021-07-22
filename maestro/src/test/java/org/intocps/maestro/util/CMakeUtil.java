@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -74,33 +75,50 @@ public class CMakeUtil {
     public static boolean runProcess(ProcessBuilder pb, boolean verbose) throws IOException, InterruptedException, CMakeGenerateException {
         final Process p = pb.start();
 
+
+        List<String> errors = new Vector<>();
         if (verbose) {
             Thread outThread = new Thread(() -> {
                 BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-                String tmp = null;
+                String tmp;
                 try {
                     while ((tmp = out.readLine()) != null) {
                         System.out.println(tmp);
                     }
                 } catch (IOException e) {
-                    return;
                 }
             });
 
             outThread.setDaemon(true);
             outThread.start();
+
+            Thread errThread = new Thread(() -> {
+                BufferedReader out = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+                String tmp;
+                try {
+                    while ((tmp = out.readLine()) != null) {
+                        System.out.println(tmp);
+                        errors.add(tmp);
+                    }
+                } catch (IOException e) {
+                }
+            });
+
+            errThread.setDaemon(true);
+            errThread.start();
         }
 
-        p.waitFor();
+        p.waitFor(30, TimeUnit.MINUTES);
 
-        List<String> errors = IOUtils.readLines(p.getErrorStream());
+        errors.addAll(IOUtils.readLines(p.getErrorStream(), StandardCharsets.UTF_8));
 
         boolean res = p.exitValue() == 0;
 
         if (!res) {
             if (!errors.isEmpty()) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 for (String string : errors) {
                     sb.append(string);
                     sb.append("\n");
@@ -150,6 +168,7 @@ public class CMakeUtil {
         cmds.add("-S" + toPath(source));
 
         ProcessBuilder pb = new ProcessBuilder(cmds);
+
 
         pb.directory(source);
 
