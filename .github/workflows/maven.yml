@@ -72,6 +72,8 @@ jobs:
           name: surfire-win
           path: |
             **/target/surefire-reports/*
+            **/target/FullSpecCppTest/spec.mabl
+            **/target/FullSpecCppTest/co-sim.cxx
           retention-days: 1
 
       - name: upload test reports ubuntu

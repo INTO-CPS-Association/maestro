@@ -29,10 +29,12 @@ import java.util.zip.ZipFile;
 
 public class FullSpecCppTest extends FullSpecTest {
     public static final List<String> CACHE_FOLDERS = Arrays.asList("libzip", "rapidjson", "intocpsfmi-src");
-    static final File baseProjectPath = Paths.get("target", FullSpecCppTest.class.getSimpleName(), "_base").toFile();
+    static final File baseProjectPath = Paths.get("target", FullSpecCppTest.class.getSimpleName(), "_base").toFile().getAbsoluteFile();
     static final File baseBuild = new File(baseProjectPath, "build");
 
     static final File baseSimProgram = getSimProgramFile(baseProjectPath);
+
+    static boolean beforeExecuted = false;
 
     private static File getSimProgramFile(File baseProjectPath) {
         String name = "sim";
@@ -66,6 +68,8 @@ public class FullSpecCppTest extends FullSpecTest {
                 cMakeUtil.make(baseBuild);
             }
         }
+
+        beforeExecuted = true;
     }
 
     @Override
@@ -75,6 +79,10 @@ public class FullSpecCppTest extends FullSpecTest {
 
     @Override
     protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+        if (!beforeExecuted) {
+            configureBaseProject();
+        }
+
         mabl.optimize();
         Map.Entry<Boolean, Map<INode, PType>> tc = mabl.typeCheck();
         Assumptions.assumeTrue(tc.getKey(), "TC should pass");

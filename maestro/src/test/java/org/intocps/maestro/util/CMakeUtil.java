@@ -187,11 +187,14 @@ public class CMakeUtil {
             cmds.add("-j3");
         }
 
+        cmds.add("-C");
+        cmds.add(root.getAbsolutePath());
+
         ProcessBuilder pb = new ProcessBuilder(cmds);
         for (String string : goal) {
             pb.command().add(string);
         }
-        pb.directory(root);
+        //pb.directory(root);
 
         return runProcess(pb, verbose);
 
