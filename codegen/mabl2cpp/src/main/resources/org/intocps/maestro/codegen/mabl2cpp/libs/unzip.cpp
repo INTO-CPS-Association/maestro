@@ -148,7 +148,11 @@ bool unzip(const char *path, const char *dest) {
 
         /* try to open the file in the filesystem for writing */
         //  printf("##Extracting '%s'\n",filePathBuffer);
+        #ifdef _WIN32
+        if ((file_fd = open(filePathBuffer, O_CREAT | O_TRUNC | O_WRONLY | _O_BINARY, 0666)) == -1) {
+        #else
         if ((file_fd = open(filePathBuffer, O_CREAT | O_TRUNC | O_WRONLY, 0666)) == -1) {
+        #endif
             perror("cannot open file for writing");
             goto bail;
         }
