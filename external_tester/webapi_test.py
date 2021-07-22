@@ -267,8 +267,6 @@ try:
             print("Failed to connect: " + x.__class__.__name__)
             time.sleep(1)
             maxWait -= 1
-    if(maxWait == 0):
-        raise Exception("Unable to connect to host")
 
     # Run tests
     print("Testing simulation controller..")
