@@ -74,6 +74,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         // instance in a multi-model is uniquely identified as: "{<fmu-name>}.<instance-name>" where instances are not really considered in scenarios
         // but is currently expected to be expressed as: "<fmu-name>_<instance_name>".
         // This is not optimal and should be changed to the same format.
+        // Also should fmu, instance and port identifiers be case sensitive?
 
         logger.info("Unfolding with scenario verifier: {}", declaredFunction.toString());
 
@@ -633,8 +634,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     }
 
     private boolean portRefMatch(PortRef portRef, String multiModelInstanceName, String multiModelPortName) {
-        return portRef.fmu().toLowerCase(Locale.ROOT).contains(multiModelInstanceName) &&
-                portRef.port().toLowerCase(Locale.ROOT).contains(multiModelPortName);
+        return portRef.fmu().toLowerCase(Locale.ROOT).contains(multiModelInstanceName.toLowerCase(Locale.ROOT)) &&
+                portRef.port().toLowerCase(Locale.ROOT).contains(multiModelPortName.toLowerCase(Locale.ROOT));
     }
 
     private String masterMRepresentationToMultiMRepresentation(String masterModelRepresentation) {
