@@ -1,5 +1,4 @@
 #include "SimFmi2.h"
-//#include "zlib.h"
 #include <iostream>
 #include <string>
 #include <iostream>
@@ -12,6 +11,7 @@
 namespace fs = std::filesystem;
 extern "C" {
 #include "sim_support.h"
+#include "uri.h"
 }
 
 #ifdef _WIN32
@@ -54,9 +54,11 @@ bool hasEnding (std::string const &fullString, std::string const &ending) {
 }
 
 
-FMI2 load_FMI2(const char *guid, const char *path) {
+FMI2 load_FMI2(const char *guid, const char *in_path) {
     using namespace std;
     using namespace chrono;
+
+    auto path =URIToNativePath(in_path);
 
     if(!std::filesystem::exists(path))
     {

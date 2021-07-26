@@ -64,6 +64,7 @@ include_directories(${PROJECT_SOURCE_DIR}
 
 add_executable(sim
     ${intocpsfmi-src}/jnifmuapi/src/main/native/src/sim_support.c
+    libs/uri.c
     libs/DataWriter.cpp
     libs/BooleanLogic.cpp
     libs/Logger.cpp

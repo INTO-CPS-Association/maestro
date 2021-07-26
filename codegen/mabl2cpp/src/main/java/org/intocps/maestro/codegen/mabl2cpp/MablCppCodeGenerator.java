@@ -55,10 +55,10 @@ public class MablCppCodeGenerator {
 
 
         String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv", "BooleanLogic", "DataWriterConfig", "unzip", "FmiComponentState",
-                "VariableStep", "VariableStepConfig"};
+                "VariableStep", "VariableStepConfig", "uri"};
 
         for (String libraryName : libraries) {
-            for (String ext : new String[]{"cpp", "h"}) {
+            for (String ext : new String[]{"cpp", "c", "h"}) {
                 String name = libraryName + "." + ext;
                 InputStream is = this.getClass().getResourceAsStream("libs/" + name);
                 File libs = new File(outputDirectory, "libs");
