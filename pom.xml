@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.into-cps.maestro</groupId>
     <artifactId>root</artifactId>
-    <version>2.1.5-SNAPSHOT</version>
+    <version>2.1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Maestro Root</name>
 
@@ -25,6 +24,7 @@
         <fmu.api.version>1.0.12</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
         <kotlin.version>1.5.0</kotlin.version>
+        <scala.version>2.13.5</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
     </properties>
 
@@ -55,7 +55,7 @@
         <module>codegen</module>
         <module>fmi</module>
         <module>modeldefinitionchecker</module>
-        <module>external_tester</module>
+        <!--        <module>external_tester</module>-->
     </modules>
 
     <build>
@@ -101,12 +101,12 @@
                     <checkstyleRules>
                         <module name="Checker">
                             <module name="TreeWalker">
-                                <module name="NeedBraces"/>
+                                <module name="NeedBraces" />
                                 <module name="PackageName">
-                                    <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+                                    <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$" />
                                 </module>
                                 <module name="MethodName">
-                                    <property name="format" value="^[a-z](_?[a-zA-Z0-9]+)*$"/>
+                                    <property name="format" value="^[a-z](_?[a-zA-Z0-9]+)*$" />
                                 </module>
                             </module>
                         </module>
@@ -203,7 +203,7 @@
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
                         <!-- https://stackoverflow.com/questions/55272870/surefire-maven-plugin-corrupted-stdout-by-directly-writing-to-native-stream-in -->
-                        <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                        <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
                     </configuration>
                 </plugin>
                 <plugin>

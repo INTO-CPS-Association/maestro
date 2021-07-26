@@ -14,7 +14,7 @@ real r = g.identityReal(1.1);
 
 real i[1] = {1.2};
 real[] rr =g.identityRealArrCStyle(i);
-real[] rr =g.identityRealArr(i);
+real[] rr2 =g.identityRealArr(i);
 real res = g.identityRealArrOut(ref i);
 
 unload(g);

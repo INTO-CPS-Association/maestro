@@ -2,30 +2,22 @@ package org.intocps.maestro.interpreter.values.variablestep;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.fmi.Fmi2Status;
 import org.intocps.fmi.FmiInvalidNativeStateException;
 import org.intocps.fmi.FmuResult;
 import org.intocps.fmi.IFmiComponent;
-import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
-import org.intocps.fmi.IFmu;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
+import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
 import org.intocps.maestro.interpreter.values.*;
-import org.intocps.maestro.interpreter.values.fmi.FmuValue;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,14 +27,11 @@ public class VariableStepValue extends ModuleValue {
         super(createMembers(configuration));
     }
 
-
-    private static Set<InitializationMsgJson.Constraint> getConstraintsFromConfig(JsonNode config) {
+    private static Set<InitializationMsgJson.Constraint> getConstraintsFromAlgorithmConfig(VariableStepAlgorithmConfig config, ObjectMapper objectMapper) {
         final Set<InitializationMsgJson.Constraint> constraints = new HashSet<>();
-        Map<String, Map<String, Object>> namedConstraints = (new ObjectMapper()).convertValue(config.get("constraints"), new TypeReference<>() {
-        });
-        if(namedConstraints == null){
-            return constraints;
-        }
+        Map<String, Map<String, Object>> namedConstraints =
+                objectMapper.convertValue(objectMapper.valueToTree(config.getConstraints()), new TypeReference<>() {
+                });
 
         for (Map.Entry<String, Map<String, Object>> entry : namedConstraints.entrySet()) {
             final InitializationMsgJson.Constraint constraint = InitializationMsgJson.Constraint.parse(entry.getValue());
@@ -52,46 +41,19 @@ public class VariableStepValue extends ModuleValue {
         return constraints;
     }
 
-    private static StepsizeInterval getStepSizeIntervalFromConfig(JsonNode config) {
-        List<Double> sizes = new Vector<>();
-        List<Object> objSizes = (new ObjectMapper()).convertValue(config.get("size"), new TypeReference<>() {
-        });
-
-        for (Object number : objSizes) {
-            if (number instanceof Integer) {
-                sizes.add(Double.valueOf((Integer) number));
-            } else if (number instanceof Double) {
-                sizes.add((Double) number);
-            }
-        }
-        return new StepsizeInterval(sizes.get(0), sizes.get(1));
-    }
-
-    private static Double getInitSizeFromConfig(JsonNode config) {
-        Double initsize = -1.0;
-        Object objInitsize = (new ObjectMapper()).convertValue(config.get("initsize"), new TypeReference<>() {
-        });
-
-        if (objInitsize instanceof Double) {
-            initsize = (Double) objInitsize;
-        } else if (objInitsize instanceof Integer) {
-            initsize = Double.valueOf((Integer) objInitsize);
-        }
-        return initsize;
-    }
-
-    private static Double calculateMaxStepSize(Double minStepSize, Double maxStepSize, Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances){
+    private static Double calculateMaxStepSize(Double minStepSize, Double maxStepSize,
+            Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances) {
         boolean allGreaterOrEqualMaxSize = true;
         Double stepSize = Double.MAX_VALUE;
-        for(FmiSimulationInstance instance : instances.values()){
+        for (FmiSimulationInstance instance : instances.values()) {
             try {
-                if(instance.instance != null){
+                if (instance.instance != null) {
                     FmuResult<Double> res = instance.instance.getMaxStepSize();
-                    if(res.status != Fmi2Status.Error){
+                    if (res.status != Fmi2Status.Error) {
                         double maxSize = res.result;
 
                         //If ANY are less than minStepsize, choose minStepsize.
-                        if(maxSize < minStepSize){
+                        if (maxSize < minStepSize) {
                             return minStepSize;
                         }
                         allGreaterOrEqualMaxSize = allGreaterOrEqualMaxSize && maxSize >= maxStepSize;
@@ -107,7 +69,7 @@ public class VariableStepValue extends ModuleValue {
 
         //If ALL are greater than maxStepsize, choose maxStepsize
         //If NONE succeeds in getMaxStepSize, choose maxStepsize
-        if(allGreaterOrEqualMaxSize || stepSize.equals(Double.MAX_VALUE)){
+        if (allGreaterOrEqualMaxSize || stepSize.equals(Double.MAX_VALUE)) {
             return maxStepSize;
         }
 
@@ -118,44 +80,23 @@ public class VariableStepValue extends ModuleValue {
     /**
      * Values passed in addDataPoint is assumed to follow the same order as the portNames passed in initializePortNames.
      *
-     * @param algorithmAsUriOrJson
+     * @param algorithmAsJson
      * @return
      */
-    private static Map<String, Value> createMembers(String algorithmAsUriOrJson) {
-        Set<InitializationMsgJson.Constraint> constraints;
-        StepsizeInterval stepsizeInterval;
-        Double initSize;
-
-        // Try to generate config from uri
-        JsonNode config = null;
-        try {
-            URI pathAsUri = URI.create((new URI(algorithmAsUriOrJson)).getRawPath());
-            if (!pathAsUri.isAbsolute()) {
-                pathAsUri = (new File(".")).toURI().resolve(pathAsUri);
-            }
-            config = (new ObjectMapper()).readTree(new String(Files.readAllBytes(Paths.get(pathAsUri))));
-        } catch (URISyntaxException | IOException e) {
-            if (e instanceof IOException) {
-                throw new InterpreterException("Configuration could not be passed", e);
-            }
-        }
+    private static Map<String, Value> createMembers(String algorithmAsJson) {
 
         // Try to generate config from json
-        if (config == null) {
-            try {
-                config = (new ObjectMapper()).readTree(StringEscapeUtils.unescapeJava(algorithmAsUriOrJson));
-            } catch (JsonProcessingException e) {
-                throw new InterpreterException("Configuration could not be passed", e);
-            }
+        VariableStepAlgorithmConfig config;
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            config = objectMapper.readValue(StringEscapeUtils.unescapeJava(algorithmAsJson), VariableStepAlgorithmConfig.class);
+        } catch (JsonProcessingException e) {
+            throw new InterpreterException("Configuration could not be passed", e);
         }
 
-        if (config != null) {
-            constraints = getConstraintsFromConfig(config);
-            stepsizeInterval = getStepSizeIntervalFromConfig(config);
-            initSize = getInitSizeFromConfig(config);
-        } else {
-            throw new InterpreterException("Configuration could not be passed");
-        }
+        final Set<InitializationMsgJson.Constraint> constraints = getConstraintsFromAlgorithmConfig(config, objectMapper);
+        final StepsizeInterval stepsizeInterval = new StepsizeInterval(config.getSize()[0], config.getSize()[1]);
+        final Double initSize = config.getInitsize();
 
         Map<String, Value> componentMembers = new HashMap<>();
         componentMembers.put("setFMUs", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -190,9 +131,9 @@ public class VariableStepValue extends ModuleValue {
             if (cv instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
                 variableStepConfig.initializePorts(
-                        ValueExtractionUtilities.getArrayValue(fcargs.get(1), StringValue.class).stream().map(StringValue::getValue).collect(Collectors.toList()));
-            }
-            else {
+                        ValueExtractionUtilities.getArrayValue(fcargs.get(1), StringValue.class).stream().map(StringValue::getValue)
+                                .collect(Collectors.toList()));
+            } else {
                 throw new InterpreterException("Invalid arguments");
             }
             return new VoidValue();
@@ -206,8 +147,7 @@ public class VariableStepValue extends ModuleValue {
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
                 List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
                 variableStepConfigValue.addDataPoint(time, portValues);
-            }
-            else{
+            } else {
                 throw new InterpreterException("Invalid arguments");
             }
             return new VoidValue();
@@ -227,8 +167,7 @@ public class VariableStepValue extends ModuleValue {
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
                 ((VariableStepConfigValue) cv).setEndTime(((RealValue) fcargs.get(1).deref()).getValue());
-            }
-            else{
+            } else {
                 throw new InterpreterException("Invalid arguments");
             }
             return new VoidValue();

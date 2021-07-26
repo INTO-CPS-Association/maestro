@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.5-SNAPSHOT</version>
+        <version>2.1.6-SNAPSHOT</version>
     </parent>
 
 
@@ -77,7 +76,7 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>fmi</artifactId>
-            <version>2.1.5-SNAPSHOT</version>
+            <version>2.1.6-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -140,12 +139,7 @@
                         <phase>process-sources</phase>
                         <configuration>
                             <tasks>
-                                <replace
-                                        dir="${project.build.directory}/generated-sources/javacode/org/intocps/fmichecker"
-                                        token="import org.overture.codegen.runtime.*;"
-                                        value="import org.overture.codegen.runtime.*;${line.separator}import org.overture.codegen.runtime.Record;"
-                                        failOnNoReplacements="true"
-                                >
+                                <replace dir="${project.build.directory}/generated-sources/javacode/org/intocps/fmichecker" token="import org.overture.codegen.runtime.*;" value="import org.overture.codegen.runtime.*;${line.separator}import org.overture.codegen.runtime.Record;" failOnNoReplacements="true">
                                 </replace>
                             </tasks>
                         </configuration>
@@ -181,7 +175,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore/>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

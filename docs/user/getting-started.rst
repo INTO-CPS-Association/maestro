@@ -10,6 +10,12 @@ This section takes you through a the entire process of conducting a co-simulatio
 
 Note that Maestro2 also features a web API presented in :ref:`web-api`.
 
+DEVELOPMENT BRANCH
+------------------
+If you are using the development branch, then the documentation might not be up to date.
+However, you can consult the tests :code:`webapi_test.py`, :code:`maestro_cli_test.py` and :code:`cli_legacy_test.py`. 
+These tests are run by our CI system, so if the build passes, then these are valid.
+
 Setup
 -----
 The first step is to install the dependencies along with the tools and resources that are to be used

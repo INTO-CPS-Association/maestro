@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.5-SNAPSHOT</version>
+        <version>2.1.6-SNAPSHOT</version>
     </parent>
 
 
     <artifactId>plugins</artifactId>
-    <version>2.1.5-SNAPSHOT</version>
+    <version>2.1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Mable plugins</name>
 
@@ -25,5 +25,6 @@
         <module>verificationsuite</module>
         <module>initializer</module>
         <module>debuglogging</module>
+        <module>scenarioverifier</module>
     </modules>
 </project>

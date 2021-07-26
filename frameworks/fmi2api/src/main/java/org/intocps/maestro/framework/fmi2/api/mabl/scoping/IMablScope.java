@@ -7,6 +7,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Set;
 
 public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
@@ -44,6 +45,8 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     @Override
     void addAfter(PStm item, PStm... commands);
 
+    void addAfterOrTop(PStm item, PStm... commands);
+
     @Override
     IMablScope activate();
 
@@ -76,10 +79,24 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
 
+    ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
+
     FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception;
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
 
     <Var extends VariableFmi2Api> Var copy(String name, Var variable);
+
+    /**
+     * Retrieves a set of allComponentFmi2Variables including those of parents
+     *
+     * @return
+     */
+    Set<ComponentVariableFmi2Api> getAllComponentFmi2Variables();
+
+    /**
+     * This is used to maintain a register of stored ComponentVariableFmi2API, such that they can be freed in case of an error.
+     */
+    void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api);
 }

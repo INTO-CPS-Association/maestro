@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.5-SNAPSHOT</version>
+        <version>2.1.6-SNAPSHOT</version>
     </parent>
 
 
     <artifactId>codegen</artifactId>
-    <version>2.1.5-SNAPSHOT</version>
+    <version>2.1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Mable Code Generation</name>
 

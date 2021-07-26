@@ -59,11 +59,18 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         freeInstance(builder.getDynamicScope(), comp);
     }
 
+    /**
+     * Performs null check and frees the instance
+     *
+     * @param scope
+     * @param comp
+     */
     @Override
     public void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
         if (comp instanceof ComponentVariableFmi2Api) {
-            scope.add(MableAstFactory
-                    .newExpressionStm(call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())));
+            scope.add(newIf(newNotEqual(((ComponentVariableFmi2Api) comp).getReferenceExp().clone(), newNullExp()), newABlockStm(MableAstFactory
+                            .newExpressionStm(call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())),
+                    newAAssignmentStm(((ComponentVariableFmi2Api) comp).getDesignatorClone(), newNullExp())), null));
         } else {
             throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
         }
@@ -96,6 +103,8 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
             thenScope.add(newBreak());
             thenScope.leave();
         }
+
+        ((IMablScope) scope).registerComponentVariableFmi2Api(aMablFmi2ComponentAPI);
 
         return aMablFmi2ComponentAPI;
     }

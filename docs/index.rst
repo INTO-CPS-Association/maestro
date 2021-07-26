@@ -54,7 +54,6 @@ Features in Progress
    :maxdepth: 4
    :hidden:
 
-   index
    user/index
    dev/index
    https://github.com/INTO-CPS-Association/Documentation

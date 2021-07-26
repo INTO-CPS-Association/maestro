@@ -126,7 +126,6 @@ public class MablSpecificationGenerator {
 
         List<AImportedModuleCompilationUnit> pluginUnits =
                 plugins.stream().map(IMaestroExpansionPlugin::getDeclaredImportUnit).collect(Collectors.toList());
-        //                plugins.stream().flatMap(plugin -> plugin.getDeclaredUnfoldFunctions().stream()).collect(Collectors.toList());
         List<ARootDocument> documentList = Stream.concat(Stream.of(simulationModule), importedDocumentList.stream()).collect(Collectors.toList());
         documentList.add(new ARootDocument(pluginUnits));
 
@@ -145,10 +144,6 @@ public class MablSpecificationGenerator {
         } else if (depth > configuration.maximumExpansionDepth) {
             throw new RuntimeException("Recursive external expansion larger than " + configuration.maximumExpansionDepth);
         }
-
-
-        //        Map<IMaestroExpansionPlugin, Map<AFunctionDeclaration, AFunctionType>> plugins = plugins.getTypesPlugins();
-
 
         //TODO: It is not necessary to check if it is expand as all CallExps are expand.
         // CallExps to runtime modules are part of Dot Exp.
@@ -201,6 +196,15 @@ public class MablSpecificationGenerator {
                             .collect(Collectors.joining(",")));
         }
 
+        //update simulation module unit with required imports
+        NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
+                .ifPresent(unit -> {
+
+                    Stream<? extends LexIdentifier> imports = replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get)
+                            .flatMap(p -> p.getKey().getImports().stream());
+                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
+                            .collect(Collectors.toList()));
+                });
 
         for (Map.Entry<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> callReplacement : replaceWith
                 .entrySet()) {
@@ -216,17 +220,6 @@ public class MablSpecificationGenerator {
             replaceCall(call, replacement, replacementPlugin, runtimeConfigAdditions, reporter);
             intermediateSpecWriter.write(simulationModule);
         }
-
-        //update simulation module unit with required imports
-        NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
-                .ifPresent(unit -> {
-
-                    Stream<? extends LexIdentifier> imports =
-                            replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get).map(p -> p.getKey().getImports().stream())
-                                    .flatMap(Function.identity());
-                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
-                            .collect(Collectors.toList()));
-                });
 
         return expandExternals(importedDocumentList, simulationModule, reporter, plugins, runtimeConfigAdditions, depth + 1);
     }

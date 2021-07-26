@@ -1,0 +1,8 @@
+simulation
+import DataWriter;
+{
+DataWriter dw = null;
+string a[1] = {""};
+dw.writeHeader(a);
+}
+
