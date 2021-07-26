@@ -7,7 +7,10 @@ Maestro 2 is the next version of the Maestro Co-simulation Orchestration Engine.
 
 #### Development Environment
 
-You need Java 11 and maven 3.6 to build the project. The project can be built from CLI using the maven command:.
+You need Java 11 and maven 3.6 to build the project. For the external / integration tests it also needs a functioning
+cpp environment with CMake (on windows MSYS)
+
+The project can be built from CLI using the maven command:.
 
 ```
 mvn package
