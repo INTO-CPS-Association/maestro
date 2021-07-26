@@ -84,7 +84,7 @@ public class MaBLTemplateGenerator {
 
         String path = uriFromFMUName.toString();
         if (uriFromFMUName.getScheme() != null && uriFromFMUName.getScheme().equals("file")) {
-            path = new File(uriFromFMUName).getPath();
+            path = new File(uriFromFMUName).getPath().replace("\\", "\\\\");
         }
         return newVariable(fmuLexName, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
