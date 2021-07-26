@@ -7,7 +7,6 @@ import difflib.Patch;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.api.FixedStepAlgorithm;
@@ -235,7 +234,6 @@ public class FullSpecTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         return mabl.getMainSimulationUnit();
     }
 
