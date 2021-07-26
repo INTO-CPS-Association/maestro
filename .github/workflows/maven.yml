@@ -22,9 +22,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-latest , macos-latest ]
+
     steps:
-      - uses: actions/checkout@v2
 
       - name: Set up Java
         uses: actions/setup-java@v1.4.3
@@ -41,10 +41,45 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pipenv
 
+      - name: Put MSYS2_MinGW64 on PATH for windows
+        if: matrix.os == 'windows-latest'
+        # there is not yet an environment variable for this path from msys2/setup-msys2
+        run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - uses: actions/checkout@v2
+
       - name: Maven Build
-        run: mvn -B package --file pom.xml -DskipTests -fae
+        run: mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" -B package --file pom.xml -DskipTests -fae
+
       - name: Maven Test
-        run: mvn test
+        #        if: matrix.os == 'windows-latest'
+        #        shell: msys2 {0}
+        run: mvn -D"org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" test
+
+      #      - name: Maven Test
+      #        if: matrix.os != 'windows-latest'
+      #        run: mvn test -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+      - name: upload test reports win
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() && matrix.os == 'windows-latest'}}
+        with:
+          name: surfire-win
+          path: |
+            **/target/surefire-reports/*
+            **/target/FullSpecCppTest/spec.mabl
+            **/target/FullSpecCppTest/co-sim.cxx
+          retention-days: 1
+
+      - name: upload test reports ubuntu
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() && matrix.os == 'ubuntu-latest'}}
+        with:
+          name: surfire-ubuntu
+          path: |
+            **/target/surefire-reports/*
+          retention-days: 1
+
 
       - name: Install Python Dependencies
         run: |

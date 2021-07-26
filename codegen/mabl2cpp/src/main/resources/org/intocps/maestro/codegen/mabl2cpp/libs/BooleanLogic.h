@@ -2,8 +2,8 @@
 // Created by Kenneth Guldbrandt Lausdahl on 18/05/2021.
 //
 
-#ifndef ZLIB_DOWNLOAD_BOOLEANLOGIC_H
-#define ZLIB_DOWNLOAD_BOOLEANLOGIC_H
+#ifndef BOOLEANLOGIC_H
+#define BOOLEANLOGIC_H
 
 
 class BooleanLogicImpl {
@@ -22,4 +22,4 @@ class BooleanLogicImpl {
 
 
 BooleanLogic load_BooleanLogic();
-#endif //ZLIB_DOWNLOAD_BOOLEANLOGIC_H
+#endif //BOOLEANLOGIC_H

@@ -82,9 +82,6 @@ public class MaBLTemplateGenerator {
             URI uriFromFMUName) throws XPathExpressionException {
 
         String path = uriFromFMUName.toString();
-        if (uriFromFMUName.getScheme() != null && uriFromFMUName.getScheme().equals("file")) {
-            path = uriFromFMUName.getPath();
-        }
         return newVariable(fmuLexName, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
 
