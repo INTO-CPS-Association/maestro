@@ -86,7 +86,7 @@ FMI2 load_FMI2(const char *guid, const char *path) {
 
 
   #ifdef _WIN32
-      library_base=library_base/"win32";
+      library_base=library_base/"win64";
   #elif __APPLE__
   #if TARGET_OS_MAC
       library_base = library_base / "darwin64";
