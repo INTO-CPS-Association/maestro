@@ -315,10 +315,10 @@ public class Mabl {
         if (configuration == null) {
             throw new Exception("No configuration");
         }
-        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
-        List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
+        ASimulationSpecificationCompilationUnit unit = MaBLTemplateGenerator.generateTemplate(configuration);
+        List<? extends LexIdentifier> imports = unit.getImports();
         List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
-        String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
+        String template = PrettyPrinter.print(unit);
         environment = configuration.getSimulationEnvironment();
         logger.trace("Generated template:\n{}", template);
         document = MablParserUtil.parse(CharStreams.fromString(template));
