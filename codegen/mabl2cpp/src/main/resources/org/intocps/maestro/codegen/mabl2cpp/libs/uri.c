@@ -99,29 +99,7 @@ const char* URIToNativePath(const char* uri) {
     return NULL;
   }
 
-  /* Allocate memory for the return value including terminating \0 and extra
-   * path separator */
-  //%IF%%FMI1%
-  //	if (g_fmiCallbackFunctions.allocateMemory != NULL)
-  //	{
-  //		path = (char*) g_fmiCallbackFunctions.allocateMemory(path_len +
-  // 2,
-  // sizeof(char));
-  //	}
-  //%ENDIF%
-  //%IF%%FMI2%
-  //	if ((g_fmiCallbackFunctions) &&( g_fmiCallbackFunctions->allocateMemory
-  //!= NULL))
-  //	{
-  //		path = (char*) g_fmiCallbackFunctions->allocateMemory(path_len +
-  // 2,
-  // sizeof(char));
-  //	}
-  //%ENDIF%
-  //	else
-  //	{
-  path = (char*)malloc(path_len + 2);
-  //	}
+  path = (char*)malloc(path_len + 1);
 
   /* Copy the remainder of the uri and replace all percent encoded character
   * by their ASCII character and translate slashes to backslashes on Windows
@@ -155,14 +133,8 @@ const char* URIToNativePath(const char* uri) {
     }
   }
 
-  /* Check if we need to add a path separator at the end */
-  if (path[path_len - 1] == native_path_separator) {
-    path[path_len] = '\0';
-  } else {
-    path[path_len] = native_path_separator;
-  }
   /* Make sure that the string is always NULL terminated */
-  path[path_len + 1] = '\0';
+  path[path_len ] = '\0';
 
   return path;
 }
