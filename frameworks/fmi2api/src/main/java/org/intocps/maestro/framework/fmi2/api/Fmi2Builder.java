@@ -396,6 +396,7 @@ public interface Fmi2Builder<S, B, E> {
      */
     interface Fmi2ComponentVariable<T> extends Variable<T, NamedVariable<T>> {
 
+        void setDebugLogging(List<String> categories, boolean enableLogging);
 
         void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, Double tolerance);
 
