@@ -12,7 +12,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2FmuValidator;
 import org.intocps.maestro.plugin.IMaestroVerifier;
 import org.intocps.maestro.plugin.SimulationFramework;
 
-import java.io.File;
+import java.net.URI;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -35,7 +35,7 @@ public class Fmi2ModelDescriptionVerifier implements IMaestroVerifier {
             PExp pathExp = load.getArgs().get(2);
             if (pathExp instanceof AStringLiteralExp) {
                 String path = ((AStringLiteralExp) pathExp).getValue();
-                verified = verified && validator.validate(name, new File(path).toURI(), reporter);
+                verified = verified && validator.validate(name, URI.create(path), reporter);
             }
         }
 
