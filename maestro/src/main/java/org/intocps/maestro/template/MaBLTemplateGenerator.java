@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.io.File;
 import java.net.URI;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -83,7 +84,7 @@ public class MaBLTemplateGenerator {
 
         String path = uriFromFMUName.toString();
         if (uriFromFMUName.getScheme() != null && uriFromFMUName.getScheme().equals("file")) {
-            path = uriFromFMUName.getPath();
+            path = new File(uriFromFMUName).getPath();
         }
         return newVariable(fmuLexName, newANameType("FMI2"),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
