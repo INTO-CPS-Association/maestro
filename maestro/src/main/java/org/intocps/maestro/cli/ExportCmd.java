@@ -16,7 +16,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "export", description = "Specification export", mixinStandardHelpOptions = true)
 public class ExportCmd implements Callable<Integer> {
-    @CommandLine.Parameters(description = "The valid exporters: ${COMPLETION-CANDIDATES}")
+    @CommandLine.Parameters(index = "0", description = "The valid exporters: ${COMPLETION-CANDIDATES}")
     ExportType type;
 
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Verbose")
@@ -25,7 +25,7 @@ public class ExportCmd implements Callable<Integer> {
     @CommandLine.Option(names = "-runtime", description = "Path to a runtime file which should be included in the export")
     File runtime;
 
-    @CommandLine.Parameters(description = "One or more specification files")
+    @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
     List<File> files;
 
     @CommandLine.Option(names = "-output", description = "Path to a directory where the export will be stored")
