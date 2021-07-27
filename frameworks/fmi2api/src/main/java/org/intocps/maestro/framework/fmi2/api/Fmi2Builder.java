@@ -3,10 +3,6 @@ package org.intocps.maestro.framework.fmi2.api;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -627,10 +623,23 @@ public interface Fmi2Builder<S, B, E> {
         Scope<T> getDeclaredScope();
     }
 
-    public interface ExpressionValue extends ProvidesTypedReferenceExp {
+    interface ExpressionValue extends ProvidesTypedReferenceExp {
     }
 
-    public interface NumericExpressionValue extends ExpressionValue, NumericTypedReferenceExp {
+    interface BooleanExpressionValue extends Fmi2Builder.ExpressionValue {
+    }
+
+    interface DoubleExpressionValue extends NumericExpressionValue {
+    }
+
+    interface IntExpressionValue extends NumericExpressionValue {
+    }
+
+    interface StringExpressionValue extends Fmi2Builder.ExpressionValue {
+    }
+
+
+    interface NumericExpressionValue extends ExpressionValue, NumericTypedReferenceExp {
 
     }
 

@@ -9,7 +9,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 
-public class IntExpressionValue extends NumericExpressionValueFmi2Api {
+public class IntExpressionValue extends NumericExpressionValueFmi2Api implements Fmi2Builder.IntExpressionValue {
 
     final PType type = new AIntNumericPrimitiveType();
     final PExp exp;
