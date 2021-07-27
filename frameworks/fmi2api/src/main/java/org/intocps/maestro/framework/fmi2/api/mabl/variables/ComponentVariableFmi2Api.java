@@ -42,6 +42,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final static int FMI_FATAL = 4;
     private final static int FMI_PENDING = 5;
     private final static int FMI_STATUS_LAST_SUCCESSFUL = 2;
+    private static final String LOGLEVELS_POSTFIX = "_log_levels";
+    private final static String CATEGORY_STATUS = "category_status";
     final List<PortFmi2Api> outputPorts;
     final List<PortFmi2Api> inputPorts;
     final List<PortFmi2Api> ports;
@@ -60,8 +62,6 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
     private Map<PortFmi2Api, List<VariableFmi2Api<Object>>> derivativePortsToShare;
     private List<String> variabesToLog;
-    private static final String LOGLEVELS_POSTFIX = "_log_levels";
-    private final static String CATEGORY_STATUS = "category_status";
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
@@ -962,12 +962,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+    public <V> void set(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
         this.set(new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
         this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
     }
 

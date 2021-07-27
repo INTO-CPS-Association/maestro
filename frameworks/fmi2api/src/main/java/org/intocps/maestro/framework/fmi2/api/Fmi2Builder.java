@@ -3,7 +3,6 @@ package org.intocps.maestro.framework.fmi2.api;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.util.Collection;
@@ -37,15 +36,15 @@ public interface Fmi2Builder<S, B, E> {
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
 
-    DoubleVariableFmi2Api getDoubleVariableFrom(E exp);
+    DoubleVariable<S> getDoubleVariableFrom(E exp);
 
-    IntVariableFmi2Api getIntVariableFrom(E exp);
+    IntVariable<S> getIntVariableFrom(E exp);
 
-    StringVariableFmi2Api getStringVariableFrom(E exp);
+    StringVariable<S> getStringVariableFrom(E exp);
 
-    BooleanVariableFmi2Api getBooleanVariableFrom(E exp);
+    BoolVariable<S> getBooleanVariableFrom(E exp);
 
-    FmuVariableFmi2Api getFmuVariableFrom(E exp);
+    <V, T> Variable<T, V> getFmuVariableFrom(E exp);
 
 
     interface RuntimeModule<S> extends Fmi2Builder.Variable<S, NamedVariable<S>> {
@@ -194,7 +193,7 @@ public interface Fmi2Builder<S, B, E> {
 
         IntVariable<T> store(String name, int value);
 
-        <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
+        <CV> ArrayVariable<T, CV> store(String name, CV value[]);
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -534,9 +533,9 @@ public interface Fmi2Builder<S, B, E> {
 
         <V> void set(Port port, Value<V> value);
 
-        <V> void set(Port port, VariableFmi2Api<V> value);
+        <V> void set(Port port, Variable<T, V> value);
 
-        <V> void set(Scope<T> scope, Port port, VariableFmi2Api<V> value);
+        <V> void set(Scope<T> scope, Port port, Variable<T, V> value);
 
         <V> void set(PortVariableMap<T, V> value);
 
@@ -615,12 +614,20 @@ public interface Fmi2Builder<S, B, E> {
 
         void setValue(Variable<T, V> variable);
 
-        void setValue(Scope<PStm> scope, Variable<PStm, V> variable);
+        void setValue(Scope<T> scope, Variable<T, V> variable);
 
         void setValue(Scope<T> scope, V value);
 
 
         Scope<T> getDeclaredScope();
+    }
+
+    interface ArrayVariable<T, CV> extends Variable<T, Fmi2Builder.NamedVariable<T>> {
+        int size();
+
+        List<? extends Variable<T, CV>> items();
+
+        void setValue(IntExpressionValue index, ExpressionValue value);
     }
 
     interface ExpressionValue extends ProvidesTypedReferenceExp {
