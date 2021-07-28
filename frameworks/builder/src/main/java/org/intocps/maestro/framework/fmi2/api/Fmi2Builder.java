@@ -10,8 +10,22 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public interface Fmi2Builder<S, B, E> {
+public interface Fmi2Builder<S, B, E, SETTINGS> {
     B build() throws Exception;
+
+    SETTINGS getSettings();
+
+    /**
+     * Returns whether the build has been used
+     *
+     * @return true if the builder contains user added statements
+     */
+    boolean isDirty();
+
+    /**
+     * Reset the dirty flag
+     */
+    void resetDirty();
 
     PStm buildRaw() throws Exception;
 
