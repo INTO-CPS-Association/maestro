@@ -7,7 +7,6 @@ import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.ToParExp;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
@@ -175,7 +174,6 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             SBlockStm algorithm = (SBlockStm) builder.buildRaw();
 
             algorithm.apply(new ToParExp());
-            System.out.println(PrettyPrinter.print(algorithm));
 
             return algorithm.getBody();
 

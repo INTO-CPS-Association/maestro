@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.NullNode
 import org.intocps.maestro.ast.*
-import org.intocps.maestro.ast.display.PrettyPrinter
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
 import org.intocps.maestro.ast.node.PExp
 import org.intocps.maestro.ast.node.PStm
@@ -201,7 +200,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
 
-            println(PrettyPrinter.print(algorithm))
+            
             algorithm.body
         } catch (e: Exception) {
             throw ExpandException("Internal error: ", e)
