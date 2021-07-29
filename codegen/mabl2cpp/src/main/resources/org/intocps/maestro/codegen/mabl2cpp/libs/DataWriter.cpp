@@ -55,6 +55,7 @@ DataWriterConfig DataWriterImpl::writeHeader(int size, const char **headers) {
 
 
     myfile.open(this->filePath.c_str());
+    myfile.precision(17);
     myfile << "\"time\",";
     for (int i = 0; i < size; i++) {
         myfile << "\"" << headers[i] << "\"";
