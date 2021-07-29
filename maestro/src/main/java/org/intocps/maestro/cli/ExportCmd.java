@@ -4,18 +4,22 @@ import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.codegen.mabl2cpp.MablCppCodeGenerator;
 import org.intocps.maestro.core.Framework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "export", description = "Specification export", mixinStandardHelpOptions = true)
 public class ExportCmd implements Callable<Integer> {
+    final static Logger logger = LoggerFactory.getLogger(ExportCmd.class);
     @CommandLine.Parameters(index = "0", description = "The valid exporters: ${COMPLETION-CANDIDATES}")
     ExportType type;
 
@@ -56,14 +60,37 @@ public class ExportCmd implements Callable<Integer> {
             }
         }
 
-        if (type == ExportType.Cpp) {
-            if (runtime != null && runtime.exists() && !runtime.getParentFile().equals(output)) {
-                Files.copy(runtime.toPath(), new File(output, runtime.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
+        if (output == null) {
+            //pwd
+            output = Paths.get("").toAbsolutePath().toFile();
+        }
 
-            BufferedWriter writer = new BufferedWriter(new FileWriter("spec.mabl"));
-            writer.write(PrettyPrinter.print(util.mabl.getMainSimulationUnit()));
-            writer.close();
+        if (!output.exists()) {
+            if (!output.mkdirs()) {
+                System.err.println("Unable to create output directory: " + output);
+                return 1;
+            }
+        }
+
+        if (type == ExportType.Cpp) {
+            if (runtime != null && output != null) {
+                if (runtime.exists()) {
+                    if (runtime.getParentFile() == null && !output.equals(Paths.get("").toAbsolutePath().toFile())) {
+                        Files.copy(runtime.toPath(), new File(output, runtime.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } else {
+                    System.err.println("Runtime file not found: " + runtime);
+                    return 1;
+                }
+            }
+            File file = new File(output, "spec.mabl");
+            if (!file.exists()) {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                writer.write(PrettyPrinter.print(util.mabl.getMainSimulationUnit()));
+                writer.close();
+            } else {
+                logger.warn("Generated spec not written. File already exists: {}", file);
+            }
             new MablCppCodeGenerator(output).generate(util.mabl.getMainSimulationUnit(), util.typeCheckResult.getValue());
         }
 
