@@ -5,12 +5,15 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.core.IRelation;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.IVariable;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class FromMaBLToMaBLAPI {
+    final static Logger logger = LoggerFactory.getLogger(FromMaBLToMaBLAPI.class);
 
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
             Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
@@ -56,11 +60,28 @@ public class FromMaBLToMaBLAPI {
             for (IRelation relation : env.getRelations(entry.getKey()).stream()
                     .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                             x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
-                PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                    ComponentVariableFmi2Api instance = instances.get(x.getValue().getScalarVariable().getInstance().getText());
-                    return instance.getPort(x.getValue().getScalarVariable().getScalarVariable().getName());
-                }).toArray(PortFmi2Api[]::new);
-                entry.getValue().getPort(relation.getSource().getScalarVariable().getScalarVariable().getName()).linkTo(targets);
+
+                for (IVariable targetVar : relation.getTargets().values()) {
+                    String targetName = targetVar.getScalarVariable().getInstance().getText();
+                    if (instances.containsKey(targetName)) {
+                        ComponentVariableFmi2Api instance = instances.get(targetName);
+
+                        PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getScalarVariable().getName());
+
+                        String sourcePortName = relation.getSource().getScalarVariable().getScalarVariable().getName();
+                        if (targetPort != null) {
+                            entry.getValue().getPort(sourcePortName).linkTo(targetPort);
+                        } else {
+                            //error port not found in target var
+                            logger.warn("Failed to find port '{}' on instance '{}' required by relational '{}' ", sourcePortName, targetName,
+                                    relation);
+                        }
+                    } else {
+                        logger.warn(
+                                "Failed to find instance required by relational information from simulation env. Missing '{}' in relation " + "{}",
+                                targetName, relation);
+                    }
+                }
             }
         }
 

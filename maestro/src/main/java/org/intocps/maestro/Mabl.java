@@ -26,7 +26,6 @@ import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.plugin.IMaestroVerifier;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.template.TemplateGenerator;
 import org.intocps.maestro.typechecker.TypeChecker;
@@ -247,6 +246,8 @@ public class Mabl {
         if (reporter.getErrorCount() != 0) {
             throw new IllegalArgumentException("Expansion cannot be called with errors");
         }
+
+        ISimulationEnvironment env = null;
         if (frameworks != null && frameworkConfigs != null && frameworks.contains(Framework.FMI2) && frameworkConfigs.containsKey(Framework.FMI2)) {
 
             if (!frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
@@ -255,12 +256,14 @@ public class Mabl {
                         MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK_CONFIG));
             }
 
-            ISimulationEnvironment env = getSimulationEnv();
+            env = getSimulationEnv();
 
             if (env == null) {
                 throw new Exception("No env found");
             }
+        }
 
+        if (frameworks != null && frameworks.contains(Framework.FMI2) || frameworkConfigs != null && frameworkConfigs.containsKey(Framework.FMI2)) {
             MablSpecificationGenerator mablSpecificationGenerator =
                     new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
 

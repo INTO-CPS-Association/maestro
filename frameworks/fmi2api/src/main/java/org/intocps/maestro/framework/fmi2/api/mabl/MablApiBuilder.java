@@ -25,7 +25,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp> {
+public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
 
     static ScopeFmi2Api rootScope;
     final DynamicActiveBuilderScope dynamicScope;
@@ -38,6 +38,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     private final Map<FmiStatus, IntVariableFmi2Api> fmiStatusVariables;
     private final ScopeFmi2Api mainErrorHandlingScope;
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
+    int dynamicScopeInitialSize;
     List<String> importedModules = new Vector<>();
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
     private MathBuilderFmi2Api mathBuilderApi;
@@ -132,15 +133,30 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             if (decl != null) {
                 this.getMablToMablAPI().createExternalRuntimeLogger();
             }
+
+            //reserve all previously names to avoid clashing with these
+            MablToMablAPI.getPreviouslyUsedNamed(lastNodePriorToBuilderTakeOver).forEach(this.nameGenerator::addUsedIdentifier);
         }
 
+        resetDirty();
 
+    }
+
+    @Override
+    public boolean isDirty() {
+        return dynamicScopeInitialSize != ((ScopeFmi2Api) this.dynamicScope.activate()).getBlock().getBody().size();
+    }
+
+    @Override
+    public void resetDirty() {
+        dynamicScopeInitialSize = ((ScopeFmi2Api) this.dynamicScope.activate()).getBlock().getBody().size();
     }
 
     public void setRuntimeLogger(LoggerFmi2Api runtimeLogger) {
         this.runtimeLogger = runtimeLogger;
     }
 
+    @Override
     public MablSettings getSettings() {
         return this.settings;
     }

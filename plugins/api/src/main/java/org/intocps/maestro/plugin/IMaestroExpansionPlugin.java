@@ -2,10 +2,12 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
+import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +42,22 @@ public interface IMaestroExpansionPlugin extends IMaestroPlugin {
      * @throws ExpandException if generation fails
      */
     <R> Map.Entry<List<PStm>, RuntimeConfigAddition<R>> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction, List<PExp> formalArguments,
+            IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException;
+
+
+    /**
+     * Expansion method of this plugin. It should generate a list of statements based on the provided arguments and potentially also the config given.
+     *
+     * @param declaredFunction the function within the plugin that is selected to be expanded
+     * @param formalArguments  the formal arguements given to the expansion. these will match the function signatures formals
+     * @param config           the configuration of null is not required
+     * @param env              the runtime environment
+     * @param errorReporter    the error reported that must be used for reporting any errors or warnings
+     * @return a list of statements produced as the result of expansion and the runtime addition
+     * @throws ExpandException if generation fails
+     */
+    <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
+            Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
             IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException;
 
 
@@ -92,5 +110,17 @@ public interface IMaestroExpansionPlugin extends IMaestroPlugin {
          * @return a merged of this and the original
          */
         abstract public RuntimeConfigAddition<T> merge(RuntimeConfigAddition<T> original);
+    }
+
+    /**
+     * An empty implementation of the {@link RuntimeConfigAddition}
+     *
+     * @param <R>
+     */
+    class EmptyRuntimeConfig<R> extends RuntimeConfigAddition<R> {
+        @Override
+        public RuntimeConfigAddition<R> merge(RuntimeConfigAddition<R> original) {
+            return original;
+        }
     }
 }
