@@ -133,6 +133,9 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             if (decl != null) {
                 this.getMablToMablAPI().createExternalRuntimeLogger();
             }
+
+            //reserve all previously names to avoid clashing with these
+            MablToMablAPI.getPreviouslyUsedNamed(lastNodePriorToBuilderTakeOver).forEach(this.nameGenerator::addUsedIdentifier);
         }
 
         resetDirty();

@@ -1,10 +1,19 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class TagNameGenerator {
     final Set<String> identifiers = new HashSet<>();
+    //Should be taken from the MablLexer
+    final Set<String> reserved = new HashSet<>(
+            Arrays.asList("true", "false", "if", "while", "else", "out", "ref", "real", "uint", "bool", "int", "void", "string", "module", "expand",
+                    "import", "simulation", "observable", "break"));
+
+    public void addUsedIdentifier(String name) {
+        this.identifiers.add(name);
+    }
 
     public String getName() {
         return getName("tmp");
@@ -28,19 +37,20 @@ public class TagNameGenerator {
     }
 
     public String getName(String prefix) {
-  if (prefix == null || prefix.isEmpty()) {
+
+        if (prefix == null || prefix.isEmpty()) {
             // TODO: Throw warning. Probably not meant to call this function.
             return this.getName();
         }
-    
+
         prefix = prefix.toLowerCase();
-        if (!identifiers.contains(prefix)) {
+        if (!identifiers.contains(prefix) && !reserved.contains(prefix)) {
             identifiers.add(prefix);
             return prefix;
         }
 
         int postFix = 1;
-        while (identifiers.contains(prefix + postFix)) {
+        while (identifiers.contains(prefix + postFix) || reserved.contains(prefix + postFix)) {
             postFix++;
         }
         String name = prefix + postFix;
