@@ -85,7 +85,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newPlusExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type NumericExpressionValue.");
+            throw new RuntimeException(v + " is not of type NumericExpressionValue.");
         }
     }
 
@@ -94,7 +94,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
         if (v instanceof DoubleExpressionValue || v instanceof IntExpressionValue) {
             return new DoubleExpressionValue(newDivideExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
         }
     }
 
@@ -105,7 +105,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newMinusExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
         }
     }
 
@@ -116,7 +116,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newMultiplyExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
 
         }
     }
