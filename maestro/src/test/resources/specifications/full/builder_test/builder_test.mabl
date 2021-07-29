@@ -1,0 +1,10 @@
+simulation
+import DemoBuilderPlugin;
+@Framework("FMI2");
+{
+int a=1;
+bool b=false;
+DemoBuilderPlugin.expand add(1,2);
+DemoBuilderPlugin.expand add(1,2);
+
+}
