@@ -32,7 +32,7 @@ public class TagNameGenerator {
             }
             s.append(part);
         }
-        return s.toString();
+        return getName(s.toString());
 
     }
 
