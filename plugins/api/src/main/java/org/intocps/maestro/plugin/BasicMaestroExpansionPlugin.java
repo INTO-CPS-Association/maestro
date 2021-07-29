@@ -1,21 +1,32 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base maestro expansion plugin implementation. All plugins should extend this class to reduce the impact on future changes of the @{link
  * {@link IMaestroExpansionPlugin} interface
  */
 public abstract class BasicMaestroExpansionPlugin implements IMaestroExpansionPlugin {
+    protected FunctionDeclarationBuilder getFunctionDeclarationBuilder(String name, PType returnType) {
+        return new FunctionDeclarationBuilder(name, returnType);
+    }
+
+    protected FunctionDeclarationBuilder getFunctionDeclarationBuilder(String name) {
+        return new FunctionDeclarationBuilder(name, new AVoidType());
+    }
 
     @Override
     public ConfigOption getConfigRequirement() {
@@ -25,6 +36,11 @@ public abstract class BasicMaestroExpansionPlugin implements IMaestroExpansionPl
     @Override
     public boolean requireConfig() {
         return false;
+    }
+
+    @Override
+    public IPluginConfiguration parseConfig(InputStream is) throws IOException {
+        return null;
     }
 
     /**
@@ -68,7 +84,6 @@ public abstract class BasicMaestroExpansionPlugin implements IMaestroExpansionPl
         return null;
     }
 
-
     /**
      * Function to use for building using the builder interface. <br>
      * This is search order 1
@@ -88,6 +103,39 @@ public abstract class BasicMaestroExpansionPlugin implements IMaestroExpansionPl
             Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
             IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
         return new EmptyRuntimeConfig<>();
+    }
+
+    protected class FunctionDeclarationBuilder {
+        private final String name;
+        private final PType returnType;
+
+        private final List<Map.Entry<String, PType>> args = new Vector<>();
+
+        public FunctionDeclarationBuilder(String name, PType returnType) {
+            this.name = name;
+
+            this.returnType = returnType;
+        }
+
+        public AFunctionDeclaration build() {
+            return new AFunctionDeclaration(new LexIdentifier(this.name, null), this.returnType,
+                    this.args.stream().map(arg -> new AFormalParameter(arg.getValue(), new LexIdentifier(arg.getKey(), null)))
+                            .collect(Collectors.toList()));
+        }
+
+        public FunctionDeclarationBuilder addArg(Class<? extends PType> type, String name) {
+            try {
+                args.add(Map.entry(name, type.getDeclaredConstructor().newInstance()));
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+            return this;
+        }
+
+        public FunctionDeclarationBuilder addArg(String typeName, String name) {
+            args.add(Map.entry(name, new ANameType(new LexIdentifier(typeName, null))));
+            return this;
+        }
     }
 
 
