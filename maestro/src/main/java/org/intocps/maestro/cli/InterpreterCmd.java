@@ -22,6 +22,12 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
 
+    @CommandLine.Option(names = {"-tc", "--typecheck"}, description = "Perform type check", negatable = true, defaultValue = "true")
+    boolean useTypeCheck;
+
+    @CommandLine.Option(names = {"-exp", "--expand"}, description = "Perform expand", negatable = true, defaultValue = "true")
+    boolean useExpand;
+
     @CommandLine.Option(names = "-runtime", description = "Path to a runtime file which should be included in the export")
     File runtime;
 
@@ -47,16 +53,20 @@ public class InterpreterCmd implements Callable<Integer> {
         if (!util.parse(files)) {
             return -1;
         }
-        if (!util.expand()) {
-            return 1;
+        if (useExpand) {
+            if (!util.expand()) {
+                return 1;
+            }
         }
 
         if (output != null) {
             util.mabl.dump(output);
         }
 
-        if (!util.typecheck()) {
-            return -1;
+        if (useTypeCheck) {
+            if (!util.typecheck()) {
+                return -1;
+            }
         }
 
         if (verify != null) {
