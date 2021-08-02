@@ -40,12 +40,28 @@ public class InterpreterCmd implements Callable<Integer> {
             description = "Verify the spec according to the following verifier groups: ${COMPLETION-CANDIDATES}")
     Framework verify;
 
+    @CommandLine.Option(names = "-wait", description = "Wait the specified seconds before processing. Intended for allowing a debugger or profiler " +
+            "to be attached before the processing starts.")
+    int wait = 0;
+
+    private static void waitForProfiling(int wait) throws InterruptedException {
+        System.out.printf("Initial wait activated, waiting... %d", wait);
+        for (int i = 0; i < wait; i++) {
+            Thread.sleep(1000);
+            System.out.printf("\rInitial wait activated, waiting... %d", wait - i);
+        }
+    }
+
     @Override
     public Integer call() throws Exception {
         Mabl.MableSettings settings = new Mabl.MableSettings();
         settings.dumpIntermediateSpecs = dumpIntermediate;
         settings.preserveFrameworkAnnotations = preserveAnnotations;
         settings.inlineFrameworkConfig = false;
+
+        if (wait > 0) {
+            waitForProfiling(wait);
+        }
 
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
