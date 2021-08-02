@@ -22,11 +22,11 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
 
-    @CommandLine.Option(names = {"-tc", "--typecheck"}, description = "Perform type check", negatable = true, defaultValue = "true")
-    boolean useTypeCheck;
+    @CommandLine.Option(names = {"--no-typecheck"}, description = "Perform type check", negatable = true)
+    boolean useTypeCheck = true;
 
-    @CommandLine.Option(names = {"-exp", "--expand"}, description = "Perform expand", negatable = true, defaultValue = "true")
-    boolean useExpand;
+    @CommandLine.Option(names = {"--no-expand"}, description = "Perform expand", negatable = true)
+    boolean useExpand = true;
 
     @CommandLine.Option(names = "-runtime", description = "Path to a runtime file which should be included in the export")
     File runtime;
