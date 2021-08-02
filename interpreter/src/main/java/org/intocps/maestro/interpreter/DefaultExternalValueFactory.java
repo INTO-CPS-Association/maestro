@@ -67,6 +67,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         lifecycleHandlers.put(MEnvLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new MEnvLifecycleHandler(new ByteArrayInputStream(baos.toByteArray())));
 
+        //performance
+        for (Class<? extends IValueLifecycleHandler> cls : new Class[]{Fmi2LifecycleHandler.class, LoggerLifecycleHandler.class,
+                BooleanLogicLifecycleHandler.class, MathLifecycleHandler.class}) {
+
+            lifecycleHandlers.put(cls.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), instantiateHandler(workingDirectory, cls));
+
+        }
+
 
     }
 
