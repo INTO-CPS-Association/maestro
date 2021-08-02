@@ -477,6 +477,16 @@
 
     <profiles>
         <profile>
+            <id>external</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>external_tester</module>
+            </modules>
+        </profile>
+
+        <profile>
             <id>release-sign-artifacts</id>
             <activation>
                 <property>
