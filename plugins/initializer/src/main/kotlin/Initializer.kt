@@ -200,7 +200,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
 
-            
+
             algorithm.body
         } catch (e: Exception) {
             throw ExpandException("Internal error: ", e)
@@ -421,7 +421,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         var conf: InitializationConfig? = null
         try {
             conf = InitializationConfig(
-                parameters,
+                if (parameters is NullNode) null else parameters,
                 if (envParameters is NullNode) null else envParameters,
                 verify,
                 stabilisation,
