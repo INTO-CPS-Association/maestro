@@ -188,7 +188,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         sb.append("\n" + indent(question) + "}");
         sb.append(indent(question) + "finally \n");
         sb.append(indent(question) + "{\n");
-        applyBodyIntendedScoping(node.getBody(), question + 1);
+        applyBodyIntendedScoping(node.getFinally(), question + 1);
         sb.append("\n" + indent(question) + "}");
     }
 
