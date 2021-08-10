@@ -102,10 +102,6 @@ public class MaBLTemplateGenerator {
             boolean loggingOn, FaultInjectWithLexName faultInject) {
         List<PStm> statements = new ArrayList<>();
         String instanceLexName_ = instanceLexName;
-        //        if (faultInject.isPresent()) {
-        //
-        //            instanceLexName_ = instanceLexName + "_original";
-        //        }
 
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName_), instanceEnvironmentKey);
         statements.add(mapping);
