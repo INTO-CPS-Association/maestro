@@ -9,7 +9,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.intocps.maestro.framework.fmi2.FaultInject;
+import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.JacobianStepConfig;
@@ -52,6 +52,7 @@ public class MaBLTemplateGenerator {
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
+    public static final String FAULTINJECT_POSTFIX = "_m_fi";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -94,17 +95,17 @@ public class MaBLTemplateGenerator {
 
     public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
             boolean loggingOn) {
-        return createFMUInstantiateStatement(instanceLexName, instanceEnvironmentKey, fmuLexName, visible, loggingOn, Optional.empty());
+        return createFMUInstantiateStatement(instanceLexName, instanceEnvironmentKey, fmuLexName, visible, loggingOn, null);
     }
 
     public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
-            boolean loggingOn, Optional<FaultInject> faultInject) {
+            boolean loggingOn, FaultInjectWithLexName faultInject) {
         List<PStm> statements = new ArrayList<>();
         String instanceLexName_ = instanceLexName;
-        if (faultInject.isPresent()) {
-
-            instanceLexName_ = instanceLexName + "_original";
-        }
+        //        if (faultInject.isPresent()) {
+        //
+        //            instanceLexName_ = instanceLexName + "_original";
+        //        }
 
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName_), instanceEnvironmentKey);
         statements.add(mapping);
@@ -116,15 +117,16 @@ public class MaBLTemplateGenerator {
                                 newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName_)), null);
         statements.add(ifAssign);
 
-        if (faultInject.isPresent()) {
-            String faultInjectLexName = instanceLexName;
-            PStm ficomp = newVariable(faultInjectLexName, newANameType("FMI2Component"), newNullExp());
+        if (faultInject != null) {
+            AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
+            statements.add(fiToEnvMapping);
+            PStm ficomp = newVariable(faultInject.lexName, newANameType("FMI2Component"), newNullExp());
             statements.add(ficomp);
             AIfStm stm = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInjectLexName)),
+                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
                             newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
                                     Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
-                                            newAStringLiteralExp(faultInject.get().constraintId)))), checkNullAndStop(faultInjectLexName)), null);
+                                            newAStringLiteralExp(faultInject.constraintId)))), checkNullAndStop(faultInject.lexName)), null);
             statements.add(stm);
         }
 
@@ -200,6 +202,7 @@ public class MaBLTemplateGenerator {
         List<PStm> freeInstanceStatements = new ArrayList<>();
         List<PStm> terminateStatements = new ArrayList<>();
         Map<String, String> instaceNameToInstanceLex = new HashMap<>();
+        Map<String, FaultInjectWithLexName> faultInjectedInstances = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Find parent lex
             String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
@@ -209,11 +212,20 @@ public class MaBLTemplateGenerator {
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
 
-            stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
-                    templateConfiguration.getLoggingOn(), entry.getValue().getFaultInject()));
 
-            terminateStatements.add(createFMUTerminateStatement(instanceLexName, entry.getValue().getFaultInject()));
-            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex, entry.getValue().getFaultInject()));
+            // Instance shall be faultinjected
+            if (entry.getValue().getFaultInject().isPresent()) {
+                String faultInjectName = instanceLexName.concat(FAULTINJECT_POSTFIX);
+                FaultInjectWithLexName faultInjectWithLexName =
+                        new FaultInjectWithLexName(entry.getValue().getFaultInject().get().constraintId, faultInjectName);
+                faultInjectedInstances.put(instanceLexName, faultInjectWithLexName);
+
+            }
+            stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
+                    templateConfiguration.getLoggingOn(), faultInjectedInstances.get(instanceLexName)));
+
+            terminateStatements.add(createFMUTerminateStatement(instanceLexName, faultInjectedInstances.get(instanceLexName)));
+            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
         });
 
 
@@ -226,8 +238,17 @@ public class MaBLTemplateGenerator {
         }
 
 
+        var instanceLexToComponentsArray = new HashSet<String>();
+        for (String instanceLex : instanceLexToInstanceName.keySet()) {
+            var fi = faultInjectedInstances.get(instanceLex);
+            if (fi != null) {
+                instanceLexToComponentsArray.add(fi.lexName);
+            } else {
+                instanceLexToComponentsArray.add(instanceLex);
+            }
+        }
         // Components Array
-        stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToInstanceName.keySet()));
+        stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToComponentsArray));
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
         if (templateConfiguration.getStepAlgorithmConfig() == null) {
@@ -380,18 +401,15 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
     }
 
-    private static PStm createFMUTerminateStatement(String instanceLexName, Optional<FaultInject> faultInject) {
-        if (faultInject.isPresent()) {
-            instanceLexName = instanceLexName + "_original";
+    private static PStm createFMUTerminateStatement(String instanceLexName, FaultInjectWithLexName faultInject) {
+        if (faultInject != null) {
+            instanceLexName = faultInject.lexName;
         }
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"), Arrays.asList()));
     }
 
-    private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName, Optional<FaultInject> faultInject) {
-        if (faultInject.isPresent()) {
-            instanceLexName = instanceLexName + "_original";
-        }
+    private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));

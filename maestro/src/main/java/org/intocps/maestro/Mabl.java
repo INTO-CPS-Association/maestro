@@ -8,10 +8,7 @@ import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.intocps.maestro.ast.AModuleDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.NodeCollector;
-import org.intocps.maestro.ast.PDeclaration;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -162,7 +159,7 @@ public class Mabl {
     }
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
-        ARootDocument main = null;
+        ARootDocument main = this.document;
         for (ARootDocument doc : documentList) {
             if (doc == null) {
                 continue;
@@ -170,7 +167,12 @@ public class Mabl {
             Optional<List<ASimulationSpecificationCompilationUnit>> collect =
                     NodeCollector.collect(doc, ASimulationSpecificationCompilationUnit.class);
             if (collect.isPresent() && !collect.get().isEmpty()) {
-                main = doc;
+                if (main != null) {
+                    // A simulationSpecification already exists!
+                    reporter.report(0, "A simulation specification compilation unit already exists.", new LexToken("", 0, 0));
+                } else {
+                    main = doc;
+                }
             } else {
                 importedDocument.add(doc);
             }
@@ -322,8 +324,8 @@ public class Mabl {
         String template = PrettyPrinter.print(aSimulationSpecificationCompilationUnit);
         environment = simulationEnvironment;
         logger.trace("Generated template:\n{}", template);
-        document = MablParserUtil.parse(CharStreams.fromString(template));
-        moduleDocuments.add(document);
+        ARootDocument templateParsed = MablParserUtil.parse(CharStreams.fromString(template));
+        moduleDocuments.add(templateParsed);
         document = this.mergeDocuments(moduleDocuments);
 
         postProcessParsing();

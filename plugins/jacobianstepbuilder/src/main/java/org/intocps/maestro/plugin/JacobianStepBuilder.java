@@ -189,8 +189,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             int indexer = 0;
             for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                 StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null, MableAstFactory
-                        .newAStringLiteralExp(
-                                env.getInstanceByLexName(entry.getValue().getName()).getFmuIdentifier() + "." + entry.getValue().getName()));
+                        .newAStringLiteralExp(env.getInstanceByLexName(entry.getValue().getEnvironmentName()).getFmuIdentifier() + "." +
+                                entry.getValue().getName()));
                 fmuNamesToInstances.put(fullyQualifiedFMUInstanceName, entry.getValue());
 
                 fmuInstancesToVariablesInArray.put(entry.getValue(), fmuCommunicationPoints.items().get(indexer));
