@@ -29,9 +29,11 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         node.apply(printer, 0);
         int lineNumber = 1;
         StringBuilder sb = new StringBuilder();
-        int decimals = 3;
-        for (String line : printer.sb.toString().split("\n")) {
-            sb.append(String.format("%1$" + decimals + "s", (lineNumber++) + "  ")).append(line).append("\n");
+        String[] lines = printer.sb.toString().split("\n");
+        //check how many chars we need for the line number
+        int decimals = (lines.length + "").length();
+        for (String line : lines) {
+            sb.append(String.format("%" + decimals + "s ", (lineNumber++) + "")).append(line).append("\n");
 
         }
         return sb.toString();
@@ -186,7 +188,7 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         sb.append(indent(question) + "{\n");
         applyBodyIntendedScoping(node.getBody(), question + 1);
         sb.append("\n" + indent(question) + "}");
-        sb.append(indent(question) + "finally \n");
+        sb.append("finally \n");
         sb.append(indent(question) + "{\n");
         applyBodyIntendedScoping(node.getFinally(), question + 1);
         sb.append("\n" + indent(question) + "}");
@@ -197,10 +199,10 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
             return;
         }
 
-        if (body.size() == 1) {
-            body.get(0).apply(this, question);
-            return;
-        }
+        //        if (body.size() == 1) {
+        //            body.get(0).apply(this, question);
+        //            return;
+        //        }
         if (!skipBracket) {
             sb.append(indent(question) + (parallel ? "||" : "") + "{\n ");
         }
