@@ -83,7 +83,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         PStm var = newVariable(name, newANameType("FMI2Component"),
                 call(getReferenceExp().clone(), "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(true)));
         ComponentVariableFmi2Api aMablFmi2ComponentAPI = null;
-        aMablFmi2ComponentAPI = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope,
+        aMablFmi2ComponentAPI = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope.enter(),
                 newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
         scope.enter().add(var);
 
@@ -103,7 +103,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
             thenScope.leave();
         }
 
-        ((IMablScope) scope).registerComponentVariableFmi2Api(aMablFmi2ComponentAPI);
+        ((IMablScope) scope.enter()).registerComponentVariableFmi2Api(aMablFmi2ComponentAPI);
 
         return aMablFmi2ComponentAPI;
     }
