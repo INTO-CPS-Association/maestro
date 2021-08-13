@@ -36,14 +36,12 @@ public class TagNameGenerator {
 
     }
 
-    public String getName(String prefix) {
-
+    public String getNameIgnoreCase(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
             // TODO: Throw warning. Probably not meant to call this function.
             return this.getName();
         }
 
-        prefix = prefix.toLowerCase();
         if (!identifiers.contains(prefix) && !reserved.contains(prefix)) {
             identifiers.add(prefix);
             return prefix;
@@ -56,5 +54,14 @@ public class TagNameGenerator {
         String name = prefix + postFix;
         identifiers.add(name);
         return name;
+    }
+
+    public String getName(String prefix) {
+
+        if (prefix == null || prefix.isEmpty()) {
+            // TODO: Throw warning. Probably not meant to call this function.
+            return this.getName();
+        }
+        return getNameIgnoreCase(prefix.toLowerCase());
     }
 }

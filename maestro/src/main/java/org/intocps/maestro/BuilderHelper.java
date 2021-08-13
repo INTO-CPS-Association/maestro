@@ -2,6 +2,8 @@ package org.intocps.maestro;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
@@ -12,6 +14,9 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.typechecker.TypeComparator;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -30,21 +35,64 @@ public class BuilderHelper {
     List<Fmi2Builder.Variable<PStm, ?>> variables;
 
     public BuilderHelper(ACallExp callToBeReplaced, Map<INode, PType> typesMap,
-            ISimulationEnvironment simulationEnvironment) throws Fmi2Builder.Port.PortLinkException {
+            ISimulationEnvironment simulationEnvironment) throws Fmi2Builder.Port.PortLinkException, AnalysisException {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = true;
         this.builder = new MablApiBuilder(settings, callToBeReplaced);
 
+        // Build a graph from AInstanceMapping. I.e. if FMU instance A is faultinjected by B then the graph should be
+        // B -> A
+        var simulationSpecification = callToBeReplaced.getAncestor(ASimulationSpecificationCompilationUnit.class);
+        var graph = buildInstanceMappingGraph(simulationSpecification);
+
         Map<String, ComponentVariableFmi2Api> instances = new HashMap<>();
         this.variables = callToBeReplaced.getArgs().stream()
-                .map(exp -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(exp), exp, instances)).collect(Collectors.toList());
+                .map(exp -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(exp), exp, instances, graph))
+                .collect(Collectors.toList());
 
         FromMaBLToMaBLAPI.createBindings(instances, simulationEnvironment);
     }
 
+    private static String getLastVertexOfDirectedGraph(DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> graph, String startVertex) {
+        String finalVertex = startVertex;
+        if (graph.containsVertex(startVertex)) {
+            DepthFirstIterator<String, org.jgrapht.graph.DefaultEdge> iterator = new DepthFirstIterator<>(graph, startVertex);
+
+            while (iterator.hasNext()) {
+                finalVertex = iterator.next();
+            }
+        }
+        return finalVertex;
+    }
+
+    private static DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> buildInstanceMappingGraph(
+            ASimulationSpecificationCompilationUnit spec) throws AnalysisException {
+        DefaultDirectedGraph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
+
+
+        spec.apply(new DepthFirstAnalysisAdaptorQuestion<>() {
+            @Override
+            public void caseAInstanceMappingStm(AInstanceMappingStm node,
+                    DefaultDirectedGraph<String, DefaultEdge> question) throws AnalysisException {
+                super.caseAInstanceMappingStm(node, question);
+
+                String source = node.getIdentifier().getText();
+                String target = node.getName();
+                if (!source.equals(target)) {
+                    question.addVertex(source);
+                    question.addVertex(target);
+                    question.addEdge(source, target);
+                }
+            }
+        }, graph);
+
+        return graph;
+    }
+
     private static Fmi2Builder.Variable<PStm, ?> wrapAsVariable(MablApiBuilder builder, Map<INode, PType> typesMap,
-            ISimulationEnvironment simulationEnvironment, PType type, PExp exp, Map<String, ComponentVariableFmi2Api> instances) {
+            ISimulationEnvironment simulationEnvironment, PType type, PExp exp, Map<String, ComponentVariableFmi2Api> instances,
+            DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> graph) {
 
         Fmi2SimulationEnvironment env = null;
 
@@ -64,6 +112,7 @@ public class BuilderHelper {
         } else if (env != null && type instanceof AModuleType && ((AModuleType) type).getName().getText().equals("FMI2")) {
             if (exp instanceof AIdentifierExp) {
                 String componentName = ((AIdentifierExp) exp).getName().getText();
+
                 ComponentInfo instance = env.getInstanceByLexName(componentName);
                 ModelDescriptionContext modelDescriptionContext = null;
                 try {
@@ -87,7 +136,12 @@ public class BuilderHelper {
 
         } else if (env != null && type instanceof AModuleType && ((AModuleType) type).getName().getText().equals("FMI2Component")) {
             try {
-                Map.Entry<String, ComponentVariableFmi2Api> component = FromMaBLToMaBLAPI.getComponentVariableFrom(builder, exp, env);
+                String environmentComponentName = ((AIdentifierExp) exp).getName().getText();
+                if (graph != null) {
+                    environmentComponentName = getLastVertexOfDirectedGraph(graph, environmentComponentName);
+                }
+                Map.Entry<String, ComponentVariableFmi2Api> component =
+                        FromMaBLToMaBLAPI.getComponentVariableFrom(builder, exp, env, environmentComponentName);
 
                 instances.put(component.getKey(), component.getValue());
                 return component.getValue();
@@ -115,7 +169,7 @@ public class BuilderHelper {
                     .collect(Collectors.toList());
 
             return new ArrayVariableFmi2Api(null, type.clone(), null, null, null, exp,
-                    initializerExps.stream().map(e -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(e), e, instances))
+                    initializerExps.stream().map(e -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(e), e, instances, graph))
                             .collect(Collectors.toList()));
         }
 

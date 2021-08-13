@@ -84,7 +84,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                     AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, s.name());
                     if (decl == null) {
                         //create the status as it was not found
-                        fmiStatusVariables.put(s, rootScope.store(s.name(), s.getValue()));
+                        fmiStatusVariables.put(s, rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(s.name()), s.getValue()));
                     } else {
                         //if exists then link to previous declaration
                         fmiStatusVariables.put(s, f.apply(s.name()));

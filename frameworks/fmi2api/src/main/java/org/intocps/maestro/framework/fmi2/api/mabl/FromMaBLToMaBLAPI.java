@@ -29,10 +29,21 @@ public class FromMaBLToMaBLAPI {
     final static Logger logger = LoggerFactory.getLogger(FromMaBLToMaBLAPI.class);
 
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+            Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        if (exp instanceof AIdentifierExp) {
+            return getComponentVariableFrom(builder, exp, env, ((AIdentifierExp) exp).getName().getText());
+        } else {
+            throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
+        }
+    }
+
+    public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
+            Fmi2SimulationEnvironment env,
+            String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
-            ComponentInfo instance = env.getInstanceByLexName(componentName);
+
+            ComponentInfo instance = env.getInstanceByLexName(environmentComponentName);
             ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
             //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
@@ -43,8 +54,14 @@ public class FromMaBLToMaBLAPI {
                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
                     new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
 
-            ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                    builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+            ComponentVariableFmi2Api a;
+            if (environmentComponentName == null) {
+                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+            } else {
+                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
+            }
             List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
             a.setVariablesToLog(variablesToLog);
 
