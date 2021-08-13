@@ -503,6 +503,12 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AErrorStm newError(PExp exp) {
+        AErrorStm errorStm = new AErrorStm();
+        errorStm.setExp(exp);
+        return errorStm;
+    }
+
     public static ABreakStm newBreak() {
         return new ABreakStm();
     }
