@@ -19,6 +19,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     IMablScope enterScope();
 
     @Override
+    TryMaBlScope enterTry();
+
+    @Override
     BooleanVariableFmi2Api store(boolean value);
 
     @Override

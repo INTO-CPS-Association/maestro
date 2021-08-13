@@ -398,6 +398,18 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public TryMaBlScope enterTry() {
+        var bodyStm = newABlockStm();
+        var finallyStm = newABlockStm();
+
+        ATryStm tryStm = newTry(bodyStm, finallyStm);
+        add(tryStm);
+        ScopeFmi2Api bodyScope = new ScopeFmi2Api(builder, this, bodyStm);
+        ScopeFmi2Api finallyScope = new ScopeFmi2Api(builder, this, finallyStm);
+        return new TryMaBlScope(builder, tryStm, this, bodyScope, finallyScope);
+    }
+
+    @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
 
         return storePrivate(builder.getNameGenerator().getName(), tag);

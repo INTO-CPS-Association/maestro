@@ -39,7 +39,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     @Override
     public ComponentVariableFmi2Api instantiate(String name) {
-        return instantiate(name, builder.getDynamicScope().getActiveScope());
+        return instantiate(name, builder.getDynamicScope().getActiveScope().enterTry());
     }
 
     @Override
@@ -77,7 +77,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     }
 
     @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.Scope<PStm> scope) {
+    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> scope) {
         String name = builder.getNameGenerator().getName(namePrefix);
         //TODO: Extract bool visible and bool loggingOn from configuration
         PStm var = newVariable(name, newANameType("FMI2Component"),
@@ -85,12 +85,11 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         ComponentVariableFmi2Api aMablFmi2ComponentAPI = null;
         aMablFmi2ComponentAPI = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope,
                 newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
-        scope.add(var);
+        scope.enter().add(var);
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            ScopeFmi2Api thenScope =
-                    (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(aMablFmi2ComponentAPI.getReferenceExp().clone(), newNullExp())))
-                            .enterThen();
+            ScopeFmi2Api thenScope = (ScopeFmi2Api) scope.enter()
+                    .enterIf(new PredicateFmi2Api(newEqual(aMablFmi2ComponentAPI.getReferenceExp().clone(), newNullExp()))).enterThen();
 
             thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
             builder.getLogger().error(thenScope, "Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix);

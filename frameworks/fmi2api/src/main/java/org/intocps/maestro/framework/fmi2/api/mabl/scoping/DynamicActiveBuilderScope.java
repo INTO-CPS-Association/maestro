@@ -70,6 +70,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public TryMaBlScope enterTry() {
+        return this.activeScope.enterTry();
+    }
+
+    @Override
     public BooleanVariableFmi2Api store(boolean value) {
         return activeScope.store(value);
     }

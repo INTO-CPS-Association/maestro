@@ -154,6 +154,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         IfScope<T> enterIf(Predicate predicate);
 
+        TryScope<T> enterTry();
+
         Scoping<T> parallel();
 
         Scoping<T> enterScope();
@@ -245,6 +247,27 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
          * @return
          */
         Scope<T> enterElse();
+
+        Scope<T> leave();
+    }
+
+    /**
+     * Try finally scope, default scope is body
+     */
+    interface TryScope<T> {
+        /**
+         * Switch to body scope
+         *
+         * @return
+         */
+        Scope<T> enter();
+
+        /**
+         * Switch to finally scope
+         *
+         * @return
+         */
+        Scope<T> enterFinally();
 
         Scope<T> leave();
     }
@@ -387,7 +410,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     interface Fmu2Variable<S> extends Variable<S, NamedVariable<S>> {
         Fmi2ComponentVariable<S> instantiate(String name);
 
-        Fmi2ComponentVariable<S> instantiate(String name, Scope<S> scope);
+        Fmi2ComponentVariable<S> instantiate(String name, TryScope<S> scope);
 
         void freeInstance(Fmi2ComponentVariable<S> comp);
 
