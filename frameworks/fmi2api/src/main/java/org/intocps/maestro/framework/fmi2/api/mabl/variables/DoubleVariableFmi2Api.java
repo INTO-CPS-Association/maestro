@@ -10,7 +10,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 
 import static org.intocps.maestro.ast.MableAstFactory.newARealNumericPrimitiveType;
 
-public class DoubleVariableFmi2Api extends VariableFmi2Api<DoubleExpressionValue> implements Fmi2Builder.DoubleVariable<PStm> {
+public class DoubleVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.DoubleExpressionValue> implements Fmi2Builder.DoubleVariable<PStm> {
     public DoubleVariableFmi2Api(PStm declaration, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
         super(declaration, newARealNumericPrimitiveType(), declaredScope, dynamicScope, designator, referenceExp);
@@ -24,7 +24,7 @@ public class DoubleVariableFmi2Api extends VariableFmi2Api<DoubleExpressionValue
 
 
     @Override
-    public void setValue(DoubleExpressionValue value) {
+    public void setValue(Fmi2Builder.DoubleExpressionValue value) {
         super.setValue(value.getExp());
     }
 

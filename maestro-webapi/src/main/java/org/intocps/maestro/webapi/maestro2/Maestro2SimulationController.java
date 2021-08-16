@@ -83,17 +83,17 @@ public class Maestro2SimulationController {
 
     }
 
-    @RequestMapping(value = "/ping", method = RequestMethod.GET)
+    @RequestMapping(value = "/ping", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public String ping() {
         return "OK";
     }
 
-    @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public String getStatuses(@PathVariable String sessionId) throws Exception {
         return new ObjectMapper().writeValueAsString(sessionController.getStatus(sessionId));
     }
 
-    @RequestMapping(value = "/status", method = RequestMethod.GET)
+    @RequestMapping(value = "/status", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public String getStatuses() throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(sessionController.getStatus());
     }
@@ -106,26 +106,21 @@ public class Maestro2SimulationController {
         }
     }
 
-    @RequestMapping(value = "/createSession", method = RequestMethod.GET)
+    @RequestMapping(value = "/createSession", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel createSession() {
         String session = sessionController.createNewSession();
         return getStatus(session);
     }
 
-    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST)
-    public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody String body1) throws Exception {
+    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody InitializationData body) throws Exception {
         // Store this data to be used for the interpretor later on.
         // It is not possible to create the spec at this point in time as data for setup experiment is missing (i.e. endtime)
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
-        logger.debug("Got initial data: {}", body1);
+        logger.debug("Got initial data");
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        InitializationData body = mapper.readValue(body1, InitializationData.class);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
-
-        if (logic == null) {
-            throw new Exception("Session has not been created.");
-        }
 
         if (body == null) {
             throw new Exception("Could not parse configuration: ");
@@ -214,7 +209,7 @@ public class Maestro2SimulationController {
 
 
     @ApiOperation(value = "This request begins the co-simulation")
-    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"})
+    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"}, produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
@@ -299,7 +294,7 @@ public class Maestro2SimulationController {
         //        }
     }
 
-    @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET)
+    @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET, produces = "text/csv")
     public ResponseEntity<Resource> getResultPlain(@PathVariable String sessionId) throws Exception {
         SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
 
@@ -334,7 +329,7 @@ public class Maestro2SimulationController {
         this.sessionController.deleteSession(sessionId);
     }
 
-    @RequestMapping(value = "/version", method = RequestMethod.GET)
+    @RequestMapping(value = "/version", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public String version() {
         final String message;
         try {

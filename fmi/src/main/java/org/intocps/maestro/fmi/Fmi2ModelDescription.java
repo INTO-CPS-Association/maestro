@@ -129,9 +129,9 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     /**
      * @return Map of ports to derivative ports.
-     * @throws XPathExpressionException
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
+     * @throws XPathExpressionException  parse failure
+     * @throws InvocationTargetException invoke error
+     * @throws IllegalAccessException    illegal access
      */
     public Map<ScalarVariable, ScalarVariable> getDerivativesMap() throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
         if (derivativesMap == null) {
@@ -195,9 +195,9 @@ public class Fmi2ModelDescription extends ModelDescription {
 
         ders.forEach(der -> {
             ScalarVariable derSource = indexMap.get(Integer.parseInt((String) ((RealType) der.type).derivative));
-			if (derSource.causality == Causality.Output) {
-				derivativesMap.put(derSource, der);
-			}
+            if (derSource.causality == Causality.Output) {
+                derivativesMap.put(derSource, der);
+            }
         });
 
         for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/ModelStructure/Outputs/Unknown"))) {
@@ -299,9 +299,9 @@ public class Fmi2ModelDescription extends ModelDescription {
         Node attribute = node.getAttributes().getNamedItem("declaredType");
         if (attribute != null) {
             String declaredType = attribute.getNodeValue();
-			if (typeDefinitions.containsKey(declaredType)) {
-				typeDefinitions.get(declaredType).setDefaults(type);
-			}
+            if (typeDefinitions.containsKey(declaredType)) {
+                typeDefinitions.get(declaredType).setDefaults(type);
+            }
         }
     }
 
@@ -414,9 +414,9 @@ public class Fmi2ModelDescription extends ModelDescription {
             case Enumeration:
                 type = new EnumerationType();
             case Integer:
-				if (type == null) {
-					type = new IntegerType();
-				}
+                if (type == null) {
+                    type = new IntegerType();
+                }
                 copyDefaults(type, child, typeDefinitions);
                 parseIntegerType((IntegerType) type, child, false);
                 break;
@@ -535,19 +535,19 @@ public class Fmi2ModelDescription extends ModelDescription {
                                 break;
                         }
 
-						if (other.initial != null) {
-							switch (other.initial) {
-								case Approx:
-									break;
-								case Calculated:
-									break;
-								case Exact:
-									handler.get(sc).put(other, ScalarVariable.DependencyKind.Dependent);
-									break;
-								default:
-									break;
-							}
-						}
+                        if (other.initial != null) {
+                            switch (other.initial) {
+                                case Approx:
+                                    break;
+                                case Calculated:
+                                    break;
+                                case Exact:
+                                    handler.get(sc).put(other, ScalarVariable.DependencyKind.Dependent);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
 
                     }
                 }
@@ -764,4 +764,144 @@ public class Fmi2ModelDescription extends ModelDescription {
             Discrete
         }
     }
+
+    public static class LogCategory {
+        public final String name;
+        public final String description;
+
+        public LogCategory(String name, String description) {
+            this.name = name;
+            this.description = description;
+        }
+
+        protected LogCategory() {
+            name = null;
+            description = null;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    public static class ResourceResolver implements LSResourceResolver {
+
+        @Override
+        public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
+
+            // note: in this sample, the XSD's are expected to be in the root of the classpath
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(systemId);
+            return new Input(publicId, systemId, resourceAsStream);
+        }
+
+    }
+
+    public static class Input implements LSInput {
+
+        private String publicId;
+
+        private String systemId;
+        private BufferedInputStream inputStream;
+
+        public Input(String publicId, String sysId, InputStream input) {
+            this.publicId = publicId;
+            this.systemId = sysId;
+            this.inputStream = new BufferedInputStream(input);
+        }
+
+        @Override
+        public String getPublicId() {
+            return publicId;
+        }
+
+        @Override
+        public void setPublicId(String publicId) {
+            this.publicId = publicId;
+        }
+
+        @Override
+        public String getBaseURI() {
+            return null;
+        }
+
+        @Override
+        public void setBaseURI(String baseURI) {
+        }
+
+        @Override
+        public InputStream getByteStream() {
+            return null;
+        }
+
+        @Override
+        public void setByteStream(InputStream byteStream) {
+        }
+
+        @Override
+        public boolean getCertifiedText() {
+            return false;
+        }
+
+        @Override
+        public void setCertifiedText(boolean certifiedText) {
+        }
+
+        @Override
+        public Reader getCharacterStream() {
+            return null;
+        }
+
+        @Override
+        public void setCharacterStream(Reader characterStream) {
+        }
+
+        @Override
+        public String getEncoding() {
+            return null;
+        }
+
+        @Override
+        public void setEncoding(String encoding) {
+        }
+
+        @Override
+        public String getStringData() {
+            synchronized (inputStream) {
+                try {
+                    byte[] input = new byte[inputStream.available()];
+                    inputStream.read(input);
+                    String contents = new String(input);
+                    return contents;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.out.println("Exception " + e);
+                    return null;
+                }
+            }
+        }
+
+        @Override
+        public void setStringData(String stringData) {
+        }
+
+        @Override
+        public String getSystemId() {
+            return systemId;
+        }
+
+        @Override
+        public void setSystemId(String systemId) {
+            this.systemId = systemId;
+        }
+
+        public BufferedInputStream getInputStream() {
+            return inputStream;
+        }
+
+        public void setInputStream(BufferedInputStream inputStream) {
+            this.inputStream = inputStream;
+        }
+    }
+
 }

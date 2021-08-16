@@ -9,7 +9,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 
-public class IntExpressionValue extends NumericExpressionValueFmi2Api {
+public class IntExpressionValue extends NumericExpressionValueFmi2Api implements Fmi2Builder.IntExpressionValue {
 
     final PType type = new AIntNumericPrimitiveType();
     final PExp exp;
@@ -85,7 +85,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newPlusExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type NumericExpressionValue.");
+            throw new RuntimeException(v + " is not of type NumericExpressionValue.");
         }
     }
 
@@ -94,7 +94,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         if (v instanceof DoubleExpressionValue || v instanceof IntExpressionValue) {
             return new DoubleExpressionValue(newDivideExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
         }
     }
 
@@ -105,7 +105,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newMinusExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
         }
     }
 
@@ -116,7 +116,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api {
         } else if (v instanceof IntExpressionValue) {
             return new IntExpressionValue(newMultiplyExp(this.getExp(), v.getExp()));
         } else {
-            throw new RuntimeException("v is not of type IntExpressionValue nor DoubleExpressionValue.");
+            throw new RuntimeException(v + " is not of type IntExpressionValue nor DoubleExpressionValue.");
 
         }
     }

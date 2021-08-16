@@ -56,9 +56,7 @@ public abstract class BaseApiTest {
 
         ARootDocument doc = MablParserUtil.parse(CharStreams.fromStream(new ByteArrayInputStream(spec.getBytes())));
 
-
         TypeChecker typeChecker = new TypeChecker(reporter);
-
 
         List<AImportedModuleCompilationUnit> maestro2EmbeddedModules =
                 getModuleDocuments(TypeChecker.getRuntimeModules()).stream().map(x -> NodeCollector.collect(x, AImportedModuleCompilationUnit.class))
@@ -76,8 +74,7 @@ public abstract class BaseApiTest {
             reporter.printErrors(writer);
         }
 
-        Assertions.assertTrue(res, "Type check errors:" + out.toString());
-
+        Assertions.assertTrue(res, "Type check errors:" + out);
 
         new MableInterpreter(
                 new DefaultExternalValueFactory(new File("target"), new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8))))

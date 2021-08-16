@@ -1,8 +1,7 @@
+package org.intocps.maestro;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.intocps.maestro.FullSpecTest;
-import org.intocps.maestro.Mabl;
-import org.intocps.maestro.Main;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -28,8 +27,8 @@ public class DocumentationGettingStartedExamplesTest {
     @Test
     public void part1() throws Exception {
         List<File> sourceFiles = Arrays.asList(new File(testFilesDirectory, "example1.mabl"));
-        File specificationDirectory = new File("target", "DocumentationGettingStartedExamplesTest/initial/specification");
-        File workingDirectory = new File("target", "DocumentationGettingStartedExamplesTest/initial/working");
+        File specificationDirectory = new File("target", "org.intocps.maestro.DocumentationGettingStartedExamplesTest/initial/specification");
+        File workingDirectory = new File("target", "org.intocps.maestro.DocumentationGettingStartedExamplesTest/initial/working");
 
         FileUtils.deleteDirectory(workingDirectory);
 
@@ -59,7 +58,7 @@ public class DocumentationGettingStartedExamplesTest {
     @Disabled("Ignored due to storing outputs.csv in non-target place")
     public void part2_json_parse() throws Exception {
         File configurationFile = new File(testFilesDirectory, "wt-example-config.json");
-        File targetDirectory = new File("target", "DocumentationGettingStartedExamplesTest/part2");
+        File targetDirectory = new File("target", "org.intocps.maestro.DocumentationGettingStartedExamplesTest/part2");
         File intermediateDirectory = new File(targetDirectory, "intermediate");
         File specificationDirectory = new File(targetDirectory, "specification");
         File interpretSpecification = new File(specificationDirectory, "spec.mabl");

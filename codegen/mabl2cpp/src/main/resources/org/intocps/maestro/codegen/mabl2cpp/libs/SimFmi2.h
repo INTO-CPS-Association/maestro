@@ -1,7 +1,16 @@
+//
+// Created by Kenneth Guldbrandt Lausdahl on 18/05/2021.
+//
+#ifndef SIMFMI2_H
+#define SIMFMI2_H
+
 
 #include "fmi2.h"
 #include <string>
 #include "unzip.h"
+
+
+
 class Fmi2Comp {
 
 
@@ -41,3 +50,5 @@ std::string guid;
 
 
 FMI2 load_FMI2(const char *guid, const char *path);
+
+#endif

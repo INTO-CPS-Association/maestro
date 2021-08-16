@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -25,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toSet;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
@@ -40,6 +42,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final static int FMI_FATAL = 4;
     private final static int FMI_PENDING = 5;
     private final static int FMI_STATUS_LAST_SUCCESSFUL = 2;
+    private static final String LOGLEVELS_POSTFIX = "_log_levels";
+    private final static String CATEGORY_STATUS = "category_status";
     final List<PortFmi2Api> outputPorts;
     final List<PortFmi2Api> inputPorts;
     final List<PortFmi2Api> ports;
@@ -50,6 +54,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
     private final Map<IMablScope, Map<PType, ArrayVariableFmi2Api<Object>>> tentativeBuffer = new HashMap<>();
     private final Map<IMablScope, Map<PortFmi2Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
+    private final String environmentName;
     Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi2Api) p).getSourcePort() != null;
     ModelDescriptionContext modelDescriptionContext;
     private ArrayVariableFmi2Api<Object> derSharedBuffer;
@@ -61,6 +66,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
             MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
+        this(declaration, parent, name, modelDescriptionContext, builder, declaringScope, designator, referenceExp, name);
+    }
+
+    public ComponentVariableFmi2Api(PStm declaration, FmuVariableFmi2Api parent, String name, ModelDescriptionContext modelDescriptionContext,
+            MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp, String environmentName) {
         super(declaration, newANameType("FMI2Component"), declaringScope, builder.getDynamicScope(), designator, referenceExp);
         this.owner = parent;
         this.name = name;
@@ -76,6 +86,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
         inputPorts = ports.stream().filter(p -> p.scalarVariable.causality == Fmi2ModelDescription.Causality.Input)
                 .sorted(Comparator.comparing(PortFmi2Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+
+        this.environmentName = environmentName;
     }
 
     public Fmi2ModelDescription getModelDescription() {
@@ -213,6 +225,34 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         return new ArrayVariableFmi2Api<>(var, type, scope, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(ioBufName)),
                 newAIdentifierExp(ioBufName), items);
 
+    }
+
+    @Override
+    public void setDebugLogging(List<String> categories, boolean enableLogging) {
+        AArrayInitializer loglevelsArrayInitializer = null;
+        String arrayName = name + LOGLEVELS_POSTFIX;
+        IMablScope scope = builder.getDynamicScope().getActiveScope();
+        if (!categories.isEmpty()) {
+            loglevelsArrayInitializer =
+                    newAArrayInitializer(categories.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
+        }
+        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
+                .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
+                        MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), categories.size(), loglevelsArrayInitializer));
+
+        LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
+
+        ALocalVariableStm callStm = newALocalVariableStm(newAVariableDeclaration(statusIdentifier, newAIntNumericPrimitiveType(), newAExpInitializer(
+                newACallExp(newAIdentifierExp(name), newAIdentifier("setDebugLogging"),
+                        Arrays.asList(newABoolLiteralExp(enableLogging), MableAstFactory.newAIntLiteralExp(categories.size()),
+                                MableAstFactory.newAIdentifierExp(arrayName))))));
+
+
+        AIfStm ifStm = newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
+                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))),
+                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)), null);
+
+        scope.add(arrayContent, callStm, ifStm);
     }
 
     @Override
@@ -776,6 +816,17 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi2Api> selectedPorts, Function<PortFmi2Api, Map.Entry<PExp, PType>> portToValue) {
 
+        Set<String> selectedPortsAsStrings = selectedPorts.stream()
+                .map(p -> p.getName() + "-" + p.aMablFmi2ComponentAPI.getName() + "-" + p.aMablFmi2ComponentAPI.getOwner().getName())
+                .collect(toSet());
+        selectedPortsAsStrings.removeAll(
+                ports.stream().map(p -> p.getName() + "-" + p.aMablFmi2ComponentAPI.getName() + "-" + p.aMablFmi2ComponentAPI.getOwner().getName())
+                        .collect(toSet()));
+        if (selectedPortsAsStrings.size() > 0) {
+            throw new RuntimeException("Unable to set port(s) that is not declared in the FMU: " +
+                    selectedPortsAsStrings.stream().map(name -> name.split("-")[0]).collect(Collectors.joining(", ")));
+        }
+
         List<PortFmi2Api> sortedPorts =
                 selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
 
@@ -919,12 +970,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+    public <V> void set(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
         this.set(new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, VariableFmi2Api<V> value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
         this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
     }
 
@@ -1237,6 +1288,10 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     @Override
     public String getName() {
         return this.name;
+    }
+
+    public String getEnvironmentName() {
+        return environmentName;
     }
 
 
