@@ -246,7 +246,8 @@ if not os.path.isfile(jarPath):
 print(f"Testing Web api of: {jarPath} with port: {str(port)}")
 
 cmd = f"java -jar {jarPath} -p {str(port)}"
-# Start the server as a subprocess
+
+# Start the server as a subprocess and pipe stdout
 proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
 # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
