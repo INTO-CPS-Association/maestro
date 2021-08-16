@@ -497,8 +497,8 @@ class Initializer : BasicMaestroExpansionPlugin {
         if (fmu != null) {
             val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
             return when (p.scalarVariable.scalarVariable.causality) {
-                ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
-                ModelDescription.Causality.Input -> {
+                Fmi2ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
+                Fmi2ModelDescription.Causality.Input -> {
                     addToPortsAlreadySet(fmu, port.scalarVariable)
                     SetInstruction(fmu, port)
                 }

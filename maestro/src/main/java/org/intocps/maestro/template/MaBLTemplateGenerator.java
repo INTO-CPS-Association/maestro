@@ -8,6 +8,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;

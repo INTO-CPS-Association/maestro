@@ -5,6 +5,7 @@ import org.intocps.fmi.Fmi2Status;
 import org.intocps.fmi.IFmiComponent;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.IFmuFactory;
@@ -73,7 +74,7 @@ public class ComponentVariableFmi2ApiTest extends BaseApiTest {
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         FmuVariableFmi2Api tankFMU = dynamicScope
-                .createFMU("tankFMU", new ModelDescription(Paths.get(dirPath.toString(), "modelDescription.xml").toFile()),
+                .createFMU("tankFMU", new Fmi2ModelDescription(Paths.get(dirPath.toString(), "modelDescription.xml").toFile()),
                         Paths.get(dirPath.toString(), "singlewatertank-20sim.fmu").toUri());
 
         ComponentVariableFmi2Api tank = tankFMU.instantiate("tank");

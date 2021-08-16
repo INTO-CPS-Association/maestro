@@ -40,6 +40,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.fmi.xml.NodeIterator;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.ls.LSInput;
+import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
