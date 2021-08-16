@@ -8,8 +8,7 @@ import java.util.concurrent.Callable;
 
 @Command(name = "mabl", mixinStandardHelpOptions = true, versionProvider = MablCmdVersionProvider.class,
         description = "Mable for co-simulating models", usageHelpAutoWidth = true,
-        subcommands = {InterpreterCmd.class, ExportCmd.class, ImportCmd.class, ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class,
-                VerifyAlgorithmCmd.class, VisualizeTracesCmd.class},
+        subcommands = {InterpreterCmd.class, ExportCmd.class, ImportCmd.class, PlaceHolderNameCmd.class},
         headerHeading = "@|bold,underline " +
         "Usage|@:%n%n",
         synopsisHeading = "%n", descriptionHeading = "%n@|bold,underline Description|@:%n%n",
