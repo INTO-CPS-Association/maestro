@@ -44,10 +44,10 @@ import java.util.Map;
  */
 public abstract class HierarchicalCoeStateComponent implements IFmiComponent
 {
-	protected final Map<ModelDescription.ScalarVariable, Object> outputsSvToValue = new HashMap<>();
-	protected final Map<ModelDescription.ScalarVariable, Object> inputsSvToValue = new HashMap<>();
+	protected final Map<Fmi2ModelDescription.ScalarVariable, Object> outputsSvToValue = new HashMap<>();
+	protected final Map<Fmi2ModelDescription.ScalarVariable, Object> inputsSvToValue = new HashMap<>();
 
-	protected Map<Long, ModelDescription.ScalarVariable> refToSv = new HashMap<>();
+	protected Map<Long, Fmi2ModelDescription.ScalarVariable> refToSv = new HashMap<>();
 
 	@Override public FmuResult<double[]> getReal(long[] longs)
 			throws FmuInvocationException

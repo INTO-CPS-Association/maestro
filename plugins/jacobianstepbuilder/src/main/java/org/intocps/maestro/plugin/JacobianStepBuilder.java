@@ -12,7 +12,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
@@ -169,8 +169,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
                 List<String> portsOfInterest = portsToShare.keySet().stream()
-                        .filter(objectVariableFmi2Api -> objectVariableFmi2Api.scalarVariable.causality == ModelDescription.Causality.Output ||
-                                objectVariableFmi2Api.scalarVariable.causality == ModelDescription.Causality.Input).map(PortFmi2Api::getName)
+                        .filter(objectVariableFmi2Api -> objectVariableFmi2Api.scalarVariable.causality == Fmi2ModelDescription.Causality.Output ||
+                                objectVariableFmi2Api.scalarVariable.causality == Fmi2ModelDescription.Causality.Input).map(PortFmi2Api::getName)
                         .collect(Collectors.toList());
 
                 portsToGet.put(y, portsOfInterest);
@@ -336,7 +336,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             .entrySet()) {
                         List<BooleanVariableFmi2Api> converged = new ArrayList<>();
                         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = compToPortAndVariable.getValue().entrySet().stream()
-                                .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).collect(Collectors.toList());
+                                .filter(x -> x.getKey().scalarVariable.type.type == Fmi2ModelDescription.Types.Real).collect(Collectors.toList());
 
                         for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
                             VariableFmi2Api oldVariable = entry.getKey().getSharedAsVariable();

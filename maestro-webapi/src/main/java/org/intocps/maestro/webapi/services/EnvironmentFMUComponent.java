@@ -2,14 +2,14 @@ package org.intocps.maestro.webapi.services;
 
 import org.intocps.fmi.*;
 import org.intocps.maestro.fmi.HierarchicalCoeStateComponent;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.List;
 
 public class EnvironmentFMUComponent extends HierarchicalCoeStateComponent {
     private final IFmu fmu;
 
-    public EnvironmentFMUComponent(IFmu fmu, List<ModelDescription.ScalarVariable> inputs, List<ModelDescription.ScalarVariable> outputs) {
+    public EnvironmentFMUComponent(IFmu fmu, List<Fmi2ModelDescription.ScalarVariable> inputs, List<Fmi2ModelDescription.ScalarVariable> outputs) {
         inputs.forEach(sv -> {
             inputsSvToValue.put(sv, sv.type.start != null ? sv.type.start : null);
             refToSv.put(sv.valueReference, sv);
@@ -102,11 +102,11 @@ public class EnvironmentFMUComponent extends HierarchicalCoeStateComponent {
         return null;
     }
 
-    public Object getValue(ModelDescription.ScalarVariable value) {
+    public Object getValue(Fmi2ModelDescription.ScalarVariable value) {
         return this.inputsSvToValue.get(value);
     }
 
-    public void setOutput(ModelDescription.ScalarVariable scalarVariable, Object value) {
+    public void setOutput(Fmi2ModelDescription.ScalarVariable scalarVariable, Object value) {
         this.outputsSvToValue.replace(scalarVariable, value);
     }
 }

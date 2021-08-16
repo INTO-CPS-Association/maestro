@@ -1,6 +1,6 @@
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.plugin.verificationsuite.graph.GraphDrawer;
@@ -70,7 +70,7 @@ public class GraphPlotterTest {
 
 
     private Fmi2SimulationEnvironment.Variable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
-        var scalarVar = new ModelDescription.ScalarVariable();
+        var scalarVar = new Fmi2ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
         return new Fmi2SimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
     }
