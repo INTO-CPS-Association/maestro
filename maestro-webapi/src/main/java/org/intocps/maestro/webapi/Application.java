@@ -9,6 +9,8 @@ import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent;
+import org.springframework.context.event.EventListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,15 @@ import java.util.function.Function;
 public class Application {
 
     final static ObjectMapper mapper = new ObjectMapper();
+    private static boolean serverAcquiresPort = false;
+
+    @EventListener
+    public void onApplicationEvent(final ServletWebServerInitializedEvent event) {
+        if(serverAcquiresPort){
+            int port = event.getWebServer().getPort();
+            System.out.println("Server acquired port: {" + port + "}");
+        }
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -29,6 +40,7 @@ public class Application {
         } else {
             CommandLine cmd = MaestroV1CliProxy.parse(args);
             if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {
+                serverAcquiresPort = port == 0;
                 SpringApplication app = new SpringApplication(Application.class);
                 app.run("--server.port=" + port);
             })) {
