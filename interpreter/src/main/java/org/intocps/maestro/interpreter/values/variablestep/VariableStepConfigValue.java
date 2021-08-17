@@ -5,7 +5,7 @@ import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.derivativeestimator.ScalarDerivativeEstimator;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.*;
 
@@ -19,13 +19,13 @@ public class VariableStepConfigValue extends Value {
     private final Double maxStepSize;
     private StepValidationResult stepValidationResult;
     private final StepsizeCalculator stepsizeCalculator;
-    private final Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
+    private final Map<Fmi2ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derivativeEstimators;
 
     public VariableStepConfigValue(Map<ModelConnection.ModelInstance, FmiSimulationInstance> instances,
             Set<InitializationMsgJson.Constraint> constraints, StepsizeInterval stepsizeInterval, Double initSize, Double maxStepSize) throws InterpreterException {
         this.instances = instances;
         stepsizeCalculator = new StepsizeCalculator(constraints, stepsizeInterval, initSize, instances);
-        Map<ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
+        Map<Fmi2ModelDescription.ScalarVariable, ScalarDerivativeEstimator> derEsts = new HashMap<>();
         instances.forEach((mi, fsi) -> fsi.config.scalarVariables.forEach(sv -> derEsts.put(sv, new ScalarDerivativeEstimator(2))));
         derivativeEstimators = derEsts;
         this.maxStepSize = maxStepSize;
@@ -42,11 +42,11 @@ public class VariableStepConfigValue extends Value {
     }
 
     public double getStepSize() {
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentPortValues = new HashMap<>();
+        Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives = new HashMap<>();
+        Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Object>> currentPortValues = new HashMap<>();
         instances.forEach((mi, fsi) -> {
-            Map<ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
-            Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
+            Map<Fmi2ModelDescription.ScalarVariable, Map<Integer, Double>> derivatives = new HashMap<>();
+            Map<Fmi2ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
                     sv -> (dataPoints.stream().filter(dp -> (dp.getName().contains((mi.key + "." + mi.instanceName + "." + sv.name)))).findFirst())
                             .ifPresent(val -> {
@@ -116,11 +116,11 @@ public class VariableStepConfigValue extends Value {
         return stepVals;
     }
 
-    private Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> mapModelInstancesToPortValues(
+    private Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Object>> mapModelInstancesToPortValues(
             List<StepVal> dataPointsToMap) {
-        Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> values = new HashMap<>();
+        Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Object>> values = new HashMap<>();
         instances.forEach((mi, fsi) -> {
-            Map<ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
+            Map<Fmi2ModelDescription.ScalarVariable, Object> portValues = new HashMap<>();
             fsi.config.scalarVariables.forEach(
                     sv -> (dataPointsToMap.stream().filter(dp -> (dp.getName().equals((mi.key + "." + mi.instanceName + "." + sv.name))))
                             .findFirst()).ifPresent(val -> {

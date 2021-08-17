@@ -7,7 +7,7 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import static org.intocps.maestro.ast.MableAstFactory.newAStringLiteralExp;
 import static org.intocps.maestro.ast.MableAstFactory.newAStringPrimitiveType;
 
-public class StringExpressionValue implements Fmi2Builder.ExpressionValue {
+public class StringExpressionValue implements Fmi2Builder.ExpressionValue, Fmi2Builder.StringExpressionValue {
     private final PExp exp;
 
     public StringExpressionValue(PExp exp) {

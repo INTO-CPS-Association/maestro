@@ -43,11 +43,11 @@ import java.util.List;
 public class FmiInstanceConfig
 {
 
-	public final ModelDescription modelDescription;
-	public final List<ModelDescription.ScalarVariable> scalarVariables;
+	public final Fmi2ModelDescription modelDescription;
+	public final List<Fmi2ModelDescription.ScalarVariable> scalarVariables;
 
-	public FmiInstanceConfig(ModelDescription modelDescription,
-			List<ModelDescription.ScalarVariable> scalarVariables)
+	public FmiInstanceConfig(Fmi2ModelDescription modelDescription,
+			List<Fmi2ModelDescription.ScalarVariable> scalarVariables)
 	{
 		this.modelDescription = modelDescription;
 		this.scalarVariables = scalarVariables;

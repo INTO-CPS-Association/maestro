@@ -47,16 +47,17 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class ModelDefinitionSchemaValidatorTests {
+    //TODO: What is this testing?
     @Test
     public void test() throws IOException, SAXException {
         File f = new File("src/test/resources/modelDescription.xml".replace('/', File.separatorChar));
 
         FileInputStream in = FileUtils.openInputStream(f);
 
-        InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
+        InputStream resourceAsStream = Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
 
         try {
-            ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
         } catch (SAXParseException e) {
 
         }
@@ -69,12 +70,9 @@ public class ModelDefinitionSchemaValidatorTests {
 
             FileInputStream in = FileUtils.openInputStream(f);
 
-            InputStream resourceAsStream = ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
+            InputStream resourceAsStream = Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
 
-
-            ModelDescription.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
         });
-
-
     }
 }

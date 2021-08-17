@@ -7,7 +7,6 @@ import difflib.Patch;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
@@ -146,13 +145,17 @@ public class FullSpecTest {
         IErrorReporter reporter = new ErrorReporter();
         Mabl mabl = new Mabl(directory, workingDirectory);
         mabl.setReporter(reporter);
-        mabl.setVerbose(true);
+        mabl.setVerbose(getMablVerbose());
 
         ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
-        postProcessSpec(directory, workingDirectory, mabl, spec);
+        postProcessSpec(name, directory, workingDirectory, mabl, spec);
     }
 
-    protected void postProcessSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+    protected boolean getMablVerbose() {
+        return true;
+    }
+
+    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
         interpretSpec(directory, workingDirectory, mabl, spec);
     }
 
@@ -237,7 +240,6 @@ public class FullSpecTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         return mabl.getMainSimulationUnit();
     }
 

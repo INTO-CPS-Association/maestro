@@ -22,6 +22,7 @@
                     <include>*.py</include>
                     <include>wt/**</include>
                     <include>requirements.txt</include>
+                    <include>scenario_controller_resources/**</include>
                 </includes>
             </resource>
         </resources>

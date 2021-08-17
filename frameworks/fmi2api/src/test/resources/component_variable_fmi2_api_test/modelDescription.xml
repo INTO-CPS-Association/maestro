@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="SingleWatertank" guid="{cfc65592-9ece-4563-9705-1581b6e7071c}" generationTool="20-sim" numberOfEventIndicators="0" copyright="Controllab Products B.V." license="-">
+<CoSimulation modelIdentifier="SingleWatertank" needsExecutionTool="false" canHandleVariableCommunicationStepSize="true" canInterpolateInputs="false" maxOutputDerivativeOrder="0" canRunAsynchronuously="false" canBeInstantiatedOnlyOncePerProcess="true" canNotUseMemoryManagementFunctions="true" canGetAndSetFMUstate="false" canSerializeFMUstate="false" providesDirectionalDerivative="false" />
+<DefaultExperiment startTime="0.0" stopTime="16.0" stepSize="0.01" />
+<ModelVariables>
+<ScalarVariable name="Drain.p.e" valueReference="14" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Drain.p.f" valueReference="7" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Drain.r" valueReference="0" variability="tunable" causality="parameter">
+<Real start="9.0" />
+</ScalarVariable>
+<ScalarVariable name="FlowSource.p.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="FlowSource.p.phi" valueReference="8" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="FlowSource.phi" valueReference="1" description="flow rate" variability="tunable" causality="parameter">
+<Real start="1.0" />
+</ScalarVariable>
+<ScalarVariable name="FlowSource.inflow" valueReference="9" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p1.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p2.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p3.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p1.phi" valueReference="20" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p2.phi" valueReference="8" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Node1.p3.phi" valueReference="13" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.p.e" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.level" valueReference="11" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.area" valueReference="2" variability="tunable" causality="parameter">
+<Real start="1.0" />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.gravity" valueReference="3" variability="tunable" causality="parameter">
+<Real start="9.81" />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.liquid_density" valueReference="4" variability="tunable" causality="parameter">
+<Real start="1.0" />
+</ScalarVariable>
+<ScalarVariable name="tank.p.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.p.phi" valueReference="8" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.p1.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.p1.phi" valueReference="13" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.level" valueReference="11" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.valvecontrol" valueReference="12" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.powerIn.p" valueReference="10" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.powerIn.phi" valueReference="13" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.powerOut.e" valueReference="14" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.powerOut.f" valueReference="7" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.puddle" valueReference="15" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="valvecontrol" valueReference="16" variability="continuous" causality="input">
+<Real start="0.0" />
+</ScalarVariable>
+<ScalarVariable name="level" valueReference="17" variability="continuous" causality="output">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.p.f" valueReference="20" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.volume" valueReference="18" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="tank.Tank.volume_initial" valueReference="5" variability="fixed" causality="parameter">
+<Real start="0.0" />
+</ScalarVariable>
+<ScalarVariable name="Valve.outflow" valueReference="21" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.outflow_int" valueReference="19" variability="continuous" causality="local">
+<Real />
+</ScalarVariable>
+<ScalarVariable name="Valve.outflow_int_initial" valueReference="6" variability="fixed" causality="parameter">
+<Real start="0.0" />
+</ScalarVariable>
+</ModelVariables>
+<ModelStructure>
+<Outputs>
+<Unknown index="31" />
+</Outputs>
+</ModelStructure>
+</fmiModelDescription>

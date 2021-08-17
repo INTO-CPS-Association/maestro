@@ -11,7 +11,7 @@ import org.intocps.fmi.IFmiComponent;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
@@ -113,7 +113,7 @@ public class VariableStepValue extends ModuleValue {
                     String fmuName = fullyQualifiedFMUInstanceNames.get(i).getValue().split("\\.")[0];
                     ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(fmuName, instanceName);
                     IFmiComponent fmu = fmus.get(i).getModule();
-                    ModelDescription modelDescription = new ModelDescription(fmu.getFmu().getModelDescription());
+                    Fmi2ModelDescription modelDescription = new Fmi2ModelDescription(fmu.getFmu().getModelDescription());
                     FmiInstanceConfig fmiInstanceConfig = new FmiInstanceConfig(modelDescription, modelDescription.getScalarVariables());
                     FmiSimulationInstance si = new FmiSimulationInstance(null, fmiInstanceConfig);
                     instances.put(mi, si);
