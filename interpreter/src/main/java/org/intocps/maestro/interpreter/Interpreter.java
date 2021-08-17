@@ -349,7 +349,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAErrorStm(AErrorStm node, Context question) throws AnalysisException {
-        throw new ErrorException(node.getExp().apply(this, question) + "");
+        throw new ErrorException(node.getExp() == null ? "" : node.getExp().apply(this, question) + "");
     }
 
     @Override
