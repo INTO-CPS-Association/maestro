@@ -1,5 +1,7 @@
 #include <chrono>
 #include <iostream>
+#include <cstring>
+#include <algorithm>
 
 #include "co-sim.hxx"
 int main(int argc, char *argv[]) {
@@ -10,6 +12,7 @@ int main(int argc, char *argv[]) {
     string runtimeKey = "-runtime";
     string helpKey = "-help";
     string helpQKey = "-?";
+    string sourceKey = "-sha1";
     string runtimeConfigPath;
     for (int i = 0; i < argc; i++) {
 
@@ -21,7 +24,17 @@ int main(int argc, char *argv[]) {
                 i++;
             }
         }else if(helpKey == currentArg ||helpQKey == currentArg){
-            cout<< "Help\nsim \n\n\t-help, -?\tPrints this message\n\t-runtime\tPath to a runtime json file used for runtime configuration"<<endl;
+            cout<< "Help\nsim \n\n\t-help, -?\tPrints this message\n\t-runtime\tPath to a runtime json file used for runtime configuration\n\t-sha1\tTo show the pretty printed SHA1 checksum of the input spec"<<endl;
+            return 0;
+        }else if(sourceKey == currentArg){
+            cout << SPEC_SHA1 << " " SPEC_GEN_TIME << endl;
+
+            if (i + 1 < argc) {
+                const char* expectedSha1 = argv[i + 1];
+                return strcmp(SPEC_SHA1,expectedSha1);
+            }
+
+            return 0;
         }
     }
     auto t1 = std::chrono::high_resolution_clock::now();

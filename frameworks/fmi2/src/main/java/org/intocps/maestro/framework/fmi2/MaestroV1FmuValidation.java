@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -18,7 +18,7 @@ public class MaestroV1FmuValidation implements IFmuValidator {
         try {
             IFmu fmu = FmuFactory.create(null, path);
 
-            ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            Fmi2ModelDescription md = new Fmi2ModelDescription(fmu.getModelDescription());
             validateModelDescription(md);
             VdmSvChecker.validateModelVariables(md.getScalarVariables());
             return true;
@@ -33,15 +33,15 @@ public class MaestroV1FmuValidation implements IFmuValidator {
      * Validate model description overall structure
      */
     void validateModelDescription(
-            ModelDescription description) throws IllegalAccessException, XPathExpressionException, InvocationTargetException, VdmSvChecker.ScalarVariableConfigException {
+            Fmi2ModelDescription description) throws IllegalAccessException, XPathExpressionException, InvocationTargetException, VdmSvChecker.ScalarVariableConfigException {
 
-        List<ModelDescription.ScalarVariable> outputs =
-                description.getScalarVariables().stream().filter(sv -> sv.causality == ModelDescription.Causality.Output)
+        List<Fmi2ModelDescription.ScalarVariable> outputs =
+                description.getScalarVariables().stream().filter(sv -> sv.causality == Fmi2ModelDescription.Causality.Output)
                         .collect(Collectors.toList());
-        List<ModelDescription.ScalarVariable> declaredOutputs = description.getOutputs();
+        List<Fmi2ModelDescription.ScalarVariable> declaredOutputs = description.getOutputs();
 
-        List<ModelDescription.ScalarVariable> invalidDeclaredOutputs =
-                declaredOutputs.stream().filter(sv -> sv.causality != ModelDescription.Causality.Output).collect(Collectors.toList());
+        List<Fmi2ModelDescription.ScalarVariable> invalidDeclaredOutputs =
+                declaredOutputs.stream().filter(sv -> sv.causality != Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
         if (!invalidDeclaredOutputs.isEmpty()) {
             throw new VdmSvChecker.ScalarVariableConfigException(
                     "Declared outputs in model description model structure contains scalar variables that has Causality != Output: " +

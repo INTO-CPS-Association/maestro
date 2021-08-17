@@ -22,6 +22,12 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
 
+    @CommandLine.Option(names = {"--no-typecheck"}, description = "Perform type check", negatable = true)
+    boolean useTypeCheck = true;
+
+    @CommandLine.Option(names = {"--no-expand"}, description = "Perform expand", negatable = true)
+    boolean useExpand = true;
+
     @CommandLine.Option(names = "-runtime", description = "Path to a runtime file which should be included in the export")
     File runtime;
 
@@ -34,6 +40,18 @@ public class InterpreterCmd implements Callable<Integer> {
             description = "Verify the spec according to the following verifier groups: ${COMPLETION-CANDIDATES}")
     Framework verify;
 
+    @CommandLine.Option(names = "-wait", description = "Wait the specified seconds before processing. Intended for allowing a debugger or profiler " +
+            "to be attached before the processing starts.")
+    int wait = 0;
+
+    private static void waitForProfiling(int wait) throws InterruptedException {
+        System.out.printf("Initial wait activated, waiting... %d", wait);
+        for (int i = 0; i < wait; i++) {
+            Thread.sleep(1000);
+            System.out.printf("\rInitial wait activated, waiting... %d", wait - i);
+        }
+    }
+
     @Override
     public Integer call() throws Exception {
         Mabl.MableSettings settings = new Mabl.MableSettings();
@@ -41,22 +59,30 @@ public class InterpreterCmd implements Callable<Integer> {
         settings.preserveFrameworkAnnotations = preserveAnnotations;
         settings.inlineFrameworkConfig = false;
 
+        if (wait > 0) {
+            waitForProfiling(wait);
+        }
+
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
 
         if (!util.parse(files)) {
             return -1;
         }
-        if (!util.expand()) {
-            return 1;
+        if (useExpand) {
+            if (!util.expand()) {
+                return 1;
+            }
         }
 
         if (output != null) {
             util.mabl.dump(output);
         }
 
-        if (!util.typecheck()) {
-            return -1;
+        if (useTypeCheck) {
+            if (!util.typecheck()) {
+                return -1;
+            }
         }
 
         if (verify != null) {

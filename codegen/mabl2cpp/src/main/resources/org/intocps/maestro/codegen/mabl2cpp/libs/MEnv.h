@@ -1,3 +1,8 @@
+//
+// Created by Kenneth Guldbrandt Lausdahl on 18/05/2021.
+//
+#ifndef MENV_H
+#define MENV_H
 
 #include "fmi2TypesPlatform.h"
 #include <iostream>
@@ -13,6 +18,9 @@
 #include <rapidjson/document.h>
 #include <fstream>
 #include <rapidjson/istreamwrapper.h>
+
+
+
 using namespace rapidjson;
 class MEnvImpl {
 private:
@@ -46,3 +54,5 @@ public:
 
 
 MEnv load_MEnv(const char* runtimeConfigPath);
+
+#endif

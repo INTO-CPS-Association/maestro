@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AParallelBlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
@@ -206,12 +206,13 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
+
     @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
-    protected DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
+    public DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
         PStm var = newVariable(name, newARealNumericPrimitiveType(), initial);
@@ -220,7 +221,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
+    public BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
         String name = nameProvider.get();
         ABoolLiteralExp initial = newABoolLiteralExp(value);
         PStm var = newVariable(name, newABoleanPrimitiveType(), initial);
@@ -229,7 +230,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected IntVariableFmi2Api store(Supplier<String> nameProvider, int value) {
+    public IntVariableFmi2Api store(Supplier<String> nameProvider, int value) {
         String name = nameProvider.get();
         AIntLiteralExp initial = newAIntLiteralExp(value);
         PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
@@ -238,7 +239,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
+    public StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
         String name = nameProvider.get();
         AStringLiteralExp initial = newAStringLiteralExp(value);
         PStm var = newVariable(name, newAStringPrimitiveType(), initial);
@@ -483,7 +484,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception {
+    public FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception {
         return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, modelDescription, path, this);
     }
 

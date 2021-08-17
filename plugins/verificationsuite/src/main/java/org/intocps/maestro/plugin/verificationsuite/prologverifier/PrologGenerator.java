@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.verificationsuite.prologverifier;
 
 import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
 
@@ -100,9 +100,9 @@ public class PrologGenerator {
     }
 
     private String getMethod(Fmi2SimulationEnvironment.Variable variable) throws ExpandException {
-        if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output) {
+        if (variable.scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output) {
             return "getOut";
-        } else if (variable.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Input) {
+        } else if (variable.scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Input) {
             return "setIn";
         } else {
             throw new ExpandException("Unknown causality of port");

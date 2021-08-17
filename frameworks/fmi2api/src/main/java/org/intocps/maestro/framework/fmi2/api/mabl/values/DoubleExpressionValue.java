@@ -10,7 +10,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 
-public class DoubleExpressionValue extends NumericExpressionValueFmi2Api {
+public class DoubleExpressionValue extends NumericExpressionValueFmi2Api implements Fmi2Builder.DoubleExpressionValue {
 
     final PType type = new ARealNumericPrimitiveType();
     final PExp exp;

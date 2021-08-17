@@ -43,7 +43,7 @@
 package org.intocps.maestro.interpreter.values.variablestep;
 
 import org.intocps.maestro.fmi.FmiSimulationInstance;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.ConstraintHandler;
@@ -52,7 +52,7 @@ import org.intocps.maestro.interpreter.values.variablestep.constraint.FmuMaxStep
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.SamplingRateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.intocps.maestro.fmi.ModelDescription.*;
+import static org.intocps.maestro.fmi.Fmi2ModelDescription.*;
 
 import java.util.*;
 
@@ -97,8 +97,8 @@ public class StepsizeCalculator {
         }
     }
 
-    public Double getStepsize(final Double currentTime, final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Object>> currentValues,
-            final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
+    public Double getStepsize(final Double currentTime, final Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Object>> currentValues,
+            final Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, Map<Integer, Double>>> currentDerivatives, final Double maxFmuStepsize) {
         currentSolutionPoint.advance(currentTime, currentValues, currentDerivatives, stepsize, wasStepsizeLimitedByDiscreteConstraint);
         wasStepsizeLimitedByDiscreteConstraint = false;
         final Double stepsizeToEnd = endTime - currentTime;

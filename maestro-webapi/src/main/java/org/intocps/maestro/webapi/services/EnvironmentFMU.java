@@ -1,7 +1,7 @@
 package org.intocps.maestro.webapi.services;
 
 import org.intocps.fmi.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.InvalidVariableStringException;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.plugin.initializer.ModelParameter;
@@ -21,12 +21,12 @@ public class EnvironmentFMU implements IFmu {
     final ModelConnection.ModelInstance environmentFmuModelInstance;
     final String fmuName;
     // A map from the non-virtual variable to the corresponding virtual scalar variable in the environment FMU.
-    private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableInputs = new HashMap<>();
-    private final Map<String, ModelDescription.ScalarVariable> sourceToEnvironmentVariableOutputs = new HashMap<>();
+    private final Map<String, Fmi2ModelDescription.ScalarVariable> sourceToEnvironmentVariableInputs = new HashMap<>();
+    private final Map<String, Fmi2ModelDescription.ScalarVariable> sourceToEnvironmentVariableOutputs = new HashMap<>();
     // The inputs of the environment FMU
-    private final List<ModelDescription.ScalarVariable> inputs = new ArrayList<>();
+    private final List<Fmi2ModelDescription.ScalarVariable> inputs = new ArrayList<>();
     // The outputs of the environment FMU
-    private final List<ModelDescription.ScalarVariable> outputs = new ArrayList<>();
+    private final List<Fmi2ModelDescription.ScalarVariable> outputs = new ArrayList<>();
     private Integer nextValueReference = 1;
     private String modelDescriptionXML;
     private EnvironmentFMUComponent environmentFMUComponent;
@@ -56,7 +56,7 @@ public class EnvironmentFMU implements IFmu {
     // Therefore, all the inputs of environment FMU originates from requested outputs.
     public Map<ModelConnection.Variable, Object> getRequestedOutputValues() throws InvalidVariableStringException {
         Map<ModelConnection.Variable, Object> requestedOutputValues = new HashMap<>();
-        for (Map.Entry<String, ModelDescription.ScalarVariable> entry : sourceToEnvironmentVariableInputs.entrySet()) {
+        for (Map.Entry<String, Fmi2ModelDescription.ScalarVariable> entry : sourceToEnvironmentVariableInputs.entrySet()) {
             requestedOutputValues.put(ModelConnection.Variable.parse(entry.getKey()), this.environmentFMUComponent.getValue(entry.getValue()));
         }
 
@@ -74,15 +74,15 @@ public class EnvironmentFMU implements IFmu {
 
     }
 
-    public Map<String, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableInputs() {
+    public Map<String, Fmi2ModelDescription.ScalarVariable> getSourceToEnvironmentVariableInputs() {
         return sourceToEnvironmentVariableInputs;
     }
 
-    public Map<String, ModelDescription.ScalarVariable> getSourceToEnvironmentVariableOutputs() {
+    public Map<String, Fmi2ModelDescription.ScalarVariable> getSourceToEnvironmentVariableOutputs() {
         return sourceToEnvironmentVariableOutputs;
     }
 
-    public ModelConnection.Variable createVariable(ModelDescription.ScalarVariable sv) throws InvalidVariableStringException {
+    public ModelConnection.Variable createVariable(Fmi2ModelDescription.ScalarVariable sv) throws InvalidVariableStringException {
         return ModelConnection.Variable.parse(this.environmentFmuModelInstance.toString() + "." + sv.name);
     }
 
@@ -91,7 +91,7 @@ public class EnvironmentFMU implements IFmu {
         modelDescriptionXML = EnvironmentFMUModelDescription.createEnvironmentFMUModelDescription(inputs, outputs, fmuName);
     }
 
-    private Object start(ModelDescription.Type type) {
+    private Object start(Fmi2ModelDescription.Type type) {
         if (type.start != null) {
             return type.start;
         } else {
@@ -111,15 +111,15 @@ public class EnvironmentFMU implements IFmu {
         }
     }
 
-    private ModelDescription.ScalarVariable createOutputScalarVariable(ModelDescription.ScalarVariable sourceScalarVariable, long valueReference) {
-        ModelDescription.ScalarVariable outputScalarVariable = new ModelDescription.ScalarVariable();
-        outputScalarVariable.causality = ModelDescription.Causality.Output;
-        outputScalarVariable.variability = ModelDescription.Variability.Discrete;
-        outputScalarVariable.type = new ModelDescription.Type();
+    private Fmi2ModelDescription.ScalarVariable createOutputScalarVariable(Fmi2ModelDescription.ScalarVariable sourceScalarVariable, long valueReference) {
+        Fmi2ModelDescription.ScalarVariable outputScalarVariable = new Fmi2ModelDescription.ScalarVariable();
+        outputScalarVariable.causality = Fmi2ModelDescription.Causality.Output;
+        outputScalarVariable.variability = Fmi2ModelDescription.Variability.Discrete;
+        outputScalarVariable.type = new Fmi2ModelDescription.Type();
         outputScalarVariable.type.type = sourceScalarVariable.type.type;
         if (sourceScalarVariable.type.start != null) {
             outputScalarVariable.type.start = sourceScalarVariable.type.start;
-            outputScalarVariable.initial = ModelDescription.Initial.Exact;
+            outputScalarVariable.initial = Fmi2ModelDescription.Initial.Exact;
         }
         outputScalarVariable.valueReference = valueReference;
 
@@ -128,12 +128,12 @@ public class EnvironmentFMU implements IFmu {
         return outputScalarVariable;
     }
 
-    private ModelDescription.ScalarVariable createInputScalarVariable(ModelDescription.ScalarVariable sourceScalarVariable, long valueReference) {
-        ModelDescription.ScalarVariable inpSv = new ModelDescription.ScalarVariable();
-        inpSv.causality = ModelDescription.Causality.Input;
-        inpSv.type = new ModelDescription.Type();
+    private Fmi2ModelDescription.ScalarVariable createInputScalarVariable(Fmi2ModelDescription.ScalarVariable sourceScalarVariable, long valueReference) {
+        Fmi2ModelDescription.ScalarVariable inpSv = new Fmi2ModelDescription.ScalarVariable();
+        inpSv.causality = Fmi2ModelDescription.Causality.Input;
+        inpSv.type = new Fmi2ModelDescription.Type();
         inpSv.type.type = sourceScalarVariable.type.type;
-        inpSv.variability = ModelDescription.Variability.Discrete;
+        inpSv.variability = Fmi2ModelDescription.Variability.Discrete;
         inpSv.type.start = start(sourceScalarVariable.type);
         inpSv.valueReference = valueReference;
         // valueReference added to name to ensure uniqueness
@@ -141,11 +141,11 @@ public class EnvironmentFMU implements IFmu {
         return inpSv;
     }
 
-    public List<ModelDescription.ScalarVariable> getInputs() {
+    public List<Fmi2ModelDescription.ScalarVariable> getInputs() {
         return inputs;
     }
 
-    public List<ModelDescription.ScalarVariable> getOutputs() {
+    public List<Fmi2ModelDescription.ScalarVariable> getOutputs() {
         return outputs;
     }
 
@@ -193,14 +193,14 @@ public class EnvironmentFMU implements IFmu {
      *
      * @param envInputs
      */
-    public void calculateInputs(HashMap<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envInputs) {
+    public void calculateInputs(HashMap<ModelConnection.ModelInstance, List<Fmi2ModelDescription.ScalarVariable>> envInputs) {
         calculateScalarVariable(envInputs, IOTYPE.INPUT);
     }
 
-    private void calculateScalarVariable(Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envInputs, IOTYPE IO) {
-        for (Map.Entry<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> entry : envInputs.entrySet()) {
-            for (ModelDescription.ScalarVariable sv : entry.getValue()) {
-                ModelDescription.ScalarVariable newEnvSv = null;
+    private void calculateScalarVariable(Map<ModelConnection.ModelInstance, List<Fmi2ModelDescription.ScalarVariable>> envInputs, IOTYPE IO) {
+        for (Map.Entry<ModelConnection.ModelInstance, List<Fmi2ModelDescription.ScalarVariable>> entry : envInputs.entrySet()) {
+            for (Fmi2ModelDescription.ScalarVariable sv : entry.getValue()) {
+                Fmi2ModelDescription.ScalarVariable newEnvSv = null;
                 switch (IO) {
                     case INPUT:
                         newEnvSv = createInputScalarVariable(sv, nextValueReference);
@@ -218,7 +218,7 @@ public class EnvironmentFMU implements IFmu {
         }
     }
 
-    public void calculateOutputs(Map<ModelConnection.ModelInstance, List<ModelDescription.ScalarVariable>> envOutputs) {
+    public void calculateOutputs(Map<ModelConnection.ModelInstance, List<Fmi2ModelDescription.ScalarVariable>> envOutputs) {
         calculateScalarVariable(envOutputs, IOTYPE.OUTPUT);
     }
 

@@ -5,14 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.NullNode
 import org.intocps.maestro.ast.*
-import org.intocps.maestro.ast.display.PrettyPrinter
-import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit
-import org.intocps.maestro.ast.node.PExp
-import org.intocps.maestro.ast.node.PStm
-import org.intocps.maestro.ast.node.SBlockStm
+import org.intocps.maestro.ast.node.*
 import org.intocps.maestro.core.Framework
 import org.intocps.maestro.core.messages.IErrorReporter
-import org.intocps.maestro.fmi.ModelDescription
+import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.core.IRelation
 import org.intocps.maestro.framework.core.ISimulationEnvironment
 import org.intocps.maestro.framework.core.RelationVariable
@@ -20,6 +16,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.InvalidVariableStringException
 import org.intocps.maestro.framework.fmi2.ModelConnection
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
+import org.intocps.maestro.framework.fmi2.api.Fmi2Builder.ArrayVariable
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api
@@ -31,10 +28,8 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFm
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
-import org.intocps.maestro.plugin.BasicMaestroExpansionPlugin
-import org.intocps.maestro.plugin.ExpandException
-import org.intocps.maestro.plugin.IPluginConfiguration
-import org.intocps.maestro.plugin.SimulationFramework
+import org.intocps.maestro.plugin.*
+import org.intocps.maestro.plugin.IMaestroExpansionPlugin.EmptyRuntimeConfig
 import org.intocps.maestro.plugin.initializer.instructions.*
 import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery
 import org.slf4j.Logger
@@ -42,7 +37,9 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
 import java.util.function.Consumer
+import java.util.function.Function
 import java.util.function.Predicate
+import java.util.stream.Collectors
 
 @SimulationFramework(framework = Framework.FMI2)
 class Initializer : BasicMaestroExpansionPlugin {
@@ -65,7 +62,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         MableAstFactory.newAVoidType()
     )
 
-    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<ModelDescription.ScalarVariable>>()
+    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<Fmi2ModelDescription.ScalarVariable>>()
     private val topologicalPlugin: TopologicalPlugin
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
@@ -99,6 +96,159 @@ class Initializer : BasicMaestroExpansionPlugin {
     val declaredUnfoldFunctions: Set<AFunctionDeclaration>
         get() = setOf(f1)
 
+    override fun <R : Any?> expandWithRuntimeAddition(
+        declaredFunction: AFunctionDeclaration?,
+        builder: Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, *>?,
+        formalArguments: MutableList<Fmi2Builder.Variable<PStm, *>>?,
+        config: IPluginConfiguration?,
+        envIn: ISimulationEnvironment?,
+        errorReporter: IErrorReporter?
+    ): IMaestroExpansionPlugin.RuntimeConfigAddition<R> {
+        if (!declaredUnfoldFunctions.contains(declaredFunction)) {
+            throw ExpandException("Unknown function declaration")
+        }
+
+        if (envIn == null) {
+            throw ExpandException("Simulation environment must not be null")
+        }
+
+        if (formalArguments == null || formalArguments.size != f1.getFormals().size) {
+            throw ExpandException("Invalid args")
+        }
+
+        val env = envIn as Fmi2SimulationEnvironment
+        try {
+            if (builder !is MablApiBuilder && builder != null) {
+                throw ExpandException(
+                    "Not supporting the given builder type. Expecting " + MablApiBuilder::class.java.simpleName + " got " +
+                            builder.javaClass.simpleName
+                )
+            }
+
+            val builder = builder as MablApiBuilder
+
+            val dynamicScope = builder.dynamicScope
+            val math = builder.mablToMablAPI.mathBuilder
+            val booleanLogic = builder.booleanBuilder
+
+
+            // Convert raw MaBL to API
+            val externalStartTime = formalArguments[1] as DoubleVariableFmi2Api
+            val externalEndTime = formalArguments[2] as DoubleVariableFmi2Api
+            val endTimeVar = dynamicScope.store("fixed_end_time", 0.0) as DoubleVariableFmi2Api
+            endTimeVar.setValue(externalEndTime)
+
+            // use LinkedHashMap to preserve added order
+            val fmuInstances: Map<String, ComponentVariableFmi2Api> =
+                ((formalArguments[0] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
+                    .collect(Collectors.toMap(
+                        { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
+                        { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
+                    ) { LinkedHashMap() })
+
+            expansionLogic(
+                config,
+                dynamicScope,
+                fmuInstances,
+                externalStartTime,
+                externalEndTime,
+                env,
+                builder,
+                booleanLogic,
+                math
+            )
+
+//            val algorithm = builder.buildRaw() as SBlockStm
+//            algorithm.apply(ToParExp())
+//
+//
+//            algorithm.body
+        } catch (e: Exception) {
+            throw ExpandException("Internal error: ", e)
+        }
+
+        return EmptyRuntimeConfig()
+    }
+
+    private fun expansionLogic(
+        config: IPluginConfiguration?,
+        dynamicScope: DynamicActiveBuilderScope,
+        fmuInstances: Map<String, ComponentVariableFmi2Api>,
+        externalStartTime: DoubleVariableFmi2Api,
+        externalEndTime: DoubleVariableFmi2Api,
+        env: Fmi2SimulationEnvironment,
+        builder: MablApiBuilder,
+        booleanLogic: BooleanBuilderFmi2Api,
+        math: MathBuilderFmi2Api
+    ) {
+        this.config = config as InitializationConfig
+
+        this.modelParameters = config.modelParameters
+        this.envParameters = config.envParameters
+
+        // Convergence related variables
+        absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
+        relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
+        maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
+
+        logger.debug("Setup experiment for all components")
+        fmuInstances.values.forEach { i ->
+            i.setupExperiment(
+                externalStartTime,
+                externalEndTime,
+                this.config!!.relativeTolerance
+            )
+        };
+        val connections = createConnections(env, fmuInstances)
+
+        //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
+        val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
+
+        //Verification against prolog should only be done if it turned on and there is no loops
+        if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
+            initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
+
+
+        //Set variables for all components in IniPhase
+        setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
+
+        //Enter initialization Mode
+        logger.debug("Enter initialization Mode")
+        fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
+
+        val instructions = instantiationOrder.map { i ->
+            createInitInstructions(
+                i.toList(),
+                dynamicScope,
+                fmuInstances,
+                booleanLogic,
+                math
+            )
+        }
+        var stabilisationScope: ScopeFmi2Api? = null
+        var stabilisationLoop: IntVariableFmi2Api? = null
+        if (this.config!!.stabilisation) {
+            stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
+            stabilisationScope = dynamicScope.enterWhile(
+                stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
+            )
+        }
+
+        instructions.forEach { i -> i.perform() }
+
+        if (stabilisationScope != null) {
+            stabilisationLoop!!.decrement();
+            stabilisationScope.activate()
+            stabilisationScope.leave();
+        }
+
+
+        setRemainingInputs(fmuInstances, builder)
+
+        //Exit initialization Mode
+        fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
+    }
+
     override fun expand(
         declaredFunction: AFunctionDeclaration, formalArguments: List<PExp>, config: IPluginConfiguration,
         envIn: ISimulationEnvironment, errorReporter: IErrorReporter
@@ -128,80 +278,92 @@ class Initializer : BasicMaestroExpansionPlugin {
             // Import the external components into Fmi2API
             val fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env)
 
-            // Create bindings
-            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
-
-            this.config = config as InitializationConfig
-
-            this.modelParameters = config.modelParameters
-            this.envParameters = config.envParameters
-
-            // Convergence related variables
-            absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
-            relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
-            maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
-
-            logger.debug("Setup experiment for all components")
-            fmuInstances.values.forEach { i ->
-                i.setupExperiment(
-                    externalStartTime,
-                    externalEndTime,
-                    this.config!!.relativeTolerance
-                )
-            };
-            val connections = createConnections(env, fmuInstances)
-
-            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
-
-            //Verification against prolog should only be done if it turned on and there is no loops
-            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
-                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
-
-
-            //Set variables for all components in IniPhase
-            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
-
-            //Enter initialization Mode
-            logger.debug("Enter initialization Mode")
-            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
-
-            val instructions = instantiationOrder.map { i ->
-                createInitInstructions(
-                    i.toList(),
-                    dynamicScope,
-                    fmuInstances,
-                    booleanLogic,
-                    math
-                )
-            }
-            var stabilisationScope: ScopeFmi2Api? = null
-            var stabilisationLoop: IntVariableFmi2Api? = null
-            if (this.config!!.stabilisation) {
-                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
-                stabilisationScope = dynamicScope.enterWhile(
-                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
-                )
-            }
-
-            instructions.forEach { i -> i.perform() }
-
-            if (stabilisationScope != null) {
-                stabilisationLoop!!.decrement();
-                stabilisationScope.activate()
-                stabilisationScope.leave();
-            }
-
-
-            setRemainingInputs(fmuInstances, builder)
-
-            //Exit initialization Mode
-            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
+            expansionLogic(
+                config,
+                builder.dynamicScope,
+                fmuInstances,
+                externalStartTime,
+                externalEndTime,
+                env,
+                builder,
+                booleanLogic,
+                math
+            );
+//
+//            // Create bindings
+//            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
+//
+//            this.config = config as InitializationConfig
+//
+//            this.modelParameters = config.modelParameters
+//            this.envParameters = config.envParameters
+//
+//            // Convergence related variables
+//            absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
+//            relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
+//            maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
+//
+//            logger.debug("Setup experiment for all components")
+//            fmuInstances.values.forEach { i ->
+//                i.setupExperiment(
+//                    externalStartTime,
+//                    externalEndTime,
+//                    this.config!!.relativeTolerance
+//                )
+//            };
+//            val connections = createConnections(env, fmuInstances)
+//
+//            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
+//            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
+//
+//            //Verification against prolog should only be done if it turned on and there is no loops
+//            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
+//                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
+//
+//
+//            //Set variables for all components in IniPhase
+//            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
+//
+//            //Enter initialization Mode
+//            logger.debug("Enter initialization Mode")
+//            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
+//
+//            val instructions = instantiationOrder.map { i ->
+//                createInitInstructions(
+//                    i.toList(),
+//                    dynamicScope,
+//                    fmuInstances,
+//                    booleanLogic,
+//                    math
+//                )
+//            }
+//            var stabilisationScope: ScopeFmi2Api? = null
+//            var stabilisationLoop: IntVariableFmi2Api? = null
+//            if (this.config!!.stabilisation) {
+//                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
+//                stabilisationScope = dynamicScope.enterWhile(
+//                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
+//                )
+//            }
+//
+//            instructions.forEach { i -> i.perform() }
+//
+//            if (stabilisationScope != null) {
+//                stabilisationLoop!!.decrement();
+//                stabilisationScope.activate()
+//                stabilisationScope.leave();
+//            }
+//
+//
+//            setRemainingInputs(fmuInstances, builder)
+//
+//            //Exit initialization Mode
+//            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
 
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
 
-            println(PrettyPrinter.print(algorithm))
+
             algorithm.body
         } catch (e: Exception) {
             throw ExpandException("Internal error: ", e)
@@ -209,7 +371,7 @@ class Initializer : BasicMaestroExpansionPlugin {
     }
 
     private fun setRemainingInputs(
-        fmuInstances: MutableMap<String, ComponentVariableFmi2Api>,
+        fmuInstances: Map<String, ComponentVariableFmi2Api>,
         builder: MablApiBuilder
     ) {
         for (comp in fmuInstances.values) {
@@ -233,7 +395,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         }
     }
 
-    private fun portSet(comp: ComponentVariableFmi2Api, x: ModelDescription.ScalarVariable?): Boolean {
+    private fun portSet(comp: ComponentVariableFmi2Api, x: Fmi2ModelDescription.ScalarVariable?): Boolean {
         return if (portsAlreadySet.containsKey(comp)) portsAlreadySet.getValue(comp).contains(x) else false
     }
 
@@ -250,38 +412,38 @@ class Initializer : BasicMaestroExpansionPlugin {
 
             var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
             when (port.scalarVariable.type.type!!) {
-                ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
-                ModelDescription.Types.Real -> {
+                Fmi2ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
+                Fmi2ModelDescription.Types.Real -> {
                     if (staticValue is Int) {
                         staticValue = staticValue.toDouble()
                     }
                     val b: Double = staticValue as Double
                     comp.set(port, DoubleExpressionValue.of(b))
                 }
-                ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(staticValue as Int))
-                ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(staticValue as String))
-                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                Fmi2ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(staticValue as Int))
+                Fmi2ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(staticValue as String))
+                Fmi2ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
                 else -> throw ExpandException("Not known type")
             }
         } else {
             when (port.scalarVariable.type.type!!) {
-                ModelDescription.Types.Boolean -> {
+                Fmi2ModelDescription.Types.Boolean -> {
                     val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
-                ModelDescription.Types.Real -> {
+                Fmi2ModelDescription.Types.Real -> {
                     val v = builder.executionEnvironment.getReal(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
-                ModelDescription.Types.Integer -> {
+                Fmi2ModelDescription.Types.Integer -> {
                     val v = builder.executionEnvironment.getInt(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
-                ModelDescription.Types.String -> {
+                Fmi2ModelDescription.Types.String -> {
                     val v = builder.executionEnvironment.getString(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
-                ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
+                Fmi2ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
                 else -> throw ExpandException("Not known type")
             }
         }
@@ -290,7 +452,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
-    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: ModelDescription.ScalarVariable) {
+    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: Fmi2ModelDescription.ScalarVariable) {
         if (portsAlreadySet.containsKey(comp)) {
             portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
         } else {
@@ -311,7 +473,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         } else {
             val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, c) }
             val outputPorts =
-                ports.filter { p -> p.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output }
+                ports.filter { p -> p.scalarVariable.scalarVariable.causality == Fmi2ModelDescription.Causality.Output }
                     .map { i -> i.scalarVariable }
             LoopSimInstruction(
                 dynamicScope,
@@ -330,16 +492,20 @@ class Initializer : BasicMaestroExpansionPlugin {
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
         p: Fmi2SimulationEnvironment.Variable
     ): FMUCoSimInstruction {
-        val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
-        val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
-        return when (p.scalarVariable.scalarVariable.causality) {
-            ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
-            ModelDescription.Causality.Input -> {
-                addToPortsAlreadySet(fmu, port.scalarVariable)
-                SetInstruction(fmu, port)
+        val fmu = fmuInstances.values.find { x -> x.environmentName.equals(p.scalarVariable.instance.text) }
+//        val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
+        if (fmu != null) {
+            val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
+            return when (p.scalarVariable.scalarVariable.causality) {
+                Fmi2ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
+                Fmi2ModelDescription.Causality.Input -> {
+                    addToPortsAlreadySet(fmu, port.scalarVariable)
+                    SetInstruction(fmu, port)
+                }
+                else -> throw ExpandException("Internal error")
             }
-            else -> throw ExpandException("Internal error")
-        }
+        } else
+            throw ExpandException("Failed to retrieve FMUInstance by name: " + p.scalarVariable.instance.text)
     }
 
 
@@ -370,7 +536,7 @@ class Initializer : BasicMaestroExpansionPlugin {
     ): Set<Fmi2SimulationEnvironment.Relation> {
         return fmuInstances.values
             .flatMap { i: ComponentVariableFmi2Api ->
-                env.getRelations(i.name)
+                env.getRelations(i.environmentName)
                     .filter { rel: Fmi2SimulationEnvironment.Relation -> rel.direction == IRelation.Direction.OutputToInput }
             }.toSet()
     }
@@ -378,7 +544,7 @@ class Initializer : BasicMaestroExpansionPlugin {
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
-        predicate: Predicate<ModelDescription.ScalarVariable>,
+        predicate: Predicate<Fmi2ModelDescription.ScalarVariable>,
         builder: MablApiBuilder
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
@@ -422,7 +588,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         var conf: InitializationConfig? = null
         try {
             conf = InitializationConfig(
-                parameters,
+                if (parameters is NullNode) null else parameters,
                 if (envParameters is NullNode) null else envParameters,
                 verify,
                 stabilisation,
@@ -443,7 +609,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         }
         compilationUnit = AImportedModuleCompilationUnit()
         compilationUnit!!.imports =
-            listOf("FMI2", "TypeConverter", "Math", "Logger", "MEnv").map { identifier: String? ->
+            listOf("FMI2", "TypeConverter", "Math", "Logger", "MEnv", "BooleanLogic").map { identifier: String? ->
                 MableAstFactory.newAIdentifier(
                     identifier
                 )
@@ -515,7 +681,7 @@ class Initializer : BasicMaestroExpansionPlugin {
 
         private fun findParameterOrDefault(
             compName: String,
-            sv: ModelDescription.ScalarVariable,
+            sv: Fmi2ModelDescription.ScalarVariable,
             modelParameters: List<ModelParameter>?
         ): Any {
             val parameterValue =

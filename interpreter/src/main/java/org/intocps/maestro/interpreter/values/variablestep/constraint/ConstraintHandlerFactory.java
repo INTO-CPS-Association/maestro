@@ -42,7 +42,6 @@
  */
 package org.intocps.maestro.interpreter.values.variablestep.constraint;
 
-import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.values.variablestep.InitializationMsgJson;
@@ -51,7 +50,7 @@ import org.intocps.maestro.interpreter.values.variablestep.constraint.boundeddif
 import org.intocps.maestro.interpreter.values.variablestep.constraint.samplingrate.SamplingRateHandler;
 import org.intocps.maestro.interpreter.values.variablestep.constraint.zerocrossing.ZerocrossingHandler;
 import org.slf4j.Logger;
-import static org.intocps.maestro.fmi.ModelDescription.*;
+import static org.intocps.maestro.fmi.Fmi2ModelDescription.*;
 
 import java.util.*;
 
