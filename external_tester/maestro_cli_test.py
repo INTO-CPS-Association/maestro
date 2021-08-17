@@ -69,7 +69,7 @@ def cliGenerateAlgorithmFromScenario():
     temporary = tempfile.mkdtemp()
     print(f"Temporary directory: {temporary}")
     scenarioPath = os.path.join(SCR_path, "generate_from_scenario", "scenario.conf")
-    cmd = "java -jar {0} placeHolderName generate-algorithm {1} -output {2}".format(path, scenarioPath, temporary)
+    cmd = "java -jar {0} scenario-verifier generate-algorithm {1} -output {2}".format(path, scenarioPath, temporary)
     func = lambda: print("Succesfully generated algorithm from scenario") if(os.path.exists(os.path.join(temporary, "algorithm.conf"))) else lambda: (Exception("Algorithm was not returned"))
     testutils.testCliCommandWithFunc(cmd, func)
 
@@ -89,7 +89,7 @@ def cliGenerateAlgorithmFromMultiModel():
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multiModel, jsonFile)
     
-    cmd = "java -jar {0} placeHolderName generate-algorithm {1} -output {2}".format(path, multiModelPath, temporary)
+    cmd = "java -jar {0} scenario-verifier generate-algorithm {1} -output {2}".format(path, multiModelPath, temporary)
     func = lambda: validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))
     testutils.testCliCommandWithFunc(cmd, func)
 
@@ -111,7 +111,7 @@ def cliExecuteAlgorithmFromExtendedMultiModel():
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multimodel, jsonFile)
 
-    cmd = "java -jar {0} placeHolderName execute-algorithm -mm {1} -ep {2} -output {3} -di -vim FMI2".format(path, multiModelPath, executionParametersPath, temporary)
+    cmd = "java -jar {0} scenario-verifier execute-algorithm -mm {1} -ep {2} -output {3} -di -vim FMI2".format(path, multiModelPath, executionParametersPath, temporary)
     func = lambda: validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))
     testutils.testCliCommandWithFunc(cmd, func)
 
@@ -134,7 +134,7 @@ def cliExecuteAlgorithmFromMasterModel():
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multimodel, jsonFile)
 
-    cmd = "java -jar {0} placeHolderName execute-algorithm -mm {1} -ep {2} -al {3} -output {4} -di -vim FMI2".format(path, multiModelPath, executionParametersPath, masterModelPath, temporary)
+    cmd = "java -jar {0} scenario-verifier execute-algorithm -mm {1} -ep {2} -al {3} -output {4} -di -vim FMI2".format(path, multiModelPath, executionParametersPath, masterModelPath, temporary)
     func = lambda: print("Succesfully executed the algorithm and returned output") if(validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))) else lambda: (Exception("No output was returned from executing the algorithm"))
     testutils.testCliCommandWithFunc(cmd, func)
 

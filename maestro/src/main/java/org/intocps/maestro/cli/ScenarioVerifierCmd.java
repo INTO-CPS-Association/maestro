@@ -31,10 +31,11 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "placeHolderName", description = "Handles all functionality related to generating, verifying and executing scenarios",
+@CommandLine.Command(name = "scenario-verifier", description = "Utilise the scenario verifier tool to generate and verify algorithms (as part of a " +
+        "full scenario). It is also possible to execute scenarios and extended multi-models.",
         mixinStandardHelpOptions = true, subcommands = {ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class, VisualizeTracesCmd.class,
         VerifyAlgorithmCmd.class})
-public class PlaceHolderNameCmd {
+public class ScenarioVerifierCmd {
 }
 
 @CommandLine.Command(name = "visualize-traces", description = "Visualizes traces for an algorithm that cannot be verified successfully.",
@@ -99,7 +100,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
     }
 }
 
-@CommandLine.Command(name = "verify-algorithm", description = "Verifies an algorithm generated from a scenario.",
+@CommandLine.Command(name = "verify-algorithm", description = "Verifies an algorithm in a scenario.",
         mixinStandardHelpOptions = true)
 class VerifyAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Parameters(description = "A master model (scenario + algorithm) in .conf format")
@@ -147,7 +148,8 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
     }
 }
 
-@CommandLine.Command(name = "generate-algorithm", description = "Generates an algorithm from a scenario or multi-model.", mixinStandardHelpOptions =
+@CommandLine.Command(name = "generate-algorithm", description = "Generates an algorithm from a scenario or multi-model.",
+        mixinStandardHelpOptions =
         true)
 class GenerateAlgorithmCmd  implements Callable<Integer> {
     @CommandLine.Parameters(description = "A scenario (.conf) or a multi-model (.json)")
@@ -181,7 +183,7 @@ class GenerateAlgorithmCmd  implements Callable<Integer> {
 }
 
 @CommandLine.Command(name = "execute-algorithm", description = "Executes an algorithm generated from a multi-model. If no algorithm is specified " +
-        "(as a master model) it will be generated from the multi-model, however this requires the multi-model to include scenario " +
+        "(as a master model) it will be generated from the multi-model, however this requires an extended multi-model that includes scenario " +
         "verifier information such as reactivity!", mixinStandardHelpOptions = true)
 class ExecuteAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-v", "--verbose"}, description = "Verbose")
