@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.StepAlgorithm;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
@@ -62,8 +64,9 @@ public class ImportCmd implements Callable<Integer> {
 
         if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(Collectors
-                    .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(
+                    Collectors.toMap(
+                            entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                             Map.Entry::getValue));
             builder.setLogLevels(removedFMUKeyFromLogLevels);
         }
@@ -73,9 +76,13 @@ public class ImportCmd implements Callable<Integer> {
         initialize.put("environmentParameters", simulationConfiguration.getEnvironmentParameters());
 
         JacobianStepConfig algorithmConfig = new JacobianStepConfig();
-        algorithmConfig.startTime = 0.0;
+        algorithmConfig.startTime = simulationConfiguration.getStartTime();
         algorithmConfig.endTime = simulationConfiguration.getEndTime();
-        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) simulationConfiguration.getAlgorithm()).getSize());
+        algorithmConfig.stepAlgorithm = simulationConfiguration.getAlgorithm();
+        algorithmConfig.absoluteTolerance = simulationConfiguration.getGlobal_absolute_tolerance();
+        algorithmConfig.relativeTolerance = simulationConfiguration.getGlobal_relative_tolerance();
+        algorithmConfig.simulationProgramDelay = simulationConfiguration.isSimulationProgramDelay();
+        algorithmConfig.stabilisation = simulationConfiguration.isStabalizationEnabled();
 
         Fmi2SimulationEnvironmentConfiguration environmentConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         environmentConfiguration.fmus = simulationConfiguration.getFmus();
@@ -86,7 +93,6 @@ public class ImportCmd implements Callable<Integer> {
         builder.setFrameworkConfig(Framework.FMI2, environmentConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.isVisible()).setLoggingOn(simulationConfiguration.isLoggingOn())
                 .setStepAlgorithmConfig(algorithmConfig);
-
 
         return builder.build();
     }

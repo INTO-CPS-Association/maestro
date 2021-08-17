@@ -160,9 +160,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             fmuInstances.forEach((x, y) -> {
                 List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
-
                 Set<String> scalarVariablesToShare = y.getPorts().stream()
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .map(PortFmi2Api::getName).collect(Collectors.toSet());
                 scalarVariablesToShare.addAll(variablesToLog.stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
 
@@ -218,7 +217,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             if (algorithm == StepAlgorithm.VARIABLESTEP) {
                 // Initialize variable step module
                 List<PortFmi2Api> ports = fmuInstances.values().stream().map(ComponentVariableFmi2Api::getPorts).flatMap(Collection::stream)
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
                 variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config",

@@ -152,9 +152,9 @@ public class Maestro2Broker {
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
         Map<String, List<String>> removedFMUKeyFromLogLevels = body.getLogLevels() == null ? new HashMap<>() : body.getLogLevels().entrySet().stream()
-                .collect(Collectors
-                        .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                                Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                        entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                        Map.Entry::getValue));
 
         // Setup step config
         JacobianStepConfig config = new JacobianStepConfig();
@@ -166,18 +166,6 @@ public class Maestro2Broker {
         config.stepAlgorithm = initializeRequest.getAlgorithm();
         config.startTime = body.getStartTime();
         config.endTime = body.getEndTime();
-
-        if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
-                if (v instanceof VarStepConstraint.ZeroCrossingConstraint) {
-                    config.variablesOfInterest.addAll(((VarStepConstraint.ZeroCrossingConstraint) v).getPorts());
-                } else if (v instanceof VarStepConstraint.BoundedDifferenceConstraint) {
-                    config.variablesOfInterest.addAll(((VarStepConstraint.BoundedDifferenceConstraint) v).getPorts());
-                }
-            });
-        } else if (!(initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig)) {
-            throw new Exception("Could not get algorithm from specification");
-        }
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
@@ -210,8 +198,8 @@ public class Maestro2Broker {
 
 
         executeInterpreter(socket, Stream.concat(connectedOutputs.stream(),
-                (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
-                        .stream()).collect(Collectors.toList()),
+                        (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(
+                                initializeRequest.getLogVariables())).stream()).collect(Collectors.toList()),
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
                 body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
