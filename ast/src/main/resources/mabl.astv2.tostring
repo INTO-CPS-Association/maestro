@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
 %stm->break = "break"
 %stm->instanceMapping = "@Map(" + [identifier]+ " -> "+[name] + ")"
 %stm->config = "@Config(\"" + [config] + "\")"
-%stm->error = "error " + [exp]
+%stm->error = "error "+ $ ($[exp]$==null?"":$[exp]$)$
 %stm->try = "try" + [body] +  "finally"  +[finally]
 
 
