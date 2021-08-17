@@ -256,7 +256,7 @@ basicUrl = f"http://localhost:{str(port)}"
 
 try:
     # Test connection
-    maxWait = 10
+    maxWait = 20
     while maxWait > 0:
         try:
             r = requests.get(basicUrl+"/version")
