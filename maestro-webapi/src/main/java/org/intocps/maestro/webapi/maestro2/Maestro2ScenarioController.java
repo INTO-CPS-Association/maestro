@@ -34,20 +34,21 @@ import java.util.zip.ZipOutputStream;
 @Component
 public class Maestro2ScenarioController {
 
-    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE})
+    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE}, produces =
+            MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
         MasterModel masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
         return ScenarioConfGenerator.generate(masterModel, masterModel.name());
     }
 
-    @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
     public MasterMultiModelDTO generateAlgorithmFromMultiModel(@RequestBody MultiModelScenarioVerifier multiModel) {
         // MaxPossibleStepSize is related to verification in Uppaal.
         MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         return new MasterMultiModelDTO(ScenarioConfGenerator.generate(masterModel, masterModel.name()), multiModel);
     }
 
-    @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE})
+    @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
     public VerificationDTO verifyAlgorithm(@RequestBody String masterModelAsString) throws Exception {
         // Load the master model, verify the algorithm and return success, detailed message and the resulting uppaal model.
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));

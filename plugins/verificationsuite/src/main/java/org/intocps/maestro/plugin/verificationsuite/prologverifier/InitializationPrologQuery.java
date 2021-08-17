@@ -2,6 +2,8 @@ package org.intocps.maestro.plugin.verificationsuite.prologverifier;
 
 import com.ugos.jiprolog.engine.*;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InitializationPrologQuery {
+    final static Logger logger = LoggerFactory.getLogger(InitializationPrologQuery.class);
     private final PrologGenerator prologGenerator;
 
     public InitializationPrologQuery(PrologGenerator prologGenerator) {
@@ -53,7 +56,7 @@ public class InitializationPrologQuery {
             //If the solution is false the result will be null
             isCorrectInitializationOrder = (jipQuery.nextSolution() != null);
         } catch (JIPRuntimeException ex) {
-            System.out.println(ex.getMessage());
+            logger.error("No solution", ex);
         }
 
         jip.reset();

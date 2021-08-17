@@ -69,6 +69,10 @@ public class MablCliUtil {
                 files.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mableFileFilter::test)))),
                 files.stream().filter(File::isFile).filter(mableFileFilter)).collect(Collectors.toList());
 
+        if (sourceFiles.isEmpty()) {
+            return true;
+        }
+
         mabl.parse(sourceFiles);
 
         return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);

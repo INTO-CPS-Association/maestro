@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import sys
 import testutils
 import os
@@ -43,7 +44,7 @@ def validateCliSpecResult(outputs, temporary):
 
 def cliSpecGen():
     testutils.printSection("CLI with Specification Generation")
-    temporary=testutils.createAndPrepareTempDirectory()
+    temporary = testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
     cmd = "java -jar {0} import -output {1} --dump-intermediate sg1 {2} {3} -i -vi FMI2".format(path, temporary.dirPath, temporary.initializationPath, testutils.simulationConfigurationPath)
     testutils.testCliCommandWithFunc(cmd, lambda: validateCliSpecResult(outputs, temporary))
@@ -51,7 +52,7 @@ def cliSpecGen():
 
 def cliRaw():
     testutils.printSection("CLI Raw")
-    temporary=testutils.createAndPrepareTempDirectory()
+    temporary = testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
     cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} {3} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample, testutils.folderWithModuleDefinitions)
     testutils.testCliCommandWithFunc(cmd, lambda: validateCliSpecResult(outputs, temporary))
@@ -59,7 +60,7 @@ def cliRaw():
 
 def cliExpansion():
     testutils.printSection("CLI Expansion")
-    temporary=testutils.createAndPrepareTempDirectory()
+    temporary = testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
     cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
     testutils.testCliCommandWithFunc(cmd, lambda: validateCliSpecResult(outputs, temporary))

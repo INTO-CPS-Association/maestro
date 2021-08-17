@@ -63,7 +63,7 @@ public class Main
 
 		try
 		{
-			new ModelDescription(path);
+			new Fmi2ModelDescription(path);
 		} catch (SAXParseException e)
 		{
 			System.err.println("Invalid ModelDescription: " + e.getMessage()

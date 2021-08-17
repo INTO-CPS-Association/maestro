@@ -6,7 +6,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.newABoolLiteralExp;
 
-public class BooleanExpressionValue extends PredicateFmi2Api implements Fmi2Builder.ExpressionValue {
+public class BooleanExpressionValue extends PredicateFmi2Api implements Fmi2Builder.ExpressionValue, Fmi2Builder.BooleanExpressionValue {
 
     public BooleanExpressionValue(PExp exp) {
         super(exp);

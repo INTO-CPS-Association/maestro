@@ -14,7 +14,7 @@ import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexToken;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.vdm.annotations.ast.ASTOnFailAnnotation;
 import org.intocps.maestro.framework.fmi2.vdm.annotations.in.INOnFailAnnotation;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
             FMI2SaxHandler handler = new FMI2SaxHandler(path.getPath(), "var");
             IFmu fmu = FmuFactory.create(null, path);
             //check schema. The constructor checks the schema
-            new ModelDescription(fmu.getModelDescription());
+            new Fmi2ModelDescription(fmu.getModelDescription());
 
             logger.trace("Generate VDM specification for: {}", id);
             //convert to VDM

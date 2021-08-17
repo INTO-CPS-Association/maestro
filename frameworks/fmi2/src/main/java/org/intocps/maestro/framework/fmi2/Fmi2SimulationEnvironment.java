@@ -6,7 +6,7 @@ import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
     Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
-    HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
+    HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
     Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
@@ -118,7 +118,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-    public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
+    public Set<Map.Entry<String, Fmi2ModelDescription>> getFmusWithModelDescriptions() {
         return this.fmuKeyToModelDescription.entrySet();
     }
 
@@ -142,7 +142,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         // Build map from fmuKey to ModelDescription
         this.fmuToUri = fmuToURI;
         List<ModelConnection> connections = buildConnections(msg.connections);
-        HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
+        HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
         if (msg.faultInjectConfigurationPath != null && msg.faultInjectConfigurationPath.length() > 0) {
@@ -182,21 +182,21 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
             LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
             Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
 
-            List<ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
+            List<Fmi2ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
-                            .filter(x -> x.causality == ModelDescription.Causality.Output).collect(Collectors.toList());
+                            .filter(x -> x.causality == Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
 
             // Add the instance to the globalVariablesToLogForInstance map.
             ArrayList<org.intocps.maestro.framework.fmi2.RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
             this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
-            for (ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
+            for (Fmi2ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
                 Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
 
                 // dependantInputs are the inputs on which the current output depends on internally
                 Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
-                for (ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
-                    if (inputScalarVariable.causality == ModelDescription.Causality.Input) {
+                for (Fmi2ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
+                    if (inputScalarVariable.causality == Fmi2ModelDescription.Causality.Input) {
                         Variable inputVariable = getOrCreateVariable(inputScalarVariable, instanceLexIdentifier);
                         dependantInputs.put(instanceLexIdentifier, inputVariable);
                     }
@@ -221,8 +221,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
                     // externalInputs are all the external Inputs that depends on the current output
                     Map<LexIdentifier, Variable> externalInputs = new HashMap<>();
                     for (ModelConnection.Variable modelConnToVar : externalInputTargets) {
-                        ModelDescription md = instanceNameToInstanceComponentInfo.get(modelConnToVar.instance.instanceName).modelDescription;
-                        Optional<ModelDescription.ScalarVariable> toScalarVariable =
+                        Fmi2ModelDescription md = instanceNameToInstanceComponentInfo.get(modelConnToVar.instance.instanceName).modelDescription;
+                        Optional<Fmi2ModelDescription.ScalarVariable> toScalarVariable =
                                 md.getScalarVariables().stream().filter(sv -> sv.name.equals(modelConnToVar.variable)).findFirst();
                         if (toScalarVariable.isPresent()) {
                             LexIdentifier inputInstanceLexIdentifier = new LexIdentifier(modelConnToVar.instance.instanceName, null);
@@ -299,20 +299,20 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
 
-    private HashMap<String, ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus) throws Exception {
-        HashMap<String, ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
+    private HashMap<String, Fmi2ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus) throws Exception {
+        HashMap<String, Fmi2ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
         for (Map.Entry<String, URI> entry : fmus.entrySet()) {
             String key = entry.getKey();
             URI value = entry.getValue();
             IFmu fmu = FmuFactory.create(null, value);
-            ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
+            Fmi2ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
             fmuKeyToFmuWithMD.put(key, md);
         }
 
         return fmuKeyToFmuWithMD;
     }
 
-    Variable getOrCreateVariable(ModelDescription.ScalarVariable inputScalarVariable, LexIdentifier instanceLexIdentifier) {
+    Variable getOrCreateVariable(Fmi2ModelDescription.ScalarVariable inputScalarVariable, LexIdentifier instanceLexIdentifier) {
         if (variables.containsKey(inputScalarVariable.name + instanceLexIdentifier)) {
             return variables.get(inputScalarVariable.name + instanceLexIdentifier);
         } else {
@@ -399,7 +399,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
         }
     }
 
-    public ModelDescription getModelDescription(String name) {
+    public Fmi2ModelDescription getModelDescription(String name) {
         return this.fmuKeyToModelDescription.get(name);
     }
 

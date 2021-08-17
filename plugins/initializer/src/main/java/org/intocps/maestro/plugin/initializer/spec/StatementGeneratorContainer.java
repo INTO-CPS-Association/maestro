@@ -7,7 +7,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
@@ -42,18 +42,18 @@ public class StatementGeneratorContainer {
     private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
     private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> loopValueArray = new HashMap<>();
 
-    private final EnumMap<ModelDescription.Types, String> typesStringMap = new EnumMap<>(ModelDescription.Types.class) {
+    private final EnumMap<Fmi2ModelDescription.Types, String> typesStringMap = new EnumMap<>(Fmi2ModelDescription.Types.class) {
         {
-            put(ModelDescription.Types.Integer, "Integer");
-            put(ModelDescription.Types.String, "String");
-            put(ModelDescription.Types.Boolean, "Boolean");
-            put(ModelDescription.Types.Real, "Real");
+            put(Fmi2ModelDescription.Types.Integer, "Integer");
+            put(Fmi2ModelDescription.Types.String, "String");
+            put(Fmi2ModelDescription.Types.Boolean, "Boolean");
+            put(Fmi2ModelDescription.Types.Real, "Real");
         }
     };
 
 
     private final Map<String, Map<Long, VariableLocation>> instanceVariables = new HashMap<>();
-    private final Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>>
+    private final Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, Fmi2ModelDescription.ScalarVariable>>>
             inputToOutputMapping = new HashMap<>();
     private final IntFunction<String> booleanArrayVariableName = i -> "booleanValueSize" + i;
     private final IntFunction<String> realArrayVariableName = i -> "realValueSize" + i;
@@ -123,7 +123,7 @@ public class StatementGeneratorContainer {
         return newIf(statusErrorExpressions(status.clone(), statusCodes), newABlockStm(thenStm), null);
     }
 
-    public SPrimitiveTypeBase fmiTypeToMablType(ModelDescription.Types type) {
+    public SPrimitiveTypeBase fmiTypeToMablType(Fmi2ModelDescription.Types type) {
         switch (type) {
             case Boolean:
                 return newABoleanPrimitiveType();
@@ -164,8 +164,8 @@ public class StatementGeneratorContainer {
                 .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
-        var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == ModelDescription.Causality.Output &&
-                o.scalarVariable.scalarVariable.getType().type == ModelDescription.Types.Real).collect(Collectors.toList());
+        var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output &&
+                o.scalarVariable.scalarVariable.getType().type == Fmi2ModelDescription.Types.Real).collect(Collectors.toList());
 
         for (Fmi2SimulationEnvironment.Variable output : outputs) {
             var lexIdentifier = createLexIdentifier
@@ -210,7 +210,7 @@ public class StatementGeneratorContainer {
             long[] scalarValueIndices = new long[]{variable.scalarVariable.scalarVariable.valueReference};
 
             //All members of the same set has the same causality, type and comes from the same instance
-            if (variable.scalarVariable.scalarVariable.causality == ModelDescription.Causality.Output) {
+            if (variable.scalarVariable.scalarVariable.causality == Fmi2ModelDescription.Causality.Output) {
                 var lexId = createLexIdentifier.apply(variable.scalarVariable.instance + variable.scalarVariable.getScalarVariable().name);
                 LoopStatements.add(newALocalVariableStm(
                         newAVariableDeclaration(lexId, newAArrayType(fmiTypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
@@ -235,21 +235,21 @@ public class StatementGeneratorContainer {
         return LoopStatements;
     }
 
-    public List<PStm> setValueOnPortStm(LexIdentifier comp, ModelDescription.Types type, List<ModelDescription.ScalarVariable> variables,
+    public List<PStm> setValueOnPortStm(LexIdentifier comp, Fmi2ModelDescription.Types type, List<Fmi2ModelDescription.ScalarVariable> variables,
             long[] scalarValueIndices, Fmi2SimulationEnvironment env) throws ExpandException {
         ComponentInfo componentInfo = env.getUnitInfo(comp, Framework.FMI2);
         ModelConnection.ModelInstance modelInstances = new ModelConnection.ModelInstance(componentInfo.fmuIdentifier, comp.getText());
 
-        if (type == ModelDescription.Types.Boolean) {
+        if (type == Fmi2ModelDescription.Types.Boolean) {
             return setBooleansStm(comp.getText(), scalarValueIndices,
                     Arrays.stream(getValues(variables, modelInstances)).map(Boolean.class::cast).collect(BooleanUtils.TO_BOOLEAN_ARRAY));
-        } else if (type == ModelDescription.Types.Real) {
+        } else if (type == Fmi2ModelDescription.Types.Real) {
             return setRealsStm(comp.getText(), scalarValueIndices,
                     Arrays.stream(getValues(variables, modelInstances)).mapToDouble(o -> Double.parseDouble(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.Integer) {
+        } else if (type == Fmi2ModelDescription.Types.Integer) {
             return setIntegersStm(comp.getText(), scalarValueIndices,
                     Arrays.stream(getValues(variables, modelInstances)).mapToInt(o -> Integer.parseInt(o.toString())).toArray());
-        } else if (type == ModelDescription.Types.String) {
+        } else if (type == Fmi2ModelDescription.Types.String) {
             return setStringsStm(comp.getText(), scalarValueIndices,
                     Arrays.stream(getValues(variables, modelInstances)).map(o -> o.toString()).toArray(String[]::new));
         } else {
@@ -326,7 +326,7 @@ public class StatementGeneratorContainer {
     }
 
     private Pair<LexIdentifier, List<PStm>> createArray(int valueLength, IntFunction<Pair<PExp, List<PStm>>> valueLocator, String arrayName,
-            ModelDescription.Types type, Map<Integer, LexIdentifier> array) {
+            Fmi2ModelDescription.Types type, Map<Integer, LexIdentifier> array) {
         List<PStm> statements = new Vector<>();
 
         List<PExp> args = new ArrayList<>();
@@ -362,7 +362,7 @@ public class StatementGeneratorContainer {
     }
 
     public void setInputOutputMapping(
-            Map<ModelConnection.ModelInstance, Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>> inputOutputMapping) {
+            Map<ModelConnection.ModelInstance, Map<Fmi2ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, Fmi2ModelDescription.ScalarVariable>>> inputOutputMapping) {
         inputOutputMapping.forEach(this.inputToOutputMapping::put);
     }
 
@@ -390,7 +390,7 @@ public class StatementGeneratorContainer {
         return arrays.getOrDefault(i, null);
     }
 
-    private List<PStm> updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray, ModelDescription.Types fmiType) {
+    private List<PStm> updateInstanceVariables(String instanceName, long[] longs, LexIdentifier valueArray, Fmi2ModelDescription.Types fmiType) {
         Map<Long, VariableLocation> instanceVariables = this.instanceVariables.computeIfAbsent(instanceName, k -> new HashMap<>());
 
         List<PStm> result = new Vector<>();
@@ -432,21 +432,21 @@ public class StatementGeneratorContainer {
      * @return a function (valueLocator) that, given an int representing the index of <code>valRefs</code>, will locate the corresponding output
      */
     public IntFunction<Pair<PExp, List<PStm>>> generateInstanceVariablesValueLocator(String instanceName, long[] valRefs,
-            IntFunction<PExp> literalExp, ModelDescription.Types targetType) {
+            IntFunction<PExp> literalExp, Fmi2ModelDescription.Types targetType) {
         IntFunction<Pair<PExp, List<PStm>>> valueLocator = null;
         if (this.instancesLookupDependencies) {
             Optional<ModelConnection.ModelInstance> key =
                     this.inputToOutputMapping.keySet().stream().filter(x -> x.instanceName.equals(instanceName)).findFirst();
 
             if (key.isPresent()) {
-                Map<ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable>>
+                Map<Fmi2ModelDescription.ScalarVariable, AbstractMap.SimpleEntry<ModelConnection.ModelInstance, Fmi2ModelDescription.ScalarVariable>>
                         svInputsToOutputs = this.inputToOutputMapping.get(key.get());
                 valueLocator = i -> {
-                    Optional<ModelDescription.ScalarVariable> svInputVarToOutput =
+                    Optional<Fmi2ModelDescription.ScalarVariable> svInputVarToOutput =
                             svInputsToOutputs.keySet().stream().filter(x -> x.valueReference == valRefs[i]).findFirst();
 
                     if (svInputVarToOutput.isPresent()) {
-                        AbstractMap.SimpleEntry<ModelConnection.ModelInstance, ModelDescription.ScalarVariable> output =
+                        AbstractMap.SimpleEntry<ModelConnection.ModelInstance, Fmi2ModelDescription.ScalarVariable> output =
                                 svInputsToOutputs.get(svInputVarToOutput.get());
                         VariableLocation variable = this.instanceVariables.get(output.getKey().instanceName).get(output.getValue().valueReference);
                         LexIdentifier variableLexId = createLexIdentifier.apply(variable.variableId);
@@ -492,13 +492,13 @@ public class StatementGeneratorContainer {
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<Pair<PExp, List<PStm>>> valueLocator =
                 generateInstanceVariablesValueLocator(instanceName, longs, i -> MableAstFactory.newARealLiteralExp(doubles[i]),
-                        ModelDescription.Types.Real);
+                        Fmi2ModelDescription.Types.Real);
         List<PStm> statements = new Vector<>();
         // Create the array to contain the values
         LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(doubles.length, valueLocator, realArrayVariableName.apply(longs.length), ModelDescription.Types.Real, realArrays);
+            var value = createArray(doubles.length, valueLocator, realArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Real, realArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
         } else {
@@ -516,14 +516,14 @@ public class StatementGeneratorContainer {
     public List<PStm> setBooleansStm(String instanceName, long[] longs, boolean[] booleans) {
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<Pair<PExp, List<PStm>>> valueLocator =
-                generateInstanceVariablesValueLocator(instanceName, longs, i -> newABoolLiteralExp(booleans[i]), ModelDescription.Types.Boolean);
+                generateInstanceVariablesValueLocator(instanceName, longs, i -> newABoolLiteralExp(booleans[i]), Fmi2ModelDescription.Types.Boolean);
         List<PStm> statements = new Vector<>();
 
         // Create the array to contain the values
         LexIdentifier valueArray = findArrayOfSize(boolArrays, booleans.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(booleans.length, valueLocator, booleanArrayVariableName.apply(longs.length), ModelDescription.Types.Boolean,
+            var value = createArray(booleans.length, valueLocator, booleanArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Boolean,
                     boolArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
@@ -543,13 +543,13 @@ public class StatementGeneratorContainer {
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<Pair<PExp, List<PStm>>> valueLocator =
                 generateInstanceVariablesValueLocator(instanceName, longs, i -> MableAstFactory.newAIntLiteralExp(ints[i]),
-                        ModelDescription.Types.Integer);
+                        Fmi2ModelDescription.Types.Integer);
         List<PStm> statements = new Vector<>();
         // Create the array to contain the values
         LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(ints.length, valueLocator, intArrayVariableName.apply(longs.length), ModelDescription.Types.Integer, intArrays);
+            var value = createArray(ints.length, valueLocator, intArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Integer, intArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
         } else {
@@ -566,13 +566,13 @@ public class StatementGeneratorContainer {
     public List<PStm> setStringsStm(String instanceName, long[] longs, String[] strings) {
         // Create a valueLocator to locate the value corresponding to a given valuereference.
         IntFunction<Pair<PExp, List<PStm>>> valueLocator =
-                generateInstanceVariablesValueLocator(instanceName, longs, i -> newAStringLiteralExp(strings[i]), ModelDescription.Types.String);
+                generateInstanceVariablesValueLocator(instanceName, longs, i -> newAStringLiteralExp(strings[i]), Fmi2ModelDescription.Types.String);
         List<PStm> statements = new Vector<>();
         // Create the array to contain the values
         LexIdentifier valueArray = findArrayOfSize(stringArrays, strings.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(strings.length, valueLocator, stringArrayVariableName.apply(longs.length), ModelDescription.Types.String,
+            var value = createArray(strings.length, valueLocator, stringArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.String,
                     stringArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
@@ -627,16 +627,16 @@ public class StatementGeneratorContainer {
 
     }
 
-    public Object[] getValues(List<ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
+    public Object[] getValues(List<Fmi2ModelDescription.ScalarVariable> variables, ModelConnection.ModelInstance modelInstance) {
         Object[] values = new Object[variables.size()];
         var i = 0;
-        for (ModelDescription.ScalarVariable v : variables) {
+        for (Fmi2ModelDescription.ScalarVariable v : variables) {
             values[i++] = getNewValue(v, modelInstance);
         }
         return values;
     }
 
-    private Object getNewValue(ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
+    private Object getNewValue(Fmi2ModelDescription.ScalarVariable sv, ModelConnection.ModelInstance comp) {
         Object newVal = null;
         if (sv.type.start != null) {
             newVal = sv.type.start;
@@ -648,7 +648,7 @@ public class StatementGeneratorContainer {
                 par.isSet = true;
             }
         }
-        if (sv.type.type == ModelDescription.Types.Real) {
+        if (sv.type.type == Fmi2ModelDescription.Types.Real) {
             if (newVal instanceof Integer) {
                 newVal = (double) (int) newVal;
             }
@@ -657,7 +657,7 @@ public class StatementGeneratorContainer {
         return newVal;
     }
 
-    public List<PStm> getValueStm(String instanceName, LexIdentifier valueArray, long[] longs, ModelDescription.Types type) throws ExpandException {
+    public List<PStm> getValueStm(String instanceName, LexIdentifier valueArray, long[] longs, Fmi2ModelDescription.Types type) throws ExpandException {
         if (!instancesLookupDependencies) {
             instancesLookupDependencies = true;
         }
@@ -701,26 +701,26 @@ public class StatementGeneratorContainer {
         return null;
     }
 
-    private PExp getDefaultArrayValue(ModelDescription.Types type) throws ExpandException {
-        if (type == ModelDescription.Types.Boolean) {
+    private PExp getDefaultArrayValue(Fmi2ModelDescription.Types type) throws ExpandException {
+        if (type == Fmi2ModelDescription.Types.Boolean) {
             return newABoolLiteralExp(false);
-        } else if (type == ModelDescription.Types.Real) {
+        } else if (type == Fmi2ModelDescription.Types.Real) {
             return newARealLiteralExp(0.0);
-        } else if (type == ModelDescription.Types.Integer) {
+        } else if (type == Fmi2ModelDescription.Types.Integer) {
             return newAIntLiteralExp(0);
         } else {
             throw new ExpandException("Unknown type");
         }
     }
 
-    private Map<Integer, LexIdentifier> getArrayMapOfType(ModelDescription.Types type) throws ExpandException {
-        if (type == ModelDescription.Types.Boolean) {
+    private Map<Integer, LexIdentifier> getArrayMapOfType(Fmi2ModelDescription.Types type) throws ExpandException {
+        if (type == Fmi2ModelDescription.Types.Boolean) {
             return boolArrays;
-        } else if (type == ModelDescription.Types.Real) {
+        } else if (type == Fmi2ModelDescription.Types.Real) {
             return realArrays;
-        } else if (type == ModelDescription.Types.Integer) {
+        } else if (type == Fmi2ModelDescription.Types.Integer) {
             return intArrays;
-        } else if (type == ModelDescription.Types.String) {
+        } else if (type == Fmi2ModelDescription.Types.String) {
             return stringArrays;
         } else {
             throw new ExpandException("Unrecognised type: " + type.name());
