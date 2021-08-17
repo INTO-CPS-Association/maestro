@@ -8,6 +8,10 @@ import csv
 from collections import namedtuple
 import glob
 import socket
+import re
+import subprocess
+from threading import Thread 
+import time
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -134,3 +138,34 @@ def find_free_port():
 def ensureResponseOk(response):
     if not response.status_code == 200:
         raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")
+
+def acquireServerDefinedPortFromStdio(proc):
+    # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
+    # Therefore match the pattern and retrieve the port number from stdout to communicate with the server
+
+    linebuffer=[]
+    def reader(procout,buffer):
+        while True:
+            line=procout.readline()
+            if line:
+                buffer.append(line)
+            else:
+                break
+
+    # readline from popen is blocking so it needs its own thread so it is possible to handle if no port number is found within a set time.
+    t=Thread(target=reader,args=(proc.stdout,linebuffer))
+    t.daemon=True
+    t.start()
+    timeoutInSecs = 0
+    while True:
+        if linebuffer:
+            stringLine = linebuffer.pop(0).decode("utf-8")
+            print(str(stringLine))
+            match = re.search("(?<=\{)[0-9]+(?=\})", stringLine)
+            if match:
+                return match.group()
+        elif timeoutInSecs < 5:
+            time.sleep(1)
+            timeoutInSecs += 1
+        else:
+            raise Exception("Unable to locate serverport in stdout") 

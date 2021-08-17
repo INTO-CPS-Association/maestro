@@ -78,17 +78,8 @@ cmd = f"java -jar {jarPath} -p {str(port)}"
 proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
 # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
-# Then match the pattern and retrieve the port number from stdout to communicate with the server
 if port == 0:
-    while True:
-        stringLine = proc.stdout.readline().decode("utf-8")
-        print(str(stringLine))
-        match = re.search("(?<=\{)[0-9]+(?=\})", stringLine)
-        if match:
-            port = match.group()
-            break
-        elif not stringLine:
-            break
+    port = testutils.acquireServerDefinedPortFromStdio(proc)
 basicUrl = f"http://localhost:{str(port)}"
 
 try:

@@ -27,7 +27,7 @@ public class Application {
 
     @EventListener
     public void onApplicationEvent(final ServletWebServerInitializedEvent event) {
-        if(serverAcquiresPort){
+        if (serverAcquiresPort) {
             int port = event.getWebServer().getPort();
             System.out.println("Server acquired port: {" + port + "}");
         }
