@@ -120,7 +120,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
             //            globalExecutionContinue =
             //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
-            //            globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
+            //                        globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
 
         mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());

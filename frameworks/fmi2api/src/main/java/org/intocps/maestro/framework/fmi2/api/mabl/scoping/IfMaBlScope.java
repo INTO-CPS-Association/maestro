@@ -35,4 +35,14 @@ public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     public ScopeFmi2Api leave() {
         return declaringScope.activate();
     }
+
+    @Override
+    public Fmi2Builder.Scoping<PStm> parent() {
+        return this.declaringScope;
+    }
+
+    @Override
+    public PStm getDeclaration() {
+        return declaration;
+    }
 }

@@ -18,6 +18,9 @@ public class TryMaBlScope implements Fmi2Builder.TryScope<PStm> {
         this.bodyScope = body;
         this.finallyScope = finallyScope;
 
+        this.bodyScope.parent = this;
+        this.finallyScope.parent = this;
+
         enter();
     }
 
@@ -34,5 +37,25 @@ public class TryMaBlScope implements Fmi2Builder.TryScope<PStm> {
     @Override
     public ScopeFmi2Api leave() {
         return declaringScope.activate();
+    }
+
+    @Override
+    public ScopeFmi2Api getBody() {
+        return bodyScope;
+    }
+
+    @Override
+    public ScopeFmi2Api getFinallyBody() {
+        return finallyScope;
+    }
+
+    @Override
+    public ScopeFmi2Api parent() {
+        return declaringScope;
+    }
+
+    @Override
+    public PStm getDeclaration() {
+        return declaration;
     }
 }

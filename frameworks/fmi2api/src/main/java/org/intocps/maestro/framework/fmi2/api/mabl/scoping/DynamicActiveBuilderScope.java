@@ -55,6 +55,16 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
 
     @Override
+    public Fmi2Builder.ScopeElement<PStm> parent() {
+        return this.activeScope.parent();
+    }
+
+    @Override
+    public PStm getDeclaration() {
+        return this.activeScope.getDeclaration();
+    }
+
+    @Override
     public IntVariableFmi2Api getFmiStatusVariable() {
         return this.activeScope.getFmiStatusVariable();
     }
@@ -204,5 +214,10 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     public void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api) {
         activeScope.registerComponentVariableFmi2Api(componentVariableFmi2Api);
 
+    }
+
+    @Override
+    public <S> S findParentScope(Class<S> type) {
+        return this.activeScope.findParentScope(type);
     }
 }

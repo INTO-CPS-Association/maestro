@@ -1,18 +1,14 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStateDesignator;
-import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
-
-import java.util.Arrays;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
@@ -39,73 +35,86 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
     @Override
     public ComponentVariableFmi2Api instantiate(String name) {
-        return instantiate(name, builder.getDynamicScope().getActiveScope().enterTry());
+        IMablScope scope = builder.getDynamicScope().getActiveScope();
+        return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope);
     }
 
-    @Override
-    public void unload() {
-        unload(builder.getDynamicScope());
-    }
+    //    @Override
+    //    public void unload() {
+    //        unload(builder.getDynamicScope());
+    //    }
+    //
+    //    @Override
+    //    public void unload(Fmi2Builder.Scope<PStm> scope) {
+    //        scope.add(newIf(newNotEqual(getReferenceExp().clone(), newNullExp()),
+    //                newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))),
+    //                        newAAssignmentStm(getDesignator().clone(), newNullExp())), null));
+    //    }
+
+
+    //    public void freeInstance(Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
+    //        freeInstance(builder.getDynamicScope(), comp);
+    //    }
+
+    //    /**
+    //     * Performs null check and frees the instance
+    //     *
+    //     * @param scope
+    //     * @param comp
+    //     */
+    //    private void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
+    //        if (comp instanceof ComponentVariableFmi2Api) {
+    //            scope.add(newIf(newNotEqual(((ComponentVariableFmi2Api) comp).getReferenceExp().clone(), newNullExp()), newABlockStm(
+    //                    MableAstFactory.newExpressionStm(
+    //                            call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())),
+    //                    newAAssignmentStm(((ComponentVariableFmi2Api) comp).getDesignatorClone(), newNullExp())), null));
+    //        } else {
+    //            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
+    //        }
+    //    }
 
     @Override
-    public void unload(Fmi2Builder.Scope<PStm> scope) {
-        scope.add(newIf(newNotEqual(getReferenceExp().clone(), newNullExp()),
-                newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))),
-                        newAAssignmentStm(getDesignator(), newNullExp())), null));
-    }
-
-    @Override
-    public void freeInstance(Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
-        freeInstance(builder.getDynamicScope(), comp);
-    }
-
-    /**
-     * Performs null check and frees the instance
-     *
-     * @param scope
-     * @param comp
-     */
-    @Override
-    public void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
-        if (comp instanceof ComponentVariableFmi2Api) {
-            scope.add(newIf(newNotEqual(((ComponentVariableFmi2Api) comp).getReferenceExp().clone(), newNullExp()), newABlockStm(MableAstFactory
-                            .newExpressionStm(call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())),
-                    newAAssignmentStm(((ComponentVariableFmi2Api) comp).getDesignatorClone(), newNullExp())), null));
-        } else {
-            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
-        }
-    }
-
-    @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> scope) {
+    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope) {
         String name = builder.getNameGenerator().getName(namePrefix);
         //TODO: Extract bool visible and bool loggingOn from configuration
-        PStm var = newVariable(name, newANameType("FMI2Component"),
+        var var = newVariable(name, newANameType("FMI2Component"), newNullExp());
+
+        PStm instantiateAssign = newAAssignmentStm(newAIdentifierStateDesignator(name),
                 call(getReferenceExp().clone(), "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(true)));
-        ComponentVariableFmi2Api aMablFmi2ComponentAPI = null;
-        aMablFmi2ComponentAPI = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope.enter(),
+
+
+        ComponentVariableFmi2Api compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope,
                 newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
-        scope.enter().add(var);
+
+        if (enclosingTryScope == null) {
+            throw new IllegalArgumentException("Call to instantiate is not allowed with a null enclosing try scope");
+        }
+
+
+        TryMaBlScope mTryScope = (TryMaBlScope) enclosingTryScope;
+        mTryScope.parent().addBefore(mTryScope.getDeclaration(), var);
+
+        scope.add(instantiateAssign);
+
+        mTryScope.getFinallyBody().addAfterOrTop(null, newIf(newNotEqual(compVar.getReferenceExp().clone(), newNullExp()),
+                newABlockStm(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance", compVar.getReferenceExp().clone())),
+                        newAAssignmentStm(compVar.getDesignatorClone(), newNullExp())), null));
+
+        scope.activate();
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            ScopeFmi2Api thenScope = (ScopeFmi2Api) scope.enter()
-                    .enterIf(new PredicateFmi2Api(newEqual(aMablFmi2ComponentAPI.getReferenceExp().clone(), newNullExp()))).enterThen();
+            ScopeFmi2Api thenScope =
+                    (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(compVar.getReferenceExp().clone(), newNullExp()))).enterThen();
 
-            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
             builder.getLogger().error(thenScope, "Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix);
-            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder.collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast())
-                    .forEach(p -> {
-                        thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
-                        thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
-                    });
-
-            thenScope.add(newBreak());
+            thenScope.add(new AErrorStm(
+                    newAStringLiteralExp(String.format("Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix))));
             thenScope.leave();
         }
 
-        ((IMablScope) scope.enter()).registerComponentVariableFmi2Api(aMablFmi2ComponentAPI);
+        ((IMablScope) scope).registerComponentVariableFmi2Api(compVar);
 
-        return aMablFmi2ComponentAPI;
+        return compVar;
     }
 
     public String getFmuIdentifier() {
