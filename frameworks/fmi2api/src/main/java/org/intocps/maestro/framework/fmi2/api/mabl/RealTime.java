@@ -8,7 +8,6 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -26,8 +25,8 @@ public class RealTime {
         this.moduleIdentifier = "realTime";
     }
 
-    public RealTime(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
-        this(dynamicScope, mablApiBuilder);
+    public RealTime(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.moduleIdentifier = runtimeModule.getName();
     }
 
@@ -49,9 +48,8 @@ public class RealTime {
 
         String variableName = dynamicScope.getName("realTime");
         final String FUNCTION_GETREALTIME = "getRealTime";
-        targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(),
-                newAExpInitializer(newACallExp(newAIdentifierExp(this.getModuleIdentifier()), newAIdentifier(FUNCTION_GETREALTIME),
-                        Collections.emptyList()))));
+        targetVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newARealNumericPrimitiveType(), newAExpInitializer(
+                newACallExp(newAIdentifierExp(this.getModuleIdentifier()), newAIdentifier(FUNCTION_GETREALTIME), Collections.emptyList()))));
 
         this.dynamicScope.add(targetVarStm);
 
@@ -61,9 +59,9 @@ public class RealTime {
 
     public void sleep(DoubleVariableFmi2Api sleepTime) {
         final String FUNCTION_SLEEP = "sleep";
-        AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifierExp(this.moduleIdentifier),
-                        MableAstFactory.newAIdentifier(FUNCTION_SLEEP), Collections.singletonList(sleepTime.getReferenceExp().clone())));
+        AExpressionStm stm = MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.moduleIdentifier), MableAstFactory.newAIdentifier(FUNCTION_SLEEP),
+                        Collections.singletonList(sleepTime.getReferenceExp().clone())));
         this.dynamicScope.add(stm);
     }
 

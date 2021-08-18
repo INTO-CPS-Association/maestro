@@ -136,9 +136,8 @@ public class VariableCreatorFmi2Api {
         enclosingTryScope.parent().addBefore(enclosingTryScope.getDeclaration(), var);
         scope.add(assign);
 
-        FmuVariableFmi2Api fmuVar =
-                new FmuVariableFmi2Api(name, builder, modelDescriptionSupplier.get(), var, MableAstFactory.newANameType("FMI2"), scope, dynamicScope,
-                        newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
+        FmuVariableFmi2Api fmuVar = new FmuVariableFmi2Api(name, builder, modelDescriptionSupplier.get(), var, MableAstFactory.newANameType("FMI2"),
+                enclosingTryScope.parent(), dynamicScope, newAIdentifierStateDesignator(newAIdentifier(uniqueName)), newAIdentifierExp(uniqueName));
 
         enclosingTryScope.getFinallyBody().addAfterOrTop(null, newIf(newNotEqual(fmuVar.getReferenceExp().clone(), newNullExp()),
                 newABlockStm(newExpressionStm(newUnloadExp(List.of(fmuVar.getReferenceExp().clone()))),

@@ -34,7 +34,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     }
 
-    public ScopeFmi2Api(MablApiBuilder builder, ScopeFmi2Api parent, SBlockStm block) {
+    public ScopeFmi2Api(MablApiBuilder builder, Fmi2Builder.ScopeElement<PStm> parent, SBlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
@@ -164,6 +164,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             addAll(insertAt, commands);
         }
 
+    }
+
+    @Override
+    public int indexOf(PStm stm) {
+        return this.block.getBody().indexOf(stm);
     }
 
 
@@ -384,12 +389,12 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
         final PType finalType = type;
 
+        add(localVarStm);
         List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
-                i -> new VariableFmi2Api<>(localVarStm, finalType, null, builder.getDynamicScope(),
+                i -> new VariableFmi2Api<>(localVarStm, finalType, this, builder.getDynamicScope(),
                         newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(i)),
                         newAArrayIndexExp(newAIdentifierExp(name), Collections.singletonList(newAIntLiteralExp(i))))).collect(Collectors.toList());
 
-        add(localVarStm);
         return new ArrayVariableFmi2Api(localVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name), items);
     }
@@ -509,6 +514,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        return this.findParentScope(clz);
+    }
+
+    @Override
     public IntVariableFmi2Api getFmiStatusVariable() {
 
         //if this is a parallel block then we just use the global variable as there is no way to control the concurrency anyway. But if this is a
@@ -550,10 +560,10 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     @Override
     public <S> S findParentScope(Class<S> type) {
-        Fmi2Builder.ScopeElement<PStm> parent = this;
-        while ((parent = parent.parent()) != null) {
-            if (type.isAssignableFrom(parent.getClass())) {
-                return type.cast(parent());
+        Fmi2Builder.ScopeElement<PStm> p = this;
+        while ((p = p.parent()) != null) {
+            if (type.isAssignableFrom(p.getClass())) {
+                return type.cast(p);
             }
         }
         return null;

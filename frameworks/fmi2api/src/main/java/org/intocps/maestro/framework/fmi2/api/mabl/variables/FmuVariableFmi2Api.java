@@ -83,9 +83,6 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
                 call(getReferenceExp().clone(), "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(true)));
 
 
-        ComponentVariableFmi2Api compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, (IMablScope) scope,
-                newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
-
         if (enclosingTryScope == null) {
             throw new IllegalArgumentException("Call to instantiate is not allowed with a null enclosing try scope");
         }
@@ -93,6 +90,8 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
         TryMaBlScope mTryScope = (TryMaBlScope) enclosingTryScope;
         mTryScope.parent().addBefore(mTryScope.getDeclaration(), var);
+        ComponentVariableFmi2Api compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
+                newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
 
         scope.add(instantiateAssign);
 

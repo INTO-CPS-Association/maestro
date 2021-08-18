@@ -12,10 +12,10 @@ import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,38 +28,29 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
 
     static ScopeFmi2Api rootScope;
+    final ScopeFmi2Api externalScope = new ScopeFmi2Api(this);
     final DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
-    private final VariableCreatorFmi2Api currentVariableCreator;
-    private final BooleanVariableFmi2Api globalExecutionContinue;
+    final TryMaBlScope mainErrorHandlingScope;
     private final IntVariableFmi2Api globalFmiStatus;
     private final MablToMablAPI mablToMablAPI;
     private final MablSettings settings;
     private final Map<FmiStatus, IntVariableFmi2Api> fmiStatusVariables;
-    private final ScopeFmi2Api mainErrorHandlingScope;
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
     int dynamicScopeInitialSize;
     List<String> importedModules = new Vector<>();
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
+    Map<String, Object> instanceCache = new HashMap<>();
     private MathBuilderFmi2Api mathBuilderApi;
-    private BooleanBuilderFmi2Api booleanBuilderApi;
-    private DataWriter dataWriter;
-    private RealTime realTime;
-    private VariableStep variableStep;
-    private DerivativeEstimator derivativeEstimator;
-    private LoggerFmi2Api runtimeLogger;
-    private ConsolePrinter consolePrinter;
-    private ExecutionEnvironmentFmi2Api executionEnvironment;
-
 
     public MablApiBuilder() {
         this(new MablSettings(), null);
     }
 
+
     public MablApiBuilder(MablSettings settings) {
         this(settings, null);
     }
-
 
     /**
      * Create a MablApiBuilder
@@ -99,13 +90,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         if (createdFromExistingSpec) {
 
             AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "global_execution_continue");
-            if (decl == null) {
-                globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
-            } else {
-                globalExecutionContinue =
-                        (BooleanVariableFmi2Api) createVariableExact(rootScope, newBoleanType(), newABoolLiteralExp(true), decl.getName().getText(),
-                                true);
-            }
 
             decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, status_varname);
             if (decl == null) {
@@ -116,16 +100,14 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
         } else {
 
-            globalExecutionContinue = rootScope.store(global_execution_continue_varname, true);
             globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
             //            globalExecutionContinue =
             //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
             //                        globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
 
-        mainErrorHandlingScope = rootScope.enterWhile(globalExecutionContinue.toPredicate());
-        this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope);
-        this.currentVariableCreator = new VariableCreatorFmi2Api(dynamicScope, this);
+        mainErrorHandlingScope = rootScope.enterTry();
+        this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope.getBody());
         this.mablToMablAPI = new MablToMablAPI(this);
 
         if (createdFromExistingSpec) {
@@ -137,6 +119,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             //reserve all previously names to avoid clashing with these
             MablToMablAPI.getPreviouslyUsedNamed(lastNodePriorToBuilderTakeOver).forEach(this.nameGenerator::addUsedIdentifier);
         }
+
 
         resetDirty();
 
@@ -153,7 +136,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
     }
 
     public void setRuntimeLogger(LoggerFmi2Api runtimeLogger) {
-        this.runtimeLogger = runtimeLogger;
+        this.instanceCache.put("Logger", runtimeLogger);
     }
 
     @Override
@@ -171,42 +154,42 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 case FMI_OK: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_OK.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_OK, var);
                 }
                 break;
                 case FMI_WARNING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_WARNING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
                     break;
                 }
                 case FMI_DISCARD: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_DISCARD.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
                 }
                 break;
                 case FMI_ERROR: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
                     break;
                 }
                 case FMI_FATAL: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_FATAL.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
                     break;
                 }
                 case FMI_PENDING: {
                     IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_PENDING.getValue());
                     //relocate to top of scope
-                    rootScope.addAfterOrTop(getGlobalExecutionContinue().getDeclaringStm(), var.getDeclaringStm());
+                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
                     break;
                 }
@@ -221,53 +204,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.mablToMablAPI;
     }
 
-    public VariableStep getVariableStep(StringVariableFmi2Api config) {
-        if (this.variableStep == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "VariableStep", config);
-            this.variableStep = new VariableStep(this.dynamicScope, this, runtimeModule);
-        }
-        return this.variableStep;
-    }
-
-    public DerivativeEstimator getDerivativeEstimator() {
-        if (this.derivativeEstimator == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DerivativeEstimator");
-            this.derivativeEstimator = new DerivativeEstimator(this.dynamicScope, this, runtimeModule);
-        }
-        return this.derivativeEstimator;
-    }
-
-    public DataWriter getDataWriter() {
-        if (this.dataWriter == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "DataWriter");
-            this.dataWriter = new DataWriter(this.dynamicScope, this, runtimeModule);
-        }
-
-        return this.dataWriter;
-    }
-
-    public ConsolePrinter getConsolePrinter() {
-        if (this.consolePrinter == null) {
-            RuntimeModule<PStm> runtimeModule =
-                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var),
-                            "ConsolePrinter");
-            this.consolePrinter = new ConsolePrinter(this, runtimeModule);
-        }
-
-        return this.consolePrinter;
-    }
-
-    public RealTime getRealTimeModule() {
-        if (this.realTime == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, "RealTime");
-            this.realTime = new RealTime(this.dynamicScope, this, runtimeModule);
-        }
-        return this.realTime;
-    }
-
-    public BooleanVariableFmi2Api getGlobalExecutionContinue() {
-        return globalExecutionContinue;
-    }
 
     public IntVariableFmi2Api getGlobalFmiStatus() {
         return globalFmiStatus;
@@ -284,17 +220,18 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         if (!external) {
             scope.add(var);
         }
+        this.externalScope.add(var);
         if (type instanceof ARealNumericPrimitiveType) {
-            return new DoubleVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new DoubleVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof ABooleanPrimitiveType) {
-            return new BooleanVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new BooleanVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof AIntNumericPrimitiveType) {
-            return new IntVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new IntVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         } else if (type instanceof AStringPrimitiveType) {
-            return new StringVariableFmi2Api(var, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+            return new StringVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
         }
 
-        return new VariableFmi2Api(var, type, scope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
+        return new VariableFmi2Api(var, type, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
     }
 
     public TagNameGenerator getNameGenerator() {
@@ -329,7 +266,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
         return mp.getSharedAsVariable();
     }
-
 
     Pair<PStateDesignator, PExp> getDesignatorAndReferenceExp(PExp exp) {
         if (exp instanceof AArrayIndexExp) {
@@ -379,10 +315,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         if (block == null) {
             return null;
         }
-        SBlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
-        if (errorHandlingBlock == null) {
-            return null;
-        }
+        //        SBlockStm errorHandlingBlock = this.getErrorHandlingBlock(block);
+        //        if (errorHandlingBlock == null) {
+        //            return null;
+        //        }
 
 
         /**
@@ -418,55 +354,79 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         }
 
 
-        errorHandlingBlock.getBody().add(newBreak());
+        //        errorHandlingBlock.getBody().add(newBreak());
         postClean(block);
         return block;
     }
 
     @Override
     public RuntimeModuleVariable loadRuntimeModule(String name, Object... args) {
-        return loadRuntimeModule(dynamicScope.getActiveScope(), name, args);
+
+        ScopeElement<PStm> scope = dynamicScope.getActiveScope();
+
+        if (!(scope instanceof TryScope)) {
+            while ((scope = scope.parent()) != null) {
+                if (scope instanceof TryScope) {
+                    break;
+                }
+            }
+        }
+
+        return loadRuntimeModule((TryScope<PStm>) scope, name, args);
     }
 
     @Override
-    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, String name, Object... args) {
-        return loadRuntimeModule(scope, (s, var) -> s.add(var), name, args);
+    public RuntimeModuleVariable loadRuntimeModule(TryScope<PStm> scope, String name, Object... args) {
+        return loadRuntimeModule(scope, (s, var) -> s.addAll(var), name, args);
     }
 
-    public RuntimeModuleVariable loadRuntimeModule(Scope<PStm> scope, BiConsumer<Scope<PStm>, PStm> variableStoreFunc, String name, Object... args) {
+    //    private SBlockStm getErrorHandlingBlock(SBlockStm block) throws AnalysisException {
+    //        AtomicReference<SBlockStm> errorHandingBlock = new AtomicReference<>();
+    //        block.apply(new DepthFirstAnalysisAdaptor() {
+    //            @Override
+    //            public void caseAWhileStm(AWhileStm node) throws AnalysisException {
+    //                if (node.getBody().equals(mainErrorHandlingScope.getBlock())) {
+    //                    errorHandingBlock.set(((SBlockStm) node.getBody()));
+    //
+    //                }
+    //                super.caseAWhileStm(node);
+    //            }
+    //        });
+    //        return errorHandingBlock.get();
+    //    }
+
+    public RuntimeModuleVariable loadRuntimeModule(TryScope<PStm> scope, BiConsumer<Scope<PStm>, List<PStm>> variableStoreFunc, String name,
+            Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));
-        PStm var = newVariable(varName, newANameType(name), newALoadExp(argList));
-        variableStoreFunc.accept(scope, var);
+        PStm var = newVariable(varName, newANameType(name));
+
+        var thisScope = scope.findParent(ScopeFmi2Api.class);
+        thisScope.addBefore(scope.getDeclaration(), var);
+
         RuntimeModuleVariable module =
-                new RuntimeModuleVariable(var, newANameType(name), (IMablScope) scope, dynamicScope, this, newAIdentifierStateDesignator(varName),
+                new RuntimeModuleVariable(var, newANameType(name), thisScope, dynamicScope, this, newAIdentifierStateDesignator(varName),
                         newAIdentifierExp(varName));
+
+        variableStoreFunc.accept(scope.getBody(), Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(varName), newALoadExp(argList)),
+                newIf(newEqual(module.getReferenceExp().clone(), newNullExp()), new AErrorStm(newAStringLiteralExp("Failed load of: " + varName)),
+                        null)));
+
+
+        ((IMablScope) scope.getFinallyBody()).addAfterOrTop(null, newIf(newNotEqual(module.getReferenceExp().clone(), newNullExp()),
+                newABlockStm(newExpressionStm(newUnloadExp(List.of(module.getReferenceExp().clone()))),
+                        newAAssignmentStm(module.getDesignator().clone(), newNullExp())), null));
         importedModules.add(name);
-        loadedModules.add(module);
+        //        loadedModules.add(module);
         return module;
-    }
-
-    private SBlockStm getErrorHandlingBlock(SBlockStm block) throws AnalysisException {
-        AtomicReference<SBlockStm> errorHandingBlock = new AtomicReference<>();
-        block.apply(new DepthFirstAnalysisAdaptor() {
-            @Override
-            public void caseAWhileStm(AWhileStm node) throws AnalysisException {
-                if (node.getBody().equals(mainErrorHandlingScope.getBlock())) {
-                    errorHandingBlock.set(((SBlockStm) node.getBody()));
-
-                }
-                super.caseAWhileStm(node);
-            }
-        });
-        return errorHandingBlock.get();
     }
 
     @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
         SBlockStm block = rootScope.getBlock().clone();
 
-        SBlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
+        //        SBlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
         /**
          * Automatically created unloads for all modules loaded by the builder.
@@ -534,7 +494,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         //            });
         //        }
 
-        errorHandingBlock.getBody().add(newBreak());
+        //        errorHandingBlock.getBody().add(newBreak());
 
 
         postClean(block);
@@ -578,39 +538,8 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     }
 
-
     public FunctionBuilder getFunctionBuilder() {
         return new FunctionBuilder();
-    }
-
-    public BooleanBuilderFmi2Api getBooleanBuilder() {
-
-        if (this.booleanBuilderApi == null) {
-            RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule("BooleanLogic");
-            this.booleanBuilderApi = new BooleanBuilderFmi2Api(this.dynamicScope, this, runtimeModule);
-        }
-        return this.booleanBuilderApi;
-    }
-
-    public LoggerFmi2Api getLogger() {
-        if (this.runtimeLogger == null) {
-            RuntimeModule<PStm> runtimeModule =
-                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var), "Logger");
-            this.runtimeLogger = new LoggerFmi2Api(this, runtimeModule);
-        }
-
-        return this.runtimeLogger;
-    }
-
-
-    public ExecutionEnvironmentFmi2Api getExecutionEnvironment() {
-        if (this.executionEnvironment == null) {
-            RuntimeModule<PStm> runtimeModule =
-                    this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> ((ScopeFmi2Api) s).getBlock().getBody().add(0, var), "MEnv");
-            this.executionEnvironment = new ExecutionEnvironmentFmi2Api(this, runtimeModule);
-        }
-
-        return this.executionEnvironment;
     }
 
     public void addExternalLoadedModuleIdentifier(String name) {
@@ -622,6 +551,73 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return this.externalLoadedModuleIdentifier;
     }
 
+    public BooleanBuilderFmi2Api getBooleanBuilder() {
+        return load("BooleanLogic", runtime -> new BooleanBuilderFmi2Api(this, runtime));
+    }
+
+    public ExecutionEnvironmentFmi2Api getExecutionEnvironment() {
+        return load("MEnv", runtime -> new ExecutionEnvironmentFmi2Api(this, runtime));
+    }
+
+    public LoggerFmi2Api getLogger() {
+        return load("Logger", runtime -> new LoggerFmi2Api(this, runtime));
+    }
+
+    public VariableStep getVariableStep(StringVariableFmi2Api config) {
+        return load("VariableStep", runtime -> new VariableStep(this, runtime), config);
+    }
+
+    public DerivativeEstimator getDerivativeEstimator() {
+        return load("DerivativeEstimator", runtime -> new DerivativeEstimator(this.getDynamicScope(), this, runtime));
+    }
+
+    public DataWriter getDataWriter() {
+        return load("DataWriter", runtime -> new DataWriter(this, runtime));
+    }
+
+    public ConsolePrinter getConsolePrinter() {
+        return load("ConsolePrinter", runtime -> new ConsolePrinter(this, runtime));
+    }
+
+    public RealTime getRealTimeModule() {
+        return load("RealTime", runtime -> new RealTime(this, runtime));
+    }
+
+    <T> T load(String moduleType, Function<Fmi2Builder.RuntimeModule<PStm>, T> creator, Object... args) {
+        if (instanceCache.containsKey(moduleType)) {
+            return (T) instanceCache.get(moduleType);
+        }
+
+        Fmi2Builder.RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> {
+            if (args == null || args.length == 0) {
+                ((ScopeFmi2Api) s).getBlock().getBody().addAll(0, var);
+            } else {
+                //we need to mare sure we don't move the creation before the arguments passed
+                int index = 0;
+                var b = ((ScopeFmi2Api) s).getBlock();
+
+                for (Object arg : args) {
+                    if (arg instanceof VariableFmi2Api) {
+                        INode argDecl = ((VariableFmi2Api<?>) arg).getDeclaringStm();
+                        while (!b.equals(argDecl.parent()) && (argDecl = argDecl.parent()) != null) {
+                        }
+
+                        if (argDecl != null && b.equals(argDecl.parent())) {
+                            var argIndex = b.getBody().indexOf(argDecl) + 1;
+                            if (argIndex > index) {
+                                index = argIndex;
+                            }
+                        }
+
+                    }
+                }
+                b.getBody().addAll(index, var);
+            }
+        }, moduleType, args);
+        var m = creator.apply(runtimeModule);
+        instanceCache.put(moduleType, m);
+        return m;
+    }
 
     public enum FmiStatus {
         FMI_OK(0),

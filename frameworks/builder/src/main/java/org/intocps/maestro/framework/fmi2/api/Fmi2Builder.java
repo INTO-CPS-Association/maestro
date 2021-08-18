@@ -31,7 +31,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
     RuntimeModule<S> loadRuntimeModule(String name, Object... args);
 
-    RuntimeModule<S> loadRuntimeModule(Scope<S> scope, String name, Object... args);
+    RuntimeModule<S> loadRuntimeModule(TryScope<S> scope, String name, Object... args);
 
     /**
      * Gets the default scope
@@ -75,9 +75,9 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         <V> Variable<S, V> call(RuntimeFunction functionId, Object... args);
 
-        void destroy();
-
-        void destroy(Scope<S> scope);
+        //        void destroy();
+        //
+        //        void destroy(Scope<S> scope);
     }
 
     interface NumericValue {
@@ -159,6 +159,15 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
          * @return the scope
          */
         T getDeclaration();
+
+        /**
+         * Find a prent element of a specific type
+         *
+         * @param clz the class type to search for
+         * @param <P> the type of class
+         * @return the parent of the specified type or null
+         */
+        <P extends ScopeElement<T>> P findParent(Class<P> clz);
     }
 
 

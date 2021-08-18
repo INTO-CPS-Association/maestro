@@ -45,4 +45,15 @@ public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     public PStm getDeclaration() {
         return declaration;
     }
+
+    @Override
+    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        Fmi2Builder.ScopeElement<PStm> parent = this;
+        while ((parent = parent.parent()) != null) {
+            if (clz.isAssignableFrom(parent.getClass())) {
+                return clz.cast(parent());
+            }
+        }
+        return null;
+    }
 }

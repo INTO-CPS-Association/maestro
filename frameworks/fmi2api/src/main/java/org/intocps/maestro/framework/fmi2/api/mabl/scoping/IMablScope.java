@@ -53,6 +53,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     void addAfterOrTop(PStm item, PStm... commands);
 
+    int indexOf(PStm stm);
+
+
     @Override
     IMablScope activate();
 

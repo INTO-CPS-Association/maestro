@@ -65,6 +65,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        return this.activeScope.findParent(clz);
+    }
+
+    @Override
     public IntVariableFmi2Api getFmiStatusVariable() {
         return this.activeScope.getFmiStatusVariable();
     }
@@ -112,6 +117,11 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     @Override
     public void addAfterOrTop(PStm item, PStm... commands) {
         this.activeScope.addAfterOrTop(item, commands);
+    }
+
+    @Override
+    public int indexOf(PStm stm) {
+        return this.activeScope.indexOf(stm);
     }
 
     @Override

@@ -49,10 +49,10 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         sb.append("load_" + name.getValue() + "(");
 
         //inject config path for MEnv
-        List<PExp> arguments = name.getValue().equals("MEnv") || name.getValue().equals("DataWriter") ? Stream
-                .concat(node.getArgs().stream().limit(1),
-                        Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
-                .collect(Collectors.toList()) : node.getArgs();
+        List<PExp> arguments =
+                name.getValue().equals("MEnv") || name.getValue().equals("DataWriter") ? Stream.concat(node.getArgs().stream().limit(1),
+                                Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
+                        .collect(Collectors.toList()) : node.getArgs();
         for (int i = 1; i < arguments.size(); i++) {
             if (i > 1) {
                 sb.append(", ");
@@ -485,6 +485,18 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         node.getLeft().apply(this, question);
         sb.append(" > ");
         node.getRight().apply(this, question);
+    }
+
+    @Override
+    public void caseAErrorStm(AErrorStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question));
+        sb.append("throw ");
+        if (node.getExp() == null) {
+            sb.append("0");
+        } else {
+            node.getExp().apply(this, question);
+        }
+        sb.append(";");
     }
 
     @Override
