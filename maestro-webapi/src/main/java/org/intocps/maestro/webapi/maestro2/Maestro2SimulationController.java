@@ -112,7 +112,8 @@ public class Maestro2SimulationController {
         return getStatus(session);
     }
 
-    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"}, produces =
+            MediaType.APPLICATION_JSON_VALUE)
     public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody InitializationData body) throws Exception {
         // Store this data to be used for the interpretor later on.
         // It is not possible to create the spec at this point in time as data for setup experiment is missing (i.e. endtime)
