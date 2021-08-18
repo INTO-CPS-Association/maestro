@@ -72,14 +72,11 @@ void DataWriterImpl::writeDataPoint(const char *fmt, DataWriterConfig, double ti
     va_list args;
     va_start(args, time);
 
-//skip first
-    va_arg(args, int);
-//    const char* fmt = "df";
     myfile << time << " , ";
     bool first = true;
     while (*fmt != '\0') {
 
-        if (!first && (*fmt == 'i' || *fmt == 'b' || *fmt == 'r')) {
+        if (!first && (*fmt == 'i' || *fmt == 'b' || *fmt == 'r' || *fmt == 's')) {
             myfile << " , ";
         }
         first = false;
@@ -90,14 +87,13 @@ void DataWriterImpl::writeDataPoint(const char *fmt, DataWriterConfig, double ti
             myfile << i;
         } else if (*fmt == 'b') {
             int i = va_arg(args, int);
-            if (i == 1)
-                myfile << "true";
-            else
+            if (i == 0)
                 myfile << "false";
+            else
+                myfile << "true";
         } else if (*fmt == 's') {
-            // note automatic conversion to integral type
-            int c = va_arg(args, int);
-            myfile << static_cast<char>(c);
+            char* c = va_arg(args, char*);
+            myfile << static_cast<char*>(c);
         } else if (*fmt == 'r') {
             double d = va_arg(args, double);
             myfile << d;
