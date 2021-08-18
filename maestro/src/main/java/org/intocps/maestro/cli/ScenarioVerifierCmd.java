@@ -31,10 +31,10 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "scenario-verifier", description = "Utilise the scenario verifier tool to generate and verify algorithms (as part of a " +
-        "full scenario). It is also possible to execute scenarios and extended multi-models.",
-        mixinStandardHelpOptions = true, subcommands = {ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class, VisualizeTracesCmd.class,
-        VerifyAlgorithmCmd.class})
+@CommandLine.Command(name = "scenario-verifier",
+        description = "Utilise the scenario verifier tool to generate and verify algorithms. It is also possible to execute scenarios and extended multi-models.",
+        mixinStandardHelpOptions = true,
+        subcommands = {ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class, VisualizeTracesCmd.class, VerifyAlgorithmCmd.class})
 public class ScenarioVerifierCmd {
 }
 
@@ -100,8 +100,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
     }
 }
 
-@CommandLine.Command(name = "verify-algorithm", description = "Verifies an algorithm in a scenario.",
-        mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "verify-algorithm", description = "Verifies an algorithm.", mixinStandardHelpOptions = true)
 class VerifyAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Parameters(description = "A master model (scenario + algorithm) in .conf format")
     File masterModelFile;
@@ -149,9 +148,8 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
 }
 
 @CommandLine.Command(name = "generate-algorithm", description = "Generates an algorithm from a scenario or multi-model.",
-        mixinStandardHelpOptions =
-        true)
-class GenerateAlgorithmCmd  implements Callable<Integer> {
+        mixinStandardHelpOptions = true)
+class GenerateAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Parameters(description = "A scenario (.conf) or a multi-model (.json)")
     File file;
 
@@ -162,15 +160,13 @@ class GenerateAlgorithmCmd  implements Callable<Integer> {
     public Integer call() throws Exception {
         Path filePath = file.toPath();
         MasterModel masterModel;
-        if(FilenameUtils.getExtension(filePath.toString()).equals("conf")){
+        if (FilenameUtils.getExtension(filePath.toString()).equals("conf")) {
             String scenario = Files.readString(filePath);
             masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
-        }
-        else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
+        } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
             MultiModelScenarioVerifier multiModel = (new ObjectMapper()).readValue(file, MultiModelScenarioVerifier.class);
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
-        }
-        else {
+        } else {
             return -1;
         }
 
@@ -182,7 +178,7 @@ class GenerateAlgorithmCmd  implements Callable<Integer> {
     }
 }
 
-@CommandLine.Command(name = "execute-algorithm", description = "Executes an algorithm generated from a multi-model. If no algorithm is specified " +
+@CommandLine.Command(name = "execute-algorithm", description = "Executes an algorithm generated from a multi-model. If no algorithm is passed " +
         "(as a master model) it will be generated from the multi-model, however this requires an extended multi-model that includes scenario " +
         "verifier information such as reactivity!", mixinStandardHelpOptions = true)
 class ExecuteAlgorithmCmd implements Callable<Integer> {
@@ -197,7 +193,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
     boolean preserveAnnotations;
 
     @CommandLine.Option(names = {"-mm", "--multi-model"}, required = true,
-            description = "A multi-model or an extended multi-model if no master model is parsed")
+            description = "A multi-model or an extended multi-model if no master model is passed")
     File extendedMultiModelFile;
 
     @CommandLine.Option(names = {"-al", "--algorithm"},
@@ -214,8 +210,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
             description = "Verify the resulting MaBL spec according to the following verifier groups: ${COMPLETION-CANDIDATES}")
     Framework verifyMabl;
 
-    @CommandLine.Option(names = {"-via", "--verify-algorithm"},
-            description = "Verify the algorithm. Note this requires UPPAAL to be available!")
+    @CommandLine.Option(names = {"-via", "--verify-algorithm"}, description = "Verify the algorithm. Note this requires UPPAAL to be available!")
     boolean verifyAlgo;
 
     @Override
@@ -232,7 +227,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Path algorithmPath;
         if (algorithmFile == null) {
             algorithmPath = output.toPath().resolve("masterModel.conf");
-            System.out.println("No master model parsed. Generating algorithm from executable model");
+            System.out.println("No master model passed. Generating algorithm from executable model");
             try {
                 MultiModelScenarioVerifier multiModel = (new ObjectMapper()).readValue(extendedMultiModelFile, MultiModelScenarioVerifier.class);
                 MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
@@ -255,12 +250,12 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         ScenarioConfiguration scenarioConfiguration =
                 getConfigFromMultiModel(multiModelNode, execParamsNode, jsonMapper, util.reporter, masterModelAsString);
 
-        if(verifyAlgo) {
+        if (verifyAlgo) {
             VerifyAlgorithmCmd viaCmd = new VerifyAlgorithmCmd();
             viaCmd.masterModelFile = algorithmPath.toFile();
             viaCmd.output = output;
             viaCmd.call();
-            if(viaCmd.resultCode != 0){
+            if (viaCmd.resultCode != 0) {
                 System.out.println("The algorithm did not verify");
                 return -1;
             }
