@@ -131,7 +131,7 @@ public class DataWriter {
                                     .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
                                             MableAstFactory.newAIdentifier(FUNCTION_WRITEHEADER),
                                             Arrays.asList(MableAstFactory.newAIdentifierExp(logHeadersVariableName))))));
-            
+
             this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
 
             this.initialized = true;

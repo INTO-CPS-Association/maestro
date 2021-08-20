@@ -128,8 +128,8 @@ public class VariableStep {
             AExpressionStm addDataPointStm;
             PStm targetVarStm;
 
-            addDataPointStm = MableAstFactory.newExpressionStm(
-                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
+            addDataPointStm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
                             MableAstFactory.newAIdentifier(FUNCTION_ADDDATAPOINT),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), simTime.getExp(),
                                     MableAstFactory.newAIdentifierExp(portsWithDataIdentifier))));
@@ -196,8 +196,8 @@ public class VariableStep {
 
             //ports with data variable
             List<PExp> portsWithData = ports.stream().map(p -> p.getSharedAsVariable().getReferenceExp().clone()).collect(Collectors.toList());
-            portsWithDataStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(portsWithDataIdentifier),
+            portsWithDataStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(portsWithDataIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newARealNumericPrimitiveType()), portsWithData.size(),
                             portsWithData.size() > 0 ? MableAstFactory.newAArrayInitializer(portsWithData) : null));
 
@@ -205,23 +205,23 @@ public class VariableStep {
             //fmu names variable
             List<PExp> fmuNames = fmus.entrySet().stream().map(v -> v.getKey().getExp()).collect(Collectors.toList());
 
-            fmuNamesStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(fmuInstanceNamesIdentifier),
+            fmuNamesStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(fmuInstanceNamesIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), fmuNames.size(),
                             MableAstFactory.newAArrayInitializer(fmuNames)));
 
             //fmu instances variable
             List<PExp> fmuInstances = fmus.values().stream().map(x -> x.getReferenceExp().clone()).collect(Collectors.toList());
-            fmuInstancesStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(fmuInstancesIdentifier),
+            fmuInstancesStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(fmuInstancesIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")), fmuInstances.size(),
                             MableAstFactory.newAArrayInitializer(fmuInstances)));
 
             //setFMUs function
-            setFMUsStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(variableStepConfigurationIdentifier),
-                            MableAstFactory.newANameType(TYPE_VARIABLESTEPCONFIG), MableAstFactory.newAExpInitializer(
-                                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
+            setFMUsStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(variableStepConfigurationIdentifier),
+                            MableAstFactory.newANameType(TYPE_VARIABLESTEPCONFIG), MableAstFactory.newAExpInitializer(MableAstFactory
+                                    .newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
                                             MableAstFactory.newAIdentifier(FUNCTION_SETFMUS),
                                             Arrays.asList(MableAstFactory.newAIdentifierExp(fmuInstanceNamesIdentifier),
                                                     MableAstFactory.newAIdentifierExp(fmuInstancesIdentifier))))));
@@ -231,32 +231,27 @@ public class VariableStep {
             List<AStringLiteralExp> portNames =
                     ports.stream().map(p -> MableAstFactory.newAStringLiteralExp(p.getMultiModelScalarVariableName())).collect(Collectors.toList());
 
-            portNamesStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(portNamesIdentifier),
+            portNamesStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(portNamesIdentifier),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), portNames.size(),
                             portNames.size() > 0 ? MableAstFactory.newAArrayInitializer(portNames) : null));
 
             //initializePortNames function
-            initializePortNamesStm = MableAstFactory.newExpressionStm(
-                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
+            initializePortNamesStm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
                             MableAstFactory.newAIdentifier(FUNCTION_INITIALIZEPORTNAMES),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier),
                                     MableAstFactory.newAIdentifierExp(portNamesIdentifier))));
 
 
             //setEndTime function
-            setEndTimeStm = MableAstFactory.newExpressionStm(
-                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
+            setEndTimeStm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.variableStep.getModuleIdentifier()),
                             MableAstFactory.newAIdentifier(FUNCTION_SETENDTIME),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), endTime.getExp())));
 
-            if (this.runtimeModuleMode) {
-                this.runtimeModule.getDeclaredScope()
-                        .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
-            } else {
-                this.mablApiBuilder.getDynamicScope()
-                        .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
-            }
+            this.mablApiBuilder.getDynamicScope()
+                    .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
 
             this.initialized = true;
         }
