@@ -1,7 +1,7 @@
 package org.intocps.maestro.webapi.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.intocps.maestro.webapi.maestro2.dto.MultiModelScenarioVerifier
+import org.intocps.maestro.core.dto.MultiModelScenarioVerifier
 
 data class FmuDTO(
     @JsonProperty("can-reject-step") val canRejectStep: Boolean,
