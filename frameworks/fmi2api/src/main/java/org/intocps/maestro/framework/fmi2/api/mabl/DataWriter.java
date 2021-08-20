@@ -117,26 +117,22 @@ public class DataWriter {
                     this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getMultiModelScalarVariableName()))
                             .collect(Collectors.toList());
 
-            AVariableDeclaration datawriter_configuration =
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(logHeadersVariableName),
+            AVariableDeclaration datawriter_configuration = MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(logHeadersVariableName),
                             MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), variablesNamesToLog.size(),
                             MableAstFactory.newAArrayInitializer(variablesNamesToLog));
 
             this.logHeadersStm = MableAstFactory.newALocalVariableStm(datawriter_configuration);
 
 
-            this.writeHeadersStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(this.dataWriterInstanceConfigurationVariableName),
-                            MableAstFactory.newANameType(TYPE_DATAWRITERCONFIG), MableAstFactory.newAExpInitializer(
-                                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
+            this.writeHeadersStm = MableAstFactory.newALocalVariableStm(MableAstFactory
+                    .newAVariableDeclaration(MableAstFactory.newAIdentifier(this.dataWriterInstanceConfigurationVariableName),
+                            MableAstFactory.newANameType(TYPE_DATAWRITERCONFIG), MableAstFactory.newAExpInitializer(MableAstFactory
+                                    .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
                                             MableAstFactory.newAIdentifier(FUNCTION_WRITEHEADER),
                                             Arrays.asList(MableAstFactory.newAIdentifierExp(logHeadersVariableName))))));
-
-            if (this.runtimeModuleMode) {
-                this.runtimeModule.getDeclaredScope().add(logHeadersStm, writeHeadersStm);
-            } else {
-                this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
-            }
+            
+            this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
 
             this.initialized = true;
         }
@@ -145,8 +141,8 @@ public class DataWriter {
             if (!initialized) {
                 throw new RuntimeException("DataWriter has not been initialized!");
             }
-            AExpressionStm stm = MableAstFactory.newExpressionStm(
-                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
+            AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
                             MableAstFactory.newAIdentifier(this.FUNCTION_WRITEDATAPOINT), Stream.concat(
                                     Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName),
                                             time.getReferenceExp().clone()).stream(),
@@ -156,8 +152,8 @@ public class DataWriter {
         }
 
         public void close() {
-            AExpressionStm stm = MableAstFactory.newExpressionStm(
-                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
+            AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
+                    .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
                             MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE), Arrays.asList()));
             this.dynamicScope.add(stm);
         }
