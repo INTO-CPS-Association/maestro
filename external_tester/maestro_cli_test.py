@@ -8,6 +8,9 @@ import shutil
 import tempfile
 import pathlib
 import json
+import subprocess
+import platform
+from pathlib import Path
 
 parser = argparse.ArgumentParser(prog='Example of Maestro CLI', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro CLI jar (Can be relative path)")
