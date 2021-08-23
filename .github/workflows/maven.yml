@@ -87,7 +87,7 @@ jobs:
           pipenv install
 
       - name: CLI Test
-        timeout-minutes: 2
+        timeout-minutes: 5
         run: |
           cd external_tester
           pipenv run python maestro_cli_test.py
