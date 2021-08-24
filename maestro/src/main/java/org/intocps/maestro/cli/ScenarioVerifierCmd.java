@@ -168,7 +168,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
         }
 
         String algorithm = ScenarioConfGenerator.generate(masterModel, masterModel.name());
-        Path algorithmPath = output.toPath().resolve("algorithm.conf");
+        Path algorithmPath = output.toPath().resolve("masterModel.conf");
         Files.write(algorithmPath, algorithm.getBytes(StandardCharsets.UTF_8));
 
         return 0;
