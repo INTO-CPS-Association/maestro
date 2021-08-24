@@ -139,6 +139,14 @@ def ensureResponseOk(response):
     if not response.status_code == 200:
         raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")
 
+def testCliCommandWithFunc(cmd, func):
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        raise Exception(f"Error executing {cmd}")
+    else:
+        func()
+
 def acquireServerDefinedPortFromStdio(proc):
     # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
     # Therefore match the pattern and retrieve the port number from stdout to communicate with the server
