@@ -180,15 +180,27 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
         printABlockStm(node.getBody(), question, false, true);
     }
 
+    @Override
+    public void caseATryStm(ATryStm node, Integer question) throws AnalysisException {
+        sb.append(indent(question) + "try \n");
+        sb.append(indent(question) + "{\n");
+        applyBodyIntendedScoping(node.getBody(), question + 1);
+        sb.append("\n" + indent(question) + "}");
+        sb.append(indent(question) + "finally \n");
+        sb.append(indent(question) + "{\n");
+        applyBodyIntendedScoping(node.getFinally(), question + 1);
+        sb.append("\n" + indent(question) + "}");
+    }
+
     public void printABlockStm(List<? extends PStm> body, Integer question, boolean skipBracket, boolean parallel) throws AnalysisException {
         if (body.isEmpty()) {
             return;
         }
 
-        if (body.size() == 1) {
-            body.get(0).apply(this, question);
-            return;
-        }
+        //        if (body.size() == 1) {
+        //            body.get(0).apply(this, question);
+        //            return;
+        //        }
         if (!skipBracket) {
             sb.append(indent(question) + (parallel ? "||" : "") + "{\n ");
         }

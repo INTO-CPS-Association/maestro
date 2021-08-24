@@ -22,6 +22,9 @@ IMPORT:           'import';
 SIMULATION:         'simulation';
 OBSERVABLE:         'observable';
 BREAK:         'break';
+TRY: 'try';
+FINALLY: 'finally';
+ERROR: 'error';
 
 // Literals
 

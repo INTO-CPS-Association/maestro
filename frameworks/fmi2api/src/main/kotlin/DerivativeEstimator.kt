@@ -15,8 +15,8 @@ class DerivativeEstimator(
 ) {
     private val moduleIdentifier: String = runtimeModule?.name ?: "derivativeEstimator"
 
-    constructor(dynamicScope: DynamicActiveBuilderScope, mablApiBuilder: MablApiBuilder) : this(
-        dynamicScope,
+    constructor(mablApiBuilder: MablApiBuilder) : this(
+        mablApiBuilder.dynamicScope,
         mablApiBuilder,
         null
     )
@@ -87,8 +87,7 @@ class DerivativeEstimator(
                 )
             )
 
-            runtimeModule?.declaredScope?.add(createFunctionStm)
-                ?: mablApiBuilder.dynamicScope.add(createFunctionStm)
+            mablApiBuilder.dynamicScope.add(createFunctionStm)
 
             isInitialized = true
         }

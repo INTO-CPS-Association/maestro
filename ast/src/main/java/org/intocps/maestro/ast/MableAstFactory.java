@@ -119,6 +119,13 @@ public class MableAstFactory {
         return stm;
     }
 
+    public static ATryStm newTry(ABasicBlockStm bodyStm, ABasicBlockStm finallyStm) {
+        var stm = new ATryStm();
+        stm.setBody(bodyStm);
+        stm.setFinally(finallyStm);
+        return stm;
+    }
+
     public static LexIdentifier newLexIdentifier(String identifier) {
         LexIdentifier lexIdentifier = new LexIdentifier(identifier, null);
         return lexIdentifier;
@@ -494,6 +501,12 @@ public class MableAstFactory {
         exp.setLeft(left);
         exp.setRight(right);
         return exp;
+    }
+
+    public static AErrorStm newError(PExp exp) {
+        AErrorStm errorStm = new AErrorStm();
+        errorStm.setExp(exp);
+        return errorStm;
     }
 
     public static ABreakStm newBreak() {

@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
+import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -58,8 +59,8 @@ public class MaBLTemplateGenerator {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(new LexIdentifier(lexName, null), MableAstFactory.newARealNumericPrimitiveType(),
+        return MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(new LexIdentifier(lexName, null), MableAstFactory.newARealNumericPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newARealLiteralExp(initializerValue))));
     }
 
@@ -80,12 +81,18 @@ public class MaBLTemplateGenerator {
         return proposedName;
     }
 
+    public static PStm createFmuVariable(String fmuLexName) {
+        return newVariable(fmuLexName, newANameType("FMI2"), newNullExp());
+    }
+
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
 
         String path = uriFromFMUName.toString();
-        return newVariable(fmuLexName, newANameType("FMI2"),
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
+        //        return newVariable(fmuLexName, newANameType("FMI2"),
+        //                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
 
     }
 
@@ -94,41 +101,38 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
     }
 
-    public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
-            boolean loggingOn) {
-        return createFMUInstantiateStatement(instanceLexName, instanceEnvironmentKey, fmuLexName, visible, loggingOn, null);
+    public static List<PStm> createFmuInstanceVariable(String instanceLexName, String instanceEnvironmentKey) {
+        List<PStm> statements = new ArrayList<>();
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
+        statements.add(mapping);
+        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
+        statements.add(var);
+        return statements;
     }
 
-    public static List<PStm> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey, String fmuLexName, boolean visible,
-            boolean loggingOn, FaultInjectWithLexName faultInject) {
-        List<PStm> statements = new ArrayList<>();
+    public static Map.Entry<List<PStm>, List<PStm>> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey,
+            String fmuLexName, boolean visible, boolean loggingOn, FaultInjectWithLexName faultInject) {
+        List<PStm> rootStatements = new ArrayList<>();
+        List<PStm> tryBlockStatements = new ArrayList<>();
         String instanceLexName_ = instanceLexName;
 
-        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName_), instanceEnvironmentKey);
-        statements.add(mapping);
-        PStm var = newVariable(instanceLexName_, newANameType("FMI2Component"), newNullExp());
-        statements.add(var);
-        AIfStm ifAssign = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName_)),
-                        call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
-                                newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName_)), null);
-        statements.add(ifAssign);
+        List<PStm> instantiate = Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName_)),
+                call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                        newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName_));
+        tryBlockStatements.addAll(instantiate);
 
         if (faultInject != null) {
             AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
-            statements.add(fiToEnvMapping);
             PStm ficomp = newVariable(faultInject.lexName, newANameType("FMI2Component"), newNullExp());
-            statements.add(ficomp);
-            AIfStm stm = newIf(newAIdentifierExp(GLOBAL_EXECUTION_CONTINUE), newABlockStm(
-                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
-                            newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
-                                    Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
-                                            newAStringLiteralExp(faultInject.constraintId)))), checkNullAndStop(faultInject.lexName)), null);
-            statements.add(stm);
+            rootStatements.addAll(Arrays.asList(fiToEnvMapping, ficomp));
+            tryBlockStatements.addAll(Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
+                    newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
+                            Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
+                                    newAStringLiteralExp(faultInject.constraintId)))), checkNullAndStop(faultInject.lexName)));
         }
 
 
-        return statements;
+        return new AbstractMap.SimpleEntry(rootStatements, tryBlockStatements);
     }
 
     public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig) {
@@ -136,19 +140,19 @@ public class MaBLTemplateGenerator {
 
         switch (algorithmConfig.getAlgorithmType()) {
             case FIXEDSTEP:
-                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
-                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                                MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
-                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                        newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             case VARIABLESTEP:
-                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
-                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                                MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
-                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                        newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             default:
@@ -165,50 +169,82 @@ public class MaBLTemplateGenerator {
         boolean wrapExpansionPluginInGlobalExecutionContinue = false;
 
         //TODO: mable builder
+        ABasicBlockStm rootScope = newABlockStm();
+        LinkedList<PStm> rootScopeBody = rootScope.getBody();
+        rootScopeBody.add(createGlobalExecutionContinue());
+        rootScopeBody.addAll(createStatusVariables());
 
-        StatementMaintainer stmMaintainer = new StatementMaintainer();
-        stmMaintainer.add(createGlobalExecutionContinue());
-        stmMaintainer.addAll(createStatusVariables());
+        // Create the try block
+        ABasicBlockStm tryBody = newABlockStm();
+        ABasicBlockStm finallyBody = newABlockStm();
 
-        stmMaintainer.addAll(generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement));
+        var loadUnloadStatements = generateLoadUnloadStms(MaBLTemplateGenerator::createLoadStatement);
+        for (Map.Entry<? extends PStm, List<PStm>> a : loadUnloadStatements) {
+            if (a.getKey() != null) {
+                rootScopeBody.add(a.getKey());
+                if (a.getValue() != null) {
+                    tryBody.getBody().addAll(a.getValue());
+                }
+            }
+        }
 
         Fmi2SimulationEnvironment unitRelationShip = templateConfiguration.getUnitRelationship();
         boolean faultInject =
                 unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
         if (faultInject) {
-            stmMaintainer.add(createLoadStatement(FAULT_INJECT_MODULE_NAME,
-                    Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath()))));
+            Map.Entry<PStm, List<PStm>> fiinjectLoadStatement = createLoadStatement(FAULT_INJECT_MODULE_NAME,
+                    Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath())));
+            if (fiinjectLoadStatement.getKey() != null) {
+                rootScopeBody.add(fiinjectLoadStatement.getKey());
+                if (fiinjectLoadStatement.getValue() != null) {
+                    tryBody.getBody().addAll(fiinjectLoadStatement.getValue());
+                }
+            }
         }
 
-        // Create FMU load statements
-        List<PStm> unloadFmuStatements = new ArrayList<>();
+        // First create the FMU variables and assign to null
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
         for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
-
-            stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
-            stmMaintainer.add(checkNullAndStop(fmuLexName));
-            unloadFmuStatements.add(createFMUUnload(fmuLexName));
-
+            rootScopeBody.add(createFmuVariable(fmuLexName));
             fmuNameToLexIdentifier.put(entry.getKey(), fmuLexName);
         }
 
-        // Create Instantiate Statements
-        HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
+        // Create the FMU Instances and assign to null
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
-        List<PStm> freeInstanceStatements = new ArrayList<>();
-        List<PStm> terminateStatements = new ArrayList<>();
+        HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
         Map<String, String> instaceNameToInstanceLex = new HashMap<>();
-        Map<String, FaultInjectWithLexName> faultInjectedInstances = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
-            // Find parent lex
-            String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
             // Get instanceName
             String instanceLexName = findInstanceLexName(entry.getKey(), invalidNames);
             invalidNames.add(instanceLexName);
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
+            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, entry.getKey()));
+        });
 
+        StatementMaintainer stmMaintainer = new StatementMaintainer();
+
+        // Create FMU load statements
+        List<PStm> unloadFmuStatements = new ArrayList<>();
+
+        for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
+            String fmuLexName = removeFmuKeyBraces(entry.getKey());
+            stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
+            stmMaintainer.add(checkNullAndStop(fmuLexName));
+            unloadFmuStatements.add(createUnloadStatement(fmuLexName).getKey());
+        }
+
+        // Create Instantiate Statements
+        List<PStm> freeInstanceStatements = new ArrayList<>();
+        List<PStm> terminateStatements = new ArrayList<>();
+
+        Map<String, FaultInjectWithLexName> faultInjectedInstances = new HashMap<>();
+        unitRelationShip.getInstances().forEach(entry -> {
+            // Find parent lex
+            String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
+            // Get instanceName
+            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
 
             // Instance shall be faultinjected
             if (entry.getValue().getFaultInject().isPresent()) {
@@ -218,12 +254,18 @@ public class MaBLTemplateGenerator {
                 faultInjectedInstances.put(instanceLexName, faultInjectWithLexName);
 
             }
-            stmMaintainer.addAll(createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
-                    templateConfiguration.getLoggingOn(), faultInjectedInstances.get(instanceLexName)));
+            Map.Entry<List<PStm>, List<PStm>> fmuInstantiateStatement =
+                    createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
+                            templateConfiguration.getLoggingOn(), faultInjectedInstances.get(instanceLexName));
+            rootScopeBody.addAll(fmuInstantiateStatement.getKey());
+            stmMaintainer.addAll(fmuInstantiateStatement.getValue());
 
             terminateStatements.add(createFMUTerminateStatement(instanceLexName, faultInjectedInstances.get(instanceLexName)));
-            freeInstanceStatements.add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
+            finallyBody.getBody().add(createFMUFreeInstanceStatement(instanceLexName, parentLex));
         });
+
+        // Add FMU Unload as all instances should have been freed by now.
+        finallyBody.getBody().addAll(unloadFmuStatements);
 
 
         // Debug logging
@@ -286,10 +328,13 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(freeInstanceStatements);
 
         // Unload the FMUs
-        stmMaintainer.addAllCleanup(unloadFmuStatements);
-        stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
+        //        stmMaintainer.addAllCleanup(unloadFmuStatements);
+        finallyBody.getBody().addAll(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))).stream().map(x -> x.getKey())
+                .collect(Collectors.toList()));
+        //        stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
         if (faultInject) {
-            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
+            finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
+            //            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
@@ -301,13 +346,21 @@ public class MaBLTemplateGenerator {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
 
-        ASimulationSpecificationCompilationUnit unit =
-                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));
+        //        ASimulationSpecificationCompilationUnit unit =
+        //                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));
+        tryBody.getBody().addAll(stmMaintainer.getStatements());
+        rootScopeBody.add(newTry(tryBody, finallyBody));
+        ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(imports, rootScope);
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 
         unit.setFrameworkConfigs(Arrays.asList(
                 new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
+        try {
+            System.out.println(org.intocps.maestro.ast.display.PrettyPrinter.print(unit));
+        } catch (AnalysisException e) {
+            e.printStackTrace();
+        }
         return unit;
     }
 
@@ -322,16 +375,16 @@ public class MaBLTemplateGenerator {
         list.add(createStatusVariable_.apply("FMI_STATUS_ERROR", 3));
         list.add(createStatusVariable_.apply("FMI_STATUS_FATAL", 4));
         list.add(createStatusVariable_.apply("FMI_STATUS_PENDING", 5));
-        list.add(MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
+        list.add(MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newAIntLiteralExp(0)))));
         return list;
     }
 
 
     private static PStm checkNullAndStop(String identifier) {
-        return newIf(newEqual(newAIdentifierExp(identifier), newNullExp()),
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(GLOBAL_EXECUTION_CONTINUE)), newABoolLiteralExp(false)), null);
+        return newIf(newEqual(newAIdentifierExp(identifier), newNullExp()), newABlockStm(newError(newAStringLiteralExp(identifier + " IS NULL "))),
+                null);
     }
 
     private static Collection<? extends PStm> createDebugLoggingStmsHelper(Map<String, String> instaceNameToInstanceLex, String instanceName,
@@ -378,12 +431,12 @@ public class MaBLTemplateGenerator {
             loglevelsArrayInitializer =
                     newAArrayInitializer(logLevels.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
         }
-        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
+        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
                         MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), logLevels.size(), loglevelsArrayInitializer));
 
-        AExpressionStm expandCall = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_MODULE_NAME)),
+        AExpressionStm expandCall = MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifierExp(arrayName),
                                 MableAstFactory.newAUIntLiteralExp(Long.valueOf(logLevels.size())))));
@@ -393,23 +446,24 @@ public class MaBLTemplateGenerator {
     }
 
     private static PStm createGlobalExecutionContinue() {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE), MableAstFactory.newABoleanPrimitiveType(),
-                        MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
+        return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE),
+                MableAstFactory.newABoleanPrimitiveType(), MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
     }
 
     private static PStm createFMUTerminateStatement(String instanceLexName, FaultInjectWithLexName faultInject) {
         if (faultInject != null) {
             instanceLexName = faultInject.lexName;
         }
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"), Arrays.asList()));
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"),
+                        Arrays.asList()));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
-                        Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName))));
+        return newIf(newNotEqual(newAIdentifierExp(instanceLexName), newNullExp()), newABlockStm(MableAstFactory.newExpressionStm(
+                        MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
+                                Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName)))),
+                MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(instanceLexName), newNullExp())), null);
     }
 
     private static Collection<? extends PStm> generateUnloadStms() {
@@ -422,33 +476,39 @@ public class MaBLTemplateGenerator {
                 MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> aIdentifierExpFromString(x)).collect(Collectors.toList()))));
     }
 
-    private static PStm createUnloadStatement(String moduleName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory.newUnloadExp(Arrays.asList(MableAstFactory.newAIdentifierExp(moduleName))));
+    private static Map.Entry<PStm, List<PStm>> createUnloadStatement(String moduleName) {
+        AIfStm ifNotNull = newIf(newNotEqual(newAIdentifierExp(moduleName), newNullExp()),
+                newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp(moduleName)))),
+                        newAAssignmentStm(newAIdentifierStateDesignator(moduleName), newNullExp())), null);
+        return new AbstractMap.SimpleEntry(ifNotNull, null);
     }
 
-    private static Collection<? extends PStm> generateLoadUnloadStms(Function<String, PStm> function) {
+    private static Collection<Map.Entry<? extends PStm, List<PStm>>> generateLoadUnloadStms(Function<String, Map.Entry<PStm, List<PStm>>> function) {
         return Arrays.asList(MATH_MODULE_NAME, LOGGER_MODULE_NAME, DATAWRITER_MODULE_NAME, BOOLEANLOGIC_MODULE_NAME).stream()
                 .map(x -> function.apply(x)).collect(Collectors.toList());
     }
 
-    private static PStm createLoadStatement(String moduleName, List<PExp> pexp) {
+    private static Map.Entry<PStm, List<PStm>> createLoadStatement(String moduleName, List<PExp> pexp) {
         List<PExp> arguments = new ArrayList<>();
         arguments.add(MableAstFactory.newAStringLiteralExp(moduleName));
         if (pexp != null && pexp.size() > 0) {
             arguments.addAll(pexp);
         }
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(StringUtils.uncapitalize(moduleName)),
-                        MableAstFactory.newANameType(moduleName), MableAstFactory.newAExpInitializer(MableAstFactory.newALoadExp(arguments))));
+        var identifier = MableAstFactory.newAIdentifier(StringUtils.uncapitalize(moduleName));
+        var variable = MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(identifier, MableAstFactory.newANameType(moduleName), newAExpInitializer(newNullExp())));
+        var assignment = newAAssignmentStm(newAIdentifierStateDesignator(identifier), MableAstFactory.newALoadExp(arguments));
+
+        return new AbstractMap.SimpleEntry<>(variable, Arrays.asList(assignment, checkNullAndStop(identifier.getText())));
     }
 
-    private static PStm createLoadStatement(String moduleName) {
+    private static Map.Entry<PStm, List<PStm>> createLoadStatement(String moduleName) {
         return createLoadStatement(moduleName, null);
     }
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
                                 aIdentifierExpFromString(endTimeLexName))));

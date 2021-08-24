@@ -347,8 +347,6 @@ public class BuilderGetSetDerivativesTest {
                 }
             });
 
-            pumpFMU.unload();
-            sinkFMU.unload();
 
             // Setup mabl
             ASimulationSpecificationCompilationUnit program = builder.build();
@@ -368,8 +366,8 @@ public class BuilderGetSetDerivativesTest {
             mabl.setVerbose(true);
 
             // Assert
-            Assertions.assertDoesNotThrow(() -> mabl
-                    .parse(Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+            Assertions.assertDoesNotThrow(() -> mabl.parse(
+                    Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
                             .collect(Collectors.toList())));
 
             Assertions.assertDoesNotThrow((ThrowingSupplier<Map.Entry<Boolean, Map<INode, PType>>>) mabl::typeCheck);

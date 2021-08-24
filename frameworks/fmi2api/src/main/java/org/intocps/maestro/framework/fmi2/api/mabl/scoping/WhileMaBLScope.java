@@ -5,8 +5,6 @@ import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 
-import static org.intocps.maestro.ast.MableAstFactory.newBreak;
-
 public class WhileMaBLScope extends ScopeFmi2Api implements Fmi2Builder.WhileScope<PStm> {
     private final MablApiBuilder builder;
     private final PStm declaration;
@@ -30,12 +28,7 @@ public class WhileMaBLScope extends ScopeFmi2Api implements Fmi2Builder.WhileSco
      */
     @Override
     public ScopeFmi2Api leave() {
-        if (builder.getSettings().fmiErrorHandlingEnabled) {
-            IMablScope notThenScope = super.leave().enterIf(builder.getGlobalExecutionContinue().toPredicate().not()).enterThen();
-            notThenScope.add(newBreak());
-            return notThenScope.leave();
-        } else {
-            return super.leave();
-        }
+
+        return super.leave();
     }
 }

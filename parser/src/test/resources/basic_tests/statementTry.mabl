@@ -1,0 +1,11 @@
+ simulation
+ {
+    try{
+        int i=2;
+        error "some error";
+    } finally {
+
+      int i =1;
+
+    }
+ }

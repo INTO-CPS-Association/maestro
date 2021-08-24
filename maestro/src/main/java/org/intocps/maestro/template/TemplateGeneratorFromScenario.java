@@ -87,20 +87,20 @@ public class TemplateGeneratorFromScenario {
         dynamicScope.add(configStm);
 
         // Add scenario verifier expansion plugin
-        PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTE_ALGORITHM_FUNCTION_NAME),
-                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+        PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                newAIdentifierExp(MableAstFactory.newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME)),
+                MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTE_ALGORITHM_FUNCTION_NAME),
+                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
         dynamicScope.add(algorithmStm);
 
         // Terminate instances, free instances, unload FMUs
         fmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);
-        fmus.forEach(fmu -> {
-            fmuInstances.values().stream().filter(instance -> instance.getOwner().getFmuIdentifier().equals(fmu.getFmuIdentifier())).findAny()
-                    .ifPresent(fmu::freeInstance);
-            fmu.unload(dynamicScope);
-        });
+        //        fmus.forEach(fmu -> {
+        //            fmuInstances.values().stream().filter(instance -> instance.getOwner().getFmuIdentifier().equals(fmu.getFmuIdentifier())).findAny()
+        //                    .ifPresent(fmu::freeInstance);
+        //            //            fmu.unload(dynamicScope);
+        //        });
 
         // Build unit
         ASimulationSpecificationCompilationUnit unit = builder.build();

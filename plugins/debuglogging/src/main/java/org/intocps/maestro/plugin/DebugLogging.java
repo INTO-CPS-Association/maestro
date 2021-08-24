@@ -79,10 +79,9 @@ public class DebugLogging extends BasicMaestroExpansionPlugin {
                         Arrays.asList(newABoolLiteralExp(selectedFun == funEnable), size.clone(), categories.clone()))))));
 
         statements.add(newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
-                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))),
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)), null));
+                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))), new AErrorStm(), null));
 
-        return Arrays.asList(newIf(newAIdentifierExp("global_execution_continue"), newABlockStm(statements), null));
+        return List.of(newABlockStm(statements));
     }
 
     @Override

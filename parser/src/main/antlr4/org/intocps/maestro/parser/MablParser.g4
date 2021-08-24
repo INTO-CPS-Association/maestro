@@ -62,6 +62,8 @@ statement
     | INSTANCE_MAP identifier=IDENTIFIER '->'
                      name=STRING_LITERAL ';'                    #expandMapping
     | AT_CONFIG LPAREN  config=STRING_LITERAL  RPAREN ';'       #config
+    | ERROR expression? ';'                                     #error
+    | TRY tryBlock=block FINALLY finallyBlock=block                                   #try
     ;
 
 

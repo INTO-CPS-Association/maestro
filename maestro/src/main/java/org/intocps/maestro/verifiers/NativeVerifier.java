@@ -26,7 +26,7 @@ public class NativeVerifier implements IMaestroVerifier {
         try {
             doc.apply(analysis);
 
-            analysis.loadsWithNoVarDecl.forEach(load -> reporter.report(0, "No variable found for load", null));
+            analysis.loadsWithNoVarDecl.forEach(load -> reporter.report(0, "No variable found for load: '" + load + "'", null));
             analysis.getMissingUnloads().forEach((unload, name) -> reporter.report(0, "No unload found for loaded name: " + name, name.getSymbol()));
             analysis.getMissingLoads().forEach((unload, name) -> reporter.report(0, "No load found for unloaded name: " + name, name.getSymbol()));
 
@@ -67,23 +67,28 @@ public class NativeVerifier implements IMaestroVerifier {
             return unloadsWithNoLoad;
         }
 
-        @Override
-        public void caseAVariableDeclaration(AVariableDeclaration node) throws AnalysisException {
-            this.lastVisitedVarDecl = node;
-            super.caseAVariableDeclaration(node);
-        }
+        //        @Override
+        //        public void caseAVariableDeclaration(AVariableDeclaration node) throws AnalysisException {
+        //            this.lastVisitedVarDecl = node;
+        //            super.caseAVariableDeclaration(node);
+        //        }
 
         @Override
         public void caseALoadExp(ALoadExp node) throws AnalysisException {
 
-            if (lastVisitedVarDecl == null) {
-                loadsWithNoVarDecl.add(node);
-                return;
+
+            if (node.parent() instanceof AAssigmentStm) {
+                AAssigmentStm assign = (AAssigmentStm) node.parent();
+
+                if (assign.getTarget() instanceof AIdentifierStateDesignator) {
+                    identifierToLoad.put(((AIdentifierStateDesignator) assign.getTarget()).getName(), node);
+                }
+            } else {
+                AVariableDeclaration decl = node.getAncestor(AVariableDeclaration.class);
+                if (decl != null) {
+                    identifierToLoad.put(decl.getName(), node);
+                }
             }
-
-            identifierToLoad.put(lastVisitedVarDecl.getName(), node);
-
-            lastVisitedVarDecl = null;
         }
 
         @Override

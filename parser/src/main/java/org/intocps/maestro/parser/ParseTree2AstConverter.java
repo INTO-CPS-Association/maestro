@@ -51,6 +51,24 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
+    public INode visitTry(MablParser.TryContext ctx) {
+        ATryStm tryStm = new ATryStm();
+        tryStm.setBody((ABasicBlockStm) visit(ctx.tryBlock));
+        tryStm.setFinally((ABasicBlockStm) visit(ctx.finallyBlock));
+        return tryStm;
+    }
+
+    @Override
+    public INode visitError(MablParser.ErrorContext ctx) {
+        AErrorStm errStm = new AErrorStm();
+        if (ctx.expression() != null) {
+            errStm.setExp((PExp) visit(ctx.expression()));
+        }
+
+        return errStm;
+    }
+
+    @Override
     public INode visitFunctionDeclaration(MablParser.FunctionDeclarationContext ctx) {
         AFunctionDeclaration fun = new AFunctionDeclaration();
 

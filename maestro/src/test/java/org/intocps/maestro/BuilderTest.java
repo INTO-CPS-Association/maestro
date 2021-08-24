@@ -59,14 +59,14 @@ public class BuilderTest {
 
         LoggerFmi2Api logger = builder.getLogger();
 
-        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().store(6);
+        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().enterTry().enter().store(6);
         // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
                 .createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
-        FmuVariableFmi2Api tankFMU = builder.getDynamicScope().
-                createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+        FmuVariableFmi2Api tankFMU =
+                builder.getDynamicScope().createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");
@@ -113,8 +113,8 @@ public class BuilderTest {
         //tank.set(allVars);
 
 
-        controllerFMU.unload();
-        tankFMU.unload();
+        //        controllerFMU.unload();
+        //        tankFMU.unload();
         // logger.destroy();
         ASimulationSpecificationCompilationUnit program = builder.build();
 
@@ -140,9 +140,8 @@ public class BuilderTest {
             Assertions.fail();
         }
         mabl.dump(workingDirectory);
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
     }
 

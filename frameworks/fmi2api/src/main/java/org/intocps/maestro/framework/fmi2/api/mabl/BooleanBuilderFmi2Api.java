@@ -21,9 +21,8 @@ public class BooleanBuilderFmi2Api {
     private boolean runtimeModuleMode = false;
 
 
-    public BooleanBuilderFmi2Api(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder,
-            Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
-        this(dynamicScope, mablApiBuilder);
+    public BooleanBuilderFmi2Api(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.runtimeModuleMode = true;
         this.runtimeModule = runtimeModule;
         this.moduleIdentifier = runtimeModule.getName();

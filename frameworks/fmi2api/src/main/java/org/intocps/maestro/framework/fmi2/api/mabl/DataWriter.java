@@ -31,8 +31,8 @@ public class DataWriter {
         this.moduleIdentifier = "dataWriter";
     }
 
-    public DataWriter(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
-        this(dynamicScope, mablApiBuilder);
+    public DataWriter(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.runtimeModuleMode = true;
         this.runtimeModule = runtimeModule;
         this.moduleIdentifier = runtimeModule.getName();
@@ -132,11 +132,7 @@ public class DataWriter {
                                             MableAstFactory.newAIdentifier(FUNCTION_WRITEHEADER),
                                             Arrays.asList(MableAstFactory.newAIdentifierExp(logHeadersVariableName))))));
 
-            if (this.runtimeModuleMode) {
-                this.runtimeModule.getDeclaredScope().add(logHeadersStm, writeHeadersStm);
-            } else {
-                this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
-            }
+            this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
 
             this.initialized = true;
         }
