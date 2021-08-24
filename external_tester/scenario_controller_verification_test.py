@@ -92,7 +92,7 @@ def verifyAlgorithmTest(SCR_path, jarPath):
     temporary = tempfile.mkdtemp()
     print(f"Temporary directory: {temporary}")
     masterModelPath = os.path.join(SCR_path, "verify_algorithm", "masterModel.conf")
-    cmd = "java -jar {0} verify-algorithm {1} -output {2}".format(jarPath, masterModelPath, temporary)
+    cmd = "java -jar {0} scenario-verifier verify-algorithm {1} -output {2}".format(jarPath, masterModelPath, temporary)
     func = lambda: True
     testutils.testCliCommandWithFunc(cmd, func)
 
@@ -101,7 +101,7 @@ def visualizeTracesTest(SCR_path, jarPath):
     temporary = tempfile.mkdtemp()
     print(f"Temporary directory: {temporary}")
     masterModelPath = os.path.join(SCR_path, "visualize_traces", "masterModel.conf")
-    cmd = "java -jar {0} visualize-traces {1} -output {2}".format(jarPath, masterModelPath, temporary)
+    cmd = "java -jar {0} scenario-verifier visualize-traces {1} -output {2}".format(jarPath, masterModelPath, temporary)
     func = lambda: True
     testutils.testCliCommandWithFunc(cmd, func)
 
