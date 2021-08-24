@@ -116,13 +116,13 @@ def cliTest(jarPath):
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar")))
-if not os.path.isfile(webApiJarPath):
-    raise Exception(f"Unable to locate jar: {webApiJarPath}")
-webApiTest(webApiJarPath)
+# webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar")))
+# if not os.path.isfile(webApiJarPath):
+#     raise Exception(f"Unable to locate jar: {webApiJarPath}")
+# webApiTest(webApiJarPath)
 
 ## guru.nidi.graphviz.engine fails to initialize if it has just been used e.g. by running webApiTest before cliTest or the other way around. Therefore only one can be run at the time.
-# cliJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar")))
-# if not os.path.isfile(cliJarPath):
-#     raise Exception(f"Unable to locate jar: {cliJarPath}")
-# cliTest(cliJarPath)
+cliJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar")))
+if not os.path.isfile(cliJarPath):
+    raise Exception(f"Unable to locate jar: {cliJarPath}")
+cliTest(cliJarPath)

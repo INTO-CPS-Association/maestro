@@ -71,7 +71,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
         // If verification result code is 1 violations of the scenarios' contract were found and a trace has been written to the trace file
         // from which a visualization can be made.
         if (resultCode == 1) {
-            Path videoTraceFolder = java.nio.file.Files.createDirectories(Path.of(tempDir.getPath(), "video_trace"));
+            Path videoTraceFolder = output.toPath();
             ModelEncoding modelEncoding = new ModelEncoding(masterModel);
             try (BufferedReader bufferedReader = new BufferedReader(new FileReader(traceFile))) {
                 TraceAnalyzer.AnalyseScenario(masterModel.name(), CollectionConverters.asScala(bufferedReader.lines().iterator()), modelEncoding,
@@ -81,6 +81,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
                 System.out.println("Unable to generate trace visualization: " + e);
                 return -1;
             }
+            System.out.println("Generated trace visualization in: " + videoTraceFolder.toAbsolutePath());
         }
         // If the verification code is anything else than 1 it is not possible to visualize the trace and this is an "error" for this endpoint
         // even though the verification might have been successful.
