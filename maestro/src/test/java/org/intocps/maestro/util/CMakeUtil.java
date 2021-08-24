@@ -172,6 +172,8 @@ public class CMakeUtil {
 
         pb.directory(source);
 
+        System.out.println("Running CMAKE command: " + String.join(" ", cmds));
+
         return runProcess(pb, verbose);
 
     }

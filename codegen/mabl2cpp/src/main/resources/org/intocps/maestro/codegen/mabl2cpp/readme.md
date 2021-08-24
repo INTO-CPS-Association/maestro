@@ -4,11 +4,7 @@
 
 Install i.e.:
 
-- msys (https://www.msys2.org/)
-
-Packages:
-
-- libzip
+- msys with mingw64 (https://www.msys2.org/)
 
 ## Linux (ubuntu)
 
