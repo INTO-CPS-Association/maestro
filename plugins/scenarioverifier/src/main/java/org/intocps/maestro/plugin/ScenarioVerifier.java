@@ -133,7 +133,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
             if (masterModel.initialization().length() == 0) {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum());
-                masterModel.initialization().appendedAll(synthesizer.synthesizeInitialization());
+                masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
 
             dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(masterModel.scenario().connections()).stream()

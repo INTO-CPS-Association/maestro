@@ -8,6 +8,7 @@ import csv
 from collections import namedtuple
 import glob
 import socket
+import subprocess
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -134,3 +135,11 @@ def find_free_port():
 def ensureResponseOk(response):
     if not response.status_code == 200:
         raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")
+
+def testCliCommandWithFunc(cmd, func):
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        raise Exception(f"Error executing {cmd}")
+    else:
+        func()

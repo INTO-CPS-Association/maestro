@@ -11,6 +11,18 @@
             ]
         },
         "parameters": {},
+        "logVariables": null,
+        "parallelSimulation": false,
+        "stabalizationEnabled": false,
+        "global_absolute_tolerance": 0.0,
+        "global_relative_tolerance": 0.0,
+        "loggingOn": false,
+        "visible": false,
+        "simulationProgramDelay": false,
+        "algorithm": null,
+        "overrideLogLevel": null,
+        "environmentParameters": null,
+        "logLevels": null,
         "scenarioVerifier": {
             "reactivity": {
                 "{Controller}.cont.level": false
