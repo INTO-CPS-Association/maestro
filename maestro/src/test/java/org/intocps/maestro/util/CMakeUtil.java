@@ -150,8 +150,9 @@ public class CMakeUtil {
         if (autoNinja && hasNinja()) {
             cmds.add("-GNinja");
         } else if (isWindows()) {
-            cmds.add("-GMSYS Makefiles");
+            //            cmds.add("-GMSYS Makefiles");
             //            cmds.add("\"MSYS Makefiles\"");
+            cmds.add("-GMinGW Makefiles");
         }
 
         if (install != null) {
