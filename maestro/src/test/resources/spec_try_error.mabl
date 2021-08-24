@@ -1,0 +1,388 @@
+simulation
+import BooleanLogic;
+import DataWriter;
+import DataWriterConfig;
+import FMI2;
+import FMI2Component;
+import Logger;
+import MEnv;
+import Math;
+{
+	bool global_execution_continue = true;
+	int FMI_STATUS_OK = 0;
+	int FMI_STATUS_WARNING = 1;
+	int FMI_STATUS_DISCARD = 2;
+	int FMI_STATUS_ERROR = 3;
+	int FMI_STATUS_FATAL = 4;
+	int FMI_STATUS_PENDING = 5;
+	int status = 0;
+
+	Math math = null;
+	Logger logger = null;
+	DataWriter dataWriter = null;
+	BooleanLogic booleanLogic = null;
+    @map wtInstance -> "wtInstance";
+    FMI2Component wtInstance = null;
+    @map crtlInstance -> "crtlInstance";
+    FMI2Component crtlInstance = null;
+    FMI2 x1 =null;
+    FMI2 x2 =null;
+	try
+	{
+		math = load("Math");
+		logger = load("Logger");
+		dataWriter = load("DataWriter");
+		booleanLogic = load("BooleanLogic");
+		 x1 = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "file:/Users/kgl/data/au/into-cps-association/maestro/maestro/src/test/resources/watertankcontroller-c.fmu");
+		if (((x1 == null)))
+		{
+			error;
+		}
+		 x2 = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "file:/Users/kgl/data/au/into-cps-association/maestro/maestro/src/test/resources/singlewatertank-20sim.fmu");
+		if (((x2 == null)))
+		{
+			error;
+		}
+
+		if (((global_execution_continue)))
+		{
+			wtInstance = x2.instantiate("wtInstance", false, false);
+			if (((wtInstance == null)))
+			{
+				error;
+			}
+		}
+
+		if (((global_execution_continue)))
+		{
+			crtlInstance = x1.instantiate("crtlInstance", false, false);
+			if (((crtlInstance == null)))
+			{
+				error;
+			}
+		}
+		FMI2Component components[2] = {
+			wtInstance,
+			crtlInstance
+		};
+		real STEP_SIZE = 0.1;
+		real START_TIME = 0.0;
+		real END_TIME = 10.0;
+		while ((global_execution_continue))
+		{
+			MEnv menv = load("MEnv");
+			real fixed_end_time = 0.0;
+			fixed_end_time = END_TIME;
+			real wtinstancerealshare[1];
+			bool crtlinstanceboolshare[1];
+			bool crtlinstanceboolio[4];
+			real crtlinstancerealio[4];
+			uint crtlinstanceuintvref[4];
+			real wtinstancerealio[22];
+			uint wtinstanceuintvref[22];
+			real absolutetolerance = 0.2;
+			real relativetolerance = 0.1;
+			int maxconvergeattempts = 5;
+			status = wtInstance.setupExperiment(true, 0.1, START_TIME, true, END_TIME);
+			status = crtlInstance.setupExperiment(true, 0.1, START_TIME, true, END_TIME);
+			wtinstanceuintvref[0] = 0;
+			wtinstancerealio[0] = 9.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 1;
+			wtinstancerealio[0] = 1.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 2;
+			wtinstancerealio[0] = 1.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 3;
+			wtinstancerealio[0] = 9.81;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 4;
+			wtinstancerealio[0] = 1.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 5;
+			wtinstancerealio[0] = 0.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 6;
+			wtinstancerealio[0] = 0.0;
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			real tmp = menv.getReal("{x1}.crtlInstance.maxlevel");
+			crtlinstanceuintvref[0] = 0;
+			crtlinstancerealio[0] = tmp;
+			status = crtlInstance.setReal(crtlinstanceuintvref, 1, crtlinstancerealio);
+			crtlinstanceuintvref[0] = 1;
+			crtlinstancerealio[0] = 1.0;
+			status = crtlInstance.setReal(crtlinstanceuintvref, 1, crtlinstancerealio);
+			status = wtInstance.enterInitializationMode();
+			status = crtlInstance.enterInitializationMode();
+			crtlinstanceuintvref[0] = 4;
+			status = crtlInstance.getBoolean(crtlinstanceuintvref, 1, crtlinstanceboolio);
+			crtlinstanceboolshare[0] = crtlinstanceboolio[0];
+			wtinstanceuintvref[0] = 16;
+			if ((crtlinstanceboolshare[0]))
+			{
+				wtinstancerealio[0] = 1.0;
+			}
+			else
+			{
+				wtinstancerealio[0] = 0.0;
+			}
+			status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstanceuintvref[0] = 17;
+			status = wtInstance.getReal(wtinstanceuintvref, 1, wtinstancerealio);
+			wtinstancerealshare[0] = wtinstancerealio[0];
+			crtlinstanceuintvref[0] = 3;
+			crtlinstancerealio[0] = wtinstancerealshare[0];
+			status = crtlInstance.setReal(crtlinstanceuintvref, 1, crtlinstancerealio);
+			status = wtInstance.exitInitializationMode();
+			status = crtlInstance.exitInitializationMode();
+			if ((menv != null))
+			{
+				unload(menv);
+			}
+			break;
+		}
+		int fmi_ok = 0;
+		int fmi_warning = 1;
+		int fmi_discard = 2;
+		int fmi_error = 3;
+		int fmi_fatal = 4;
+		int fmi_pending = 5;
+		while ((global_execution_continue))
+		{
+			bool crtlinstancecurrenttimefullstep = true;
+			real crtlinstancecurrenttime = 0.0;
+			bool wtinstancecurrenttimefullstep = true;
+			real wtinstancecurrenttime = 0.0;
+			real crtlinstancerealio[4];
+			bool crtlinstanceboolshare[1];
+			bool crtlinstanceboolio[4];
+			uint crtlinstanceuintvref[4];
+			real wtinstancerealshare[1];
+			real wtinstancerealio[22];
+			uint wtinstanceuintvref[22];
+
+			BooleanLogic booleanlogic = null;
+			DataWriter datawriter = null;
+			try
+			{
+
+				booleanlogic = load("BooleanLogic");
+				real jac_current_step_size = 0.0;
+				jac_current_step_size = STEP_SIZE;
+				real jac_step_size = 0.0;
+				jac_step_size = STEP_SIZE;
+				real jac_current_communication_point = 0.0;
+				jac_current_communication_point = START_TIME;
+				real jac_end_time = 0.0;
+				jac_end_time = END_TIME;
+				datawriter = load("DataWriter");
+				string datawriter_headers[2] = {
+					"{x2}.wtInstance.level",
+					"{x1}.crtlInstance.valve"
+				};
+				DataWriterConfig datawriter_configuration = datawriter.writeHeader(datawriter_headers);
+				wtinstanceuintvref[0] = 17;
+				status = wtInstance.getReal(wtinstanceuintvref, 1, wtinstancerealio);
+				if (((status == fmi_error) || (status == fmi_fatal)))
+				{
+					if ((status == fmi_error))
+					{
+						logger.log(4, "GetReal failed on '%s' with status: FMI_ERROR", "wtInstance");
+					}
+					if ((status == fmi_fatal))
+					{
+						logger.log(4, "GetReal failed on '%s' with status: FMI_FATAL", "wtInstance");
+					}
+					error;
+
+				}
+				wtinstancerealshare[0] = wtinstancerealio[0];
+				crtlinstanceuintvref[0] = 4;
+				status = crtlInstance.getBoolean(crtlinstanceuintvref, 1, crtlinstanceboolio);
+				if (((status == fmi_error) || (status == fmi_fatal)))
+				{
+					if ((status == fmi_error))
+					{
+						logger.log(4, "GetBoolean failed on '%s' with status: FMI_ERROR", "crtlInstance");
+					}
+					if ((status == fmi_fatal))
+					{
+						logger.log(4, "GetBoolean failed on '%s' with status: FMI_FATAL", "crtlInstance");
+					}
+					error;
+				}
+				crtlinstanceboolshare[0] = crtlinstanceboolio[0];
+				real fmu_communicationpoints[2];
+				bool all_fmus_support_get_state = false;
+				bool any_discards = false;
+				datawriter.writeDataPoint(datawriter_configuration, jac_current_communication_point, wtinstancerealshare[0], crtlinstanceboolshare[0]);
+				while (((jac_current_communication_point + jac_current_step_size) < jac_end_time))
+				{
+					wtinstanceuintvref[0] = 16;
+					if ((crtlinstanceboolshare[0]))
+					{
+						wtinstancerealio[0] = 1.0;
+					}
+					else
+					{
+						wtinstancerealio[0] = 0.0;
+					}
+					status = wtInstance.setReal(wtinstanceuintvref, 1, wtinstancerealio);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						global_execution_continue = false;
+						if ((status == fmi_error))
+						{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", "wtInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", "wtInstance");
+						}
+						error;
+					}
+					crtlinstanceuintvref[0] = 3;
+					crtlinstancerealio[0] = wtinstancerealshare[0];
+					status = crtlInstance.setReal(crtlinstanceuintvref, 1, crtlinstancerealio);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						if ((status == fmi_error))
+						{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", "crtlInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", "crtlInstance");
+						}
+						error;
+					}
+					any_discards = false;
+					status = wtInstance.doStep(jac_current_communication_point, jac_current_step_size, false);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						if ((status == fmi_error))
+						{
+							logger.log(4, "DoStep failed on '%s' with status: FMI_ERROR", "wtInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "DoStep failed on '%s' with status: FMI_FATAL", "wtInstance");
+						}
+						error;
+					}
+					if ((status != fmi_ok))
+					{
+						if ((status == fmi_discard))
+						{
+							status = wtInstance.getRealStatus(2, ref wtinstancecurrenttime);
+							wtinstancecurrenttimefullstep = false;
+						}
+					}
+					else
+					{
+						wtinstancecurrenttime = jac_current_communication_point + jac_current_step_size;
+						wtinstancecurrenttimefullstep = true;
+					}
+					fmu_communicationpoints[0] = wtinstancecurrenttime;
+					if ((!wtinstancecurrenttimefullstep))
+					{
+						logger.log(1, "## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", "wtInstance", jac_current_communication_point, jac_current_step_size, wtinstancecurrenttime);
+						any_discards = any_discards || !wtinstancecurrenttimefullstep;
+					}
+					status = crtlInstance.doStep(jac_current_communication_point, jac_current_step_size, false);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						if ((status == fmi_error))
+						{
+							logger.log(4, "DoStep failed on '%s' with status: FMI_ERROR", "crtlInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "DoStep failed on '%s' with status: FMI_FATAL", "crtlInstance");
+						}
+						error;
+					}
+					if ((status != fmi_ok))
+					{
+						if ((status == fmi_discard))
+						{
+							status = crtlInstance.getRealStatus(2, ref crtlinstancecurrenttime);
+							crtlinstancecurrenttimefullstep = false;
+						}
+					}
+					else
+					{
+						crtlinstancecurrenttime = jac_current_communication_point + jac_current_step_size;
+						crtlinstancecurrenttimefullstep = true;
+					}
+					fmu_communicationpoints[1] = crtlinstancecurrenttime;
+					if ((!crtlinstancecurrenttimefullstep))
+					{
+						logger.log(1, "## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", "crtlInstance", jac_current_communication_point, jac_current_step_size, crtlinstancecurrenttime);
+						any_discards = any_discards || !crtlinstancecurrenttimefullstep;
+					}
+					crtlinstanceuintvref[0] = 4;
+					status = crtlInstance.getBoolean(crtlinstanceuintvref, 1, crtlinstanceboolio);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						if ((status == fmi_error))
+						{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_ERROR", "crtlInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_FATAL", "crtlInstance");
+						}
+						error;
+					}
+					wtinstanceuintvref[0] = 17;
+					status = wtInstance.getReal(wtinstanceuintvref, 1, wtinstancerealio);
+					if (((status == fmi_error) || (status == fmi_fatal)))
+					{
+						if ((status == fmi_error))
+						{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_ERROR", "wtInstance");
+						}
+						if ((status == fmi_fatal))
+						{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_FATAL", "wtInstance");
+						}
+						error;
+					}
+					crtlinstanceboolshare[0] = crtlinstanceboolio[0];
+					wtinstancerealshare[0] = wtinstancerealio[0];
+					if ((!any_discards))
+					{
+						jac_current_communication_point = jac_current_communication_point + jac_current_step_size;
+						datawriter.writeDataPoint(datawriter_configuration, jac_current_communication_point, wtinstancerealshare[0], crtlinstanceboolshare[0]);
+						jac_current_step_size = jac_step_size;
+					}
+				}
+
+
+			}
+			finally
+			{
+				unload(datawriter);
+				datawriter = null;
+				unload(booleanlogic);
+				booleanlogic = null;
+				break;
+			}
+		}
+	}
+    finally
+    {
+        wtInstance.terminate();
+        crtlInstance.terminate();
+        x2.freeInstance(wtInstance);
+        x1.freeInstance(crtlInstance);
+        unload(x1);
+        unload(x2);
+        unload(math);
+        unload(logger);
+        unload(dataWriter);
+        unload(booleanLogic);
+    }
+}

@@ -25,6 +25,7 @@ FMI2Component roller = tankcontroller.instantiate("crtlInstance", false, false);
 FMI2Component cont = SingleWatertank.instantiate("wtInstance", false, false);;
 DataWriter dataWriter = load("DataWriter");
 Logger logger = load("Logger");
+try{
 FMI2Component components[2]={roller,cont};
 
 bool global_execution_continue = true;
@@ -32,7 +33,7 @@ bool global_execution_continue = true;
 //expand initialize(components,START_TIME, END_TIME);
 
 FixedStep.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
-
+}finally{
 tankcontroller.freeInstance(roller);
 SingleWatertank.freeInstance(cont);
 
@@ -41,5 +42,5 @@ unload(SingleWatertank);
 unload(dataWriter);
 unload(logger);
 unload(math);
-
+}
 }

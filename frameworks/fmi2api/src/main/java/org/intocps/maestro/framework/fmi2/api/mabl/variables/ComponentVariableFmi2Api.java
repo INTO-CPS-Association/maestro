@@ -217,9 +217,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
         List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
-                i -> new VariableFmi2Api<>(var, type, scope, builder.getDynamicScope(),
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
-                        newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
+                        i -> new VariableFmi2Api<>(var, type, scope, builder.getDynamicScope(),
+                                newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
+                                newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
                 .collect(Collectors.toList());
 
         return new ArrayVariableFmi2Api<>(var, type, scope, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(ioBufName)),
@@ -236,8 +236,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             loglevelsArrayInitializer =
                     newAArrayInitializer(categories.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
         }
-        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
+        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
                         MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), categories.size(), loglevelsArrayInitializer));
 
         LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
@@ -249,8 +249,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
 
         AIfStm ifStm = newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
-                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))),
-                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier("global_execution_continue")), newABoolLiteralExp(false)), null);
+                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))), new AErrorStm(), null);
 
         scope.add(arrayContent, callStm, ifStm);
     }
@@ -363,8 +362,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                 ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder
-                    .generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
         }
 
 
@@ -535,9 +534,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
             scope.add(stm);
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
-                FmiStatusErrorHandlingBuilder
-                        .generate(builder, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)), this, (IMablScope) scope,
-                                MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)), this,
+                        (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
             }
 
             if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
@@ -577,9 +575,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 modelDescriptionContext.getModelDescription().getDerivativesMap().entrySet().stream()
                         .filter(entry -> portsLinkedToTargetsThatInterpolates.stream()
                                 .anyMatch(p -> p.getPortReferenceValue().equals(entry.getKey().getValueReference()))).forEach(e ->
-                        // Find the PortFmi2Api representation of the scalarvariable derivative port.
-                        getPorts().stream().filter(p -> p.getPortReferenceValue().equals(e.getValue().getValueReference())).findAny()
-                                .ifPresent(derivativePorts::add));
+                                // Find the PortFmi2Api representation of the scalarvariable derivative port.
+                                getPorts().stream().filter(p -> p.getPortReferenceValue().equals(e.getValue().getValueReference())).findAny()
+                                        .ifPresent(derivativePorts::add));
 
                 if (derivativePorts.size() > 0) {
                     // Array size: number of ports for which to get derivatives multiplied the max derivative order.
@@ -620,9 +618,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                     // If enabled handle potential errors from calling getRealInputDerivatives
                     if (builder.getSettings().fmiErrorHandlingEnabled) {
-                        FmiStatusErrorHandlingBuilder
-                                .generate(builder, createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES), this, (IMablScope) scope,
-                                        MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                        FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES), this,
+                                (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
                     }
                 }
             }
@@ -888,8 +885,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                         if (derivativePortEntry.isPresent()) {
                             // Find PortFmi2Api value of the scalarvariable derivative port and the components max output derivative.
-                            innerEntry = Map.entry(port.getSourcePort().aMablFmi2ComponentAPI
-                                            .getPort(derivativePortEntry.get().getValue().getValueReference().intValue()),
+                            innerEntry = Map.entry(port.getSourcePort().aMablFmi2ComponentAPI.getPort(
+                                            derivativePortEntry.get().getValue().getValueReference().intValue()),
                                     port.getSourcePort().aMablFmi2ComponentAPI.getModelDescription().getMaxOutputDerivativeOrder());
                             return Map.entry(port, innerEntry);
                         }
@@ -927,8 +924,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
                     PStateDesignator derValInDesignator = derValInBuf.items().get(arrayIndex).getDesignator().clone();
                     scope.add(newAAssignmentStm(derValInDesignator,
-                            ((VariableFmi2Api) ((ArrayVariableFmi2Api) entry.getValue().getKey().getSharedAsVariable()).items().get(order - 1))
-                                    .getReferenceExp().clone()));
+                            ((VariableFmi2Api) ((ArrayVariableFmi2Api) entry.getValue().getKey().getSharedAsVariable()).items()
+                                    .get(order - 1)).getReferenceExp().clone()));
                 }
             }
 
@@ -1078,8 +1075,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         PStm stm = stateTransitionFunction(FmiFunctionType.TERMINATE);
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder
-                    .generate(builder, "terminate", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "terminate", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
         }
     }
 
@@ -1194,8 +1191,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 AArrayIndexExp indexExp =
                         newAArrayIndexExp(newAIdentifierExp(bufferName), Arrays.asList(newAIntLiteralExp(outerIndex), newAIntLiteralExp(l)));
 
-                variables.add(new VariableFmi2Api<>(outerArrayVariableStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator,
-                        indexExp));
+                variables.add(
+                        new VariableFmi2Api<>(outerArrayVariableStm, type, this.getDeclaredScope(), builder.getDynamicScope(), designator, indexExp));
             }
             // Create array with variables
             ArrayVariableFmi2Api innerArrayVariable =
@@ -1230,9 +1227,9 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         // getDeclaredScope().addAfter(getDeclaringStm(), var);
 
         List<VariableFmi2Api<Object>> items = IntStream.range(buffer.size(), length).mapToObj(
-                i -> new VariableFmi2Api<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
-                        newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
-                        newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
+                        i -> new VariableFmi2Api<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
+                                newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
+                                newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
                 .collect(Collectors.toList());
 
         //we can not replace these as some of them may be used and could potential have reference problems (they should not but just to be sure)
@@ -1269,8 +1266,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder
-                    .generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
         }
 
         return state;
@@ -1328,7 +1325,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
             ScopeFmi2Api thenScope = scope.enterIf(new PredicateFmi2Api(exp)).enterThen();
 
-            thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
+            // thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
 
             for (MablApiBuilder.FmiStatus status : statusesToFail) {
                 ScopeFmi2Api s = thenScope.enterIf(new PredicateFmi2Api(checkStatusEq.apply(status))).enterThen();
@@ -1336,20 +1333,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
             }
 
-            /** Frees the instance on all fmu component variables
-             *
-             */
-            scope.getAllComponentFmi2Variables().forEach(x -> {
-                x.owner.freeInstance(thenScope, x);
-            });
-
-            collectedPreviousLoadedModules(thenScope.getBlock().getBody().getLast()/*, builder.getExternalLoadedModuleIdentifiers()*/).forEach(p -> {
-                thenScope.add(newExpressionStm(newUnloadExp(newAIdentifierExp(p))));
-                thenScope.add(newAAssignmentStm(newAIdentifierStateDesignator(p), newNullExp()));
-
-            });
-
-            thenScope.add(newBreak());
+            thenScope.add(new AErrorStm(newAStringLiteralExp("Failed to load instance " + instance.getName())));
             thenScope.leave();
         }
 

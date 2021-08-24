@@ -160,16 +160,16 @@ public class StatementGeneratorContainer {
         LexIdentifier start = newAIdentifier(String.format("start%d", sccNumber));
         List<PStm> statements = new Vector<>();
 
-        statements
-                .add(newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
+        statements.add(
+                newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
         var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output &&
                 o.scalarVariable.scalarVariable.getType().type == Fmi2ModelDescription.Types.Real).collect(Collectors.toList());
 
         for (Fmi2SimulationEnvironment.Variable output : outputs) {
-            var lexIdentifier = createLexIdentifier
-                    .apply("Ref" + output.scalarVariable.instance.getText() + output.scalarVariable.scalarVariable.getName() + "ValueRef" +
+            var lexIdentifier = createLexIdentifier.apply(
+                    "Ref" + output.scalarVariable.instance.getText() + output.scalarVariable.scalarVariable.getName() + "ValueRef" +
                             output.scalarVariable.scalarVariable.getValueReference());
             statements.add(createReferenceArray(output, lexIdentifier));
             //Create map to test references against
@@ -177,8 +177,8 @@ public class StatementGeneratorContainer {
         }
 
         LexIdentifier doesConverge = new LexIdentifier("DoesConverge", null);
-        statements.add(newALocalVariableStm(
-                newAVariableDeclaration(doesConverge, newABoleanPrimitiveType(), newAExpInitializer(newABoolLiteralExp(true)))));
+        statements.add(
+                newALocalVariableStm(newAVariableDeclaration(doesConverge, newABoleanPrimitiveType(), newAExpInitializer(newABoolLiteralExp(true)))));
         List<PStm> loopStmts = new Vector<>();
 
         loopStmts.addAll(performLoopActions(loopVariables, env));
@@ -290,12 +290,11 @@ public class StatementGeneratorContainer {
             //find number of places in array
             var arraySize = newAIntLiteralExp(0);
 
-            convergenceLoop.add(newIf(
-                    newACallExp(newAIdentifierExp(createLexIdentifier.apply("Math")), (LexIdentifier) createLexIdentifier.apply("isClose").clone(),
-                            new ArrayList<>(Arrays.asList(
-                                    newAArrayIndexExp(newAIdentifierExp(currentValue), Collections.singletonList(newAIdentifierExp(index))),
-                                    newAArrayIndexExp(newAIdentifierExp(referenceValue), Collections.singletonList(newAIdentifierExp(index))),
-                                    newARealLiteralExp(this.absoluteTolerance), newARealLiteralExp(this.relativeTolerance)))), null,
+            convergenceLoop.add(newIf(newACallExp(newAIdentifierExp(createLexIdentifier.apply("Math")),
+                            (LexIdentifier) createLexIdentifier.apply("isClose").clone(), new ArrayList<>(
+                                    Arrays.asList(newAArrayIndexExp(newAIdentifierExp(currentValue), Collections.singletonList(newAIdentifierExp(index))),
+                                            newAArrayIndexExp(newAIdentifierExp(referenceValue), Collections.singletonList(newAIdentifierExp(index))),
+                                            newARealLiteralExp(this.absoluteTolerance), newARealLiteralExp(this.relativeTolerance)))), null,
                     newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) doesConverge.clone()), newABoolLiteralExp(false))));
 
             convergenceLoop.add(newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) index.clone()),
@@ -469,7 +468,7 @@ public class StatementGeneratorContainer {
 
                             // Convert the value
                             statements.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifierExp("TypeConverter"), newAIdentifier(
-                                    "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
+                                            "convert" + typesStringMap.get(output.getValue().type.type) + "2" + typesStringMap.get(targetType)),
                                     new ArrayList<PExp>(List.of(newAIdentifierExp(variable.variableId), newAIdentifierExp(name))))));
 
 
@@ -477,8 +476,8 @@ public class StatementGeneratorContainer {
                         }
                         return Pair.of(newAIdentifierExp(variableLexId), statements);
                     } else {
-                        return Pair.of(newAIdentifierExp(createLexIdentifier
-                                .apply("Failed to find the variable with valref " + valRefs[i] + " for instance: " + key.get().instanceName)), null);
+                        return Pair.of(newAIdentifierExp(createLexIdentifier.apply(
+                                "Failed to find the variable with valref " + valRefs[i] + " for instance: " + key.get().instanceName)), null);
                     }
                 };
             }
@@ -623,7 +622,7 @@ public class StatementGeneratorContainer {
         PExp orExp = statusErrorExpressions(newAIdentifierExp(newAIdentifier(statusVariable)), FMIWARNINGANDFATALERRORCODES);
         return newIf(orExp, newABlockStm(
                 newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)), newABoolLiteralExp(false)),
-                newBreak()), null);
+                new AErrorStm()), null);
 
     }
 

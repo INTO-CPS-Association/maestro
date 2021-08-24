@@ -1,16 +1,18 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStateDesignator;
+import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.ValueFmi2Api;
 
-import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 
 public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, Fmi2Builder.ProvidesTypedReferenceExp {
 
@@ -26,6 +28,9 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
 
     public VariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
+        if (declaration != null && (declaredScope == null || declaredScope.indexOf(declaration) == -1)) {
+            throw new IllegalArgumentException("Declared scope is illegal it does not declare the declaration");
+        }
         this.declaration = declaration;
         this.declaredScope = declaredScope;
         this.dynamicScope = dynamicScope;
@@ -35,7 +40,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         this.type = type;
     }
 
-    protected PStateDesignator getDesignator() {
+    public PStateDesignator getDesignator() {
         return designator;
     }
 

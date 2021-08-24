@@ -47,6 +47,24 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         return super.defaultPInitializer(node, ctxt);
     }
 
+
+    @Override
+    public PType caseAErrorStm(AErrorStm node, Context ctxt) throws AnalysisException {
+        return store(node, new AVoidType());
+    }
+
+    @Override
+    public PType caseATryStm(ATryStm node, Context ctxt) throws AnalysisException {
+
+        if (node.getBody() != null) {
+            node.getBody().apply(this, ctxt);
+        }
+        if (node.getFinally() != null) {
+            node.getFinally().apply(this, ctxt);
+        }
+        return store(node, MableAstFactory.newAVoidType());
+    }
+
     @Override
     public PType defaultPType(PType node, Context ctxt) throws AnalysisException {
         return store(node, node.clone());

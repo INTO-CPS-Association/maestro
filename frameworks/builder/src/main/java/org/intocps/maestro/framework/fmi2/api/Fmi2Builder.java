@@ -31,7 +31,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
     RuntimeModule<S> loadRuntimeModule(String name, Object... args);
 
-    RuntimeModule<S> loadRuntimeModule(Scope<S> scope, String name, Object... args);
+    RuntimeModule<S> loadRuntimeModule(TryScope<S> scope, String name, Object... args);
 
     /**
      * Gets the default scope
@@ -75,9 +75,9 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         <V> Variable<S, V> call(RuntimeFunction functionId, Object... args);
 
-        void destroy();
-
-        void destroy(Scope<S> scope);
+        //        void destroy();
+        //
+        //        void destroy(Scope<S> scope);
     }
 
     interface NumericValue {
@@ -140,19 +140,46 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     }
 
     /**
-     * New boolean that can be used as a predicate
+     * Scoping element which defines a scope like a block, if, while etc.
      *
-     * @param
-     * @return
+     * @param <T> the type the scoping element encloses
      */
+
+    interface ScopeElement<T> {
+        /**
+         * The parent element of this element or null if root
+         *
+         * @return the parent
+         */
+        ScopeElement<T> parent();
+
+        /**
+         * The declaration node that defined the underlying scope
+         *
+         * @return the scope
+         */
+        T getDeclaration();
+
+        /**
+         * Find a prent element of a specific type
+         *
+         * @param clz the class type to search for
+         * @param <P> the type of class
+         * @return the parent of the specified type or null
+         */
+        <P extends ScopeElement<T>> P findParent(Class<P> clz);
+    }
+
 
     /**
      * Scoping functions
      */
-    interface Scoping<T> {
+    interface Scoping<T> extends ScopeElement<T> {
         WhileScope<T> enterWhile(Predicate predicate);
 
         IfScope<T> enterIf(Predicate predicate);
+
+        TryScope<T> enterTry();
 
         Scoping<T> parallel();
 
@@ -170,6 +197,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         void addAfter(T item, T... commands);
 
         Scoping<T> activate();
+
+
     }
 
     /**
@@ -231,7 +260,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     /**
      * If scope, default scope is then
      */
-    interface IfScope<T> {
+    interface IfScope<T> extends ScopeElement<T> {
         /**
          * Switch to then scope
          *
@@ -250,9 +279,35 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     }
 
     /**
+     * Try finally scope, default scope is body
+     */
+    interface TryScope<T> extends ScopeElement<T> {
+        /**
+         * Switch to body scope
+         *
+         * @return
+         */
+        Scope<T> enter();
+
+        /**
+         * Switch to finally scope
+         *
+         * @return
+         */
+        Scope<T> enterFinally();
+
+        Scope<T> leave();
+
+
+        Scope<T> getBody();
+
+        Scope<T> getFinallyBody();
+    }
+
+    /**
      * While
      */
-    interface WhileScope<T> extends Scope<T> {
+    interface WhileScope<T> extends Scope<T>, ScopeElement<T> {
 
     }
 
@@ -387,15 +442,15 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     interface Fmu2Variable<S> extends Variable<S, NamedVariable<S>> {
         Fmi2ComponentVariable<S> instantiate(String name);
 
-        Fmi2ComponentVariable<S> instantiate(String name, Scope<S> scope);
+        Fmi2ComponentVariable<S> instantiate(String name, TryScope<S> enclosingTryScope, Scope<S> scope);
 
-        void freeInstance(Fmi2ComponentVariable<S> comp);
+        //void freeInstance(Fmi2ComponentVariable<S> comp);
 
-        void freeInstance(Scope<S> scope, Fmi2ComponentVariable<S> comp);
+        //void freeInstance(Scope<S> scope, Fmi2ComponentVariable<S> comp);
 
-        void unload();
-
-        void unload(Scope<S> scope);
+        //        void unload();
+        //
+        //        void unload(Scope<S> scope);
     }
 
     /**

@@ -25,8 +25,8 @@ public class VariableStep {
         this.moduleIdentifier = "variableStep";
     }
 
-    public VariableStep(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
-        this(dynamicScope, mablApiBuilder);
+    public VariableStep(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+        this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.runtimeModuleMode = true;
         this.runtimeModule = runtimeModule;
         this.moduleIdentifier = runtimeModule.getName();
@@ -250,13 +250,8 @@ public class VariableStep {
                             MableAstFactory.newAIdentifier(FUNCTION_SETENDTIME),
                             Arrays.asList(MableAstFactory.newAIdentifierExp(variableStepConfigurationIdentifier), endTime.getExp())));
 
-            if (this.runtimeModuleMode) {
-                this.runtimeModule.getDeclaredScope()
-                        .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
-            } else {
-                this.mablApiBuilder.getDynamicScope()
-                        .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
-            }
+            this.mablApiBuilder.getDynamicScope()
+                    .add(fmuNamesStm, fmuInstancesStm, setFMUsStm, portNamesStm, initializePortNamesStm, setEndTimeStm, portsWithDataStm);
 
             this.initialized = true;
         }

@@ -6,7 +6,6 @@ import org.intocps.fmi.IFmiComponent;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -24,7 +23,8 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ComponentVariableFmi2ApiTest extends BaseApiTest {
 
@@ -73,8 +73,8 @@ public class ComponentVariableFmi2ApiTest extends BaseApiTest {
         MablApiBuilder builder = new MablApiBuilder(settings, null);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
-        FmuVariableFmi2Api tankFMU = dynamicScope
-                .createFMU("tankFMU", new Fmi2ModelDescription(Paths.get(dirPath.toString(), "modelDescription.xml").toFile()),
+        FmuVariableFmi2Api tankFMU =
+                dynamicScope.createFMU("tankFMU", new Fmi2ModelDescription(Paths.get(dirPath.toString(), "modelDescription.xml").toFile()),
                         Paths.get(dirPath.toString(), "singlewatertank-20sim.fmu").toUri());
 
         ComponentVariableFmi2Api tank = tankFMU.instantiate("tank");
@@ -84,7 +84,6 @@ public class ComponentVariableFmi2ApiTest extends BaseApiTest {
 
         tank.terminate();
 
-        tankFMU.unload();
 
         String spec = PrettyPrinter.print(builder.build());
 

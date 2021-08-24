@@ -98,12 +98,14 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
 
 
+        boolean setGetDerivativesRestore = false;
+        MablApiBuilder.MablSettings settings = null;
         try {
-
             if (builder1.getSettings() instanceof MablApiBuilder.MablSettings) {
                 //FIXME we should probably not do this in a plugin as it changes this for all once the builder is reused!
-                MablApiBuilder.MablSettings settings = (MablApiBuilder.MablSettings) builder1.getSettings();
-                settings.fmiErrorHandlingEnabled = true;
+                settings = (MablApiBuilder.MablSettings) builder1.getSettings();
+                //                settings.fmiErrorHandlingEnabled = true;
+                setGetDerivativesRestore = settings.setGetDerivatives;
                 settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
             }
 
@@ -472,6 +474,11 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             }
 
             dataWriterInstance.close();
+
+            if (settings != null) {
+                //restore previous state
+                settings.setGetDerivatives = setGetDerivativesRestore;
+            }
         } catch (Exception e) {
             throw new ExpandException("Internal error: ", e);
         }

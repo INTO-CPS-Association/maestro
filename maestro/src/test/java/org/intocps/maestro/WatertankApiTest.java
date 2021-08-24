@@ -88,10 +88,6 @@ public class WatertankApiTest {
         time.setValue(time.toMath().addition(step));
         whileScope.leave();
 
-        //How to write controller != null
-        //  ds.enterIf(controller.toMath().)
-        controllerFmu.unload();
-        tankFmu.unload();
 
         Map<String, Object> data = new HashMap<>();
 
@@ -136,8 +132,8 @@ public class WatertankApiTest {
         }
         mabl.dump(workingDirectory);
 
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8))).execute(
+                mabl.getMainSimulationUnit());
 
         MablCppCodeGenerator cppCodeGenerator = new MablCppCodeGenerator(workingDirectory);
         cppCodeGenerator.generate(mabl.getMainSimulationUnit(), tcRef.getValue());

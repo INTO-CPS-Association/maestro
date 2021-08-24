@@ -11,12 +11,18 @@ import java.util.Set;
 
 public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
+    @Override
+    Fmi2Builder.ScopeElement<PStm> parent();
+
     IntVariableFmi2Api getFmiStatusVariable();
 
     String getName(String prefix);
 
     @Override
     IMablScope enterScope();
+
+    @Override
+    TryMaBlScope enterTry();
 
     @Override
     BooleanVariableFmi2Api store(boolean value);
@@ -46,6 +52,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     void addAfter(PStm item, PStm... commands);
 
     void addAfterOrTop(PStm item, PStm... commands);
+
+    int indexOf(PStm stm);
+
 
     @Override
     IMablScope activate();
@@ -99,4 +108,6 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
      * This is used to maintain a register of stored ComponentVariableFmi2API, such that they can be freed in case of an error.
      */
     void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api);
+
+    <S> S findParentScope(Class<S> type);
 }

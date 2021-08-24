@@ -4,6 +4,7 @@ import com.spencerwi.either.Either;
 import org.antlr.v4.runtime.CharStreams;
 import org.intocps.maestro.ast.NodeCollector;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.PStm;
@@ -70,6 +71,7 @@ public abstract class BaseApiTest {
         StringWriter out = new StringWriter();
         PrintWriter writer = new PrintWriter(out);
         if (!res) {
+            System.out.println(PrettyPrinter.printLineNumbers(doc));
             reporter.printWarnings(writer);
             reporter.printErrors(writer);
         }
@@ -77,8 +79,8 @@ public abstract class BaseApiTest {
         Assertions.assertTrue(res, "Type check errors:" + out);
 
         new MableInterpreter(
-                new DefaultExternalValueFactory(new File("target"), new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8))))
-                .execute(doc);
+                new DefaultExternalValueFactory(new File("target"), new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(
+                doc);
     }
 
     public static class MDebugAssert {
@@ -152,8 +154,8 @@ public abstract class BaseApiTest {
             @Override
             public InputStream getMablModule() {
                 return new ByteArrayInputStream(("module " + MDebugAssert.class.getSimpleName() + "{" +
-                        getMembers().keySet().stream().map(n -> "void" + " " + n + "(?a,?b)").collect(Collectors.joining(";", "", ";")) + "" + "}")
-                        .getBytes(StandardCharsets.UTF_8));
+                        getMembers().keySet().stream().map(n -> "void" + " " + n + "(?a,?b)").collect(Collectors.joining(";", "", ";")) + "" +
+                        "}").getBytes(StandardCharsets.UTF_8));
             }
         }
     }
