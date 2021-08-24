@@ -1,5 +1,15 @@
 # Compilation
 
+## Windows
+
+Install i.e.:
+
+- msys (https://www.msys2.org/)
+
+Packages:
+
+- libzip
+
 ## Linux (ubuntu)
 
 Install:

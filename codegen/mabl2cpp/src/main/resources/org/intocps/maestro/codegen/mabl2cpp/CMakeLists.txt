@@ -8,8 +8,6 @@ include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(zlib-download NONE)
-
 FetchContent_Declare(intocpsfmi
   GIT_REPOSITORY https://github.com/INTO-CPS-Association/org.intocps.maestro.fmi.git
         GIT_TAG  Release/1.0.12
