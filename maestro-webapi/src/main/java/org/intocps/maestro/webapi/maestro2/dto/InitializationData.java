@@ -1,13 +1,14 @@
 package org.intocps.maestro.webapi.maestro2.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.core.dto.MultiModel;
 
 import java.util.List;
 import java.util.Map;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InitializationData extends MultiModel {
 
     @JsonProperty("livestream")
