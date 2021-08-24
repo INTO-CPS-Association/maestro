@@ -1,5 +1,5 @@
 package org.intocps.maestro.framework.fmi2;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
 import org.xml.sax.SAXException;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Proxy interface to a model description that make all assumption about the scalar variables explicit
  */
-public class ExplicitModelDescription extends ModelDescription {
+public class ExplicitModelDescription extends Fmi2ModelDescription {
 
     List<ScalarVariable> scalarVariables = null;
     List<ScalarVariable> outputs = null;

@@ -48,7 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
-import static org.intocps.maestro.fmi.ModelDescription.*;
+import static org.intocps.maestro.fmi.Fmi2ModelDescription.*;
 
 public class CurrentSolutionPoint extends Observable
 {

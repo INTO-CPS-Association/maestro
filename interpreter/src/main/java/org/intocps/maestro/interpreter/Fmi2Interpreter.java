@@ -7,7 +7,7 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.intocps.fmi.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentStateValue;
@@ -760,7 +760,7 @@ public class Fmi2Interpreter {
             final IFmu fmu = (IFmu) clz.getDeclaredConstructor().newInstance();
 
             fmu.load();
-            ModelDescription md = new ModelDescription(fmu.getModelDescription());
+            Fmi2ModelDescription md = new Fmi2ModelDescription(fmu.getModelDescription());
             Map<String, Value> functions = createFmuMembers(workingDirectory, md.getGuid(), fmu);
 
             long stopTime = System.nanoTime();

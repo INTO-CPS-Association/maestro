@@ -1,7 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
@@ -14,12 +14,12 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class PortFmi2Api implements Fmi2Builder.Port {
 
     public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
-    public final ModelDescription.ScalarVariable scalarVariable;
+    public final Fmi2ModelDescription.ScalarVariable scalarVariable;
     private final List<PortFmi2Api> targetPorts = new ArrayList<>();
     private VariableFmi2Api sharedAsVariable;
     private PortFmi2Api sourcePort;
 
-    public PortFmi2Api(ComponentVariableFmi2Api aMablFmi2ComponentAPI, ModelDescription.ScalarVariable scalarVariable) {
+    public PortFmi2Api(ComponentVariableFmi2Api aMablFmi2ComponentAPI, Fmi2ModelDescription.ScalarVariable scalarVariable) {
 
         this.aMablFmi2ComponentAPI = aMablFmi2ComponentAPI;
         this.scalarVariable = scalarVariable;
@@ -73,14 +73,14 @@ public class PortFmi2Api implements Fmi2Builder.Port {
             return;
         }
 
-        if (this.scalarVariable.causality != ModelDescription.Causality.Output) {
+        if (this.scalarVariable.causality != Fmi2ModelDescription.Causality.Output) {
             throw new PortLinkException("Can only link output ports. This port is: " + this.scalarVariable.causality, this);
         }
 
         for (Fmi2Builder.Port receiver : receivers) {
             PortFmi2Api receiverPort = (PortFmi2Api) receiver;
 
-            if (receiverPort.scalarVariable.causality != ModelDescription.Causality.Input) {
+            if (receiverPort.scalarVariable.causality != Fmi2ModelDescription.Causality.Input) {
                 throw new PortLinkException("Receivers must be input ports. This receiver is: " + receiverPort.scalarVariable.causality,
                         receiverPort);
             }

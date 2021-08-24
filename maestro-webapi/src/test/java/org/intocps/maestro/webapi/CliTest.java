@@ -17,8 +17,7 @@ public class CliTest {
         double endTimeIn = 10;
 
         String arguments = String.format(Locale.US, "--oneshot --configuration %s --starttime %f --endtime %f --result %s",
-                Paths.get("src", "test", "resources", "cli-test", "config.json").toFile().getAbsolutePath(), startTimeIn, endTimeIn,
-                outFile.toString());
+                Paths.get("src", "test", "resources", "cli-test", "config.json").toFile().getAbsolutePath(), startTimeIn, endTimeIn, outFile);
         String[] s = arguments.split(" ");
 
         Application.main(s);

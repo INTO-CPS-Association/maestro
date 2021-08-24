@@ -37,19 +37,19 @@ package org.intocps.maestro.modeldefinitionchecker;
 import org.intocps.fmichecker.Orch;
 import org.intocps.fmichecker.Orch.SV_X_;
 import org.intocps.fmichecker.quotes.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.overture.codegen.runtime.Tuple;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class VdmSvChecker {
-    public static List<ModelDescription.ScalarVariable> validateModelVariables(
-            List<ModelDescription.ScalarVariable> modelVariables) throws ScalarVariableConfigException {
-        List<ModelDescription.ScalarVariable> SV_list = new ArrayList<>();
+    public static List<Fmi2ModelDescription.ScalarVariable> validateModelVariables(
+            List<Fmi2ModelDescription.ScalarVariable> modelVariables) throws ScalarVariableConfigException {
+        List<Fmi2ModelDescription.ScalarVariable> SV_list = new ArrayList<>();
 
         StringBuffer sb = new StringBuffer();
-        for (ModelDescription.ScalarVariable scalarVariable : modelVariables) {
+        for (Fmi2ModelDescription.ScalarVariable scalarVariable : modelVariables) {
             Orch.SV sv = new Orch.SV(convertCausality(scalarVariable.causality), convertVariability(scalarVariable.variability),
                     convertInitial(scalarVariable.initial), convertType(scalarVariable.type));
 
@@ -76,7 +76,7 @@ public class VdmSvChecker {
         return SV_list;
     }
 
-    private static Orch.Type convertType(ModelDescription.Type type) {
+    private static Orch.Type convertType(Fmi2ModelDescription.Type type) {
         Object t = null;
         switch (type.type) {
             case Boolean:
@@ -100,7 +100,7 @@ public class VdmSvChecker {
         return new Orch.Type(t, (type.start != null ? type.start : null));
     }
 
-    private static Object convertInitial(ModelDescription.Initial initial) {
+    private static Object convertInitial(Fmi2ModelDescription.Initial initial) {
         if (initial == null) {
             return null;
         }
@@ -117,20 +117,20 @@ public class VdmSvChecker {
         return null;
     }
 
-    private static ModelDescription.Initial convertInitialSV(Object initial) {
+    private static Fmi2ModelDescription.Initial convertInitialSV(Object initial) {
 
 		if (initial instanceof approxQuote) {
-			return ModelDescription.Initial.Approx;
+			return Fmi2ModelDescription.Initial.Approx;
 		} else if (initial instanceof calculatedQuote) {
-			return ModelDescription.Initial.Calculated;
+			return Fmi2ModelDescription.Initial.Calculated;
 		} else if (initial instanceof exactQuote) {
-			return ModelDescription.Initial.Exact;
+			return Fmi2ModelDescription.Initial.Exact;
 		} else {
 			return null;
 		}
     }
 
-    private static Object convertVariability(ModelDescription.Variability variability) {
+    private static Object convertVariability(Fmi2ModelDescription.Variability variability) {
         if (variability == null) {
             return null;
         }
@@ -151,24 +151,24 @@ public class VdmSvChecker {
         }
     }
 
-    private static ModelDescription.Variability convertVariabilitySV(Object variability) {
+    private static Fmi2ModelDescription.Variability convertVariabilitySV(Object variability) {
 
 		if (variability instanceof constantQuote) {
-			return ModelDescription.Variability.Constant;
+			return Fmi2ModelDescription.Variability.Constant;
 		} else if (variability instanceof continuousQuote) {
-			return ModelDescription.Variability.Continuous;
+			return Fmi2ModelDescription.Variability.Continuous;
 		} else if (variability instanceof discreteQuote) {
-			return ModelDescription.Variability.Discrete;
+			return Fmi2ModelDescription.Variability.Discrete;
 		} else if (variability instanceof fixedQuote) {
-			return ModelDescription.Variability.Fixed;
+			return Fmi2ModelDescription.Variability.Fixed;
 		} else if (variability instanceof tunableQuote) {
-			return ModelDescription.Variability.Tunable;
+			return Fmi2ModelDescription.Variability.Tunable;
 		} else {
 			return null;
 		}
     }
 
-    private static Object convertCausality(ModelDescription.Causality causality) {
+    private static Object convertCausality(Fmi2ModelDescription.Causality causality) {
         if (causality == null) {
             return null;
         }
@@ -192,20 +192,20 @@ public class VdmSvChecker {
         }
     }
 
-    private static ModelDescription.Causality convertCausalitySV(Object causality) {
+    private static Fmi2ModelDescription.Causality convertCausalitySV(Object causality) {
 
 		if (causality instanceof calculatedParameterQuote) {
-			return ModelDescription.Causality.CalculatedParameter;
+			return Fmi2ModelDescription.Causality.CalculatedParameter;
 		} else if (causality instanceof independentQuote) {
-			return ModelDescription.Causality.Independent;
+			return Fmi2ModelDescription.Causality.Independent;
 		} else if (causality instanceof inputQuote) {
-			return ModelDescription.Causality.Input;
+			return Fmi2ModelDescription.Causality.Input;
 		} else if (causality instanceof localQuote) {
-			return ModelDescription.Causality.Local;
+			return Fmi2ModelDescription.Causality.Local;
 		} else if (causality instanceof outputQuote) {
-			return ModelDescription.Causality.Output;
+			return Fmi2ModelDescription.Causality.Output;
 		} else if (causality instanceof parameterQuote) {
-			return ModelDescription.Causality.Parameter;
+			return Fmi2ModelDescription.Causality.Parameter;
 		} else {
 			return null;
 		}

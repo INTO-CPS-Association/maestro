@@ -1,4 +1,3 @@
-import argparse
 import os
 import testutils
 import subprocess
@@ -9,13 +8,13 @@ import re
 from zipfile import ZipFile
 
 def testVerificationEntryPoint(basicUrl, baseResourcePath):
-    testutils.printSection("VERIFY ALGORITHM")
+    testutils.printSection("WEB API verify algorithm")
 
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
 
     resourcesPath = os.path.join(baseResourcePath, "verify_algorithm")
-    with open(os.path.join(resourcesPath, "masterModel.txt")) as f:
+    with open(os.path.join(resourcesPath, "masterModel.conf")) as f:
         payloadString = f.read()
 
     response = requests.post(f"{basicUrl}/verifyAlgorithm", data=payloadString, headers={'Content-Type': 'text/plain'})
@@ -29,13 +28,13 @@ def testVerificationEntryPoint(basicUrl, baseResourcePath):
         print("SUCCESS: The algorithm did not verify as expected.")
 
 def testVisualizationEntryPoint(basicUrl, baseResourcePath):
-    testutils.printSection("VISUALIZE TRACES")
+    testutils.printSection("WEB API visualize traces")
 
     tempDirectory = tempfile.mkdtemp()
     print("Temporary directory: " + tempDirectory)
 
     resourcesPath = os.path.join(baseResourcePath, "visualize_traces")
-    with open(os.path.join(resourcesPath, "masterModel.txt")) as f:
+    with open(os.path.join(resourcesPath, "masterModel.conf")) as f:
         payloadString = f.read()
 
     response = requests.post(f"{basicUrl}/visualizeTrace", data=payloadString, headers={'Content-Type': 'text/plain'})
@@ -60,7 +59,6 @@ parser.add_argument('--path', type=str, default=None, help="Path to the Maestro 
 parser.add_argument('--port', help='Maestro connection port')
 parser.set_defaults(port=port)
 
-args = parser.parse_args()
 
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))

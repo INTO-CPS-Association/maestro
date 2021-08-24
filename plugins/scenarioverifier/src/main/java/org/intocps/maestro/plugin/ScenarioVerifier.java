@@ -13,7 +13,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
@@ -73,6 +73,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         // instance in a multi-model is uniquely identified as: "{<fmu-name>}.<instance-name>" where instances are not really considered in scenarios
         // but is currently expected to be expressed as: "<fmu-name>_<instance_name>".
         // This is not optimal and should be changed to the same format.
+        // Also should fmu, instance and port identifiers be case sensitive?
 
         logger.info("Unfolding with scenario verifier: {}", declaredFunction.toString());
 
@@ -132,7 +133,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
             if (masterModel.initialization().length() == 0) {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum());
-                masterModel.initialization().appendedAll(synthesizer.synthesizeInitialization());
+                masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
 
             dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(masterModel.scenario().connections()).stream()
@@ -146,7 +147,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                     new DoubleVariableFmi2Api(null, null, null, null, endTimeVar), configuration.relTol));
 
             // Generate set parameters section
-            setParameters(fmuInstances, configuration.parameters);
+            setSEA(fmuInstances, configuration.parameters);
 
             // Generate initialization section
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars =
@@ -246,7 +247,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         }
     }
 
-    private void setParameters(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {
+    private void setSEA(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {
         fmuInstances.forEach((instanceName, fmuInstance) -> {
             Map<String, Object> portNameToValueMap =
                     parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
@@ -256,10 +257,13 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =
                     portNameToValueMap.entrySet().stream().filter(e -> {
                         PortFmi2Api port = fmuInstance.getPort(e.getKey());
-                        boolean isParameter = port.scalarVariable.causality.equals(ModelDescription.Causality.Parameter);
-                        //boolean isTunable = port.scalarVariable.variability.equals(ModelDescription.Variability.Tunable);
+                        boolean isTunableParameter = port.scalarVariable.variability.equals(Fmi2ModelDescription.Variability.Tunable) &&
+                                port.scalarVariable.causality.equals(Fmi2ModelDescription.Causality.Parameter);
+                        boolean isEligibleVariable = port.scalarVariable.variability != Fmi2ModelDescription.Variability.Constant &&
+                                (port.scalarVariable.initial.equals(Fmi2ModelDescription.Initial.Exact) ||
+                                        port.scalarVariable.initial.equals(Fmi2ModelDescription.Initial.Approx));
                         //TODO: log/notify if port in 'parameters' either does not have the causality of parameter or is not tunable.
-                        return isParameter;
+                        return isTunableParameter || isEligibleVariable;
                     }).collect(Collectors.toMap(e -> fmuInstance.getPort(e.getKey()), e -> {
                         if (e.getValue() instanceof Double) {
                             return DoubleExpressionValue.of((Double) e.getValue());
@@ -631,8 +635,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     }
 
     private boolean portRefMatch(PortRef portRef, String multiModelInstanceName, String multiModelPortName) {
-        return portRef.fmu().toLowerCase(Locale.ROOT).contains(multiModelInstanceName) &&
-                portRef.port().toLowerCase(Locale.ROOT).contains(multiModelPortName);
+        return portRef.fmu().toLowerCase(Locale.ROOT).contains(multiModelInstanceName.toLowerCase(Locale.ROOT)) &&
+                portRef.port().toLowerCase(Locale.ROOT).contains(multiModelPortName.toLowerCase(Locale.ROOT));
     }
 
     private String masterMRepresentationToMultiMRepresentation(String masterModelRepresentation) {

@@ -11,7 +11,7 @@ import org.intocps.fmi.IFmiComponent;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
@@ -27,7 +27,8 @@ public class VariableStepValue extends ModuleValue {
         super(createMembers(configuration));
     }
 
-    private static Set<InitializationMsgJson.Constraint> getConstraintsFromAlgorithmConfig(VariableStepAlgorithmConfig config, ObjectMapper objectMapper) {
+    private static Set<InitializationMsgJson.Constraint> getConstraintsFromAlgorithmConfig(VariableStepAlgorithmConfig config,
+            ObjectMapper objectMapper) {
         final Set<InitializationMsgJson.Constraint> constraints = new HashSet<>();
         Map<String, Map<String, Object>> namedConstraints =
                 objectMapper.convertValue(objectMapper.valueToTree(config.getConstraints()), new TypeReference<>() {
@@ -113,7 +114,7 @@ public class VariableStepValue extends ModuleValue {
                     String fmuName = fullyQualifiedFMUInstanceNames.get(i).getValue().split("\\.")[0];
                     ModelConnection.ModelInstance mi = new ModelConnection.ModelInstance(fmuName, instanceName);
                     IFmiComponent fmu = fmus.get(i).getModule();
-                    ModelDescription modelDescription = new ModelDescription(fmu.getFmu().getModelDescription());
+                    Fmi2ModelDescription modelDescription = new Fmi2ModelDescription(fmu.getFmu().getModelDescription());
                     FmiInstanceConfig fmiInstanceConfig = new FmiInstanceConfig(modelDescription, modelDescription.getScalarVariables());
                     FmiSimulationInstance si = new FmiSimulationInstance(null, fmiInstanceConfig);
                     instances.put(mi, si);
@@ -147,6 +148,36 @@ public class VariableStepValue extends ModuleValue {
                 double time = ((RealValue) fcargs.get(1).deref()).getValue();
                 List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
                 variableStepConfigValue.addDataPoint(time, portValues);
+            } else {
+                throw new InterpreterException("Invalid arguments");
+            }
+            return new VoidValue();
+        }));
+        componentMembers.put("addDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 3);
+
+            Value cv = fcargs.get(0).deref();
+            double time = ((RealValue) fcargs.get(1).deref()).getValue();
+            if (cv instanceof VariableStepConfigValue) {
+                VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
+                Value arrVal = fcargs.get(2).deref();
+                if (arrVal instanceof ArrayValue) {
+                    ArrayValue<Value> array = (ArrayValue) arrVal;
+                    if (array.getValues().stream().allMatch(v -> v.deref() instanceof ArrayValue)) {
+                        try {
+                            List<List<RealValue>> ders = array.getValues().stream()
+                                    .map(subArr -> ((ArrayValue<Value>) subArr.deref()).getValues().stream().map(v -> (RealValue) v)
+                                            .collect(Collectors.toList())).collect(Collectors.toList());
+                            variableStepConfig.addDerivatives(ders, time);
+                        } catch (Exception e) {
+                            throw new InterpreterException("Unable to cast array. It is probably not a 2d array: " + e);
+                        }
+                    } else {
+                        throw new InterpreterException("Array passed to addDerivatives is not a 2d array");
+                    }
+                } else {
+                    throw new InterpreterException("Array passed to addDerivatives is not an array");
+                }
             } else {
                 throw new InterpreterException("Invalid arguments");
             }
