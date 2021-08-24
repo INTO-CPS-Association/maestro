@@ -135,7 +135,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
                 for (PExp arg : node.getArgs().stream().skip(2).collect(Collectors.toList())) {
                     PType at = types.get(arg);
                     if (at instanceof ABooleanPrimitiveType) {
-                        sb.append("i");
+                        sb.append("b");
                     } else if (at instanceof AIntNumericPrimitiveType) {
                         sb.append("i");
                     } else if (at instanceof AUIntNumericPrimitiveType) {

@@ -8,6 +8,9 @@ import shutil
 import tempfile
 import pathlib
 import json
+import subprocess
+import platform
+from pathlib import Path
 
 parser = argparse.ArgumentParser(prog='Example of Maestro CLI', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro CLI jar (Can be relative path)")
@@ -64,6 +67,44 @@ def cliExpansion():
     outputs = os.path.join(temporary.dirPath, outputsFileName)
     cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
     testutils.testCliCommandWithFunc(cmd, lambda: validateCliSpecResult(outputs, temporary))
+
+def cliExportCpp():
+    testutils.printSection("CLI export cpp")
+    temporary = testutils.createAndPrepareTempDirectory()
+    outputs = os.path.join(temporary.dirPath, outputsFileName)
+    cmd = "java -jar {0} export -output {1} -vi FMI2 cpp {2}".format(path, temporary.dirPath, testutils.mablExample)
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True, check=True)
+    cmd = "cmake"
+
+    if os.name == 'nt' or 'Windows' in platform.system() or 'CYGWIN' in platform.system():
+        cmd = cmd + " -G\"MSYS Makefiles\""
+
+    cmd = cmd+" -B{0} -S{1}".format(Path(temporary.dirPath) / 'build', temporary.dirPath)
+    print("Cmd: " + cmd)
+
+    p = subprocess.run(cmd, shell=True, check=True)
+    cmd = "make -j8 -C {0}".format(Path(temporary.dirPath) / 'build')
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True, check=True)
+
+    output_csv_path = Path(temporary.dirPath) / 'build' / 'output.csv'
+    runtime = {
+        "DataWriter": [{
+            "filename": str(output_csv_path),
+            "type": "CSV"
+        }]
+    }
+    runtime_path = Path(temporary.dirPath) / 'build' / 'runtime.json'
+    with open(runtime_path, 'w') as f:
+        f.write(json.dumps(runtime))
+
+    cmd = "{0} -runtime {1}".format(Path(temporary.dirPath) / 'build' / 'sim', runtime_path)
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        raise Exception(f"Error executing {cmd}")
+
 
 def cliGenerateAlgorithmFromScenario():
     testutils.printSection("CLI generate algorithm from scenario")
@@ -144,6 +185,7 @@ print("Testing CLI of: " + path)
 cliRaw()
 cliSpecGen()
 cliExpansion()
+cliExportCpp()
 cliGenerateAlgorithmFromScenario()
 cliGenerateAlgorithmFromMultiModel()
 cliExecuteAlgorithmFromExtendedMultiModel()
