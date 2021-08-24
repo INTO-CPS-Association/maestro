@@ -84,7 +84,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
             }
         }
 
-        String global_execution_continue_varname = "global_execution_continue";
         String status_varname = "status";
 
         if (createdFromExistingSpec) {
@@ -101,9 +100,6 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         } else {
 
             globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
-            //            globalExecutionContinue =
-            //                    (BooleanVariableFmi2Api) createVariable(rootScope, newBoleanType(), newABoolLiteralExp(true), "global", "execution", "continue");
-            //                        globalFmiStatus = (IntVariableFmi2Api) createVariable(rootScope, newIntType(), null, "status");
         }
 
         mainErrorHandlingScope = rootScope.enterTry();
