@@ -151,7 +151,6 @@ public class CMakeUtil {
             cmds.add("-GNinja");
         } else if (isWindows()) {
             cmds.add("-GMSYS Makefiles");
-            //            cmds.add("\"MSYS Makefiles\"");
         }
 
         if (install != null) {
@@ -194,7 +193,6 @@ public class CMakeUtil {
         for (String string : goal) {
             pb.command().add(string);
         }
-        //pb.directory(root);
 
         return runProcess(pb, verbose);
 
