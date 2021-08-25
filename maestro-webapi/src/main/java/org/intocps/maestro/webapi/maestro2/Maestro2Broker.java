@@ -62,30 +62,30 @@ public class Maestro2Broker {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
-        // simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+        if(simulationConfiguration.connections.isEmpty()){
+            // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
+            MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+            List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
+            Map<String, List<String>> connectionsMap = new HashMap<>();
+            connections.forEach(connection -> {
+                String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
+                String trgFmuName = trgFmuAndInstance[0];
+                String trgInstanceName = trgFmuAndInstance[1];
+                String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
+                String srcFmuName = srcFmuAndInstance[0];
+                String srcInstanceName = srcFmuAndInstance[1];
+                String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
+                String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
+                if (connectionsMap.containsKey(muModelSrcName)) {
+                    connectionsMap.get(muModelSrcName).add(muModelTrgName);
+                } else {
+                    connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
+                }
+            });
 
-        // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
-        List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
-        Map<String, List<String>> connectionsMap = new HashMap<>();
-        connections.forEach(connection -> {
-            String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
-            String trgFmuName = trgFmuAndInstance[0];
-            String trgInstanceName = trgFmuAndInstance[1];
-            String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
-            String srcFmuName = srcFmuAndInstance[0];
-            String srcInstanceName = srcFmuAndInstance[1];
-            String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
-            String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
-            if (connectionsMap.containsKey(muModelSrcName)) {
-                connectionsMap.get(muModelSrcName).add(muModelTrgName);
-            } else {
-                connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
-            }
-        });
-
-        simulationConfiguration.connections = connectionsMap;
-
+            simulationConfiguration.connections = connectionsMap;
+        }
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration =
                 new ScenarioConfiguration(simulationEnvironment, executableModel.getMasterModel(), executableModel.getMultiModel().getParameters(),
