@@ -148,32 +148,32 @@ def testCliCommandWithFunc(cmd, func):
         func()
 
 def acquireServerDefinedPortFromStdio(proc):
-    # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
-    # Therefore match the pattern and retrieve the port number from stdout to communicate with the server
+    # If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
+    # Therefore match the pattern and retrieve the port number from stderr
 
+    # readline from popen is blocking so it needs its own thread to be able to time out if no port number is found within a set time.
     linebuffer=[]
-    def reader(procout,buffer):
+    def reader(stderr, buffer):
         while True:
-            line=procout.readline()
+            line = stderr.readline()
             if line:
                 buffer.append(line)
             else:
                 break
 
-    # readline from popen is blocking so it needs its own thread so it is possible to handle if no port number is found within a set time.
-    t=Thread(target=reader,args=(proc.stdout,linebuffer))
-    t.daemon=True
+    t=Thread(target=reader, args=(proc.stderr, linebuffer))
+    t.daemon=True # Ensures the thread terminates with the main thread.
     t.start()
     timeoutInSecs = 0
-    while True:
+    while timeoutInSecs < 20:
         if linebuffer:
             stringLine = linebuffer.pop(0).decode("utf-8")
             print(str(stringLine))
             match = re.search("(?<=\{)[0-9]+(?=\})", stringLine)
             if match:
+                # Return the server port
                 return match.group()
-        elif timeoutInSecs < 5:
-            time.sleep(1)
-            timeoutInSecs += 1
-        else:
-            raise Exception("Unable to locate serverport in stdout") 
+        time.sleep(1)
+        timeoutInSecs += 1
+
+    raise Exception("Unable to locate serverport in stdout") 

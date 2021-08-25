@@ -27,9 +27,10 @@ public class Application {
 
     @EventListener
     public void onApplicationEvent(final ServletWebServerInitializedEvent event) {
+        // If port 0 is passed to the server should acquire a port and write the port number to system.err so the client can get the acquired port.
         if (serverAcquiresPort) {
             int port = event.getWebServer().getPort();
-            System.out.println("Server acquired port: {" + port + "}");
+            System.err.println("Server acquired port: {" + port + "}");
         }
     }
 
