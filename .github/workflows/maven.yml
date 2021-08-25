@@ -94,7 +94,6 @@ jobs:
 
       - name: Web API Test
         timeout-minutes: 2
-        if: matrix.os != 'macos-latest'
         run: |
           cd external_tester
           pipenv run python webapi_test.py
