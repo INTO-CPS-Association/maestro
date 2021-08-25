@@ -24,8 +24,18 @@ terminal and reimporting in the maven control panel of IntelliJ.
 
 ### CPP environment installation guide
 
-1. Follow the guide at https://www.msys2.org/
-2. Add C:\msys64\mingw64\bin
+#### Windows
+1. Install msys with mingw64 (https://www.msys2.org/)
+2. Follow the guide at https://www.msys2.org/
+3. Add C:\msys64\mingw64\bin to Path
+4. Add C:\msys64\usr\bin to Path
+5. Run pacman -S mingw-w64-x86_64-cmake in the MSYS terminal
+
+#### Linux (ubuntu)
+
+```bash
+apt install git libzip-dev build-essential cmake
+```
 
 ## Release the tool
 
