@@ -150,9 +150,7 @@ public class CMakeUtil {
         if (autoNinja && hasNinja()) {
             cmds.add("-GNinja");
         } else if (isWindows()) {
-            //            cmds.add("-GMSYS Makefiles");
-            //            cmds.add("\"MSYS Makefiles\"");
-            cmds.add("-GMinGW Makefiles");
+            cmds.add("-GMSYS Makefiles");
         }
 
         if (install != null) {
@@ -172,8 +170,6 @@ public class CMakeUtil {
 
 
         pb.directory(source);
-
-        System.out.println("Running CMAKE command: " + String.join(" ", cmds));
 
         return runProcess(pb, verbose);
 
@@ -197,7 +193,6 @@ public class CMakeUtil {
         for (String string : goal) {
             pb.command().add(string);
         }
-        //pb.directory(root);
 
         return runProcess(pb, verbose);
 
