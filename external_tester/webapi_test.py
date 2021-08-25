@@ -11,6 +11,7 @@ import threading
 import websocket
 import testutils
 import pathlib
+import re
 
 websocketopen = False
 socketFile = None
@@ -221,11 +222,11 @@ def testScenarioController(basicUrl):
     if not testutils.compareCSV(expectedCSVFilePath, actualCSVFilePath):
         raise Exception("CSV files did not match!")
 
-
+port = 0
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')
-parser.set_defaults(port=8082)
+parser.set_defaults(port=port) 
 
 args = parser.parse_args()
 
@@ -236,23 +237,19 @@ relativePath = os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maest
 
 jarPath = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
 
-port = args.port
-
-# Check if port is free
-if testutils.is_port_in_use(port):
-    print("Port %s is already in use. Finding free port" % port)
-    port = testutils.find_free_port()
-    print("New port is: %s" % port)
-
-
 if not os.path.isfile(jarPath):
     raise Exception(f"The path does not exist: {jarPath}")
 
-print(f"Testing Web api of: {jarPath} with port: {str(port)}")
-
 cmd = f"java -jar {jarPath} -p {str(port)}"
-proc = subprocess.Popen(cmd, shell=True)
+
+# Start the server as a subprocess and pipe stderr
+proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+
+# If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
+if port == 0:
+    port = testutils.acquireServerDefinedPortFromStdio(proc)
 basicUrl = f"http://localhost:{str(port)}"
+print(f"Testing Web api of: {jarPath} with port: {str(port)}")
 
 try:
     # Test connection

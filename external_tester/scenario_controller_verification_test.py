@@ -53,20 +53,18 @@ def testVisualizationEntryPoint(basicUrl, baseResourcePath):
             print("SUCCESS: at least one mp4 file visualizing a trace was returned.")
 
 def webApiTest(jarPath):
-    port = 8082
-
-    # Check if port is free
-    if testutils.is_port_in_use(port):
-        print("Port %s is already in use. Finding free port" % port)
-        port = testutils.find_free_port()
-        print("New port is: %s" % port)
-
+    port = 0
     cmd = f"java -jar {jarPath} -p {str(port)}"
-    proc = subprocess.Popen(cmd, shell=True)
+    # Start the server as a subprocess and pipe stdout
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+    # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
+    if port == 0:
+        port = testutils.acquireServerDefinedPortFromStdio(proc)
     basicUrl = f"http://localhost:{str(port)}"
 
     try:
-        maxWait = 10
+        maxWait = 20
         while maxWait > 0:
             try:
                 r = requests.get(basicUrl+"/version")
@@ -83,9 +81,9 @@ def webApiTest(jarPath):
         baseResourcePath = "scenario_controller_resources"
         testVerificationEntryPoint(basicUrl, baseResourcePath)
         testVisualizationEntryPoint(basicUrl, baseResourcePath)
-        print("Sucessfully tested scenario verification WEB API commands")
     finally:
         proc.terminate()
+
 
 def verifyAlgorithmTest(SCR_path, jarPath):
     testutils.printSection("CLI verify algorithm")
@@ -111,18 +109,16 @@ def cliTest(jarPath):
     visualizeTracesTest(SCR_path, jarPath)
     print("Sucessfully tested scenario verification CLI commands")
 
-
-
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-# webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar")))
-# if not os.path.isfile(webApiJarPath):
-#     raise Exception(f"Unable to locate jar: {webApiJarPath}")
-# webApiTest(webApiJarPath)
+webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar")))
+if not os.path.isfile(webApiJarPath):
+    raise Exception(f"Unable to locate jar: {webApiJarPath}")
+webApiTest(webApiJarPath)
 
 ## guru.nidi.graphviz.engine fails to initialize if it has just been used e.g. by running webApiTest before cliTest or the other way around. Therefore only one can be run at the time.
-cliJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar")))
-if not os.path.isfile(cliJarPath):
-    raise Exception(f"Unable to locate jar: {cliJarPath}")
-cliTest(cliJarPath)
+# cliJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar")))
+# if not os.path.isfile(cliJarPath):
+#     raise Exception(f"Unable to locate jar: {cliJarPath}")
+# cliTest(cliJarPath)
