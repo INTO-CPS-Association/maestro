@@ -4,10 +4,7 @@ import cli.VerifyTA;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
-import core.ModelEncoding;
-import core.ScenarioGenerator;
-import core.ScenarioLoader;
+import core.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
@@ -28,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "scenario-verifier",
@@ -74,7 +71,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
         // If verification result code is 1 violations of the scenarios' contract were found and a trace has been written to the trace file
         // from which a visualization can be made.
         if (resultCode == 1) {
-            Path videoTraceFolder = java.nio.file.Files.createDirectories(Path.of(tempDir.getPath(), "video_trace"));
+            Path videoTraceFolder = output.toPath();
             ModelEncoding modelEncoding = new ModelEncoding(masterModel);
             try (BufferedReader bufferedReader = new BufferedReader(new FileReader(traceFile))) {
                 TraceAnalyzer.AnalyseScenario(masterModel.name(), CollectionConverters.asScala(bufferedReader.lines().iterator()), modelEncoding,
@@ -84,6 +81,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
                 System.out.println("Unable to generate trace visualization: " + e);
                 return -1;
             }
+            System.out.println("Generated trace visualization in: " + videoTraceFolder.toAbsolutePath());
         }
         // If the verification code is anything else than 1 it is not possible to visualize the trace and this is an "error" for this endpoint
         // even though the verification might have been successful.
@@ -171,7 +169,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
         }
 
         String algorithm = ScenarioConfGenerator.generate(masterModel, masterModel.name());
-        Path algorithmPath = output.toPath().resolve("algorithm.conf");
+        Path algorithmPath = output.toPath().resolve("masterModel.conf");
         Files.write(algorithmPath, algorithm.getBytes(StandardCharsets.UTF_8));
 
         return 0;
@@ -315,6 +313,31 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         });
         Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("stepSize")), new TypeReference<>() {
         });
+
+
+        if(simulationConfiguration.connections.isEmpty()){
+            // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
+            MasterModel masterModelObj = ScenarioLoader.load(new ByteArrayInputStream(masterModel.getBytes()));
+            List<ConnectionModel> connections = CollectionConverters.asJava(masterModelObj.scenario().connections());
+            Map<String, List<String>> connectionsMap = new HashMap<>();
+            connections.forEach(connection -> {
+                String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
+                String trgFmuName = trgFmuAndInstance[0];
+                String trgInstanceName = trgFmuAndInstance[1];
+                String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
+                String srcFmuName = srcFmuAndInstance[0];
+                String srcInstanceName = srcFmuAndInstance[1];
+                String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
+                String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
+                if (connectionsMap.containsKey(muModelSrcName)) {
+                    connectionsMap.get(muModelSrcName).add(muModelTrgName);
+                } else {
+                    connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
+                }
+            });
+
+            simulationConfiguration.connections = connectionsMap;
+        }
 
         // Setup scenarioConfiguration
         return new ScenarioConfiguration(Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter), masterModel, parameters, relTol,
