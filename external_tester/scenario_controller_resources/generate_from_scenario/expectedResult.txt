@@ -62,10 +62,14 @@ cosim-step = [{save-state: msd2}
 {loop: { 
  until-step-accept: [msd2,msd1,msd3] 
  iterate: [{loop: { 
- until-converged: [msd3.G,msd2.fk,msd1.v1] 
+ until-converged: [msd3.G,msd2.fk,msd2.z,msd1.x1,msd1.v1] 
  iterate: [{set: msd2.G}
 
 {step: msd3 }
+
+{set: msd3.z}
+
+{get-tentative: msd3.G}
 
 {set: msd1.fk}
 
@@ -73,21 +77,17 @@ cosim-step = [{save-state: msd2}
 
 {get-tentative: msd1.v1}
 
+{get-tentative: msd1.x1}
+
 {set: msd2.v1}
 
 {step: msd2 }
 
-{get-tentative: msd2.z}
-
-{set-tentative: msd3.z}
-
-{get-tentative: msd3.G}
-
-{get-tentative: msd1.x1}
-
-{set-tentative: msd2.x1}
+{set: msd2.x1}
 
 {get-tentative: msd2.fk}
+
+{get-tentative: msd2.z}
 ] 
  if-retry-needed: [{restore-state: msd3}
 
