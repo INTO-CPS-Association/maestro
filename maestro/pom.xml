@@ -21,7 +21,7 @@
         </dependency>
 
         <dependency>
-            <groupId>scenario_verifier</groupId>
+            <groupId>INTO-CPS-Association</groupId>
             <artifactId>scenario_verifier_2.13</artifactId>
             <version>0.1</version>
         </dependency>
