@@ -12,25 +12,6 @@ import subprocess
 import platform
 from pathlib import Path
 
-parser = argparse.ArgumentParser(prog='Example of Maestro CLI', usage='%(prog)s [options]')
-parser.add_argument('--path', type=str, default=None, help="Path to the Maestro CLI jar (Can be relative path)")
-
-args = parser.parse_args()
-
-# cd to run everything relative to this file
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
-relativePath = os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar"))
-path = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
-
-if not os.path.isfile(path):
-    print('The path does not exist')
-    sys.exit()
-
-# Interpreter outputs to directory from where it is executed.
-outputsFileName = "outputs.csv"
-
-SCR_path = "scenario_controller_resources"
-
 def validateAlgorithmExecution(outputcsv, expectedcsv):
     if os.path.exists(outputcsv) and testutils.compareCSV(outputcsv, expectedcsv):
         print("Succesfully executed the algorithm and returned output")
@@ -68,8 +49,13 @@ def cliExpansion():
     cmd = "java -jar {0} interpret -output {1} --dump-intermediate {1} {2} -vi FMI2".format(path, temporary.dirPath, testutils.mablExample)
     testutils.testCliCommandWithFunc(cmd, lambda: validateCliSpecResult(outputs, temporary))
 
-def cliExportCpp():
+def cliExportCpp(runTest):
     testutils.printSection("CLI export cpp")
+
+    if not runTest:
+        print("Skipping CLI export cpp test...")
+        return
+
     temporary = testutils.createAndPrepareTempDirectory()
     outputs = os.path.join(temporary.dirPath, outputsFileName)
     cmd = "java -jar {0} export -output {1} -vi FMI2 cpp {2}".format(path, temporary.dirPath, testutils.mablExample)
@@ -181,11 +167,31 @@ def cliExecuteAlgorithmFromMasterModel():
     testutils.testCliCommandWithFunc(cmd, func)
 
 
+parser = argparse.ArgumentParser(prog='Maestro CLI test', usage='%(prog)s [options]')
+parser.add_argument('--path', type=str, default=None, help="Path to the Maestro CLI jar (Can be relative path)")
+parser.add_argument('--includeSlowTests', help='Includes CLI export cpp test', action="store_true")
+
+args = parser.parse_args()
+
+# cd to run everything relative to this file
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+relativePath = os.path.abspath(os.path.join(r"../maestro/target/", "maestro-*-jar-with-dependencies.jar"))
+path = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
+
+if not os.path.isfile(path):
+    print('The path does not exist')
+    sys.exit()
+
+# Interpreter outputs to directory from where it is executed.
+outputsFileName = "outputs.csv"
+
+SCR_path = "scenario_controller_resources"
+
 print("Testing CLI of: " + path)
 cliRaw()
 cliSpecGen()
 cliExpansion()
-cliExportCpp()
+cliExportCpp(args.includeSlowTests)
 cliGenerateAlgorithmFromScenario()
 cliGenerateAlgorithmFromMultiModel()
 cliExecuteAlgorithmFromExtendedMultiModel()
