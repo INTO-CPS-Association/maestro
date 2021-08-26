@@ -12,7 +12,7 @@ import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.dto.MasterMultiModelDTO;
 import org.intocps.maestro.webapi.dto.VerificationDTO;
-import org.intocps.maestro.core.dto.MultiModelScenarioVerifier;
+import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.webapi.util.Files;
 import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.springframework.http.MediaType;
@@ -42,7 +42,7 @@ public class Maestro2ScenarioController {
     }
 
     @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public MasterMultiModelDTO generateAlgorithmFromMultiModel(@RequestBody MultiModelScenarioVerifier multiModel) {
+    public MasterMultiModelDTO generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
         // MaxPossibleStepSize is related to verification in Uppaal.
         MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         return new MasterMultiModelDTO(ScenarioConfGenerator.generate(masterModel, masterModel.name()), multiModel);

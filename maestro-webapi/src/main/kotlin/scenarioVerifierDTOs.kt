@@ -1,7 +1,7 @@
 package org.intocps.maestro.webapi.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.intocps.maestro.core.dto.MultiModelScenarioVerifier
+import org.intocps.maestro.core.dto.ExtendedMultiModel
 
 data class FmuDTO(
     @JsonProperty("can-reject-step") val canRejectStep: Boolean,
@@ -42,12 +42,12 @@ data class ExecutionParameters(
 
 data class MasterMultiModelDTO(
     @JsonProperty("masterModel") val masterModel: String,
-    @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier
+    @JsonProperty("multiModel") val multiModel: ExtendedMultiModel
 )
 
 data class ExecutableMasterAndMultiModelTDO(
     @JsonProperty("masterModel") val masterModel: String,
-    @JsonProperty("multiModel") val multiModel: MultiModelScenarioVerifier,
+    @JsonProperty("multiModel") val multiModel: ExtendedMultiModel,
     @JsonProperty("executionParameters") val executionParameters: ExecutionParameters
 )
 

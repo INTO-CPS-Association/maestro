@@ -59,6 +59,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     private Double relTol;
     private Double absTol;
     private Integer convAtt;
+    private AdaptiveModel adaptiveModel;
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(func).collect(Collectors.toSet());
@@ -102,6 +103,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         try {
 
             MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
+            ScenarioModel scenarioModel = masterModel.scenario();
+            adaptiveModel = scenarioModel.config();
 
             MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
             //TODO: Error handling on or off -> settings flag?
@@ -132,11 +135,11 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
             if (masterModel.initialization().length() == 0) {
-                SynthesizerSimple synthesizer = new SynthesizerSimple(masterModel.scenario(), LoopStrategy.maximum());
+                SynthesizerSimple synthesizer = new SynthesizerSimple(scenarioModel, LoopStrategy.maximum());
                 masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
 
-            dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(masterModel.scenario().connections()).stream()
+            dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(scenarioModel.connections()).stream()
                     .map(connection -> fmuInstances.get(connection.srcPort().fmu()).getPort(connection.srcPort().port()))
                     .collect(Collectors.toSet())));
 
@@ -152,7 +155,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             // Generate initialization section
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars =
                     mapInitializationActionsToMaBL(CollectionConverters.asJava(masterModel.initialization()), fmuInstances,
-                            CollectionConverters.asJava(masterModel.scenario().connections()));
+                            CollectionConverters.asJava(scenarioModel.connections()));
 
             // Generate step loop section
             DoubleVariableFmi2Api currentCommunicationPoint = dynamicScope.store("current_communication_point", 0.0);
@@ -164,8 +167,12 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
             currentStepSize.setValue(new DoubleExpressionValue(stepSizeExp));
 
-            mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(masterModel.cosimStep()), fmuInstances, currentCommunicationPoint,
-                    new HashSet<>(), CollectionConverters.asJava(masterModel.scenario().connections()), sharedPortVars, currentStepSize);
+            Map<String, List<CosimStepInstruction>> coSimStepsMap =
+                    CollectionConverters.asJava(masterModel.cosimStep()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+                            e -> CollectionConverters.asJava(e.getValue())));
+
+            mapCoSimStepInstructionsToMaBL(coSimStepsMap, fmuInstances, currentCommunicationPoint,
+                    new HashSet<>(), CollectionConverters.asJava(scenarioModel.connections()), sharedPortVars, currentStepSize);
 
             currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(currentStepSize));
             dataWriterInstance.log(currentCommunicationPoint);
@@ -309,14 +316,21 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         return sharedPortVars;
     }
 
-    private Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> mapCoSimStepInstructionsToMaBL(
-            List<CosimStepInstruction> coSimStepInstructions, Map<String, ComponentVariableFmi2Api> fmuInstances,
+    private Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> mapCoSimStepInstructionsToMaBL(Map<String,List<CosimStepInstruction>> coSimStepInstructionsMap,
+            Map<String, ComponentVariableFmi2Api> fmuInstances,
             DoubleVariableFmi2Api currentCommunicationPoint, Set<Fmi2Builder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars, DoubleVariableFmi2Api currentStepSize) {
 
         Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuInstanceWithStepVar =
                 new HashMap<>();
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> tentativePortVars = new ArrayList<>();
+
+        if(!adaptiveModel.configurations().isEmpty() || coSimStepInstructionsMap.values().size() > 1){
+            throw new RuntimeException("Support for multiple algorithms is not yet supported in Maestro!");
+        }
+        // For now, we only handle a single co-sim step algorithm.
+        String algorithmIdentifier = coSimStepInstructionsMap.keySet().iterator().next();
+        List<CosimStepInstruction> coSimStepInstructions = coSimStepInstructionsMap.get(algorithmIdentifier);
 
         // Loop over step instructions and map them to MaBL
         coSimStepInstructions.forEach(instruction -> {
@@ -344,10 +358,14 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                         .contains(((RestoreState) instruction).fmu().toLowerCase(Locale.ROOT).split(MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]))
                         .findAny().ifPresent(Fmi2Builder.StateVariable::set);
             } else if (instruction instanceof AlgebraicLoop) {
-                mapAlgebraicLoopCoSimStepInstruction((AlgebraicLoop) instruction, fmuInstances, currentCommunicationPoint, fmuStates, connections,
+                mapAlgebraicLoopCoSimStepInstruction(algorithmIdentifier, (AlgebraicLoop) instruction, fmuInstances,
+                        currentCommunicationPoint, fmuStates,
+                        connections,
                         sharedPortVars, currentStepSize).forEach(fmuInstanceWithStepVar::putIfAbsent);
             } else if (instruction instanceof StepLoop) {
-                mapStepLoopCoSimStepInstruction((StepLoop) instruction, fmuInstances, currentCommunicationPoint, fmuStates, connections,
+                mapStepLoopCoSimStepInstruction(algorithmIdentifier, (StepLoop) instruction, fmuInstances, currentCommunicationPoint
+                        , fmuStates
+                        , connections,
                         sharedPortVars, currentStepSize);
             } else if (instruction instanceof GetTentative) {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets =
@@ -376,7 +394,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         return fmuInstanceWithStepVar;
     }
 
-    private void mapStepLoopCoSimStepInstruction(StepLoop instruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
+    private void mapStepLoopCoSimStepInstruction(String parentAlgorithmIdentifier, StepLoop instruction,
+            Map<String, ComponentVariableFmi2Api> fmuInstances,
             DoubleVariableFmi2Api currentCommunicationPoint, Set<Fmi2Builder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet, DoubleVariableFmi2Api currentStepSize) {
 
@@ -388,7 +407,9 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
         // Map iterate instructions to MaBL
         Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> fmuInstanceWithStepVar =
-                mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(instruction.iterate()), fmuInstances, currentCommunicationPoint, fmuStates,
+                mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.iterate())),
+                        fmuInstances,
+                        currentCommunicationPoint, fmuStates,
                         connections, portsWithGet, currentStepSize);
 
         // Get step accepted boolean from each fmu instance of interest.
@@ -413,7 +434,9 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         dynamicScope.enterIf(stepAcceptedPredicate.toPredicate().not());
         {
             // Map retry instructions to MaBL
-            mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(instruction.ifRetryNeeded()), fmuInstances, currentCommunicationPoint,
+            mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.ifRetryNeeded())),
+                    fmuInstances,
+                    currentCommunicationPoint,
                     fmuStates, connections, portsWithGet, currentStepSize);
 
             // Set the step size to the lowest accepted step-size
@@ -432,7 +455,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     }
 
     private Map<ComponentVariableFmi2Api, Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>>> mapAlgebraicLoopCoSimStepInstruction(
-            AlgebraicLoop algebraicLoopInstruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
+            String parentAlgorithmIdentifier, AlgebraicLoop algebraicLoopInstruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
             DoubleVariableFmi2Api currentCommunicationPoint, Set<Fmi2Builder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars, DoubleVariableFmi2Api currentStepSize) {
 
@@ -470,7 +493,9 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             } else if (instruction instanceof SetTentative) {
                 mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances, connections);
             } else {
-                mapCoSimStepInstructionsToMaBL(List.of(instruction), fmuInstances, currentCommunicationPoint, fmuStates, connections, portMapVars,
+                mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, List.of(instruction)), fmuInstances,
+                        currentCommunicationPoint, fmuStates, connections,
+                        portMapVars,
                         currentStepSize).forEach(fmuWithStep::put);
             }
         }
@@ -492,7 +517,8 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         dynamicScope.enterIf(convergencePredicate.toPredicate().not());
         {
             // Map retry instructions to MaBL
-            mapCoSimStepInstructionsToMaBL(CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded()), fmuInstances,
+            mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded()))
+                    , fmuInstances,
                     currentCommunicationPoint, fmuStates, connections, portMapVars, currentStepSize);
 
             loggerModule.trace("## Convergence was not reached at sim-time: %f with step size: %f... %d convergence attempts remaining",
