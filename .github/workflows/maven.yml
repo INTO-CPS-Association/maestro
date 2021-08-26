@@ -90,7 +90,7 @@ jobs:
         timeout-minutes: 5
         run: |
           cd external_tester
-          pipenv run python maestro_cli_test.py
+          pipenv run python maestro_cli_test.py --includeSlowTests
 
       - name: Web API Test
         timeout-minutes: 2
