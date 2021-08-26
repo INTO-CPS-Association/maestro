@@ -8,7 +8,10 @@ import csv
 from collections import namedtuple
 import glob
 import socket
+import re
 import subprocess
+from threading import Thread 
+import time
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -143,3 +146,34 @@ def testCliCommandWithFunc(cmd, func):
         raise Exception(f"Error executing {cmd}")
     else:
         func()
+
+def acquireServerDefinedPortFromStdio(proc):
+    # If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
+    # Therefore match the pattern and retrieve the port number from stderr
+
+    # readline from popen is blocking so it needs its own thread to be able to time out if no port number is found within a set time.
+    linebuffer=[]
+    def reader(stderr, buffer):
+        while True:
+            line = stderr.readline()
+            if line:
+                buffer.append(line)
+            else:
+                break
+
+    t=Thread(target=reader, args=(proc.stderr, linebuffer))
+    t.daemon=True # Ensures the thread terminates with the main thread.
+    t.start()
+    timeoutInSecs = 0
+    while timeoutInSecs < 20:
+        if linebuffer:
+            stringLine = linebuffer.pop(0).decode("utf-8")
+            print(str(stringLine))
+            match = re.search("(?<=\{)[0-9]+(?=\})", stringLine)
+            if match:
+                # Return the server port
+                return match.group()
+        time.sleep(1)
+        timeoutInSecs += 1
+
+    raise Exception("Unable to locate serverport in stdout") 
