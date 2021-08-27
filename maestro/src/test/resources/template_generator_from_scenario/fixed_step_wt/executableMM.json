@@ -1,37 +1,49 @@
 {
-  "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\ncrtl_crtlinstance = { \n  inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\nvalve = {dependencies-init=[], dependencies=[]}}\n }\nwt_wtinstance = { \n  inputs = {\nvalvecontrol = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valvecontrol], dependencies=[valvecontrol]}}\n }}\nconnections = [\ncrtl_crtlinstance.valve -> wt_wtinstance.valvecontrol\nwt_wtinstance.level -> crtl_crtlinstance.level]\n}\ninitialization = [{get: crtl_crtlinstance.valve}\n\n{set: wt_wtinstance.valvecontrol}\n\n{get: wt_wtinstance.level}\n\n{set: crtl_crtlinstance.level}\n]\ncosim-step = [{step: crtl_crtlinstance }\n\n{get: crtl_crtlinstance.valve}\n\n{step: wt_wtinstance }\n\n{set: wt_wtinstance.valvecontrol}\n\n{get: wt_wtinstance.level}\n\n{set: crtl_crtlinstance.level}\n]\n",
-  "multiModel": {
-    "fmus": {
-      "{crtl}": "src/test/resources/watertankcontroller-c.fmu",
-      "{wt}": "src/test/resources/singlewatertank-20sim.fmu"
+    "masterModel": "name = generatedFromMultiModel\nscenario = {\nfmus = {\ncrtl_crtlInstance = { \n  inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\nvalve = {dependencies-init=[], dependencies=[]}}\n }\nwt_wtInstance = { \n  inputs = {\nvalvecontrol = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valvecontrol], dependencies=[valvecontrol]}}\n }}\nconnections = [\ncrtl_crtlInstance.valve -> wt_wtInstance.valvecontrol\nwt_wtInstance.level -> crtl_crtlInstance.level]\n}\ninitialization = [{get: crtl_crtlInstance.valve}\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\ncosim-step = {conf1 = [{step: crtl_crtlInstance }\n\n{get: crtl_crtlInstance.valve}\n\n{step: wt_wtInstance }\n\n{set: wt_wtInstance.valvecontrol}\n\n{get: wt_wtInstance.level}\n\n{set: crtl_crtlInstance.level}\n]\n}",
+    "multiModel": {
+        "fmus": {
+            "{crtl}": "src/test/resources/watertankcontroller-c.fmu",
+            "{wt}": "src/test/resources/singlewatertank-20sim.fmu"
+        },
+        "connections": {
+            "{crtl}.crtlInstance.valve": [
+                "{wt}.wtInstance.valvecontrol"
+            ],
+            "{wt}.wtInstance.level": [
+                "{crtl}.crtlInstance.level"
+            ]
+        },
+        "parameters": {
+            "{crtl}.crtlInstance.maxlevel": 2,
+            "{crtl}.crtlInstance.minlevel": 1
+        },
+        "logVariables": null,
+        "parallelSimulation": false,
+        "stabalizationEnabled": false,
+        "global_absolute_tolerance": 0.0,
+        "global_relative_tolerance": 0.0,
+        "loggingOn": false,
+        "visible": false,
+        "simulationProgramDelay": false,
+        "algorithm": null,
+        "overrideLogLevel": null,
+        "environmentParameters": null,
+        "logLevels": null,
+        "scenarioVerifier": {
+            "reactivity": {
+                "{wt}.wtInstance.valvecontrol": false,
+                "{crtl}.crtlInstance.level": false
+            },
+            "verification": false,
+            "traceVisualization": false
+        }
     },
-    "connections": {
-      "{crtl}.crtlinstance.valve": [
-        "{wt}.wtinstance.valvecontrol"
-      ],
-      "{wt}.wtinstance.level": [
-        "{crtl}.crtlinstance.level"
-      ]
-    },
-    "parameters": {
-      "{crtl}.crtlinstance.maxlevel": 2,
-      "{crtl}.crtlinstance.minlevel": 1
-    },
-    "scenarioVerifier": {
-      "reactivity": {
-        "{wt}.wtinstance.valvecontrol": false,
-        "{crtl}.crtlinstance.level": false
-      },
-      "verification": false,
-      "traceVisualization": false
+    "executionParameters": {
+      "convergenceRelativeTolerance": 0.01,
+      "convergenceAbsoluteTolerance": 0.3,
+      "convergenceAttempts": 5,
+      "startTime": 0.0,
+      "endTime": 10.0,
+      "stepSize": 0.1
     }
-  },
-  "executionParameters": {
-    "convergenceRelativeTolerance": 0.01,
-    "convergenceAbsoluteTolerance": 0.3,
-    "convergenceAttempts": 5,
-    "startTime": 0.0,
-    "endTime": 10.0,
-    "stepSize": 0.1
-  }
 }

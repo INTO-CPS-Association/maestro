@@ -39,21 +39,6 @@ class MasterModelMapper {
             // Load master model without algorithm
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
             return GenerationAPI.generateAlgorithm(masterModel.name(), masterModel.scenario())
-
-//            // Generate algorithm part of the master model
-//            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
-//            val initialization = synthesizer.synthesizeInitialization()
-//            val coSimStep = synthesizer.synthesizeStep()
-//
-//            return MasterModel(
-//                masterModel.name(),
-//                masterModel.scenario(),
-//                masterModel.instantiation(),
-//                initialization,
-//                coSimStep,
-//                masterModel.terminate()
-//            )
-
         }
 
         fun multiModelToMasterModel(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModel {

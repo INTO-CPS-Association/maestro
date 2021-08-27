@@ -79,9 +79,10 @@ public class TemplateGeneratorFromScenarioTest {
         Double absTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAbsoluteTolerance")),
                 new TypeReference<>() {
                 });
-        Integer convergenceAttempts = jsonMapper
-                .readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")), new TypeReference<>() {
-                });
+        Integer convergenceAttempts =
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")),
+                        new TypeReference<>() {
+                        });
         Double startTime =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("startTime")), new TypeReference<>() {
                 });
@@ -117,9 +118,8 @@ public class TemplateGeneratorFromScenarioTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
 
         csvCompare(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
