@@ -1,5 +1,6 @@
 package org.intocps.maestro.plugin
 
+import api.GenerationAPI
 import core.*
 import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
@@ -37,20 +38,21 @@ class MasterModelMapper {
         fun scenarioToMasterModel(scenario: String): MasterModel {
             // Load master model without algorithm
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
+            return GenerationAPI.generateAlgorithm(masterModel.name(), masterModel.scenario())
 
-            // Generate algorithm part of the master model
-            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
-            val initialization = synthesizer.synthesizeInitialization()
-            val coSimStep = synthesizer.synthesizeStep()
-
-            return MasterModel(
-                masterModel.name(),
-                masterModel.scenario(),
-                masterModel.instantiation(),
-                initialization,
-                coSimStep,
-                masterModel.terminate()
-            )
+//            // Generate algorithm part of the master model
+//            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
+//            val initialization = synthesizer.synthesizeInitialization()
+//            val coSimStep = synthesizer.synthesizeStep()
+//
+//            return MasterModel(
+//                masterModel.name(),
+//                masterModel.scenario(),
+//                masterModel.instantiation(),
+//                initialization,
+//                coSimStep,
+//                masterModel.terminate()
+//            )
 
         }
 
