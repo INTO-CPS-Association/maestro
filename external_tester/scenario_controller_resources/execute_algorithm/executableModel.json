@@ -1,30 +1,42 @@
 {
-    "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\nFMU_roller = { \n can-reject-step = true,\n inputs = {\nvalve = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valve], dependencies=[valve]}}\n }\nController_cont = { \n can-reject-step = true,\n inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\n}\n }}\nconnections = [\nFMU_roller.level -> Controller_cont.level]\n}\ninitialization = [{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n]\ncosim-step = [{save-state: Controller_cont}\n\n{save-state: FMU_roller}\n\n{loop: { \n until-step-accept: [Controller_cont,FMU_roller] \n iterate: [{step: Controller_cont }\n\n{step: FMU_roller }\n] \n if-retry-needed: [{restore-state: Controller_cont}\n\n{restore-state: FMU_roller}\n]} \n }\n\n{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n]\n",
+    "masterModel": "name = generatedFromMultiModel\nscenario = {\nfmus = {\nFMU_roller = { \n can-reject-step = true,\n inputs = {\nvalve = {reactivity=delayed}},\n outputs = {\nlevel = {dependencies-init=[valve], dependencies=[valve]}}\n }\nController_cont = { \n can-reject-step = true,\n inputs = {\nlevel = {reactivity=delayed}},\n outputs = {\n}\n }}\nconnections = [\nFMU_roller.level -> Controller_cont.level]\n}\ninitialization = [\n\n{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n\n\n]\ncosim-step = {conf1 = [{save-state: Controller_cont}\n\n{save-state: FMU_roller}\n\n{loop: { \n until-step-accept: [Controller_cont,FMU_roller] \n iterate: [{step: Controller_cont }\n\n{step: FMU_roller }\n] \n if-retry-needed: [{restore-state: Controller_cont}\n\n{restore-state: FMU_roller}\n]} \n }\n\n{set: FMU_roller.valve}\n\n{get: FMU_roller.level}\n\n{set: Controller_cont.level}\n]\n}",
     "multiModel": {
-        "fmus": {
-            "{FMU}": "/rollback-test.fmu",
-            "{Controller}": "/rollback-end.fmu"
+      "fmus": {
+        "{FMU}": "src/test/resources/rollback-test.fmu",
+        "{Controller}": "src/test/resources/rollback-end.fmu"
+      },
+      "connections": {
+        "{FMU}.roller.level": [
+          "{Controller}.cont.level"
+        ]
+      },
+      "parameters": {},
+      "logVariables": null,
+      "parallelSimulation": false,
+      "stabalizationEnabled": false,
+      "global_absolute_tolerance": 0.0,
+      "global_relative_tolerance": 0.0,
+      "loggingOn": false,
+      "visible": false,
+      "simulationProgramDelay": false,
+      "algorithm": null,
+      "overrideLogLevel": null,
+      "environmentParameters": null,
+      "logLevels": null,
+      "scenarioVerifier": {
+        "reactivity": {
+          "{Controller}.cont.level": false
         },
-        "connections": {
-            "{FMU}.roller.level": [
-                "{Controller}.cont.level"
-            ]
-        },
-        "parameters": {},
-        "scenarioVerifier": {
-            "reactivity": {
-                "{Controller}.cont.level": false
-            },
-            "verification": false,
-            "traceVisualization": false
-        }
+        "verification": false,
+        "traceVisualization": false
+      }
     },
     "executionParameters": {
-        "convergenceRelativeTolerance": 0.01,
-        "convergenceAbsoluteTolerance": 0.0,
-        "convergenceAttempts": 5,
-        "startTime": 0.0,
-        "endTime": 1.0,
-        "stepSize": 0.1
+      "convergenceRelativeTolerance": 0.01,
+      "convergenceAbsoluteTolerance": 0.0,
+      "convergenceAttempts": 5,
+      "startTime": 0.0,
+      "endTime": 1.0,
+      "stepSize": 0.1
     }
-}
+  }
