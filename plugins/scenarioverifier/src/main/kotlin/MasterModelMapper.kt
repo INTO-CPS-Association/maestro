@@ -2,18 +2,14 @@ package org.intocps.maestro.plugin
 
 import api.GenerationAPI
 import core.*
+import org.intocps.maestro.core.dto.ExtendedMultiModel
 import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
-import org.intocps.maestro.core.dto.ExtendedMultiModel
 import scala.jdk.javaapi.CollectionConverters
-import synthesizer.LoopStrategy
-import synthesizer.SynthesizerSimple
 
 class MasterModelMapper {
     companion object {
-
-        private val loopStrategy = LoopStrategy.maximum()
 
         private const val INSTANCE_DELIMITER = "_"
 
@@ -121,26 +117,21 @@ class MasterModelMapper {
                     }
             }.toMap()
 
-            val scenario = ScenarioModel(
+            val scenarioModel = ScenarioModel(
                 scala.collection.immutable.Map.from(
                     scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()
                 ),
-                AdaptiveModel(CollectionConverters.asScala(listOf<PortRef>()).toList(), scala.collection.immutable.Map.from(
-                    scala.jdk.CollectionConverters.MapHasAsScala(mapOf<String, ConfigurationModel>()).asScala())),
+                AdaptiveModel(
+                    CollectionConverters.asScala(listOf<PortRef>()).toList(), scala.collection.immutable.Map.from(
+                        scala.jdk.CollectionConverters.MapHasAsScala(mapOf<String, ConfigurationModel>()).asScala()
+                    )
+                ),
                 CollectionConverters.asScala(connectionModelList).toList(),
                 maxPossibleStepSize
             )
 
             // Generate the master model from the scenario
-            val synthesizer = SynthesizerSimple(scenario, loopStrategy)
-            return MasterModel(
-                "generatedFromMultiModel",
-                scenario,
-                CollectionConverters.asScala(listOf<InstantiationInstruction>()).toList(),
-                synthesizer.synthesizeInitialization(),
-                synthesizer.synthesizeStep(),
-                CollectionConverters.asScala(listOf<TerminationInstruction>()).toList()
-            )
+            return GenerationAPI.generateAlgorithm("generatedFromMultiModel", scenarioModel)
         }
     }
 }

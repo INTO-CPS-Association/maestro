@@ -1,10 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import cli.VerifyTA;
-import core.MasterModel;
-import core.ModelEncoding;
-import core.ScenarioGenerator;
-import core.ScenarioLoader;
+import core.*;
 import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -34,21 +31,23 @@ import java.util.zip.ZipOutputStream;
 @Component
 public class Maestro2ScenarioController {
 
-    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE}, produces =
-            MediaType.TEXT_PLAIN_VALUE)
+    @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE},
+            produces = MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
         MasterModel masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
         return ScenarioConfGenerator.generate(masterModel, masterModel.name());
     }
 
-    @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public MasterMultiModelDTO generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
         // MaxPossibleStepSize is related to verification in Uppaal.
         MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         return new MasterMultiModelDTO(ScenarioConfGenerator.generate(masterModel, masterModel.name()), multiModel);
     }
 
-    @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = {MediaType.TEXT_PLAIN_VALUE},
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public VerificationDTO verifyAlgorithm(@RequestBody String masterModelAsString) throws Exception {
         // Load the master model, verify the algorithm and return success, detailed message and the resulting uppaal model.
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
@@ -139,16 +138,17 @@ public class Maestro2ScenarioController {
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
 
-            broker.buildAndRunExecutableModel(executableModel, new File(zipDir, "outputs.csv"));
+            broker.buildAndRunMasterModel(executableModel.getMultiModel(), executableModel.getMasterModel(), executableModel.getExecutionParameters(),
+                    new File(zipDir, "outputs.csv"));
 
             if (reporter.getErrorCount() > 0) {
                 throw new Exception("Error(s) occurred during MaBL specification generation: " + reporter);
             }
 
-            File warningsLog = Path.of(zipDir.getPath(), "specGenWarnings.log").toFile();
-
             if (reporter.getWarningCount() > 0) {
-                reporter.printWarnings(new PrintWriter(warningsLog));
+                PrintWriter printWriter = new PrintWriter(Path.of(zipDir.getPath(), "Specification-generation-warnings.log").toFile());
+                reporter.printWarnings(printWriter);
+                printWriter.close();
             }
 
             // Setting headers

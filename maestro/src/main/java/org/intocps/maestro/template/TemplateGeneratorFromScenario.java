@@ -39,7 +39,7 @@ public class TemplateGeneratorFromScenario {
         // but is currently expected to be expressed as: "<fmu-name>_<instance_name>".
         // This is not optimal and should be changed to the same format.
 
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.getMasterModel().getBytes()));
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.getMasterModelAsString().getBytes()));
 
         // Generate MaBL spec
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
@@ -58,15 +58,16 @@ public class TemplateGeneratorFromScenario {
                     }
                 }).collect(Collectors.toList());
 
-        // Generate fmu instances with identifying names from the mater model.
+        // Generate fmu instances with identifying names from the master model.
         Map<String, ComponentVariableFmi2Api> fmuInstances =
                 CollectionConverters.asJava(masterModel.scenario().fmus()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                    Optional<FmuVariableFmi2Api> fmuFromScenario = fmus.stream().filter(fmu -> fmu.getName()
+                    Optional<FmuVariableFmi2Api> fmuFromScenario = fmus.stream().filter(fmu -> fmu.getName().toLowerCase(Locale.ROOT)
                             .contains(entry.getKey().split(SCENARIO_MODEL_FMU_INSTANCE_DELIMITER)[0].toLowerCase(Locale.ROOT))).findAny();
                     if (fmuFromScenario.isEmpty()) {
                         throw new RuntimeException("Unable to match fmu from multi model with fmu from master model");
                     }
-                    return fmuFromScenario.get().instantiate(entry.getKey().split(ScenarioVerifier.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]);
+                    String instanceNameInEnvironment = entry.getKey().split(ScenarioVerifier.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
+                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
                 }));
 
         // Store variables to be used by the scenario verifier
@@ -77,7 +78,7 @@ public class TemplateGeneratorFromScenario {
 
         // Setup and add scenario verifier config
         ScenarioVerifierConfig expansionConfig = new ScenarioVerifierConfig();
-        expansionConfig.masterModel = configuration.getMasterModel();
+        expansionConfig.masterModel = configuration.getMasterModelAsString();
         expansionConfig.parameters = configuration.getParameters();
         expansionConfig.relTol = configuration.getExecutionParameters().getConvergenceRelativeTolerance();
         expansionConfig.absTol = configuration.getExecutionParameters().getConvergenceAbsoluteTolerance();
@@ -96,11 +97,6 @@ public class TemplateGeneratorFromScenario {
 
         // Terminate instances, free instances, unload FMUs
         fmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);
-        //        fmus.forEach(fmu -> {
-        //            fmuInstances.values().stream().filter(instance -> instance.getOwner().getFmuIdentifier().equals(fmu.getFmuIdentifier())).findAny()
-        //                    .ifPresent(fmu::freeInstance);
-        //            //            fmu.unload(dynamicScope);
-        //        });
 
         // Build unit
         ASimulationSpecificationCompilationUnit unit = builder.build();
