@@ -1,5 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,6 +64,6 @@ public class TagNameGenerator {
             // TODO: Throw warning. Probably not meant to call this function.
             return this.getName();
         }
-        return getNameIgnoreCase(prefix.toLowerCase());
+        return getNameIgnoreCase(StringUtils.uncapitalize(prefix));
     }
 }

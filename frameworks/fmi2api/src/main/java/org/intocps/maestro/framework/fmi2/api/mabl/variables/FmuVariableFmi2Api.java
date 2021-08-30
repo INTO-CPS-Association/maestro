@@ -34,6 +34,12 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     }
 
     @Override
+    public ComponentVariableFmi2Api instantiate(String name, String environmentName) {
+        IMablScope scope = builder.getDynamicScope().getActiveScope();
+        return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope, environmentName);
+    }
+
+    @Override
     public ComponentVariableFmi2Api instantiate(String name) {
         IMablScope scope = builder.getDynamicScope().getActiveScope();
         return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope);
@@ -72,9 +78,10 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     //            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
     //        }
     //    }
-
     @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope) {
+    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
+            String environmentName) {
+
         String name = builder.getNameGenerator().getName(namePrefix);
         //TODO: Extract bool visible and bool loggingOn from configuration
         var var = newVariable(name, newANameType("FMI2Component"), newNullExp());
@@ -90,8 +97,19 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
 
         TryMaBlScope mTryScope = (TryMaBlScope) enclosingTryScope;
         mTryScope.parent().addBefore(mTryScope.getDeclaration(), var);
-        ComponentVariableFmi2Api compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
-                newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
+
+        ComponentVariableFmi2Api compVar;
+        if(environmentName == null) {
+            compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
+                    newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
+        }
+        else {
+
+            AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(name), environmentName);
+            compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
+                    newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name), environmentName);
+            scope.add(mapping);
+        }
 
         scope.add(instantiateAssign);
 
@@ -114,6 +132,11 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         ((IMablScope) scope).registerComponentVariableFmi2Api(compVar);
 
         return compVar;
+    }
+
+    @Override
+    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope) {
+        return instantiate(namePrefix, enclosingTryScope, scope, null);
     }
 
     public String getFmuIdentifier() {
