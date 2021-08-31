@@ -70,8 +70,8 @@ class MasterModelMapper {
 
 
             // Map fmus to fmu models
-            val fmusWithModelDescriptions =
-                Fmi2SimulationEnvironment.of(simulationConfiguration, null).fmusWithModelDescriptions
+            val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
+            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
             val fmuNameToFmuModel = fmuInstanceNamesFromConnections.mapNotNull { fmuInstanceName ->
                 fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
                     ?.let { fmuWithMD ->
@@ -112,7 +112,8 @@ class MasterModelMapper {
                             scala.collection.immutable.Map.from(
                                 scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()
                             ),
-                            fmuWithMD.value.getCanGetAndSetFmustate()
+                            fmuWithMD.value.getCanGetAndSetFmustate(),
+                            simulationEnvironment.getUriFromFMUName(fmuWithMD.key).path
                         )
                     }
             }.toMap()
