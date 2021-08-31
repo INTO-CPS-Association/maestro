@@ -57,7 +57,7 @@ public class TemplateGeneratorFromScenarioTest {
 
         // Read JSON
         File executableMMJson =
-                Objects.requireNonNull(directory.listFiles((dir, name1) -> name1.startsWith("executableMM") && name1.endsWith("json")))[0];
+                Objects.requireNonNull(directory.listFiles((dir, fileName) -> fileName.equals("executableMM.json")))[0];
         ObjectMapper jsonMapper = new ObjectMapper();
         JsonNode executableMM = jsonMapper.readTree(new String(Files.readAllBytes(Paths.get(executableMMJson.getPath()))));
 
