@@ -13,7 +13,7 @@ import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
@@ -312,8 +312,8 @@ public class BuilderGetSetDerivativesTest {
             settings.setGetDerivatives = true;
             MablApiBuilder builder = new MablApiBuilder(settings);
             IMablScope scope = builder.getDynamicScope();
-            FmuVariableFmi2Api pumpFMU = scope.createFMU("pumpFMU", new ModelDescription(pumpMDPath.toFile()), pumpPath.toUri());
-            FmuVariableFmi2Api sinkFMU = scope.createFMU("sinkFMU", new ModelDescription(sinkMDPath.toFile()), sinkPath.toUri());
+            FmuVariableFmi2Api pumpFMU = scope.createFMU("pumpFMU", new Fmi2ModelDescription(pumpMDPath.toFile()), pumpPath.toUri());
+            FmuVariableFmi2Api sinkFMU = scope.createFMU("sinkFMU", new Fmi2ModelDescription(sinkMDPath.toFile()), sinkPath.toUri());
 
             ComponentVariableFmi2Api pump = pumpFMU.instantiate("pump");
             ComponentVariableFmi2Api sink = sinkFMU.instantiate("sink");
@@ -347,8 +347,6 @@ public class BuilderGetSetDerivativesTest {
                 }
             });
 
-            pumpFMU.unload();
-            sinkFMU.unload();
 
             // Setup mabl
             ASimulationSpecificationCompilationUnit program = builder.build();
@@ -368,8 +366,8 @@ public class BuilderGetSetDerivativesTest {
             mabl.setVerbose(true);
 
             // Assert
-            Assertions.assertDoesNotThrow(() -> mabl
-                    .parse(Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
+            Assertions.assertDoesNotThrow(() -> mabl.parse(
+                    Arrays.stream(Objects.requireNonNull(specFolder.listFiles((file, s) -> s.toLowerCase().endsWith(".mabl"))))
                             .collect(Collectors.toList())));
 
             Assertions.assertDoesNotThrow((ThrowingSupplier<Map.Entry<Boolean, Map<INode, PType>>>) mabl::typeCheck);

@@ -122,15 +122,15 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
     }
 
 
-    @Override
-    public void destroy() {
-        destroy(dynamicScope);
-    }
-
-    @Override
-    public void destroy(Fmi2Builder.Scope<PStm> scope) {
-        if (!this.external) {
-            scope.add(newExpressionStm(newUnloadExp(getReferenceExp())));
-        }
-    }
+    //    @Override
+    //    public void destroy() {
+    //        destroy(dynamicScope);
+    //    }
+    //
+    //    @Override
+    //    public void destroy(Fmi2Builder.Scope<PStm> scope) {
+    //        if (!this.external) {
+    //            scope.add(newExpressionStm(newUnloadExp(getReferenceExp())));
+    //        }
+    //    }
 }

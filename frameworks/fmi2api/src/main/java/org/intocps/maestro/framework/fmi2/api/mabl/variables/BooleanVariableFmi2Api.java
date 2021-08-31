@@ -6,11 +6,10 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
 
 import static org.intocps.maestro.ast.MableAstFactory.newABoleanPrimitiveType;
 
-public class BooleanVariableFmi2Api extends VariableFmi2Api<BooleanExpressionValue> implements Fmi2Builder.BoolVariable<PStm> {
+public class BooleanVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.BooleanExpressionValue> implements Fmi2Builder.BoolVariable<PStm> {
 
     private final PredicateFmi2Api predicate;
 

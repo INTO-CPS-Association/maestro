@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -17,9 +17,9 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class DataExchangeHandler {
 
     private final Set<Fmi2SimulationEnvironment.Relation> outputRelations;
-    private final Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs;
+    private final Map<LexIdentifier, Map<Fmi2ModelDescription.Types, List<Fmi2ModelDescription.ScalarVariable>>> outputs;
     private final Set<Fmi2SimulationEnvironment.Relation> inputRelations;
-    private final Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> inputs;
+    private final Map<LexIdentifier, Map<Fmi2ModelDescription.Types, List<Fmi2ModelDescription.ScalarVariable>>> inputs;
     Function<LexIdentifier, PStateDesignator> getCompStatusDesignator;
     BiConsumer<Map.Entry<Boolean, String>, Map.Entry<LexIdentifier, List<PStm>>> checkStatus;
 
@@ -34,7 +34,7 @@ public class DataExchangeHandler {
         // outputs contains both outputs based on relations and outputs based on additional variables to log
         outputs = outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors
                 .toMap(Function.identity(), s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s)).flatMap(r -> {
-                    List<ModelDescription.ScalarVariable> outputs_ =
+                    List<Fmi2ModelDescription.ScalarVariable> outputs_ =
                             env.getVariablesToLog(s.getText()).stream().map(x -> x.scalarVariable).collect(Collectors.toList());
                     //outputs_.add(r.getSource().scalarVariable.getScalarVariable());
                     return outputs_.stream();
@@ -51,7 +51,7 @@ public class DataExchangeHandler {
 
     }
 
-    static String getFmiGetName(ModelDescription.Types type, UsageType usage) {
+    static String getFmiGetName(Fmi2ModelDescription.Types type, UsageType usage) {
 
         String fun = usage == UsageType.In ? "set" : "get";
         switch (type) {
@@ -69,7 +69,7 @@ public class DataExchangeHandler {
         }
     }
 
-    static SPrimitiveType convert(ModelDescription.Types type) {
+    static SPrimitiveType convert(Fmi2ModelDescription.Types type) {
         switch (type) {
 
             case Boolean:
@@ -86,7 +86,7 @@ public class DataExchangeHandler {
         }
     }
 
-    static LexIdentifier getBufferName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
+    static LexIdentifier getBufferName(LexIdentifier comp, Fmi2ModelDescription.Types type, UsageType usage) {
         return getBufferName(comp, convert(type), usage);
     }
 
@@ -112,7 +112,7 @@ public class DataExchangeHandler {
         return t;
     }
 
-    public Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> getOutputs() {
+    public Map<LexIdentifier, Map<Fmi2ModelDescription.Types, List<Fmi2ModelDescription.ScalarVariable>>> getOutputs() {
         return outputs;
     }
 
@@ -120,7 +120,7 @@ public class DataExchangeHandler {
         return inputRelations;
     }
 
-    LexIdentifier getVrefName(LexIdentifier comp, ModelDescription.Types type, UsageType usage) {
+    LexIdentifier getVrefName(LexIdentifier comp, Fmi2ModelDescription.Types type, UsageType usage) {
 
         return newAIdentifier(comp.getText() + "Vref" + getTypeId(convert(type)) + usage);
     }
@@ -189,7 +189,7 @@ public class DataExchangeHandler {
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
             int toIndex =
                     inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type).stream()
-                            .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
                             .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
 
             AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(
@@ -200,7 +200,7 @@ public class DataExchangeHandler {
             RelationVariable fromVar = r.getTargets().values().iterator().next().scalarVariable;
             PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)),
                     Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                            .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.scalarVariable.getName()))));
+                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.scalarVariable.getName()))));
 
             if (r.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type) {
                 //ok the types are not matching, lets use a converter

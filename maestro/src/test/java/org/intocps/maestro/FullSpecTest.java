@@ -7,7 +7,6 @@ import difflib.Patch;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
@@ -119,8 +118,8 @@ public class FullSpecTest {
         }
     }
 
-    File getWorkingDirectory(File base) throws IOException {
-        String s = Paths.get("target", this.getClass().getSimpleName()).toString() + File.separatorChar + base.getAbsolutePath().substring(
+    static File getWorkingDirectory(File base, Class cls) throws IOException {
+        String s = Paths.get("target", cls.getSimpleName()).toString() + File.separatorChar + base.getAbsolutePath().substring(
                 base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
 
         File workingDir = new File(s.replace('/', File.separatorChar));
@@ -141,18 +140,22 @@ public class FullSpecTest {
     @MethodSource("data")
     public void test(String name, File directory) throws Exception {
 
-        File workingDirectory = getWorkingDirectory(directory);
+        File workingDirectory = getWorkingDirectory(directory, this.getClass());
 
         IErrorReporter reporter = new ErrorReporter();
         Mabl mabl = new Mabl(directory, workingDirectory);
         mabl.setReporter(reporter);
-        mabl.setVerbose(true);
+        mabl.setVerbose(getMablVerbose());
 
         ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
-        postProcessSpec(directory, workingDirectory, mabl, spec);
+        postProcessSpec(name, directory, workingDirectory, mabl, spec);
     }
 
-    protected void postProcessSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+    protected boolean getMablVerbose() {
+        return true;
+    }
+
+    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
         interpretSpec(directory, workingDirectory, mabl, spec);
     }
 
@@ -191,7 +194,6 @@ public class FullSpecTest {
             Fmi2EnvironmentConfiguration simulationConfiguration =
                     new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2EnvironmentConfiguration.class);
 
-
             Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
                     new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
 
@@ -213,8 +215,8 @@ public class FullSpecTest {
                 algorithmConfig.endTime = simulationConfiguration.endTime;
                 algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(a.size);
 
-                builder.setStepAlgorithmConfig(algorithmConfig)
-                        .setVisible(simulationConfiguration.visible).setLoggingOn(simulationConfiguration.loggingOn);
+                builder.setStepAlgorithmConfig(algorithmConfig).setVisible(simulationConfiguration.visible)
+                        .setLoggingOn(simulationConfiguration.loggingOn);
             }
 
             MaBLTemplateConfiguration configuration = builder.build();
@@ -238,7 +240,6 @@ public class FullSpecTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
         return mabl.getMainSimulationUnit();
     }
 

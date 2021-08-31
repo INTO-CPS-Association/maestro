@@ -1,7 +1,7 @@
 package org.intocps.maestro.plugin.initializer.instructions
 
 import org.intocps.maestro.ast.node.PStm
-import org.intocps.maestro.fmi.ModelDescription
+import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
 import org.intocps.maestro.framework.fmi2.api.mabl.BooleanBuilderFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.MathBuilderFmi2Api
@@ -31,7 +31,7 @@ class LoopSimInstruction(scope: Fmi2Builder.Scope<*>, private val maxStepAcceptA
             simulationActions.forEach { action: CoSimInstruction -> action.perform() }
 
             val convergenceVariables: List<BooleanVariableFmi2Api> = convergencePorts.entries.flatMap { (fmu, ports) ->
-                ports.entries.filter { (p, _) -> p.scalarVariable.type.type == ModelDescription.Types.Real }
+                ports.entries.filter { (p, _) -> p.scalarVariable.type.type == Fmi2ModelDescription.Types.Real }
                         .map { (port, v) ->
                             val oldVariable: VariableFmi2Api<Any> = port.sharedAsVariable
                             val newVariable: VariableFmi2Api<Any> = v

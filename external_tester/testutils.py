@@ -6,6 +6,12 @@ import tempfile
 import pathlib
 import csv
 from collections import namedtuple
+import glob
+import socket
+import re
+import subprocess
+from threading import Thread 
+import time
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -76,7 +82,7 @@ def compare(strPrefix, expected, actual):
             print("%s: Files match" % strPrefix)
             return True
     else:
-        print("ERROR: %s: No results file exists within wt. Results are not compared." % strPrefix)
+        print("ERROR: %s: No results file exists. Results are not compared." % strPrefix)
         return False
 
 def convert(expected):
@@ -111,3 +117,63 @@ def checkMablSpecExists(mablSpecPath):
         print("MaBL Spec exists at: " + mablSpecPath)
     else:
         raise Exception(f"Mable spec does not exist at {mablSpecPath}")
+
+def findJar(relativePath):
+    # try and find the jar file
+    result = glob.glob(relativePath)
+    if len(result) == 0 or len(result) > 1:
+        raise FileNotFoundError("Could not automatically find jar file please specify manually")
+    return result[0]
+
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+def ensureResponseOk(response):
+    if not response.status_code == 200:
+        raise Exception(f"Request returned error code: {response.status_code} with text: {response.text}")
+
+def testCliCommandWithFunc(cmd, func):
+    print("Cmd: " + cmd)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        raise Exception(f"Error executing {cmd}")
+    else:
+        func()
+
+def acquireServerDefinedPortFromStdio(proc):
+    # If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
+    # Therefore match the pattern and retrieve the port number from stderr
+
+    # readline from popen is blocking so it needs its own thread to be able to time out if no port number is found within a set time.
+    linebuffer=[]
+    def reader(stderr, buffer):
+        while True:
+            line = stderr.readline()
+            if line:
+                buffer.append(line)
+            else:
+                break
+
+    t=Thread(target=reader, args=(proc.stderr, linebuffer))
+    t.daemon=True # Ensures the thread terminates with the main thread.
+    t.start()
+    timeoutInSecs = 0
+    while timeoutInSecs < 20:
+        if linebuffer:
+            stringLine = linebuffer.pop(0).decode("utf-8")
+            print(str(stringLine))
+            match = re.search("(?<=\{)[0-9]+(?=\})", stringLine)
+            if match:
+                # Return the server port
+                return match.group()
+        time.sleep(1)
+        timeoutInSecs += 1
+
+    raise Exception("Unable to locate serverport in stdout") 

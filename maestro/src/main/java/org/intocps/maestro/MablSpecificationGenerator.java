@@ -1,10 +1,7 @@
 package org.intocps.maestro;
 
 import org.antlr.v4.runtime.CharStreams;
-import org.intocps.maestro.ast.ABasicBlockStm;
-import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.NodeCollector;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -196,6 +193,15 @@ public class MablSpecificationGenerator {
                             .collect(Collectors.joining(",")));
         }
 
+        //update simulation module unit with required imports
+        NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
+                .ifPresent(unit -> {
+
+                    Stream<? extends LexIdentifier> imports = replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get)
+                            .flatMap(p -> p.getKey().getImports().stream());
+                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
+                            .collect(Collectors.toList()));
+                });
 
         for (Map.Entry<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> callReplacement : replaceWith
                 .entrySet()) {
@@ -208,30 +214,19 @@ public class MablSpecificationGenerator {
             logger.debug("Replacing external '{}' with unfoled statement '{}' from plugin: {}", call.getMethodName().getText(),
                     replacement.getName().getText(), replacementPlugin.getName() + " " + replacementPlugin.getVersion());
 
-            replaceCall(call, replacement, replacementPlugin, runtimeConfigAdditions, reporter);
+            replaceCall(call, replacement, replacementPlugin, runtimeConfigAdditions, reporter, tcRes.getValue());
             intermediateSpecWriter.write(simulationModule);
         }
-
-        //update simulation module unit with required imports
-        NodeCollector.collect(simulationModule, ASimulationSpecificationCompilationUnit.class).stream().flatMap(List::stream).findFirst()
-                .ifPresent(unit -> {
-
-                    Stream<? extends LexIdentifier> imports =
-                            replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get).map(p -> p.getKey().getImports().stream())
-                                    .flatMap(Function.identity());
-                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
-                            .collect(Collectors.toList()));
-                });
 
         return expandExternals(importedDocumentList, simulationModule, reporter, plugins, runtimeConfigAdditions, depth + 1);
     }
 
     private void replaceCall(ACallExp callToBeReplaced, AFunctionDeclaration replacement, IMaestroExpansionPlugin replacementPlugin,
-            List<IMaestroExpansionPlugin.RuntimeConfigAddition<Object>> runtimeConfigAdditions, IErrorReporter reporter) {
+            List<IMaestroExpansionPlugin.RuntimeConfigAddition<Object>> runtimeConfigAdditions, IErrorReporter reporter, Map<INode, PType> typesMap) {
         Map.Entry<List<PStm>, IMaestroExpansionPlugin.RuntimeConfigAddition<Object>> unfoled = null;
         AConfigStm configRightAbove = null;
         try {
-
+            IPluginConfiguration config = null;
             switch (replacementPlugin.getConfigRequirement()) {
 
                 case Required:
@@ -245,20 +240,42 @@ public class MablSpecificationGenerator {
                                             (callToBeReplaced.getMethodName().getSymbol().getLine() - 1));
                         }
 
-                        IPluginConfiguration config = PluginUtil.getConfiguration(replacementPlugin, configRightAbove, specificationFolder);
-                        unfoled = replacementPlugin
-                                .expandWithRuntimeAddition(replacement, callToBeReplaced.getArgs(), config, simulationEnvironment, reporter);
+                        config = PluginUtil.getConfiguration(replacementPlugin, configRightAbove, specificationFolder);
                     } catch (IOException e) {
                         logger.error("Could not obtain configuration for plugin '{}' at {}: {}", replacementPlugin.getName(),
                                 callToBeReplaced.getMethodName().toString(), e.getMessage());
                     }
                 }
                 break;
-                case NotRequired: {
+                case NotRequired:
+                    break;
+            }
+
+            //1: see if the builder is supported
+            BuilderHelper builderHelper = new BuilderHelper(callToBeReplaced, typesMap, simulationEnvironment);
+
+            builderHelper.getBuilder().resetDirty();
+            IMaestroExpansionPlugin.RuntimeConfigAddition<Object> runtimeConfigProduced = replacementPlugin
+                    .expandWithRuntimeAddition(replacement, builderHelper.getBuilder(), builderHelper.getArgumentVariables(), config,
+                            simulationEnvironment, reporter);
+
+            if (builderHelper.getBuilder().isDirty()) {
+
+                ASimulationSpecificationCompilationUnit unit = builderHelper.getBuilder().build();
+
+                //not sure why this is needed maybe there is a bug in the logical construction
+                unit.apply(new ToParExp());
+
+                unfoled = Map.entry(((ABasicBlockStm) unit.getBody()).getBody(),
+                        runtimeConfigProduced == null ? new IMaestroExpansionPlugin.EmptyRuntimeConfig<>() : runtimeConfigProduced);
+            }
+
+            //2: see fallback to the raw interface
+            {
+                if (unfoled == null) {
                     unfoled = replacementPlugin
-                            .expandWithRuntimeAddition(replacement, callToBeReplaced.getArgs(), null, simulationEnvironment, reporter);
+                            .expandWithRuntimeAddition(replacement, callToBeReplaced.getArgs(), config, simulationEnvironment, reporter);
                 }
-                break;
             }
 
         } catch (ExpandException e) {
@@ -266,9 +283,14 @@ public class MablSpecificationGenerator {
                     callToBeReplaced.getMethodName().toString(), e.getMessage());
             reporter.report(999, String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
                     callToBeReplaced.getMethodName().toString(), e.getMessage()), callToBeReplaced.getMethodName().getSymbol());
+        } catch (Exception e) {
+            logger.error("Internal error while processing builder for in plug-in '{}' at {}. Message: {}", replacementPlugin.getName(),
+                    callToBeReplaced.getMethodName().toString(), e.getMessage());
+            reporter.report(998, String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
+                    callToBeReplaced.getMethodName().toString(), e.getMessage()), callToBeReplaced.getMethodName().getSymbol());
         }
         if (unfoled == null || unfoled.getKey() == null) {
-            reporter.report(999,
+            reporter.report(997,
                     String.format("Unfold failure in plugin %s for %s", replacementPlugin.getName(), callToBeReplaced.getMethodName() + ""), null);
         } else {
             //replace the call and so rounding expression statement

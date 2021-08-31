@@ -5,16 +5,14 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.ToParExp;
-import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
+import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.ast.node.SBlockStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
@@ -32,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,9 +58,11 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
     }
 
+
     @Override
-    public List<PStm> expand(AFunctionDeclaration declaredFunction, List<PExp> formalArguments, IPluginConfiguration config,
-            ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+    public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
+            Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder1, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
+            IPluginConfiguration config, ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
 
         logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
@@ -95,16 +96,25 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         }
 
         Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
-        PExp stepSizeVar = formalArguments.get(1).clone();
-        PExp startTime = formalArguments.get(2).clone();
-        PExp endTimeVar = formalArguments.get(3).clone();
 
+
+        boolean setGetDerivativesRestore = false;
+        MablApiBuilder.MablSettings settings = null;
         try {
-            MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
-            settings.fmiErrorHandlingEnabled = true;
-            settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
-            // Selected fun now matches funWithBuilder
-            MablApiBuilder builder = new MablApiBuilder(settings, formalArguments.get(0));
+            if (builder1.getSettings() instanceof MablApiBuilder.MablSettings) {
+                //FIXME we should probably not do this in a plugin as it changes this for all once the builder is reused!
+                settings = (MablApiBuilder.MablSettings) builder1.getSettings();
+                //                settings.fmiErrorHandlingEnabled = true;
+                setGetDerivativesRestore = settings.setGetDerivatives;
+                settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
+            }
+
+            if (!(builder1 instanceof MablApiBuilder)) {
+                throw new ExpandException("Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " +
+                        builder1.getClass().getSimpleName());
+            }
+
+            MablApiBuilder builder = (MablApiBuilder) builder1;
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
             MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
@@ -115,25 +125,28 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             }
 
             // Convert raw MaBL to API
-            DoubleVariableFmi2Api externalStepSize = builder.getDoubleVariableFrom(stepSizeVar);
+            DoubleVariableFmi2Api externalStepSize = (DoubleVariableFmi2Api) formalArguments.get(1);//builder.getDoubleVariableFrom(stepSizeVar);
             DoubleVariableFmi2Api currentStepSize = dynamicScope.store("jac_current_step_size", 0.0);
             currentStepSize.setValue(externalStepSize);
 
             DoubleVariableFmi2Api stepSize = dynamicScope.store("jac_step_size", 0.0);
             stepSize.setValue(externalStepSize);
 
-            DoubleVariableFmi2Api externalStartTime = new DoubleVariableFmi2Api(null, null, null, null, startTime);
+            DoubleVariableFmi2Api externalStartTime =
+                    (DoubleVariableFmi2Api) formalArguments.get(2);//new DoubleVariableFmi2Api(null, null, null, null, startTime);
             DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
             currentCommunicationTime.setValue(externalStartTime);
-            DoubleVariableFmi2Api externalEndTime = new DoubleVariableFmi2Api(null, null, null, null, endTimeVar);
+            DoubleVariableFmi2Api externalEndTime =
+                    (DoubleVariableFmi2Api) formalArguments.get(3);// new DoubleVariableFmi2Api(null, null, null, null, endTimeVar);
             DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
             endTime.setValue(externalEndTime);
 
-            // Import the external components into Fmi2API
-            Map<String, ComponentVariableFmi2Api> fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments.get(0), env);
 
-            // Create bindings
-            FromMaBLToMaBLAPI.createBindings(fmuInstances, env);
+            // use LinkedHashMap to preserve added order
+            Map<String, ComponentVariableFmi2Api> fmuInstances =
+                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream()
+                            .collect(Collectors.toMap(v -> v.getName(), Function.identity(), (u, v) -> u, LinkedHashMap::new));
+
 
             // Create the logging
             DataWriter dataWriter = builder.getDataWriter();
@@ -149,17 +162,16 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             fmuInstances.forEach((x, y) -> {
                 List<RelationVariable> variablesToLog = env.getVariablesToLog(x);
-
                 Set<String> scalarVariablesToShare = y.getPorts().stream()
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .map(PortFmi2Api::getName).collect(Collectors.toSet());
                 scalarVariablesToShare.addAll(variablesToLog.stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
 
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
                 List<String> portsOfInterest = portsToShare.keySet().stream()
-                        .filter(objectVariableFmi2Api -> objectVariableFmi2Api.scalarVariable.causality == ModelDescription.Causality.Output ||
-                                objectVariableFmi2Api.scalarVariable.causality == ModelDescription.Causality.Input).map(PortFmi2Api::getName)
+                        .filter(objectVariableFmi2Api -> objectVariableFmi2Api.scalarVariable.causality == Fmi2ModelDescription.Causality.Output ||
+                                objectVariableFmi2Api.scalarVariable.causality == Fmi2ModelDescription.Causality.Input).map(PortFmi2Api::getName)
                         .collect(Collectors.toList());
 
                 portsToGet.put(y, portsOfInterest);
@@ -167,8 +179,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             });
 
             // Build static FMU relations and validate if all fmus can get state
-            Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToInstances = new HashMap<>();
-            Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToVariablesInArray = new HashMap<>();
+
+            // use LinkedHashMap to preserve added order
+            Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToInstances = new LinkedHashMap<>();
+            Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstancesToVariablesInArray = new LinkedHashMap<>();
             ArrayVariableFmi2Api<Double> fmuCommunicationPoints =
                     dynamicScope.store("fmu_communicationpoints", new Double[fmuInstances.entrySet().size()]);
             List<String> fmusThatSupportsGetState = new ArrayList<>();
@@ -176,8 +190,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             int indexer = 0;
             for (Map.Entry<String, ComponentVariableFmi2Api> entry : fmuInstances.entrySet()) {
                 StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null, MableAstFactory
-                        .newAStringLiteralExp(
-                                env.getInstanceByLexName(entry.getValue().getName()).getFmuIdentifier() + "." + entry.getValue().getName()));
+                        .newAStringLiteralExp(env.getInstanceByLexName(entry.getValue().getEnvironmentName()).getFmuIdentifier() + "." +
+                                entry.getValue().getName()));
                 fmuNamesToInstances.put(fullyQualifiedFMUInstanceName, entry.getValue());
 
                 fmuInstancesToVariablesInArray.put(entry.getValue(), fmuCommunicationPoints.items().get(indexer));
@@ -205,11 +219,11 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             if (algorithm == StepAlgorithm.VARIABLESTEP) {
                 // Initialize variable step module
                 List<PortFmi2Api> ports = fmuInstances.values().stream().map(ComponentVariableFmi2Api::getPorts).flatMap(Collection::stream)
-                        .filter(p -> jacobianStepConfig.variablesOfInterest.stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                        .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                         .collect(Collectors.toList());
 
                 variableStep = builder.getVariableStep(dynamicScope.store("variable_step_config",
-                        StringEscapeUtils.escapeJava( (new ObjectMapper()).writeValueAsString(jacobianStepConfig.stepAlgorithm))));
+                        StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(jacobianStepConfig.stepAlgorithm))));
                 variableStepInstance = variableStep.createVariableStepInstanceInstance();
                 variableStepInstance.initialize(fmuNamesToInstances, ports, endTime);
             }
@@ -323,7 +337,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             .entrySet()) {
                         List<BooleanVariableFmi2Api> converged = new ArrayList<>();
                         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> entries = compToPortAndVariable.getValue().entrySet().stream()
-                                .filter(x -> x.getKey().scalarVariable.type.type == ModelDescription.Types.Real).collect(Collectors.toList());
+                                .filter(x -> x.getKey().scalarVariable.type.type == Fmi2ModelDescription.Types.Real).collect(Collectors.toList());
 
                         for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> entry : entries) {
                             VariableFmi2Api oldVariable = entry.getKey().getSharedAsVariable();
@@ -375,7 +389,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         // Set step-size to lowest
                         currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
 
-                        builder.getLogger().debug("## Discard occurred! FMUs are rolledback and step-size reduced to: %f", currentStepSize);
+                        builder.getLogger().debug("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", currentStepSize);
 
                         dynamicScope.leave();
                     }
@@ -461,16 +475,17 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             dataWriterInstance.close();
 
-            SBlockStm algorithm = (SBlockStm) builder.buildRaw();
-
-            algorithm.apply(new ToParExp());
-            System.out.println(PrettyPrinter.print(algorithm));
-
-            return algorithm.getBody();
+            if (settings != null) {
+                //restore previous state
+                settings.setGetDerivatives = setGetDerivativesRestore;
+            }
         } catch (Exception e) {
             throw new ExpandException("Internal error: ", e);
         }
+
+        return new EmptyRuntimeConfig<>();
     }
+
 
     @Override
     public ConfigOption getConfigRequirement() {
@@ -500,7 +515,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
     @Override
     public String getVersion() {
-        return "0.0.1";
+        return "0.1.1";
     }
 }
 

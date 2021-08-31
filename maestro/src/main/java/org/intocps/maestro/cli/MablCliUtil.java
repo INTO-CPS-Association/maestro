@@ -9,6 +9,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.template.ScenarioConfiguration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -68,21 +69,18 @@ public class MablCliUtil {
                 files.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mableFileFilter::test)))),
                 files.stream().filter(File::isFile).filter(mableFileFilter)).collect(Collectors.toList());
 
-        mabl.parse(sourceFiles);
-
-        if (hasErrorAndPrintErrorsAndWarnings(verbose, reporter)) {
-            return false;
+        if (sourceFiles.isEmpty()) {
+            return true;
         }
 
-        return true;
+        mabl.parse(sourceFiles);
+
+        return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
     }
 
     public boolean expand() throws Exception {
         mabl.expand();
-        if (hasErrorAndPrintErrorsAndWarnings(verbose, reporter)) {
-            return false;
-        }
-        return true;
+        return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
     }
 
     public boolean typecheck() {
@@ -114,5 +112,10 @@ public class MablCliUtil {
     public void interpret(File config) throws Exception {
         InputStream c = new FileInputStream(config);
         new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, c)).execute(mabl.getMainSimulationUnit());
+    }
+
+    public boolean generateSpec(ScenarioConfiguration scenarioConfiguration) throws Exception {
+        mabl.generateSpec(scenarioConfiguration);
+        return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
     }
 }

@@ -5,9 +5,12 @@
 
 Maestro 2 is the next version of the Maestro Co-simulation Orchestration Engine.
 
-#### Development Environment
+## Development Environment
 
-You need Java 11 and maven 3.6 to build the project. The project can be built from CLI using the maven command:.
+You need Java 11 and maven 3.6 to build the project. For the external / integration tests it also needs a functioning
+cpp environment with CMake (on windows MSYS). See guide below under CPP environment installation guide
+
+The project can be built from CLI using the maven command:.
 
 ```
 mvn package
@@ -18,6 +21,21 @@ Scala code in this project. As long as you keep this in mind, you are welcome to
 
 If IntelliJ fails to build the project after import, then it might be resolved by executing `mvn install` in the
 terminal and reimporting in the maven control panel of IntelliJ.
+
+### CPP environment installation guide
+
+#### Windows
+1. Install msys with mingw64 (https://www.msys2.org/)
+2. Follow the guide at https://www.msys2.org/
+3. Add C:\msys64\mingw64\bin to Path
+4. Add C:\msys64\usr\bin to Path
+5. Run pacman -S mingw-w64-x86_64-cmake in the MSYS terminal
+
+#### Linux (ubuntu)
+
+```bash
+apt install git libzip-dev build-essential cmake
+```
 
 ## Release the tool
 

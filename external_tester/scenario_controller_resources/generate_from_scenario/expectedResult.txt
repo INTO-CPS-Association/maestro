@@ -1,0 +1,107 @@
+name = Example master that has a loop within a loop
+scenario = {
+fmus = {
+msd3 = { 
+ can-reject-step = true,
+ inputs = {
+z = {reactivity=delayed}},
+ outputs = {
+G = {dependencies-init=[z], dependencies=[z]}}
+ }
+msd2 = { 
+ can-reject-step = true,
+ inputs = {
+v1 = {reactivity=reactive}
+x1 = {reactivity=delayed}
+G = {reactivity=reactive}},
+ outputs = {
+fk = {dependencies-init=[x1,v1], dependencies=[x1,v1]}
+z = {dependencies-init=[], dependencies=[]}}
+ }
+msd1 = { 
+ can-reject-step = true,
+ inputs = {
+fk = {reactivity=reactive}},
+ outputs = {
+x1 = {dependencies-init=[], dependencies=[]}
+v1 = {dependencies-init=[], dependencies=[]}}
+ }}
+connections = [
+msd1.x1 -> msd2.x1
+msd1.v1 -> msd2.v1
+msd2.fk -> msd1.fk
+msd2.z -> msd3.z
+msd3.G -> msd2.G]
+}
+initialization = [{get: msd1.x1}
+
+{set: msd2.x1}
+
+{get: msd2.z}
+
+{set: msd3.z}
+
+{get: msd1.v1}
+
+{set: msd2.v1}
+
+{get: msd2.fk}
+
+{set: msd1.fk}
+
+{get: msd3.G}
+
+{set: msd2.G}
+]
+cosim-step = [{save-state: msd2}
+
+{save-state: msd1}
+
+{save-state: msd3}
+
+{loop: { 
+ until-step-accept: [msd2,msd1,msd3] 
+ iterate: [{loop: { 
+ until-converged: [msd3.G,msd2.fk,msd2.z,msd1.x1,msd1.v1] 
+ iterate: [{set: msd2.G}
+
+{step: msd3 }
+
+{set: msd3.z}
+
+{get-tentative: msd3.G}
+
+{set: msd1.fk}
+
+{step: msd1 }
+
+{get-tentative: msd1.v1}
+
+{get-tentative: msd1.x1}
+
+{set: msd2.v1}
+
+{step: msd2 }
+
+{set: msd2.x1}
+
+{get-tentative: msd2.fk}
+
+{get-tentative: msd2.z}
+] 
+ if-retry-needed: [{restore-state: msd3}
+
+{restore-state: msd2}
+
+{restore-state: msd1}
+]} 
+ }
+] 
+ if-retry-needed: [{restore-state: msd2}
+
+{restore-state: msd1}
+
+{restore-state: msd3}
+]} 
+ }
+]

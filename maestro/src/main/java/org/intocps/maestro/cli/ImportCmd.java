@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.StepAlgorithm;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
@@ -21,7 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @CommandLine.Command(name = "import", description = "Created a specification from various import types. Remember to place all \" +\n" +
-        "        \"necessary plugin extensions in the classpath", mixinStandardHelpOptions = true)
+        "        \"necessary plugin extensions in the classpath. \n\nHint for sg1 import where menv shoudl be enabled. Use the follding to " +
+        "generate the extra input file:'jq '.parameters|keys|{\"environmentParameters\":.}' mm.json > menv.json'", mixinStandardHelpOptions = true)
 public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> jsonFileFilter = f -> f.getName().toLowerCase().endsWith(".json");
     static final Predicate<File> mablFileFilter = f -> f.getName().toLowerCase().endsWith(".mabl");
@@ -42,8 +45,10 @@ public class ImportCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
     @CommandLine.Option(names = {"-if", "--inline-framework-config"}, description = "Inline all framework configs", negatable = true)
-
     boolean inlineFrameworkConfig;
+    @CommandLine.Option(names = {"-fmu", "--fmu-base-dir"},
+            description = "A path to the FMU base directory at which the FMU parhs are " + "relative to")
+    File fmuBase;
     @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
     @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
@@ -59,8 +64,9 @@ public class ImportCmd implements Callable<Integer> {
 
         if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(Collectors
-                    .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(
+                    Collectors.toMap(
+                            entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                             Map.Entry::getValue));
             builder.setLogLevels(removedFMUKeyFromLogLevels);
         }
@@ -70,9 +76,13 @@ public class ImportCmd implements Callable<Integer> {
         initialize.put("environmentParameters", simulationConfiguration.getEnvironmentParameters());
 
         JacobianStepConfig algorithmConfig = new JacobianStepConfig();
-        algorithmConfig.startTime = 0.0;
+        algorithmConfig.startTime = simulationConfiguration.getStartTime();
         algorithmConfig.endTime = simulationConfiguration.getEndTime();
-        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(((FixedStepAlgorithmConfig) simulationConfiguration.getAlgorithm()).getSize());
+        algorithmConfig.stepAlgorithm = simulationConfiguration.getAlgorithm();
+        algorithmConfig.absoluteTolerance = simulationConfiguration.getGlobal_absolute_tolerance();
+        algorithmConfig.relativeTolerance = simulationConfiguration.getGlobal_relative_tolerance();
+        algorithmConfig.simulationProgramDelay = simulationConfiguration.isSimulationProgramDelay();
+        algorithmConfig.stabilisation = simulationConfiguration.isStabalizationEnabled();
 
         Fmi2SimulationEnvironmentConfiguration environmentConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         environmentConfiguration.fmus = simulationConfiguration.getFmus();
@@ -84,8 +94,43 @@ public class ImportCmd implements Callable<Integer> {
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.isVisible()).setLoggingOn(simulationConfiguration.isLoggingOn())
                 .setStepAlgorithmConfig(algorithmConfig);
 
-
         return builder.build();
+    }
+
+    // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
+    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+
+        Iterator<String> fieldNames = updateNode.fieldNames();
+
+        while (fieldNames.hasNext()) {
+            String updatedFieldName = fieldNames.next();
+            JsonNode valueToBeUpdated = mainNode.get(updatedFieldName);
+            JsonNode updatedValue = updateNode.get(updatedFieldName);
+
+            // If the node is an @ArrayNode
+            if (valueToBeUpdated != null && valueToBeUpdated.isArray() && updatedValue.isArray()) {
+                // running a loop for all elements of the updated ArrayNode
+                for (int i = 0; i < updatedValue.size(); i++) {
+                    JsonNode updatedChildNode = updatedValue.get(i);
+                    // Create a new Node in the node that should be updated, if there was no corresponding node in it
+                    // Use-case - where the updateNode will have a new element in its Array
+                    if (valueToBeUpdated.size() <= i) {
+                        ((ArrayNode) valueToBeUpdated).add(updatedChildNode);
+                    }
+                    // getting reference for the node to be updated
+                    JsonNode childNodeToBeUpdated = valueToBeUpdated.get(i);
+                    merge(childNodeToBeUpdated, updatedChildNode);
+                }
+                // if the Node is an @ObjectNode
+            } else if (valueToBeUpdated != null && valueToBeUpdated.isObject()) {
+                merge(valueToBeUpdated, updatedValue);
+            } else {
+                if (mainNode instanceof ObjectNode) {
+                    ((ObjectNode) mainNode).replace(updatedFieldName, updatedValue);
+                }
+            }
+        }
+        return mainNode;
     }
 
     @Override
@@ -114,7 +159,7 @@ public class ImportCmd implements Callable<Integer> {
 
 
         if (type == ImportType.Sg1) {
-            if (!importSg1(util, sourceFiles)) {
+            if (!importSg1(util, fmuBase, sourceFiles)) {
                 return 1;
             }
         } else {
@@ -153,23 +198,29 @@ public class ImportCmd implements Callable<Integer> {
         return 0;
     }
 
-    private boolean importSg1(MablCliUtil util, List<File> files) throws Exception {
+    private boolean importSg1(MablCliUtil util, File fmuBaseDir, List<File> files) throws Exception {
         if (!files.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            //            for (File jsonFile : files) {
-            //                ObjectReader updater = mapper.readerForUpdating(config);
-            //                config = updater.readValue(jsonFile);
-            //            }
             JsonNode rootNode = null;
             for (File jsonFile : files) {
                 JsonNode tempNode = mapper.readTree(jsonFile);
-
                 rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
-
             }
 
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
+
+            if (fmuBaseDir != null) {
+                for (String key : config.getFmus().keySet()) {
+                    String fmuPath = config.getFmus().get(key);
+                    if (new File(fmuPath).isAbsolute()) {
+                        continue;
+                    } else {
+                        config.getFmus().put(key, fmuBaseDir.toPath().resolve(fmuPath).toString());
+                    }
+
+                }
+            }
 
             MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
 
@@ -186,41 +237,5 @@ public class ImportCmd implements Callable<Integer> {
 
     enum ImportType {
         Sg1
-    }
-
-    // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
-    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
-
-        Iterator<String> fieldNames = updateNode.fieldNames();
-
-        while (fieldNames.hasNext()) {
-            String updatedFieldName = fieldNames.next();
-            JsonNode valueToBeUpdated = mainNode.get(updatedFieldName);
-            JsonNode updatedValue = updateNode.get(updatedFieldName);
-
-            // If the node is an @ArrayNode
-            if (valueToBeUpdated != null && valueToBeUpdated.isArray() && updatedValue.isArray()) {
-                // running a loop for all elements of the updated ArrayNode
-                for (int i = 0; i < updatedValue.size(); i++) {
-                    JsonNode updatedChildNode = updatedValue.get(i);
-                    // Create a new Node in the node that should be updated, if there was no corresponding node in it
-                    // Use-case - where the updateNode will have a new element in its Array
-                    if (valueToBeUpdated.size() <= i) {
-                        ((ArrayNode) valueToBeUpdated).add(updatedChildNode);
-                    }
-                    // getting reference for the node to be updated
-                    JsonNode childNodeToBeUpdated = valueToBeUpdated.get(i);
-                    merge(childNodeToBeUpdated, updatedChildNode);
-                }
-                // if the Node is an @ObjectNode
-            } else if (valueToBeUpdated != null && valueToBeUpdated.isObject()) {
-                merge(valueToBeUpdated, updatedValue);
-            } else {
-                if (mainNode instanceof ObjectNode) {
-                    ((ObjectNode) mainNode).replace(updatedFieldName, updatedValue);
-                }
-            }
-        }
-        return mainNode;
     }
 }

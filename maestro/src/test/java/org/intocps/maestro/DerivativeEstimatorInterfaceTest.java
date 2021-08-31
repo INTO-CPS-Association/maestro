@@ -7,7 +7,7 @@ import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.PInitializer;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.framework.fmi2.IFmuFactory;
 import org.intocps.maestro.framework.fmi2.api.DerivativeEstimator;
@@ -80,12 +80,12 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
         };
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
-        settings.fmiErrorHandlingEnabled = false;
-        MablApiBuilder builder = new MablApiBuilder(settings, null);
+        settings.fmiErrorHandlingEnabled = true;
+        MablApiBuilder builder = new MablApiBuilder(settings);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-
-        FmuVariableFmi2Api sinkFMU = dynamicScope
-                .createFMU("sinkFMU", new ModelDescription(Paths.get(dirPath.toString(), "sink_modelDescription.xml").toFile()),
+        dynamicScope.enterTry().enter();
+        FmuVariableFmi2Api sinkFMU =
+                dynamicScope.createFMU("sinkFMU", new Fmi2ModelDescription(Paths.get(dirPath.toString(), "sink_modelDescription.xml").toFile()),
                         Paths.get(dirPath.toString(), "sink_mocked.fmu").toUri());
 
         ComponentVariableFmi2Api sink = sinkFMU.instantiate("sink");
@@ -140,7 +140,7 @@ public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
         mDebugAssert.assertEquals(expectedXDot, (VariableFmi2Api) ((ArrayVariableFmi2Api) sharedDataDerivatives.items().get(0)).items().get(0));
         mDebugAssert.assertEquals(expectedYDot, (VariableFmi2Api) ((ArrayVariableFmi2Api) sharedDataDerivatives.items().get(2)).items().get(0));
 
-        sinkFMU.unload();
+        //        sinkFMU.unload();
 
         String spec = PrettyPrinter.print(builder.build());
 

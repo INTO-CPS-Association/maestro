@@ -5,12 +5,15 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.core.IRelation;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.IVariable;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,12 +26,24 @@ import java.util.stream.Collectors;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class FromMaBLToMaBLAPI {
+    final static Logger logger = LoggerFactory.getLogger(FromMaBLToMaBLAPI.class);
 
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+            Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        if (exp instanceof AIdentifierExp) {
+            return getComponentVariableFrom(builder, exp, env, ((AIdentifierExp) exp).getName().getText());
+        } else {
+            throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
+        }
+    }
+
+    public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
+            Fmi2SimulationEnvironment env,
+            String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
-            ComponentInfo instance = env.getInstanceByLexName(componentName);
+
+            ComponentInfo instance = env.getInstanceByLexName(environmentComponentName);
             ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
             //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
@@ -39,8 +54,14 @@ public class FromMaBLToMaBLAPI {
                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
                     new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
 
-            ComponentVariableFmi2Api a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                    builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+            ComponentVariableFmi2Api a;
+            if (environmentComponentName == null) {
+                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+            } else {
+                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
+            }
             List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
             a.setVariablesToLog(variablesToLog);
 
@@ -56,11 +77,28 @@ public class FromMaBLToMaBLAPI {
             for (IRelation relation : env.getRelations(entry.getKey()).stream()
                     .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                             x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
-                PortFmi2Api[] targets = relation.getTargets().entrySet().stream().map(x -> {
-                    ComponentVariableFmi2Api instance = instances.get(x.getValue().getScalarVariable().getInstance().getText());
-                    return instance.getPort(x.getValue().getScalarVariable().getScalarVariable().getName());
-                }).toArray(PortFmi2Api[]::new);
-                entry.getValue().getPort(relation.getSource().getScalarVariable().getScalarVariable().getName()).linkTo(targets);
+
+                for (IVariable targetVar : relation.getTargets().values()) {
+                    String targetName = targetVar.getScalarVariable().getInstance().getText();
+                    if (instances.containsKey(targetName)) {
+                        ComponentVariableFmi2Api instance = instances.get(targetName);
+
+                        PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getScalarVariable().getName());
+
+                        String sourcePortName = relation.getSource().getScalarVariable().getScalarVariable().getName();
+                        if (targetPort != null) {
+                            entry.getValue().getPort(sourcePortName).linkTo(targetPort);
+                        } else {
+                            //error port not found in target var
+                            logger.warn("Failed to find port '{}' on instance '{}' required by relational '{}' ", sourcePortName, targetName,
+                                    relation);
+                        }
+                    } else {
+                        logger.warn(
+                                "Failed to find instance required by relational information from simulation env. Missing '{}' in relation " + "{}",
+                                targetName, relation);
+                    }
+                }
             }
         }
 

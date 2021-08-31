@@ -6,18 +6,6 @@ import testutils
 import argparse
 import os
 import subprocess
-import glob
-
-def findJar():
-    basePath = r"../maestro-webapi/target/"
-    basePath = os.path.abspath(os.path.join(basePath, "maestro-webapi*.jar"))
-
-    # try and find the jar file
-    result = glob.glob(basePath)
-    if len(result) == 0 or len(result) > 1:
-        raise FileNotFoundError("Could not automatically find jar file please specify manually")
-
-    return result[0]
 
 def cliTest(tempDir, testCmd):
     print("Cmd: " + testCmd)
@@ -54,7 +42,10 @@ args = parser.parse_args()
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-path = os.path.abspath(args.path) if str(args.path) != "None" else findJar()
+
+relativePath = os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar"))
+
+path = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
 
 if not os.path.isfile(path):
     print('The path does not exist')

@@ -119,7 +119,9 @@ public class MultiModel {
         return simulationProgramDelay;
     }
 
-    public Map<String, List<String>> getLogLevels() { return logLevels;}
+    public Map<String, List<String>> getLogLevels() {
+        return logLevels;
+    }
 
     public IAlgorithmConfig getAlgorithm() {
         return algorithm;

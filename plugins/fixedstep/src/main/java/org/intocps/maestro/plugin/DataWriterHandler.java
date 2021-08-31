@@ -9,7 +9,7 @@ import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -30,7 +30,7 @@ public class DataWriterHandler implements GeneratorComponent {
     Map<RelationVariable, PExp> csvFields;
 
     public List<PStm> allocate(Set<Fmi2SimulationEnvironment.Relation> inputRelations,
-            Map<LexIdentifier, Map<ModelDescription.Types, List<ModelDescription.ScalarVariable>>> outputs, Fmi2SimulationEnvironment env) {
+            Map<LexIdentifier, Map<Fmi2ModelDescription.Types, List<Fmi2ModelDescription.ScalarVariable>>> outputs, Fmi2SimulationEnvironment env) {
         List<PStm> statements = new Vector<>();
         List<String> variableNames = new Vector<>();
 
@@ -49,7 +49,7 @@ public class DataWriterHandler implements GeneratorComponent {
                     RelationVariable fromVar = r;
                     PExp from = arrayGet(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, DataExchangeHandler.UsageType.Out),
                             outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                                    .map(ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                                    .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
                                     .indexOf(fromVar.scalarVariable.getName()));
                     return from;
 

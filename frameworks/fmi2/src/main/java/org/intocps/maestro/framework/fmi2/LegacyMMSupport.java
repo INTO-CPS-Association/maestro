@@ -7,11 +7,14 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 public class LegacyMMSupport {
     public static Map<String, String> adjustFmi2SimulationEnvironmentConfiguration(
             Fmi2SimulationEnvironmentConfiguration config) throws EnvironmentException {
+        // Calculate the instance remapping
         Map<String, String> instanceRemapping = calculateInstanceRemapping(config.connections);
 
+        // Apply it to connections, variablesToLog, logVariables and livestream.
         fixVariableToVariablesMap(instanceRemapping, config.connections);
         fixKeyInstanceToVariablesMap(instanceRemapping, config.variablesToLog);
         fixKeyInstanceToVariablesMap(instanceRemapping, config.logVariables);
@@ -92,7 +95,14 @@ public class LegacyMMSupport {
         map.putAll(newMap);
     }
 
-
+    /**
+     * In a multi-model FMU keys and instances are not allowed to have the same name.
+     * This function finds all cases where this is the case and then renames the instances.
+     *
+     * @param connections
+     * @return
+     * @throws EnvironmentException
+     */
     public static Map<String, String> calculateInstanceRemapping(Map<String, List<String>> connections) throws EnvironmentException {
         HashMap<String, String> instanceRemapping = new HashMap<>();
         // Get all key instances pairs

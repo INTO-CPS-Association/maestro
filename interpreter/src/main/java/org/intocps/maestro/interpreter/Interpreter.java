@@ -337,6 +337,22 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseATryStm(ATryStm node, Context question) throws AnalysisException {
+        try {
+            node.getBody().apply(this, question);
+        } catch (ErrorException e) {
+            logger.info("Error in simulation: " + e.getMessage());
+        }
+        node.getFinally().apply(this, question);
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseAErrorStm(AErrorStm node, Context question) throws AnalysisException {
+        throw new ErrorException(node.getExp() == null ? "" : node.getExp().apply(this, question) + "");
+    }
+
+    @Override
     public Value caseAIfStm(AIfStm node, Context question) throws AnalysisException {
         if (((BooleanValue) node.getTest().apply(this, question).deref()).getValue()) {
             node.getThen().apply(this, question);

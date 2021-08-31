@@ -8,10 +8,7 @@ import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.intocps.maestro.ast.AModuleDeclaration;
-import org.intocps.maestro.ast.LexIdentifier;
-import org.intocps.maestro.ast.NodeCollector;
-import org.intocps.maestro.ast.PDeclaration;
+import org.intocps.maestro.ast.*;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -26,7 +23,8 @@ import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.plugin.IMaestroVerifier;
 import org.intocps.maestro.plugin.PluginFactory;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.template.MaBLTemplateGenerator;
+import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.template.TemplateGenerator;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +159,7 @@ public class Mabl {
     }
 
     private ARootDocument mergeDocuments(List<ARootDocument> documentList) {
-        ARootDocument main = null;
+        ARootDocument main = this.document;
         for (ARootDocument doc : documentList) {
             if (doc == null) {
                 continue;
@@ -169,7 +167,12 @@ public class Mabl {
             Optional<List<ASimulationSpecificationCompilationUnit>> collect =
                     NodeCollector.collect(doc, ASimulationSpecificationCompilationUnit.class);
             if (collect.isPresent() && !collect.get().isEmpty()) {
-                main = doc;
+                if (main != null) {
+                    // A simulationSpecification already exists!
+                    reporter.report(0, "A simulation specification compilation unit already exists.", new LexToken("", 0, 0));
+                } else {
+                    main = doc;
+                }
             } else {
                 importedDocument.add(doc);
             }
@@ -245,6 +248,8 @@ public class Mabl {
         if (reporter.getErrorCount() != 0) {
             throw new IllegalArgumentException("Expansion cannot be called with errors");
         }
+
+        ISimulationEnvironment env = null;
         if (frameworks != null && frameworkConfigs != null && frameworks.contains(Framework.FMI2) && frameworkConfigs.containsKey(Framework.FMI2)) {
 
             if (!frameworks.contains(Framework.FMI2) || !frameworkConfigs.containsKey(Framework.FMI2)) {
@@ -253,12 +258,14 @@ public class Mabl {
                         MablLexer.VOCABULARY.getDisplayName(MablLexer.AT_FRAMEWORK_CONFIG));
             }
 
-            ISimulationEnvironment env = getSimulationEnv();
+            env = getSimulationEnv();
 
             if (env == null) {
                 throw new Exception("No env found");
             }
+        }
 
+        if (frameworks != null && frameworks.contains(Framework.FMI2) || frameworkConfigs != null && frameworkConfigs.containsKey(Framework.FMI2)) {
             MablSpecificationGenerator mablSpecificationGenerator =
                     new MablSpecificationGenerator(Framework.FMI2, verbose, env, specificationFolder, this.intermediateSpecWriter);
 
@@ -310,22 +317,34 @@ public class Mabl {
         }
     }
 
-    public void generateSpec(MaBLTemplateConfiguration configuration) throws Exception {
-
-        if (configuration == null) {
-            throw new Exception("No configuration");
-        }
-        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(configuration);
+    private void processTemplate(ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit,
+            Fmi2SimulationEnvironment simulationEnvironment) throws Exception {
         List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
         List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
-        String template = PrettyPrinter.print(MaBLTemplateGenerator.generateTemplate(configuration));
-        environment = configuration.getSimulationEnvironment();
+        String template = PrettyPrinter.print(aSimulationSpecificationCompilationUnit);
+        environment = simulationEnvironment;
         logger.trace("Generated template:\n{}", template);
-        document = MablParserUtil.parse(CharStreams.fromString(template));
-        moduleDocuments.add(document);
+        ARootDocument templateParsed = MablParserUtil.parse(CharStreams.fromString(template));
+        moduleDocuments.add(templateParsed);
         document = this.mergeDocuments(moduleDocuments);
 
         postProcessParsing();
+    }
+
+    public void generateSpec(ScenarioConfiguration configuration) throws Exception {
+        if (configuration == null) {
+            throw new Exception("No configuration");
+        }
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = TemplateGenerator.generateTemplate(configuration);
+        processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
+    }
+
+    public void generateSpec(MaBLTemplateConfiguration configuration) throws Exception {
+        if (configuration == null) {
+            throw new Exception("No configuration");
+        }
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = TemplateGenerator.generateTemplate(configuration);
+        processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
     }
 
     //FIXME should be private

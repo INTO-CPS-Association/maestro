@@ -1,12 +1,18 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import core.ConnectionModel;
+import core.MasterModel;
+import core.ScenarioLoader;
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.dto.VarStepConstraint;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -15,24 +21,22 @@ import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
+import scala.jdk.javaapi.CollectionConverters;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,7 +47,7 @@ public class Maestro2Broker {
     final File workingDirectory;
     final ErrorReporter reporter;
 
-    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) throws IOException {
+    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
         this.workingDirectory = workingDirectory;
         Mabl.MableSettings mableSettings = new Mabl.MableSettings();
         mableSettings.dumpIntermediateSpecs = false;
@@ -52,6 +56,62 @@ public class Maestro2Broker {
         this.reporter = reporter;
 
         mabl.setReporter(this.reporter);
+    }
+
+    public void buildAndRunExecutableModel(ExecutableMasterAndMultiModelTDO executableModel, File csvOutputFile) throws Exception {
+
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
+        simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
+        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+        if(simulationConfiguration.connections.isEmpty()){
+            // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
+            MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+            List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
+            Map<String, List<String>> connectionsMap = new HashMap<>();
+            connections.forEach(connection -> {
+                String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
+                String trgFmuName = trgFmuAndInstance[0];
+                String trgInstanceName = trgFmuAndInstance[1];
+                String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
+                String srcFmuName = srcFmuAndInstance[0];
+                String srcInstanceName = srcFmuAndInstance[1];
+                String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
+                String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
+                if (connectionsMap.containsKey(muModelSrcName)) {
+                    connectionsMap.get(muModelSrcName).add(muModelTrgName);
+                } else {
+                    connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
+                }
+            });
+
+            simulationConfiguration.connections = connectionsMap;
+        }
+        Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
+        ScenarioConfiguration configuration =
+                new ScenarioConfiguration(simulationEnvironment, executableModel.getMasterModel(), executableModel.getMultiModel().getParameters(),
+                        executableModel.getExecutionParameters().getConvergenceRelativeTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAbsoluteTolerance(),
+                        executableModel.getExecutionParameters().getConvergenceAttempts(), executableModel.getExecutionParameters().getStartTime(),
+                        executableModel.getExecutionParameters().getEndTime(), executableModel.getExecutionParameters().getStepSize(),
+                        Pair.of(Framework.FMI2, simulationConfiguration));
+
+        String runtimeJsonConfigString = generateSpecification(configuration, null);
+
+        if (!mabl.typeCheck().getKey()) {
+            throw new Exception("Specification did not type check");
+        }
+
+        if (!mabl.verify(Framework.FMI2)) {
+            throw new Exception("Specification did not verify");
+        }
+
+        List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
+            ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+        }).collect(Collectors.toList());
+
+
+        executeInterpreter(null, connectedOutputs, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
@@ -92,9 +152,9 @@ public class Maestro2Broker {
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
         Map<String, List<String>> removedFMUKeyFromLogLevels = body.getLogLevels() == null ? new HashMap<>() : body.getLogLevels().entrySet().stream()
-                .collect(Collectors
-                        .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                                Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                        entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                        Map.Entry::getValue));
 
         // Setup step config
         JacobianStepConfig config = new JacobianStepConfig();
@@ -106,18 +166,6 @@ public class Maestro2Broker {
         config.stepAlgorithm = initializeRequest.getAlgorithm();
         config.startTime = body.getStartTime();
         config.endTime = body.getEndTime();
-
-        if (initializeRequest.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            ((VariableStepAlgorithmConfig) initializeRequest.getAlgorithm()).getConstraints().values().forEach(v -> {
-                if (v instanceof VarStepConstraint.ZeroCrossingConstraint) {
-                    config.variablesOfInterest.addAll(((VarStepConstraint.ZeroCrossingConstraint) v).getPorts());
-                } else if (v instanceof VarStepConstraint.BoundedDifferenceConstraint) {
-                    config.variablesOfInterest.addAll(((VarStepConstraint.BoundedDifferenceConstraint) v).getPorts());
-                }
-            });
-        } else if(!(initializeRequest.getAlgorithm() instanceof FixedStepAlgorithmConfig)) {
-            throw new Exception("Could not get algorithm from specification");
-        }
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                 MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
@@ -150,16 +198,25 @@ public class Maestro2Broker {
 
 
         executeInterpreter(socket, Stream.concat(connectedOutputs.stream(),
-                (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
-                        .stream()).collect(Collectors.toList()),
+                        (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(
+                                initializeRequest.getLogVariables())).stream()).collect(Collectors.toList()),
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
                 body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
 
     }
 
+    public String generateSpecification(ScenarioConfiguration config, Map<String, Object> parameters) throws Exception {
+        mabl.generateSpec(config);
+        return postGenerate(parameters);
+    }
+
     public String generateSpecification(MaBLTemplateConfiguration config, Map<String, Object> parameters) throws Exception {
         mabl.generateSpec(config);
+        return postGenerate(parameters);
+    }
+
+    private String postGenerate(Map<String, Object> parameters) throws Exception {
         mabl.expand();
         mabl.setRuntimeEnvironmentVariables(parameters);
         mabl.dump(workingDirectory);

@@ -76,7 +76,7 @@ public class WatertankApiTest {
         DoubleVariableFmi2Api time = ds.store("time", 0d);
         DoubleVariableFmi2Api step = ds.store("step_size", 0.1);
 
-        ScopeFmi2Api whileScope = ds.enterWhile(time.toMath().lessThan(DoubleExpressionValue.of(10d))).activate();
+        ScopeFmi2Api whileScope = ds.enterWhile(time.toMath().addition(step).lessThan(DoubleExpressionValue.of(10d))).activate();
 
         tank.setLinked();
         controller.setLinked();
@@ -88,10 +88,6 @@ public class WatertankApiTest {
         time.setValue(time.toMath().addition(step));
         whileScope.leave();
 
-        //How to write controller != null
-        //  ds.enterIf(controller.toMath().)
-        controllerFmu.unload();
-        tankFmu.unload();
 
         Map<String, Object> data = new HashMap<>();
 
@@ -136,8 +132,8 @@ public class WatertankApiTest {
         }
         mabl.dump(workingDirectory);
 
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8))).execute(
+                mabl.getMainSimulationUnit());
 
         MablCppCodeGenerator cppCodeGenerator = new MablCppCodeGenerator(workingDirectory);
         cppCodeGenerator.generate(mabl.getMainSimulationUnit(), tcRef.getValue());

@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AParallelBlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
@@ -21,11 +21,11 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
-    final ScopeFmi2Api parent;
     private final MablApiBuilder builder;
     private final SBlockStm block;
-    IntVariableFmi2Api fmiStatusVariable = null;
     private final List<ComponentVariableFmi2Api> fmi2ComponentVariables = new ArrayList<>();
+    Fmi2Builder.ScopeElement<PStm> parent;
+    IntVariableFmi2Api fmiStatusVariable = null;
 
     public ScopeFmi2Api(MablApiBuilder builder) {
         this.builder = builder;
@@ -34,7 +34,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     }
 
-    public ScopeFmi2Api(MablApiBuilder builder, ScopeFmi2Api parent, SBlockStm block) {
+    public ScopeFmi2Api(MablApiBuilder builder, Fmi2Builder.ScopeElement<PStm> parent, SBlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
@@ -57,6 +57,21 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         }
         throw new RuntimeException("Predicate has to be of type PredicateFmi2Api. Unknown predicate: " + predicate.getClass());
     }
+
+    @Override
+    public TryMaBlScope enterTry() {
+        var bodyStm = newABlockStm();
+        var finallyStm = newABlockStm();
+
+        ATryStm tryStm = newTry(bodyStm, finallyStm);
+        add(tryStm);
+        ScopeFmi2Api bodyScope = new ScopeFmi2Api(builder, null, bodyStm);
+        ScopeFmi2Api finallyScope = new ScopeFmi2Api(builder, null, finallyStm);
+        var tryScope = new TryMaBlScope(builder, tryStm, this, bodyScope, finallyScope);
+        tryScope.enter().activate();
+        return tryScope;
+    }
+
 
     @Override
     public IfMaBlScope enterIf(Fmi2Builder.Predicate predicate) {
@@ -87,7 +102,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     @Override
     public ScopeFmi2Api leave() {
-        return parent.activate();
+        return ((ScopeFmi2Api) parent).activate();
     }
 
     @Override
@@ -109,12 +124,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         if (index == -1) {
             add(commands);
         } else {
-            int insertAt = index - 1;
-            if (insertAt < 0) {
-                addAll(0, commands);
-            } else {
-                addAll(insertAt, commands);
-            }
+            addAll(index, commands);
         }
 
     }
@@ -137,6 +147,31 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             addAll(insertAt, commands);
         }
     }
+
+    /**
+     * Attempts to find {@code item} and places {@code commands} after it.
+     * If {@code item} is not found, then {@code commands} is added at the top of the scope.
+     *
+     * @param item
+     * @param commands
+     */
+    @Override
+    public void addAfterOrTop(PStm item, PStm... commands) {
+        int index = block.getBody().indexOf(item);
+        int insertAt = index + 1;
+        if (insertAt > block.getBody().size()) {
+            add(commands);
+        } else {
+            addAll(insertAt, commands);
+        }
+
+    }
+
+    @Override
+    public int indexOf(PStm stm) {
+        return this.block.getBody().indexOf(stm);
+    }
+
 
     @Override
     public ScopeFmi2Api activate() {
@@ -186,12 +221,13 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
+
     @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
-    protected DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
+    public DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
         ARealLiteralExp initial = newARealLiteralExp(value);
         PStm var = newVariable(name, newARealNumericPrimitiveType(), initial);
@@ -200,7 +236,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
+    public BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
         String name = nameProvider.get();
         ABoolLiteralExp initial = newABoolLiteralExp(value);
         PStm var = newVariable(name, newABoleanPrimitiveType(), initial);
@@ -209,7 +245,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected IntVariableFmi2Api store(Supplier<String> nameProvider, int value) {
+    public IntVariableFmi2Api store(Supplier<String> nameProvider, int value) {
         String name = nameProvider.get();
         AIntLiteralExp initial = newAIntLiteralExp(value);
         PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
@@ -218,7 +254,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    protected StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
+    public StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
         String name = nameProvider.get();
         AStringLiteralExp initial = newAStringLiteralExp(value);
         PStm var = newVariable(name, newAStringPrimitiveType(), initial);
@@ -354,12 +390,12 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
         final PType finalType = type;
 
+        add(localVarStm);
         List<VariableFmi2Api<Object>> items = IntStream.range(0, length).mapToObj(
-                i -> new VariableFmi2Api<>(localVarStm, finalType, null, builder.getDynamicScope(),
+                i -> new VariableFmi2Api<>(localVarStm, finalType, this, builder.getDynamicScope(),
                         newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(i)),
                         newAArrayIndexExp(newAIdentifierExp(name), Collections.singletonList(newAIntLiteralExp(i))))).collect(Collectors.toList());
 
-        add(localVarStm);
         return new ArrayVariableFmi2Api(localVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name), items);
     }
@@ -376,6 +412,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         return new ScopeFmi2Api(this.builder, this, blockStm).activate();
     }
 
+
     @Override
     public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
 
@@ -389,6 +426,19 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         add(var);
         return new IntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
+    }
+
+    @Override
+    public ArrayVariableFmi2Api storeInArray(String namePrefix, VariableFmi2Api[] variables) {
+        String name = getName(namePrefix);
+        PType type = variables[0].getType();
+        PInitializer initializer = newAArrayInitializer(Arrays.stream(variables).map(VariableFmi2Api::getExp).collect(Collectors.toList()));
+        PStm arrayVarStm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(name), variables[0].getType(), variables.length, initializer));
+
+
+        add(arrayVarStm);
+        return new ArrayVariableFmi2Api(arrayVarStm, type, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name), Arrays.asList(variables));
     }
 
     private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {
@@ -443,15 +493,30 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             String varName = builder.getNameGenerator().getName(name);
             PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
             add(variableDeclaration);
-            return (Var) variable
-                    .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
+            return (Var) variable.clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName),
+                    newAIdentifierExp(varName));
         }
         throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass().getName());
     }
 
     @Override
-    public FmuVariableFmi2Api createFMU(String name, ModelDescription modelDescription, URI path) throws Exception {
+    public FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception {
         return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, modelDescription, path, this);
+    }
+
+    @Override
+    public Fmi2Builder.ScopeElement<PStm> parent() {
+        return this.parent;
+    }
+
+    @Override
+    public PStm getDeclaration() {
+        return this.block;
+    }
+
+    @Override
+    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        return this.findParentScope(clz);
     }
 
     @Override
@@ -462,14 +527,31 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
         if (this.parent == null) {
             return builder.getGlobalFmiStatus();
-        } else if (this.parent.block instanceof AParallelBlockStm) {
-            if (this.fmiStatusVariable == null) {
-                this.fmiStatusVariable = this.store("status", MablApiBuilder.FmiStatus.FMI_OK.getValue());
-            }
-            return this.fmiStatusVariable;
         } else {
-            return this.parent.getFmiStatusVariable();
+
+            if (parent instanceof ScopeFmi2Api) {
+
+                if (((ScopeFmi2Api) this.parent).block instanceof AParallelBlockStm) {
+                    if (this.fmiStatusVariable == null) {
+                        this.fmiStatusVariable = this.store("status", MablApiBuilder.FmiStatus.FMI_OK.getValue());
+                    }
+                    return this.fmiStatusVariable;
+                } else {
+                    return ((ScopeFmi2Api) parent).getFmiStatusVariable();
+                }
+            } else {
+                //ignore try and if
+                Fmi2Builder.ScopeElement<PStm> p = parent;
+                while ((p = p.parent()) != null) {
+                    if (p instanceof ScopeFmi2Api) {
+                        return ((ScopeFmi2Api) p).getFmiStatusVariable();
+                    }
+                }
+            }
+
+
         }
+        return null;
     }
 
     @Override
@@ -478,13 +560,24 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public <S> S findParentScope(Class<S> type) {
+        Fmi2Builder.ScopeElement<PStm> p = this;
+        while ((p = p.parent()) != null) {
+            if (type.isAssignableFrom(p.getClass())) {
+                return type.cast(p);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Set<ComponentVariableFmi2Api> getAllComponentFmi2Variables() {
         HashSet<ComponentVariableFmi2Api> compFmi2Variables = new HashSet<>();
         compFmi2Variables.addAll(this.fmi2ComponentVariables);
-        ScopeFmi2Api parentScope = this.parent;
-        while (parentScope != null) {
-            compFmi2Variables.addAll(parentScope.getAllComponentFmi2Variables());
-            parentScope = parentScope.parent;
+        var parentScope = this.parent;
+        while (parentScope != null && parentScope instanceof ScopeFmi2Api) {
+            compFmi2Variables.addAll(((ScopeFmi2Api) parentScope).getAllComponentFmi2Variables());
+            parentScope = ((ScopeFmi2Api) parentScope).parent;
         }
 
 
