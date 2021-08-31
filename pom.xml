@@ -296,7 +296,7 @@
             <dependency>
                 <groupId>INTO-CPS-Association</groupId>
                 <artifactId>scenario_verifier_2.13</artifactId>
-                <version>0.2.1</version>
+                <version>0.2.2</version>
             </dependency>
 
             <dependency>

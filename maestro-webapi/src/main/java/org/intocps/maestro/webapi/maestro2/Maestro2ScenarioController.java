@@ -1,5 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
+import api.TraceResult;
 import api.VerificationAPI;
 import core.*;
 import org.apache.commons.io.FileUtils;
@@ -61,11 +62,15 @@ public class Maestro2ScenarioController {
     }
 
     @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE, produces = "video/mp4")
-    public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) {
+    public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) throws Exception {
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
-        File traceFile = VerificationAPI.generateTraceFromMasterModel(masterModel);
+        TraceResult traceResult = VerificationAPI.generateTraceFromMasterModel(masterModel);
 
-        return new FileSystemResource(traceFile);
+        if (!traceResult.isGenerated()) {
+            throw new Exception("Unable to generate trace results - the algorithm is probably successfully verified");
+        }
+
+        return new FileSystemResource(traceResult.file());
     }
 
     @RequestMapping(value = "/executeAlgorithm", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
