@@ -27,6 +27,7 @@
         <kotlin.version>1.5.0</kotlin.version>
         <scala.version>2.13.5</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
+        <dokka.version>1.5.0</dokka.version>
     </properties>
 
     <repositories>
@@ -126,7 +127,6 @@
 
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
-
                 <plugin>
                     <groupId>org.jetbrains.dokka</groupId>
                     <artifactId>dokka-maven-plugin</artifactId>
@@ -140,11 +140,13 @@
                         </execution>
                     </executions>
                     <configuration>
+                        <outputDir>${project.basedir}/target/apidocs</outputDir>
+                        <jdkVersion>${kotlin.jvmTarget}</jdkVersion>
                         <dokkaPlugins>
                             <plugin>
                                 <groupId>org.jetbrains.dokka</groupId>
                                 <artifactId>javadoc-plugin</artifactId>
-                                <version>1.5.0</version>
+                                <version>${dokka.version}</version>
                             </plugin>
                         </dokkaPlugins>
                     </configuration>
@@ -256,7 +258,6 @@
 
             </plugins>
         </pluginManagement>
-
     </build>
 
     <reporting>
@@ -284,12 +285,8 @@
                 <version>3.0.0-M5</version>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <show>private</show>
-                </configuration>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </reporting>
@@ -546,8 +543,8 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <groupId>org.jetbrains.dokka</groupId>
+                        <artifactId>dokka-maven-plugin</artifactId>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
