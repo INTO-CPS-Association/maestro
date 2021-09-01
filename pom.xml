@@ -140,7 +140,6 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <outputDir>${project.basedir}/target/apidocs</outputDir>
                         <jdkVersion>${kotlin.jvmTarget}</jdkVersion>
                         <dokkaPlugins>
                             <plugin>
