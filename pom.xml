@@ -148,6 +148,14 @@
                                 <version>${dokka.version}</version>
                             </plugin>
                         </dokkaPlugins>
+
+                        <perPackageOptions>
+                            <packageOptions>
+                                <matchingRegex>org.intocps.maestro.ast.*</matchingRegex>
+                                <reportUndocumented>false</reportUndocumented>
+                                <skipDepricated>true</skipDepricated>
+                            </packageOptions>
+                        </perPackageOptions>
                     </configuration>
                 </plugin>
 
