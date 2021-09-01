@@ -11,7 +11,7 @@ public class TemplateGenerator {
         try {
             return TemplateGeneratorFromScenario.generateTemplate(configuration);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to generate template");
+            throw new RuntimeException("Unable to generate template: " + e);
         }
     }
 

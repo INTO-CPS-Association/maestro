@@ -292,6 +292,13 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>INTO-CPS-Association</groupId>
+                <artifactId>scenario_verifier_2.13</artifactId>
+                <version>0.2.2</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>

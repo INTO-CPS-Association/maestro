@@ -9,16 +9,16 @@ import java.util.Map;
 
 public class ScenarioConfiguration {
     private final Fmi2SimulationEnvironment simulationEnvironment;
-    private final String masterModel;
+    private final String masterModelAsString;
     private final Map<String, Object> parameters;
     private final ExecutionParameters executionParameters;
     private final Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
 
-    public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, String masterModel, Map<String, Object> parameters,
+    public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, String masterModelAsString, Map<String, Object> parameters,
             Double convergenceRelativeTolerance, Double convergenceAbsoluteTolerance, Integer convergenceAttempts, Double startTime, Double endTime,
             Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig) {
         this.simulationEnvironment = simulationEnvironment;
-        this.masterModel = masterModel;
+        this.masterModelAsString = masterModelAsString;
         this.parameters = parameters;
         this.frameworkConfig = frameworkConfig;
         executionParameters =
@@ -30,10 +30,12 @@ public class ScenarioConfiguration {
         return simulationEnvironment;
     }
 
-    public Pair<Framework, Fmi2SimulationEnvironmentConfiguration> getFrameworkConfig(){return frameworkConfig;}
+    public Pair<Framework, Fmi2SimulationEnvironmentConfiguration> getFrameworkConfig() {
+        return frameworkConfig;
+    }
 
-    public String getMasterModel() {
-        return masterModel;
+    public String getMasterModelAsString() {
+        return masterModelAsString;
     }
 
     public Map<String, Object> getParameters() {

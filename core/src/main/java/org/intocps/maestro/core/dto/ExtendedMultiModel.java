@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MultiModelScenarioVerifier extends MultiModel {
+public class ExtendedMultiModel extends MultiModel {
     @JsonProperty("scenarioVerifier")
     public final ScenarioVerifier scenarioVerifier;
 
     @JsonCreator
-    public MultiModelScenarioVerifier(@JsonProperty("fmus") Map<String, String> fmus,
+    public ExtendedMultiModel(@JsonProperty("fmus") Map<String, String> fmus,
             @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
             @JsonProperty("logVariables") Map<String, List<String>> logVariables, @JsonProperty("parallelSimulation") boolean parallelSimulation,
             @JsonProperty("stabalizationEnabled") boolean stabalizationEnabled,

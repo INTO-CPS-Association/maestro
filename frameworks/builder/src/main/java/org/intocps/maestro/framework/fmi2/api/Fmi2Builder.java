@@ -440,7 +440,27 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
      * Handle for an fmu for the creation of component
      */
     interface Fmu2Variable<S> extends Variable<S, NamedVariable<S>> {
+        Fmi2ComponentVariable<S> instantiate(String name, String environmentname);
+
         Fmi2ComponentVariable<S> instantiate(String name);
+
+        //    /**
+        //     * Performs null check and frees the instance
+        //     *
+        //     * @param scope
+        //     * @param comp
+        //     */
+        //    private void freeInstance(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Fmi2ComponentVariable<PStm> comp) {
+        //        if (comp instanceof ComponentVariableFmi2Api) {
+        //            scope.add(newIf(newNotEqual(((ComponentVariableFmi2Api) comp).getReferenceExp().clone(), newNullExp()), newABlockStm(
+        //                    MableAstFactory.newExpressionStm(
+        //                            call(getReferenceExp().clone(), "freeInstance", ((ComponentVariableFmi2Api) comp).getReferenceExp().clone())),
+        //                    newAAssignmentStm(((ComponentVariableFmi2Api) comp).getDesignatorClone(), newNullExp())), null));
+        //        } else {
+        //            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
+        //        }
+        //    }
+        Fmi2ComponentVariable<S> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
 
         Fmi2ComponentVariable<S> instantiate(String name, TryScope<S> enclosingTryScope, Scope<S> scope);
 

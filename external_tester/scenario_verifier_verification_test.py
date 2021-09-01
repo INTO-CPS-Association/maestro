@@ -4,7 +4,7 @@ import subprocess
 import requests
 import time
 import tempfile
-from zipfile import ZipFile
+from pathlib import Path
 
 def testVerificationEntryPoint(basicUrl, baseResourcePath):
     testutils.printSection("WEB API verify algorithm")
@@ -24,7 +24,7 @@ def testVerificationEntryPoint(basicUrl, baseResourcePath):
     if(actualResultJson["verifiedSuccessfully"]):
         raise Exception("The algorithm should not have been verified successfully.")
     else:
-        print("SUCCESS: The algorithm did not verify as expected.")
+        print("SUCCESS: Verification of the algorithm has been tested.")
 
 def testVisualizationEntryPoint(basicUrl, baseResourcePath):
     testutils.printSection("WEB API visualize traces")
@@ -38,30 +38,33 @@ def testVisualizationEntryPoint(basicUrl, baseResourcePath):
 
     response = requests.post(f"{basicUrl}/visualizeTrace", data=payloadString, headers={'Content-Type': 'text/plain'})
     testutils.ensureResponseOk(response)
-   
-    zipFilePath = os.path.join(tempDirectory, "actual_zip_result.zip")
-    chunk_size = 128
-    with open(zipFilePath, 'wb') as fd:
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            fd.write(chunk)
-    print("Wrote zip file to: " + zipFilePath)
 
-    with ZipFile(zipFilePath, 'r') as zipObj:
-        if not any(".mp4" in fileName for fileName in zipObj.namelist()):
-            raise Exception("Expected at least one mp4 file visualizing the trace.")
-        else:
-            print("SUCCESS: at least one mp4 file visualizing a trace was returned.")
+    videoFilePath = os.path.join(tempDirectory, "traces.mp4")
+
+    with open(videoFilePath, 'wb') as wfile:
+      wfile.write(response.content)
+
+    print("Video file is located at: " + videoFilePath)
+
+    fileSize = Path(videoFilePath).stat().st_size
+   
+    if fileSize < 100:
+        raise Exception("The size of the returned file seems too small to contain any video.")
+    else:
+        print("SUCCESS: Trace visualization of the algorithm has been tested.")
+    
 
 def webApiTest(jarPath):
     port = 0
     cmd = f"java -jar {jarPath} -p {str(port)}"
-    # Start the server as a subprocess and pipe stdout
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    # Start the server as a subprocess and pipe stderr
+    proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
 
-    # If port '0' is specified the server will acquire the port and write the port number to stdout as: '<' + 'port-number' + '>'.
+    # If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
     if port == 0:
         port = testutils.acquireServerDefinedPortFromStdio(proc)
     basicUrl = f"http://localhost:{str(port)}"
+    print(f"Testing Web api of: {jarPath} with port: {str(port)}")
 
     try:
         maxWait = 20

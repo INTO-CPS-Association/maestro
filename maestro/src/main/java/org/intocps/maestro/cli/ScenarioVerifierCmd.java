@@ -9,7 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.dto.MultiModelScenarioVerifier;
+import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -162,7 +162,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
             String scenario = Files.readString(filePath);
             masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
         } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
-            MultiModelScenarioVerifier multiModel = (new ObjectMapper()).readValue(file, MultiModelScenarioVerifier.class);
+            ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         } else {
             return -1;
@@ -227,7 +227,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
             algorithmPath = output.toPath().resolve("masterModel.conf");
             System.out.println("No master model passed. Generating algorithm from executable model");
             try {
-                MultiModelScenarioVerifier multiModel = (new ObjectMapper()).readValue(extendedMultiModelFile, MultiModelScenarioVerifier.class);
+                ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(extendedMultiModelFile, ExtendedMultiModel.class);
                 MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
 
                 masterModelAsString = ScenarioConfGenerator.generate(masterModel, masterModel.name());

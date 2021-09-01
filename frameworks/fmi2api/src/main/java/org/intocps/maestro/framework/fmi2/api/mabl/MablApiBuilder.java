@@ -78,7 +78,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                         fmiStatusVariables.put(s, rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(s.name()), s.getValue()));
                     } else {
                         //if exists then link to previous declaration
-                        fmiStatusVariables.put(s, f.apply(s.name()));
+                        fmiStatusVariables.put(s, f.apply(decl.getName().getText()));
                     }
                 }
             }
@@ -169,14 +169,15 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
                 }
                 break;
                 case FMI_ERROR: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
+                    IntVariableFmi2Api var = storeStatusVariable(rootScope, status.name(), FmiStatus.FMI_ERROR.getValue());
+                    //IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
                     //relocate to top of scope
                     rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
                     break;
                 }
                 case FMI_FATAL: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_FATAL.getValue());
+                    IntVariableFmi2Api var = storeStatusVariable(rootScope, status.name(), FmiStatus.FMI_FATAL.getValue());
                     //relocate to top of scope
                     rootScope.addAfterOrTop(null, var.getDeclaringStm());
                     fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
@@ -203,6 +204,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public IntVariableFmi2Api getGlobalFmiStatus() {
         return globalFmiStatus;
+    }
+
+    private IntVariableFmi2Api storeStatusVariable(ScopeFmi2Api rootScope, String name, int errorCode){
+        return rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(name), errorCode);
     }
 
     @SuppressWarnings("rawtypes")

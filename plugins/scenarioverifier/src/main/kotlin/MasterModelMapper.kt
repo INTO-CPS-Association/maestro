@@ -1,18 +1,15 @@
 package org.intocps.maestro.plugin
 
+import api.GenerationAPI
 import core.*
+import org.intocps.maestro.core.dto.ExtendedMultiModel
 import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
-import org.intocps.maestro.core.dto.MultiModelScenarioVerifier
 import scala.jdk.javaapi.CollectionConverters
-import synthesizer.LoopStrategy
-import synthesizer.SynthesizerSimple
 
 class MasterModelMapper {
     companion object {
-
-        private val loopStrategy = LoopStrategy.maximum()
 
         private const val INSTANCE_DELIMITER = "_"
 
@@ -37,26 +34,12 @@ class MasterModelMapper {
         fun scenarioToMasterModel(scenario: String): MasterModel {
             // Load master model without algorithm
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
-
-            // Generate algorithm part of the master model
-            val synthesizer = SynthesizerSimple(masterModel.scenario(), loopStrategy)
-            val initialization = synthesizer.synthesizeInitialization()
-            val coSimStep = synthesizer.synthesizeStep()
-
-            return MasterModel(
-                masterModel.name(),
-                masterModel.scenario(),
-                masterModel.instantiation(),
-                initialization,
-                coSimStep,
-                masterModel.terminate()
-            )
-
+            return GenerationAPI.generateAlgorithm(masterModel.name(), masterModel.scenario())
         }
 
-        fun multiModelToMasterModel(multiModel: MultiModelScenarioVerifier, maxPossibleStepSize: Int): MasterModel {
+        fun multiModelToMasterModel(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModel {
             // Map multi model connections type to scenario connections type
-            val connectionModelList = multiModel.connections.entries.map { (key, value) ->
+            val connectionModelList = extendedMultiModel.connections.entries.map { (key, value) ->
                 value.map { targetPortName ->
                     ConnectionModel(
                         PortRef(
@@ -73,8 +56,8 @@ class MasterModelMapper {
 
             // Instantiate a simulationConfiguration to be able to access fmu model descriptions
             val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration().apply {
-                this.fmus = multiModel.fmus;
-                this.connections = multiModel.connections;
+                this.fmus = extendedMultiModel.fmus;
+                this.connections = extendedMultiModel.connections;
                 if (this.fmus == null) throw Exception("Missing FMUs from multi-model")
             }
 
@@ -87,8 +70,8 @@ class MasterModelMapper {
 
 
             // Map fmus to fmu models
-            val fmusWithModelDescriptions =
-                Fmi2SimulationEnvironment.of(simulationConfiguration, null).fmusWithModelDescriptions
+            val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
+            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
             val fmuNameToFmuModel = fmuInstanceNamesFromConnections.mapNotNull { fmuInstanceName ->
                 fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
                     ?.let { fmuWithMD ->
@@ -96,7 +79,7 @@ class MasterModelMapper {
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
                                 .associate { port ->
-                                    port.getName() to InputPortModel(if (multiModel.scenarioVerifier.reactivity.any { portReactivity ->
+                                    port.getName() to InputPortModel(if (extendedMultiModel.scenarioVerifier.reactivity.any { portReactivity ->
                                             portReactivity.key.contains(port.getName()) &&
                                                     portReactivity.key.contains(
                                                         getFmuNameFromFmuInstanceName(
@@ -129,29 +112,27 @@ class MasterModelMapper {
                             scala.collection.immutable.Map.from(
                                 scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()
                             ),
-                            fmuWithMD.value.getCanGetAndSetFmustate()
+                            fmuWithMD.value.getCanGetAndSetFmustate(),
+                            simulationEnvironment.getUriFromFMUName(fmuWithMD.key).path
                         )
                     }
             }.toMap()
 
-            val scenario = ScenarioModel(
+            val scenarioModel = ScenarioModel(
                 scala.collection.immutable.Map.from(
                     scala.jdk.CollectionConverters.MapHasAsScala(fmuNameToFmuModel).asScala()
+                ),
+                AdaptiveModel(
+                    CollectionConverters.asScala(listOf<PortRef>()).toList(), scala.collection.immutable.Map.from(
+                        scala.jdk.CollectionConverters.MapHasAsScala(mapOf<String, ConfigurationModel>()).asScala()
+                    )
                 ),
                 CollectionConverters.asScala(connectionModelList).toList(),
                 maxPossibleStepSize
             )
 
             // Generate the master model from the scenario
-            val synthesizer = SynthesizerSimple(scenario, loopStrategy)
-            return MasterModel(
-                "fromMultiModel",
-                scenario,
-                CollectionConverters.asScala(listOf<InstantiationInstruction>()).toList(),
-                synthesizer.synthesizeInitialization(),
-                synthesizer.synthesizeStep(),
-                CollectionConverters.asScala(listOf<TerminationInstruction>()).toList()
-            )
+            return GenerationAPI.generateAlgorithm("generatedFromMultiModel", scenarioModel)
         }
     }
 }

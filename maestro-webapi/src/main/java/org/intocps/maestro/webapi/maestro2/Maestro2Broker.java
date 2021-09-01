@@ -10,6 +10,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.dto.VarStepConstraint;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
@@ -58,14 +59,17 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    public void buildAndRunExecutableModel(ExecutableMasterAndMultiModelTDO executableModel, File csvOutputFile) throws Exception {
+    public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, String masterModelAsString,
+            org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters,
+            File csvOutputFile) throws Exception {
+
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
-        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
+        simulationConfiguration.fmus = extendedMultiModel.getFmus();
+        simulationConfiguration.connections = extendedMultiModel.getConnections();
         if(simulationConfiguration.connections.isEmpty()){
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-            MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
             List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
             Map<String, List<String>> connectionsMap = new HashMap<>();
             connections.forEach(connection -> {
@@ -88,11 +92,11 @@ public class Maestro2Broker {
         }
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration =
-                new ScenarioConfiguration(simulationEnvironment, executableModel.getMasterModel(), executableModel.getMultiModel().getParameters(),
-                        executableModel.getExecutionParameters().getConvergenceRelativeTolerance(),
-                        executableModel.getExecutionParameters().getConvergenceAbsoluteTolerance(),
-                        executableModel.getExecutionParameters().getConvergenceAttempts(), executableModel.getExecutionParameters().getStartTime(),
-                        executableModel.getExecutionParameters().getEndTime(), executableModel.getExecutionParameters().getStepSize(),
+                new ScenarioConfiguration(simulationEnvironment, masterModelAsString, extendedMultiModel.getParameters(),
+                        executionParameters.getConvergenceRelativeTolerance(),
+                        executionParameters.getConvergenceAbsoluteTolerance(),
+                        executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(),
+                        executionParameters.getEndTime(), executionParameters.getStepSize(),
                         Pair.of(Framework.FMI2, simulationConfiguration));
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);

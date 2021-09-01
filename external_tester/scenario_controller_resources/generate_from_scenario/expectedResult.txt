@@ -33,7 +33,10 @@ msd2.fk -> msd1.fk
 msd2.z -> msd3.z
 msd3.G -> msd2.G]
 }
-initialization = [{get: msd1.x1}
+initialization = [
+
+
+{get: msd1.x1}
 
 {set: msd2.x1}
 
@@ -52,8 +55,11 @@ initialization = [{get: msd1.x1}
 {get: msd3.G}
 
 {set: msd2.G}
+
+
+
 ]
-cosim-step = [{save-state: msd2}
+cosim-step = {conf1 = [{save-state: msd2}
 
 {save-state: msd1}
 
@@ -105,3 +111,4 @@ cosim-step = [{save-state: msd2}
 ]} 
  }
 ]
+}
