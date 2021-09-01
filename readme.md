@@ -39,7 +39,8 @@ apt install git libzip-dev build-essential cmake
 
 ## Release the tool
 
-Replace ${RELEASE_VER} with the release (e.g. 2.0.0) and ${NEW_DEV_VER} with dev version (e.g. 2.0.1-SNAPSHOT). Press
+Make sure to be on the development branch. 
+Then replace ${RELEASE_VER} with the release (e.g. 2.0.0) and ${NEW_DEV_VER} with dev version (e.g. 2.0.1-SNAPSHOT). Press
 enter when prompted for SCM
 
 ```bash
