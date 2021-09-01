@@ -32,14 +32,8 @@
 
         <dependency>
             <groupId>org.into-cps.vdmcheck.fmi2</groupId>
-            <artifactId>fmi2vdm</artifactId>
-            <version>1.0.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fujitsu</groupId>
-                    <artifactId>annotations</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>vdmcheck2</artifactId>
+            <version>1.1.0</version>
         </dependency>
 
         <dependency>
