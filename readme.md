@@ -37,10 +37,24 @@ terminal and reimporting in the maven control panel of IntelliJ.
 apt install git libzip-dev build-essential cmake
 ```
 
-## Release the tool
+## Release procedure
+The release procedure roughly follows the [Overture release procedure](https://github.com/overturetool/overture/wiki/New-Release-Procedure).
+### Prerequisites
+1. Acquire login access to http://oss.sonatype.org by signing up to their [issue tracker](https://issues.sonatype.org/secure/Dashboard.jspa). 
+Then ask @CThuleHansen to submit a ticket there to have your user id granted rights to publish to the org.overturetool repository on the Maven Central. 
+This [ticket](https://issues.sonatype.org/browse/OSSRH-35910) is a reasonable template for this.
+2. [Setup GPG](https://central.sonatype.org/publish/requirements/gpg/)*
+3. Make sure that you are connected to the repository with SSH and can authenticate successfully: https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh
+4. Make sure you can access [Aarhus University's Gitlab server](https://gitlab.au.dk/overture/certificates) and download the certificate store to sign the release. 
+5. Configure your Maven settings (stored in the settings.xml file) correctly. 
+In particular, make sure your local ~/.m2/settings.xml has the filled-in version of the skeleton settings in the file 
+[overture_settings.xml](https://github.com/overturetool/overture/blob/development/overture_settings.xml) from the Overture repository.
 
+*__Note:__ On Windows it is easiest to use Git Bash for steps 2, 3 and running the following release commands.
+
+### Releasing the tool
 Make sure to be on the development branch. 
-Then replace ${RELEASE_VER} with the release (e.g. 2.0.0) and ${NEW_DEV_VER} with dev version (e.g. 2.0.1-SNAPSHOT). Press
+Then replace ${RELEASE_VER} with the release (e.g. 2.0.0) and ${NEW_DEV_VER} with dev version (e.g. 2.0.1-SNAPSHOT) in the following commands and run them. Press
 enter when prompted for SCM
 
 ```bash
@@ -48,12 +62,14 @@ mvn -Dmaven.repo.local=repository release:clean
 mvn -Dmaven.repo.local=repository release:prepare -DreleaseVersion=${RELEASE_VER} -DdevelopmentVersion=${NEW_DEV_VER}
 mvn -Dmaven.repo.local=repository release:perform
 ```
+__Note:__ If the release fails during _release:prepare_ a rollback should be performed with _release:rollback_ before running the above commands again.
 
+After successfully running the commands check that the release is present in the [sonatype staging repository](https://oss.sonatype.org/#stagingRepositories).
+Then press Close in the sonatype ui. Sonatype will then run a number of checks and if these succeed press the Release button.
+
+[Create a release on Github](https://github.com/INTO-CPS-Association/maestro/tags) from the newly created tag and include both the Maestro jar and the Maestro Web API jar.
+In the release description note significant changes and the jars MD5 checksums.
 Now go to the master branch, merge with the newly created tag, and push. REMEMBER TO GO BACK TO DEVELOPMENT BRANCH!
-
-for more see https://github.com/overturetool/overture/wiki/Release-Process
-
-* Sonatype link: https://oss.sonatype.org/#stagingRepositories
 
 ## Upload the release
 
