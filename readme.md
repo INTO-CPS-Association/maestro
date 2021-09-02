@@ -52,7 +52,7 @@ In particular, make sure your local ~/.m2/settings.xml has the filled-in version
 
 *__Note:__ On Windows it is easiest to use Git Bash for steps 2, 3 and running the following release commands.
 
-### Releasing the tool
+### Release the tool
 Make sure to be on the development branch. 
 Then replace ${RELEASE_VER} with the release (e.g. 2.0.0) and ${NEW_DEV_VER} with dev version (e.g. 2.0.1-SNAPSHOT) in the following commands and run them. Press
 enter when prompted for SCM
@@ -67,18 +67,14 @@ __Note:__ If the release fails during _release:prepare_ a rollback should be per
 After successfully running the commands check that the release is present in the [sonatype staging repository](https://oss.sonatype.org/#stagingRepositories).
 Then press Close in the sonatype ui. Sonatype will then run a number of checks and if these succeed press the Release button.
 
+### Upload the release
+
 [Create a release on Github](https://github.com/INTO-CPS-Association/maestro/tags) from the newly created tag and include both the Maestro jar and the Maestro Web API jar.
 In the release description note significant changes and the jars MD5 checksums.
 Now go to the master branch, merge with the newly created tag, and push. REMEMBER TO GO BACK TO DEVELOPMENT BRANCH!
 
-## Upload the release
-
-remember to create github release from the released tag and
-upload: `target/checkout/webapi/target/webapi-2.0.0-SNAPSHOT.jar` and
-`target/checkout/maestro/target/maestro-2.0.0-SNAPSHOT-jar-with-dependencies.jar`.
-
-Furthermore, remember to update the download.json file in the development branch of INTO-CPS/github.io with both files
-above. The file webapi should be the new coe.jar
+Furthermore, remember to update the [download.json](https://github.com/INTO-CPS-Association/INTO-CPS-Association.github.io/tree/development/download) file in the development branch of INTO-CPS-Association/INTO-CPS-Association.github.io.
+The item "maestro2" should be updated with the new version number, releasepage, url and md5sum. The url should point to the Maestro Web API jar.
 
 ## Building the documentation
 
