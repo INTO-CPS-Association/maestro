@@ -91,7 +91,7 @@ class MasterModelMapper {
                                                             fmuInstanceName
                                                         )
                                                     ) &&
-                                                    portReactivity.value
+                                                    portReactivity.value == Reactivity.reactive()
                                         }) Reactivity.reactive() else Reactivity.delayed())
                                 }
 

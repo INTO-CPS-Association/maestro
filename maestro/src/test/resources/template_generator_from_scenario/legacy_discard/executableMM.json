@@ -25,7 +25,7 @@
     "logLevels": null,
     "scenarioVerifier": {
       "reactivity": {
-        "{Controller}.cont.level": false
+        "{Controller}.cont.level": "Delayed"
       },
       "verification": false,
       "traceVisualization": false
