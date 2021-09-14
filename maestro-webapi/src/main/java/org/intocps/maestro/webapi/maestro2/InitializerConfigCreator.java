@@ -22,7 +22,6 @@ public class InitializerConfigCreator {
         maestroInitializationJsonNode.parameters = legacyInitializationData.getParameters();
         JsonNode configuration = mapper.valueToTree(maestroInitializationJsonNode);
         initializerConfiguration.configuration = configuration;
-        System.out.println(configuration.toString());
 
         PluginFactory.PluginConfiguration initPluginConfig = new PluginFactory.PluginConfiguration();
         PluginIdentification initPluginID = new PluginIdentification();

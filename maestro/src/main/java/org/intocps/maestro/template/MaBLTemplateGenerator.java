@@ -7,7 +7,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
@@ -356,11 +355,7 @@ public class MaBLTemplateGenerator {
         unit.setFrameworkConfigs(Arrays.asList(
                 new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
-        try {
-            System.out.println(org.intocps.maestro.ast.display.PrettyPrinter.print(unit));
-        } catch (AnalysisException e) {
-            e.printStackTrace();
-        }
+
         return unit;
     }
 
