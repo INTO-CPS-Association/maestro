@@ -42,8 +42,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
             return true;
 
         } catch (Exception e) {
-            logger.error("An exception occurred during Fmi2FmUValidator: ", e);
-            return false;
+            throw new RuntimeException("An exception occurred during validate in Fmi2FmUValidator", e);
         }
     }
 }
