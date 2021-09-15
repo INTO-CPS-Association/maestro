@@ -17,8 +17,9 @@ public class Fmi2FmuValidator implements IFmuValidator {
 
     /**
      * returns true if validation could be performed. I.e. true does NOT indicate that no errors were found.
-     * @param id validation id.
-     * @param path fmu path.
+     *
+     * @param id       validation id.
+     * @param path     fmu path.
      * @param reporter error reporter.
      * @return indication if validation could be performed.
      */
@@ -32,7 +33,6 @@ public class Fmi2FmuValidator implements IFmuValidator {
 
             onFailErrors.forEach(onFailError -> {
                 reporter.warning(onFailError.errno, onFailError.message, new LexToken(path + File.separator + "modelDescription" + ".xml", 0, 0));
-                logger.warn(onFailError.toString());
             });
 
             return true;
