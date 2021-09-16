@@ -2,6 +2,8 @@ package org.intocps.maestro.webapi.maestro2;
 
 import api.TraceResult;
 import api.VerificationAPI;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import core.*;
 import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -45,11 +47,11 @@ public class Maestro2ScenarioController {
     }
 
     @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public MasterMultiModelDTO generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
+            produces = MediaType.TEXT_PLAIN_VALUE)
+    public String generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
         // MaxPossibleStepSize is related to verification in Uppaal.
         MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
-        return new MasterMultiModelDTO(ScenarioConfGenerator.generate(masterModel, masterModel.name()), multiModel);
+        return ScenarioConfGenerator.generate(masterModel, masterModel.name());
     }
 
     @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
