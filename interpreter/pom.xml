@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.7</version>
+        <version>2.1.8-SNAPSHOT</version>
     </parent>
 
     <artifactId>interpreter</artifactId>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>ast</artifactId>
-            <version>2.1.7</version>
+            <version>2.1.8-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
 
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
             <artifactId>api</artifactId>
-            <version>2.1.7</version>
+            <version>2.1.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
@@ -78,13 +78,13 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>typechecker</artifactId>
-            <version>2.1.7</version>
+            <version>2.1.8-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>parser</artifactId>
-            <version>2.1.7</version>
+            <version>2.1.8-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -95,7 +95,7 @@
         <dependency>
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>fmi2</artifactId>
-            <version>2.1.7</version>
+            <version>2.1.8-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
