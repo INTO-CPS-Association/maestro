@@ -5,7 +5,7 @@
 
     <groupId>org.into-cps.maestro</groupId>
     <artifactId>root</artifactId>
-    <version>2.1.7-SNAPSHOT</version>
+    <version>2.1.8-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Maestro Root</name>
 
@@ -39,6 +39,11 @@
             <id>overture.au.dk</id>
             <name>overture.au.dk-releases</name>
             <url>https://overture.au.dk/artifactory/into-cps</url>
+        </repository>
+        <repository>
+            <id>vdmj</id>
+            <name>overture.au.dk-vdmj</name>
+            <url>https://overture.au.dk/artifactory/vdmj</url>
         </repository>
 
     </repositories>
