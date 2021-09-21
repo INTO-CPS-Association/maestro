@@ -130,12 +130,11 @@ public class JacobianFixedStep {
                                             newABoolLiteralExp(false)),
 
                                     newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
-                                            Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp("doStep failed for %d - status code "),
+                                            Arrays.asList(newAIntLiteralExp(4),
+                                                    newAStringLiteralExp("doStep failed with status %d for component " + "index %d"),
                                                     newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
-                                                            Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))))))
-
-
-                                    , new AErrorStm())), null),
+                                                            Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
+                                                    newAIdentifierExp((LexIdentifier) compIndexVar.clone())))))), null),
 
 
                             newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()),
@@ -186,13 +185,15 @@ public class JacobianFixedStep {
                                                                                     Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
                                                                             newAIntLiteralExp(FMI_FATAL)))),
 
-                                                                    newExpressionStm(newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
-                                                                            Arrays.asList(newAIntLiteralExp(4),
-                                                                                    newAStringLiteralExp("doStep failed for %d - status code "),
-                                                                                    newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
-                                                                                            Arrays.asList(newAIdentifierExp(
-                                                                                                    (LexIdentifier) compIndexVar.clone())))))),
-                                                                    null)), newIf(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                                    newABlockStm(newExpressionStm(
+                                                                                    newACallExp(newAIdentifierExp("logger"), newAIdentifier("log"),
+                                                                                            Arrays.asList(newAIntLiteralExp(4), newAStringLiteralExp(
+                                                                                                            "doStep failed for %d - status code "),
+                                                                                                    newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
+                                                                                                            Arrays.asList(newAIdentifierExp(
+                                                                                                                    (LexIdentifier) compIndexVar.clone())))))),
+                                                                            new AErrorStm(new AStringLiteralExp("do step failed"))), null)),
+                                                    newIf(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
                                                                     Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
                                                             newAIntLiteralExp(FMI_DISCARD)), newABlockStm(newExpressionStm(
                                                                     simLog(LogUtil.SimLogLevel.DEBUG, "Instance discarding %d",
@@ -205,7 +206,7 @@ public class JacobianFixedStep {
 
                                                     , newAAssignmentStm(
                                                             newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
-                                                            newABoolLiteralExp(false)), new AErrorStm())), null),
+                                                            newABoolLiteralExp(false)))), null),
 
 
                                     newAAssignmentStm(newAIdentifierStateDesignator((LexIdentifier) compIndexVar.clone()),
@@ -231,18 +232,16 @@ public class JacobianFixedStep {
 
                                             }, newAIdentifierExp(fixedStepStatus), newAIntLiteralExp(componentNames.size()), (index, comp) -> {
 
-                                                return Arrays.asList(newIf(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
-                                                                Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
+                                                return Arrays.asList(newIf(newEqual(
+                                                        newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(index.clone())),
                                                         newAIntLiteralExp(FMI_DISCARD)), newABlockStm(Arrays.asList(
 
                                                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recovering)),
                                                                 newABoolLiteralExp(true)),
 
                                                         newAAssignmentStm(newAArayStateDesignator(
-                                                                        newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)),
-                                                                        newAIdentifierExp((LexIdentifier) compIndexVar.clone())),
-                                                                call(arrayGet(componentsIdentifier,
-                                                                                newAIdentifierExp((LexIdentifier) compIndexVar.clone())), "getRealStatus",
+                                                                        newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)), index.clone()),
+                                                                call(arrayGet(componentsIdentifier, index.clone()), "getRealStatus",
                                                                         newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
                                                                         newARefExp(newAIdentifierExp("fix_recover_real_status")))),
                                                         newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
