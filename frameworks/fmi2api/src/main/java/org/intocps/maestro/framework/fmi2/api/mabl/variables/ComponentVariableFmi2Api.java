@@ -1333,7 +1333,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                         .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
             }
 
-            thenScope.add(new AErrorStm(newAStringLiteralExp("Failed to load instance " + instance.getName())));
+            thenScope.add(new AErrorStm(newAStringLiteralExp("Failed to '" + method + "' on '" + instance.getName() + "'")));
             thenScope.leave();
         }
 
