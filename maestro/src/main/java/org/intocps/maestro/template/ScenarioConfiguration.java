@@ -1,5 +1,6 @@
 package org.intocps.maestro.template;
 
+import core.MasterModel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -9,16 +10,16 @@ import java.util.Map;
 
 public class ScenarioConfiguration {
     private final Fmi2SimulationEnvironment simulationEnvironment;
-    private final String masterModelAsString;
+    private final MasterModel masterModel;
     private final Map<String, Object> parameters;
     private final ExecutionParameters executionParameters;
     private final Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
 
-    public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, String masterModelAsString, Map<String, Object> parameters,
+    public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, MasterModel masterModel, Map<String, Object> parameters,
             Double convergenceRelativeTolerance, Double convergenceAbsoluteTolerance, Integer convergenceAttempts, Double startTime, Double endTime,
             Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig) {
         this.simulationEnvironment = simulationEnvironment;
-        this.masterModelAsString = masterModelAsString;
+        this.masterModel = masterModel;
         this.parameters = parameters;
         this.frameworkConfig = frameworkConfig;
         executionParameters =
@@ -34,8 +35,8 @@ public class ScenarioConfiguration {
         return frameworkConfig;
     }
 
-    public String getMasterModelAsString() {
-        return masterModelAsString;
+    public MasterModel getMasterModel() {
+        return masterModel;
     }
 
     public Map<String, Object> getParameters() {

@@ -21,6 +21,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
+import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
@@ -59,15 +60,14 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, String masterModelAsString,
+    public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, MasterModel masterModel,
             org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters,
             File csvOutputFile) throws Exception {
-
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = extendedMultiModel.getFmus();
         simulationConfiguration.connections = extendedMultiModel.getConnections();
+
         if(simulationConfiguration.connections.isEmpty()){
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
             List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
@@ -90,9 +90,10 @@ public class Maestro2Broker {
 
             simulationConfiguration.connections = connectionsMap;
         }
+
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration =
-                new ScenarioConfiguration(simulationEnvironment, masterModelAsString, extendedMultiModel.getParameters(),
+                new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
                         executionParameters.getConvergenceRelativeTolerance(),
                         executionParameters.getConvergenceAbsoluteTolerance(),
                         executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(),

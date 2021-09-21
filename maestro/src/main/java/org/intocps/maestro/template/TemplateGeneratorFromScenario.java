@@ -15,6 +15,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.ScenarioVerifier;
 import org.intocps.maestro.plugin.ScenarioVerifierConfig;
 import scala.jdk.javaapi.CollectionConverters;
+import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import java.io.ByteArrayInputStream;
 import java.util.*;
@@ -39,7 +40,7 @@ public class TemplateGeneratorFromScenario {
         // but is currently expected to be expressed as: "<fmu-name>_<instance_name>".
         // This is not optimal and should be changed to the same format.
 
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.getMasterModelAsString().getBytes()));
+        MasterModel masterModel = configuration.getMasterModel();
 
         // Generate MaBL spec
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
@@ -78,7 +79,7 @@ public class TemplateGeneratorFromScenario {
 
         // Setup and add scenario verifier config
         ScenarioVerifierConfig expansionConfig = new ScenarioVerifierConfig();
-        expansionConfig.masterModel = configuration.getMasterModelAsString();
+        expansionConfig.masterModel = ScenarioConfGenerator.generate(masterModel, masterModel.name());
         expansionConfig.parameters = configuration.getParameters();
         expansionConfig.relTol = configuration.getExecutionParameters().getConvergenceRelativeTolerance();
         expansionConfig.absTol = configuration.getExecutionParameters().getConvergenceAbsoluteTolerance();

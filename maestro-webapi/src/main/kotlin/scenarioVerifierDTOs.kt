@@ -12,13 +12,8 @@ data class ExecutionParameters(
     @JsonProperty("stepSize") val stepSize: Double
 )
 
-data class MasterMultiModelDTO(
-    @JsonProperty("masterModel") val masterModel: String,
-    @JsonProperty("multiModel") val multiModel: ExtendedMultiModel
-)
-
 data class ExecutableMasterAndMultiModelTDO(
-    @JsonProperty("masterModel") val masterModel: String,
+    @JsonProperty("masterModel") var masterModel: String,
     @JsonProperty("multiModel") val multiModel: ExtendedMultiModel,
     @JsonProperty("executionParameters") val executionParameters: ExecutionParameters
 )

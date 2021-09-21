@@ -35,14 +35,9 @@ public class ExtendedMultiModel extends MultiModel {
         @JsonProperty("verification")
         public final boolean verification;
 
-        @JsonProperty("traceVisualization")
-        public final boolean traceVisualization;
-
-        public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Reactivity> reactivity, @JsonProperty("verification") boolean verification,
-                @JsonProperty("visualization") boolean visualization) {
+        public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Reactivity> reactivity, @JsonProperty("verification") boolean verification) {
             this.reactivity = reactivity;
             this.verification = verification;
-            this.traceVisualization = visualization;
         }
 
         public enum Reactivity{

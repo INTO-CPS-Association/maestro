@@ -2,16 +2,14 @@ package org.intocps.maestro.webapi.maestro2;
 
 import api.TraceResult;
 import api.VerificationAPI;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import core.*;
+import core.MasterModel;
+import core.ScenarioLoader;
 import org.apache.commons.io.FileUtils;
+import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
-import org.intocps.maestro.webapi.dto.MasterMultiModelDTO;
-import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.webapi.dto.VerificationDTO;
 import org.intocps.maestro.webapi.util.Files;
 import org.intocps.maestro.webapi.util.ZipDirectory;
@@ -26,7 +24,9 @@ import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.zip.ZipOutputStream;
 
@@ -85,18 +85,24 @@ public class Maestro2ScenarioController {
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public void executeAlgorithm(@RequestBody ExecutableMasterAndMultiModelTDO executableModel, HttpServletResponse response) throws Exception {
 
-        // Only verify the algorithm if the verification flag is set.
-        if (executableModel.getMultiModel().scenarioVerifier.verification &&
-                !verifyAlgorithm(executableModel.getMasterModel()).getVerifiedSuccessfully()) {
-            throw new Exception("Algorithm did not verify successfully - unable to execute it");
+        if (executableModel.getMultiModel().getFmus() == null || executableModel.getMultiModel().getFmus().isEmpty()) {
+            throw new IllegalArgumentException("Missing FMUs in multi model");
         }
 
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = executableModel.getMultiModel().getFmus();
-        simulationConfiguration.connections = executableModel.getMultiModel().getConnections();
 
-        if (simulationConfiguration.fmus == null) {
-            throw new IllegalArgumentException("Missing FMUs in multi model");
+        MasterModel masterModel;
+        if(executableModel.getMasterModel().equals("")){
+            masterModel = MasterModelMapper.Companion.multiModelToMasterModel(executableModel.getMultiModel(), 3);
+        }
+        else {
+            masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+        }
+
+        // Only verify the algorithm if the verification flag is set.
+        if(executableModel.getMultiModel().scenarioVerifier.verification){
+            if(!VerificationAPI.verifyAlgorithm(masterModel)) {
+                throw new Exception("Algorithm did not verify successfully - unable to execute it");
+            }
         }
 
         File zipDir = Files.createTempDir();
@@ -104,7 +110,7 @@ public class Maestro2ScenarioController {
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
 
-            broker.buildAndRunMasterModel(executableModel.getMultiModel(), executableModel.getMasterModel(), executableModel.getExecutionParameters(),
+            broker.buildAndRunMasterModel(executableModel.getMultiModel(), masterModel, executableModel.getExecutionParameters(),
                     new File(zipDir, "outputs.csv"));
 
             if (reporter.getErrorCount() > 0) {
