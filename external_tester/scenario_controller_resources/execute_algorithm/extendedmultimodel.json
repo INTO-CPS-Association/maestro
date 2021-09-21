@@ -13,7 +13,6 @@
         "reactivity": {
             "{Controller}.cont.level": "Delayed"
         },
-        "verification": false,
-        "traceVisualization": false
+        "verification": false
     }
 }

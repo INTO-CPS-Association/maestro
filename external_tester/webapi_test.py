@@ -171,28 +171,30 @@ def testScenarioController(basicUrl):
     gamm_resourcesPath = os.path.join(baseResourcePath, "generate_from_multi_model")
 
     # Set FMU path to be a relative path
-    config = json.load(open(os.path.join(gamm_resourcesPath, "multimodel.json")))
-    expectedJson = json.load(open(os.path.join(gamm_resourcesPath, "expectedResult.json")))
+    multiModel = json.load(open(os.path.join(gamm_resourcesPath, "multimodel.json")))
     relativeFMUPathUri = pathlib.Path(os.path.abspath(os.path.join(gamm_resourcesPath, "rollback-test.fmu"))).as_uri()
     relativeControllerPathUri = pathlib.Path(os.path.abspath(os.path.join(gamm_resourcesPath, "rollback-end.fmu"))).as_uri()
-    expectedJson["multiModel"]["fmus"]["{FMU}"]=relativeFMUPathUri
-    expectedJson["multiModel"]["fmus"]["{Controller}"]=relativeControllerPathUri
-    config["fmus"]["{FMU}"]=relativeFMUPathUri
-    config["fmus"]["{Controller}"]=relativeControllerPathUri
+    multiModel["fmus"]["{FMU}"]=relativeFMUPathUri
+    multiModel["fmus"]["{Controller}"]=relativeControllerPathUri
 
-    response = requests.post(f"{basicUrl}/generateAlgorithmFromMultiModel", json=config)
+    response = requests.post(f"{basicUrl}/generateAlgorithmFromMultiModel", json=multiModel)
     testutils.ensureResponseOk(response)
-    actualJson = response.json()
+    actualMasterModel = response.content.decode('utf-8')
 
-    if(not actualJson == expectedJson):
-        print("ERROR: actual and expected json do not match")
-        print("Actual json:")
-        print(json.dumps(actualJson, indent=2))
-        print("Expected json:")
-        print(json.dumps(expectedJson, indent=2))
-        raise Exception("Actual json returned does not match the expected json")
+    with open(os.path.join(gamm_resourcesPath, "expectedMasterModel.txt")) as f:
+        expectedMasterModel = f.read()
+
+    expectedMasterModel = bytes(expectedMasterModel, "utf-8").decode("unicode_escape")
+
+    if(not actualMasterModel == expectedMasterModel):
+        print("ERROR: actual and expected master model do not match")
+        print("Actual:")
+        print(json.dumps(actualMasterModel, indent=2))
+        print("Expected:")
+        print(json.dumps(expectedMasterModel, indent=2))
+        raise Exception("Returned master model does not match the expected master model")
     else:
-        print("Actual json returned matches the expected json")
+        print("Actual master model matches the expected master model")
 
     #Test execute algorithm
     testutils.printSection("EXECUTE ALGORITHM")
