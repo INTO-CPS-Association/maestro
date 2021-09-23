@@ -74,6 +74,13 @@ public class BuilderTest {
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         tank.setupExperiment(0d, 10d, null);
+        controller.setupExperiment(0d, 10d, null);
+
+        controller.enterInitializationMode();
+        tank.enterInitializationMode();
+
+        controller.exitInitializationMode();
+        tank.exitInitializationMode();
  /*
         IMablScope scope1 = dynamicScope.getActiveScope();
         for (int i = 0; i < 4; i++) {
@@ -93,11 +100,13 @@ public class BuilderTest {
 
         controller.getAndShare("valve");
         controller.getAndShare();
+
         tank.setLinked();
-        // tank.set();
+        //        tank.set();
         Fmi2Builder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
+        Fmi2Builder.DoubleVariable<PStm> current_time_point = dynamicScope.store(0.0);
         Fmi2Builder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
-        tank.step(var, step);
+        tank.step(current_time_point, step);
         //Fmi2Builder.StateVariable<PStm> s = tank.getState();
 
         logger.warn("Something is wrong %f -- %f. Fmu %s, Instance %s", 1.3, step, controllerFMU, controller);

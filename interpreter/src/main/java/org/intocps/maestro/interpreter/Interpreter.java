@@ -342,6 +342,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             node.getBody().apply(this, question);
         } catch (ErrorException e) {
             logger.info("Error in simulation: " + e.getMessage());
+            logger.info("Continuing with finally");
+            node.getFinally().apply(this, question);
+            throw e;
         }
         node.getFinally().apply(this, question);
         return new VoidValue();
@@ -349,7 +352,18 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAErrorStm(AErrorStm node, Context question) throws AnalysisException {
-        throw new ErrorException(node.getExp() == null ? "" : node.getExp().apply(this, question) + "");
+
+        String message = "";
+        if (node.getExp() != null) {
+            Value msg = node.getExp().apply(this, question).deref();
+            if (msg instanceof StringValue) {
+                message = ((StringValue) msg).getValue();
+            } else {
+                message = msg.toString();
+            }
+        }
+
+        throw new ErrorException(message);
     }
 
     @Override
