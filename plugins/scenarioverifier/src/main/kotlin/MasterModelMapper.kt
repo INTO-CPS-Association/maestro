@@ -11,19 +11,19 @@ import scala.jdk.javaapi.CollectionConverters
 class MasterModelMapper {
     companion object {
 
-        private const val INSTANCE_DELIMITER = "_"
+        private const val MASTER_MODEL_INSTANCE_DELIMITER = "_"
 
         private fun getFmuNameFromFmuInstanceName(name: String): String {
-            return name.split(INSTANCE_DELIMITER)[0]
+            return name.split(MASTER_MODEL_INSTANCE_DELIMITER)[0]
         }
 
         private fun getInstanceNameFromFmuInstanceName(name: String): String {
-            return name.split(INSTANCE_DELIMITER)[1]
+            return name.split(MASTER_MODEL_INSTANCE_DELIMITER)[1]
         }
 
         private fun multiModelConnectionNameToMasterModelInstanceName(multiModelName: String): String {
             val multiModelNameSplit = multiModelName.split(".")
-            return multiModelNameSplit[0].replace("[{}]".toRegex(), "").plus(INSTANCE_DELIMITER)
+            return multiModelNameSplit[0].replace("[{}]".toRegex(), "").plus(MASTER_MODEL_INSTANCE_DELIMITER)
                 .plus(multiModelNameSplit[1])
         }
 
@@ -61,49 +61,45 @@ class MasterModelMapper {
                 if (this.fmus == null) throw Exception("Missing FMUs from multi-model")
             }
 
-            val fmuInstanceNamesFromConnections = connectionModelList.map { connectionModel ->
+            // Map fmus to fmu models
+            val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
+            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
+            val fmuInstanceNames = connectionModelList.map { connectionModel ->
                 listOf(
                     connectionModel.srcPort().fmu(),
                     connectionModel.trgPort().fmu()
                 )
             }.flatten().distinct()
-
-
-            // Map fmus to fmu models
-            val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
-            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
-            val fmuNameToFmuModel = fmuInstanceNamesFromConnections.mapNotNull { fmuInstanceName ->
+            val fmuNameToFmuModel = fmuInstanceNames.mapNotNull { fmuInstanceName ->
                 fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
                     ?.let { fmuWithMD ->
                         val scalarVariables = fmuWithMD.value.scalarVariables
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
-                                .associate { port ->
-                                    port.getName() to InputPortModel(if (extendedMultiModel.scenarioVerifier.reactivity.any { portReactivity ->
-                                            portReactivity.key.contains(port.getName()) &&
-                                                    portReactivity.key.contains(
-                                                        getFmuNameFromFmuInstanceName(
-                                                            fmuInstanceName
-                                                        )
-                                                    ) &&
-                                                    portReactivity.key.contains(
-                                                        getInstanceNameFromFmuInstanceName(
-                                                            fmuInstanceName
-                                                        )
-                                                    ) &&
-                                                    portReactivity.value == Reactivity.reactive()
+                                .associate { inputPort ->
+                                    inputPort.getName() to InputPortModel(if (extendedMultiModel.scenarioVerifier.reactivity.any { portReactivity ->
+                                            portReactivity.key.contains(inputPort.getName()) &&
+                                            portReactivity.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) &&
+                                            portReactivity.key.contains(getInstanceNameFromFmuInstanceName(fmuInstanceName)) &&
+                                            portReactivity.value == ExtendedMultiModel.ScenarioVerifier.Reactivity.Reactive
                                         }) Reactivity.reactive() else Reactivity.delayed())
                                 }
 
                         val outputs =
-                            scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Output) }
-                                .associate { port ->
-                                    val dependencies = port.outputDependencies.map { entry -> entry.key.getName() }
-                                    port.getName() to OutputPortModel(
-                                        CollectionConverters.asScala(dependencies).toList(),
-                                        CollectionConverters.asScala(dependencies).toList()
-                                    )
-                                }
+                            scalarVariables.filter { port ->
+                                port.causality.equals(Fmi2ModelDescription.Causality.Output) && connectionModelList.find { connectionModel ->
+                                    connectionModel.srcPort().fmu().equals(fmuInstanceName) && connectionModel.srcPort()
+                                        .port().equals(port.getName())
+                                } != null
+                            }.associate { outputPort ->
+                                val dependencies =
+                                    outputPort.outputDependencies.map { entry -> entry.key.getName() }
+                                // This might need to change later
+                                outputPort.getName() to OutputPortModel(
+                                    CollectionConverters.asScala(dependencies).toList(),
+                                    CollectionConverters.asScala(dependencies).toList()
+                                )
+                            }
 
                         fmuInstanceName to FmuModel(
                             scala.collection.immutable.Map.from(

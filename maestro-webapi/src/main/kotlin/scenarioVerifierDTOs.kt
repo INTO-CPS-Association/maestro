@@ -20,5 +20,6 @@ data class ExecutableMasterAndMultiModelTDO(
 
 data class VerificationDTO(
     @JsonProperty("verifiedSuccessfully") val verifiedSuccessfully: Boolean,
+    @JsonProperty("uppaalModel") val uppaalModel: String,
     @JsonProperty("errorMessage") val errorMessage: String
 )
