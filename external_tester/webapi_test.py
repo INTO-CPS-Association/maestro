@@ -224,7 +224,7 @@ def testScenarioController(basicUrl):
     if not testutils.compareCSV(expectedCSVFilePath, actualCSVFilePath):
         raise Exception("CSV files did not match!")
 
-port = 0
+port = 8082
 parser = argparse.ArgumentParser(prog='Example of Maestro Master Web Interface', usage='%(prog)s [options]')
 parser.add_argument('--path', type=str, default=None, help="Path to the Maestro Web API jar (Can be relative path)")
 parser.add_argument('--port', help='Maestro connection port')

@@ -116,7 +116,7 @@ public class Maestro2ScenarioController {
         }
 
         // Only verify the algorithm if the verification flag is set.
-        if (executableModel.getMultiModel().scenarioVerifier.verification) {
+        if (executableModel.getMultiModel().sigver.verification) {
             if (!VerificationAPI.verifyAlgorithm(masterModel)) {
                 throw new Exception("Algorithm did not verify successfully - unable to execute it");
             }

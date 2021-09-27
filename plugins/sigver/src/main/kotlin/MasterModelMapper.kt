@@ -77,11 +77,11 @@ class MasterModelMapper {
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
                                 .associate { inputPort ->
-                                    inputPort.getName() to InputPortModel(if (extendedMultiModel.scenarioVerifier.reactivity.any { portReactivity ->
+                                    inputPort.getName() to InputPortModel(if (extendedMultiModel.sigver.reactivity.any { portReactivity ->
                                             portReactivity.key.contains(inputPort.getName()) &&
                                             portReactivity.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) &&
                                             portReactivity.key.contains(getInstanceNameFromFmuInstanceName(fmuInstanceName)) &&
-                                            portReactivity.value == ExtendedMultiModel.ScenarioVerifier.Reactivity.Reactive
+                                            portReactivity.value == ExtendedMultiModel.Sigver.Reactivity.Reactive
                                         }) Reactivity.reactive() else Reactivity.delayed())
                                 }
 

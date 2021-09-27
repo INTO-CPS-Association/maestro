@@ -9,7 +9,7 @@
     ]
     },
     "parameters": {},
-    "scenarioVerifier": {
+    "sigver": {
         "reactivity": {
             "{Controller}.cont.level": "Delayed"
         },

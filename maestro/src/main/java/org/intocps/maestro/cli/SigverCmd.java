@@ -28,11 +28,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "scenario-verifier",
+@CommandLine.Command(name = "sigver",
         description = "Utilise the scenario verifier tool to generate and verify algorithms. It is also possible to execute scenarios and extended multi-models.",
         mixinStandardHelpOptions = true,
         subcommands = {ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class, VisualizeTracesCmd.class, VerifyAlgorithmCmd.class})
-public class ScenarioVerifierCmd {
+public class SigverCmd {
 }
 
 @CommandLine.Command(name = "visualize-traces", description = "Visualizes traces for an algorithm that cannot be verified successfully.",

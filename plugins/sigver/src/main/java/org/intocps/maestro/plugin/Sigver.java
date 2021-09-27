@@ -36,11 +36,11 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
+public class Sigver extends BasicMaestroExpansionPlugin {
     public static final String MASTER_MODEL_FMU_INSTANCE_DELIMITER = "_";
     public static final String MULTI_MODEL_FMU_INSTANCE_DELIMITER = ".";
     public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
-    final static Logger logger = LoggerFactory.getLogger(ScenarioVerifier.class);
+    final static Logger logger = LoggerFactory.getLogger(Sigver.class);
     private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
@@ -94,7 +94,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         DoubleVariableFmi2Api startTime = (DoubleVariableFmi2Api) formalArguments.get(2);
         DoubleVariableFmi2Api endTime = (DoubleVariableFmi2Api) formalArguments.get(3);
 
-        ScenarioVerifierConfig configuration = (ScenarioVerifierConfig) config;
+        SigverConfig configuration = (SigverConfig) config;
         relTol = configuration.relTol;
         absTol = configuration.absTol;
         convAtt = configuration.convergenceAttempts;
@@ -186,7 +186,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return (new ObjectMapper().readValue(is, ScenarioVerifierConfig.class));
+        return (new ObjectMapper().readValue(is, SigverConfig.class));
     }
 
     @Override

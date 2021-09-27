@@ -73,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.plugins</groupId>
-            <artifactId>scenarioverifier</artifactId>
+            <artifactId>sigver</artifactId>
             <version>2.1.8-SNAPSHOT</version>
         </dependency>
         <dependency>

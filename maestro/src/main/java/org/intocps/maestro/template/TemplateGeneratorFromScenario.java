@@ -2,7 +2,6 @@ package org.intocps.maestro.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import core.MasterModel;
-import core.ScenarioLoader;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -12,12 +11,11 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.plugin.ScenarioVerifier;
-import org.intocps.maestro.plugin.ScenarioVerifierConfig;
+import org.intocps.maestro.plugin.Sigver;
+import org.intocps.maestro.plugin.SigverConfig;
 import scala.jdk.javaapi.CollectionConverters;
 import synthesizer.ConfParser.ScenarioConfGenerator;
 
-import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +27,7 @@ public class TemplateGeneratorFromScenario {
     private static final String END_TIME_NAME = "end_time";
     private static final String STEP_SIZE_NAME = "step_size";
     private static final String SCENARIO_MODEL_FMU_INSTANCE_DELIMITER = "_";
-    private static final String SCENARIOVERIFIER_EXPANSION_MODULE_NAME = "ScenarioVerifier";
+    private static final String SIGVER_EXPANSION_MODULE_NAME = "Sigver";
     private static final String FRAMEWORK_MODULE_NAME = "FMI2";
     private static final String COMPONENTS_ARRAY_NAME = "components";
 
@@ -67,7 +65,7 @@ public class TemplateGeneratorFromScenario {
                     if (fmuFromScenario.isEmpty()) {
                         throw new RuntimeException("Unable to match fmu from multi model with fmu from master model");
                     }
-                    String instanceNameInEnvironment = entry.getKey().split(ScenarioVerifier.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
+                    String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
                     return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
                 }));
 
@@ -78,7 +76,7 @@ public class TemplateGeneratorFromScenario {
         dynamicScope.storeInArray(COMPONENTS_ARRAY_NAME, fmuInstances.values().toArray(new ComponentVariableFmi2Api[0]));
 
         // Setup and add scenario verifier config
-        ScenarioVerifierConfig expansionConfig = new ScenarioVerifierConfig();
+        SigverConfig expansionConfig = new SigverConfig();
         expansionConfig.masterModel = ScenarioConfGenerator.generate(masterModel, masterModel.name());
         expansionConfig.parameters = configuration.getParameters();
         expansionConfig.relTol = configuration.getExecutionParameters().getConvergenceRelativeTolerance();
@@ -90,8 +88,8 @@ public class TemplateGeneratorFromScenario {
 
         // Add scenario verifier expansion plugin
         PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
-                newAIdentifierExp(MableAstFactory.newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME)),
-                MableAstFactory.newAIdentifier(ScenarioVerifier.EXECUTE_ALGORITHM_FUNCTION_NAME),
+                newAIdentifierExp(MableAstFactory.newAIdentifier(SIGVER_EXPANSION_MODULE_NAME)),
+                MableAstFactory.newAIdentifier(Sigver.EXECUTE_ALGORITHM_FUNCTION_NAME),
                 Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
                         aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
         dynamicScope.add(algorithmStm);
@@ -103,7 +101,7 @@ public class TemplateGeneratorFromScenario {
         ASimulationSpecificationCompilationUnit unit = builder.build();
 
         // Add imports
-        unit.setImports(List.of(newAIdentifier(SCENARIOVERIFIER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
+        unit.setImports(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));

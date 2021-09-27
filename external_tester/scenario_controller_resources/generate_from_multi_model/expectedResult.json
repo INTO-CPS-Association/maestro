@@ -23,7 +23,7 @@
         "overrideLogLevel": null,
         "environmentParameters": null,
         "logLevels": null,
-        "scenarioVerifier": {
+        "sigver": {
             "reactivity": {
                 "{Controller}.cont.level": "Delayed"
             },
