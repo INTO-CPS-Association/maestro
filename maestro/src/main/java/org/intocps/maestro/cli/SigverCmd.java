@@ -28,11 +28,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "scenario-verifier",
+@CommandLine.Command(name = "sigver",
         description = "Utilise the scenario verifier tool to generate and verify algorithms. It is also possible to execute scenarios and extended multi-models.",
         mixinStandardHelpOptions = true,
         subcommands = {ExecuteAlgorithmCmd.class, GenerateAlgorithmCmd.class, VisualizeTracesCmd.class, VerifyAlgorithmCmd.class})
-public class ScenarioVerifierCmd {
+public class SigverCmd {
 }
 
 @CommandLine.Command(name = "visualize-traces", description = "Visualizes traces for an algorithm that cannot be verified successfully.",
@@ -291,7 +291,12 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
     }
 
     private ScenarioConfiguration getConfigFromMultiModel(JsonNode multiModelNode, JsonNode execParamsNode, ObjectMapper jsonMapper,
-            IErrorReporter errorReporter, String masterModel) throws Exception {
+            IErrorReporter errorReporter, String masterModelAsString) throws Exception {
+
+        if(masterModelAsString.equals("")){
+            throw new RuntimeException("Cannot create configuration from empty master model");
+        }
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         // Set values from JSON
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
@@ -317,8 +322,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         if(simulationConfiguration.connections.isEmpty()){
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-            MasterModel masterModelObj = ScenarioLoader.load(new ByteArrayInputStream(masterModel.getBytes()));
-            List<ConnectionModel> connections = CollectionConverters.asJava(masterModelObj.scenario().connections());
+            List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
             Map<String, List<String>> connectionsMap = new HashMap<>();
             connections.forEach(connection -> {
                 String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");

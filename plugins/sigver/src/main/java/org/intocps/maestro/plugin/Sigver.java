@@ -36,11 +36,11 @@ import java.util.stream.Stream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
+public class Sigver extends BasicMaestroExpansionPlugin {
     public static final String MASTER_MODEL_FMU_INSTANCE_DELIMITER = "_";
     public static final String MULTI_MODEL_FMU_INSTANCE_DELIMITER = ".";
     public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
-    final static Logger logger = LoggerFactory.getLogger(ScenarioVerifier.class);
+    final static Logger logger = LoggerFactory.getLogger(Sigver.class);
     private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
@@ -94,7 +94,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
         DoubleVariableFmi2Api startTime = (DoubleVariableFmi2Api) formalArguments.get(2);
         DoubleVariableFmi2Api endTime = (DoubleVariableFmi2Api) formalArguments.get(3);
 
-        ScenarioVerifierConfig configuration = (ScenarioVerifierConfig) config;
+        SigverConfig configuration = (SigverConfig) config;
         relTol = configuration.relTol;
         absTol = configuration.absTol;
         convAtt = configuration.convergenceAttempts;
@@ -117,7 +117,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
             // use LinkedHashMap to preserve added order
             Map<String, ComponentVariableFmi2Api> fmuInstances =
                     ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream()
-                            .collect(Collectors.toMap(v -> v.getName(), Function.identity(), (u, v) -> u, LinkedHashMap::new));
+                            .collect(Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
 
             // Rename FMU instance-name keys to master model format: <fmu-name>_<instance-name>
             Set<String> fmuKeys = new HashSet<>(fmuInstances.keySet());
@@ -128,9 +128,6 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
                 fmuInstances.remove(key);
                 fmuInstances.put(newKey, fmuInstance);
             });
-
-            //TODO: This method just throws on any mismatch but it could potentially be handled using a settings flag instead.
-            modelDataMatches(masterModel, fmuInstances);
 
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
             if (masterModel.initialization().length() == 0) {
@@ -189,7 +186,7 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
 
     @Override
     public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return (new ObjectMapper().readValue(is, ScenarioVerifierConfig.class));
+        return (new ObjectMapper().readValue(is, SigverConfig.class));
     }
 
     @Override
@@ -212,38 +209,6 @@ public class ScenarioVerifier extends BasicMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.0.1";
-    }
-
-
-    private void modelDataMatches(MasterModel masterModel, Map<String, ComponentVariableFmi2Api> fmuInstances) {
-        Map<String, FmuModel> fmuInstancesInMasterModel = CollectionConverters.asJava(masterModel.scenario().fmus());
-
-        if (fmuInstancesInMasterModel.size() != fmuInstances.size()) {
-            throw new RuntimeException("The multi model and master model do not agree on the number of fmu instances.");
-        }
-
-        // Verify that fmu identifiers and fmu instance names matches and that reject step and get-set state agrees.
-        for (Map.Entry<String, ComponentVariableFmi2Api> fmuInstance : fmuInstances.entrySet()) {
-            boolean instanceMatch = false;
-            // Find a match between identifiers
-            for (String masterModelFmuInstanceIdentifier : fmuInstancesInMasterModel.keySet()) {
-                if (masterModelFmuInstanceIdentifier.contains(fmuInstance.getKey())) {
-                    try {
-                        if (fmuInstance.getValue().getModelDescription().getCanGetAndSetFmustate() !=
-                                fmuInstancesInMasterModel.get(masterModelFmuInstanceIdentifier).canRejectStep()) {
-                            throw new RuntimeException("The multi model and master model do not agree whether it is possible to reject a step");
-                        }
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException("Unable to access model description for fmu: " + fmuInstance.getKey());
-                    }
-                    instanceMatch = true;
-                    break;
-                }
-            }
-            if (!instanceMatch) {
-                throw new RuntimeException("The multi model and master model do not agree on instance identifiers");
-            }
-        }
     }
 
     private void setSEA(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {

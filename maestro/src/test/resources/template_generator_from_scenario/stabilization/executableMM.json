@@ -32,9 +32,9 @@
     },
     "scenarioVerifier": {
       "reactivity": {
-        "{m1}.mi1.fk": true,
-        "{m2}.mi2.x1": true,
-        "{m2}.mi2.v1": true
+        "{m1}.mi1.fk": "Reactive",
+        "{m2}.mi2.x1": "Reactive",
+        "{m2}.mi2.v1": "Reactive"
       },
       "verification": false,
       "traceVisualization": false

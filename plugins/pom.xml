@@ -25,6 +25,6 @@
         <module>verificationsuite</module>
         <module>initializer</module>
         <module>debuglogging</module>
-        <module>scenarioverifier</module>
+        <module>sigver</module>
     </modules>
 </project>

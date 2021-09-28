@@ -31,8 +31,8 @@
         "logLevels": null,
         "scenarioVerifier": {
             "reactivity": {
-                "{wt}.wtInstance.valvecontrol": false,
-                "{crtl}.crtlInstance.level": false
+                "{wt}.wtInstance.valvecontrol": "Delayed",
+                "{crtl}.crtlInstance.level": "Delayed"
             },
             "verification": false,
             "traceVisualization": false

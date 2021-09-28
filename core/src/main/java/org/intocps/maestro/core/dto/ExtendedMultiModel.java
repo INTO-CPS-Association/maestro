@@ -9,8 +9,8 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExtendedMultiModel extends MultiModel {
-    @JsonProperty("scenarioVerifier")
-    public final ScenarioVerifier scenarioVerifier;
+    @JsonProperty("sigver")
+    public final Sigver sigver;
 
     @JsonCreator
     public ExtendedMultiModel(@JsonProperty("fmus") Map<String, String> fmus,
@@ -22,27 +22,27 @@ public class ExtendedMultiModel extends MultiModel {
             @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters, @JsonProperty("logLevels") Map<String, List<String>> logLevels,
-            @JsonProperty("scenarioVerifier") ScenarioVerifier scenarioVerifier) {
+            @JsonProperty("sigver") Sigver sigver) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels);
-        this.scenarioVerifier = scenarioVerifier;
+        this.sigver = sigver;
     }
 
-    public static class ScenarioVerifier {
+    public static class Sigver {
         @JsonProperty("reactivity")
-        public final Map<String, Boolean> reactivity;
+        public final Map<String, Reactivity> reactivity;
 
         @JsonProperty("verification")
         public final boolean verification;
 
-        @JsonProperty("traceVisualization")
-        public final boolean traceVisualization;
-
-        public ScenarioVerifier(@JsonProperty("reactivity") Map<String, Boolean> reactivity, @JsonProperty("verification") boolean verification,
-                @JsonProperty("visualization") boolean visualization) {
+        public Sigver(@JsonProperty("reactivity") Map<String, Reactivity> reactivity, @JsonProperty("verification") boolean verification) {
             this.reactivity = reactivity;
             this.verification = verification;
-            this.traceVisualization = visualization;
+        }
+
+        public enum Reactivity{
+            Reactive,
+            Delayed
         }
     }
 }

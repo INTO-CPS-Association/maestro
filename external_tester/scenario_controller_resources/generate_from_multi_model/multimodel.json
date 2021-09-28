@@ -9,11 +9,10 @@
     ]
     },
     "parameters": {},
-    "scenarioVerifier": {
+    "sigver": {
         "reactivity": {
-            "{Controller}.cont.level": false
+            "{Controller}.cont.level": "Delayed"
         },
-        "verification": false,
-        "traceVisualization": false
+        "verification": false
     }
 }

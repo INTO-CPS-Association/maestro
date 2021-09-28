@@ -2,7 +2,7 @@ package org.intocps.maestro.plugin;
 
 import java.util.Map;
 
-public class ScenarioVerifierConfig implements IPluginConfiguration {
+public class SigverConfig implements IPluginConfiguration {
     public String masterModel;
     public Map<String, Object> parameters;
     public Double relTol;

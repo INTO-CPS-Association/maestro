@@ -3,6 +3,8 @@ package org.intocps.maestro;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import core.MasterModel;
+import core.ScenarioLoader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -19,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
@@ -69,7 +72,6 @@ public class TemplateGeneratorFromScenarioTest {
         simulationConfiguration.connections =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
                 });
-        String masterModel = executableMM.get("masterModel").textValue();
         Map<String, Object> parameters =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {
                 });
@@ -91,6 +93,8 @@ public class TemplateGeneratorFromScenarioTest {
         Double stepSize =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")), new TypeReference<>() {
                 });
+
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes()));
 
         // Setup scenarioConfiguration
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
