@@ -646,9 +646,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     @Override
     public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
-        Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName()) &&
-                (p.scalarVariable.causality == Fmi2ModelDescription.Causality.Output ||
-                        p.scalarVariable.causality == Fmi2ModelDescription.Causality.Parameter)).toArray(Fmi2Builder.Port[]::new);
+        Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new);
         return get(builder.getDynamicScope(), ports);
     }
 
