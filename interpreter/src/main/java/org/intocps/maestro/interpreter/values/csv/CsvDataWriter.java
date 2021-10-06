@@ -30,7 +30,7 @@ public class CsvDataWriter implements IDataListener {
         // Discover the headers of interest and store the index of these
         for (int i = 0; i < headers.size(); i++) {
             String header = headers.get(i);
-            if (filter == null || (filter != null && instance.headersOfInterest.contains(header))) {
+            if (filter == null || instance.headersOfInterest.contains(header)) {
                 instance.indicesOfInterest.add(i);
             }
         }

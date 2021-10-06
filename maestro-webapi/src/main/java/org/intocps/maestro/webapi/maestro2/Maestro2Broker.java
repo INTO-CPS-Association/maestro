@@ -61,14 +61,13 @@ public class Maestro2Broker {
     }
 
     public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, MasterModel masterModel,
-            org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters,
-            File csvOutputFile) throws Exception {
+            org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters, File csvOutputFile) throws Exception {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = extendedMultiModel.getFmus();
         simulationConfiguration.connections = extendedMultiModel.getConnections();
 
-        if(simulationConfiguration.connections.isEmpty()){
+        if (simulationConfiguration.connections.isEmpty()) {
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
             List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
             Map<String, List<String>> connectionsMap = new HashMap<>();
@@ -92,13 +91,10 @@ public class Maestro2Broker {
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration =
-                new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
-                        executionParameters.getConvergenceRelativeTolerance(),
-                        executionParameters.getConvergenceAbsoluteTolerance(),
-                        executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(),
-                        executionParameters.getEndTime(), executionParameters.getStepSize(),
-                        Pair.of(Framework.FMI2, simulationConfiguration));
+        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
+                executionParameters.getConvergenceRelativeTolerance(), executionParameters.getConvergenceAbsoluteTolerance(),
+                executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(), executionParameters.getEndTime(),
+                executionParameters.getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration));
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -110,13 +106,13 @@ public class Maestro2Broker {
             throw new Exception("Specification did not verify");
         }
 
-        List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
+        List<String> portsToLog = Stream.concat(simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
             return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
-        }).collect(Collectors.toList());
+        }), extendedMultiModel.getLogVariables() == null ? Stream.of() : extendedMultiModel.getLogVariables().entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-
-        executeInterpreter(null, connectedOutputs, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
+        executeInterpreter(null, portsToLog, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
