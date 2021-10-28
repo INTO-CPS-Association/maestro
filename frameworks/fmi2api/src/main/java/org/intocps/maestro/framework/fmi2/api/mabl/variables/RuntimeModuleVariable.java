@@ -38,7 +38,6 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
 
     @Override
     public void initialize(Fmi2Builder.RuntimeFunction... declaredFuncs) {
-
     }
 
     @Override

@@ -89,9 +89,9 @@ public class BuilderUtil {
             } else if (obj instanceof String) {
                 expressions.add(newAStringLiteralExp((String) obj));
             } else if (obj instanceof FmuVariableFmi2Api) {
-                expressions.add(newAStringLiteralExp(((FmuVariableFmi2Api) obj).getName()));
+                expressions.add(VariableUtil.getAsExp((VariableFmi2Api) obj));
             } else if (obj instanceof ComponentVariableFmi2Api) {
-                expressions.add(newAStringLiteralExp(((ComponentVariableFmi2Api) obj).getName()));
+                expressions.add(VariableUtil.getAsExp((VariableFmi2Api) obj));
             } else if (obj instanceof VariableFmi2Api) {
                 expressions.add(VariableUtil.getAsExp((VariableFmi2Api) obj));
             } else if (obj instanceof Object[]) {
