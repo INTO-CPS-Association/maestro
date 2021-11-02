@@ -429,6 +429,15 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable) {
+        String name = getName(namePrefix);
+        PStm var = newVariable(name, newARealNumericPrimitiveType(), variable.getReferenceExp());
+        add(var);
+        return new DoubleVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
+    @Override
     public ArrayVariableFmi2Api storeInArray(String namePrefix, VariableFmi2Api[] variables) {
         String name = getName(namePrefix);
         PType type = variables[0].getType();
@@ -493,8 +502,8 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             String varName = builder.getNameGenerator().getName(name);
             PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
             add(variableDeclaration);
-            return (Var) variable.clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName),
-                    newAIdentifierExp(varName));
+            return (Var) variable
+                    .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
         }
         throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass().getName());
     }

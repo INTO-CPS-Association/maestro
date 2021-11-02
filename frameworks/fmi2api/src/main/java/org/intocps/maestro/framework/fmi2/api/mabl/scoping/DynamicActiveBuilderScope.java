@@ -190,8 +190,13 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
-    public IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations) {
-        return activeScope.store(stabilisation_loop, stabilisation_loop_max_iterations);
+    public IntVariableFmi2Api store(String namePrefix, IntVariableFmi2Api variable) {
+        return activeScope.store(namePrefix, variable);
+    }
+
+    @Override
+    public DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable) {
+        return activeScope.store(namePrefix, variable);
     }
 
     @Override
