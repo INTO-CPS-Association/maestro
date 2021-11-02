@@ -3,7 +3,6 @@ package org.intocps.maestro.webapi.maestro2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import core.ConnectionModel;
 import core.MasterModel;
-import core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -11,9 +10,6 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.ExtendedMultiModel;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.core.dto.VarStepConstraint;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -21,10 +17,8 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
-import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
-import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
@@ -153,9 +147,9 @@ public class Maestro2Broker {
 
         // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
         Map<String, List<String>> removedFMUKeyFromLogLevels = body.getLogLevels() == null ? new HashMap<>() : body.getLogLevels().entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
-                        Map.Entry::getValue));
+                .collect(Collectors
+                        .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+                                Map.Entry::getValue));
 
         // Setup step config
         JacobianStepConfig config = new JacobianStepConfig();
@@ -199,8 +193,8 @@ public class Maestro2Broker {
 
 
         executeInterpreter(socket, Stream.concat(connectedOutputs.stream(),
-                        (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(
-                                initializeRequest.getLogVariables())).stream()).collect(Collectors.toList()),
+                (initializeRequest.getLogVariables() == null ? new Vector<String>() : flattenFmuIds.apply(initializeRequest.getLogVariables()))
+                        .stream()).collect(Collectors.toList()),
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
                 body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));

@@ -157,13 +157,8 @@ class Initializer : BasicMaestroExpansionPlugin {
                 booleanLogic,
                 math
             )
-
-//            val algorithm = builder.buildRaw() as SBlockStm
-//            algorithm.apply(ToParExp())
-//
-//
-//            algorithm.body
         } catch (e: Exception) {
+            errorReporter?.report(0, e.toString(), null);
             throw ExpandException("Internal error: ", e)
         }
 
@@ -289,76 +284,6 @@ class Initializer : BasicMaestroExpansionPlugin {
                 booleanLogic,
                 math
             );
-//
-//            // Create bindings
-//            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
-//
-//            this.config = config as InitializationConfig
-//
-//            this.modelParameters = config.modelParameters
-//            this.envParameters = config.envParameters
-//
-//            // Convergence related variables
-//            absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
-//            relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
-//            maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
-//
-//            logger.debug("Setup experiment for all components")
-//            fmuInstances.values.forEach { i ->
-//                i.setupExperiment(
-//                    externalStartTime,
-//                    externalEndTime,
-//                    this.config!!.relativeTolerance
-//                )
-//            };
-//            val connections = createConnections(env, fmuInstances)
-//
-//            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-//            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
-//
-//            //Verification against prolog should only be done if it turned on and there is no loops
-//            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
-//                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
-//
-//
-//            //Set variables for all components in IniPhase
-//            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
-//
-//            //Enter initialization Mode
-//            logger.debug("Enter initialization Mode")
-//            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
-//
-//            val instructions = instantiationOrder.map { i ->
-//                createInitInstructions(
-//                    i.toList(),
-//                    dynamicScope,
-//                    fmuInstances,
-//                    booleanLogic,
-//                    math
-//                )
-//            }
-//            var stabilisationScope: ScopeFmi2Api? = null
-//            var stabilisationLoop: IntVariableFmi2Api? = null
-//            if (this.config!!.stabilisation) {
-//                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
-//                stabilisationScope = dynamicScope.enterWhile(
-//                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
-//                )
-//            }
-//
-//            instructions.forEach { i -> i.perform() }
-//
-//            if (stabilisationScope != null) {
-//                stabilisationLoop!!.decrement();
-//                stabilisationScope.activate()
-//                stabilisationScope.leave();
-//            }
-//
-//
-//            setRemainingInputs(fmuInstances, builder)
-//
-//            //Exit initialization Mode
-//            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
 
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
@@ -688,18 +613,5 @@ class Initializer : BasicMaestroExpansionPlugin {
                 modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
             return if (parameterValue != null) parameterValue.value else sv.type.start
         }
-
-//        /**
-//         * This functions either returns null if the parameter has a value or it returns the model description start value
-//         */
-//        private fun findUseDefault(
-//            compName: String,
-//            sv: ModelDescription.ScalarVariable,
-//            modelParameters: List<ModelParameter>?
-//        ): Any? {
-//            val parameterValue =
-//                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
-//            return if (parameterValue != null) null else sv.type.start
-//        }
     }
 }
