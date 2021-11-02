@@ -8,15 +8,15 @@ import java.util.Map;
 
 public class InitializeStatusModel extends StatusModel {
 
-    @JsonProperty("avaliableLogLevels")
-    private final Map<String, List<LogLevelModel>> avaliableLogLevels;
+    @JsonProperty("availableLogLevels")
+    private final Map<String, List<LogLevelModel>> availableLogLevels;
 
     @JsonCreator
     public InitializeStatusModel(@JsonProperty("status") String status, @JsonProperty("sessionid") String sessionId,
-            @JsonProperty("avaliableLogLevels") Map<String, List<LogLevelModel>> avaliableLogLevels,
+            @JsonProperty("availableLogLevels") Map<String, List<LogLevelModel>> availableLogLevels,
             @JsonProperty("lastExecTime") final long lastExecTime) {
         super(status, sessionId, lastExecTime);
-        this.avaliableLogLevels = avaliableLogLevels;
+        this.availableLogLevels = availableLogLevels;
     }
 
     public static class LogLevelModel {
