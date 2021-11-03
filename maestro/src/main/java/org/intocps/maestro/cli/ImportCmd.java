@@ -7,15 +7,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.core.dto.StepAlgorithm;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
@@ -46,9 +45,8 @@ public class ImportCmd implements Callable<Integer> {
     boolean preserveAnnotations;
     @CommandLine.Option(names = {"-if", "--inline-framework-config"}, description = "Inline all framework configs", negatable = true)
     boolean inlineFrameworkConfig;
-    @CommandLine.Option(names = {"-fmu", "--fmu-base-dir"},
-            description = "A path to the FMU base directory at which the FMU parhs are " + "relative to")
-    File fmuBase;
+    @CommandLine.Option(names = {"-fsp", "--fmu-search-path"}, description = "One or more search paths used to resolve relative FMU paths.")
+    List<File> fmuSearchPaths;
     @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
     @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
@@ -159,7 +157,7 @@ public class ImportCmd implements Callable<Integer> {
 
 
         if (type == ImportType.Sg1) {
-            if (!importSg1(util, fmuBase, sourceFiles)) {
+            if (!importSg1(util, fmuSearchPaths, sourceFiles)) {
                 return 1;
             }
         } else {
@@ -198,7 +196,7 @@ public class ImportCmd implements Callable<Integer> {
         return 0;
     }
 
-    private boolean importSg1(MablCliUtil util, File fmuBaseDir, List<File> files) throws Exception {
+    private boolean importSg1(MablCliUtil util, List<File> fmuSearchPaths, List<File> files) throws Exception {
         if (!files.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -210,13 +208,25 @@ public class ImportCmd implements Callable<Integer> {
 
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
-            if (fmuBaseDir != null) {
+            if (fmuSearchPaths != null) {
                 for (String key : config.getFmus().keySet()) {
                     String fmuPath = config.getFmus().get(key);
-                    if (new File(fmuPath).isAbsolute()) {
-                        continue;
-                    } else {
-                        config.getFmus().put(key, fmuBaseDir.toPath().resolve(fmuPath).toString());
+                    if (!new File(fmuPath).exists()) {
+                        Path resolved = null;
+                        for (File fmuSearchPath : fmuSearchPaths) {
+                            resolved = fmuSearchPath.toPath().resolve(fmuPath);
+
+                            if (resolved.toFile().exists()) {
+                                break;
+                            }
+
+                        }
+
+                        if (resolved != null && resolved.toFile().exists()) {
+                            config.getFmus().put(key, resolved.toUri().toString());
+                        } else {
+                            throw new FileNotFoundException(fmuPath);
+                        }
                     }
 
                 }
