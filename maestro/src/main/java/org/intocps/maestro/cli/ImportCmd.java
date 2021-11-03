@@ -45,7 +45,7 @@ public class ImportCmd implements Callable<Integer> {
     boolean preserveAnnotations;
     @CommandLine.Option(names = {"-if", "--inline-framework-config"}, description = "Inline all framework configs", negatable = true)
     boolean inlineFrameworkConfig;
-    @CommandLine.Option(names = {"-fsp", "--fmu-search-path"}, description = "A search path used to resolve relative FMU paths.")
+    @CommandLine.Option(names = {"-fsp", "--fmu-search-path"}, description = "One or more search paths used to resolve relative FMU paths.")
     List<File> fmuSearchPaths;
     @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
