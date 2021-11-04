@@ -90,11 +90,11 @@ public class FromMaBLToMaBLAPI {
                             entry.getValue().getPort(sourcePortName).linkTo(targetPort);
                         } else {
                             //error port not found in target var
-                            logger.warn("Failed to find port '{}' on instance '{}' required by relational '{}' ", sourcePortName, targetName,
+                            logger.trace("Failed to find port '{}' on instance '{}' required by relational '{}' ", sourcePortName, targetName,
                                     relation);
                         }
                     } else {
-                        logger.warn(
+                        logger.trace(
                                 "Failed to find instance required by relational information from simulation env. Missing '{}' in relation " + "{}",
                                 targetName, relation);
                     }
