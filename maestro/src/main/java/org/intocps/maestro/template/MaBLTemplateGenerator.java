@@ -80,8 +80,20 @@ public class MaBLTemplateGenerator {
         return proposedName;
     }
 
-    public static PStm createFmuVariable(String fmuLexName) {
-        return newVariable(fmuLexName, newANameType("FMI2"), newNullExp());
+    /**
+     * Creates an FMI2 variable with a mapping above
+     *
+     * @param fmuLexName The variable name
+     * @param fmuKey     The multimodel FMU key
+     * @return
+     */
+    public static List<PStm> createFmuVariable(String fmuLexName, String fmuKey) {
+        List<PStm> statements = new ArrayList<>();
+        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(fmuLexName), fmuKey);
+        statements.add(mapping);
+        PStm var = newVariable(fmuLexName, newANameType("FMI2"), newNullExp());
+        statements.add(var);
+        return statements;
     }
 
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
@@ -203,14 +215,16 @@ public class MaBLTemplateGenerator {
 
         // First create the FMU variables and assign to null
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
+        NameMapper.NameMapperState nameMapperState = new NameMapper.NameMapperState();
         for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
-            fmuLexName = makeSafeFMULexName(fmuLexName);
-            rootScopeBody.add(createFmuVariable(fmuLexName));
+            fmuLexName = NameMapper.makeSafeFMULexName(fmuLexName, nameMapperState);
+            rootScopeBody.addAll(createFmuVariable(fmuLexName, entry.getKey()));
             fmuNameToLexIdentifier.put(entry.getKey(), fmuLexName);
         }
 
         // Create the FMU Instances and assign to null
+        // invalidNames contains all the existing variable names. These cannot be resued
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
         HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
         Map<String, String> instaceNameToInstanceLex = new HashMap<>();
