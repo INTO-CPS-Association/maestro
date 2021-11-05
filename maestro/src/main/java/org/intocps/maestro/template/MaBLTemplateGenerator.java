@@ -89,7 +89,7 @@ public class MaBLTemplateGenerator {
      */
     public static List<PStm> createFmuVariable(String fmuLexName, String fmuKey) {
         List<PStm> statements = new ArrayList<>();
-        AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(fmuLexName), fmuKey);
+        AFmuMappingStm mapping = newAFMUMappingStm(newAIdentifier(fmuLexName), fmuKey);
         statements.add(mapping);
         PStm var = newVariable(fmuLexName, newANameType("FMI2"), newNullExp());
         statements.add(var);
@@ -243,7 +243,7 @@ public class MaBLTemplateGenerator {
         List<PStm> unloadFmuStatements = new ArrayList<>();
 
         for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
-            String fmuLexName = removeFmuKeyBraces(entry.getKey());
+            String fmuLexName = fmuNameToLexIdentifier.get((entry.getKey()));
             stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
             stmMaintainer.add(checkNullAndStop(fmuLexName));
             unloadFmuStatements.add(createUnloadStatement(fmuLexName).getKey());
