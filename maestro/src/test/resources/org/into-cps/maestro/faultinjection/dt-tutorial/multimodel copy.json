@@ -1,0 +1,42 @@
+{
+    "fmus": {
+        "{RmqFmu}": "rmqfmu_scenarios/RmqFmu.fmu",
+        "{AnomalyDetector}": "rmqfmu_scenarios/AnomalyDetector.fmu",
+        "{KalmanFilter}": "rmqfmu_scenarios/KalmanFilter.fmu",
+        "{Incubator3D}": "rmqfmu_scenarios/Incubator3D.fmu"
+    },
+    "connections": {
+        "{RmqFmu}.r.fields.average_temperature": [
+            "{KalmanFilter}.k.T_bair_in",
+            "{Incubator3D}.i3d.T_bair_in"
+        ],
+        "{RmqFmu}.r.fields.t3": [
+            "{KalmanFilter}.k.T_room_in",
+            "{Incubator3D}.i3d.T_heater_in"
+        ],
+        "{RmqFmu}.r.fields.heater_on": [
+            "{KalmanFilter}.k.heater_on_in",
+            "{Incubator3D}.i3d.heater_on_in"
+        ],
+        "{KalmanFilter}.k.T_heater_out": [
+            "{AnomalyDetector}.s.T_heater"
+        ],
+        "{KalmanFilter}.k.T_bair_out": [
+            "{AnomalyDetector}.s.T_bair"
+        ],
+        "{AnomalyDetector}.s.enable": [
+            "{RmqFmu}.r.enable"
+        ]
+    },
+    "parameters": {
+        "{RmqFmu}.r.config.maxage": 60000,
+        "{RmqFmu}.r.config.hostname": "localhost",
+        "{RmqFmu}.r.config.precision": 10
+    },
+    "algorithm":{"type":"fixed-step","size":3}, 
+    "faultInjectConfigurationPath": "rmqfmu_scenarios/emptyFaultEvents.xml",
+    "faultInjectInstances": {
+        "s": "id"
+    }
+
+}

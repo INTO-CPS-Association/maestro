@@ -1,0 +1,5 @@
+<events>
+    <event id="1" when="(t&gt;=10.2) &amp; (t&lt;20.4)">
+        <variable valRef="2" type="real" newVal="var_2 - 0.1" vars="var_2"/>
+    </event>
+</events>

@@ -1,0 +1,19 @@
+{
+    "fmus": {
+        "{Controller}": "GENERATED",
+        "{KalmanFilter}": "GENERATED",
+        "{Incubator3D}": "GENERATED",
+        "{Plant}": "GENERATED",
+        "{Room}": "GENERATED",
+        "{Supervisor}": "GENERATED"
+    },
+    "connections": {},
+    "parameters": {
+        "{Plant}.p.delay": 1.0
+    }, 
+    "faultInjectConfigurationPath": "execute_algorithm_faultinjection/emptyFaultEvents.xml",
+    "faultInjectInstances": {
+        "p": "id"
+    }
+
+}

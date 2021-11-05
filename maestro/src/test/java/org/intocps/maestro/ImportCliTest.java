@@ -70,4 +70,22 @@ public class ImportCliTest {
         Assert.assertEquals(0, exitCode);
 
     }
+
+    @Test
+    public void importDTTutorial() throws IOException {
+        File dtTutorialDirPath = Paths.get("src", "test", "resources", "org", "into-cps", "maestro", "faultinjection", "dt-tutorial").toFile();
+        File faultInjectMabl = new File(dtTutorialDirPath, "FaultInject.mabl");
+        File multiModel = new File(dtTutorialDirPath, "multimodel.json");
+        File executionParametersPath = new File(dtTutorialDirPath, "executionParameters.json");
+        File resultsPath = new File("importDTTutorial.resultsFolder");
+        if (resultsPath.exists()) {
+            FileUtils.deleteDirectory(resultsPath);
+        }
+
+        String arguments = String.format(Locale.US, "import sg1 %s %s -output %s ", faultInjectMabl, multiModel, resultsPath);
+        String[] s = arguments.split(" ");
+
+        int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
+        Assert.assertEquals(0, exitCode);
+    }
 }
