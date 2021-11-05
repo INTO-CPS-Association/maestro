@@ -302,8 +302,13 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
         });
-        simulationConfiguration.connections = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("connections")), new TypeReference<>() {
-        });
+        simulationConfiguration.connections = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("connections")), new TypeReference<>() {});
+        // Set fault injection
+        if(multiModelNode.has("faultInjectConfigurationPath")){
+            simulationConfiguration.faultInjectConfigurationPath = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {});
+            simulationConfiguration.faultInjectInstances = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {});
+        }
+
         Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("parameters")), new TypeReference<>() {
         });
         Double relTol = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("convergenceRelativeTolerance")), new TypeReference<>() {

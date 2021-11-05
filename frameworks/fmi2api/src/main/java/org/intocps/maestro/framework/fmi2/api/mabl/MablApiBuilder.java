@@ -564,6 +564,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return load("Logger", runtime -> new LoggerFmi2Api(this, runtime));
     }
 
+    public FaultInject getFaultInject(Object... args) {
+        return load("FaultInject", runtime -> new FaultInject(this, runtime), args);
+    }
+
     public VariableStep getVariableStep(StringVariableFmi2Api config) {
         return load("VariableStep", runtime -> new VariableStep(this, runtime), config);
     }
