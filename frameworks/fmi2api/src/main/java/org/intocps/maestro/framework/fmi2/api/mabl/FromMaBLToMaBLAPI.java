@@ -62,7 +62,12 @@ public class FromMaBLToMaBLAPI {
                 a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
                         builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
             }
-            List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
+            List<RelationVariable> variablesToLog = null;
+            if (environmentComponentName == null) {
+                variablesToLog = env.getVariablesToLog(componentName);
+            } else {
+                variablesToLog = env.getVariablesToLog(environmentComponentName);
+            }
             a.setVariablesToLog(variablesToLog);
 
             return Map.entry(componentName, a);
