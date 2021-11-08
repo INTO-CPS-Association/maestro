@@ -27,6 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.intocps.maestro.cli.ImportCmd.mablFileFilter;
 
 @CommandLine.Command(name = "sigver",
         description = "Utilise the scenario verifier tool to generate and verify algorithms. It is also possible to execute scenarios and extended multi-models.",
@@ -190,6 +194,9 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
 
+    @CommandLine.Option(names = {"-ext", "--external-specs"}, description = "One or more specification files.")
+    List<File> externalSpecs;
+
     @CommandLine.Option(names = {"-mm", "--multi-model"}, required = true,
             description = "A multi-model or an extended multi-model if no master model is passed")
     File extendedMultiModelFile;
@@ -220,6 +227,15 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
+
+        List<File> mablFiles = Stream.concat(
+                externalSpecs.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mablFileFilter::test)))),
+                externalSpecs.stream().filter(File::isFile).filter(mablFileFilter)).collect(Collectors.toList());
+
+        if (!util.parse(mablFiles)) {
+            System.err.println("Failed to parse external MaBL spec file(s)");
+            return 1;
+        }
 
         String masterModelAsString;
         Path algorithmPath;

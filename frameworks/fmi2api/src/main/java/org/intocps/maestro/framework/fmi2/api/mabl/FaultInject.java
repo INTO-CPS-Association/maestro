@@ -66,7 +66,8 @@ public class FaultInject {
 
         this.dynamicScope.addAll((Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fiComponentName)),
                         newACallExp(newAIdentifierExp(getModuleIdentifier()), newAIdentifier("faultInject"),
-                                Arrays.asList(newAIdentifierExp(creator.getName()), newAIdentifierExp(fiComponentName), newAStringLiteralExp(constraintId)))),
+                                Arrays.asList(newAIdentifierExp(creator.getName()), newAIdentifierExp(component.getName()),
+                                        newAStringLiteralExp(constraintId)))),
                 newIf(newEqual(newAIdentifierExp(fiComponentName), newNullExp()),
                         newABlockStm(newError(newAStringLiteralExp(fiComponentName + " IS NULL "))), null))));
         return fiComp;

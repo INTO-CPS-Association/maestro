@@ -68,7 +68,7 @@ public class TemplateGeneratorFromScenario {
                     Optional<FmuVariableFmi2Api> fmuFromScenario = fmus.stream().filter(fmu -> fmu.getName().toLowerCase(Locale.ROOT)
                             .contains(entry.getKey().split(SCENARIO_MODEL_FMU_INSTANCE_DELIMITER)[0].toLowerCase(Locale.ROOT))).findAny();
                     if (fmuFromScenario.isEmpty()) {
-                        throw new RuntimeException("Unable to match fmu from multi model with fmu from master model");
+                        throw new RuntimeException("The FMU: " + entry.getKey() + " from the scenario is not defined in the multi model");
                     }
                     String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
                     return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
@@ -133,7 +133,10 @@ public class TemplateGeneratorFromScenario {
         ASimulationSpecificationCompilationUnit unit = builder.build();
 
         // Add imports
-        unit.setImports(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
+        List<LexIdentifier> imports = new ArrayList<>();
+        imports.addAll(unit.getImports());
+        imports.addAll(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
+        unit.setImports(imports);
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));
