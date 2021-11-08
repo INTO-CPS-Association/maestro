@@ -136,8 +136,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             // Get FMU instances - use LinkedHashMap to preserve added order
             Map<String, ComponentVariableFmi2Api> fmuInstances =
-                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream().collect(
-                            Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
+                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream()
+                            .collect(Collectors.toMap(ComponentVariableFmi2Api::getName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
 
             // Create the logging
             DataWriter dataWriter = builder.getDataWriter();
@@ -152,8 +152,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             fmuInstances.forEach((identifier, instance) -> {
                 Set<String> scalarVariablesToGet = instance.getPorts().stream().filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
                         .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName).collect(Collectors.toSet());
-                scalarVariablesToGet
-                        .addAll(env.getVariablesToLog(identifier).stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
+                scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
+                        .collect(Collectors.toSet()));
 
                 componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
             });
