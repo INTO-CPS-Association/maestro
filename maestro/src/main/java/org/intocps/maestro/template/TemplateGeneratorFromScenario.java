@@ -51,6 +51,8 @@ public class TemplateGeneratorFromScenario {
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         Fmi2SimulationEnvironment simulationEnvironment = configuration.getSimulationEnvironment();
+        boolean doFaultInject = simulationEnvironment.getFaultInjectionConfigurationPath() != null &&
+                !simulationEnvironment.getFaultInjectionConfigurationPath().equals("");
 
         List<FmuVariableFmi2Api> fmus = simulationEnvironment.getFmusWithModelDescriptions().stream()
                 .filter(entry -> simulationEnvironment.getUriFromFMUName(entry.getKey()) != null).map(entry -> {
@@ -73,11 +75,10 @@ public class TemplateGeneratorFromScenario {
                     String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
                     return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
                 }));
-        boolean doFaultInject = true;
+
         Map<String, ComponentVariableFmi2Api> fmuInstances;
         Map<String, ComponentVariableFmi2Api> faultInjectInstances = new HashMap<>();
-        if(simulationEnvironment.getFaultInjectionConfigurationPath() != null &&
-                !simulationEnvironment.getFaultInjectionConfigurationPath().equals("")) {
+        if(doFaultInject) {
             FaultInject faultInject = builder.getFaultInject(simulationEnvironment.getFaultInjectionConfigurationPath());
 
             fmuInstances = originalFmuInstances.entrySet().stream().map(entry -> {
@@ -96,7 +97,6 @@ public class TemplateGeneratorFromScenario {
         } else {
             fmuInstances = originalFmuInstances;
         }
-
 
         // Store variables to be used by the scenario verifier
         dynamicScope.store(STEP_SIZE_NAME, configuration.getExecutionParameters().getStepSize());
