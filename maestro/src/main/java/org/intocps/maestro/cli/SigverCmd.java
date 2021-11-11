@@ -27,6 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.intocps.maestro.cli.ImportCmd.mablFileFilter;
 
 @CommandLine.Command(name = "sigver",
         description = "Utilise the scenario verifier tool to generate and verify algorithms. It is also possible to execute scenarios and extended multi-models.",
@@ -190,6 +194,9 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
     @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
 
+    @CommandLine.Option(names = {"-ext", "--external-specs"}, description = "One or more specification files.")
+    List<File> externalSpecs;
+
     @CommandLine.Option(names = {"-mm", "--multi-model"}, required = true,
             description = "A multi-model or an extended multi-model if no master model is passed")
     File extendedMultiModelFile;
@@ -220,6 +227,18 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
+
+        if(externalSpecs != null){
+            List<File> mablFiles = Stream.concat(
+                    externalSpecs.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mablFileFilter::test)))),
+                    externalSpecs.stream().filter(File::isFile).filter(mablFileFilter)).collect(Collectors.toList());
+
+            if (!util.parse(mablFiles)) {
+                System.err.println("Failed to parse external MaBL spec file(s)");
+                return 1;
+            }
+        }
+
 
         String masterModelAsString;
         Path algorithmPath;
@@ -302,8 +321,13 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
         });
-        simulationConfiguration.connections = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("connections")), new TypeReference<>() {
-        });
+
+        // Set fault injection
+        if(multiModelNode.has("faultInjectConfigurationPath")){
+            simulationConfiguration.faultInjectConfigurationPath = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {});
+            simulationConfiguration.faultInjectInstances = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {});
+        }
+
         Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("parameters")), new TypeReference<>() {
         });
         Double relTol = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("convergenceRelativeTolerance")), new TypeReference<>() {
@@ -320,28 +344,26 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         });
 
 
-        if(simulationConfiguration.connections.isEmpty()){
-            // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-            List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
-            Map<String, List<String>> connectionsMap = new HashMap<>();
-            connections.forEach(connection -> {
-                String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
-                String trgFmuName = trgFmuAndInstance[0];
-                String trgInstanceName = trgFmuAndInstance[1];
-                String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
-                String srcFmuName = srcFmuAndInstance[0];
-                String srcInstanceName = srcFmuAndInstance[1];
-                String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
-                String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
-                if (connectionsMap.containsKey(muModelSrcName)) {
-                    connectionsMap.get(muModelSrcName).add(muModelTrgName);
-                } else {
-                    connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
-                }
-            });
+        // Setup connections as defined in the scenario (These should be identical to the multi-model)
+        List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
+        Map<String, List<String>> connectionsMap = new HashMap<>();
+        connections.forEach(connection -> {
+            String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
+            String trgFmuName = trgFmuAndInstance[0];
+            String trgInstanceName = trgFmuAndInstance[1];
+            String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
+            String srcFmuName = srcFmuAndInstance[0];
+            String srcInstanceName = srcFmuAndInstance[1];
+            String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
+            String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
+            if (connectionsMap.containsKey(muModelSrcName)) {
+                connectionsMap.get(muModelSrcName).add(muModelTrgName);
+            } else {
+                connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
+            }
+        });
 
-            simulationConfiguration.connections = connectionsMap;
-        }
+        simulationConfiguration.connections = connectionsMap;
 
         // Setup scenarioConfiguration
         return new ScenarioConfiguration(Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter), masterModel, parameters, relTol,

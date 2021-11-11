@@ -12,6 +12,11 @@ public class ExtendedMultiModel extends MultiModel {
     @JsonProperty("sigver")
     public final Sigver sigver;
 
+    @JsonProperty("faultInjectConfigurationPath")
+    public String faultInjectConfigurationPath;
+    @JsonProperty("faultInjectInstances")
+    public Map<String, String> faultInjectInstances;
+
     @JsonCreator
     public ExtendedMultiModel(@JsonProperty("fmus") Map<String, String> fmus,
             @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
@@ -22,10 +27,14 @@ public class ExtendedMultiModel extends MultiModel {
             @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters, @JsonProperty("logLevels") Map<String, List<String>> logLevels,
-            @JsonProperty("sigver") Sigver sigver) {
+            @JsonProperty("sigver") Sigver sigver, @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
+            @JsonProperty("faultInjectInstances") Map<String,
+            String> faultInjectInstances) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels);
         this.sigver = sigver;
+        this.faultInjectConfigurationPath = faultInjectConfigurationPath;
+        this.faultInjectInstances = faultInjectInstances;
     }
 
     public static class Sigver {

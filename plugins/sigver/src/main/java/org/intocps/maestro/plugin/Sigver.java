@@ -435,7 +435,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                             }, () -> tentativePortMapVars.add(Map.entry(port, portValue)));
 
                     // Check for convergence
-                    convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getName(), port.getName())).findAny()
+                    convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getEnvironmentName(), port.getName())).findAny()
                             .ifPresent(portRef -> convergedVariables.add(
                                     createCheckConvergenceSection(Map.entry(port, portValue), portRef, absTolVar, relTolVar)));
                 });
@@ -451,7 +451,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         tentativePortMapVars.forEach(tentativePortMapEntry -> {
             String fmuName = tentativePortMapEntry.getKey().aMablFmi2ComponentAPI.getOwner().getFmuIdentifier();
             String instanceName = fmuName.substring(1, fmuName.length() - 1) + MASTER_MODEL_FMU_INSTANCE_DELIMITER +
-                    tentativePortMapEntry.getKey().aMablFmi2ComponentAPI.getName();
+                    tentativePortMapEntry.getKey().aMablFmi2ComponentAPI.getEnvironmentName();
             fmuInstances.get(instanceName).share(Map.ofEntries(tentativePortMapEntry));
 
             portMapVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
@@ -492,7 +492,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         // Generate convergence section
         List<BooleanVariableFmi2Api> convergedVariables = new ArrayList<>();
         for (PortRef portRef : CollectionConverters.asJava(instruction.untilConverged())) {
-            sharedPortVars.stream().filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getName(), entry.getKey().getName()))
+            sharedPortVars.stream().filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(), entry.getKey().getName()))
                     .findAny().ifPresent(portMap -> convergedVariables.add(createCheckConvergenceSection(portMap, portRef, absTolVar, relTolVar)));
         }
 
@@ -584,7 +584,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         if (connectionModel.isPresent()) {
             Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portWithValue = portMapVars.stream()
-                    .filter(entry -> portRefMatch(connectionModel.get().srcPort(), entry.getKey().aMablFmi2ComponentAPI.getName(),
+                    .filter(entry -> portRefMatch(connectionModel.get().srcPort(), entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(),
                             entry.getKey().getName())).findAny();
 
             if (portWithValue.isPresent()) {

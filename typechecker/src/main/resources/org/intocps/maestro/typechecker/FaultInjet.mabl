@@ -1,0 +1,7 @@
+module FaultInject
+import FMI2;
+{
+    FMI2Component faultInject(FMI2 creator, FMI2Component component, string constraintId);
+    FMI2Component observe(FMI2 creator, FMI2Component component, string constraintId);
+    FMI2Component returnFmuComponentValue(FMI2Component component);
+}
