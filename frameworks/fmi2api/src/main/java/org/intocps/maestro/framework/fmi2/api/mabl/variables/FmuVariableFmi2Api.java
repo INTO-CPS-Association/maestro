@@ -33,6 +33,10 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         this.modelDescriptionContext = modelDescriptionContext;
     }
 
+    public ModelDescriptionContext getModelDescriptionContext() {
+        return modelDescriptionContext;
+    }
+
     @Override
     public ComponentVariableFmi2Api instantiate(String name, String environmentName) {
         IMablScope scope = builder.getDynamicScope().getActiveScope();
