@@ -461,6 +461,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         //        }
         //    }
         Fmi2ComponentVariable<S> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
+        Fmi2ComponentVariable<S> instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
+                String environmentName, boolean loggingOn);
 
         Fmi2ComponentVariable<S> instantiate(String name, TryScope<S> enclosingTryScope, Scope<S> scope);
 
