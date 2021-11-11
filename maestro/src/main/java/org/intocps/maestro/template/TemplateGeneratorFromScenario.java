@@ -12,6 +12,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.mabl.FaultInject;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.Sigver;
@@ -73,7 +74,8 @@ public class TemplateGeneratorFromScenario {
                         throw new RuntimeException("The FMU: " + entry.getKey() + " from the scenario is not defined in the multi model");
                     }
                     String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
-                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
+                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, dynamicScope.findParentScope(TryMaBlScope.class),
+                            dynamicScope, instanceNameInEnvironment, configuration.getLoggingOn());
                 }));
 
         Map<String, ComponentVariableFmi2Api> fmuInstances;

@@ -14,10 +14,11 @@ public class ScenarioConfiguration {
     private final Map<String, Object> parameters;
     private final ExecutionParameters executionParameters;
     private final Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
+    private final Boolean loggingOn;
 
     public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, MasterModel masterModel, Map<String, Object> parameters,
             Double convergenceRelativeTolerance, Double convergenceAbsoluteTolerance, Integer convergenceAttempts, Double startTime, Double endTime,
-            Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig) {
+            Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig, Boolean loggingOn) {
         this.simulationEnvironment = simulationEnvironment;
         this.masterModel = masterModel;
         this.parameters = parameters;
@@ -25,6 +26,7 @@ public class ScenarioConfiguration {
         executionParameters =
                 new ExecutionParameters(convergenceRelativeTolerance, convergenceAbsoluteTolerance, convergenceAttempts, startTime, endTime,
                         stepSize);
+        this.loggingOn = loggingOn;
     }
 
     public Fmi2SimulationEnvironment getSimulationEnvironment() {
@@ -45,6 +47,10 @@ public class ScenarioConfiguration {
 
     public ExecutionParameters getExecutionParameters() {
         return executionParameters;
+    }
+
+    public Boolean getLoggingOn() {
+        return loggingOn;
     }
 
     public static class ExecutionParameters {

@@ -365,8 +365,14 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         simulationConfiguration.connections = connectionsMap;
 
+        Boolean loggingOn = true;
+
+        if(multiModelNode.has("loggingOn")){
+            loggingOn = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("loggingOn")), new TypeReference<>() {});
+        }
+
         // Setup scenarioConfiguration
         return new ScenarioConfiguration(Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter), masterModel, parameters, relTol,
-                absTol, convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration));
+                absTol, convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration), loggingOn);
     }
 }

@@ -102,7 +102,7 @@ public class TemplateGeneratorFromScenarioTest {
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
         ScenarioConfiguration scenarioConfiguration =
                 new ScenarioConfiguration(simulationEnvironment, masterModel, parameters, relTol, absTol, convergenceAttempts, startTime, endTime,
-                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration));
+                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration), false);
 
         // ACT
         // This calls TemplateGeneratorFromScenario.generateTemplate which is the method to test
