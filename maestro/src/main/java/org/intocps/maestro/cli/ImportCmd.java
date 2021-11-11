@@ -62,9 +62,8 @@ public class ImportCmd implements Callable<Integer> {
 
         if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(
-                    Collectors.toMap(
-                            entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(Collectors
+                    .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                             Map.Entry::getValue));
             builder.setLogLevels(removedFMUKeyFromLogLevels);
         }
@@ -87,6 +86,7 @@ public class ImportCmd implements Callable<Integer> {
         environmentConfiguration.connections = simulationConfiguration.getConnections();
         environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
         environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
+        environmentConfiguration.logVariables = simulationConfiguration.getLogVariables();
 
         builder.setFrameworkConfig(Framework.FMI2, environmentConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.isVisible()).setLoggingOn(simulationConfiguration.isLoggingOn())
