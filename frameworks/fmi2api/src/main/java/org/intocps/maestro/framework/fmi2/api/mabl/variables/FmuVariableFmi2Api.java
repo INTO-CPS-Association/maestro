@@ -85,13 +85,19 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     @Override
     public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
             String environmentName) {
+            return instantiate(namePrefix, enclosingTryScope, scope, environmentName, true);
+    }
+
+    @Override
+    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope,
+            Fmi2Builder.Scope<PStm> scope, String environmentName, boolean loggingOn) {
 
         String name = builder.getNameGenerator().getName(namePrefix);
         //TODO: Extract bool visible and bool loggingOn from configuration
         var var = newVariable(name, newANameType("FMI2Component"), newNullExp());
 
         PStm instantiateAssign = newAAssignmentStm(newAIdentifierStateDesignator(name),
-                call(getReferenceExp().clone(), "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(true)));
+                call(getReferenceExp().clone(), "instantiate", newAStringLiteralExp(name), newABoolLiteralExp(true), newABoolLiteralExp(loggingOn)));
 
 
         if (enclosingTryScope == null) {

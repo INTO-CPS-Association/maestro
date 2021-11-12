@@ -94,7 +94,7 @@ public class Maestro2Broker {
         ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
                 executionParameters.getConvergenceRelativeTolerance(), executionParameters.getConvergenceAbsoluteTolerance(),
                 executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(), executionParameters.getEndTime(),
-                executionParameters.getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration));
+                executionParameters.getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), extendedMultiModel.isLoggingOn());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
