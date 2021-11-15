@@ -10,10 +10,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.dto.ExtendedMultiModel;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.core.dto.VarStepConstraint;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.*;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -65,13 +62,13 @@ public class Maestro2Broker {
             map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
                     .collect(Collectors.toList());
 
-    public void buildAndRunMasterModel(InitializationData initializeRequest, WebSocketSession socket, ExtendedMultiModel extendedMultiModel,
-            MasterModel masterModel,
-            ExecutionParameters executionParameters, File csvOutputFile) throws Exception {
+    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SimulateRequestBody body, File csvOutputFile) throws Exception {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = extendedMultiModel.getFmus();
-        simulationConfiguration.connections = extendedMultiModel.getConnections();
+        simulationConfiguration.fmus = multiModel.getFmus();
+        simulationConfiguration.connections = multiModel.getConnections();
+
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
 
         if (simulationConfiguration.connections.isEmpty()) {
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
@@ -97,10 +94,10 @@ public class Maestro2Broker {
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
-                executionParameters.getConvergenceRelativeTolerance(), executionParameters.getConvergenceAbsoluteTolerance(),
-                executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(), executionParameters.getEndTime(),
-                executionParameters.getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), extendedMultiModel.isLoggingOn());
+        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
+                multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
+                5, body.getStartTime(), body.getEndTime(),
+                multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -115,13 +112,13 @@ public class Maestro2Broker {
         List<String> portsToLog = Stream.concat(simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
             return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
-        }), extendedMultiModel.getLogVariables() == null ? Stream.of() : extendedMultiModel.getLogVariables().entrySet().stream()
+        }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-        List<String> liveStreamFilter = initializeRequest == null ? List.of() : initializeRequest.getLivestream() == null ? List.of() :
-                flattenFmuIds.apply(initializeRequest.getLivestream());
+        List<String> liveStreamFilter = livestreamVariables == null ? List.of() :
+                flattenFmuIds.apply(livestreamVariables);
 
-        executeInterpreter(socket, portsToLog, liveStreamFilter, executionParameters.getLiveLogInterval(), csvOutputFile,
+        executeInterpreter(socket, portsToLog, liveStreamFilter, body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 

@@ -19,17 +19,21 @@ public class SimulateRequestBody {
     final Boolean reportProgress;
     @JsonProperty("liveLogInterval")
     final Double liveLogInterval;
+    @JsonProperty("masterModel")
+    final String masterModel;
 
     @JsonCreator
     public SimulateRequestBody(@JsonProperty("startTime") double startTime, @JsonProperty("endTime") double endTime,
             @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("reportProgress") Boolean reportProgress,
-            @JsonProperty("liveLogInterval") Double liveLogInterval) {
+            @JsonProperty("liveLogInterval") Double liveLogInterval, @JsonProperty("masterModel") String masterModel) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.logLevels = logLevels;
         this.reportProgress = reportProgress;
         this.liveLogInterval = liveLogInterval;
+        this.masterModel = masterModel;
     }
+    public String getMasterModel() { return masterModel;}
 
     public Map<String, List<String>> getLogLevels() {
         return logLevels;

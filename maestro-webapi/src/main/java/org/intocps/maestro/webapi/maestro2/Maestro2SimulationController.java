@@ -212,63 +212,6 @@ public class Maestro2SimulationController {
         return null;
     }
 
-    @ApiOperation(value = "This request executes an algorithm configured from a scenario")
-    @RequestMapping(value = "/executeAlgorithm/{sessionId}", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public StatusModel executeAlgorithm(@PathVariable String sessionId, @RequestBody ExecutableMasterAndMultiModelTDO executableModel,
-            HttpServletResponse response) throws Exception {
-
-        if (executableModel.getMultiModel().getFmus() == null || executableModel.getMultiModel().getFmus().isEmpty()) {
-            throw new IllegalArgumentException("Missing FMUs in multi model");
-        }
-
-        MasterModel masterModel;
-        if (executableModel.getMasterModel().equals("")) {
-            masterModel = MasterModelMapper.Companion.multiModelToMasterModel(executableModel.getMultiModel(), 3);
-        } else {
-            masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
-        }
-
-        // Only verify the algorithm if the verification flag is set.
-        if (executableModel.getMultiModel().sigver.verification) {
-            if (!VerificationAPI.verifyAlgorithm(masterModel)) {
-                throw new Exception("Algorithm did not verify successfully - unable to execute it");
-            }
-        }
-
-        SessionLogic logic = sessionController.getSessionLogic(sessionId);
-
-        ErrorReporter reporter = new ErrorReporter();
-        long preSimTime;
-        long postSimTime;
-        logic.setStatus(SessionLogic.SessionStatus.Simulating);
-
-        preSimTime = System.currentTimeMillis();
-        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
-        mc.buildAndRunMasterModel(logic.getInitializationData(), logic.getSocket(), executableModel.getMultiModel(), masterModel,
-                executableModel.getExecutionParameters(),
-                new File(logic.rootDirectory, "outputs.csv"));
-        postSimTime = System.currentTimeMillis();
-        logic.setExecTime(postSimTime - preSimTime);
-
-        if (reporter.getErrorCount() > 0) {
-            logic.setStatus(SessionLogic.SessionStatus.Error);
-            reporter.getErrors().forEach(x -> logger.error(x.toString()));
-            StringWriter out = new StringWriter();
-            PrintWriter writer = new PrintWriter(out);
-            reporter.printWarnings(writer);
-            reporter.printErrors(writer);
-            throw new Exception(out.toString());
-        }
-
-        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-        logic.setStatus(SessionLogic.SessionStatus.Finished);
-        return new StatusModel("Simulation completed", sessionId, 0,
-                reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
-                reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
-    }
-
-
     @ApiOperation(value = "This request begins the co-simulation")
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"}, produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
@@ -283,6 +226,10 @@ public class Maestro2SimulationController {
         if (!logic.getCliExecution()) {
             preSimTime = System.currentTimeMillis();
             Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
+            if(body.getMasterModel() != null && !body.getMasterModel().equals("")){
+                mc.buildAndRunMasterModel(logic.getInitializationData().getLivestream(), logic.getSocket(), logic.getInitializationData(),
+                        body, new File(logic.rootDirectory, "outputs.csv"));
+            }
             mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
             postSimTime = System.currentTimeMillis();
             logic.setExecTime(postSimTime - preSimTime);
