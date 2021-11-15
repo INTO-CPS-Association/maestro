@@ -128,7 +128,7 @@ public class Maestro2ScenarioController {
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
 
-            broker.buildAndRunMasterModel(executableModel.getMultiModel(), masterModel, executableModel.getExecutionParameters(),
+            broker.buildAndRunMasterModel(null,null, executableModel.getMultiModel(), masterModel, executableModel.getExecutionParameters(),
                     new File(zipDir, "outputs.csv"));
 
             if (reporter.getErrorCount() > 0) {

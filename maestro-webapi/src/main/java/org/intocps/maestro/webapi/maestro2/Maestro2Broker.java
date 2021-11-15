@@ -25,6 +25,7 @@ import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
+import org.intocps.maestro.webapi.dto.ExecutionParameters;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
@@ -60,8 +61,13 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, MasterModel masterModel,
-            org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters, File csvOutputFile) throws Exception {
+    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                    .collect(Collectors.toList());
+
+    public void buildAndRunMasterModel(InitializationData initializeRequest, WebSocketSession socket, ExtendedMultiModel extendedMultiModel,
+            MasterModel masterModel,
+            ExecutionParameters executionParameters, File csvOutputFile) throws Exception {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = extendedMultiModel.getFmus();
@@ -112,7 +118,11 @@ public class Maestro2Broker {
         }), extendedMultiModel.getLogVariables() == null ? Stream.of() : extendedMultiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-        executeInterpreter(null, portsToLog, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
+        List<String> liveStreamFilter = initializeRequest == null ? List.of() : initializeRequest.getLivestream() == null ? List.of() :
+                flattenFmuIds.apply(initializeRequest.getLivestream());
+
+        executeInterpreter(socket, portsToLog, liveStreamFilter, executionParameters.getLiveLogInterval(), csvOutputFile,
+                new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
@@ -187,11 +197,6 @@ public class Maestro2Broker {
             throw new Exception("Specification did not verify");
         }
 
-        Function<Map<String, List<String>>, List<String>> flattenFmuIds =
-                map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
-                        .collect(Collectors.toList());
-
-
         List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
             return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
@@ -204,7 +209,6 @@ public class Maestro2Broker {
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
                 body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
-
     }
 
     public String generateSpecification(ScenarioConfiguration config, Map<String, Object> parameters) throws Exception {

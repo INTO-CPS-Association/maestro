@@ -1,8 +1,11 @@
 package org.intocps.maestro.webapi.maestro2;
 
+import api.VerificationAPI;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import core.MasterModel;
+import core.ScenarioLoader;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
@@ -17,6 +20,8 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.plugin.MasterModelMapper;
+import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.Application;
@@ -40,10 +45,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -206,6 +210,62 @@ public class Maestro2SimulationController {
                 return Level.ALL;
         }
         return null;
+    }
+
+    @ApiOperation(value = "This request executes an algorithm configured from a scenario")
+    @RequestMapping(value = "/executeAlgorithm/{sessionId}", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public StatusModel executeAlgorithm(@PathVariable String sessionId, @RequestBody ExecutableMasterAndMultiModelTDO executableModel,
+            HttpServletResponse response) throws Exception {
+
+        if (executableModel.getMultiModel().getFmus() == null || executableModel.getMultiModel().getFmus().isEmpty()) {
+            throw new IllegalArgumentException("Missing FMUs in multi model");
+        }
+
+        MasterModel masterModel;
+        if (executableModel.getMasterModel().equals("")) {
+            masterModel = MasterModelMapper.Companion.multiModelToMasterModel(executableModel.getMultiModel(), 3);
+        } else {
+            masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+        }
+
+        // Only verify the algorithm if the verification flag is set.
+        if (executableModel.getMultiModel().sigver.verification) {
+            if (!VerificationAPI.verifyAlgorithm(masterModel)) {
+                throw new Exception("Algorithm did not verify successfully - unable to execute it");
+            }
+        }
+
+        SessionLogic logic = sessionController.getSessionLogic(sessionId);
+
+        ErrorReporter reporter = new ErrorReporter();
+        long preSimTime;
+        long postSimTime;
+        logic.setStatus(SessionLogic.SessionStatus.Simulating);
+
+        preSimTime = System.currentTimeMillis();
+        Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
+        mc.buildAndRunMasterModel(logic.getInitializationData(), logic.getSocket(), executableModel.getMultiModel(), masterModel,
+                executableModel.getExecutionParameters(),
+                new File(logic.rootDirectory, "outputs.csv"));
+        postSimTime = System.currentTimeMillis();
+        logic.setExecTime(postSimTime - preSimTime);
+
+        if (reporter.getErrorCount() > 0) {
+            logic.setStatus(SessionLogic.SessionStatus.Error);
+            reporter.getErrors().forEach(x -> logger.error(x.toString()));
+            StringWriter out = new StringWriter();
+            PrintWriter writer = new PrintWriter(out);
+            reporter.printWarnings(writer);
+            reporter.printErrors(writer);
+            throw new Exception(out.toString());
+        }
+
+        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
+        logic.setStatus(SessionLogic.SessionStatus.Finished);
+        return new StatusModel("Simulation completed", sessionId, 0,
+                reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
+                reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
     }
 
 

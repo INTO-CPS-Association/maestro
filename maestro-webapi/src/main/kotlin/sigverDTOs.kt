@@ -9,7 +9,8 @@ data class ExecutionParameters(
     @JsonProperty("convergenceAttempts") val convergenceAttempts: Int?,
     @JsonProperty("startTime") val startTime: Double,
     @JsonProperty("endTime") val endTime: Double,
-    @JsonProperty("stepSize") val stepSize: Double
+    @JsonProperty("stepSize") val stepSize: Double,
+    @JsonProperty("liveLogInterval") val liveLogInterval: Double
 )
 
 data class ExecutableMasterAndMultiModelTDO(
