@@ -10,16 +10,20 @@
           "{Controller}.cont.level"
         ]
       },
+      "algorithm": {
+        "type": "fixed-step",
+        "size": 0.1
+      },
       "parameters": {},
       "logVariables": null,
       "parallelSimulation": false,
       "stabalizationEnabled": false,
       "global_absolute_tolerance": 0.0,
-      "global_relative_tolerance": 0.0,
+      "global_relative_tolerance": 0.01,
+      "convergenceAttempts": 5,
       "loggingOn": false,
       "visible": false,
       "simulationProgramDelay": false,
-      "algorithm": null,
       "overrideLogLevel": null,
       "environmentParameters": null,
       "logLevels": null,
@@ -32,11 +36,7 @@
       }
     },
     "executionParameters": {
-      "convergenceRelativeTolerance": 0.01,
-      "convergenceAbsoluteTolerance": 0.0,
-      "convergenceAttempts": 5,
       "startTime": 0.0,
-      "endTime": 1.0,
-      "stepSize": 0.1
+      "endTime": 1.0
     }
   }
