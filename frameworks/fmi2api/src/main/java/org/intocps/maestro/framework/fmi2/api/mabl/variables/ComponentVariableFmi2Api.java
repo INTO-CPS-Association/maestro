@@ -616,7 +616,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                     derOrderOutBuf.getReferenceExp().clone(), derValOutBuf.getReferenceExp().clone()));
                     scope.add(AStm);
 
-                    // If enabled handle potential errors from calling getRealInputDerivatives
+                    // If enabled handle potential errors from calling getRealOutputDerivatives
                     if (builder.getSettings().fmiErrorHandlingEnabled) {
                         FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES), this,
                                 (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
@@ -1134,7 +1134,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                                         List<VariableFmi2Api> derivatives = ((ArrayVariableFmi2Api) derivativePort.getSharedAsVariable()).items();
                                         for (int i = 0; i < derivatives.size(); i++) {
                                             PExp val = derivativePortsToShare.get(derivativePort).get(i).getReferenceExp().clone();
-                                            builder.getDynamicScope().add(newAAssignmentStm(derivatives.get(i).getDesignator(), val));
+                                            builder.getDynamicScope().add(newAAssignmentStm(derivatives.get(i).getDesignator().clone(), val));
                                         }
                                     });
                                 }
