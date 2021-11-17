@@ -21,6 +21,7 @@ import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
@@ -59,7 +60,7 @@ public class Maestro2Broker {
             map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
                     .collect(Collectors.toList());
 
-    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SimulateRequestBody body, File csvOutputFile) throws Exception {
+    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = multiModel.getFmus();

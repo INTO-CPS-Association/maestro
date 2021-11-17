@@ -1,11 +1,8 @@
 package org.intocps.maestro.webapi.maestro2;
 
-import api.VerificationAPI;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
-import core.ScenarioLoader;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
@@ -16,14 +13,11 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.intocps.maestro.cli.MablCmdVersionProvider;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.plugin.MasterModelMapper;
-import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
-import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
@@ -45,9 +39,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,15 +111,16 @@ public class Maestro2SimulationController {
         return getStatus(session);
     }
 
-    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"}, produces =
-            MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"},
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody InitializationData body) throws Exception {
         // Store this data to be used for the interpretor later on.
         // It is not possible to create the spec at this point in time as data for setup experiment is missing (i.e. endtime)
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data");
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+                false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
 
         if (body == null) {
@@ -189,67 +185,30 @@ public class Maestro2SimulationController {
         return new InitializeStatusModel("initialized", sessionId, null, 0);
     }
 
-    private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {
-        switch (overrideLogLevel) {
-
-            case OFF:
-                return Level.OFF;
-            case FATAL:
-                return Level.FATAL;
-            case ERROR:
-                return Level.ERROR;
-            case WARN:
-                return Level.WARN;
-            case INFO:
-                return Level.INFO;
-            case DEBUG:
-                return Level.DEBUG;
-            case TRACE:
-                return Level.TRACE;
-            case ALL:
-                return Level.ALL;
-        }
-        return null;
+    @ApiOperation(value = "This request executes the algorithm provided in the master model")
+    @RequestMapping(value = "/sigverSimulate/{sessionId}", method = RequestMethod.POST, consumes = {"application/json"},
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public StatusModel sigverSimulate(@PathVariable String sessionId, @RequestBody SigverSimulateRequestBody body) throws Exception {
+        SessionLogic logic = sessionController.getSessionLogic(sessionId);
+        return runSimulation(
+                (Maestro2Broker broker) -> broker.buildAndRunMasterModel(logic.getInitializationData().getLivestream(), logic.getSocket(),
+                        logic.getInitializationData(), body, new File(logic.rootDirectory, "outputs.csv")), logic, body, sessionId);
     }
 
     @ApiOperation(value = "This request begins the co-simulation")
-    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"},
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
-
-        ErrorReporter reporter = new ErrorReporter();
-        long preSimTime;
-        long postSimTime;
-        logic.setStatus(SessionLogic.SessionStatus.Simulating);
-
         if (!logic.getCliExecution()) {
-            preSimTime = System.currentTimeMillis();
-            Maestro2Broker mc = new Maestro2Broker(logic.rootDirectory, reporter);
-            if(body.getMasterModel() != null && !body.getMasterModel().equals("")){
-                mc.buildAndRunMasterModel(logic.getInitializationData().getLivestream(), logic.getSocket(), logic.getInitializationData(),
-                        body, new File(logic.rootDirectory, "outputs.csv"));
-            }
-            mc.buildAndRun(logic.getInitializationData(), body, logic.getSocket(), new File(logic.rootDirectory, "outputs.csv"));
-            postSimTime = System.currentTimeMillis();
-            logic.setExecTime(postSimTime - preSimTime);
-
-            if (reporter.getErrorCount() > 0) {
-                logic.setStatus(SessionLogic.SessionStatus.Error);
-                reporter.getErrors().forEach(x -> logger.error(x.toString()));
-                StringWriter out = new StringWriter();
-                PrintWriter writer = new PrintWriter(out);
-                reporter.printWarnings(writer);
-                reporter.printErrors(writer);
-                throw new Exception(out.toString());
-            }
-
-            reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-            logic.setStatus(SessionLogic.SessionStatus.Finished);
-            return new StatusModel("Simulation completed", sessionId, 0,
-                    reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
-                    reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+            return runSimulation((Maestro2Broker broker) -> broker.buildAndRun(logic.getInitializationData(), body, logic.getSocket(),
+                    new File(logic.rootDirectory, "outputs.csv")), logic, body, sessionId);
         } else {
+            mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
+
+            long preSimTime;
+            long postSimTime;
+            logic.setStatus(SessionLogic.SessionStatus.Simulating);
             String simulateJsonPath = new File(logic.rootDirectory, "simulate.json").getAbsolutePath();
             String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
             String dumpDirectory = logic.rootDirectory.getAbsolutePath();
@@ -354,6 +313,63 @@ public class Maestro2SimulationController {
         sessionController.getSessionLogic(sessionId).setCliExecution(cliExecutionRequestBody.executeViaCLI);
     }
 
+    private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {
+        switch (overrideLogLevel) {
+
+            case OFF:
+                return Level.OFF;
+            case FATAL:
+                return Level.FATAL;
+            case ERROR:
+                return Level.ERROR;
+            case WARN:
+                return Level.WARN;
+            case INFO:
+                return Level.INFO;
+            case DEBUG:
+                return Level.DEBUG;
+            case TRACE:
+                return Level.TRACE;
+            case ALL:
+                return Level.ALL;
+        }
+        return null;
+    }
+
+    @FunctionalInterface
+    private interface BuildAndRun {
+        void apply(Maestro2Broker broker) throws Exception;
+    }
+
+    private StatusModel runSimulation(BuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
+        mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
+
+        ErrorReporter reporter = new ErrorReporter();
+        long preSimTime;
+        long postSimTime;
+        logic.setStatus(SessionLogic.SessionStatus.Simulating);
+
+        preSimTime = System.currentTimeMillis();
+        func.apply(new Maestro2Broker(logic.rootDirectory, reporter));
+        postSimTime = System.currentTimeMillis();
+        logic.setExecTime(postSimTime - preSimTime);
+
+        if (reporter.getErrorCount() > 0) {
+            logic.setStatus(SessionLogic.SessionStatus.Error);
+            reporter.getErrors().forEach(x -> logger.error(x.toString()));
+            StringWriter out = new StringWriter();
+            PrintWriter writer = new PrintWriter(out);
+            reporter.printWarnings(writer);
+            reporter.printErrors(writer);
+            throw new Exception(out.toString());
+        }
+
+        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
+        logic.setStatus(SessionLogic.SessionStatus.Finished);
+        return new StatusModel("Simulation completed", sessionId, 0,
+                reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
+                reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+    }
 
     //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)
     //    public void reset(@PathVariable String sessionId) {

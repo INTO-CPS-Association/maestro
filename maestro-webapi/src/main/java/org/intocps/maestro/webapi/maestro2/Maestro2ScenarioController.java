@@ -12,7 +12,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.dto.VerificationDTO;
-import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
+import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -130,12 +130,11 @@ public class Maestro2ScenarioController {
             ErrorReporter reporter = new ErrorReporter();
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
 
-            SimulateRequestBody requestBody = new SimulateRequestBody(executableModel.getExecutionParameters().getStartTime(),
-                    executableModel.getExecutionParameters().getEndTime(), Map.of(), false, 0d, ScenarioConfGenerator.generate(masterModel,
-                    masterModel.name()));
+            SigverSimulateRequestBody requestBody = new SigverSimulateRequestBody(executableModel.getExecutionParameters().getStartTime(),
+                    executableModel.getExecutionParameters().getEndTime(), Map.of(), false, 0d,
+                    ScenarioConfGenerator.generate(masterModel, masterModel.name()));
 
-            broker.buildAndRunMasterModel(null,null, executableModel.getMultiModel(), requestBody,
-                    new File(zipDir, "outputs.csv"));
+            broker.buildAndRunMasterModel(null, null, executableModel.getMultiModel(), requestBody, new File(zipDir, "outputs.csv"));
 
             if (reporter.getErrorCount() > 0) {
                 throw new Exception("Error(s) occurred during MaBL specification generation: " + reporter);
