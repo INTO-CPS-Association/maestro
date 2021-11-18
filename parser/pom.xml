@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.9</version>
+        <version>2.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>parser</artifactId>
@@ -26,12 +26,12 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>ast</artifactId>
-            <version>2.1.9</version>
+            <version>2.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>core</artifactId>
-            <version>2.1.9</version>
+            <version>2.2.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
