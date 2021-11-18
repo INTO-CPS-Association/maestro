@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>root</artifactId>
-        <version>2.1.9-SNAPSHOT</version>
+        <version>2.1.9</version>
     </parent>
 
 
@@ -76,7 +76,7 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>fmi</artifactId>
-            <version>2.1.9-SNAPSHOT</version>
+            <version>2.1.9</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
