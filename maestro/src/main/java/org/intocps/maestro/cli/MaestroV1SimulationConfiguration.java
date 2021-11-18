@@ -16,11 +16,6 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
     @JsonProperty("reportProgress")
     private final Boolean reportProgress;
 
-    @JsonProperty("faultInjectConfigurationPath")
-    private final String faultInjectConfigurationPath;
-    @JsonProperty("faultInjectInstances")
-    private final Map<String, String> faultInjectInstances;
-
     @JsonCreator
     public MaestroV1SimulationConfiguration(@JsonProperty("fmus") Map<String, String> fmus,
             @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
@@ -34,14 +29,13 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
             @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("startTime") double startTime,
             @JsonProperty("endTime") double endTime, @JsonProperty("reportProgress") Boolean reportProgress,
             @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
-            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances) {
+            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
-                global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels);
+                global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters,
+                logLevels, faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts);
         this.startTime = startTime;
         this.endTime = endTime;
         this.reportProgress = reportProgress;
-        this.faultInjectConfigurationPath = faultInjectConfigurationPath;
-        this.faultInjectInstances = faultInjectInstances;
     }
 
     public double getStartTime() {return startTime;}

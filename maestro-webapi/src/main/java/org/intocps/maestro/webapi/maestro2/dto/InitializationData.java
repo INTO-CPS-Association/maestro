@@ -27,9 +27,10 @@ public class InitializationData extends MultiModel {
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters,
             @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("livestream") Map<String, List<String>> livestream,
-            @JsonProperty("hasExternalSignals") boolean hasExternalSignals) {
+            @JsonProperty("hasExternalSignals") boolean hasExternalSignals, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
-                global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels);
+                global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters,
+                logLevels, "", Map.of(), convergenceAttempts);
         this.livestream = livestream;
         this.hasExternalSignals = hasExternalSignals;
     }
