@@ -337,11 +337,11 @@ public class Maestro2SimulationController {
     }
 
     @FunctionalInterface
-    private interface BuildAndRun {
+    private interface IBuildAndRun {
         void apply(Maestro2Broker broker) throws Exception;
     }
 
-    private StatusModel runSimulation(BuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
+    private StatusModel runSimulation(IBuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
         ErrorReporter reporter = new ErrorReporter();
