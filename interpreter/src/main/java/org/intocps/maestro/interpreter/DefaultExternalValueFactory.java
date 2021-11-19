@@ -12,6 +12,7 @@ import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
+import org.intocps.maestro.interpreter.values.modeltransition.ModelTransitionValue;
 import org.intocps.maestro.interpreter.values.utilities.ArrayUtilValue;
 import org.intocps.maestro.interpreter.values.variablestep.VariableStepValue;
 import org.reflections.Reflections;
@@ -75,7 +76,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
         }
 
-
+        lifecycleHandlers.put(ModelTransitionLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
+                new ModelTransitionLifecycleHandler());
     }
 
     private IValueLifecycleHandler instantiateHandler(File workingDirectory,
@@ -523,6 +525,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             return Either.right(new DataWriterValue(Collections.singletonList(new CsvDataWriter(
                     workingDirectory == null ? new File(dataWriterFileNameFinal) : new File(workingDirectory, dataWriterFileNameFinal),
                     dataWriterFilterFinal))));
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "ModelTransition")
+    public static class ModelTransitionLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new ModelTransitionValue());
         }
     }
 }
