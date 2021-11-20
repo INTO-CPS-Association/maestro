@@ -12,13 +12,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.intocps.fmi.IFmu;
 import org.intocps.maestro.cli.MablCmdVersionProvider;
+import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.MableError;
 import org.intocps.maestro.core.messages.MableWarning;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.framework.fmi2.FmuFactory;
 import org.intocps.maestro.webapi.Application;
 import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
@@ -44,10 +47,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
@@ -182,7 +183,31 @@ public class Maestro2SimulationController {
         logic.setInitializationData(body);
         logic.setStatus(SessionLogic.SessionStatus.Initialized);
 
-        return new InitializeStatusModel("initialized", sessionId, null, 0);
+        // This functionality only works for the FMUs that the org.intocps.maestro.framework.fmi2.LocalFactory can instantiate.
+        HashMap<String, List<InitializeStatusModel.LogLevelModel>> logcategoryKeyToLogCategories = new HashMap<>();
+        try {
+            // Load the FMUs
+            for (Map.Entry<String, String> fmuKeyToFmuURI : body.getFmus().entrySet()) {
+                IFmu iFmu = FmuFactory.create(logic.rootDirectory, URI.create(fmuKeyToFmuURI.getValue()));
+                Fmi2ModelDescription fmi2ModelDescription = new Fmi2ModelDescription(iFmu.getModelDescription());
+
+                List<ModelDescription.LogCategory> logCategories = new ArrayList<>();
+                try {
+                    logCategories = fmi2ModelDescription.getLogCategories();
+                    logcategoryKeyToLogCategories.put(fmuKeyToFmuURI.getKey(),
+                            logCategories.stream().map(x -> new InitializeStatusModel.LogLevelModel(x.getName(), x.getDescription()))
+                                    .collect(Collectors.toList()));
+                } catch (NullPointerException e) {
+                    logger.trace("No log categories found for FMU: " + fmuKeyToFmuURI.getKey());
+                }
+
+            }
+        } catch (Exception e) {
+            logger.info("Could not retrieve logging levels for one or more FMUs.");
+        }
+
+
+        return new InitializeStatusModel("initialized", sessionId, logcategoryKeyToLogCategories, 0);
     }
 
     private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {

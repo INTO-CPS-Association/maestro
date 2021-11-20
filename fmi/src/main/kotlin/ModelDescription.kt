@@ -34,6 +34,7 @@ abstract class ModelDescription
 
     @JvmField
     protected val doc: Document
+
     @JvmField
     protected val xpath: XPath
 
@@ -145,7 +146,7 @@ abstract class ModelDescription
             categories.add(
                 LogCategory(
                     node.attributes.getNamedItem("name").nodeValue,
-                    node.attributes.getNamedItem("description").nodeValue
+                    node.attributes.getNamedItem("description")?.nodeValue ?: ""
                 )
             )
         }
