@@ -10,10 +10,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.dto.ExtendedMultiModel;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
-import org.intocps.maestro.core.dto.VarStepConstraint;
-import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
+import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -21,11 +18,10 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
-import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
-import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
+import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
@@ -60,12 +56,17 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    public void buildAndRunMasterModel(ExtendedMultiModel extendedMultiModel, MasterModel masterModel,
-            org.intocps.maestro.webapi.dto.ExecutionParameters executionParameters, File csvOutputFile) throws Exception {
+    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                    .collect(Collectors.toList());
+
+    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = extendedMultiModel.getFmus();
-        simulationConfiguration.connections = extendedMultiModel.getConnections();
+        simulationConfiguration.fmus = multiModel.getFmus();
+        simulationConfiguration.connections = multiModel.getConnections();
+
+        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
 
         if (simulationConfiguration.connections.isEmpty()) {
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
@@ -91,10 +92,10 @@ public class Maestro2Broker {
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, extendedMultiModel.getParameters(),
-                executionParameters.getConvergenceRelativeTolerance(), executionParameters.getConvergenceAbsoluteTolerance(),
-                executionParameters.getConvergenceAttempts(), executionParameters.getStartTime(), executionParameters.getEndTime(),
-                executionParameters.getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), extendedMultiModel.isLoggingOn());
+        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
+                multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
+                multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
+                multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -109,10 +110,14 @@ public class Maestro2Broker {
         List<String> portsToLog = Stream.concat(simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
             return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
-        }), extendedMultiModel.getLogVariables() == null ? Stream.of() : extendedMultiModel.getLogVariables().entrySet().stream()
+        }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-        executeInterpreter(null, portsToLog, List.of(), 0d, csvOutputFile, new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
+        List<String> liveStreamFilter = livestreamVariables == null ? List.of() :
+                flattenFmuIds.apply(livestreamVariables);
+
+        executeInterpreter(socket, portsToLog, liveStreamFilter, body.getLiveLogInterval(), csvOutputFile,
+                new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
@@ -187,11 +192,6 @@ public class Maestro2Broker {
             throw new Exception("Specification did not verify");
         }
 
-        Function<Map<String, List<String>>, List<String>> flattenFmuIds =
-                map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
-                        .collect(Collectors.toList());
-
-
         List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
             return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
@@ -204,7 +204,6 @@ public class Maestro2Broker {
                 initializeRequest.getLivestream() == null ? new Vector<>() : flattenFmuIds.apply(initializeRequest.getLivestream()),
                 body.getLiveLogInterval() == null ? 0d : body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
-
     }
 
     public String generateSpecification(ScenarioConfiguration config, Map<String, Object> parameters) throws Exception {
