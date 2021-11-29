@@ -118,7 +118,7 @@ def cliGenerateAlgorithmFromMultiModel():
         json.dump(multiModel, jsonFile)
     
     cmd = "java -jar {0} sigver generate-algorithm {1} -output {2}".format(path, multiModelPath, temporary)
-    func = lambda: validateAlgorithmExecution(os.path.join(temporary, "outputs.csv"), os.path.join(resourcesPath, "expectedoutputs.csv"))
+    func = lambda: print("Succesfully generated algorithm from multi model") if(os.path.exists(os.path.join(temporary, "algorithm.conf"))) else lambda: (Exception("Algorithm was not returned"))
     testutils.testCliCommandWithFunc(cmd, func)
 
 def cliExecuteAlgorithmFromExtendedMultiModel():

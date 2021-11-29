@@ -150,10 +150,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             // Get all variables related to outputs or logging.
             Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = new HashMap<>();
             fmuInstances.forEach((identifier, instance) -> {
-                Set<String> scalarVariablesToGet = instance.getPorts().stream()
-                        .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream().anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
-                        .map(PortFmi2Api::getName).collect(Collectors.toSet());
-                scalarVariablesToGet.addAll(env.getVariablesToLog(identifier).stream().map(var -> var.scalarVariable.getName()).collect(Collectors.toSet()));
+                Set<String> scalarVariablesToGet = instance.getPorts().stream().filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
+                        .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName).collect(Collectors.toSet());
+                scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
+                        .collect(Collectors.toSet()));
 
                 componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
             });
@@ -169,9 +169,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             boolean everyFMUSupportsGetState = true;
             int indexer = 0;
             for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
-                StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null,
-                        MableAstFactory.newAStringLiteralExp(
-                                env.getInstanceByLexName(instance.getEnvironmentName()).getFmuIdentifier() + "." + instance.getName()));
+                StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null, MableAstFactory
+                        .newAStringLiteralExp(env.getInstanceByLexName(instance.getEnvironmentName()).getFmuIdentifier() + "." + instance.getName()));
                 fmuNamesToFmuInstances.put(fullyQualifiedFMUInstanceName, instance);
 
                 fmuInstanceToCommunicationPoint.put(instance, fmuCommunicationPoints.items().get(indexer));
@@ -238,8 +237,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
                 if (jacobianStepConfig.stabilisation) {
                     stabilisation_loop.setValue(stabilisation_loop_max_iterations);
-                    convergenceReached.setValue(
-                            new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
+                    convergenceReached
+                            .setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
                     stabilisationScope = dynamicScope.enterWhile(
                             convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
                 }
@@ -368,8 +367,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     if (algorithm == StepAlgorithm.VARIABLESTEP) {
                         // Validate step
                         PredicateFmi2Api notValidStepPred = Objects.requireNonNull(variableStepInstance).validateStepSize(
-                                        new DoubleVariableFmi2Api(null, null, dynamicScope, null,
-                                                currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate()
+                                new DoubleVariableFmi2Api(null, null, dynamicScope, null,
+                                        currentCommunicationTime.toMath().addition(currentStepSize).getExp()), allFMUsSupportGetState).toPredicate()
                                 .not();
 
                         BooleanVariableFmi2Api hasReducedStepSize = new BooleanVariableFmi2Api(null, null, dynamicScope, null,
@@ -446,6 +445,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 settings.setGetDerivatives = setGetDerivativesRestore;
             }
         } catch (Exception e) {
+            errorReporter.report(0, e.toString(), null);
             throw new ExpandException("Internal error: ", e);
         }
 

@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
@@ -62,7 +59,12 @@ public class FromMaBLToMaBLAPI {
                 a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
                         builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
             }
-            List<RelationVariable> variablesToLog = env.getVariablesToLog(componentName);
+            List<RelationVariable> variablesToLog = null;
+            if (environmentComponentName == null) {
+                variablesToLog = env.getVariablesToLog(componentName);
+            } else {
+                variablesToLog = env.getVariablesToLog(environmentComponentName);
+            }
             a.setVariablesToLog(variablesToLog);
 
             return Map.entry(componentName, a);
@@ -74,14 +76,22 @@ public class FromMaBLToMaBLAPI {
     public static void createBindings(Map<String, ComponentVariableFmi2Api> instances,
             ISimulationEnvironment env) throws Fmi2Builder.Port.PortLinkException {
         for (Map.Entry<String, ComponentVariableFmi2Api> entry : instances.entrySet()) {
-            for (IRelation relation : env.getRelations(entry.getKey()).stream()
-                    .filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
-                            x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
+            java.util.Set<? extends IRelation> relations = getRelations(entry, env);
+            for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
+                    x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
 
                 for (IVariable targetVar : relation.getTargets().values()) {
                     String targetName = targetVar.getScalarVariable().getInstance().getText();
-                    if (instances.containsKey(targetName)) {
+                    if (instances.containsKey(targetName) ||
+                            instances.values().stream().anyMatch(x -> x.getEnvironmentName().equalsIgnoreCase(targetName))) {
                         ComponentVariableFmi2Api instance = instances.get(targetName);
+                        if (instance == null) {
+                            Optional<ComponentVariableFmi2Api> instanceOpt =
+                                    instances.values().stream().filter(x -> x.getEnvironmentName().equalsIgnoreCase(targetName)).findFirst();
+                            if (instanceOpt.isPresent()) {
+                                instance = instanceOpt.get();
+                            }
+                        }
 
                         PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getScalarVariable().getName());
 
@@ -102,6 +112,14 @@ public class FromMaBLToMaBLAPI {
             }
         }
 
+    }
+
+    private static Set<? extends IRelation> getRelations(Map.Entry<String, ComponentVariableFmi2Api> entry, ISimulationEnvironment env) {
+        if (entry.getValue().getEnvironmentName() != entry.getKey()) {
+            return env.getRelations(entry.getValue().getEnvironmentName());
+        } else {
+            return env.getRelations(entry.getKey());
+        }
     }
 
 

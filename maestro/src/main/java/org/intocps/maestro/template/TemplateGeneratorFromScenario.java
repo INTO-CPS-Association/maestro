@@ -7,8 +7,12 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.api.mabl.FaultInject;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.Sigver;
@@ -47,27 +51,54 @@ public class TemplateGeneratorFromScenario {
         MablApiBuilder builder = new MablApiBuilder(settings);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
-        List<FmuVariableFmi2Api> fmus = configuration.getSimulationEnvironment().getFmusWithModelDescriptions().stream()
-                .filter(entry -> configuration.getSimulationEnvironment().getUriFromFMUName(entry.getKey()) != null).map(entry -> {
+        Fmi2SimulationEnvironment simulationEnvironment = configuration.getSimulationEnvironment();
+        boolean doFaultInject = simulationEnvironment.getFaultInjectionConfigurationPath() != null &&
+                !simulationEnvironment.getFaultInjectionConfigurationPath().equals("");
+
+        List<FmuVariableFmi2Api> fmus = simulationEnvironment.getFmusWithModelDescriptions().stream()
+                .filter(entry -> simulationEnvironment.getUriFromFMUName(entry.getKey()) != null).map(entry -> {
                     try {
                         return dynamicScope.createFMU(removeFmuKeyBraces(entry.getKey()), entry.getValue(),
-                                configuration.getSimulationEnvironment().getUriFromFMUName(entry.getKey()));
+                                simulationEnvironment.getUriFromFMUName(entry.getKey()));
                     } catch (Exception e) {
                         throw new RuntimeException("Unable to create FMU variable: " + e);
                     }
                 }).collect(Collectors.toList());
 
         // Generate fmu instances with identifying names from the master model.
-        Map<String, ComponentVariableFmi2Api> fmuInstances =
+        Map<String, ComponentVariableFmi2Api> originalFmuInstances =
                 CollectionConverters.asJava(masterModel.scenario().fmus()).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     Optional<FmuVariableFmi2Api> fmuFromScenario = fmus.stream().filter(fmu -> fmu.getName().toLowerCase(Locale.ROOT)
                             .contains(entry.getKey().split(SCENARIO_MODEL_FMU_INSTANCE_DELIMITER)[0].toLowerCase(Locale.ROOT))).findAny();
                     if (fmuFromScenario.isEmpty()) {
-                        throw new RuntimeException("Unable to match fmu from multi model with fmu from master model");
+                        throw new RuntimeException("The FMU: " + entry.getKey() + " from the scenario is not defined in the multi model");
                     }
                     String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
-                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, instanceNameInEnvironment);
+                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, dynamicScope.findParentScope(TryMaBlScope.class),
+                            dynamicScope, instanceNameInEnvironment, configuration.getLoggingOn());
                 }));
+
+        Map<String, ComponentVariableFmi2Api> fmuInstances;
+        Map<String, ComponentVariableFmi2Api> faultInjectInstances = new HashMap<>();
+        if(doFaultInject) {
+            FaultInject faultInject = builder.getFaultInject(simulationEnvironment.getFaultInjectionConfigurationPath());
+
+            fmuInstances = originalFmuInstances.entrySet().stream().map(entry -> {
+                String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
+                Optional<Map.Entry<String, ComponentInfo>> simEnvInstance =
+                        simulationEnvironment.getInstances().stream().filter(ins -> Objects.equals(ins.getKey(), instanceNameInEnvironment)).findFirst();
+                if (simEnvInstance.isPresent() && simEnvInstance.get().getValue().getFaultInject().isPresent()) {
+                    String constraintId = simEnvInstance.get().getValue().getFaultInject().get().constraintId;
+                    ComponentVariableFmi2Api faultInjectedInstance =
+                            faultInject.faultInject(entry.getValue().getOwner(), entry.getValue(), constraintId);
+                    faultInjectInstances.put(faultInjectedInstance.getName(), faultInjectedInstance);
+                    return Map.entry(faultInjectedInstance.getName(), faultInjectedInstance);
+                }
+                return entry;
+            }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } else {
+            fmuInstances = originalFmuInstances;
+        }
 
         // Store variables to be used by the scenario verifier
         dynamicScope.store(STEP_SIZE_NAME, configuration.getExecutionParameters().getStepSize());
@@ -87,21 +118,27 @@ public class TemplateGeneratorFromScenario {
         dynamicScope.add(configStm);
 
         // Add scenario verifier expansion plugin
-        PStm algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
-                newAIdentifierExp(MableAstFactory.newAIdentifier(SIGVER_EXPANSION_MODULE_NAME)),
-                MableAstFactory.newAIdentifier(Sigver.EXECUTE_ALGORITHM_FUNCTION_NAME),
-                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+        PStm algorithmStm = MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(SIGVER_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(Sigver.EXECUTE_ALGORITHM_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
         dynamicScope.add(algorithmStm);
 
         // Terminate instances, free instances, unload FMUs
-        fmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);
+        if(doFaultInject){
+            originalFmuInstances.putAll(faultInjectInstances);
+        }
+        originalFmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);
 
         // Build unit
         ASimulationSpecificationCompilationUnit unit = builder.build();
 
         // Add imports
-        unit.setImports(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
+        List<LexIdentifier> imports = new ArrayList<>();
+        imports.addAll(unit.getImports());
+        imports.addAll(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
+        unit.setImports(imports);
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));

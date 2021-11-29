@@ -40,6 +40,14 @@ public class MultiModel {
     @JsonProperty("logLevels")
     private final Map<String, List<String>> logLevels;
 
+    @JsonProperty("faultInjectConfigurationPath")
+    public String faultInjectConfigurationPath;
+    @JsonProperty("faultInjectInstances")
+    public Map<String, String> faultInjectInstances;
+
+    @JsonProperty("convergenceAttempts")
+    private final int convergenceAttempts;
+
     @JsonCreator
     public MultiModel(@JsonProperty("fmus") Map<String, String> fmus, @JsonProperty("connections") Map<String, List<String>> connections,
             @JsonProperty("parameters") Map<String, Object> parameters, @JsonProperty("logVariables") Map<String, List<String>> logVariables,
@@ -49,7 +57,8 @@ public class MultiModel {
             @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters,
-            @JsonProperty("logLevels") Map<String, List<String>> logLevels) {
+            @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
+            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
         this.fmus = fmus;
         this.connections = connections;
         this.parameters = parameters;
@@ -65,7 +74,12 @@ public class MultiModel {
         this.overrideLogLevel = overrideLogLevel;
         this.environmentParameters = environmentParameters;
         this.logLevels = logLevels;
+        this.faultInjectConfigurationPath = faultInjectConfigurationPath;
+        this.faultInjectInstances = faultInjectInstances;
+        this.convergenceAttempts = convergenceAttempts;
     }
+
+    public int getConvergenceAttempts() { return convergenceAttempts; }
 
     public List<String> getEnvironmentParameters() {
         return environmentParameters;

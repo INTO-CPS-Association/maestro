@@ -9,7 +9,7 @@ import java.util.Map;
 public class InitializeStatusModel extends StatusModel {
 
     @JsonProperty("availableLogLevels")
-    private final Map<String, List<LogLevelModel>> availableLogLevels;
+    public final Map<String, List<LogLevelModel>> availableLogLevels;
 
     @JsonCreator
     public InitializeStatusModel(@JsonProperty("status") String status, @JsonProperty("sessionid") String sessionId,
@@ -20,10 +20,11 @@ public class InitializeStatusModel extends StatusModel {
     }
 
     public static class LogLevelModel {
-        final String name;
-        final String description;
+        public final String name;
+        public final String description;
 
-        public LogLevelModel(String name, String description) {
+        @JsonCreator
+        public LogLevelModel(@JsonProperty("name") String name, @JsonProperty("description") String description) {
             this.name = name;
             this.description = description;
         }

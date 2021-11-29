@@ -47,6 +47,30 @@ public class CreateMablSpecTests {
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
+    public static String getWaterTankMMJson(boolean useFixedStep) {
+        String singlewatertank_20simfmu = "file:///" +
+                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "singlewatertank-20sim.fmu").toAbsolutePath().toString()
+                        .replace("\\", "/");
+        String watertankcontroller_cfmu = "file:///" +
+                Paths.get("src", "test", "resources", "maestro2", "watertankexample", "watertankcontroller-c.fmu").toAbsolutePath().toString()
+                        .replace("\\", "/");
+
+        String VariableStepalgorithm = "\"algorithm\":{\"type\":\"var-step\",\"initsize\":0,\"size\":[1e-16,1]," +
+                "\"constraints\":{\"max\":{\"type\":\"zerocrossing\",\"ports\":[\"{wt}.wtInstance.level\",\"{crtl}.crtlInstance.maxlevel\"],\"order\":1,\"abstol\":0" +
+                ".01},\"min\":{\"type\":\"zerocrossing\",\"ports\":[\"{wt}.wtInstance.level\",\"{crtl}.crtlInstance.minlevel\"],\"order\":1,\"abstol\":0.01,\"safety\":1}}}";
+
+        String FixedStepAlgorithm = "  \"algorithm\": {\n \"type\": \"fixed-step\",\n \"size\": 0.1\n}";
+
+        String json = "{\n" + "  \"fmus\": {\n" + "    \"{crtl}\": \"" + watertankcontroller_cfmu + "\",\n" + "    \"{wt}\": \"" +
+                singlewatertank_20simfmu + "\"\n" + "  },\n" + "  \"connections\": {\n" + "    \"{crtl}.crtlInstance.valve\": [\n" +
+                "      \"{wt}.wtInstance.valvecontrol\"\n" + "    ],\n" + "    \"{wt}.wtInstance.level\": [\n" +
+                "      \"{crtl}.crtlInstance.level\"\n" + "    ]\n" + "  },\n" + "  \"parameters\": {\n" +
+                "    \"{crtl}.crtlInstance.maxlevel\": 2,\n" + "    \"{crtl}.crtlInstance.minlevel\": 1\n" + "  },\n" +
+                (useFixedStep ? FixedStepAlgorithm : VariableStepalgorithm) + "\n}";
+        return json;
+
+    }
+
     @BeforeEach
     public void before() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();

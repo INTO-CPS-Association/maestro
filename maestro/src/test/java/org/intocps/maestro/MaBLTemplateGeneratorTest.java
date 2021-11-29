@@ -191,10 +191,12 @@ public class MaBLTemplateGeneratorTest {
         final double endTime = 10.0;
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
-
+        File faultInjectionFile =
+                Paths.get("src", "test", "resources", "org", "into-cps", "maestro", "faultinjection", "dummyfaultinjectfile.xml").toFile();
         Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
                 new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
         simulationEnvironmentConfiguration.faultInjectInstances = Map.of("crtlInstance", "constraintid");
+        simulationEnvironmentConfiguration.faultInjectConfigurationPath = faultInjectionFile.toString();
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
 

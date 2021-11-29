@@ -62,7 +62,7 @@ public class Application {
             if (simulationConfigFile != null && simulationConfigFile.exists()) {
                 simulationData = mapper.readValue(simulationConfigFile, SimulateRequestBody.class);
             } else {
-                simulationData = new SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d);
+                simulationData = new SimulateRequestBody(startTime, endTime, new HashMap<>(), false, 0d, "");
             }
 
             Function<File, File> calculateWorkingDirectory = (file) -> {
