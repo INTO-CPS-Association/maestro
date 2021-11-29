@@ -19,8 +19,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class CreateMablSpecTests {
                 mockMvc.perform(get("/createSession")).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
                 StatusModel.class);
         InitializeStatusModel initializeResponse = om.readValue(mockMvc.perform(
-                post("/initialize/" + statusModel.sessionId).content(getWaterTankMMJson(false)).contentType(MediaType.APPLICATION_JSON))
+                        post("/initialize/" + statusModel.sessionId).content(getWaterTankMMJson(false)).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(), InitializeStatusModel.class);
         File start_messageFile =
                 new File(Paths.get("src", "test", "resources", "maestro2", "watertankexample", "start_message.json").toAbsolutePath().toString());
@@ -91,9 +93,8 @@ public class CreateMablSpecTests {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip)
-                .containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json", "crtlInstance.log",
-                        "wtInstance.log");
+        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
+                "crtlInstance.log", "wtInstance.log");
 
 
     }
@@ -106,7 +107,7 @@ public class CreateMablSpecTests {
                 mockMvc.perform(get("/createSession")).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(),
                 StatusModel.class);
         InitializeStatusModel initializeResponse = om.readValue(mockMvc.perform(
-                post("/initialize/" + statusModel.sessionId).content(getWaterTankMMJson(true)).contentType(MediaType.APPLICATION_JSON))
+                        post("/initialize/" + statusModel.sessionId).content(getWaterTankMMJson(true)).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse().getContentAsString(), InitializeStatusModel.class);
         File start_messageFile =
                 new File(Paths.get("src", "test", "resources", "maestro2", "watertankexample", "start_message.json").toAbsolutePath().toString());
@@ -139,9 +140,8 @@ public class CreateMablSpecTests {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip)
-                .containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json", "crtlInstance.log",
-                        "wtInstance.log");
+        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
+                "crtlInstance.log", "wtInstance.log");
 
 
     }
@@ -199,10 +199,13 @@ public class CreateMablSpecTests {
         List<ZipEntry> entries = new ArrayList<>();
         ZipEntry entry = istream.getNextEntry();
         String mablSpec = null;
+        String outputsCSV = null;
         while (entry != null) {
             entries.add(entry);
             if (entry.getName().equals("spec.mabl")) {
                 mablSpec = IOUtils.toString(istream, StandardCharsets.UTF_8);
+            } else if (entry.getName().equals("outputs.csv")) {
+                outputsCSV = IOUtils.toString(istream, StandardCharsets.UTF_8);
             }
             entry = istream.getNextEntry();
 
@@ -215,8 +218,10 @@ public class CreateMablSpecTests {
 
         List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
 
-        assertThat(filesInZip)
-                .containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json", "crtlInstance.log",
-                        "wtInstance.log");
+        assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
+                "crtlInstance.log", "wtInstance.log");
+        BufferedReader reader = new BufferedReader(new StringReader(outputsCSV));
+        String headers = reader.readLine();
+        assertThat(headers.contains("{12-f}.crtlInstance.valve"));
     }
 }
