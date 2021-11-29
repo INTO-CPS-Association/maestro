@@ -66,8 +66,9 @@ public class CsvDataWriter implements IDataListener {
 
             data.add(value.toString());
         }
-
-        this.instances.get(uuid).println(String.join(",", data));
+        CsvDataWriterInstance instance = this.instances.get(uuid);
+        instance.println(String.join(",", data));
+        instance.flush();
     }
 
     @Override
@@ -84,6 +85,10 @@ public class CsvDataWriter implements IDataListener {
 
         public void println(String data) {
             this.printWriter.println(data);
+        }
+
+        public void flush() {
+            this.printWriter.flush();
         }
 
         public void close() {
