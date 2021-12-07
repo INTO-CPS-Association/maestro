@@ -27,34 +27,34 @@ x1 = {dependencies-init=[], dependencies=[]}
 v1 = {dependencies-init=[], dependencies=[]}}
  }}
 connections = [
-msd1.x1 -> msd2.x1
-msd1.v1 -> msd2.v1
-msd2.fk -> msd1.fk
-msd2.z -> msd3.z
-msd3.G -> msd2.G]
+"msd1.x1" -> "msd2.x1"
+"msd1.v1" -> "msd2.v1"
+"msd2.fk" -> "msd1.fk"
+"msd2.z" -> "msd3.z"
+"msd3.G" -> "msd2.G"]
 }
 initialization = [
 
 
-{get: msd1.x1}
+{get: "msd1.x1"}
 
-{set: msd2.x1}
+{set: "msd2.x1"}
 
-{get: msd2.z}
+{get: "msd2.z"}
 
-{set: msd3.z}
+{set: "msd3.z"}
 
-{get: msd1.v1}
+{get: "msd1.v1"}
 
-{set: msd2.v1}
+{set: "msd2.v1"}
 
-{get: msd2.fk}
+{get: "msd2.fk"}
 
-{set: msd1.fk}
+{set: "msd1.fk"}
 
-{get: msd3.G}
+{get: "msd3.G"}
 
-{set: msd2.G}
+{set: "msd2.G"}
 
 
 
@@ -68,32 +68,32 @@ cosim-step = {conf1 = [{save-state: msd2}
 {loop: { 
  until-step-accept: [msd2,msd1,msd3] 
  iterate: [{loop: { 
- until-converged: [msd3.G,msd2.fk,msd2.z,msd1.x1,msd1.v1] 
- iterate: [{set: msd2.G}
+ until-converged: ["msd3.G","msd2.fk","msd2.z","msd1.x1","msd1.v1"] 
+ iterate: [{set: "msd2.G"}
 
 {step: msd3 }
 
-{set: msd3.z}
+{set: "msd3.z"}
 
-{get-tentative: msd3.G}
+{get-tentative: "msd3.G"}
 
-{set: msd1.fk}
+{set: "msd1.fk"}
 
 {step: msd1 }
 
-{get-tentative: msd1.v1}
+{get-tentative: "msd1.v1"}
 
-{get-tentative: msd1.x1}
+{get-tentative: "msd1.x1"}
 
-{set: msd2.v1}
+{set: "msd2.v1"}
 
 {step: msd2 }
 
-{set: msd2.x1}
+{set: "msd2.x1"}
 
-{get-tentative: msd2.fk}
+{get-tentative: "msd2.fk"}
 
-{get-tentative: msd2.z}
+{get-tentative: "msd2.z"}
 ] 
  if-retry-needed: [{restore-state: msd3}
 
