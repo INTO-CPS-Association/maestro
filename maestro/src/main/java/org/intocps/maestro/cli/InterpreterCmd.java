@@ -2,6 +2,7 @@ package org.intocps.maestro.cli;
 
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.InterpreterTransitionException;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -91,11 +92,16 @@ public class InterpreterCmd implements Callable<Integer> {
             }
         }
 
-        if (runtime != null) {
-            util.interpret(runtime);
-        } else {
-            util.interpret();
-
+        try {
+            if (runtime != null) {
+                util.interpret(runtime);
+            } else {
+                util.interpret();
+            }
+        } catch (InterpreterTransitionException e) {
+            files.clear();
+            files.add(new File(e.getTransitionName()));
+            this.call();
         }
         return 0;
     }
