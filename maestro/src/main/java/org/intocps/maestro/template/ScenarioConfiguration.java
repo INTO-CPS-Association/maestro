@@ -6,6 +6,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 
+import java.util.List;
 import java.util.Map;
 
 public class ScenarioConfiguration {
@@ -15,14 +16,17 @@ public class ScenarioConfiguration {
     private final ExecutionParameters executionParameters;
     private final Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
     private final Boolean loggingOn;
+    private final Map<String, List<String>> logLevels;
 
     public ScenarioConfiguration(Fmi2SimulationEnvironment simulationEnvironment, MasterModel masterModel, Map<String, Object> parameters,
             Double convergenceRelativeTolerance, Double convergenceAbsoluteTolerance, Integer convergenceAttempts, Double startTime, Double endTime,
-            Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig, Boolean loggingOn) {
+            Double stepSize, Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig, Boolean loggingOn,
+            Map<String, List<String>> logLevels) {
         this.simulationEnvironment = simulationEnvironment;
         this.masterModel = masterModel;
         this.parameters = parameters;
         this.frameworkConfig = frameworkConfig;
+        this.logLevels = logLevels;
         executionParameters =
                 new ExecutionParameters(convergenceRelativeTolerance, convergenceAbsoluteTolerance, convergenceAttempts, startTime, endTime,
                         stepSize);
@@ -51,6 +55,10 @@ public class ScenarioConfiguration {
 
     public Boolean getLoggingOn() {
         return loggingOn;
+    }
+
+    public Map<String, List<String>> getLogLevels() {
+        return logLevels;
     }
 
     public static class ExecutionParameters {

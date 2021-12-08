@@ -80,9 +80,10 @@ public class TemplateGeneratorFromScenario {
 
         Map<String, ComponentVariableFmi2Api> fmuInstances;
         Map<String, ComponentVariableFmi2Api> faultInjectInstances = new HashMap<>();
+
         if(doFaultInject) {
             FaultInject faultInject = builder.getFaultInject(simulationEnvironment.getFaultInjectionConfigurationPath());
-
+            // We need to use the fault inject fmu instead of the original.
             fmuInstances = originalFmuInstances.entrySet().stream().map(entry -> {
                 String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
                 Optional<Map.Entry<String, ComponentInfo>> simEnvInstance =
@@ -98,6 +99,15 @@ public class TemplateGeneratorFromScenario {
             }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         } else {
             fmuInstances = originalFmuInstances;
+        }
+        if(configuration.getLoggingOn()) {
+            Map<String, List<String>> logLevelsMap = configuration.getLogLevels();
+            fmuInstances.forEach((k,v) -> {
+                logLevelsMap.entrySet().stream().filter(entry -> entry.getKey().contains(v.getEnvironmentName()) && entry.getKey().contains(v.getOwner().getFmuIdentifier())).findAny().ifPresent(entry -> {
+                    v.setDebugLogging(entry.getValue(), true);
+                    logLevelsMap.remove(entry.getKey());
+                });
+            });
         }
 
         // Store variables to be used by the scenario verifier
