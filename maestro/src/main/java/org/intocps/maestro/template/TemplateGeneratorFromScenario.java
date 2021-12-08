@@ -99,6 +99,7 @@ public class TemplateGeneratorFromScenario {
         } else {
             fmuInstances = originalFmuInstances;
         }
+        fmuInstances.values().forEach(instance -> instance.setVariablesToLog(configuration.getSimulationEnvironment().getVariablesToLog(instance.getEnvironmentName())));
 
         // Store variables to be used by the scenario verifier
         dynamicScope.store(STEP_SIZE_NAME, configuration.getExecutionParameters().getStepSize());
