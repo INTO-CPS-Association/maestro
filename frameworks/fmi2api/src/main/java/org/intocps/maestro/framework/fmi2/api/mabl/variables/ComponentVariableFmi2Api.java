@@ -240,18 +240,19 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                 MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
                         MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), categories.size(), loglevelsArrayInitializer));
 
-        LexIdentifier statusIdentifier = newAIdentifier(CATEGORY_STATUS);
+        LexIdentifier statusIdentifier = newAIdentifier(getEnvironmentName() + "_" + CATEGORY_STATUS);
 
         ALocalVariableStm callStm = newALocalVariableStm(newAVariableDeclaration(statusIdentifier, newAIntNumericPrimitiveType(), newAExpInitializer(
                 newACallExp(newAIdentifierExp(name), newAIdentifier("setDebugLogging"),
                         Arrays.asList(newABoolLiteralExp(enableLogging), MableAstFactory.newAIntLiteralExp(categories.size()),
                                 MableAstFactory.newAIdentifierExp(arrayName))))));
 
+        scope.add(arrayContent, callStm);
 
-        AIfStm ifStm = newIf(newOr(newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_ERROR))),
-                newPar(newEqual(newAIdentifierExp((LexIdentifier) statusIdentifier.clone()), newAIntLiteralExp(FMI_FATAL)))), new AErrorStm(), null);
-
-        scope.add(arrayContent, callStm, ifStm);
+        if (builder.getSettings().fmiErrorHandlingEnabled) {
+            FmiStatusErrorHandlingBuilder.generate(builder, "setDebugLogging", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
+                    MablApiBuilder.FmiStatus.FMI_FATAL);
+        }
     }
 
     @Override

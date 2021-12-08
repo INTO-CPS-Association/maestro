@@ -365,10 +365,14 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         simulationConfiguration.connections = connectionsMap;
 
-        Boolean loggingOn = true;
+        Boolean loggingOn = false;
 
         if(multiModelNode.has("loggingOn")){
             loggingOn = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("loggingOn")), new TypeReference<>() {});
+        }
+        Map<String, List<String>> logLevels = new HashMap<>();
+        if(multiModelNode.has("logLevels")) {
+            logLevels = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logLevels")), new TypeReference<>() {});
         }
 
 
@@ -381,6 +385,6 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
         // Setup scenarioConfiguration
         return new ScenarioConfiguration(Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter), masterModel, parameters, relTol,
-                absTol, convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration), loggingOn);
+                absTol, convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration), loggingOn, logLevels);
     }
 }

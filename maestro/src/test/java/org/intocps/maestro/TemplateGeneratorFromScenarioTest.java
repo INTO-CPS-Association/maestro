@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -102,7 +101,7 @@ public class TemplateGeneratorFromScenarioTest {
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
         ScenarioConfiguration scenarioConfiguration =
                 new ScenarioConfiguration(simulationEnvironment, masterModel, parameters, relTol, absTol, convergenceAttempts, startTime, endTime,
-                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration), false);
+                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration), false, Map.of());
 
         // ACT
         // This calls TemplateGeneratorFromScenario.generateTemplate which is the method to test

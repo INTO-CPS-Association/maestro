@@ -62,7 +62,8 @@ import java.util.stream.Collectors;
 %stm->observable = "observable;"
 %stm->expression = [exp]
 %stm->break = "break"
-%stm->instanceMapping = "@Map(" + [identifier]+ " -> "+[name] + ")"
+%stm->instanceMapping = "@mapInstance(" + [identifier]+ " -> \""+[name] + "\")"
+%stm->fmuMapping = "@mapFmu(" + [identifier]+ " -> \""+[name] + "\")"
 %stm->config = "@Config(\"" + [config] + "\")"
 %stm->error = "error "+ $ ($[exp]$==null?"":$[exp]$)$
 %stm->try = "try" + [body] +  "finally"  +[finally]
