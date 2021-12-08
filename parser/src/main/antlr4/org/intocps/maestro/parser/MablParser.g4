@@ -59,8 +59,10 @@ statement
     | SEMI                                                      #semi
     | OBSERVABLE                                                #observable
     | BREAK                                                     #break
-    | INSTANCE_MAP identifier=IDENTIFIER '->'
-                     name=STRING_LITERAL ';'                    #expandMapping
+    | FMU_MAP LPAREN identifier=IDENTIFIER '->'
+        name=STRING_LITERAL RPAREN ';'                          #fmuMapping
+    | INSTANCE_MAP LPAREN identifier=IDENTIFIER '->'
+                     name=STRING_LITERAL RPAREN ';'             #instanceMapping
     | AT_CONFIG LPAREN  config=STRING_LITERAL  RPAREN ';'       #config
     | ERROR expression? ';'                                     #error
     | TRY tryBlock=block FINALLY finallyBlock=block                                   #try
