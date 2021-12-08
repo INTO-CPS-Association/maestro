@@ -1,0 +1,165 @@
+simulation
+import FMI2;
+import DataWriter;
+import Logger;
+import Math;
+import ModelTransition;
+
+{
+    real START_TIME = 0.0;
+    real END_TIME = 10.0;
+    real STEP_SIZE = 0.1;
+
+    // #############################
+    // XXX: ModelTransition TEST ONLY
+    // #############################
+    ModelTransition mt = load("ModelTransition");
+    FMI2 tankController = mt.getFMU("tankController");
+    FMI2Component crtlInstance = mt.getFMUInstance("crtlInstance");
+    FMI2 singleWatertank = mt.getFMU("singleWatertank");
+    FMI2Component wtInstance = mt.getFMUInstance("wtInstance");
+
+
+    // #############################
+    // DataWriter for results
+    // #############################
+    DataWriter dataWriter = load("DataWriter");
+    string data_headers[2] = {"{crtl}.crtlInstance.valve","{wt}.wtInstance.level"};
+    DataWriterConfig dataWriterConfiguration = dataWriter.writeHeader(data_headers);
+
+
+    // #############################
+    // Load the FMUs and instantiate instances
+    // #############################
+    //FMI2 tankController = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "wt/watertankcontroller-c.fmu");
+    //FMI2 singleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "wt/singlewatertank-20sim.fmu");
+    //FMI2Component crtlInstance = tankController.instantiate("crtlInstance", false, false);
+    //FMI2Component wtInstance = singleWatertank.instantiate("wtInstance", false, false);
+
+    wtInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+    crtlInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
+
+    // #############################
+    // Set maximum level and minimum level parameters
+    // #############################
+    real crtlParameters[2] = { 2.0 , 1.0 };
+    uint crtlParameterValRefs[2] = { 0 , 1 };
+    crtlInstance.setReal(crtlParameterValRefs, 2, crtlParameters);
+
+    wtInstance.enterInitializationMode();
+    crtlInstance.enterInitializationMode();
+
+
+    uint crtlValveStateValRef[1] = { 4 };
+    bool crtlValveStateOutput[1];
+
+    uint crtlLevelInputValRef[1] = { 3 };
+    real crtlLevelInputValue[1];
+
+    uint wtValveStateValRef[1] = { 16 };
+    real wtValveStateInputs[1];
+
+    uint wtLevelValRef[1] = { 17 };
+    real wtLevelOutputValue[1];
+
+    // #############################
+    // Perform the Initialization:
+    // 1. Extract valve state from controller
+    // 2. Convert the valve state from boolean to real
+    // 3. Set the valve state on the tank
+    // 4. Extract the level from the tank
+    // 5. Set the level on the controller
+    // #############################
+    crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+    real wtValveStateInput;
+    if( crtlValveStateOutput[0] )
+    {
+        wtValveStateInput = 1.0;
+    }
+    else
+    {
+        wtValveStateInput = 0.0;
+    }
+
+
+    wtValveStateInputs[0] = wtValveStateInput;
+    wtInstance.setReal(wtValveStateValRef, 1, wtValveStateInputs);
+
+    wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+    crtlInstance.setReal(crtlLevelInputValRef, 1, wtLevelOutputValue);
+
+    wtInstance.exitInitializationMode();
+    crtlInstance.exitInitializationMode();
+
+    // #############################
+    // Get the valve state from the controller
+    // Get the level from the tank 
+    // Write the valve state and the water level to the results
+    // #############################
+    crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+    wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, crtlValveStateOutput[0], wtLevelOutputValue[0]);
+
+
+    real time = START_TIME;
+    // #############################
+    // Simulation Loop until END_TIME
+    // #############################
+    while(time + STEP_SIZE <= END_TIME)
+    {
+        // #############################
+        // Convert valve state from boolean to real
+        // #############################
+        if( crtlValveStateOutput[0] )
+        {
+            wtValveStateInput = 1.0;
+        }
+        else
+        {
+            wtValveStateInput = 0.0;
+        }
+        // #############################
+        // Set the valve state on the tank
+        // Set the level on the controller
+        // #############################
+        wtValveStateInputs[0] = wtValveStateInput;
+        wtInstance.setReal(wtValveStateValRef, 1, wtValveStateInputs);
+        crtlInstance.setReal(crtlLevelInputValRef, 1, wtLevelOutputValue);
+
+        // #############################
+        // Step the tank
+        // Step the controller
+        // #############################
+        wtInstance.doStep(time, STEP_SIZE, true);
+        crtlInstance.doStep(time, STEP_SIZE, true);
+
+        // #############################
+        // Get the valve state from the controller
+        // Get the level from the tank
+        // #############################
+        crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
+        wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
+
+        // #############################
+        // Increase the time with STEP_SIZE
+        // Write the valve state and the water level to the results
+        // #############################
+        time = time + STEP_SIZE;
+        dataWriter.writeDataPoint(dataWriterConfiguration, time, crtlValveStateOutput[0], wtLevelOutputValue[0]);
+
+    }
+    
+    // #############################
+    // Clean up
+    // #############################
+    dataWriter.close();
+    wtInstance.terminate();
+    crtlInstance.terminate();
+    tankController.freeInstance(crtlInstance);
+    singleWatertank.freeInstance(wtInstance);
+
+    // XXX: unloading transitioned models seems to fail
+    //unload(tankController);
+    //unload(singleWatertank);
+    unload(dataWriter);
+}
