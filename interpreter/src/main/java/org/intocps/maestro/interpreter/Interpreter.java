@@ -91,6 +91,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAFmuMappingStm(AFmuMappingStm node, Context question) throws AnalysisException {
+        return new VoidValue();
+    }
+
+    @Override
     public Value caseALocalVariableStm(ALocalVariableStm node, Context question) throws AnalysisException {
 
         return node.getDeclaration().apply(this, question);

@@ -32,6 +32,7 @@ public class MablParserUtil {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
                     RecognitionException e) {
+                System.out.println(specStreams);
                 throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
             }
         });

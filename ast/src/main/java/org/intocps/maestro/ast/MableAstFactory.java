@@ -42,6 +42,13 @@ public class MableAstFactory {
         return ims;
     }
 
+    public static AFmuMappingStm newAFMUMappingStm(LexIdentifier mablName, String envName) {
+        AFmuMappingStm fms = new AFmuMappingStm();
+        fms.setIdentifier(mablName);
+        fms.setName(envName);
+        return fms;
+    }
+
     public static AIdentifierExp newAIdentifierExp(String name) {
         return newAIdentifierExp(newAIdentifier(name));
     }

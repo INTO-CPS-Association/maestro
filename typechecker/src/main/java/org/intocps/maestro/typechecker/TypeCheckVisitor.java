@@ -104,6 +104,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     }
 
     @Override
+    public PType caseAFmuMappingStm(AFmuMappingStm node, Context question) throws AnalysisException {
+        return store(node, MableAstFactory.newAVoidType());
+    }
+
+    @Override
     public PType caseAArrayIndexExp(AArrayIndexExp node, Context ctxt) throws AnalysisException {
 
         for (PExp index : node.getIndices()) {

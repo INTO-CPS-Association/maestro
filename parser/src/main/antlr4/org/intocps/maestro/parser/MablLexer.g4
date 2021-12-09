@@ -94,7 +94,8 @@ RSHIFT_ASSIGN:      '>>=';
 URSHIFT_ASSIGN:     '>>>=';
 
 RIGHT_ARROW:        '->';
-INSTANCE_MAP:       '@map';
+INSTANCE_MAP:       '@mapInstance';
+FMU_MAP:            '@mapFmu';
 AT_CONFIG:          '@Config';
 AT_FRAMEWORK:      '@Framework';
 AT_FRAMEWORK_CONFIG:'@FrameworkConfig';
