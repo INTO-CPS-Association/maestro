@@ -375,6 +375,14 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
             logLevels = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logLevels")), new TypeReference<>() {});
         }
 
+
+        if(multiModelNode.has("logVariables")){
+            simulationConfiguration.logVariables = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logVariables")), new TypeReference<>() {});
+            if (simulationConfiguration.logVariables == null) {
+                simulationConfiguration.variablesToLog = new HashMap<>();
+            }
+        }
+
         // Setup scenarioConfiguration
         return new ScenarioConfiguration(Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter), masterModel, parameters, relTol,
                 absTol, convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration), loggingOn, logLevels);

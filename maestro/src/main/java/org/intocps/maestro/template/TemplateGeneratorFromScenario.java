@@ -100,6 +100,7 @@ public class TemplateGeneratorFromScenario {
         } else {
             fmuInstances = originalFmuInstances;
         }
+        fmuInstances.values().forEach(instance -> instance.setVariablesToLog(configuration.getSimulationEnvironment().getVariablesToLog(instance.getEnvironmentName())));
         if(configuration.getLoggingOn()) {
             Map<String, List<String>> logLevelsMap = configuration.getLogLevels();
             fmuInstances.forEach((k,v) -> {

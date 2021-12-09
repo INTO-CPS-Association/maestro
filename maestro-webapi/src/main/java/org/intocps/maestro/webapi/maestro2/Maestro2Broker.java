@@ -65,6 +65,10 @@ public class Maestro2Broker {
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
         simulationConfiguration.fmus = multiModel.getFmus();
         simulationConfiguration.connections = multiModel.getConnections();
+        simulationConfiguration.logVariables = multiModel.getLogVariables();
+        if (simulationConfiguration.logVariables == null) {
+            simulationConfiguration.variablesToLog = new HashMap<>();
+        }
 
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
 

@@ -134,10 +134,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(scenarioModel, LoopStrategy.maximum());
                 masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
-
-            dataWriterInstance.initialize(new ArrayList<>(CollectionConverters.asJava(scenarioModel.connections()).stream()
-                    .map(connection -> fmuInstances.get(connection.srcPort().fmu()).getPort(connection.srcPort().port()))
-                    .collect(Collectors.toSet())));
+            dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
             //TODO: Instantiate section from master model contains instantiate and setup experiment instruction, but these are ignored for now.
 
@@ -156,6 +153,12 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             DoubleVariableFmi2Api currentCommunicationPoint = dynamicScope.store("current_communication_point", 0.0);
             currentCommunicationPoint.setValue(startTime);
             DoubleVariableFmi2Api currentStepSize = dynamicScope.store("current_step_size", 0.0);
+
+            // Get and share logging variables that are not yet shared
+            fmuInstances.values().forEach(instance ->
+                instance.getAndShare(instance.getVariablesToLog().stream().filter(var -> var.getSharedAsVariable() == null).map(PortFmi2Api::getName).toArray(String[]::new))
+            );
+
             dataWriterInstance.log(currentCommunicationPoint);
             WhileMaBLScope coSimStepLoop = dynamicScope.enterWhile(currentCommunicationPoint.toMath().addition(stepSize).lessThan(endTime));
 
@@ -166,6 +169,11 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
             mapCoSimStepInstructionsToMaBL(coSimStepsMap, fmuInstances, currentCommunicationPoint, new HashSet<>(),
                     CollectionConverters.asJava(scenarioModel.connections()), sharedPortVars, currentStepSize);
+
+            // Get and share variables that are not connected
+            fmuInstances.values().forEach(instance ->
+                    instance.getAndShare(instance.getVariablesToLog().stream().filter(var -> var.getTargetPorts().size() < 1).map(PortFmi2Api::getName).toArray(String[]::new))
+            );
 
             currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(currentStepSize));
             dataWriterInstance.log(currentCommunicationPoint);

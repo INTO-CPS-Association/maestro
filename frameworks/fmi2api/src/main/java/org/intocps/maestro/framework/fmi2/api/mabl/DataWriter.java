@@ -148,7 +148,6 @@ public class DataWriter {
                                             time.getReferenceExp().clone()).stream(),
                                     portsToLog.stream().map(x -> x.getSharedAsVariable().getReferenceExp().clone())).collect(Collectors.toList())));
             this.dynamicScope.add(stm);
-
         }
 
         public void close() {
