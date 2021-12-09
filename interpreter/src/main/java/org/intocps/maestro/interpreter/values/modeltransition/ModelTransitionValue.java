@@ -11,18 +11,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ModelTransitionValue extends ModuleValue {
+/**
+ *  Singleton store that keeps map of transition names and values
+ */
+class ModelTransitionStore {
+    private static ModelTransitionStore instance = null;
+    private Map<String, Value> values = null;
 
-    private static Map<String, Value> values = null;
-
-    public ModelTransitionValue() {
-        super(createMembers());
-        if (values == null) {
-            values = new HashMap<>();
-        }
+    private ModelTransitionStore() {
+        values = new HashMap<>();
     }
 
-    private static Map<String, Value> createMembers() {
+    public static ModelTransitionStore getInstance() {
+        if (instance == null) {
+            instance = new ModelTransitionStore();
+        }
+        return instance;
+    }
+
+    public void put(String id, Value val) {
+       values.put(id, val);
+    }
+
+    public Value get(String id) {
+        return values.get(id);
+    }
+}
+
+public class ModelTransitionValue extends ModuleValue {
+
+    public ModelTransitionValue() {super(createMembers(ModelTransitionStore.getInstance()));
+    }
+
+    private static Map<String, Value> createMembers(ModelTransitionStore instance) {
         Map<String, Value> members = new HashMap<>();
 
         members.put("setFMU", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -35,7 +56,7 @@ public class ModelTransitionValue extends ModuleValue {
             String id = ((StringValue) idVal).getValue();
             FmuValue fmu = (FmuValue) fmuVal;
 
-            values.put(id, fmuVal);
+            instance.put(id, fmuVal);
             return new VoidValue();
         }));
 
@@ -46,7 +67,7 @@ public class ModelTransitionValue extends ModuleValue {
             Value idVal = args.get(0);
             String id = ((StringValue) idVal).getValue();
 
-            return values.get(id);
+            return instance.get(id);
         }));
 
         members.put("setFMUInstance", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -59,7 +80,7 @@ public class ModelTransitionValue extends ModuleValue {
             String id = ((StringValue) idVal).getValue();
             FmuComponentValue fmuInst = (FmuComponentValue) fmuInstVal;
 
-            values.put(id, fmuInst);
+            instance.put(id, fmuInst);
             return new VoidValue();
         }));
 
@@ -70,7 +91,7 @@ public class ModelTransitionValue extends ModuleValue {
             Value idVal = args.get(0);
             String id = ((StringValue) idVal).getValue();
 
-            return values.get(id);
+            return instance.get(id);
         }));
 
         members.put("transition", new FunctionValue.ExternalFunctionValue(fcargs -> {
