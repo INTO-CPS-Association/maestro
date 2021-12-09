@@ -59,19 +59,15 @@ public class TemplateGeneratorFromScenarioTest {
         mabl.setVerbose(true);
 
         // Read JSON
-        File executableMMJson =
-                Objects.requireNonNull(directory.listFiles((dir, fileName) -> fileName.equals("executableMM.json")))[0];
+        File executableMMJson = Objects.requireNonNull(directory.listFiles((dir, fileName) -> fileName.equals("executableMM.json")))[0];
         ObjectMapper jsonMapper = new ObjectMapper();
         JsonNode executableMM = jsonMapper.readTree(new String(Files.readAllBytes(Paths.get(executableMMJson.getPath()))));
 
         // Setup values from JSON
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus =
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {
-                });
-        simulationConfiguration.connections =
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
-                });
+                }), jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {
+        }));
 
         Map<String, Object> parameters =
                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {

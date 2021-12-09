@@ -55,11 +55,7 @@ class MasterModelMapper {
             }.flatten()
 
             // Instantiate a simulationConfiguration to be able to access fmu model descriptions
-            val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration().apply {
-                this.fmus = extendedMultiModel.fmus;
-                this.connections = extendedMultiModel.connections;
-                if (this.fmus == null) throw Exception("Missing FMUs from multi-model")
-            }
+            val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration(extendedMultiModel.connections, extendedMultiModel.fmus)
 
             // Map fmus to fmu models
             val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)

@@ -228,9 +228,9 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         MablCliUtil util = new MablCliUtil(output, output, settings);
         util.setVerbose(verbose);
 
-        if(externalSpecs != null){
-            List<File> mablFiles = Stream.concat(
-                    externalSpecs.stream().filter(File::isDirectory).flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mablFileFilter::test)))),
+        if (externalSpecs != null) {
+            List<File> mablFiles = Stream.concat(externalSpecs.stream().filter(File::isDirectory)
+                            .flatMap(f -> Arrays.stream(Objects.requireNonNull(f.listFiles(mablFileFilter::test)))),
                     externalSpecs.stream().filter(File::isFile).filter(mablFileFilter)).collect(Collectors.toList());
 
             if (!util.parse(mablFiles)) {
@@ -312,21 +312,10 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
     private ScenarioConfiguration getConfigFromMultiModel(JsonNode multiModelNode, JsonNode execParamsNode, ObjectMapper jsonMapper,
             IErrorReporter errorReporter, String masterModelAsString) throws Exception {
 
-        if(masterModelAsString.equals("")){
+        if (masterModelAsString.equals("")) {
             throw new RuntimeException("Cannot create configuration from empty master model");
         }
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
-
-        // Set values from JSON
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
-        });
-
-        // Set fault injection
-        if(multiModelNode.has("faultInjectConfigurationPath")){
-            simulationConfiguration.faultInjectConfigurationPath = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {});
-            simulationConfiguration.faultInjectInstances = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {});
-        }
 
         Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("parameters")), new TypeReference<>() {
         });
@@ -345,9 +334,8 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
 
 
         // Setup connections as defined in the scenario (These should be identical to the multi-model)
-        List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
         Map<String, List<String>> connectionsMap = new HashMap<>();
-        connections.forEach(connection -> {
+        CollectionConverters.asJava(masterModel.scenario().connections()).forEach(connection -> {
             String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
             String trgFmuName = trgFmuAndInstance[0];
             String trgInstanceName = trgFmuAndInstance[1];
@@ -363,21 +351,38 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
             }
         });
 
-        simulationConfiguration.connections = connectionsMap;
+        // Set values from JSON
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(connectionsMap,
+                jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
+                }));
+
+        // Set fault injection
+        if (multiModelNode.has("faultInjectConfigurationPath")) {
+            simulationConfiguration.faultInjectConfigurationPath =
+                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {
+                    });
+            simulationConfiguration.faultInjectInstances =
+                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {
+                    });
+        }
 
         Boolean loggingOn = false;
 
-        if(multiModelNode.has("loggingOn")){
-            loggingOn = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("loggingOn")), new TypeReference<>() {});
+        if (multiModelNode.has("loggingOn")) {
+            loggingOn = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("loggingOn")), new TypeReference<>() {
+            });
         }
         Map<String, List<String>> logLevels = new HashMap<>();
-        if(multiModelNode.has("logLevels")) {
-            logLevels = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logLevels")), new TypeReference<>() {});
+        if (multiModelNode.has("logLevels")) {
+            logLevels = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logLevels")), new TypeReference<>() {
+            });
         }
 
 
-        if(multiModelNode.has("logVariables")){
-            simulationConfiguration.logVariables = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logVariables")), new TypeReference<>() {});
+        if (multiModelNode.has("logVariables")) {
+            simulationConfiguration.logVariables =
+                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logVariables")), new TypeReference<>() {
+                    });
             if (simulationConfiguration.logVariables == null) {
                 simulationConfiguration.variablesToLog = new HashMap<>();
             }

@@ -61,22 +61,12 @@ public class Maestro2Broker {
                     .collect(Collectors.toList());
 
     public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
-
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = multiModel.getFmus();
-        simulationConfiguration.connections = multiModel.getConnections();
-        simulationConfiguration.logVariables = multiModel.getLogVariables();
-        if (simulationConfiguration.logVariables == null) {
-            simulationConfiguration.variablesToLog = new HashMap<>();
-        }
-
+        Map<String, List<String>> connectionsMap = multiModel.getConnections();
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
 
-        if (simulationConfiguration.connections.isEmpty()) {
+        if(connectionsMap.isEmpty()){
             // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-            List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
-            Map<String, List<String>> connectionsMap = new HashMap<>();
-            connections.forEach(connection -> {
+            CollectionConverters.asJava(masterModel.scenario().connections()).forEach(connection -> {
                 String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
                 String trgFmuName = trgFmuAndInstance[0];
                 String trgInstanceName = trgFmuAndInstance[1];
@@ -91,9 +81,14 @@ public class Maestro2Broker {
                     connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
                 }
             });
-
-            simulationConfiguration.connections = connectionsMap;
         }
+
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(connectionsMap, multiModel.getFmus());
+        simulationConfiguration.logVariables = multiModel.getLogVariables();
+        if (simulationConfiguration.logVariables == null) {
+            simulationConfiguration.variablesToLog = new HashMap<>();
+        }
+
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
@@ -127,21 +122,14 @@ public class Maestro2Broker {
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
             File csvOutputFile) throws Exception {
 
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        simulationConfiguration.fmus = initializeRequest.getFmus();
-        if (simulationConfiguration.fmus == null) {
-            simulationConfiguration.fmus = new HashMap<>();
-        }
-        simulationConfiguration.connections = initializeRequest.getConnections();
-        if (simulationConfiguration.connections == null) {
-            simulationConfiguration.connections = new HashMap<>();
-        }
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(initializeRequest.getConnections(), initializeRequest.getFmus());
+
         simulationConfiguration.logVariables = initializeRequest.getLogVariables();
         if (simulationConfiguration.logVariables == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
         simulationConfiguration.livestream = initializeRequest.getLivestream();
-
 
         Map<String, String> instanceRemapping = LegacyMMSupport.adjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
 

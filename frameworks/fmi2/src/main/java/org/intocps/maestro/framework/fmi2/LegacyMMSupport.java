@@ -12,10 +12,10 @@ public class LegacyMMSupport {
     public static Map<String, String> adjustFmi2SimulationEnvironmentConfiguration(
             Fmi2SimulationEnvironmentConfiguration config) throws EnvironmentException {
         // Calculate the instance remapping
-        Map<String, String> instanceRemapping = calculateInstanceRemapping(config.connections);
+        Map<String, String> instanceRemapping = calculateInstanceRemapping(config.getConnections());
 
         // Apply it to connections, variablesToLog, logVariables and livestream.
-        fixVariableToVariablesMap(instanceRemapping, config.connections);
+        fixVariableToVariablesMap(instanceRemapping, config.getConnections());
         fixKeyInstanceToVariablesMap(instanceRemapping, config.variablesToLog);
         fixKeyInstanceToVariablesMap(instanceRemapping, config.logVariables);
         fixKeyInstanceToVariablesMap(instanceRemapping, config.livestream);

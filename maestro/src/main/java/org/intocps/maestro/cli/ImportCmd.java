@@ -81,9 +81,8 @@ public class ImportCmd implements Callable<Integer> {
         algorithmConfig.simulationProgramDelay = simulationConfiguration.isSimulationProgramDelay();
         algorithmConfig.stabilisation = simulationConfiguration.isStabalizationEnabled();
 
-        Fmi2SimulationEnvironmentConfiguration environmentConfiguration = new Fmi2SimulationEnvironmentConfiguration();
-        environmentConfiguration.fmus = simulationConfiguration.getFmus();
-        environmentConfiguration.connections = simulationConfiguration.getConnections();
+        Fmi2SimulationEnvironmentConfiguration environmentConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(simulationConfiguration.getConnections(), simulationConfiguration.getFmus());
         environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
         environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
         environmentConfiguration.logVariables = simulationConfiguration.getLogVariables();
