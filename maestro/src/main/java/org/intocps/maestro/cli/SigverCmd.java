@@ -343,27 +343,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("stepSize")), new TypeReference<>() {
         });
 
-
-        // Setup connections as defined in the scenario (These should be identical to the multi-model)
-        List<ConnectionModel> connections = CollectionConverters.asJava(masterModel.scenario().connections());
-        Map<String, List<String>> connectionsMap = new HashMap<>();
-        connections.forEach(connection -> {
-            String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
-            String trgFmuName = trgFmuAndInstance[0];
-            String trgInstanceName = trgFmuAndInstance[1];
-            String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
-            String srcFmuName = srcFmuAndInstance[0];
-            String srcInstanceName = srcFmuAndInstance[1];
-            String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
-            String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
-            if (connectionsMap.containsKey(muModelSrcName)) {
-                connectionsMap.get(muModelSrcName).add(muModelTrgName);
-            } else {
-                connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
-            }
-        });
-
-        simulationConfiguration.connections = connectionsMap;
+        simulationConfiguration.connections = MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel);;
 
         Boolean loggingOn = false;
 
