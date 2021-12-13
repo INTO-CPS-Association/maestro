@@ -81,22 +81,17 @@ def testSimulationController(basicUrl):
     if(not websocketopen):
         raise Exception("Unable to open socket connection")
 
-    #Simulate
-    testutils.printSection("SIMULATE")
-    r = requests.post(basicUrl + "/simulate/" + sessionID, json=json.load(open("wt/start_message.json")))
-    if not r.status_code == 200:
-        raise Exception(f"Could not simulate: {r.text}")
-
-    print ("Simulate response code '%d, data=%s'" % (r.status_code, r.text))
+    # Simulate
+    simulate(sessionID)
     wsThread.join()
     socketFile.close()
 
-    #Compare results
+    # Compare results
     testutils.printSection("WS OUTPUT COMPARE")
     if(not testutils.compare("WS", "wt/wsexpected.txt", wsResult)):
         raise Exception("Output files do not match.")
 
-    #Get plain results
+    # Get plain results
     testutils.printSection("PLAIN RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/plain")
     if not r.status_code == 200:
@@ -113,7 +108,7 @@ def testSimulationController(basicUrl):
     if not testutils.compareCSV("wt/result.csv", csvFilePath):
         raise Exception("CSV files did not match!")
 
-    #Get zip results
+    # Get zip results
     testutils.printSection("ZIP RESULT")
     r = requests.get(basicUrl + "/result/" + sessionID + "/zip", stream=True)
     if not r.status_code == 200:
@@ -134,6 +129,15 @@ def testSimulationController(basicUrl):
     else:
         print("2 or more files in result zip. Actually: " + str(filesInZipCount))
 
+
+    # Execute via CLI
+    testutils.printSection("EXECUTE VIA CLI")
+    r = requests.post(basicUrl + "/executeViaCLI/" + sessionID, json={'executeViaCLI': True})
+    print ("Result response code '%d" % (r.status_code))
+    if not r.status_code == 200:
+        raise Exception(f"Could not execute via cli: {r.text}")
+    simulate(sessionID)
+
     # Destroy
     testutils.printSection("DESTROY")
     r = requests.get(basicUrl + "/destroy/" + sessionID)
@@ -142,6 +146,12 @@ def testSimulationController(basicUrl):
     if not r.status_code == 200:
         raise Exception(f"Could not destroy: {r.text}")
 
+def simulate(sessionID):
+    testutils.printSection("SIMULATE")
+    r = requests.post(basicUrl + "/simulate/" + sessionID, json=json.load(open("wt/start_message.json")))
+    if not r.status_code == 200:
+        raise Exception(f"Could not simulate: {r.text}")
+    print ("Simulate response code '%d, data=%s'" % (r.status_code, r.text))
 
 def testScenarioController(basicUrl):
     baseResourcePath = "scenario_controller_resources"

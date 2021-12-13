@@ -239,8 +239,7 @@ public class Maestro2SimulationController {
             String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
             String dumpDirectory = logic.rootDirectory.getAbsolutePath();
             List<String> arguments = new ArrayList<>(
-                    List.of("cliMain", "--dump-simple", dumpDirectory, "--dump-intermediate", dumpDirectory, "-sg1", simulateJsonPath,
-                            initializeJsonPath, "-i", "-v", "FMI2"));
+                    List.of("import", "-output", dumpDirectory, "--dump-intermediate sg1", initializeJsonPath, simulateJsonPath, "-i", "-v", "FMI2"));
 
             List<String> error = new ArrayList<>();
             List<String> out = new ArrayList<>();
