@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.INode;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,6 +24,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
     }
 
     @Override
+    @Disabled("Disabled until AU has fixed security issues")
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
     public void test(String name, File directory) throws Exception {
