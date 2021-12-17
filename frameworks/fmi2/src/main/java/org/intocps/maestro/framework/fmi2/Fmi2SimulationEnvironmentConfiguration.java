@@ -6,12 +6,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.intocps.maestro.framework.core.EnvironmentException;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,55 +28,36 @@ public class Fmi2SimulationEnvironmentConfiguration {
     public String faultInjectConfigurationPath;
     public Map<String, String> faultInjectInstances;
 
-    public static Fmi2SimulationEnvironmentConfiguration createFromJsonNode(JsonNode node) throws IOException {
+    public static Fmi2SimulationEnvironmentConfiguration createFromJsonString(String jsonData) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        if(!node.has("fmus")){
-            // Throw
+        JsonNode node = mapper.readTree(jsonData);
+        if (!node.has("fmus")) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
         }
-        if(!node.has("connections")) {
-            // Throw
+        if (!node.has("connections")) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without any connections");
         }
         Map<String, String> fmus = mapper.readValue(mapper.treeAsTokens(node.get("fmus")), new TypeReference<>() {
         });
         Map<String, List<String>> connections = mapper.readValue(mapper.treeAsTokens(node.get("connections")), new TypeReference<>() {
         });
-        Fmi2SimulationEnvironmentConfiguration configuration = new Fmi2SimulationEnvironmentConfiguration(connections, fmus);
-
-        if(node.has("faultInjectConfigurationPath")){
-            configuration.faultInjectConfigurationPath = mapper.readValue(mapper.treeAsTokens(node.get("faultInjectConfigurationPath")), new TypeReference<>() {
-            });
-        }
-        if(node.has("faultInjectInstances")) {
-            configuration.faultInjectInstances = mapper.readValue(mapper.treeAsTokens(node.get("faultInjectInstances")), new TypeReference<>() {
-            });
-        }
-        if(node.has("variablesToLog")) {
-            configuration.variablesToLog = mapper.readValue(mapper.treeAsTokens(node.get("variablesToLog")), new TypeReference<>() {
-            });
-        }
-        if(node.has("livestream")) {
-            configuration.livestream = mapper.readValue(mapper.treeAsTokens(node.get("livestream")), new TypeReference<>() {
-            });
-        }
-        if(node.has("logVariables")) {
-            configuration.logVariables = mapper.readValue(mapper.treeAsTokens(node.get("logVariables")), new TypeReference<>() {
-            });
-        }
-        return configuration;
+        ((ObjectNode) node).remove("fmus");
+        ((ObjectNode) node).remove("connections");
+        return mapper.readerForUpdating(new Fmi2SimulationEnvironmentConfiguration(connections, fmus)).readValue(node);
     }
 
-    public Fmi2SimulationEnvironmentConfiguration(Map<String, List<String>> connections, Map<String, String> fmus) {
-        if(connections == null || connections.size() < 1) {
-            // Throw
+    public Fmi2SimulationEnvironmentConfiguration(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
+        if (connections == null || connections.size() < 1) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without any connections");
         }
-        if(fmus == null || fmus.size() < 1) {
-            // Throw
+        if (fmus == null || fmus.size() < 1) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
         }
         _fmus = fmus;
         _connections = connections;
     }
 
-    public Map<String, String> getFmus()  {
+    public Map<String, String> getFmus() {
         return _fmus;
     }
 

@@ -1,7 +1,6 @@
 package org.intocps.maestro.framework.fmi2;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
@@ -15,8 +14,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,7 +48,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public static Fmi2SimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
-        return of(Fmi2SimulationEnvironmentConfiguration.createFromJsonNode(new ObjectMapper().readTree(new String(inputStream.readAllBytes()))), reporter);
+        return of(Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(inputStream.readAllBytes())), reporter);
     }
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {

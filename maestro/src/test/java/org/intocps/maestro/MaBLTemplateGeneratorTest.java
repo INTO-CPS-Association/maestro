@@ -50,8 +50,8 @@ public class MaBLTemplateGeneratorTest {
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
 
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
 
         simulationEnvironmentConfiguration.faultInjectInstances = new HashMap<>();
         simulationEnvironmentConfiguration.faultInjectInstances.put("wtInstance", "fi");
@@ -113,8 +113,8 @@ public class MaBLTemplateGeneratorTest {
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
 
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
 
@@ -137,9 +137,8 @@ public class MaBLTemplateGeneratorTest {
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
 
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonNode(
-                new ObjectMapper().readTree(
-                        new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath())))));
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
 
 
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
@@ -195,8 +194,8 @@ public class MaBLTemplateGeneratorTest {
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
         File faultInjectionFile =
                 Paths.get("src", "test", "resources", "org", "into-cps", "maestro", "faultinjection", "dummyfaultinjectfile.xml").toFile();
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                new ObjectMapper().readValue(new File(configurationDirectory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
         simulationEnvironmentConfiguration.faultInjectInstances = Map.of("crtlInstance", "constraintid");
         simulationEnvironmentConfiguration.faultInjectConfigurationPath = faultInjectionFile.toString();
 

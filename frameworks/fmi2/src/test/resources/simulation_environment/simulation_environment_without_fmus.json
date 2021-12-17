@@ -1,0 +1,12 @@
+{
+  "fmus": {},
+  "connections": {
+    "{controllerFMU}.controller.valve": [
+      "{tankFMU}.tank.valvecontrol"
+    ],
+    "{tankFMU}.tank.level": [
+      "{controllerFMU}.controller.level"
+    ]
+  },
+  "faultInjectConfigurationPath": "a/path/to/somewhere"
+}
