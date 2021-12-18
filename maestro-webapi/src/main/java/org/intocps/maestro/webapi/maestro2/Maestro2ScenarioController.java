@@ -124,7 +124,6 @@ public class Maestro2ScenarioController {
             }
         }
 
-
         File zipDir = Files.createTempDirectory(null).toFile();
         try {
             ErrorReporter reporter = new ErrorReporter();

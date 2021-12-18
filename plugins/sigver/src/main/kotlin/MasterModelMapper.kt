@@ -11,24 +11,22 @@ import scala.jdk.javaapi.CollectionConverters
 class MasterModelMapper {
     companion object {
 
-        private const val MASTER_MODEL_INSTANCE_DELIMITER = "_"
-
         private fun getFmuNameFromFmuInstanceName(name: String): String {
-            return name.split(MASTER_MODEL_INSTANCE_DELIMITER)[0]
+            return name.split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[0]
         }
 
         private fun getInstanceNameFromFmuInstanceName(name: String): String {
-            return name.split(MASTER_MODEL_INSTANCE_DELIMITER)[1]
+            return name.split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]
         }
 
         private fun multiModelConnectionNameToMasterModelInstanceName(multiModelName: String): String {
-            val multiModelNameSplit = multiModelName.split(".")
-            return multiModelNameSplit[0].replace("[{}]".toRegex(), "").plus(MASTER_MODEL_INSTANCE_DELIMITER)
+            val multiModelNameSplit = multiModelName.split(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER)
+            return multiModelNameSplit[0].replace("[{}]".toRegex(), "").plus(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)
                 .plus(multiModelNameSplit[1])
         }
 
         private fun multiModelConnectionNameToPortName(name: String): String {
-            return name.split(".")[2]
+            return name.split(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER).let { it.subList(2, it.size).joinToString(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER) }
         }
 
         fun scenarioToMasterModel(scenario: String): MasterModel {
@@ -36,6 +34,33 @@ class MasterModelMapper {
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
             return GenerationAPI.generateAlgorithm(masterModel.name(), masterModel.scenario())
         }
+
+        fun masterModelConnectionsToMultiModelConnections(masterModel: MasterModel): HashMap<String, MutableList<String>> {
+            // Setup connections as defined in the scenario (These should be identical to the multi-model)
+            return CollectionConverters.asJava(masterModel.scenario().connections())
+                .fold(HashMap()) { consMap, connection ->
+                    val targetFmuAndInstance =
+                        connection.trgPort().fmu().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER).toTypedArray()
+                    val targetFmuName = targetFmuAndInstance[0]
+                    val targetInstanceName = targetFmuAndInstance[1]
+                    val sourceFmuAndInstance =
+                        connection.srcPort().fmu().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER).toTypedArray()
+                    val sourceFmuName = sourceFmuAndInstance[0]
+                    val sourceInstanceName = sourceFmuAndInstance[1]
+                    val muModelTrgName =
+                        "{" + targetFmuName + "}" + Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER + targetInstanceName +
+                                Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER + connection.trgPort().port()
+                    val muModelSrcName =
+                        "{" + sourceFmuName + "}" + Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER + sourceInstanceName +
+                                Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER + connection.srcPort().port()
+                    consMap.containsKey(muModelSrcName).also { isPresent ->
+                        if (isPresent) consMap[muModelSrcName]!!.add(muModelTrgName) else consMap[muModelSrcName] =
+                            ArrayList(listOf(muModelTrgName))
+                    }
+                    return@fold consMap
+                }
+        }
+
 
         fun multiModelToMasterModel(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModel {
             // Map multi model connections type to scenario connections type
@@ -75,9 +100,17 @@ class MasterModelMapper {
                                 .associate { inputPort ->
                                     inputPort.getName() to InputPortModel(if (extendedMultiModel.sigver.reactivity.any { portReactivity ->
                                             portReactivity.key.contains(inputPort.getName()) &&
-                                            portReactivity.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) &&
-                                            portReactivity.key.contains(getInstanceNameFromFmuInstanceName(fmuInstanceName)) &&
-                                            portReactivity.value == ExtendedMultiModel.Sigver.Reactivity.Reactive
+                                                    portReactivity.key.contains(
+                                                        getFmuNameFromFmuInstanceName(
+                                                            fmuInstanceName
+                                                        )
+                                                    ) &&
+                                                    portReactivity.key.contains(
+                                                        getInstanceNameFromFmuInstanceName(
+                                                            fmuInstanceName
+                                                        )
+                                                    ) &&
+                                                    portReactivity.value == ExtendedMultiModel.Sigver.Reactivity.Reactive
                                         }) Reactivity.reactive() else Reactivity.delayed())
                                 }
 

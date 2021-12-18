@@ -332,39 +332,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("stepSize")), new TypeReference<>() {
         });
 
-
-        // Setup connections as defined in the scenario (These should be identical to the multi-model)
-        Map<String, List<String>> connectionsMap = new HashMap<>();
-        CollectionConverters.asJava(masterModel.scenario().connections()).forEach(connection -> {
-            String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
-            String trgFmuName = trgFmuAndInstance[0];
-            String trgInstanceName = trgFmuAndInstance[1];
-            String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
-            String srcFmuName = srcFmuAndInstance[0];
-            String srcInstanceName = srcFmuAndInstance[1];
-            String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
-            String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
-            if (connectionsMap.containsKey(muModelSrcName)) {
-                connectionsMap.get(muModelSrcName).add(muModelTrgName);
-            } else {
-                connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
-            }
-        });
-
-        // Set values from JSON
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(connectionsMap,
-                jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
-                }));
-
-        // Set fault injection
-        if (multiModelNode.has("faultInjectConfigurationPath")) {
-            simulationConfiguration.faultInjectConfigurationPath =
-                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {
-                    });
-            simulationConfiguration.faultInjectInstances =
-                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {
-                    });
-        }
+        simulationConfiguration.connections = MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel);;
 
         Boolean loggingOn = false;
 

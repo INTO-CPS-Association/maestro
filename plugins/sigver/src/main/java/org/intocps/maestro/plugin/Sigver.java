@@ -223,7 +223,13 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         fmuInstances.forEach((instanceName, fmuInstance) -> {
             Map<String, Object> portNameToValueMap =
                     parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
-                            .collect(Collectors.toMap(e -> e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER)[2], Map.Entry::getValue));
+                            .collect(Collectors.toMap(e -> {
+                                String[] instanceNameSplit = e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER);
+                                return String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER, Arrays.copyOfRange(instanceNameSplit, 2,
+                                        instanceNameSplit.length));
+                            }, Map.Entry::getValue));
+
+
 
             // Map each parameter to matching expression value but only for ports with the causality of parameter which are tunable
             Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.ExpressionValue> PortToExpressionValue =

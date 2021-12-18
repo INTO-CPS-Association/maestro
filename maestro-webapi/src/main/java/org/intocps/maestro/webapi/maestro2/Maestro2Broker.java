@@ -18,6 +18,8 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
+import org.intocps.maestro.plugin.MasterModelMapper;
+import org.intocps.maestro.plugin.Sigver;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
@@ -64,32 +66,7 @@ public class Maestro2Broker {
         Map<String, List<String>> connectionsMap = multiModel.getConnections();
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
 
-        if(connectionsMap.isEmpty()){
-            // Setup connections as defined in the scenario instead of the multi-model (These should be identical)
-            CollectionConverters.asJava(masterModel.scenario().connections()).forEach(connection -> {
-                String[] trgFmuAndInstance = connection.trgPort().fmu().split("_");
-                String trgFmuName = trgFmuAndInstance[0];
-                String trgInstanceName = trgFmuAndInstance[1];
-                String[] srcFmuAndInstance = connection.srcPort().fmu().split("_");
-                String srcFmuName = srcFmuAndInstance[0];
-                String srcInstanceName = srcFmuAndInstance[1];
-                String muModelTrgName = "{" + trgFmuName + "}" + "." + trgInstanceName + "." + connection.trgPort().port();
-                String muModelSrcName = "{" + srcFmuName + "}" + "." + srcInstanceName + "." + connection.srcPort().port();
-                if (connectionsMap.containsKey(muModelSrcName)) {
-                    connectionsMap.get(muModelSrcName).add(muModelTrgName);
-                } else {
-                    connectionsMap.put(muModelSrcName, new ArrayList<>(Collections.singletonList(muModelTrgName)));
-                }
-            });
-        }
-
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(connectionsMap, multiModel.getFmus());
-        simulationConfiguration.logVariables = multiModel.getLogVariables();
-        if (simulationConfiguration.logVariables == null) {
-            simulationConfiguration.variablesToLog = new HashMap<>();
-        }
-
-
+        simulationConfiguration.connections = MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel);
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
                 multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
