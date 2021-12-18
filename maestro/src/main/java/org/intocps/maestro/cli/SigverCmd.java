@@ -332,20 +332,31 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(execParamsNode.get("stepSize")), new TypeReference<>() {
         });
 
-        simulationConfiguration.connections = MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel);;
+        // Set values from JSON
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
+                jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("fmus")), new TypeReference<>() {
+                }));
+
+        // Set fault injection
+        if (multiModelNode.has("faultInjectConfigurationPath")) {
+            simulationConfiguration.faultInjectConfigurationPath =
+                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectConfigurationPath")), new TypeReference<>() {
+                    });
+            simulationConfiguration.faultInjectInstances =
+                    jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("faultInjectInstances")), new TypeReference<>() {
+                    });
+        }
 
         Boolean loggingOn = false;
-
         if (multiModelNode.has("loggingOn")) {
             loggingOn = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("loggingOn")), new TypeReference<>() {
             });
         }
         Map<String, List<String>> logLevels = new HashMap<>();
-        if (multiModelNode.has("logLevels")) {
+        if (loggingOn && multiModelNode.has("logLevels")) {
             logLevels = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logLevels")), new TypeReference<>() {
             });
         }
-
 
         if (multiModelNode.has("logVariables")) {
             simulationConfiguration.logVariables =

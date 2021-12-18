@@ -1,7 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.ConnectionModel;
 import core.MasterModel;
 import core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
@@ -19,7 +18,6 @@ import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.plugin.MasterModelMapper;
-import org.intocps.maestro.plugin.Sigver;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
@@ -29,7 +27,6 @@ import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
-import scala.jdk.javaapi.CollectionConverters;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -63,10 +60,13 @@ public class Maestro2Broker {
                     .collect(Collectors.toList());
 
     public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
-        Map<String, List<String>> connectionsMap = multiModel.getConnections();
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel), multiModel.getFmus());
+        simulationConfiguration.logVariables = multiModel.getLogVariables();
+        if (simulationConfiguration.logVariables == null) {
+            simulationConfiguration.variablesToLog = new HashMap<>();
+        }
 
-        simulationConfiguration.connections = MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel);
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
         ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
                 multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
