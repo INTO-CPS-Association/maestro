@@ -1,0 +1,8 @@
+{
+  "fmus": {
+    "{controllerFMU}": "target/test-classes/watertankcontroller-c.fmu",
+    "{tankFMU}": "target/test-classes/singlewatertank-20sim.fmu"
+  },
+  "connections": {},
+  "faultInjectConfigurationPath": "a/path/to/somewhere"
+}

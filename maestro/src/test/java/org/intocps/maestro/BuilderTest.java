@@ -1,6 +1,5 @@
 package org.intocps.maestro;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -30,6 +29,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public class BuilderTest {
 
@@ -37,9 +37,10 @@ public class BuilderTest {
     public void wt() throws Exception {
 
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("buildertester/buildertester.json");
-        ObjectMapper mapper = new ObjectMapper();
         Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                mapper.readValue(is, Fmi2SimulationEnvironmentConfiguration.class);
+                Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(Objects.requireNonNull(is).readAllBytes()));
+
+
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
 
         MablApiBuilder builder = new MablApiBuilder();

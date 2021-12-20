@@ -160,9 +160,8 @@ public class FullSpecTest {
     }
 
     protected void interpretSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                .execute(spec);
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(spec);
 
         compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
@@ -194,8 +193,9 @@ public class FullSpecTest {
             Fmi2EnvironmentConfiguration simulationConfiguration =
                     new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2EnvironmentConfiguration.class);
 
-            Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                    new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2SimulationEnvironmentConfiguration.class);
+            Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                    new String(Files.readAllBytes(Paths.get(new File(directory, "env.json").getAbsolutePath()))));
+
 
             MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                     MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(testJsonObject.initialize, "{}")

@@ -1,7 +1,6 @@
 package org.intocps.maestro.framework.fmi2;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
@@ -49,10 +48,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
     }
 
     public static Fmi2SimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        Fmi2SimulationEnvironmentConfiguration msg = null;
-        msg = mapper.readValue(inputStream, Fmi2SimulationEnvironmentConfiguration.class);
-        return of(msg, reporter);
+        return of(Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(inputStream.readAllBytes())), reporter);
     }
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
@@ -141,7 +137,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment {
 
         // Build map from fmuKey to ModelDescription
         this.fmuToUri = fmuToURI;
-        List<ModelConnection> connections = buildConnections(msg.connections);
+        List<ModelConnection> connections = buildConnections(msg.getConnections());
         HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 

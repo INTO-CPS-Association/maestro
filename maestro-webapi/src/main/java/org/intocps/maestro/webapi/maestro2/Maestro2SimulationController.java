@@ -122,7 +122,7 @@ public class Maestro2SimulationController {
         logger.debug("Got initial data");
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-                false);//.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                false);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
 
         if (body == null) {
@@ -192,9 +192,8 @@ public class Maestro2SimulationController {
                 IFmu iFmu = FmuFactory.create(logic.rootDirectory, URI.create(fmuKeyToFmuURI.getValue()));
                 Fmi2ModelDescription fmi2ModelDescription = new Fmi2ModelDescription(iFmu.getModelDescription());
 
-                List<ModelDescription.LogCategory> logCategories = new ArrayList<>();
                 try {
-                    logCategories = fmi2ModelDescription.getLogCategories();
+                    List<ModelDescription.LogCategory> logCategories = fmi2ModelDescription.getLogCategories();
                     logcategoryKeyToLogCategories.put(fmuKeyToFmuURI.getKey(),
                             logCategories.stream().map(x -> new InitializeStatusModel.LogLevelModel(x.getName(), x.getDescription()))
                                     .collect(Collectors.toList()));
@@ -206,7 +205,6 @@ public class Maestro2SimulationController {
         } catch (Exception e) {
             logger.info("Could not retrieve logging levels for one or more FMUs.");
         }
-
 
         return new InitializeStatusModel("initialized", sessionId, logcategoryKeyToLogCategories, 0);
     }
