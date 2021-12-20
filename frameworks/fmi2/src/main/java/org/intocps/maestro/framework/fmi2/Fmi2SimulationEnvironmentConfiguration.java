@@ -18,8 +18,8 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Fmi2SimulationEnvironmentConfiguration {
-    private final Map<String, String> _fmus;
-    private final Map<String, List<String>> _connections;
+    private final Map<String, String> fmus;
+    private final Map<String, List<String>> connections;
     @Deprecated
     public Map<String, List<String>> logVariables;
     @Deprecated
@@ -53,16 +53,16 @@ public class Fmi2SimulationEnvironmentConfiguration {
         if (fmus == null || fmus.size() < 1) {
             throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
         }
-        _fmus = fmus;
-        _connections = connections;
+        this.fmus = fmus;
+        this.connections = connections;
     }
 
     public Map<String, String> getFmus() {
-        return _fmus;
+        return fmus;
     }
 
     public Map<String, List<String>> getConnections() {
-        return _connections;
+        return connections;
     }
 
     @JsonIgnore
