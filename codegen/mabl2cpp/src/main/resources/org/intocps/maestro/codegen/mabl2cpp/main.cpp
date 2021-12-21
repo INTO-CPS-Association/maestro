@@ -2,8 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
-#include <exception>
-#include <optional>
+#include "MaestroRunTimeException.h"
 
 #include "co-sim.hxx"
 int main(int argc, char *argv[]) {
@@ -39,8 +38,14 @@ int main(int argc, char *argv[]) {
             return 0;
         }
     }
+    int exitcode = 0;
     auto t1 = std::chrono::high_resolution_clock::now();
-    simulate(runtimeConfigPath.c_str());
+    try {
+        simulate(runtimeConfigPath.c_str());
+    }catch(MaestroRunTimeException e){
+        cerr << "Fatal simulation fault: "<<e.what()<<endl;
+        exitcode = -1;
+    }
     auto t2 = std::chrono::high_resolution_clock::now();
 
     auto dur = t2-t1;
@@ -61,5 +66,5 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Total in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
 
-    return 0;
+    return exitcode;
  }

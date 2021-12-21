@@ -44,10 +44,10 @@ public class MablCppCodeGenerator {
         String cmakeLists = IOUtils.toString(is, StandardCharsets.UTF_8);
         //TODO replace what ever
         IOUtils.write(cmakeLists, new FileOutputStream(new File(outputDirectory, "CMakeLists.txt")), StandardCharsets.UTF_8);
-        org.apache.commons.io.IOUtils
-                .copy(this.getClass().getResourceAsStream("main.cpp"), new FileOutputStream(new File(outputDirectory, "main" + ".cpp")));
-        org.apache.commons.io.IOUtils
-                .copy(this.getClass().getResourceAsStream("readme.md"), new FileOutputStream(new File(outputDirectory, "readme.md")));
+        org.apache.commons.io.IOUtils.copy(this.getClass().getResourceAsStream("main.cpp"),
+                new FileOutputStream(new File(outputDirectory, "main" + ".cpp")));
+        org.apache.commons.io.IOUtils.copy(this.getClass().getResourceAsStream("readme.md"),
+                new FileOutputStream(new File(outputDirectory, "readme.md")));
 
     }
 
@@ -55,7 +55,7 @@ public class MablCppCodeGenerator {
 
 
         String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv", "BooleanLogic", "DataWriterConfig", "unzip", "FmiComponentState",
-                "VariableStep", "VariableStepConfig", "uri"};
+                "VariableStep", "VariableStepConfig", "uri", "MaestroRunTimeException"};
 
         for (String libraryName : libraries) {
             for (String ext : new String[]{"cpp", "c", "h"}) {

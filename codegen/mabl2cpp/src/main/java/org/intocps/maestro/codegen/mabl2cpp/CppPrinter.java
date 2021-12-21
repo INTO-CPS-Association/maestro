@@ -31,7 +31,6 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     public static Map<String, String> print(INode node, Map<INode, PType> types) throws AnalysisException {
         CppPrinter printer = new CppPrinter(types);
         printer.sb.append("#include \"co-sim.hxx\"\n");
-        printer.sb.append("#include <exception>\n");
         printer.sb.append("#include <optional>\n");
 
         node.apply(printer, 0);
@@ -40,19 +39,10 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         sources.put("co-sim.cxx", printer.sb.toString());
 
 
-        String exceptionDef = "";
-        exceptionDef += "#include <exception>\n";
-        exceptionDef += "#include <optional>\n";
-
-        exceptionDef += "struct MaestroRunTimeException : public std::exception {\n" + "\n" + "private:\n" + "    const char *msg;\n" + "public:\n" +
-                "    explicit MaestroRunTimeException(const char *msg) : msg(msg) {}\n" + "\n" +
-                "    [[nodiscard]] const char *what() const noexcept override {\n" + "        return msg;\n" + "    }\n" + "};\n\n";
-
-
         String specSha1 = DigestUtils.sha1Hex(PrettyPrinter.print(node));
         sources.put("co-sim.hxx",
-                "#ifndef COSIM\n#define COSIM\n" + exceptionDef + "void simulate(const char* __runtimeConfigPath);\n#define SPEC_SHA1 \"" + specSha1 +
-                        "\"\n#define " + "SPEC_GEN_TIME \"" + new Date() + "\"\n#endif");
+                "#ifndef COSIM\n#define COSIM\nvoid simulate(const char* __runtimeConfigPath);\n#define SPEC_SHA1 \"" + specSha1 + "\"\n" +
+                        "#define " + "SPEC_GEN_TIME \"" + new Date() + "\"\n#endif");
         return sources;
     }
 
@@ -226,8 +216,9 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     @Override
     public void caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node, Integer question) throws AnalysisException {
 
-        sb.append("#include <stdint.h>\n");
+        sb.append("#include <cstdint>\n");
         sb.append("#include <string>\n");
+        sb.append("#include \"MaestroRunTimeException.h\"\n");
         node.getImports().stream().filter(im -> !im.getText().equals("FMI2Component"))
                 .forEach(im -> sb.append("#include \"" + im.getText().replace("FMI2", "SimFmi2").replace("Math", "SimMath") + ".h" + "\"\n"));
         sb.append("void simulate(const char* __runtimeConfigPath)\n");
