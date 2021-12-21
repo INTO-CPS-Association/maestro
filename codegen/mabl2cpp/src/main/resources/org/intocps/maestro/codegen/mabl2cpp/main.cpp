@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
+#include <exception>
+#include <optional>
 
 #include "co-sim.hxx"
 int main(int argc, char *argv[]) {

@@ -16,6 +16,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
 
     private final Map<INode, PType> types;
     StringBuilder sb = new StringBuilder();
+    int exceptionCounter = 0;
 
     public CppPrinter(Map<INode, PType> types) {
 
@@ -30,15 +31,28 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     public static Map<String, String> print(INode node, Map<INode, PType> types) throws AnalysisException {
         CppPrinter printer = new CppPrinter(types);
         printer.sb.append("#include \"co-sim.hxx\"\n");
+        printer.sb.append("#include <exception>\n");
+        printer.sb.append("#include <optional>\n");
+
         node.apply(printer, 0);
 
         Map<String, String> sources = new HashMap<>();
         sources.put("co-sim.cxx", printer.sb.toString());
 
+
+        String exceptionDef = "";
+        exceptionDef += "#include <exception>\n";
+        exceptionDef += "#include <optional>\n";
+
+        exceptionDef += "struct MaestroRunTimeException : public std::exception {\n" + "\n" + "private:\n" + "    const char *msg;\n" + "public:\n" +
+                "    explicit MaestroRunTimeException(const char *msg) : msg(msg) {}\n" + "\n" +
+                "    [[nodiscard]] const char *what() const noexcept override {\n" + "        return msg;\n" + "    }\n" + "};\n\n";
+
+
         String specSha1 = DigestUtils.sha1Hex(PrettyPrinter.print(node));
         sources.put("co-sim.hxx",
-                "#ifndef COSIM\n#define COSIM\nvoid simulate(const char* __runtimeConfigPath);\n#define SPEC_SHA1 \"" + specSha1 + "\"\n#define " +
-                        "SPEC_GEN_TIME \"" + new Date() + "\"\n#endif");
+                "#ifndef COSIM\n#define COSIM\n" + exceptionDef + "void simulate(const char* __runtimeConfigPath);\n#define SPEC_SHA1 \"" + specSha1 +
+                        "\"\n#define " + "SPEC_GEN_TIME \"" + new Date() + "\"\n#endif");
         return sources;
     }
 
@@ -491,12 +505,51 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
     public void caseAErrorStm(AErrorStm node, Integer question) throws AnalysisException {
         sb.append(indent(question));
         sb.append("throw ");
+        sb.append("MaestroRunTimeException(");
         if (node.getExp() == null) {
             sb.append("0");
         } else {
             node.getExp().apply(this, question);
         }
+        sb.append(")");
         sb.append(";");
+    }
+
+    @Override
+    public void caseATryStm(ATryStm node, Integer question) throws AnalysisException {
+
+        String exceptionVarName = "exceptionCache" + exceptionCounter++;
+
+        //new block
+        sb.append(indent(question++));
+        sb.append("{\n");
+
+        sb.append(indent(question) + "std::optional<MaestroRunTimeException> " + exceptionVarName + ";\n");
+
+        //try
+        //        sb.append(indent(question++));
+        sb.append(indent(question) + "try\n");
+        //note we use the scope syntax from the inner block as the try block to avoid duplicating the block
+        node.getBody().apply(this, question);
+        sb.append(
+                "\n" + indent(question) + "catch(MaestroRunTimeException& e)\n" + indent(question) + "{\n" + indent(question + 1) + exceptionVarName +
+                        "=e;\n" + indent(question) + "}\n");
+        //try end
+        if (node.getFinally() != null) {
+            for (PStm pStm : node.getFinally().getBody()) {
+                pStm.apply(this, question);
+            }
+        }
+
+        sb.append("\n" + indent(question) + "if (" + exceptionVarName + ".has_value())\n");
+        sb.append(indent(question) + "{ \n");
+        sb.append(indent(question + 1) + "throw " + exceptionVarName + ".value();\n");
+        sb.append(indent(question) + "}\n");
+        question--;
+
+        sb.append(indent(question) + "}");
+        //new block end
+
     }
 
     @Override
