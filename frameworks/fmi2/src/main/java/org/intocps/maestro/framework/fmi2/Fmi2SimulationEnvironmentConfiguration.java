@@ -14,6 +14,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -53,8 +55,23 @@ public class Fmi2SimulationEnvironmentConfiguration {
         if (fmus == null || fmus.size() < 1) {
             throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
         }
+        validateFmusInConnectionsMatchesFmus(connections, fmus);
         this.fmus = fmus;
         this.connections = connections;
+    }
+
+    private void validateFmusInConnectionsMatchesFmus(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
+        // The following format is expected: {FMU_NAME}.INSTANCE_NAME.PORT_NAME
+        List<String> fmuNames = fmus.keySet().stream().map(key -> key.replaceAll("[{}]", "").strip()).collect(Collectors.toList());
+        List<String> fmuNamesInConnections = connections.entrySet().stream().flatMap(entry ->
+            Stream.concat(Stream.of(entry.getKey()), entry.getValue().stream()).map(connection -> connection.split("}")[0].replace("{", "").strip())
+        ).collect(Collectors.toList());
+
+        for (String fmuNameInConnection : fmuNamesInConnections) {
+            if (!fmuNames.contains(fmuNameInConnection)) {
+                throw new EnvironmentException("FMU with name '" + fmuNameInConnection + "' from connections cannot be located in fmus");
+            }
+        }
     }
 
     public Map<String, String> getFmus() {
