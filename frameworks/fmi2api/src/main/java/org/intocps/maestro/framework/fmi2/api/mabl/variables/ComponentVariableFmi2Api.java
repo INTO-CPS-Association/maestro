@@ -585,8 +585,11 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                     int arraySize = derivativePorts.size() * maxOutputDerOrder;
 
                     ArrayVariableFmi2Api<Object> derValOutBuf = createBuffer(newRealType(), "DVal_OUT", arraySize, getDeclaredScope());
-                    ArrayVariableFmi2Api<Object> derOrderOutBuf = createBuffer(newIntType(), "DOrder_OUT", arraySize, getDeclaredScope());
-                    ArrayVariableFmi2Api<Object> derRefOutBuf = createBuffer(newUIntType(), "DRef_OUT", arraySize, getDeclaredScope());
+                    //                    ArrayVariableFmi2Api<Object> derOrderOutBuf = createBuffer(newIntType(), "DOrder_OUT", arraySize, getDeclaredScope());
+                    //                    ArrayVariableFmi2Api<Object> derRefOutBuf = createBuffer(newUIntType(), "DRef_OUT", arraySize, getDeclaredScope());
+
+                    List<AIntLiteralExp> valueReferences = new ArrayList<>();
+                    List<AIntLiteralExp> orders = new ArrayList<>();
 
                     // Loop arrays and assign derivative value reference and derivative order.
                     // E.g for two ports with and a max derivative order of two: derRefOutBuf = [derPortRef1, derPortRef1, derPortRef2,derPortRef2],
@@ -601,20 +604,36 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
                             portIndex++;
                         }
 
-                        PStateDesignator dRefDesignator = derRefOutBuf.items().get(arrayIndex).getDesignator().clone();
-                        scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue())));
+                        valueReferences.add(newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue()));
+                        orders.add(newAIntLiteralExp(order));
 
-                        PStateDesignator derOrderDesignator = derOrderOutBuf.items().get(arrayIndex).getDesignator().clone();
-                        scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
+                        //                        PStateDesignator dRefDesignator = derRefOutBuf.items().get(arrayIndex).getDesignator().clone();
+                        //                        scope.add(newAAssignmentStm(dRefDesignator, newAIntLiteralExp(derivativePort.getPortReferenceValue().intValue())));
+                        //
+                        //                        PStateDesignator derOrderDesignator = derOrderOutBuf.items().get(arrayIndex).getDesignator().clone();
+                        //                        scope.add(newAAssignmentStm(derOrderDesignator, newAIntLiteralExp(order)));
                         order++;
+
                     }
+
+                    AArrayInitializer dorder_out_arr_init = newAArrayInitializer(orders);
+                    ALocalVariableStm dorder_out = newALocalVariableStm(
+                            newAVariableDeclaration(newAIdentifier("DOrder_OUT"), newAArrayType(newAIntNumericPrimitiveType()), orders.size(),
+                                    dorder_out_arr_init));
+                    scope.add(dorder_out);
+
+                    AArrayInitializer dref_out_arr_init = newAArrayInitializer(valueReferences);
+                    ALocalVariableStm dref_out = newALocalVariableStm(
+                            newAVariableDeclaration(newAIdentifier("DRef_OUT"), newAArrayType(newAIntNumericPrimitiveType()), valueReferences.size(),
+                                    dref_out_arr_init));
+                    scope.add(dref_out);
 
                     // Create assignment statement which assigns derivatives to derValOutBuf by calling getRealOutputDerivatives with
                     // derRefOutBuf, arraySize and derOrderOutBuf.
                     PStm AStm = newAAssignmentStm(builder.getGlobalFmiStatus().getDesignator().clone(),
                             call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES),
-                                    derRefOutBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) arraySize),
-                                    derOrderOutBuf.getReferenceExp().clone(), derValOutBuf.getReferenceExp().clone()));
+                                    dref_out_arr_init.clone(), newAUIntLiteralExp((long) arraySize),
+                                    dorder_out_arr_init.clone(), derValOutBuf.getReferenceExp().clone()));
                     scope.add(AStm);
 
                     // If enabled handle potential errors from calling getRealOutputDerivatives
