@@ -10,7 +10,7 @@ import java.util.Objects;
 public class SimulationEnvironmentTest {
 
     @Test
-    public void simulationConfigurationThrowsWithoutConnections() {
+    public void simConfThrowsWithoutConnections() {
         // Assert
         Assertions.assertThrows(EnvironmentException.class, () -> Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(
                 Objects.requireNonNull(this.getClass().getClassLoader()
@@ -18,7 +18,7 @@ public class SimulationEnvironmentTest {
     }
 
     @Test
-    public void simulationConfigurationThrowsWithoutFMUs() {
+    public void simConfThrowsWithoutFMUs() {
         // Assert
         Assertions.assertThrows(EnvironmentException.class, () -> Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(
                 Objects.requireNonNull(this.getClass().getClassLoader()
@@ -26,20 +26,10 @@ public class SimulationEnvironmentTest {
     }
 
     @Test
-    public void simulationConfigurationThrowsUnknownName() throws Exception {
-        // Arrange
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(Objects.requireNonNull(
-                        this.getClass().getClassLoader().getResourceAsStream("simulation_environment/simulation_environment_with_mismatched_names.json"))
-                .readAllBytes()));
-        ErrorReporter reporter = new ErrorReporter();
-
+    public void simConfThrowsOnUnknownFmuNameInConnections() {
         // Act
-        Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        //        Assertions.assertThrows(EnvironmentException.class,
-        //                () -> Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
-        //                        new String(Objects.requireNonNull(
-        //                                this.getClass().getClassLoader().getResourceAsStream("simulation_environment" +
-        //                                        "/simulation_environment_without_fmus" +
-        //                                        ".json")).readAllBytes())));
+        Assertions.assertThrows(EnvironmentException.class, () -> Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(
+                Objects.requireNonNull(this.getClass().getClassLoader()
+                        .getResourceAsStream("simulation_environment/simulation_environment_with_mismatched_names.json")).readAllBytes())));
     }
 }
