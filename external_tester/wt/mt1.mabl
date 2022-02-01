@@ -7,7 +7,7 @@ import ModelTransition;
 
 {
     real START_TIME = 0.0;
-    real END_TIME = 10.0;
+    real END_TIME = 20.0;
     real STEP_SIZE = 0.1;
 
     // #############################
@@ -95,7 +95,7 @@ import ModelTransition;
     // #############################
     // Simulation Loop until END_TIME
     // #############################
-    while(time + STEP_SIZE <= END_TIME)
+    while(time + STEP_SIZE <= END_TIME - 10.0)
     {
         // #############################
         // Convert valve state from boolean to real
@@ -140,25 +140,14 @@ import ModelTransition;
     }
     
     // #############################
-    // Clean up
-    // #############################
-    dataWriter.close();
-    //wtInstance.terminate();
-    //crtlInstance.terminate();
-    //tankController.freeInstance(crtlInstance);
-    //singleWatertank.freeInstance(wtInstance);
-
-    //unload(tankController);
-    //unload(singleWatertank);
-    unload(dataWriter);
-
-    // #############################
-    // XXX: ModelTransition TEST ONLY
+    // XXX: ModelTransition
     // #############################
     ModelTransition mt = load("ModelTransition");
     mt.setFMU("tankController", tankController);
     mt.setFMUInstance("crtlInstance", crtlInstance);
     mt.setFMU("singleWatertank", singleWatertank);
     mt.setFMUInstance("wtInstance", wtInstance);
+    mt.setDataWriter("dataWriter", dataWriter);
+    mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
     mt.transition();
 }
