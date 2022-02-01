@@ -3,6 +3,8 @@ package org.intocps.maestro.interpreter.values.modeltransition;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.InterpreterTransitionException;
 import org.intocps.maestro.interpreter.values.*;
+import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
+import org.intocps.maestro.interpreter.values.datawriter.DataWriterConfigValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuComponentValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
@@ -85,6 +87,54 @@ public class ModelTransitionValue extends ModuleValue {
         }));
 
         members.put("getFMUInstance", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            List<Value> args = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(args, 1);
+
+            Value idVal = args.get(0);
+            String id = ((StringValue) idVal).getValue();
+
+            return instance.get(id);
+        }));
+
+        members.put("setDataWriter", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            List<Value> args = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(args, 2);
+
+            Value idVal = args.get(0);
+            Value dataWriterVal = args.get(1);
+
+            String id = ((StringValue) idVal).getValue();
+            DataWriterValue dataWriter = (DataWriterValue) dataWriterVal;
+
+            instance.put(id, dataWriter);
+            return new VoidValue();
+        }));
+
+        members.put("getDataWriter", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            List<Value> args = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(args, 1);
+
+            Value idVal = args.get(0);
+            String id = ((StringValue) idVal).getValue();
+
+            return instance.get(id);
+        }));
+
+        members.put("setDataWriterConfig", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            List<Value> args = fcargs.stream().map(Value::deref).collect(Collectors.toList());
+            checkArgLength(args, 2);
+
+            Value idVal = args.get(0);
+            Value dataWriterConfigVal = args.get(1);
+
+            String id = ((StringValue) idVal).getValue();
+            DataWriterConfigValue dataWriterConfig = (DataWriterConfigValue) dataWriterConfigVal;
+
+            instance.put(id, dataWriterConfig);
+            return new VoidValue();
+        }));
+
+        members.put("getDataWriterConfig", new FunctionValue.ExternalFunctionValue(fcargs -> {
             List<Value> args = fcargs.stream().map(Value::deref).collect(Collectors.toList());
             checkArgLength(args, 1);
 
