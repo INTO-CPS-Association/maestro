@@ -106,8 +106,4 @@ import ModelTransition;
     tankController.freeInstance(crtlInstance);
     singleWatertank.freeInstance(wtInstance);
 
-    // XXX: unloading transitioned models seems to fail
-    //unload(tankController);
-    //unload(singleWatertank);
-    //unload(dataWriter);
 }

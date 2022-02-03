@@ -153,4 +153,9 @@ import ModelTransition;
     mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
 
     mt.transition();
+
+    // Unloading seems counterintuitive, but ownership is transferred - no freeing.
+    unload(tankController);
+    unload(singleWatertank);
+    unload(dataWriter);
 }
