@@ -143,11 +143,14 @@ import ModelTransition;
     // XXX: ModelTransition
     // #############################
     ModelTransition mt = load("ModelTransition");
+
     mt.setFMU("tankController", tankController);
     mt.setFMUInstance("crtlInstance", crtlInstance);
     mt.setFMU("singleWatertank", singleWatertank);
     mt.setFMUInstance("wtInstance", wtInstance);
+
     mt.setDataWriter("dataWriter", dataWriter);
     mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
+
     mt.transition();
 }

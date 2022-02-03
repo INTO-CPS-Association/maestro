@@ -19,9 +19,9 @@ import ModelTransition;
     FMI2Component crtlInstance = mt.getFMUInstance("crtlInstance");
     FMI2 singleWatertank = mt.getFMU("singleWatertank");
     FMI2Component wtInstance = mt.getFMUInstance("wtInstance");
+
     DataWriter dataWriter = mt.getDataWriter("dataWriter");
     DataWriterConfig dataWriterConfiguration = mt.getDataWriterConfig("dataWriterConfig");
-
 
     // #############################
     // Change max from 2.0 to 3.0
