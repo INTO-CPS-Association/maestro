@@ -8,7 +8,7 @@ test:
 
 1. terminal:
 > cd ~/maestro/external_tester/wt
-> java -jar ../../maestro/target/maestro-2.2.0-SNAPSHOT-jar-with-dependencies.jar interpret mt1.mabl
+> java -jar ../../maestro/target/maestro-2.2.0-SNAPSHOT-jar-with-dependencies.jar interpret watertank.mabl
 
 2. terminal:
 > cd ~/maestro/external_tester/wt

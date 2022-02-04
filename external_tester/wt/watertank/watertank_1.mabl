@@ -13,7 +13,7 @@ import ModelTransition;
     // #############################
     // XXX: ModelTransition TEST ONLY
     // #############################
-    ModelTransition mt = load("ModelTransition");
+    ModelTransition mt = load("ModelTransition", "watertank");
 
     FMI2 tankController = mt.getFMU("tankController");
     FMI2Component crtlInstance = mt.getFMUInstance("crtlInstance");

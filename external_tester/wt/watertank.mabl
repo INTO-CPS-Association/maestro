@@ -25,6 +25,7 @@ import ModelTransition;
     FMI2 singleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "singlewatertank-20sim.fmu");
     FMI2Component crtlInstance = tankController.instantiate("crtlInstance", false, false);
     FMI2Component wtInstance = singleWatertank.instantiate("wtInstance", false, false);
+    ModelTransition mt = load("ModelTransition", "watertank");
 
     wtInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
     crtlInstance.setupExperiment(false, 0.0, START_TIME, true, END_TIME);
@@ -142,20 +143,29 @@ import ModelTransition;
     // #############################
     // XXX: ModelTransition
     // #############################
-    ModelTransition mt = load("ModelTransition");
 
-    mt.setFMU("tankController", tankController);
-    mt.setFMUInstance("crtlInstance", crtlInstance);
-    mt.setFMU("singleWatertank", singleWatertank);
-    mt.setFMUInstance("wtInstance", wtInstance);
+    if (mt.nextTransition())
+    {
+        mt.setFMU("tankController", tankController);
+        mt.setFMUInstance("crtlInstance", crtlInstance);
+        mt.setFMU("singleWatertank", singleWatertank);
+        mt.setFMUInstance("wtInstance", wtInstance);
 
-    mt.setDataWriter("dataWriter", dataWriter);
-    mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
+        mt.setDataWriter("dataWriter", dataWriter);
+        mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
 
-    mt.transition();
+        mt.doTransition();
+    }
+    else
+    {
+        dataWriter.close();
+        wtInstance.terminate();
+        crtlInstance.terminate();
+        tankController.freeInstance(crtlInstance);
+        singleWatertank.freeInstance(wtInstance);
+        unload(tankController);
+        unload(singleWatertank);
+        unload(dataWriter);
+    }
 
-    // Unloading seems counterintuitive, but ownership is transferred - no freeing.
-    unload(tankController);
-    unload(singleWatertank);
-    unload(dataWriter);
 }

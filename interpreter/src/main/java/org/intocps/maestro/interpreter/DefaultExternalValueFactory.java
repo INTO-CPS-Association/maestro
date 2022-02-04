@@ -530,9 +530,11 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
 
     @IValueLifecycleHandler.ValueLifecycle(name = "ModelTransition")
     public static class ModelTransitionLifecycleHandler extends BaseLifecycleHandler {
+
         @Override
         public Either<Exception, Value> instantiate(List<Value> args) {
-            return Either.right(new ModelTransitionValue());
+            String transitionPath = ((StringValue) args.get(0)).getValue();
+            return Either.right(new ModelTransitionValue(transitionPath));
         }
     }
 }

@@ -14,5 +14,6 @@ import DataWriter;
     void setDataWriterConfig(string id, DataWriterConfig dataWriter);
     DataWriterConfig getDataWriterConfig(string id);
 
-    void transition();
+    void doTransition();
+    bool nextTransition();
 }

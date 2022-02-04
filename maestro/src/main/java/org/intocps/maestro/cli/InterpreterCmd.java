@@ -100,7 +100,7 @@ public class InterpreterCmd implements Callable<Integer> {
             }
         } catch (InterpreterTransitionException e) {
             files.clear();
-            files.add(new File(e.getTransitionName()));
+            files.add(e.getTransitionFile());
             useTypeCheck = false; //XXX: remove
             this.call();
         }

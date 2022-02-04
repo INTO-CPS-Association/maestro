@@ -1,34 +1,36 @@
 package org.intocps.maestro.interpreter;
 
+import java.io.File;
+
 public class InterpreterTransitionException extends RuntimeException {
-    private final String transitionName;
+    private final File transitionFile;
 
-    public InterpreterTransitionException(String transitionName) {
-        this.transitionName = transitionName;
+    public InterpreterTransitionException(File transitionName) {
+        this.transitionFile = transitionName;
     }
 
-    public InterpreterTransitionException(String transitionName, String message) {
+    public InterpreterTransitionException(File transitionName, String message) {
         super(message);
-        this.transitionName = transitionName;
+        this.transitionFile = transitionName;
     }
 
-    public InterpreterTransitionException(String transitionName, String message, Throwable cause) {
+    public InterpreterTransitionException(File transitionName, String message, Throwable cause) {
         super(message, cause);
-        this.transitionName = transitionName;
+        this.transitionFile = transitionName;
     }
 
-    public InterpreterTransitionException(String transitionName, Throwable cause) {
+    public InterpreterTransitionException(File transitionName, Throwable cause) {
         super(cause);
-        this.transitionName = transitionName;
+        this.transitionFile = transitionName;
     }
 
-    public InterpreterTransitionException(String transitionName, String message, Throwable cause, boolean enableSuppression,
+    public InterpreterTransitionException(File transitionName, String message, Throwable cause, boolean enableSuppression,
             boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        this.transitionName = transitionName;
+        this.transitionFile = transitionName;
     }
 
-    public String getTransitionName() {
-        return this.transitionName;
+    public File getTransitionFile() {
+        return this.transitionFile;
     }
 }
