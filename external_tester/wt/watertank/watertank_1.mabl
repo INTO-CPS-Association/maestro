@@ -6,7 +6,6 @@ import Math;
 import ModelTransition;
 
 {
-    real START_TIME = 10.0;
     real END_TIME = 20.0;
     real STEP_SIZE = 0.5;
 
@@ -22,6 +21,7 @@ import ModelTransition;
 
     DataWriter dataWriter = mt.getValue("dataWriter");
     DataWriterConfig dataWriterConfiguration = mt.getValue("dataWriterConfig");
+    real time = mt.getValue("time");
 
     // #############################
     // Change max from 2.0 to 3.0
@@ -46,10 +46,9 @@ import ModelTransition;
     
     crtlInstance.getBoolean(crtlValveStateValRef, 1, crtlValveStateOutput);
     wtInstance.getReal(wtLevelValRef, 1, wtLevelOutputValue);
-    dataWriter.writeDataPoint(dataWriterConfiguration, START_TIME, crtlValveStateOutput[0], wtLevelOutputValue[0]);
+    dataWriter.writeDataPoint(dataWriterConfiguration, time, crtlValveStateOutput[0], wtLevelOutputValue[0]);
 
 
-    real time = START_TIME;
     // #############################
     // Simulation Loop until END_TIME
     // #############################

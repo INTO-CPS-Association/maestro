@@ -152,6 +152,7 @@ import ModelTransition;
         mt.setValue("wtInstance", wtInstance);
         mt.setValue("dataWriter", dataWriter);
         mt.setValue("dataWriterConfig", dataWriterConfiguration);
+        mt.setValue("time", time);
 
         mt.doTransition();
     }
