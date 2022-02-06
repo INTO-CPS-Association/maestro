@@ -1,16 +1,9 @@
-build:
-======
+1) tmuxinator start maestro
+
+2) build:
 > cd ~/maestro
 > mvn package
 
-test:
-=====
-
-1. terminal:
-> cd ~/maestro/external_tester/wt
-> java -jar ../../maestro/target/maestro-2.2.0-SNAPSHOT-jar-with-dependencies.jar interpret watertank.mabl
-
-2. terminal:
-> cd ~/maestro/external_tester/wt
-> tail -f outputs.csv
+3) test: (test window)
+> ./start.sh
 
