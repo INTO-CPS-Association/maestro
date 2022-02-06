@@ -15,13 +15,13 @@ import ModelTransition;
     // #############################
     ModelTransition mt = load("ModelTransition", "watertank");
 
-    FMI2 tankController = mt.getFMU("tankController");
-    FMI2Component crtlInstance = mt.getFMUInstance("crtlInstance");
-    FMI2 singleWatertank = mt.getFMU("singleWatertank");
-    FMI2Component wtInstance = mt.getFMUInstance("wtInstance");
+    FMI2 tankController = mt.getValue("tankController");
+    FMI2Component crtlInstance = mt.getValue("crtlInstance");
+    FMI2 singleWatertank = mt.getValue("singleWatertank");
+    FMI2Component wtInstance = mt.getValue("wtInstance");
 
-    DataWriter dataWriter = mt.getDataWriter("dataWriter");
-    DataWriterConfig dataWriterConfiguration = mt.getDataWriterConfig("dataWriterConfig");
+    DataWriter dataWriter = mt.getValue("dataWriter");
+    DataWriterConfig dataWriterConfiguration = mt.getValue("dataWriterConfig");
 
     // #############################
     // Change max from 2.0 to 3.0

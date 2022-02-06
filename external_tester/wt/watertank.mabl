@@ -146,13 +146,12 @@ import ModelTransition;
 
     if (mt.nextTransition())
     {
-        mt.setFMU("tankController", tankController);
-        mt.setFMUInstance("crtlInstance", crtlInstance);
-        mt.setFMU("singleWatertank", singleWatertank);
-        mt.setFMUInstance("wtInstance", wtInstance);
-
-        mt.setDataWriter("dataWriter", dataWriter);
-        mt.setDataWriterConfig("dataWriterConfig", dataWriterConfiguration);
+        mt.setValue("tankController", tankController);
+        mt.setValue("crtlInstance", crtlInstance);
+        mt.setValue("singleWatertank", singleWatertank);
+        mt.setValue("wtInstance", wtInstance);
+        mt.setValue("dataWriter", dataWriter);
+        mt.setValue("dataWriterConfig", dataWriterConfiguration);
 
         mt.doTransition();
     }

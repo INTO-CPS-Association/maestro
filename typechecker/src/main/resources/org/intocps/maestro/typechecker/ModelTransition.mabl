@@ -1,18 +1,7 @@
 module ModelTransition
-import FMI2;
-import DataWriter;
 {
-    void setFMU(string id, FMI2 fmu);
-    FMI2 getFMU(string id);
-
-    void setFMUInstance(string id, FMI2Component fmuInst);
-    FMI2Component getFMUInstance(string id);
-
-    void setDataWriter(string id, DataWriter dataWriter);
-    DataWriter getDataWriter(string id);
-
-    void setDataWriterConfig(string id, DataWriterConfig dataWriter);
-    DataWriterConfig getDataWriterConfig(string id);
+    void setValue(string id, ? value);
+    ? getValue(string id);
 
     void doTransition();
     bool nextTransition();
