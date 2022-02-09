@@ -145,7 +145,13 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
             // Create the iteration predicate
-            PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(currentStepSize).lessThan(endTime);
+            PredicateFmi2Api loopPredicate;
+            if(jacobianStepConfig.endTime == -1) {
+                loopPredicate = new BooleanVariableFmi2Api(null, null, dynamicScope, null,
+                        MableAstFactory.newABoolLiteralExp(true)).toPredicate();
+            } else {
+                loopPredicate = currentCommunicationTime.toMath().addition(currentStepSize).lessThan(endTime);
+            }
 
             // Get all variables related to outputs or logging.
             Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = new HashMap<>();
