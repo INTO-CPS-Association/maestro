@@ -22,7 +22,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
                 .filter(n -> !n.getName().startsWith(".")).map(f -> Arguments.arguments(f.getName(), f));
     }
 
-    @Disabled
+    @Disabled("Enable when issue #379 has been resolved")
     @Override
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
