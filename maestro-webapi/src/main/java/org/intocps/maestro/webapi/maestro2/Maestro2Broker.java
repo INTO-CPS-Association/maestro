@@ -107,6 +107,8 @@ public class Maestro2Broker {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
         simulationConfiguration.livestream = initializeRequest.getLivestream();
+        simulationConfiguration.faultInjectInstances = initializeRequest.faultInjectInstances;
+        simulationConfiguration.faultInjectConfigurationPath = initializeRequest.faultInjectConfigurationPath;
 
         Map<String, String> instanceRemapping = LegacyMMSupport.adjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
 
