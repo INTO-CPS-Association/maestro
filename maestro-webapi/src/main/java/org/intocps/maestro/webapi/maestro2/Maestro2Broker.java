@@ -33,7 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +46,9 @@ public class Maestro2Broker {
     final Mabl mabl;
     final File workingDirectory;
     final ErrorReporter reporter;
+    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                    .collect(Collectors.toList());
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
         this.workingDirectory = workingDirectory;
@@ -55,23 +61,23 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
-            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
-                    .collect(Collectors.toList());
-
-    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
+    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel,
+            SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel), multiModel.getFmus());
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
+                        multiModel.getFmus());
         simulationConfiguration.logVariables = multiModel.getLogVariables();
         if (simulationConfiguration.logVariables == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
-                multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
-                multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
-                multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn(), multiModel.getLogLevels());
+        ScenarioConfiguration configuration =
+                new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(), multiModel.getGlobal_relative_tolerance(),
+                        multiModel.getGlobal_absolute_tolerance(), multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
+                        multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn(),
+                        multiModel.getLogLevels());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -89,8 +95,7 @@ public class Maestro2Broker {
         }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-        List<String> liveStreamFilter = livestreamVariables == null ? List.of() :
-                flattenFmuIds.apply(livestreamVariables);
+        List<String> liveStreamFilter = livestreamVariables == null ? List.of() : flattenFmuIds.apply(livestreamVariables);
 
         executeInterpreter(socket, portsToLog, liveStreamFilter, body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
@@ -152,6 +157,13 @@ public class Maestro2Broker {
 
 
         MaBLTemplateConfiguration configuration = builder.build();
+        if (initializeRequest.getExternalSpecs() != null) {
+            mabl.parse(initializeRequest.getExternalSpecs());
+        }
+        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && (initializeRequest.getExternalSpecs() == null ||
+                initializeRequest.getExternalSpecs().stream().noneMatch(exSp -> exSp.getName().equals("FaultInject.mabl")))) {
+            throw new Exception("Remember to include FaultInject.mabl as an external spec");
+        }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
 
         if (!mabl.typeCheck().getKey()) {
