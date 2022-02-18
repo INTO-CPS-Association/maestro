@@ -319,8 +319,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         Value function = callContext.lookup(node.getMethodName());
 
         if (function instanceof FunctionValue) {
-
-            return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
+            try{
+                return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
+            } catch (Exception e) {
+                throw new InterpreterException("Unable to evaluate node: " + node, e);
+            }
         }
 
         throw new InterpreterException("Unhandled node: " + node);
