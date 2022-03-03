@@ -33,10 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -161,7 +158,7 @@ public class Maestro2Broker {
             mabl.parse(initializeRequest.getExternalSpecs());
         }
         if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && (initializeRequest.getExternalSpecs() == null ||
-                initializeRequest.getExternalSpecs().stream().noneMatch(exSp -> exSp.getName().equals("FaultInject.mabl")))) {
+                initializeRequest.getExternalSpecs().stream().noneMatch(exSp -> exSp.getName().toLowerCase(Locale.ROOT).equals("faultinject.mabl")))) {
             throw new Exception("Remember to include FaultInject.mabl as an external spec");
         }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
