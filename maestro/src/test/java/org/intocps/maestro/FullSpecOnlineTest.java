@@ -21,8 +21,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "online").toFile().listFiles()))
                 .filter(n -> !n.getName().startsWith(".")).map(f -> Arguments.arguments(f.getName(), f));
     }
-
-    @Disabled("Enable when issue #379 has been resolved")
+    
     @Override
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")

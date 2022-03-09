@@ -305,6 +305,9 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <configuration>
+                            <classifier>bundle</classifier>
+                        </configuration>
                         <goals>
                             <goal>repackage</goal>
                         </goals>

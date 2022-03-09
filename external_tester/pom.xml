@@ -79,6 +79,7 @@
                                 <artifactItem>
                                     <groupId>org.into-cps.maestro</groupId>
                                     <artifactId>maestro-webapi</artifactId>
+                                    <classifier>bundle</classifier>
                                     <destFileName>maestro-web.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
@@ -146,13 +147,14 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>maestro</artifactId>
-            <version>2.1.6-SNAPSHOT</version>
+            <version>2.2.1-SNAPSHOT</version>
             <classifier>jar-with-dependencies</classifier>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>maestro-webapi</artifactId>
-            <version>2.1.6-SNAPSHOT</version>
+            <classifier>bundle</classifier>
+            <version>2.2.1-SNAPSHOT</version>
         </dependency>
 
     </dependencies>
