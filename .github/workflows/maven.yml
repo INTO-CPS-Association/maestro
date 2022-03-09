@@ -15,6 +15,9 @@ env:
   SERVER_ID: snapshots
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
+  WINDOWS_VERSION: 'windows-2019'
+  UBUNTU_VERSION: 'ubuntu-latest'
+  MACOS_VERSION: 'macos-latest'
 
 
 jobs:
@@ -24,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-2019 , macos-latest ]
+        os: [ UBUNTU_VERSION, WINDOWS_VERSION , MACOS_VERSION ]
 
     steps:
 
@@ -49,7 +52,7 @@ jobs:
           python -m pip install pipenv
 
       - name: Put MSYS2_MinGW64 on PATH for windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == WINDOWS_VERSION
         # there is not yet an environment variable for this path from msys2/setup-msys2
         run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
@@ -59,17 +62,17 @@ jobs:
         run: mvn "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" "-Dhttp.keepAlive=false" "-Dmaven.wagon.http.pool=false" "-Dmaven.wagon.httpconnectionManager.ttlSeconds=120" -B package --file pom.xml -DskipTests -fae
 
       - name: Maven Test
-        #        if: matrix.os == 'windows-latest'
+        #        if: matrix.os == WINDOWS_VERSION
         #        shell: msys2 {0}
         run: mvn "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" "-Dhttp.keepAlive=false" "-Dmaven.wagon.http.pool=false" "-Dmaven.wagon.httpconnectionManager.ttlSeconds=120" -Pinclude-fullSpecCppTest test
 
       #      - name: Maven Test
-      #        if: matrix.os != 'windows-latest'
+      #        if: matrix.os != WINDOWS_VERSION
       #        run: mvn test -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
       - name: upload test reports win
         uses: actions/upload-artifact@v2
-        if: ${{ failure() && matrix.os == 'windows-latest'}}
+        if: ${{ failure() && matrix.os == WINDOWS_VERSION}}
         with:
           name: surfire-win
           path: |
@@ -80,7 +83,7 @@ jobs:
 
       - name: upload test reports ubuntu
         uses: actions/upload-artifact@v2
-        if: ${{ failure() && matrix.os == 'ubuntu-latest'}}
+        if: ${{ failure() && matrix.os == UBUNTU_VERSION}}
         with:
           name: surfire-ubuntu
           path: |
