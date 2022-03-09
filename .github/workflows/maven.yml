@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ UBUNTU_VERSION, WINDOWS_VERSION , MACOS_VERSION ]
+        os: [ env.UBUNTU_VERSION, env.WINDOWS_VERSION, env.MACOS_VERSION ]
 
     steps:
 
