@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.INode;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -20,7 +21,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "specifications", "online").toFile().listFiles()))
                 .filter(n -> !n.getName().startsWith(".")).map(f -> Arguments.arguments(f.getName(), f));
     }
-
+    
     @Override
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
