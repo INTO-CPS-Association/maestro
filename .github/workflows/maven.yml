@@ -28,9 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         os: 
-          - ${{ env.UBUNTU_VERSION }}
-          - ${{ env.WINDOWS_VERSION }}
-          - ${{ env.MACOS_VERSION }}
+          - env.UBUNTU_VERSION
+          - env.WINDOWS_VERSION
+          - env.MACOS_VERSION
 
     steps:
 
