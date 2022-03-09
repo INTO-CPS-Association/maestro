@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["${{env.UBUNTU_VERSION}}", "${{env.WINDOWS_VERSION}}", "${{env.MACOS_VERSION}}"]
+        os: [ubuntu-latest, windows-2019, macos-latest]
 
     steps:
 
