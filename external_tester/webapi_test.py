@@ -245,7 +245,7 @@ args = parser.parse_args()
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-relativePath = os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar"))
+relativePath = os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*-bundle.jar"))
 
 jarPath = os.path.abspath(args.path) if str(args.path) != "None" else testutils.findJar(relativePath)
 
