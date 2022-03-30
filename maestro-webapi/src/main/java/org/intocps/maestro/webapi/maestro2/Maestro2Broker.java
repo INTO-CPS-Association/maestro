@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -154,11 +155,43 @@ public class Maestro2Broker {
 
 
         MaBLTemplateConfiguration configuration = builder.build();
+        // Validate that external spec files only includes mabl files that can be resolved
+        AtomicBoolean didLocateFaultInjectionFile = new AtomicBoolean(false);
         if (initializeRequest.getExternalSpecs() != null) {
+            List<File> filesNotResolved = new ArrayList<>();
+            List<File> nonMablFiles =
+                    initializeRequest.getExternalSpecs().stream().filter(file -> {
+                        // While filtering also test that the file actually exists
+                        if(!file.exists()) {
+                            filesNotResolved.add(file);
+                        }
+                        if(file.getName().toLowerCase().endsWith("faultinject.mabl")) {
+                            didLocateFaultInjectionFile.set(true);
+                        }
+                        return !file.getName().toLowerCase(Locale.ROOT).endsWith(".mabl");
+                    }).collect(
+                            Collectors.toList());
+            String errMsg = "";
+            if(filesNotResolved.size() > 0) {
+                errMsg = "Cannot resolve path to spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
+                        (prev, cur) -> prev + " " + cur);
+            }
+
+            else if(nonMablFiles.size() > 0){
+                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
+                        (prev, cur) -> prev + " " + cur) + ". Only mabl files should be " +
+                        "included as " +
+                        "external specs.";
+            }
+
+            if(!errMsg.equals("")) {
+                throw new Exception(errMsg);
+            }
+
             mabl.parse(initializeRequest.getExternalSpecs());
         }
-        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && (initializeRequest.getExternalSpecs() == null ||
-                initializeRequest.getExternalSpecs().stream().noneMatch(exSp -> exSp.getName().toLowerCase(Locale.ROOT).equals("faultinject.mabl")))) {
+        // If fault injection is configured then the faultinject.mabl file should be included as an external spec.
+        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && !didLocateFaultInjectionFile.get()) {
             throw new Exception("Remember to include FaultInject.mabl as an external spec");
         }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
