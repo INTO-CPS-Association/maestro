@@ -113,3 +113,5 @@ __pycache__/
 *.py[cod]
 *$py.class
 /external_tester/venv/
+
+*.ci-friendly-pom.xml
