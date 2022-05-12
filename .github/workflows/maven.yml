@@ -73,6 +73,7 @@ jobs:
       - name: upload test reports win
         uses: actions/upload-artifact@v2
         if: ${{ failure() && matrix.os == env.WINDOWS_VERSION}}
+
         with:
           name: surfire-win
           path: |
