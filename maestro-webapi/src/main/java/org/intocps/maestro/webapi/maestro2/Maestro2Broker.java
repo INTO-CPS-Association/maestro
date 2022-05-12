@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +44,9 @@ public class Maestro2Broker {
     final Mabl mabl;
     final File workingDirectory;
     final ErrorReporter reporter;
+    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                    .collect(Collectors.toList());
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
         this.workingDirectory = workingDirectory;
@@ -55,23 +59,23 @@ public class Maestro2Broker {
         mabl.setReporter(this.reporter);
     }
 
-    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
-            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
-                    .collect(Collectors.toList());
-
-    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel, SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
+    public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel,
+            SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel), multiModel.getFmus());
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
+                        multiModel.getFmus());
         simulationConfiguration.logVariables = multiModel.getLogVariables();
         if (simulationConfiguration.logVariables == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
-                multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(),
-                multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
-                multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn(), multiModel.getLogLevels());
+        ScenarioConfiguration configuration =
+                new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(), multiModel.getGlobal_relative_tolerance(),
+                        multiModel.getGlobal_absolute_tolerance(), multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
+                        multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn(),
+                        multiModel.getLogLevels());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -89,8 +93,7 @@ public class Maestro2Broker {
         }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
-        List<String> liveStreamFilter = livestreamVariables == null ? List.of() :
-                flattenFmuIds.apply(livestreamVariables);
+        List<String> liveStreamFilter = livestreamVariables == null ? List.of() : flattenFmuIds.apply(livestreamVariables);
 
         executeInterpreter(socket, portsToLog, liveStreamFilter, body.getLiveLogInterval(), csvOutputFile,
                 new ByteArrayInputStream(runtimeJsonConfigString.getBytes()));
@@ -107,6 +110,8 @@ public class Maestro2Broker {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
         simulationConfiguration.livestream = initializeRequest.getLivestream();
+        simulationConfiguration.faultInjectInstances = initializeRequest.faultInjectInstances;
+        simulationConfiguration.faultInjectConfigurationPath = initializeRequest.faultInjectConfigurationPath;
 
         Map<String, String> instanceRemapping = LegacyMMSupport.adjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
 
@@ -150,6 +155,45 @@ public class Maestro2Broker {
 
 
         MaBLTemplateConfiguration configuration = builder.build();
+        // Validate that external spec files only includes mabl files that can be resolved
+        AtomicBoolean didLocateFaultInjectionFile = new AtomicBoolean(false);
+        if (initializeRequest.getExternalSpecs() != null) {
+            List<File> filesNotResolved = new ArrayList<>();
+            List<File> nonMablFiles =
+                    initializeRequest.getExternalSpecs().stream().filter(file -> {
+                        // While filtering also test that the file actually exists
+                        if(!file.exists()) {
+                            filesNotResolved.add(file);
+                        }
+                        if(file.getName().toLowerCase().endsWith("faultinject.mabl")) {
+                            didLocateFaultInjectionFile.set(true);
+                        }
+                        return !file.getName().toLowerCase(Locale.ROOT).endsWith(".mabl");
+                    }).collect(
+                            Collectors.toList());
+            String errMsg = "";
+            if(filesNotResolved.size() > 0) {
+                errMsg = "Cannot resolve path to spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
+                        (prev, cur) -> prev + " " + cur);
+            }
+
+            else if(nonMablFiles.size() > 0){
+                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
+                        (prev, cur) -> prev + " " + cur) + ". Only mabl files should be " +
+                        "included as " +
+                        "external specs.";
+            }
+
+            if(!errMsg.equals("")) {
+                throw new Exception(errMsg);
+            }
+
+            mabl.parse(initializeRequest.getExternalSpecs());
+        }
+        // If fault injection is configured then the faultinject.mabl file should be included as an external spec.
+        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && !didLocateFaultInjectionFile.get()) {
+            throw new Exception("Remember to include FaultInject.mabl as an external spec");
+        }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
 
         if (!mabl.typeCheck().getKey()) {

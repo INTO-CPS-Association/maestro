@@ -115,7 +115,7 @@ def cliTest(jarPath):
 # cd to run everything relative to this file
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*.jar")))
+webApiJarPath = testutils.findJar(os.path.abspath(os.path.join(r"../maestro-webapi/target/", "maestro-webapi*-bundle.jar")))
 if not os.path.isfile(webApiJarPath):
     raise Exception(f"Unable to locate jar: {webApiJarPath}")
 webApiTest(webApiJarPath)
