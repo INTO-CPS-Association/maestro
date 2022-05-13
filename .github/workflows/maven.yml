@@ -125,8 +125,6 @@ jobs:
       #    python test_simultaneous_simulations.py
 
   deploy:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
-
     needs: build
     runs-on: ubuntu-latest
     steps:
