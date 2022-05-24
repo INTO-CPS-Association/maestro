@@ -134,6 +134,7 @@ stm
     | {break} [token]:parserToken
     | {instanceMapping} [identifier]:lex_identifier [name]:java_String
     | {fmuMapping} [identifier]:lex_identifier [name]:java_String
+    | {transfer} [names]:exp.#literal.string*
     | {config} [config]:java_String
     | {error} [exp]:exp
     | {try} [body]:stm.#block.basic [finally]:stm.#block.basic

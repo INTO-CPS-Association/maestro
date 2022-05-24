@@ -554,6 +554,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     }
 
     @Override
+    public PType caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
+        return MableAstFactory.newAVoidType();
+    }
+
+    @Override
     public PType caseAConfigStm(AConfigStm node, Context question) throws AnalysisException {
         return MableAstFactory.newAVoidType();
     }

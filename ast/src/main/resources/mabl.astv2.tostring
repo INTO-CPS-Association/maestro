@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 %stm->break = "break"
 %stm->instanceMapping = "@mapInstance(" + [identifier]+ " -> \""+[name] + "\")"
 %stm->fmuMapping = "@mapFmu(" + [identifier]+ " -> \""+[name] + "\")"
+%stm->transfer = "@Transfer("  +$$[names]$.stream().map(s->s.getValue()).map(Object::toString).collect(Collectors.joining(","))$+   ")"
 %stm->config = "@Config(\"" + [config] + "\")"
 %stm->error = "error "+ $ ($[exp]$==null?"":$[exp]$)$
 %stm->try = "try" + [body] +  "finally"  +[finally]

@@ -319,7 +319,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         Value function = callContext.lookup(node.getMethodName());
 
         if (function instanceof FunctionValue) {
-            try{
+            try {
                 return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
             } catch (Exception e) {
                 throw new InterpreterException("Unable to evaluate node: " + node, e);
@@ -543,6 +543,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         return new IntegerValue(x.intValue() * y.intValue());
+    }
+
+    @Override
+    public Value caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
+        return new VoidValue();
     }
 
     @Override

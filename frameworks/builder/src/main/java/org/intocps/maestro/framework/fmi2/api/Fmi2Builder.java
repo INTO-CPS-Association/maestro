@@ -248,6 +248,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         <V> Variable<T, V> store(Value<V> tag);
 
         Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
+
+        void markTransferPoint(String... names);
     }
 
     /**
@@ -461,6 +463,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         //        }
         //    }
         Fmi2ComponentVariable<S> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
+
         Fmi2ComponentVariable<S> instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
                 String environmentName, boolean loggingOn);
 

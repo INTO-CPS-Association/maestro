@@ -134,6 +134,18 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     }
 
+
+    @Override
+    public INode visitTransfer(MablParser.TransferContext ctx) {
+        ATransferStm stm = new ATransferStm();
+
+        if (ctx.names != null && !ctx.names.isEmpty()) {
+            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(s)).collect(Collectors.toList()));
+        }
+
+        return stm;
+    }
+
     @Override
     public INode visitFrameworkConfigs(MablParser.FrameworkConfigsContext ctx) {
         AConfigFramework config = new AConfigFramework();

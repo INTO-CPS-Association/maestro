@@ -496,14 +496,25 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public void markTransferPoint(String... names) {
+
+        List<AStringLiteralExp> strings = new ArrayList<>();
+        if (names != null) {
+            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(s)).collect(Collectors.toList());
+        }
+
+        add(new ATransferStm(strings));
+    }
+
+    @Override
     public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
         if (variable instanceof BooleanVariableFmi2Api || variable instanceof DoubleVariableFmi2Api || variable instanceof IntVariableFmi2Api ||
                 variable instanceof StringVariableFmi2Api) {
             String varName = builder.getNameGenerator().getName(name);
             PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
             add(variableDeclaration);
-            return (Var) variable
-                    .clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName), newAIdentifierExp(varName));
+            return (Var) variable.clone(variableDeclaration, builder.getDynamicScope(), newAIdentifierStateDesignator(varName),
+                    newAIdentifierExp(varName));
         }
         throw new RuntimeException("Copy is not implemented for the type: " + variable.getClass().getName());
     }
