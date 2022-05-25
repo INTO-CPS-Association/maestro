@@ -3,6 +3,8 @@ package org.intocps.maestro.framework.fmi2;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class ComponentInfo implements FrameworkUnitInfo {

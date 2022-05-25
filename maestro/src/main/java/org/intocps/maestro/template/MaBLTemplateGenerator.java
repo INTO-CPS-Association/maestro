@@ -10,6 +10,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -54,6 +55,8 @@ public class MaBLTemplateGenerator {
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
     public static final String FAULTINJECT_POSTFIX = "_m_fi";
+    public static final String MODEL_TRANSITION_MODULE_NAME = "ModelTransition";
+    public static final String MODEL_TRANSITION_MODULE_VARIABLE_NAME = "modelTransition";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -96,6 +99,12 @@ public class MaBLTemplateGenerator {
         return statements;
     }
 
+    public static PStm createFMUTransfer(String fmuLexName) {
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
+                call(MODEL_TRANSITION_MODULE_VARIABLE_NAME, "getValue", newAStringLiteralExp(fmuLexName)));
+    }
+
+
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
 
@@ -106,7 +115,6 @@ public class MaBLTemplateGenerator {
         //                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
 
     }
-
     public static PStm createFMUUnload(String fmuLexName) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
@@ -213,6 +221,16 @@ public class MaBLTemplateGenerator {
             }
         }
 
+        // HEJ: Unconditionally load model transition
+        Map.Entry<PStm, List<PStm>> modelTransitionLoadStatement = createLoadStatement(MODEL_TRANSITION_MODULE_NAME,
+                Arrays.asList(newAStringLiteralExp("model_transition")));
+        if (modelTransitionLoadStatement.getKey() != null) {
+            rootScopeBody.add(modelTransitionLoadStatement.getKey());
+            if (modelTransitionLoadStatement.getValue() != null) {
+                tryBody.getBody().addAll(modelTransitionLoadStatement.getValue());
+            }
+        }
+
         // First create the FMU variables and assign to null
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
         NameMapper.NameMapperState nameMapperState = new NameMapper.NameMapperState();
@@ -239,17 +257,38 @@ public class MaBLTemplateGenerator {
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
 
-        // Create FMU load statements
+        // Create FMU and instance model transfers
+        Set<String> fmuTransfers = new HashSet<>();
+        Set<String> instanceTransfers = new HashSet<>();
+
+        for (Map.Entry<String, String> entry: unitRelationShip.getModelTransfers()) {
+            ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
+            String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
+            stmMaintainer.add(createFMUTransfer(fmuLexName));
+            stmMaintainer.add(checkNullAndStop(fmuLexName));
+            fmuTransfers.add(fmuLexName);
+
+            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+            stmMaintainer.add(createFMUTransfer(instanceLexName));
+            stmMaintainer.add(checkNullAndStop(instanceLexName));
+            instanceTransfers.add(instanceLexName);
+        }
+
+        // Create FMU load statements for FMUs not transferred
         List<PStm> unloadFmuStatements = new ArrayList<>();
 
         for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = fmuNameToLexIdentifier.get((entry.getKey()));
+
+            // If FMU already transferred skip this iteration
+            if (fmuTransfers.contains(fmuLexName)) {continue;}
+
             stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
             stmMaintainer.add(checkNullAndStop(fmuLexName));
             unloadFmuStatements.add(createUnloadStatement(fmuLexName).getKey());
         }
 
-        // Create Instantiate Statements
+        // Create Instantiate Statements for instances not transferred
         List<PStm> freeInstanceStatements = new ArrayList<>();
         List<PStm> terminateStatements = new ArrayList<>();
 
@@ -259,6 +298,9 @@ public class MaBLTemplateGenerator {
             String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
             // Get instanceName
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+
+            // If instance already transferred skip this iteration
+            if (instanceTransfers.contains(instanceLexName)) {return;}
 
             // Instance shall be faultinjected
             if (entry.getValue().getFaultInject().isPresent()) {
@@ -359,6 +401,7 @@ public class MaBLTemplateGenerator {
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
+        imports.add(newAIdentifier((MODEL_TRANSITION_MODULE_NAME)));
 
         //        ASimulationSpecificationCompilationUnit unit =
         //                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));

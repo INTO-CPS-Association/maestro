@@ -85,8 +85,9 @@ public class PortFmi2Api implements Fmi2Builder.Port {
                         receiverPort);
             }
 
+            // HEJ: TBD - This check fails with "already linked" in expansion since both rbmq fmus connect to single actuation
             if (receiverPort.getSourcePort() != null) {
-                throw new PortLinkException("Cannot port already linked please break link first", receiver);
+//                throw new PortLinkException("Cannot port already linked please break link first", receiver);
             }
             receiverPort.sourcePort = this;
             if (!this.targetPorts.contains(receiverPort)) {

@@ -86,6 +86,8 @@ public class ImportCmd implements Callable<Integer> {
         environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
         environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
         environmentConfiguration.logVariables = simulationConfiguration.getLogVariables();
+        environmentConfiguration.modelTransfers = simulationConfiguration.getModelTransfers();
+        environmentConfiguration.modelSwaps = simulationConfiguration.getModelSwaps();
 
         builder.setFrameworkConfig(Framework.FMI2, environmentConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
                 .setFramework(Framework.FMI2).setVisible(simulationConfiguration.isVisible()).setLoggingOn(simulationConfiguration.isLoggingOn())

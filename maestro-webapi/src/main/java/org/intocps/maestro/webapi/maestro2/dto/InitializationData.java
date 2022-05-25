@@ -34,10 +34,12 @@ public class InitializationData extends MultiModel {
             @JsonProperty("livestream") Map<String, List<String>> livestream, @JsonProperty("hasExternalSignals") boolean hasExternalSignals,
             @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
             @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
-            @JsonProperty("convergenceAttempts") int convergenceAttempts, @JsonProperty("externalSpecs") List<File> externalSpecs) {
+            @JsonProperty("convergenceAttempts") int convergenceAttempts, @JsonProperty("externalSpecs") List<File> externalSpecs,
+            @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
+            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels,
-                faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts);
+                faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts, modelTransfers, modelSwaps);
         this.livestream = livestream;
         this.hasExternalSignals = hasExternalSignals;
         this.externalSpecs = externalSpecs;

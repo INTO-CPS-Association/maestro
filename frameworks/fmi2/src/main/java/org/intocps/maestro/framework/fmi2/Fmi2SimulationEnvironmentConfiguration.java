@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.framework.core.EnvironmentException;
 
 import java.io.File;
@@ -29,6 +30,8 @@ public class Fmi2SimulationEnvironmentConfiguration {
     public Map<String, List<String>> variablesToLog;
     public String faultInjectConfigurationPath;
     public Map<String, String> faultInjectInstances;
+    public Map<String, String> modelTransfers;
+    public Map<String, MultiModel.ModelSwap> modelSwaps;
 
     public static Fmi2SimulationEnvironmentConfiguration createFromJsonString(String jsonData) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
@@ -79,6 +82,17 @@ public class Fmi2SimulationEnvironmentConfiguration {
     }
 
     public Map<String, List<String>> getConnections() {
+        return connections;
+    }
+
+    public Map<String, List<String>> getModelSwapConnections() {
+        Map<String, List<String>> connections = new HashMap<>();
+        for (Map.Entry<String, MultiModel.ModelSwap> entry : modelSwaps.entrySet()) {
+            MultiModel.ModelSwap swap = entry.getValue();
+            if (swap.swapConnections != null) {
+                connections.putAll(swap.swapConnections);
+            }
+        }
         return connections;
     }
 

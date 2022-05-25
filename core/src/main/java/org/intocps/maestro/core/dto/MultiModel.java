@@ -48,6 +48,25 @@ public class MultiModel {
     @JsonProperty("convergenceAttempts")
     private final int convergenceAttempts;
 
+    @JsonProperty("modelTransfers")
+    public Map<String, String> modelTransfers;
+
+    public static class ModelSwap {
+        @JsonProperty("swapInstance")
+        public String swapInstance;
+        @JsonProperty("stepCondition")
+        public String stepCondition;
+        @JsonProperty("swapCondition")
+        public String swapCondition;
+        @JsonProperty("swapConnections")
+        public Map<String, List<String>> swapConnections;
+
+        public ModelSwap() {}
+    }
+    @JsonProperty("modelSwaps")
+    public Map<String, ModelSwap> modelSwaps;
+
+
     @JsonCreator
     public MultiModel(@JsonProperty("fmus") Map<String, String> fmus, @JsonProperty("connections") Map<String, List<String>> connections,
             @JsonProperty("parameters") Map<String, Object> parameters, @JsonProperty("logVariables") Map<String, List<String>> logVariables,
@@ -58,8 +77,11 @@ public class MultiModel {
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters,
             @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
-            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
-        this.fmus = fmus;
+            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
+            @JsonProperty("convergenceAttempts") int convergenceAttempts,
+            @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
+            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
+            this.fmus = fmus;
         this.connections = connections;
         this.parameters = parameters;
         this.logVariables = logVariables;
@@ -77,6 +99,8 @@ public class MultiModel {
         this.faultInjectConfigurationPath = faultInjectConfigurationPath;
         this.faultInjectInstances = faultInjectInstances;
         this.convergenceAttempts = convergenceAttempts;
+        this.modelTransfers = modelTransfers;
+        this.modelSwaps = modelSwaps;
     }
 
     public int getConvergenceAttempts() { return convergenceAttempts; }
