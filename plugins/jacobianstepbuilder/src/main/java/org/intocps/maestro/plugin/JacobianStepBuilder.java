@@ -91,7 +91,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         } else if (declaredFunction.getName().toString().equals("fixedStepSizeTransfer")) {
             algorithm = StepAlgorithm.FIXEDSTEP;
             selectedFun = fixedStepFunc;
-            imports.add("ModelExchange");
+            imports.add("ModelTransition");
             logger.debug("Activated model transfer");
         } else {
             algorithm = StepAlgorithm.FIXEDSTEP;
