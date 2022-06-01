@@ -392,6 +392,8 @@ public class MaBLTemplateGenerator {
             finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
             //            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
+        finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(MODEL_TRANSITION_MODULE_VARIABLE_NAME).getKey()));
+
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
                 Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),

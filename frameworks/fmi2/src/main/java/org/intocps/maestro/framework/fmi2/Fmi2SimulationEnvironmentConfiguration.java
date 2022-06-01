@@ -86,14 +86,17 @@ public class Fmi2SimulationEnvironmentConfiguration {
     }
 
     public Map<String, List<String>> getModelSwapConnections() {
-        Map<String, List<String>> connections = new HashMap<>();
-        for (Map.Entry<String, MultiModel.ModelSwap> entry : modelSwaps.entrySet()) {
-            MultiModel.ModelSwap swap = entry.getValue();
-            if (swap.swapConnections != null) {
-                connections.putAll(swap.swapConnections);
+        if (modelSwaps != null) {
+            Map<String, List<String>> connections = new HashMap<>();
+            for (Map.Entry<String, MultiModel.ModelSwap> entry : modelSwaps.entrySet()) {
+                MultiModel.ModelSwap swap = entry.getValue();
+                if (swap.swapConnections != null) {
+                    connections.putAll(swap.swapConnections);
+                }
             }
+            return connections;
         }
-        return connections;
+        return null;
     }
 
     @JsonIgnore

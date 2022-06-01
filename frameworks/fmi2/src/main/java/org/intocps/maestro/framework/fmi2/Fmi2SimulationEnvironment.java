@@ -150,10 +150,14 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
         // Build map from fmuKey to ModelDescription
         this.fmuToUri = fmuToURI;
-//        List<ModelConnection> connections = buildConnections(msg.getConnections());
-        List<ModelConnection> connections = Stream.concat(buildConnections(msg.getConnections()).stream(),
-                        buildConnections(msg.getModelSwapConnections()).stream())
-                .collect(Collectors.toList());
+        List<ModelConnection> connections;
+        Map<String, List<String>> swapConnections = msg.getModelSwapConnections();
+        if (swapConnections != null) {
+            connections = Stream.concat(buildConnections(msg.getConnections()).stream(), buildConnections(swapConnections).stream())
+                    .collect(Collectors.toList());
+        } else {
+            connections = buildConnections(msg.getConnections());
+        }
         HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
