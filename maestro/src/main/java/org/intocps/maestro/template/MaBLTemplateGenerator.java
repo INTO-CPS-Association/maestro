@@ -49,6 +49,7 @@ public class MaBLTemplateGenerator {
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
+    public static final String COMPONENTS_TRANSFER_ARRAY_NAME = "componentsTransfer";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String STATUS = IMaestroPlugin.FMI_STATUS_VARIABLE_NAME;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
@@ -344,6 +345,7 @@ public class MaBLTemplateGenerator {
         }
         // Components Array
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToComponentsArray));
+        stmMaintainer.add(createComponentsArray(COMPONENTS_TRANSFER_ARRAY_NAME, instanceTransfers));
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
         if (templateConfiguration.getStepAlgorithmConfig() == null) {
@@ -365,7 +367,7 @@ public class MaBLTemplateGenerator {
                 stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
             }
 
-            stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
         }
 
         // Add the algorithm expand stm
@@ -561,11 +563,13 @@ public class MaBLTemplateGenerator {
         return createLoadStatement(moduleName, null);
     }
 
-    public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
+    public static PStm createExpandInitialize(String componentsArrayLexName, String componentsTransferArrayLexName, String startTimeLexName,
+            String endTimeLexName) {
         return MableAstFactory.newExpressionStm(MableAstFactory
                 .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
-                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName),
+                                aIdentifierExpFromString(componentsTransferArrayLexName), aIdentifierExpFromString(startTimeLexName),
                                 aIdentifierExpFromString(endTimeLexName))));
     }
 

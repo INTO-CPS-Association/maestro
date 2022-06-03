@@ -36,16 +36,24 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 
 @SimulationFramework(framework = Framework.FMI2)
 class Initializer : BasicMaestroExpansionPlugin {
     val f1 = MableAstFactory.newAFunctionDeclaration(
         LexIdentifier("initialize", null),
         listOf(
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
+                MableAstFactory.newAIdentifier("component")
+            ),
             MableAstFactory.newAFormalParameter(
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
                 MableAstFactory.newAIdentifier("component")
@@ -133,14 +141,21 @@ class Initializer : BasicMaestroExpansionPlugin {
 
 
             // Convert raw MaBL to API
-            val externalStartTime = formalArguments[1] as DoubleVariableFmi2Api
-            val externalEndTime = formalArguments[2] as DoubleVariableFmi2Api
+            val externalStartTime = formalArguments[2] as DoubleVariableFmi2Api
+            val externalEndTime = formalArguments[3] as DoubleVariableFmi2Api
             val endTimeVar = dynamicScope.store("fixed_end_time", 0.0) as DoubleVariableFmi2Api
             endTimeVar.setValue(externalEndTime)
 
             // use LinkedHashMap to preserve added order
-            val fmuInstances: Map<String, ComponentVariableFmi2Api> =
+            val fmuInstances: MutableMap<String, ComponentVariableFmi2Api> =
                 ((formalArguments[0] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
+                    .collect(Collectors.toMap(
+                        { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
+                        { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
+                    ) { LinkedHashMap() })
+
+            val fmuInstancesTransfer: MutableMap<String, ComponentVariableFmi2Api> =
+                ((formalArguments[1] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
                     .collect(Collectors.toMap(
                         { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
                         { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
@@ -150,6 +165,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 config,
                 dynamicScope,
                 fmuInstances,
+                fmuInstancesTransfer,
                 externalStartTime,
                 externalEndTime,
                 env,
@@ -173,7 +189,8 @@ class Initializer : BasicMaestroExpansionPlugin {
     private fun expansionLogic(
         config: IPluginConfiguration?,
         dynamicScope: DynamicActiveBuilderScope,
-        fmuInstances: Map<String, ComponentVariableFmi2Api>,
+        fmuInstances: MutableMap<String, ComponentVariableFmi2Api>,
+        fmuInstancesTransfer: MutableMap<String, ComponentVariableFmi2Api>,
         externalStartTime: DoubleVariableFmi2Api,
         externalEndTime: DoubleVariableFmi2Api,
         env: Fmi2SimulationEnvironment,
@@ -191,6 +208,8 @@ class Initializer : BasicMaestroExpansionPlugin {
         relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
         maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
 
+        fmuInstances.keys.removeAll(fmuInstancesTransfer.keys)
+
         logger.debug("Setup experiment for all components")
         fmuInstances.values.forEach { i ->
             i.setupExperiment(
@@ -201,8 +220,10 @@ class Initializer : BasicMaestroExpansionPlugin {
         };
         val connections = createConnections(env, fmuInstances)
 
+        val filterTargets = createTargetFilter(fmuInstancesTransfer, connections)
+
         //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-        val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
+        val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections, filterTargets)
 
         //Verification against prolog should only be done if it turned on and there is no loops
         if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
@@ -256,8 +277,8 @@ class Initializer : BasicMaestroExpansionPlugin {
         logger.debug("Unfolding: {}", declaredFunction.toString())
         val env = envIn as Fmi2SimulationEnvironment
         verifyArguments(formalArguments, env)
-        val startTime = formalArguments[1].clone()
-        val endTime = formalArguments[2].clone()
+        val startTime = formalArguments[2].clone()
+        val endTime = formalArguments[3].clone()
 
         return try {
             val setting = MablApiBuilder.MablSettings()
@@ -277,11 +298,13 @@ class Initializer : BasicMaestroExpansionPlugin {
 
             // Import the external components into Fmi2API
             val fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env)
+            val fmuInstancesTransfer = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[1], env)
 
             expansionLogic(
                 config,
                 builder.dynamicScope,
                 fmuInstances,
+                fmuInstancesTransfer,
                 externalStartTime,
                 externalEndTime,
                 env,
@@ -541,6 +564,20 @@ class Initializer : BasicMaestroExpansionPlugin {
             }.toSet()
     }
 
+    private fun createTargetFilter(
+        fmuInstancesTransfer: Map<String, ComponentVariableFmi2Api>,
+        connections: Set<Fmi2SimulationEnvironment.Relation>
+    ): Set<LexIdentifier> {
+        val filter = mutableListOf<LexIdentifier>()
+        connections.forEach{ c ->
+            for (t in c.targets) {
+                if (fmuInstancesTransfer.containsKey(t.key.text)) {
+                    filter.add(t.key)
+                }
+            }
+        }
+        return filter.toSet()
+    }
 
     private fun setComponentsVariables(
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
