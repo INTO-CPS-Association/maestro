@@ -100,9 +100,9 @@ public class MaBLTemplateGenerator {
         return statements;
     }
 
-    public static PStm createFMUTransfer(String fmuLexName) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
-                call(MODEL_TRANSITION_MODULE_VARIABLE_NAME, "getValue", newAStringLiteralExp(fmuLexName)));
+    public static PStm createTransferGetValue(String lexName, String value) {
+        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(lexName)),
+                call(MODEL_TRANSITION_MODULE_VARIABLE_NAME, "getValue", newAStringLiteralExp(value)));
     }
 
 
@@ -265,12 +265,12 @@ public class MaBLTemplateGenerator {
         for (Map.Entry<String, String> entry: unitRelationShip.getModelTransfers()) {
             ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
             String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
-            stmMaintainer.add(createFMUTransfer(fmuLexName));
+            stmMaintainer.add(createTransferGetValue(fmuLexName, fmuLexName));
             stmMaintainer.add(checkNullAndStop(fmuLexName));
             fmuTransfers.add(fmuLexName);
 
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
-            stmMaintainer.add(createFMUTransfer(instanceLexName));
+            stmMaintainer.add(createTransferGetValue(instanceLexName, instanceLexName));
             stmMaintainer.add(checkNullAndStop(instanceLexName));
             instanceTransfers.add(instanceLexName);
         }
@@ -359,6 +359,9 @@ public class MaBLTemplateGenerator {
 
         // add variable statements for start time and end time.
         stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
+        if (!unitRelationShip.getModelTransfers().isEmpty()) {
+            stmMaintainer.add(createTransferGetValue(START_TIME_NAME, "jac_current_communication_point"));
+        }
         stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
 
         // Add the initializer expand stm
