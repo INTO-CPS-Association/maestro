@@ -114,6 +114,10 @@ public class PortFmi2Api implements Fmi2Builder.Port {
                 this.getName();
     }
 
+    public String getMultiModelScalarVariableNameWithoutFmu() {
+        return this.aMablFmi2ComponentAPI.getEnvironmentName() + "." + this.getName();
+    }
+
     public List<PortFmi2Api> getTargetPorts() {
         return this.targetPorts;
     }

@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
@@ -15,6 +16,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ModelSwapInfo;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -23,6 +25,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.maestro.parser.template.MablSwapConditionParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -283,8 +286,43 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
                 // STEP ALL
                 fmuInstanceToCommunicationPoint.forEach((instance, communicationPoint) -> {
-                    Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
-                            instance.step(currentCommunicationTime, currentStepSize);
+                    PredicateFmi2Api stepPredicate = null;
+                    for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry: env.getModelSwaps()) {
+                        if(instance.getName().equals(modelSwapInfoEntry.getKey())) {
+                            String stepCondition = modelSwapInfoEntry.getValue().stepCondition;
+                            for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> entry : componentsToPortsWithValues.entrySet()) {
+                                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
+                                portsToValues = entry.getKey().get(portsToValues.keySet().toArray(PortFmi2Api[]::new));
+                                for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> fmi2ApiEntry : portsToValues.entrySet()) {
+                                    stepCondition = stepCondition.replaceAll(fmi2ApiEntry.getKey().getMultiModelScalarVariableNameWithoutFmu(),
+                                            fmi2ApiEntry.getKey().getSharedAsVariable().getName());
+                                }
+                            }
+                            PExp exp = MablSwapConditionParserUtil.parse(CharStreams.fromString(stepCondition));
+                            stepPredicate = new PredicateFmi2Api(exp);
+                            break;
+                        }
+                        if(instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
+                            String stepCondition = modelSwapInfoEntry.getValue().stepCondition;
+                            for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> entry : componentsToPortsWithValues.entrySet()) {
+                                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
+                                portsToValues = entry.getKey().get(portsToValues.keySet().toArray(PortFmi2Api[]::new));
+                                for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> fmi2ApiEntry : portsToValues.entrySet()) {
+                                    stepCondition = stepCondition.replaceAll(fmi2ApiEntry.getKey().getMultiModelScalarVariableNameWithoutFmu(),
+                                            fmi2ApiEntry.getKey().getSharedAsVariable().getName());
+                                }
+                            }
+                            PExp exp = MablSwapConditionParserUtil.parse(CharStreams.fromString(stepCondition));
+                            stepPredicate = new PredicateFmi2Api(exp).not();
+                            break;
+                        }
+                    }
+
+                    if (stepPredicate != null) {
+                        dynamicScope.enterIf(stepPredicate);
+                    }
+
+                    Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = instance.step(currentCommunicationTime, currentStepSize);
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
@@ -296,8 +334,11 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                 instance.getName(), currentCommunicationTime, currentStepSize,
                                 new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                         discard.getValue().getExp()));
-                        anyDiscards.setValue(
-                                new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
+                        anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
+                        dynamicScope.leave();
+                    }
+
+                    if (stepPredicate != null) {
                         dynamicScope.leave();
                     }
                 });

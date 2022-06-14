@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2;
 
 
+import org.antlr.v4.runtime.CharStreams;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.core.Framework;
@@ -8,6 +9,7 @@ import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.*;
+import org.intocps.maestro.parser.template.MablSwapConditionParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +36,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
     Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
     private String faultInjectionConfigurationPath;
     Map<String, String> instanceToModelTransfer = new HashMap<>();
-    Map<String, IModelSwapInfo> instanceToModelSwap = new HashMap<>();
+    Map<String, ModelSwapInfo> instanceToModelSwap = new HashMap<>();
 
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
         initialize(msg);
@@ -95,8 +97,11 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         return this.instanceToModelTransfer.entrySet();
     }
 
-    @Override
-    public Set<? extends Map.Entry<String, IModelSwapInfo>> getModelSwaps() {
+    public ModelSwapInfo getModelSwapInfoByInstanceName(String name) {
+        return this.instanceToModelSwap.get(name);
+    }
+
+    public Set<Map.Entry<String, ModelSwapInfo>> getModelSwaps() {
         return this.instanceToModelSwap.entrySet();
     }
 
@@ -182,8 +187,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 }
                 if (msg.modelSwaps != null && msg.modelSwaps.containsKey(instance.from.instance.instanceName)) {
                     MultiModel.ModelSwap modelSwap = msg.modelSwaps.get(instance.from.instance.instanceName);
-                    ModelSwapInfo modelSwapInfo = new ModelSwapInfo(modelSwap.swapInstance, modelSwap.swapCondition, modelSwap.stepCondition,
-                            modelSwap.swapConnections);
+                    ModelSwapInfo modelSwapInfo = new ModelSwapInfo(modelSwap.swapInstance, modelSwap.swapCondition,
+                            modelSwap.stepCondition, modelSwap.swapConnections);
                     instanceToModelSwap.put(instance.from.instance.instanceName, modelSwapInfo);
 
                 }
@@ -200,8 +205,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 }
                 if (msg.modelSwaps != null && msg.modelSwaps.containsKey(instance.to.instance.instanceName)) {
                     MultiModel.ModelSwap modelSwap = msg.modelSwaps.get(instance.to.instance.instanceName);
-                    ModelSwapInfo modelSwapInfo = new ModelSwapInfo(modelSwap.swapInstance, modelSwap.swapCondition, modelSwap.stepCondition,
-                            modelSwap.swapConnections);
+                    ModelSwapInfo modelSwapInfo = new ModelSwapInfo(modelSwap.swapInstance, modelSwap.swapCondition,
+                            modelSwap.stepCondition, modelSwap.swapConnections);
                     instanceToModelSwap.put(instance.to.instance.instanceName, modelSwapInfo);
                 }
                 if (msg.modelTransfers != null && msg.modelTransfers.containsKey(instance.to.instance.instanceName)) {
