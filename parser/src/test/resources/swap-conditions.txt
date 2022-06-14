@@ -1,0 +1,3 @@
+a>b
+RbmqFmu.o == RbmqFmu2.o
+RbmqFmu.o == (2*RbmqFmu2.o-RbmqFmu2.o2+4)
