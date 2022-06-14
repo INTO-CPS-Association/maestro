@@ -1,15 +1,14 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
-import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -25,7 +24,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
-import org.intocps.maestro.parser.template.MablSwapConditionParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +63,6 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc, fixedStepTransferFunc).collect(Collectors.toSet());
     }
-
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
@@ -287,33 +284,17 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 // STEP ALL
                 fmuInstanceToCommunicationPoint.forEach((instance, communicationPoint) -> {
                     PredicateFmi2Api stepPredicate = null;
-                    for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry: env.getModelSwaps()) {
-                        if(instance.getName().equals(modelSwapInfoEntry.getKey())) {
-                            String stepCondition = modelSwapInfoEntry.getValue().stepCondition;
-                            for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> entry : componentsToPortsWithValues.entrySet()) {
-                                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
-                                portsToValues = entry.getKey().get(portsToValues.keySet().toArray(PortFmi2Api[]::new));
-                                for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> fmi2ApiEntry : portsToValues.entrySet()) {
-                                    stepCondition = stepCondition.replaceAll(fmi2ApiEntry.getKey().getMultiModelScalarVariableNameWithoutFmu(),
-                                            fmi2ApiEntry.getKey().getSharedAsVariable().getName());
-                                }
-                            }
-                            PExp exp = MablSwapConditionParserUtil.parse(CharStreams.fromString(stepCondition));
-                            stepPredicate = new PredicateFmi2Api(exp);
-                            break;
-                        }
-                        if(instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
-                            String stepCondition = modelSwapInfoEntry.getValue().stepCondition;
-                            for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> entry : componentsToPortsWithValues.entrySet()) {
-                                Map<PortFmi2Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
-                                portsToValues = entry.getKey().get(portsToValues.keySet().toArray(PortFmi2Api[]::new));
-                                for (Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> fmi2ApiEntry : portsToValues.entrySet()) {
-                                    stepCondition = stepCondition.replaceAll(fmi2ApiEntry.getKey().getMultiModelScalarVariableNameWithoutFmu(),
-                                            fmi2ApiEntry.getKey().getSharedAsVariable().getName());
-                                }
-                            }
-                            PExp exp = MablSwapConditionParserUtil.parse(CharStreams.fromString(stepCondition));
-                            stepPredicate = new PredicateFmi2Api(exp).not();
+                    for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry : env.getModelSwaps()) {
+                        if (instance.getName().equals(modelSwapInfoEntry.getKey()) ||
+                                instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
+
+                            Map<String, PExp> replaceRule = componentsToPortsWithValues.entrySet().stream().flatMap(
+                                            c -> c.getValue().entrySet().stream().map(p -> Map.entry(p.getKey().getMultiModelScalarVariableNameWithoutFmu(),
+                                                    p.getKey().getSharedAsVariable().getReferenceExp())))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                            //fixme handle cases where we cannot replace all field expressions
+                            stepPredicate =
+                                    new PredicateFmi2Api(IdentifierReplacer.replaceFields(modelSwapInfoEntry.getValue().stepCondition, replaceRule));
                             break;
                         }
                     }
@@ -322,7 +303,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         dynamicScope.enterIf(stepPredicate);
                     }
 
-                    Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard = instance.step(currentCommunicationTime, currentStepSize);
+                    Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
+                            instance.step(currentCommunicationTime, currentStepSize);
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
@@ -334,7 +316,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                 instance.getName(), currentCommunicationTime, currentStepSize,
                                 new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                         discard.getValue().getExp()));
-                        anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
+                        anyDiscards.setValue(
+                                new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
                         dynamicScope.leave();
                     }
 
@@ -509,7 +492,6 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         return new EmptyRuntimeConfig<>();
     }
 
-
     @Override
     public ConfigOption getConfigRequirement() {
         return ConfigOption.Optional;
@@ -539,6 +521,73 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.1.1";
+    }
+
+    static class IdentifierReplacer {
+        public static PExp replaceIdentifier(PExp tree, String oldIdentifier, String newIdentifier) {
+            return replaceIdentifier(tree, new HashMap<>() {
+                {
+                    put(oldIdentifier, newIdentifier);
+                }
+            });
+        }
+
+        static public PExp replaceIdentifier(PExp tree, Map<String, String> old2New) {
+            try {
+                tree.apply(new IdentifierReplace(old2New));
+            } catch (AnalysisException e) {
+                throw new RuntimeException(e);
+            }
+            return tree;
+        }
+
+        static public PExp replaceFields(PExp tree, Map<String, PExp> old2New) {
+            try {
+                tree.apply(new FieldExpReplace(old2New));
+            } catch (AnalysisException e) {
+                throw new RuntimeException(e);
+            }
+            return tree;
+        }
+
+        static class IdentifierReplace extends DepthFirstAnalysisAdaptor {
+            final Map<String, String> old2New;
+
+            public IdentifierReplace(Map<String, String> old2New) {
+                this.old2New = old2New;
+            }
+
+            @Override
+            public void caseAIdentifierExp(AIdentifierExp node) throws AnalysisException {
+                for (Map.Entry<String, String> replacing : old2New.entrySet()) {
+                    if (node.getName().getText().equals(replacing.getKey())) {
+                        node.parent().replaceChild(node, new AIdentifierExp(new LexIdentifier(replacing.getValue(), null)));
+                    }
+                }
+            }
+        }
+
+        static class FieldExpReplace extends DepthFirstAnalysisAdaptor {
+            final Map<String, PExp> old2New;
+
+            public FieldExpReplace(Map<String, PExp> old2New) {
+                this.old2New = old2New;
+            }
+
+            @Override
+            public void caseAFieldExp(AFieldExp node) throws AnalysisException {
+                for (Map.Entry<String, PExp> replacing : old2New.entrySet()) {
+                    String[] parts = replacing.getKey().split("\\.");
+                    if (node.getRoot() instanceof AIdentifierExp && ((AIdentifierExp) node.getRoot()).getName().getText().equals(parts[0]) &&
+                            node.getField().getText().equals(parts[1])) {
+                        node.parent().replaceChild(node, replacing.getValue().clone());
+                    }
+                }
+            }
+
+
+        }
+
     }
 }
 
