@@ -321,7 +321,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (function instanceof FunctionValue) {
             try {
                 return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
-            } catch (Exception e) {
+            } catch (InterpreterTransitionException te) {
+                throw te;
+            }
+            catch (Exception e) {
                 throw new InterpreterException("Unable to evaluate node: " + node, e);
             }
         }
