@@ -295,6 +295,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             //fixme handle cases where we cannot replace all field expressions
                             stepPredicate =
                                     new PredicateFmi2Api(IdentifierReplacer.replaceFields(modelSwapInfoEntry.getValue().stepCondition, replaceRule));
+
+                            if (instance.getName().equals(modelSwapInfoEntry.getKey())) {
+                                stepPredicate = stepPredicate.not();
+                            }
                             break;
                         }
                     }
