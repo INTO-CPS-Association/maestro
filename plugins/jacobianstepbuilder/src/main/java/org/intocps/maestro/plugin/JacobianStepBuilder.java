@@ -1,5 +1,6 @@
 package org.intocps.maestro.plugin;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
@@ -167,7 +168,9 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
                         .collect(Collectors.toSet()));
 
-                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
+//                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
+                // fixme: only add swap instances
+                componentsToPortsWithValues.put(instance, instance.get());
             });
 
             // Share
@@ -259,10 +262,102 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             convergenceReached.toPredicate().not().and(stabilisation_loop.toMath().greaterThan(IntExpressionValue.of(0))));
                 }
 
+                Map<String, PExp> replaceRule = componentsToPortsWithValues.entrySet().stream().flatMap(
+                                c -> c.getValue().entrySet().stream().map(p -> Map.entry(p.getKey().getMultiModelScalarVariableNameWithoutFmu(),
+                                        p.getKey().getSharedAsVariable().getReferenceExp())))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
                 // SET ALL LINKED VARIABLES
                 // This has to be carried out regardless of stabilisation or not.
                 fmuInstances.values().forEach(instance -> {
-                    if (instance.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
+                    //  HE: fixme, remove this comment block - only for devel
+                    //  if instance is source in swap and has existing source ports
+                    //      enterif(swapCond.not)
+                    //      inst.setLinked() // all ports
+                    //  else if instance is target in swap and has swap source ports
+                    //      create links from swap source ports to ports
+                    //      enterif(swapCond)
+                    //      inst.setLinked() // all ports
+                    //  else if instance is connected in swap relation
+                    //      for each port of instance
+                    //              if port is target in swap relation
+                    //                  if port has existing source port
+                    //                      enterIf(swapCond.not)
+                    //                      instance.setLinked(port)
+                    //                      p.breakLink()
+                    //                  create link from swap source port to port
+                    //                  enterIf(swapCond)
+                    //                  instance.setLinked(p)
+                    //              else
+                    //                  instance.setLinked(p)
+                    //  else if instance has source ports
+                    //      inst.setLinked()
+
+                    Set<Fmi2SimulationEnvironment.Relation> swapRelations = env.getModelSwapRelations();
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoSource =
+                            env.getModelSwaps().stream().filter(e -> e.getKey().equals(instance.getName())).findFirst();
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoTarget =
+                            env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(instance.getName())).findFirst();
+
+                    if (swapInfoSource.isPresent()) {
+                        if (instance.getPorts().stream().anyMatch(port -> port.getSourcePort() != null)) {
+                            PredicateFmi2Api swapPredicate =
+                                    new PredicateFmi2Api(IdentifierReplacer.replaceFields(swapInfoSource.get().getValue().swapCondition, replaceRule));
+                            dynamicScope.enterIf(swapPredicate.not());
+                            instance.setLinked();
+                            dynamicScope.leave();
+                        }
+                    } else if (swapInfoTarget.isPresent()) {
+                        instance.getPorts().stream().forEach(port -> {
+                            PortFmi2Api sourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
+                            if (sourcePort != null) {
+                                try {
+                                    sourcePort.linkTo(port);
+                                } catch (Fmi2Builder.Port.PortLinkException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+
+                        if (instance.getPorts().stream().anyMatch(port -> port.getSourcePort() != null)) {
+                            PredicateFmi2Api swapPredicate =
+                                    new PredicateFmi2Api(IdentifierReplacer.replaceFields(swapInfoTarget.get().getValue().swapCondition, replaceRule));
+                            dynamicScope.enterIf(swapPredicate);
+                            instance.setLinked();
+                            dynamicScope.leave();
+                        }
+                    } else if (instance.getPorts().stream().anyMatch(port -> getSwapSourcePort(port, swapRelations, fmuInstances) != null)) {
+                        instance.getPorts().stream().forEach(port -> {
+                            PortFmi2Api swapSourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
+
+                            if (swapSourcePort != null) {
+                                ModelSwapInfo swapInfo = getSwapSourceInfo(port, swapRelations, fmuInstances, env);
+                                PredicateFmi2Api swapPredicate =
+                                        new PredicateFmi2Api(IdentifierReplacer.replaceFields(swapInfo.swapCondition, replaceRule));
+
+                                if (port.getSourcePort() != null) {
+                                    dynamicScope.enterIf(swapPredicate.not());
+                                    instance.setLinked(port);
+                                    dynamicScope.leave();
+                                    port.breakLink();
+                                }
+
+                                try {
+                                    swapSourcePort.linkTo(port);
+                                } catch (Fmi2Builder.Port.PortLinkException e) {
+                                    e.printStackTrace();
+                                }
+
+                                dynamicScope.enterIf(swapPredicate);
+                                instance.setLinked(port);
+                                dynamicScope.leave();
+
+                            } else if (port.getSourcePort() != null) {
+                                instance.setLinked(port);
+                            }
+                        });
+                    }
+                    else if (instance.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
                         instance.setLinked();
                     }
                 });
@@ -288,10 +383,6 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         if (instance.getName().equals(modelSwapInfoEntry.getKey()) ||
                                 instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
 
-                            Map<String, PExp> replaceRule = componentsToPortsWithValues.entrySet().stream().flatMap(
-                                            c -> c.getValue().entrySet().stream().map(p -> Map.entry(p.getKey().getMultiModelScalarVariableNameWithoutFmu(),
-                                                    p.getKey().getSharedAsVariable().getReferenceExp())))
-                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                             //fixme handle cases where we cannot replace all field expressions
                             stepPredicate =
                                     new PredicateFmi2Api(IdentifierReplacer.replaceFields(modelSwapInfoEntry.getValue().stepCondition, replaceRule));
@@ -494,6 +585,37 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         }
 
         return new EmptyRuntimeConfig<>();
+    }
+
+    private PortFmi2Api getSwapSourcePort(PortFmi2Api port, Set<Fmi2SimulationEnvironment.Relation> swapRelations,
+            Map<String, ComponentVariableFmi2Api> fmuInstances) {
+        PortFmi2Api sourcePort = null;
+        Optional<Fmi2SimulationEnvironment.Relation> relation =
+                swapRelations.stream().filter(r -> r.getTargets().values().stream()
+                        .anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu()))).findFirst();
+        if (relation.isPresent()) {
+            String source = relation.get().getSource().scalarVariable.instance.getText();
+            sourcePort = fmuInstances.get(source).getPort(relation.get().getSource().scalarVariable.scalarVariable.getName());
+        }
+        return sourcePort;
+    }
+
+    private ModelSwapInfo getSwapSourceInfo(PortFmi2Api port, Set<Fmi2SimulationEnvironment.Relation> swapRelations,
+            Map<String, ComponentVariableFmi2Api> fmuInstances, Fmi2SimulationEnvironment env) {
+        ModelSwapInfo swapInfo = null;
+        Optional<Fmi2SimulationEnvironment.Relation> relation =
+                swapRelations.stream().filter(r -> r.getTargets().values().stream()
+                        .anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu()))).findFirst();
+        if (relation.isPresent()) {
+            String source = relation.get().getSource().scalarVariable.instance.getText();
+            Optional<Map.Entry<String, ModelSwapInfo>> infoEntry =
+                    env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(source)).findFirst();
+            if (infoEntry.isPresent()) {
+                swapInfo = infoEntry.get().getValue();
+            }
+        }
+
+        return swapInfo;
     }
 
     @Override

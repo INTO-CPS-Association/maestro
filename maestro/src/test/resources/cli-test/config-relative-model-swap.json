@@ -27,16 +27,16 @@
       "swapCondition": "(tank.level >1)",
       "swapConnections": {
         "{x3}.crtlInstance3.valve": [
-          "{x2}.wtInstance.valvecontrol"
+          "{x2}.tank.valvecontrol"
         ],
-        "{x2}.wtInstance.level": [
+        "{x2}.tank.level": [
           "{x3}.crtlInstance3.level"
         ]
       }
     }
   },
   "modelTransfers": {
-    "crtlInstance": "crtlInstance",
-    "wtInstance": "wtInstance"
+    "controller": "controller",
+    "tank": "tank"
   }
 }

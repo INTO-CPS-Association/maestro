@@ -13,9 +13,11 @@ import org.intocps.maestro.parser.template.MablSwapConditionParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
@@ -105,6 +107,16 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         return this.instanceToModelSwap.entrySet();
     }
 
+    public Set<Relation> getModelSwapRelations() {
+        Set<Relation> relations = new HashSet<>();
+        for (Map.Entry<String, ModelSwapInfo> entry : this.instanceToModelSwap.entrySet()) {
+            for (Set<Relation> relation : entry.getValue().swapRelations.values()) {
+                relations.addAll(relation);
+            }
+        }
+        return relations;
+    }
+
     public void setLexNameToInstanceNameMapping(String lexName, String instanceName) {
         this.instanceLexToInstanceName.put(lexName, instanceName);
     }
@@ -150,12 +162,12 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
     }
 
 
-    ModelSwapInfo convert(MultiModel.ModelSwap swap) {
+    ModelSwapInfo convert(MultiModel.ModelSwap swap) throws Exception {
         MultiModel.ModelSwap modelSwap = swap;
         return new ModelSwapInfo(modelSwap.swapInstance,
                 modelSwap.swapCondition == null ? null : MablSwapConditionParserUtil.parse(CharStreams.fromString(modelSwap.swapCondition)),
                 modelSwap.stepCondition == null ? null : MablSwapConditionParserUtil.parse(CharStreams.fromString(modelSwap.stepCondition)),
-                modelSwap.swapConnections);
+                modelSwap.swapConnections = swap.swapConnections);
     }
 
     private void initialize(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
@@ -164,14 +176,9 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
         // Build map from fmuKey to ModelDescription
         this.fmuToUri = fmuToURI;
-        List<ModelConnection> connections;
-        Map<String, List<String>> swapConnections = msg.getModelSwapConnections();
-        if (swapConnections != null) {
-            connections = Stream.concat(buildConnections(msg.getConnections()).stream(), buildConnections(swapConnections).stream())
-                    .collect(Collectors.toList());
-        } else {
-            connections = buildConnections(msg.getConnections());
-        }
+        List<ModelConnection> connections = buildConnections(msg.getConnections());
+        List<ModelConnection> swapConnections = buildConnections(msg.getModelSwapConnections());
+
         HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
@@ -185,7 +192,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
         // Build map from InstanceName to InstanceComponentInfo
         Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
-        for (ModelConnection instance : connections) {
+        for (ModelConnection instance : Stream.concat(connections.stream(), swapConnections.stream()).collect(Collectors.toList())) {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
             if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
@@ -217,19 +224,35 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, instanceComponentInfo);
             }
         }
-
-
         // Build relations
+        this.variableToRelations = buildRelations(msg, connections, instancesFromConnections);
+
+        instanceToModelSwap.forEach((key, value) -> {
+            try {
+                value.swapRelations = buildRelations(null, buildConnections(value.swapConnections), instancesFromConnections);
+                value.swapRelations.entrySet().forEach(e -> {
+                    e.getValue().removeIf(r -> r.origin.name().equals("Internal"));
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private Map<LexIdentifier, Set<Relation>> buildRelations(Fmi2SimulationEnvironmentConfiguration msg, List<ModelConnection> connections,
+            Set<ModelConnection.ModelInstance> instancesFromConnections) throws XPathExpressionException, InvocationTargetException, IllegalAccessException, EnvironmentException {
+        Map<LexIdentifier, Set<Relation>> idToRelations = new HashMap<>();
         for (ModelConnection.ModelInstance instance : instancesFromConnections) {
             LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
-            Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
+//            Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
+            Set<Relation> instanceRelations = idToRelations.computeIfAbsent(instanceLexIdentifier, key->new HashSet<>());
 
             List<Fmi2ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
                             .filter(x -> x.causality == Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
 
             // Add the instance to the globalVariablesToLogForInstance map.
-            ArrayList<org.intocps.maestro.framework.fmi2.RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
+            ArrayList<RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
             this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
             for (Fmi2ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
@@ -299,10 +322,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
             // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
             HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
-            if (msg.logVariables != null) {
+            if (msg != null && msg.logVariables != null) {
                 globalLogVariablesMaps.putAll(msg.logVariables);
             }
-            if (msg.livestream != null) {
+            if (msg != null && msg.livestream != null) {
                 msg.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
                     Set<String> set = new TreeSet<>(v1);
                     set.addAll(v2);
@@ -311,20 +334,20 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
             }
 
 
-            List<org.intocps.maestro.framework.fmi2.RelationVariable> variablesToLogForInstance = new ArrayList<>();
+            List<RelationVariable> variablesToLogForInstance = new ArrayList<>();
             String logVariablesKey = instance.key + "." + instance.instanceName;
             if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
                 for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
-                    variablesToLogForInstance.add(new org.intocps.maestro.framework.fmi2.RelationVariable(
+                    variablesToLogForInstance.add(new RelationVariable(
                             this.fmuKeyToModelDescription.get(instance.key).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst()
                                     .get(), instanceLexIdentifier));
 
 
                 }
                 if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
-                    List<org.intocps.maestro.framework.fmi2.RelationVariable> existingRVs =
+                    List<RelationVariable> existingRVs =
                             this.globalVariablesToLogForInstance.get(instance.instanceName);
-                    for (org.intocps.maestro.framework.fmi2.RelationVariable rv : variablesToLogForInstance) {
+                    for (RelationVariable rv : variablesToLogForInstance) {
                         if (existingRVs.contains(rv) == false) {
                             existingRVs.add(rv);
                         }
@@ -335,6 +358,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
             }
         }
+        return idToRelations;
     }
 
     public Map<String, List<String>> getLogLevels() {
