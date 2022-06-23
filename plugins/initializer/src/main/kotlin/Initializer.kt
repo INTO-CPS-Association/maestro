@@ -41,14 +41,11 @@ import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 
 @SimulationFramework(framework = Framework.FMI2)
 class Initializer : BasicMaestroExpansionPlugin {
-    val f1 = MableAstFactory.newAFunctionDeclaration(
-        LexIdentifier("initialize", null),
+    val f1_transfer = MableAstFactory.newAFunctionDeclaration(
+        LexIdentifier("initialize_transfer", null),
         listOf(
             MableAstFactory.newAFormalParameter(
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
@@ -58,6 +55,26 @@ class Initializer : BasicMaestroExpansionPlugin {
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
                 MableAstFactory.newAIdentifier("component")
             ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newRealType(),
+                MableAstFactory.newAIdentifier("startTime")
+            ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newRealType(),
+                MableAstFactory.newAIdentifier("endTime")
+            )
+        ),
+        MableAstFactory.newAVoidType()
+    )
+
+    val f1 = MableAstFactory.newAFunctionDeclaration(
+        LexIdentifier("initialize", null),
+        listOf(
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newAArrayType(MableAstFactory.newANameType("FMI2Component")),
+                MableAstFactory.newAIdentifier("component")
+            ),
+
             MableAstFactory.newAFormalParameter(
                 MableAstFactory.newRealType(),
                 MableAstFactory.newAIdentifier("startTime")
@@ -102,7 +119,11 @@ class Initializer : BasicMaestroExpansionPlugin {
     }
 
     val declaredUnfoldFunctions: Set<AFunctionDeclaration>
-        get() = setOf(f1)
+        get() = setOf(f1, f1_transfer)
+
+    fun getActiveDeclaration(declaredFunction: AFunctionDeclaration?): AFunctionDeclaration {
+        return if (declaredFunction == f1) f1 else f1_transfer
+    }
 
     override fun <R : Any?> expandWithRuntimeAddition(
         declaredFunction: AFunctionDeclaration?,
@@ -120,7 +141,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             throw ExpandException("Simulation environment must not be null")
         }
 
-        if (formalArguments == null || formalArguments.size != f1.getFormals().size) {
+        if (formalArguments == null || formalArguments.size != getActiveDeclaration(declaredFunction).getFormals().size) {
             throw ExpandException("Invalid args")
         }
 
@@ -139,10 +160,18 @@ class Initializer : BasicMaestroExpansionPlugin {
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.booleanBuilder
 
+            val fmuInstancesTransfer: Map<String, ComponentVariableFmi2Api> =
+                if (declaredFunction == f1) emptyMap() else ((formalArguments[1] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
+                    .collect(Collectors.toMap(
+                        { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
+                        { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
+                    ) { LinkedHashMap() });
+            val startTimeIndex = if (declaredFunction == f1) 1 else 2;
+            val endTimeIndex = if (declaredFunction == f1) 2 else 3;
 
             // Convert raw MaBL to API
-            val externalStartTime = formalArguments[2] as DoubleVariableFmi2Api
-            val externalEndTime = formalArguments[3] as DoubleVariableFmi2Api
+            val externalStartTime = formalArguments[startTimeIndex] as DoubleVariableFmi2Api
+            val externalEndTime = formalArguments[endTimeIndex] as DoubleVariableFmi2Api
             val endTimeVar = dynamicScope.store("fixed_end_time", 0.0) as DoubleVariableFmi2Api
             endTimeVar.setValue(externalEndTime)
 
@@ -154,12 +183,12 @@ class Initializer : BasicMaestroExpansionPlugin {
                         { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
                     ) { LinkedHashMap() })
 
-            val fmuInstancesTransfer: MutableMap<String, ComponentVariableFmi2Api> =
-                ((formalArguments[1] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
-                    .collect(Collectors.toMap(
-                        { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
-                        { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
-                    ) { LinkedHashMap() })
+//            val fmuInstancesTransfer: MutableMap<String, ComponentVariableFmi2Api> =
+//                ((formalArguments[1] as ArrayVariable<*, *>).items() as List<ComponentVariableFmi2Api>).stream()
+//                    .collect(Collectors.toMap(
+//                        { v: ComponentVariableFmi2Api -> v.name }, Function.identity(),
+//                        { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }
+//                    ) { LinkedHashMap() })
 
             expansionLogic(
                 config,
@@ -189,8 +218,8 @@ class Initializer : BasicMaestroExpansionPlugin {
     private fun expansionLogic(
         config: IPluginConfiguration?,
         dynamicScope: DynamicActiveBuilderScope,
-        fmuInstances: MutableMap<String, ComponentVariableFmi2Api>,
-        fmuInstancesTransfer: MutableMap<String, ComponentVariableFmi2Api>,
+        fmuInstancesIn: Map<String, ComponentVariableFmi2Api>,
+        fmuInstancesTransfer: Map<String, ComponentVariableFmi2Api>,
         externalStartTime: DoubleVariableFmi2Api,
         externalEndTime: DoubleVariableFmi2Api,
         env: Fmi2SimulationEnvironment,
@@ -208,7 +237,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
         maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
 
-        fmuInstances.keys.removeAll(fmuInstancesTransfer.keys)
+        val fmuInstances = fmuInstancesIn.filterKeys { !fmuInstancesTransfer.keys.contains(it) };
 
         logger.debug("Setup experiment for all components")
         fmuInstances.values.forEach { i ->
@@ -276,9 +305,14 @@ class Initializer : BasicMaestroExpansionPlugin {
     ): List<PStm> {
         logger.debug("Unfolding: {}", declaredFunction.toString())
         val env = envIn as Fmi2SimulationEnvironment
-        verifyArguments(formalArguments, env)
-        val startTime = formalArguments[2].clone()
-        val endTime = formalArguments[3].clone()
+        verifyArguments(declaredFunction, formalArguments, env)
+
+
+        val startTimeIndex = if (declaredFunction == f1) 1 else 2;
+        val endTimeIndex = if (declaredFunction == f1) 2 else 3;
+
+        val startTime = formalArguments[startTimeIndex].clone()
+        val endTime = formalArguments[endTimeIndex].clone()
 
         return try {
             val setting = MablApiBuilder.MablSettings()
@@ -298,7 +332,14 @@ class Initializer : BasicMaestroExpansionPlugin {
 
             // Import the external components into Fmi2API
             val fmuInstances = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env)
-            val fmuInstancesTransfer = FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[1], env)
+
+            val fmuInstancesTransfer: Map<String, ComponentVariableFmi2Api> =
+                if (declaredFunction == f1) emptyMap() else FromMaBLToMaBLAPI.getComponentVariablesFrom(
+                    builder,
+                    formalArguments[1],
+                    env
+                ).toMap()
+
 
             expansionLogic(
                 config,
@@ -569,7 +610,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         connections: Set<Fmi2SimulationEnvironment.Relation>
     ): Set<LexIdentifier> {
         val filter = mutableListOf<LexIdentifier>()
-        connections.forEach{ c ->
+        connections.forEach { c ->
             for (t in c.targets) {
                 if (fmuInstancesTransfer.containsKey(t.key.text)) {
                     filter.add(t.key)
@@ -594,9 +635,13 @@ class Initializer : BasicMaestroExpansionPlugin {
 
 
     @Throws(ExpandException::class)
-    private fun verifyArguments(formalArguments: List<PExp>?, env: ISimulationEnvironment?) {
+    private fun verifyArguments(
+        declaredFunction: AFunctionDeclaration,
+        formalArguments: List<PExp>?,
+        env: ISimulationEnvironment?
+    ) {
         //maybe some of these tests are not necessary - but they are in my unit test
-        if (formalArguments == null || formalArguments.size != f1.formals.size) {
+        if (formalArguments == null || formalArguments.size != getActiveDeclaration(declaredFunction).formals.size) {
             throw ExpandException("Invalid args")
         }
         if (env == null) {

@@ -60,7 +60,9 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
     public static List<ModelConnection> buildConnections(Map<String, List<String>> connections) throws Exception {
         List<ModelConnection> list = new Vector<>();
-
+        if (connections == null) {
+            return new ArrayList<>();
+        }
         for (Map.Entry<String, List<String>> entry : connections.entrySet()) {
             for (String input : entry.getValue()) {
                 list.add(new ModelConnection(ModelConnection.Variable.parse(entry.getKey()), ModelConnection.Variable.parse(input)));
@@ -244,8 +246,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         Map<LexIdentifier, Set<Relation>> idToRelations = new HashMap<>();
         for (ModelConnection.ModelInstance instance : instancesFromConnections) {
             LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
-//            Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
-            Set<Relation> instanceRelations = idToRelations.computeIfAbsent(instanceLexIdentifier, key->new HashSet<>());
+            //            Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
+            Set<Relation> instanceRelations = idToRelations.computeIfAbsent(instanceLexIdentifier, key -> new HashSet<>());
 
             List<Fmi2ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
                     instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
@@ -345,8 +347,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
                 }
                 if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
-                    List<RelationVariable> existingRVs =
-                            this.globalVariablesToLogForInstance.get(instance.instanceName);
+                    List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
                     for (RelationVariable rv : variablesToLogForInstance) {
                         if (existingRVs.contains(rv) == false) {
                             existingRVs.add(rv);

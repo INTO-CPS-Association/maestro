@@ -19,9 +19,15 @@ import java.util.stream.Collectors;
 class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final IExternalValueFactory loadFactory;
+    private final ITTransitionManager transitionManager;
 
     public Interpreter(IExternalValueFactory loadFactory) {
+        this(loadFactory, null);
+    }
+
+    public Interpreter(IExternalValueFactory loadFactory, ITTransitionManager transitionManager) {
         this.loadFactory = loadFactory;
+        this.transitionManager = transitionManager;
     }
 
     List<Value> evaluate(List<? extends PExp> list, Context ctxt) throws AnalysisException {
@@ -323,8 +329,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
                 return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
             } catch (InterpreterTransitionException te) {
                 throw te;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new InterpreterException("Unable to evaluate node: " + node, e);
             }
         }
@@ -353,6 +358,11 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             node.getBody().apply(this, question);
         } catch (ErrorException e) {
             logger.info("Error in simulation: " + e.getMessage());
+            logger.info("Continuing with finally");
+            node.getFinally().apply(this, question);
+            throw e;
+        } catch (StopException e) {
+            logger.info("Stop in simulation: " + e.getMessage());
             logger.info("Continuing with finally");
             node.getFinally().apply(this, question);
             throw e;
@@ -550,6 +560,14 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
+        if (transitionManager != null) {
+            if (transitionManager.canTransfer(node, question)) {
+                ITTransitionManager.ITTransitionInfo info = transitionManager.which();
+                transitionManager.transfer(question);
+                //if we get back here we need to break out of the current state and run the shutdown actions from finally
+                throw new StopException("Stopping previous simulation as a result of a model transfer: " + info.describe());
+            }
+        }
         return new VoidValue();
     }
 

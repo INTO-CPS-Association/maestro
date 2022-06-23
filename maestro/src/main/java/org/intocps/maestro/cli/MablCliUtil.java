@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 
 public class MablCliUtil {
     static final Predicate<File> mableFileFilter = f -> f.getName().toLowerCase().endsWith(".mabl");
+    protected final Mabl mabl;
     final IErrorReporter reporter = new ErrorReporter();
-    final Mabl mabl;
     private final File workingDirectory;
     public boolean verbose;
     public Map.Entry<Boolean, Map<INode, PType>> typeCheckResult;

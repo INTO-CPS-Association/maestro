@@ -40,6 +40,7 @@ public class MaBLTemplateGenerator {
     public static final String FMI2_MODULE_NAME = "FMI2";
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
+    public static final String INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME = "initialize_transfer";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
     public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSizeTransfer";
     public static final String VARIABLESTEP_FUNCTION_NAME = "variableStepSize";
@@ -62,8 +63,8 @@ public class MaBLTemplateGenerator {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static ALocalVariableStm createRealVariable(String lexName, Double initializerValue) {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(new LexIdentifier(lexName, null), MableAstFactory.newARealNumericPrimitiveType(),
+        return MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(new LexIdentifier(lexName, null), MableAstFactory.newARealNumericPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newARealLiteralExp(initializerValue))));
     }
 
@@ -116,6 +117,7 @@ public class MaBLTemplateGenerator {
         //                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
 
     }
+
     public static PStm createFMUUnload(String fmuLexName) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
@@ -160,19 +162,19 @@ public class MaBLTemplateGenerator {
 
         switch (algorithmConfig.getAlgorithmType()) {
             case FIXEDSTEP:
-                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
-                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                                MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
-                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                        newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             case VARIABLESTEP:
-                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory
-                        .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                                MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
-                                Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                        aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                        newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
                 break;
 
             default:
@@ -187,6 +189,8 @@ public class MaBLTemplateGenerator {
 
         // This variable determines whether an expansion should be wrapped in globalExecutionContinue or not.
         boolean wrapExpansionPluginInGlobalExecutionContinue = false;
+
+        boolean modelSwapActive = templateConfiguration.getFrameworkConfig().getValue().hasModelSwap();
 
         //TODO: mable builder
         ABasicBlockStm rootScope = newABlockStm();
@@ -222,13 +226,15 @@ public class MaBLTemplateGenerator {
             }
         }
 
-        // HEJ: Unconditionally load model transition
-        Map.Entry<PStm, List<PStm>> modelTransitionLoadStatement = createLoadStatement(MODEL_TRANSITION_MODULE_NAME,
-                Arrays.asList(newAStringLiteralExp("model_transition")));
-        if (modelTransitionLoadStatement.getKey() != null) {
-            rootScopeBody.add(modelTransitionLoadStatement.getKey());
-            if (modelTransitionLoadStatement.getValue() != null) {
-                tryBody.getBody().addAll(modelTransitionLoadStatement.getValue());
+        if (modelSwapActive) {
+            // HEJ: Unconditionally load model transition
+            Map.Entry<PStm, List<PStm>> modelTransitionLoadStatement =
+                    createLoadStatement(MODEL_TRANSITION_MODULE_NAME, Arrays.asList(newAStringLiteralExp("model_transition")));
+            if (modelTransitionLoadStatement.getKey() != null) {
+                rootScopeBody.add(modelTransitionLoadStatement.getKey());
+                if (modelTransitionLoadStatement.getValue() != null) {
+                    tryBody.getBody().addAll(modelTransitionLoadStatement.getValue());
+                }
             }
         }
 
@@ -262,7 +268,7 @@ public class MaBLTemplateGenerator {
         Set<String> fmuTransfers = new HashSet<>();
         Set<String> instanceTransfers = new HashSet<>();
 
-        for (Map.Entry<String, String> entry: unitRelationShip.getModelTransfers()) {
+        for (Map.Entry<String, String> entry : unitRelationShip.getModelTransfers()) {
             ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
             String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
             stmMaintainer.add(createTransferGetValue(fmuLexName, fmuLexName));
@@ -282,7 +288,9 @@ public class MaBLTemplateGenerator {
             String fmuLexName = fmuNameToLexIdentifier.get((entry.getKey()));
 
             // If FMU already transferred skip this iteration
-            if (fmuTransfers.contains(fmuLexName)) {continue;}
+            if (fmuTransfers.contains(fmuLexName)) {
+                continue;
+            }
 
             stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
             stmMaintainer.add(checkNullAndStop(fmuLexName));
@@ -301,7 +309,9 @@ public class MaBLTemplateGenerator {
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
 
             // If instance already transferred skip this iteration
-            if (instanceTransfers.contains(instanceLexName)) {return;}
+            if (instanceTransfers.contains(instanceLexName)) {
+                return;
+            }
 
             // Instance shall be faultinjected
             if (entry.getValue().getFaultInject().isPresent()) {
@@ -345,7 +355,9 @@ public class MaBLTemplateGenerator {
         }
         // Components Array
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToComponentsArray));
-        stmMaintainer.add(createComponentsArray(COMPONENTS_TRANSFER_ARRAY_NAME, instanceTransfers));
+        if (modelSwapActive) {
+            stmMaintainer.add(createComponentsArray(COMPONENTS_TRANSFER_ARRAY_NAME, instanceTransfers));
+        }
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
         if (templateConfiguration.getStepAlgorithmConfig() == null) {
@@ -370,7 +382,11 @@ public class MaBLTemplateGenerator {
                 stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
             }
 
-            stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            if (modelSwapActive) {
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            } else {
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            }
         }
 
         // Add the algorithm expand stm
@@ -397,7 +413,9 @@ public class MaBLTemplateGenerator {
             finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
             //            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
-        finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(MODEL_TRANSITION_MODULE_VARIABLE_NAME).getKey()));
+        if (modelSwapActive) {
+            finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(MODEL_TRANSITION_MODULE_VARIABLE_NAME).getKey()));
+        }
 
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
@@ -435,8 +453,8 @@ public class MaBLTemplateGenerator {
         list.add(createStatusVariable_.apply("FMI_STATUS_ERROR", 3));
         list.add(createStatusVariable_.apply("FMI_STATUS_FATAL", 4));
         list.add(createStatusVariable_.apply("FMI_STATUS_PENDING", 5));
-        list.add(MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
+        list.add(MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newAIntLiteralExp(0)))));
         return list;
     }
@@ -491,12 +509,12 @@ public class MaBLTemplateGenerator {
             loglevelsArrayInitializer =
                     newAArrayInitializer(logLevels.stream().map(MableAstFactory::newAStringLiteralExp).collect(Collectors.toList()));
         }
-        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
+        ALocalVariableStm arrayContent = MableAstFactory.newALocalVariableStm(
+                MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(arrayName),
                         MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), logLevels.size(), loglevelsArrayInitializer));
 
-        AExpressionStm expandCall = MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_MODULE_NAME)),
+        AExpressionStm expandCall = MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(DEBUG_LOGGING_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(DEBUG_LOGGING_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifierExp(arrayName),
                                 MableAstFactory.newAUIntLiteralExp(Long.valueOf(logLevels.size())))));
@@ -506,22 +524,22 @@ public class MaBLTemplateGenerator {
     }
 
     private static PStm createGlobalExecutionContinue() {
-        return MableAstFactory.newALocalVariableStm(MableAstFactory
-                .newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE), MableAstFactory.newABoleanPrimitiveType(),
-                        MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
+        return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(GLOBAL_EXECUTION_CONTINUE),
+                MableAstFactory.newABoleanPrimitiveType(), MableAstFactory.newAExpInitializer(MableAstFactory.newABoolLiteralExp(true))));
     }
 
     private static PStm createFMUTerminateStatement(String instanceLexName, FaultInjectWithLexName faultInject) {
         if (faultInject != null) {
             instanceLexName = faultInject.lexName;
         }
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"), Arrays.asList()));
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"),
+                        Arrays.asList()));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
-        return newIf(newNotEqual(newAIdentifierExp(instanceLexName), newNullExp()), newABlockStm(MableAstFactory.newExpressionStm(MableAstFactory
-                        .newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
+        return newIf(newNotEqual(newAIdentifierExp(instanceLexName), newNullExp()), newABlockStm(MableAstFactory.newExpressionStm(
+                        MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
                                 Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName)))),
                 MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(instanceLexName), newNullExp())), null);
     }
@@ -568,11 +586,18 @@ public class MaBLTemplateGenerator {
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String componentsTransferArrayLexName, String startTimeLexName,
             String endTimeLexName) {
-        return MableAstFactory.newExpressionStm(MableAstFactory
-                .newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(componentsTransferArrayLexName),
+                                aIdentifierExpFromString(startTimeLexName), aIdentifierExpFromString(endTimeLexName))));
+    }
+
+    public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
-                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName),
-                                aIdentifierExpFromString(componentsTransferArrayLexName), aIdentifierExpFromString(startTimeLexName),
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
                                 aIdentifierExpFromString(endTimeLexName))));
     }
 

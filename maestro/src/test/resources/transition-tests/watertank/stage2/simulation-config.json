@@ -1,0 +1,17 @@
+{
+  "startTime": 0,
+  "endTime": 100,
+  "reportProgress": true,
+  "liveLogInterval": 0,
+  "logLevels": {
+    "{crtl}.crtlInstance": [
+      "logAll",
+      "logError",
+      "logFmiCall",
+      "Protocol",
+      "VdmErr",
+      "VdmOut"
+    ],
+    "{wt}.wtInstance": []
+  }
+}

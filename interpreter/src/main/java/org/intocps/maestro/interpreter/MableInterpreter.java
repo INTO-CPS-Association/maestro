@@ -11,11 +11,17 @@ import java.time.Instant;
 public class MableInterpreter {
 
     final static Logger logger = LoggerFactory.getLogger(MableInterpreter.class);
+    final ITTransitionManager transitionManager;
     private final DefaultExternalValueFactory loadFactory;
 
 
     public MableInterpreter(DefaultExternalValueFactory loadFactory) {
+        this(loadFactory, null);
+    }
+
+    public MableInterpreter(DefaultExternalValueFactory loadFactory, ITTransitionManager transitionManager) {
         this.loadFactory = loadFactory;
+        this.transitionManager = transitionManager;
     }
 
     public void execute(ARootDocument document) throws AnalysisException {
@@ -23,7 +29,7 @@ public class MableInterpreter {
 
         long startTime = System.nanoTime();
         Instant start = Instant.now();
-        document.apply(new Interpreter(this.loadFactory), new Context(null));
+        document.apply(new Interpreter(this.loadFactory, this.transitionManager), new Context(null));
         long stopTime = System.nanoTime();
         Instant end = Instant.now();
         System.out.println("Interpretation time: " + (stopTime - startTime) + " " + Duration.between(start, end));
