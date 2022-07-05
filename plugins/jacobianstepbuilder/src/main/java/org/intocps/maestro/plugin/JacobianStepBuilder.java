@@ -332,7 +332,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             dynamicScope.leave();
                         }
                     } else if (swapInfoTarget.isPresent()) {
-                        instance.getPorts().stream().forEach(port -> {
+                        instance.getPorts().forEach(port -> {
                             PortFmi2Api sourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
                             if (sourcePort != null) {
                                 try {
@@ -351,7 +351,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             dynamicScope.leave();
                         }
                     } else if (instance.getPorts().stream().anyMatch(port -> getSwapSourcePort(port, swapRelations, fmuInstances) != null)) {
-                        instance.getPorts().stream().forEach(port -> {
+                        instance.getPorts().forEach(port -> {
                             PortFmi2Api swapSourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
 
                             if (swapSourcePort != null) {

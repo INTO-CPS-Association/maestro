@@ -231,7 +231,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
         instanceToModelSwap.forEach((key, value) -> {
             try {
-                value.swapRelations = buildRelations(null, buildConnections(value.swapConnections), instancesFromConnections);
+                value.swapRelations = buildRelations(msg, buildConnections(value.swapConnections), instancesFromConnections);
                 value.swapRelations.entrySet().forEach(e -> {
                     e.getValue().removeIf(r -> r.origin.name().equals("Internal"));
                 });
@@ -254,7 +254,12 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                             .filter(x -> x.causality == Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
 
             // Add the instance to the globalVariablesToLogForInstance map.
-            ArrayList<RelationVariable> globalVariablesToLogForGivenInstance = new ArrayList<>();
+            List<RelationVariable> globalVariablesToLogForGivenInstance;
+            if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
+                globalVariablesToLogForGivenInstance = this.globalVariablesToLogForInstance.get(instance.instanceName);
+            } else {
+                globalVariablesToLogForGivenInstance = new ArrayList<>();
+            }
             this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
             for (Fmi2ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
