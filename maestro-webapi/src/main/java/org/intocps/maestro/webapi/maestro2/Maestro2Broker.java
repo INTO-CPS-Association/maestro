@@ -1,6 +1,7 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spencerwi.either.Either;
 import core.MasterModel;
 import core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,6 +9,7 @@ import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.cli.ImportCmd;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -15,7 +17,11 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
+import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
+import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.values.simulationcontrol.SimulationControlValue;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
@@ -36,6 +42,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,12 +51,14 @@ public class Maestro2Broker {
     final Mabl mabl;
     final File workingDirectory;
     final ErrorReporter reporter;
+    private final Supplier<Boolean> isStopRequsted;
     private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
             map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
                     .collect(Collectors.toList());
 
-    public Maestro2Broker(File workingDirectory, ErrorReporter reporter) {
+    public Maestro2Broker(File workingDirectory, ErrorReporter reporter, Supplier<Boolean> isStopRequsted) {
         this.workingDirectory = workingDirectory;
+        this.isStopRequsted = isStopRequsted;
         Mabl.MableSettings mableSettings = new Mabl.MableSettings();
         mableSettings.dumpIntermediateSpecs = false;
         mableSettings.inlineFrameworkConfig = true;
@@ -101,6 +110,9 @@ public class Maestro2Broker {
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
             File csvOutputFile) throws Exception {
+
+        //Initially resolve any FMUs to the local folder in case they are uploaded
+        ImportCmd.resolveFmuPaths(Collections.singletonList(workingDirectory), initializeRequest.getFmus());
 
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
                 new Fmi2SimulationEnvironmentConfiguration(initializeRequest.getConnections(), initializeRequest.getFmus());
@@ -159,39 +171,33 @@ public class Maestro2Broker {
         AtomicBoolean didLocateFaultInjectionFile = new AtomicBoolean(false);
         if (initializeRequest.getExternalSpecs() != null) {
             List<File> filesNotResolved = new ArrayList<>();
-            List<File> nonMablFiles =
-                    initializeRequest.getExternalSpecs().stream().filter(file -> {
-                        // While filtering also test that the file actually exists
-                        if(!file.exists()) {
-                            filesNotResolved.add(file);
-                        }
-                        if(file.getName().toLowerCase().endsWith("faultinject.mabl")) {
-                            didLocateFaultInjectionFile.set(true);
-                        }
-                        return !file.getName().toLowerCase(Locale.ROOT).endsWith(".mabl");
-                    }).collect(
-                            Collectors.toList());
+            List<File> nonMablFiles = initializeRequest.getExternalSpecs().stream().filter(file -> {
+                // While filtering also test that the file actually exists
+                if (!file.exists()) {
+                    filesNotResolved.add(file);
+                }
+                if (file.getName().toLowerCase().endsWith("faultinject.mabl")) {
+                    didLocateFaultInjectionFile.set(true);
+                }
+                return !file.getName().toLowerCase(Locale.ROOT).endsWith(".mabl");
+            }).collect(Collectors.toList());
             String errMsg = "";
-            if(filesNotResolved.size() > 0) {
-                errMsg = "Cannot resolve path to spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
-                        (prev, cur) -> prev + " " + cur);
+            if (filesNotResolved.size() > 0) {
+                errMsg = "Cannot resolve path to spec files: " + nonMablFiles.stream().map(File::getName).reduce("", (prev, cur) -> prev + " " + cur);
+            } else if (nonMablFiles.size() > 0) {
+                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName).reduce("", (prev, cur) -> prev + " " + cur) +
+                        ". Only mabl files should be " + "included as " + "external specs.";
             }
 
-            else if(nonMablFiles.size() > 0){
-                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName).reduce("",
-                        (prev, cur) -> prev + " " + cur) + ". Only mabl files should be " +
-                        "included as " +
-                        "external specs.";
-            }
-
-            if(!errMsg.equals("")) {
+            if (!errMsg.equals("")) {
                 throw new Exception(errMsg);
             }
 
             mabl.parse(initializeRequest.getExternalSpecs());
         }
         // If fault injection is configured then the faultinject.mabl file should be included as an external spec.
-        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") && !didLocateFaultInjectionFile.get()) {
+        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") &&
+                !didLocateFaultInjectionFile.get()) {
             throw new Exception("Remember to include FaultInject.mabl as an external spec");
         }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
@@ -247,6 +253,17 @@ public class Maestro2Broker {
         } else {
             factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter, config);
         }
+
+        // create and install the overrides' simulation control lifecycle handler that links this simulation to the current session
+        @IValueLifecycleHandler.ValueLifecycle(name = "SimulationControl")
+        class WebSimulationControlDefaultLifecycleHandler extends DefaultExternalValueFactory.SimulationControlDefaultLifecycleHandler {
+            @Override
+            public Either<Exception, Value> instantiate(List<Value> args) {
+                return Either.right(new SimulationControlValue(isStopRequsted));
+            }
+        }
+
+        factory.addLifecycleHandler(new WebSimulationControlDefaultLifecycleHandler());
         new MableInterpreter(factory).execute(mabl.getMainSimulationUnit());
     }
 
