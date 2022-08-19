@@ -507,6 +507,17 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
+    public void addTransferAs(String... names) {
+
+        List<AStringLiteralExp> strings = new ArrayList<>();
+        if (names != null) {
+            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(s)).collect(Collectors.toList());
+        }
+
+        add(new ATransferAsStm(strings));
+    }
+
+    @Override
     public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
         if (variable instanceof BooleanVariableFmi2Api || variable instanceof DoubleVariableFmi2Api || variable instanceof IntVariableFmi2Api ||
                 variable instanceof StringVariableFmi2Api) {

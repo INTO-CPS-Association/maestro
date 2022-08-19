@@ -1,8 +1,0 @@
-module ModelTransition
-{
-    void setValue(string id, ? value);
-    ? getValue(string id);
-
-    void doTransition();
-    bool nextTransition();
-}

@@ -128,6 +128,9 @@ public class PrettyPrinter extends QuestionAdaptor<Integer> {
     @Override
     public void caseAVariableDeclaration(AVariableDeclaration node, Integer question) throws AnalysisException {
         sb.append(indent(question));
+        if (node.getExternal() != null && node.getExternal()) {
+            sb.append("external ");
+        }
         node.getType().apply(this, question);
         sb.append(" ");
         sb.append(node.getName().getText());

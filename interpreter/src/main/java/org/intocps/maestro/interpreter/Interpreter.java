@@ -167,7 +167,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         Value currentValue = node.getTarget().apply(this, question);
         if (!(currentValue instanceof UpdatableValue)) {
-            throw new InterpreterException("Cannot assign to a constant value");
+            throw new InterpreterException("Cannot assign to a constant value. " + node);
         }
 
         try {
@@ -213,6 +213,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
+        if (node.getExternal() != null && node.getExternal()) {
+            //external variables already exists in the context
+            return new VoidValue();
+        }
 
         if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
@@ -364,8 +368,6 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         } catch (StopException e) {
             logger.info("Stop in simulation: " + e.getMessage());
             logger.info("Continuing with finally");
-            node.getFinally().apply(this, question);
-            throw e;
         }
         node.getFinally().apply(this, question);
         return new VoidValue();
@@ -561,13 +563,22 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
         if (transitionManager != null) {
-            if (transitionManager.canTransfer(node, question)) {
-                ITTransitionManager.ITTransitionInfo info = transitionManager.which();
-                transitionManager.transfer(question);
+
+            ITTransitionManager.ITTransitionInfo info = transitionManager.getTransferInfo(node, question,
+                    node.getNames().stream().limit(1).map(AStringLiteralExp::getValue).findFirst().orElse(null));
+            if (info != null) {
+
+                transitionManager.transfer(this, info);
                 //if we get back here we need to break out of the current state and run the shutdown actions from finally
                 throw new StopException("Stopping previous simulation as a result of a model transfer: " + info.describe());
             }
         }
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseATransferAsStm(ATransferAsStm node, Context question) {
+        //this has no semantic meaning during normal execution
         return new VoidValue();
     }
 

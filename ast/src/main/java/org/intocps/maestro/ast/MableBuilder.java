@@ -20,6 +20,11 @@ public class MableBuilder {
                 newAVariableDeclaration(newAIdentifier(name), type.clone(), value == null ? null : newAExpInitializer(value.clone())));
     }
 
+    public static PStm newVariable(boolean external, String name, PType type, PExp value) {
+        return newALocalVariableStm(
+                newAVariableDeclaration(external, newAIdentifier(name), type.clone(), value == null ? null : newAExpInitializer(value.clone())));
+    }
+
     public static PStm newVariable(LexIdentifier name, PType type, List<PExp> values) {
         return newVariable(name.getText(), type, values);
 

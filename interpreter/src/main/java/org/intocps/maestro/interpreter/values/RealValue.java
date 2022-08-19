@@ -58,6 +58,9 @@ public class RealValue extends NumericValue {
             RealValue ro = (RealValue) other;
             return (int) Math.round(Math.signum(this.value - ro.getValue()));
 
+        } else if (other instanceof IntegerValue) {
+            IntegerValue ro = (IntegerValue) other;
+            return (int) Math.round(Math.signum(this.value - ro.getValue()));
         }
 
         return super.compareTo(value);

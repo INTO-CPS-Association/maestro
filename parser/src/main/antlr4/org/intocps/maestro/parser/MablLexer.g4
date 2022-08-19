@@ -25,6 +25,7 @@ BREAK:         'break';
 TRY: 'try';
 FINALLY: 'finally';
 ERROR: 'error';
+EXTERNAL: 'external';
 
 // Literals
 
@@ -100,6 +101,7 @@ AT_CONFIG:          '@Config';
 AT_FRAMEWORK:      '@Framework';
 AT_FRAMEWORK_CONFIG:'@FrameworkConfig';
 AT_TRANSFER:        '@Transfer';
+AT_TRANSFER_AS:        '@TransferAs';
 
 // Whitespace and comments
 WS:                 [ \t\r\n\u000C]+ -> channel(HIDDEN);

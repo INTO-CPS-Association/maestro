@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
+import org.intocps.maestro.interpreter.ITTransitionManager;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.interpreter.TransitionManager;
 import org.junit.Assert;
@@ -17,10 +18,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,7 +87,43 @@ public class TransitionTest {
 
         //        util.interpret(stageOutput.resolve("spec.runtime.json").toFile());
         InputStream c = new FileInputStream(stageOutput.resolve("spec.runtime.json").toFile());
-        new MableInterpreter(new DefaultExternalValueFactory(stageOutput.toFile(), c), new TransitionManager()).execute(util.getMainSimulationUnit());
+
+
+        MablCliUtilTesting utilStage2 = new MablCliUtilTesting(stageOutput.toFile(), stageOutput.toFile(), settings);
+        utilStage2.setVerbose(true);
+        File stage2Spec = outputPath.resolve(stages.get(1).getName()).resolve("spec.mabl").toFile();
+        utilStage2.parse(Arrays.asList(stage2Spec));
+
+        ITTransitionManager.ISpecificationProvider specificationProvider = new ITTransitionManager.ISpecificationProvider() {
+            final Map<String, ARootDocument> candidates = new HashMap<>() {{
+                put(stage2Spec.getAbsolutePath(), utilStage2.getMainSimulationUnit());
+            }};
+
+            @Override
+            public Map<String, ARootDocument> get() {
+                return candidates;
+            }
+
+            @Override
+            public Map<String, ARootDocument> get(String name) {
+                return get();
+            }
+
+            @Override
+            public void remove(ARootDocument specification) {
+                candidates.entrySet().stream().filter(map -> map.getValue().equals(specification)).map(Map.Entry::getKey).findFirst()
+                        .ifPresent(candidates::remove);
+            }
+        };
+
+        ITTransitionManager tm = new TransitionManager() {
+            @Override
+            public ISpecificationProvider getSpecificationProvider() {
+                return specificationProvider;
+            }
+        };
+
+        new MableInterpreter(new DefaultExternalValueFactory(stageOutput.toFile(), c), tm).execute(util.getMainSimulationUnit());
 
     }
 

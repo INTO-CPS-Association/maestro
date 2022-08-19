@@ -250,6 +250,9 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
 
         void markTransferPoint(String... names);
+
+        void addTransferAs(String... names);
+
     }
 
     /**
