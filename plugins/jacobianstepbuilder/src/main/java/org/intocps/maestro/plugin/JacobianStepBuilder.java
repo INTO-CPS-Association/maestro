@@ -404,10 +404,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                 instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
 
                             //fixme handle cases where we cannot replace all field expressions
-                            stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getValue().toPredicate();
-
                             if (instance.getName().equals(modelSwapInfoEntry.getKey())) {
-                                stepPredicate = stepPredicate.not();
+                                stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getKey().toPredicate().not();
+                            } else {
+                                stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getValue().toPredicate();
                             }
                             break;
                         }
