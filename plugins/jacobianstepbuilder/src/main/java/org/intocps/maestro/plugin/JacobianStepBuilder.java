@@ -300,7 +300,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     //      inst.setLinked() // all ports
                     //  else if instance is target in swap and has swap source ports
                     //      create links from swap source ports to ports
-                    //      enterif(swapCond)
+                    //      enterif(stepCond)
                     //      inst.setLinked() // all ports
                     //  else if instance is connected in swap relation
                     //      for each port of instance
@@ -344,9 +344,9 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         });
 
                         if (instance.getPorts().stream().anyMatch(port -> port.getSourcePort() != null)) {
-                            PredicateFmi2Api swapPredicate =
-                                    modelSwapConditions.get(swapInfoTarget.get().getValue()).getKey().toPredicate();
-                            dynamicScope.enterIf(swapPredicate);
+                            PredicateFmi2Api stepPredicate =
+                                    modelSwapConditions.get(swapInfoTarget.get().getValue()).getValue().toPredicate();
+                            dynamicScope.enterIf(stepPredicate);
                             instance.setLinked();
                             dynamicScope.leave();
                         }

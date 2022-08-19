@@ -23,7 +23,7 @@
   "modelSwaps": {
     "controller": {
       "swapInstance": "crtlInstance3",
-      "stepCondition": "(tank.level >0.2)",
+      "stepCondition": "(true)",
       "swapCondition": "(tank.level >1)",
       "swapConnections": {
         "{x3}.crtlInstance3.valve": [
