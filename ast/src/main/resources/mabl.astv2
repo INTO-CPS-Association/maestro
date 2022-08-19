@@ -55,7 +55,7 @@ declaration {
         -> package='org.intocps.maestro.ast'
          | [name]:lex_identifier}
     = {function} [returnType]:type  [formals]:parameter.formal*
-    | {variable} [type]:type [size]:exp* [initializer]:initializer
+    | {variable} [external]:java_Boolean [type]:type [size]:exp* [initializer]:initializer
     | {module} [name]:lex_identifier [functions]:declaration.function*
     ;
 
@@ -135,6 +135,7 @@ stm
     | {instanceMapping} [identifier]:lex_identifier [name]:java_String
     | {fmuMapping} [identifier]:lex_identifier [name]:java_String
     | {transfer} [names]:exp.#literal.string*
+    | {transferAs} [names]:exp.#literal.string*
     | {config} [config]:java_String
     | {error} [exp]:exp
     | {try} [body]:stm.#block.basic [finally]:stm.#block.basic

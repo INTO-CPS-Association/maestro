@@ -57,8 +57,6 @@ public class MaBLTemplateGenerator {
     public static final String FAULT_INJECT_MODULE_NAME = "FaultInject";
     public static final String FAULT_INJECT_MODULE_VARIABLE_NAME = "faultInject";
     public static final String FAULTINJECT_POSTFIX = "_m_fi";
-    public static final String MODEL_TRANSITION_MODULE_NAME = "ModelTransition";
-    public static final String MODEL_TRANSITION_MODULE_VARIABLE_NAME = "modelTransition";
     final static Logger logger = LoggerFactory.getLogger(MaBLTemplateGenerator.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -101,11 +99,6 @@ public class MaBLTemplateGenerator {
         return statements;
     }
 
-    public static PStm createTransferGetValue(String lexName, String value) {
-        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(lexName)),
-                call(MODEL_TRANSITION_MODULE_VARIABLE_NAME, "getValue", newAStringLiteralExp(value)));
-    }
-
 
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
@@ -113,21 +106,14 @@ public class MaBLTemplateGenerator {
         String path = uriFromFMUName.toString();
         return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
-        //        return newVariable(fmuLexName, newANameType("FMI2"),
-        //                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
-
     }
 
-    public static PStm createFMUUnload(String fmuLexName) {
-        return MableAstFactory.newExpressionStm(
-                MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
-    }
 
-    public static List<PStm> createFmuInstanceVariable(String instanceLexName, String instanceEnvironmentKey) {
+    public static List<PStm> createFmuInstanceVariable(String instanceLexName, boolean external, String instanceEnvironmentKey) {
         List<PStm> statements = new ArrayList<>();
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
         statements.add(mapping);
-        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
+        PStm var = newVariable(external, instanceLexName, newANameType("FMI2Component"), external ? null : newNullExp());
         statements.add(var);
         return statements;
     }
@@ -181,7 +167,7 @@ public class MaBLTemplateGenerator {
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
 
-        return new ExpandStatements(Arrays.asList(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), Arrays.asList(algorithmStm));
+        return new ExpandStatements(List.of(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), List.of(algorithmStm));
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -217,23 +203,11 @@ public class MaBLTemplateGenerator {
                 unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
         if (faultInject) {
             Map.Entry<PStm, List<PStm>> fiinjectLoadStatement = createLoadStatement(FAULT_INJECT_MODULE_NAME,
-                    Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath())));
+                    List.of(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath())));
             if (fiinjectLoadStatement.getKey() != null) {
                 rootScopeBody.add(fiinjectLoadStatement.getKey());
                 if (fiinjectLoadStatement.getValue() != null) {
                     tryBody.getBody().addAll(fiinjectLoadStatement.getValue());
-                }
-            }
-        }
-
-        if (modelSwapActive) {
-            // HEJ: Unconditionally load model transition
-            Map.Entry<PStm, List<PStm>> modelTransitionLoadStatement =
-                    createLoadStatement(MODEL_TRANSITION_MODULE_NAME, Arrays.asList(newAStringLiteralExp("model_transition")));
-            if (modelTransitionLoadStatement.getKey() != null) {
-                rootScopeBody.add(modelTransitionLoadStatement.getKey());
-                if (modelTransitionLoadStatement.getValue() != null) {
-                    tryBody.getBody().addAll(modelTransitionLoadStatement.getValue());
                 }
             }
         }
@@ -259,7 +233,11 @@ public class MaBLTemplateGenerator {
             invalidNames.add(instanceLexName);
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
-            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, entry.getKey()));
+
+            //determine if fmu is external
+            boolean external = unitRelationShip.getModelTransfers().stream().anyMatch(p -> p.getKey().equals(entry.getKey()));
+
+            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, external, entry.getKey()));
         });
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
@@ -271,13 +249,9 @@ public class MaBLTemplateGenerator {
         for (Map.Entry<String, String> entry : unitRelationShip.getModelTransfers()) {
             ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
             String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
-            stmMaintainer.add(createTransferGetValue(fmuLexName, fmuLexName));
-            stmMaintainer.add(checkNullAndStop(fmuLexName));
             fmuTransfers.add(fmuLexName);
 
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
-            stmMaintainer.add(createTransferGetValue(instanceLexName, instanceLexName));
-            stmMaintainer.add(checkNullAndStop(instanceLexName));
             instanceTransfers.add(instanceLexName);
         }
 
@@ -337,10 +311,8 @@ public class MaBLTemplateGenerator {
 
         // Debug logging
         if (templateConfiguration.getLoggingOn()) {
-            //            if (templateConfiguration.getLogLevels() != null) {
             stmMaintainer.addAll(createDebugLoggingStms(instaceNameToInstanceLex, templateConfiguration.getLogLevels()));
             stmMaintainer.wrapInIfBlock();
-            //            }
         }
 
 
@@ -370,9 +342,12 @@ public class MaBLTemplateGenerator {
         }
 
         // add variable statements for start time and end time.
-        stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
-        if (!unitRelationShip.getModelTransfers().isEmpty()) {
-            stmMaintainer.add(createTransferGetValue(START_TIME_NAME, "jac_current_communication_point"));
+        if (unitRelationShip.getModelTransfers().isEmpty()) {
+            stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
+        } else {
+            stmMaintainer.add(MableAstFactory.newALocalVariableStm(
+                    MableAstFactory.newAVariableDeclaration(true, new LexIdentifier(START_TIME_NAME, null),
+                            MableAstFactory.newARealNumericPrimitiveType(), null)));
         }
         stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
 
@@ -405,16 +380,10 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(freeInstanceStatements);
 
         // Unload the FMUs
-        //        stmMaintainer.addAllCleanup(unloadFmuStatements);
         finallyBody.getBody().addAll(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))).stream().map(x -> x.getKey())
                 .collect(Collectors.toList()));
-        //        stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
         if (faultInject) {
             finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
-            //            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
-        }
-        if (modelSwapActive) {
-            finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(MODEL_TRANSITION_MODULE_VARIABLE_NAME).getKey()));
         }
 
         // Create the toplevel
@@ -426,10 +395,7 @@ public class MaBLTemplateGenerator {
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
-        imports.add(newAIdentifier((MODEL_TRANSITION_MODULE_NAME)));
 
-        //        ASimulationSpecificationCompilationUnit unit =
-        //                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));
         tryBody.getBody().addAll(stmMaintainer.getStatements());
         rootScopeBody.add(newTry(tryBody, finallyBody));
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(imports, rootScope);

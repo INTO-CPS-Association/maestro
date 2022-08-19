@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 %compilationUnit->simulationSpecification = "simulation "+$ $[imports]$.stream().map( s-> "import " + "" + s.toString()).collect(Collectors.joining(";\n","\n",";\n"))+ ($[framework]$.isEmpty()?"":$[framework]$.stream().map( s->"\""+  s.getText()+"\"").collect(Collectors.joining(",","\n@Framework(",");\n"))) + ($[frameworkConfigs]$.isEmpty()?"":$[frameworkConfigs]$.stream().map( s->  s.toString()).collect(Collectors.joining(";","\n;","\n")))$ + [body]
 
 %declaration->function = [returnType] +$ " "+ $[name]$+"("+ $[formals]$.stream().map(Object::toString).collect(Collectors.joining(", "))$+")"
-%declaration->variable = [type]+ $ " "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
+%declaration->variable = ""+ $ ($[external]$!=null &&$[external]$ ? "external ":"" )  + $[type]$ +" "+ $[name]$ + ""+($[size]$==null || $[size]$.isEmpty()?"":$[size]$.stream().map(s->s.toString()).collect(Collectors.joining("][","[","]")))+ ( $[initializer]$ ==null?"":" = " +$[initializer]$)$
 %declaration->module =   [name]+$" {"+ $[functions]$.stream().map(Object::toString).collect(Collectors.joining(";\n","\n","\n"))$ + "}"
 
 
@@ -64,7 +64,8 @@ import java.util.stream.Collectors;
 %stm->break = "break"
 %stm->instanceMapping = "@mapInstance(" + [identifier]+ " -> \""+[name] + "\")"
 %stm->fmuMapping = "@mapFmu(" + [identifier]+ " -> \""+[name] + "\")"
-%stm->transfer = "@Transfer("  +$$[names]$.stream().map(s->s.getValue()).map(Object::toString).collect(Collectors.joining(","))$+   ")"
+%stm->transfer = "@Transfer("  +$$[names]$.stream().map(Object::toString).collect(Collectors.joining(","))$+   ")"
+%stm->transferAs = "@TransferAs("  +$$[names]$.stream().map(Object::toString).collect(Collectors.joining(","))$+   ")"
 %stm->config = "@Config(\"" + [config] + "\")"
 %stm->error = "error "+ $ ($[exp]$==null?"":$[exp]$)$
 %stm->try = "try" + [body] +  "finally"  +[finally]

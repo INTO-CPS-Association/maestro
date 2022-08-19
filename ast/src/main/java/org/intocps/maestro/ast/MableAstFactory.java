@@ -71,6 +71,20 @@ public class MableAstFactory {
         return vardecl;
     }
 
+    public static AVariableDeclaration newAVariableDeclaration(boolean external, LexIdentifier name, PType type, PInitializer initializer_) {
+
+        if (type instanceof AArrayType) {
+            throw new IllegalArgumentException("array declerations must use overload with size");
+        }
+
+        AVariableDeclaration vardecl = new AVariableDeclaration();
+        vardecl.setExternal(external);
+        vardecl.setName(name);
+        vardecl.setType(type);
+        vardecl.setInitializer(initializer_);
+        return vardecl;
+    }
+
     public static AVariableDeclaration newAVariableDeclaration(LexIdentifier name, PType type, int size, PInitializer initializer_) {
         return newAVariableDeclaration(name, type, MableAstFactory.newAIntLiteralExp(size), initializer_);
     }
