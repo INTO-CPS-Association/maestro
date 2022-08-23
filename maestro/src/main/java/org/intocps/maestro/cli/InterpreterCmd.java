@@ -6,6 +6,7 @@ import org.intocps.maestro.interpreter.InterpreterTransitionException;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -44,6 +45,9 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = "-wait", description = "Wait the specified seconds before processing. Intended for allowing a debugger or profiler " +
             "to be attached before the processing starts.")
     int wait = 0;
+
+    @CommandLine.Option(names = "-transition", description = "Path to a directory with a transition specification")
+    Path transitionPath;
 
     private static void waitForProfiling(int wait) throws InterruptedException {
         System.out.printf("Initial wait activated, waiting... %d", wait);
@@ -93,6 +97,9 @@ public class InterpreterCmd implements Callable<Integer> {
         }
 
         try {
+            if (transitionPath != null) {
+                util.setTransitionPath(transitionPath);
+            }
             if (runtime != null) {
                 util.interpret(runtime);
             } else {

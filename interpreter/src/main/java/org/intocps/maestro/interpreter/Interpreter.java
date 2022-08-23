@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
+public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final IExternalValueFactory loadFactory;
     private final ITTransitionManager transitionManager;
