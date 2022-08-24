@@ -1,11 +1,10 @@
 package org.intocps.maestro;
 
+import org.apache.commons.io.IOUtils;
+import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
-import org.intocps.maestro.interpreter.ITTransitionManager;
-import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.interpreter.TransitionManager;
+import org.intocps.maestro.interpreter.*;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,6 +15,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -89,9 +89,11 @@ public class TransitionTest {
         InputStream c = new FileInputStream(stageOutput.resolve("spec.runtime.json").toFile());
 
 
-        MablCliUtilTesting utilStage2 = new MablCliUtilTesting(stageOutput.toFile(), stageOutput.toFile(), settings);
+        File stage2 = stages.get(1);
+        Path stageOutput2 = outputPath.resolve(stage2.getName());
+        MablCliUtilTesting utilStage2 = new MablCliUtilTesting(stageOutput2.toFile(), stageOutput2.toFile(), settings);
         utilStage2.setVerbose(true);
-        File stage2Spec = outputPath.resolve(stages.get(1).getName()).resolve("spec.mabl").toFile();
+        File stage2Spec = stageOutput2.resolve("spec.mabl").toFile();
         utilStage2.parse(Arrays.asList(stage2Spec));
 
         ITTransitionManager.ISpecificationProvider specificationProvider = new ITTransitionManager.ISpecificationProvider() {
@@ -120,6 +122,15 @@ public class TransitionTest {
             @Override
             public ISpecificationProvider getSpecificationProvider() {
                 return specificationProvider;
+            }
+
+            @Override
+            public void transfer(Interpreter interpreter, ITTransitionInfo info) throws AnalysisException {
+                try {
+                    super.transfer(new Interpreter(new DefaultExternalValueFactory(stageOutput2.toFile(), c), this), info);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         };
 

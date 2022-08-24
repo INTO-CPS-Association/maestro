@@ -4,7 +4,7 @@
   "reportProgress": true,
   "liveLogInterval": 0,
   "logLevels": {
-    "{crtl}.crtlInstance": [
+    "{x1}.controller": [
       "logAll",
       "logError",
       "logFmiCall",
@@ -12,6 +12,14 @@
       "VdmErr",
       "VdmOut"
     ],
-    "{wt}.wtInstance": []
+    "{x3}.crtlInstance3": [
+      "logAll",
+      "logError",
+      "logFmiCall",
+      "Protocol",
+      "VdmErr",
+      "VdmOut"
+    ],
+    "{x2}.tank": []
   }
 }

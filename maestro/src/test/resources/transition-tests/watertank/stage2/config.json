@@ -24,7 +24,7 @@
     "controller": {
       "swapInstance": "crtlInstance3",
       "stepCondition": "(true)",
-      "swapCondition": "(tank.level >1)",
+      "swapCondition": "(controller.valve ==true)",
       "swapConnections": {
         "{x3}.crtlInstance3.valve": [
           "{x2}.tank.valvecontrol"
