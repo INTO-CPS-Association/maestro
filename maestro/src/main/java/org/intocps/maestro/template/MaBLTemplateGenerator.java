@@ -31,6 +31,7 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MaBLTemplateGenerator {
     public static final String START_TIME_NAME = "START_TIME";
+    public static final String START_TIME_NAME_OFFSET = "START_TIME_OFFSET";
     public static final String END_TIME_NAME = "END_TIME";
     public static final String STEP_SIZE_NAME = "STEP_SIZE";
     public static final String MATH_MODULE_NAME = "Math";
@@ -348,6 +349,7 @@ public class MaBLTemplateGenerator {
             stmMaintainer.add(MableAstFactory.newALocalVariableStm(
                     MableAstFactory.newAVariableDeclaration(true, new LexIdentifier(START_TIME_NAME, null),
                             MableAstFactory.newARealNumericPrimitiveType(), null)));
+            stmMaintainer.add(createRealVariable(START_TIME_NAME_OFFSET, 0.0));
         }
         stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
 
@@ -358,7 +360,7 @@ public class MaBLTemplateGenerator {
             }
 
             if (modelSwapActive) {
-                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME));
             } else {
                 stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
             }

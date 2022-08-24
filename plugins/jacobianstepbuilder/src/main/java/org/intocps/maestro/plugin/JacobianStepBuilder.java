@@ -142,6 +142,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
             DoubleVariableFmi2Api externalEndTime = (DoubleVariableFmi2Api) formalArguments.get(3);
             DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
+            DoubleVariableFmi2Api currentCommunicationTimeOffset= dynamicScope.store("jac_current_communication_point_offset", 0.0);
 
             currentStepSize.setValue(externalStepSize);
             stepSize.setValue(externalStepSize);
@@ -399,15 +400,19 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 // STEP ALL
                 fmuInstanceToCommunicationPoint.forEach((instance, communicationPoint) -> {
                     PredicateFmi2Api stepPredicate = null;
+                    boolean instanceIsSwappedIn = false;
                     for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry : env.getModelSwaps()) {
                         if (instance.getName().equals(modelSwapInfoEntry.getKey()) ||
                                 instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
 
                             //fixme handle cases where we cannot replace all field expressions
                             if (instance.getName().equals(modelSwapInfoEntry.getKey())) {
+                                // instance swapped out -> stepPredicate = !swapCondition
                                 stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getKey().toPredicate().not();
                             } else {
+                                // instance swapped in -> stepPredicate = stepCondition
                                 stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getValue().toPredicate();
+                                instanceIsSwappedIn = true;
                             }
                             break;
                         }
@@ -417,8 +422,15 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         dynamicScope.enterIf(stepPredicate);
                     }
 
+                    DoubleVariableFmi2Api communicationTime = currentCommunicationTime;
+                    if (instanceIsSwappedIn) {
+                        currentCommunicationTimeOffset.setValue(currentCommunicationTime.toMath().subtraction(externalStartTime));
+                        communicationTime = currentCommunicationTimeOffset;
+                    }
+
+
                     Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
-                            instance.step(currentCommunicationTime, currentStepSize);
+                            instance.step(communicationTime, currentStepSize);
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
@@ -427,7 +439,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     dynamicScope.enterIf(didDiscard);
                     {
                         builder.getLogger().debug("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f",
-                                instance.getName(), currentCommunicationTime, currentStepSize,
+                                instance.getName(), communicationTime, currentStepSize,
                                 new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                         discard.getValue().getExp()));
                         anyDiscards.setValue(
