@@ -241,6 +241,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         });
     }
 
+
     private Map<LexIdentifier, Set<Relation>> buildRelations(Fmi2SimulationEnvironmentConfiguration msg, List<ModelConnection> connections,
             Set<ModelConnection.ModelInstance> instancesFromConnections) throws XPathExpressionException, InvocationTargetException, IllegalAccessException, EnvironmentException {
         Map<LexIdentifier, Set<Relation>> idToRelations = new HashMap<>();
@@ -302,7 +303,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                             externalInputs.put(inputInstanceLexIdentifier, inputVariable);
 
                             //Add relation from the input to the given output
-                            Set<Relation> inputInstanceRelations = getOrCreateRelationsForLexIdentifier(inputInstanceLexIdentifier);
+                            Set<Relation> inputInstanceRelations = idToRelations.computeIfAbsent(inputInstanceLexIdentifier, key -> new HashSet<>());
                             Relation r = new Relation();
                             r.source = inputVariable;
                             r.targets = new HashMap<>() {{
@@ -394,15 +395,6 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         }
     }
 
-    Set<Relation> getOrCreateRelationsForLexIdentifier(LexIdentifier instanceLexIdentifier) {
-        if (variableToRelations.containsKey(instanceLexIdentifier)) {
-            return variableToRelations.get(instanceLexIdentifier);
-        } else {
-            Set<Relation> relations = new HashSet<>();
-            variableToRelations.put(instanceLexIdentifier, relations);
-            return relations;
-        }
-    }
 
     /**
      * Finds all the relations for the given FMU Component LexIdentifiers
