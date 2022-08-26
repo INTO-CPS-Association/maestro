@@ -1,7 +1,6 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
@@ -32,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,6 +61,28 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
+    BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
+        try {
+
+            switch (source.scalarVariable.causality) {
+
+
+                case Input:
+                    source.breakLink();
+                    target.linkTo(source);
+                    break;
+                case Output:
+                    target.breakLink();
+                    source.linkTo(target);
+                    break;
+                default:
+                    break;
+            }
+
+        } catch (Fmi2Builder.Port.PortLinkException e) {
+            e.printStackTrace();
+        }
+    };
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc, fixedStepTransferFunc).collect(Collectors.toSet());
@@ -251,7 +273,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             for (ModelSwapInfo info : swapInfoList) {
                 BooleanVariableFmi2Api swapVar = dynamicScope.store("swapCondition" + index, false);
                 BooleanVariableFmi2Api stepVar = dynamicScope.store("stepCondition" + index, false);
-                DoubleVariableFmi2Api currentCommunicationTimeOffset= dynamicScope.store("jac_current_communication_point_offset" + index, 0.0);
+                DoubleVariableFmi2Api currentCommunicationTimeOffset = dynamicScope.store("jac_current_communication_point_offset" + index, 0.0);
                 modelSwapConditions.put(info, Triple.of(swapVar, stepVar, currentCommunicationTimeOffset));
                 index++;
             }
@@ -334,11 +356,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         instance.getPorts().forEach(port -> {
                             PortFmi2Api sourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
                             if (sourcePort != null) {
-                                try {
-                                    sourcePort.linkTo(port);
-                                } catch (Fmi2Builder.Port.PortLinkException e) {
-                                    e.printStackTrace();
-                                }
+                                relinkPorts.accept(sourcePort, port);
                             }
                         });
 
@@ -363,11 +381,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                     port.breakLink();
                                 }
 
-                                try {
-                                    swapSourcePort.linkTo(port);
-                                } catch (Fmi2Builder.Port.PortLinkException e) {
-                                    e.printStackTrace();
-                                }
+                                relinkPorts.accept(swapSourcePort, port);
 
                                 dynamicScope.enterIf(swapPredicate);
                                 instance.setLinked(port);
