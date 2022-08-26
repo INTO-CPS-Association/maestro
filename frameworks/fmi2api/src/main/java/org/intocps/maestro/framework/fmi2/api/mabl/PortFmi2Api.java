@@ -102,7 +102,26 @@ public class PortFmi2Api implements Fmi2Builder.Port {
 
     @Override
     public void breakLink() {
+        if (sourcePort != null) {
+            //delete this from the source port
+            sourcePort.targetPorts.remove(this);
+        }
         sourcePort = null;
+    }
+
+    @Override
+    public boolean isLinked() {
+        return isLinkedAsInputConsumer() || isLinkedAsOutputProvider();
+    }
+
+    @Override
+    public boolean isLinkedAsOutputProvider() {
+        return targetPorts.isEmpty();
+    }
+
+    @Override
+    public boolean isLinkedAsInputConsumer() {
+        return this.sourcePort != null;
     }
 
     public String toLexName() {

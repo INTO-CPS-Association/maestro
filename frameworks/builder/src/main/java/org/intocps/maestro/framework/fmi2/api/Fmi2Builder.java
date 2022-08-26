@@ -364,6 +364,27 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
          */
         void breakLink() throws PortLinkException;
 
+        /**
+         * Indicates if the current port is linked
+         *
+         * @return true if linked
+         */
+        boolean isLinked();
+
+        /**
+         * Indicates if this is linked into other @{@link Port}s
+         *
+         * @return true if linked
+         */
+        boolean isLinkedAsOutputProvider();
+
+        /**
+         * Indicates if another @{@link Port} is linked into this
+         *
+         * @return true if linked
+         */
+        boolean isLinkedAsInputConsumer();
+
         class PortLinkException extends Exception {
             Port port;
 
