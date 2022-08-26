@@ -171,9 +171,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
                         .collect(Collectors.toSet()));
 
-                //                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
-                // fixme: only add swap instances
-                componentsToPortsWithValues.put(instance, instance.get());
+                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
             });
 
             // Share
