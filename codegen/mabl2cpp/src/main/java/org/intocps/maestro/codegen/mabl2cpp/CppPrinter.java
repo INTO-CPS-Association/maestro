@@ -565,4 +565,9 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         sb.append("!");
         node.getExp().apply(this, question);
     }
+
+    @Override
+    public void caseATransferAsStm(ATransferAsStm node, Integer question) {
+        //semantic meaning only not to be executed
+    }
 }
