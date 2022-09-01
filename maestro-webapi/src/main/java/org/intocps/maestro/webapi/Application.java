@@ -25,15 +25,6 @@ public class Application {
     final static ObjectMapper mapper = new ObjectMapper();
     private static boolean serverAcquiresPort = false;
 
-    @EventListener
-    public void onApplicationEvent(final ServletWebServerInitializedEvent event) {
-        // If port 0 is passed to the server should acquire a port and write the port number to system.err so the client can get the acquired port.
-        if (serverAcquiresPort) {
-            int port = event.getWebServer().getPort();
-            System.err.println("Server acquired port: {" + port + "}");
-        }
-    }
-
     public static void main(String[] args) throws Exception {
 
         if (args.length > 0 && args[0].equals("cliMain")) {
@@ -49,6 +40,15 @@ public class Application {
             }
         }
 
+    }
+
+    @EventListener
+    public void onApplicationEvent(final ServletWebServerInitializedEvent event) {
+        // If port 0 is passed to the server should acquire a port and write the port number to system.err so the client can get the acquired port.
+        if (serverAcquiresPort) {
+            int port = event.getWebServer().getPort();
+            System.err.println("Server acquired port: {" + port + "}");
+        }
     }
 
     static class MableV1ToV2ProxyRunner implements MaestroV1CliProxy.OneShotRunner {
@@ -77,7 +77,7 @@ public class Application {
 
             File workingDirectory = calculateWorkingDirectory.apply(outputFile);
             ErrorReporter reporter = new ErrorReporter();
-            Maestro2Broker mc = new Maestro2Broker(workingDirectory, reporter);
+            Maestro2Broker mc = new Maestro2Broker(workingDirectory, reporter, () -> false);
             mc.setVerbose(verbose);
             try {
                 mc.buildAndRun(initializationData, simulationData, null, outputFile);

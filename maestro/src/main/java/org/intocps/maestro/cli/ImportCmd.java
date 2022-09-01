@@ -14,6 +14,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -62,8 +63,9 @@ public class ImportCmd implements Callable<Integer> {
 
         if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
-            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(Collectors
-                    .toMap(entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
+            Map<String, List<String>> removedFMUKeyFromLogLevels = simulationConfiguration.getLogLevels().entrySet().stream().collect(
+                    Collectors.toMap(
+                            entry -> MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getFmuInstanceFromFmuKeyInstance(entry.getKey()),
                             Map.Entry::getValue));
             builder.setLogLevels(removedFMUKeyFromLogLevels);
         }
@@ -128,6 +130,38 @@ public class ImportCmd implements Callable<Integer> {
             }
         }
         return mainNode;
+    }
+
+    public static void resolveFmuPaths(List<File> fmuSearchPaths, Map<String, String> fmuMap) throws FileNotFoundException {
+        if (fmuSearchPaths != null) {
+            for (String key : fmuMap.keySet()) {
+                String fmuPath = fmuMap.get(key);
+                try {
+                    fmuPath = URI.create(fmuPath).getPath();
+                } catch (IllegalArgumentException e) {
+                    //ok it's not a URI so let's hope it is a file path
+                }
+
+                if (!new File(fmuPath).exists()) {
+                    Path resolved = null;
+                    for (File fmuSearchPath : fmuSearchPaths) {
+                        resolved = fmuSearchPath.toPath().resolve(fmuPath);
+
+                        if (resolved.toFile().exists()) {
+                            break;
+                        }
+
+                    }
+
+                    if (resolved != null && resolved.toFile().exists()) {
+                        fmuMap.put(key, resolved.toUri().toString());
+                    } else {
+                        throw new FileNotFoundException(fmuPath);
+                    }
+                }
+
+            }
+        }
     }
 
     @Override
@@ -207,29 +241,7 @@ public class ImportCmd implements Callable<Integer> {
 
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
-            if (fmuSearchPaths != null) {
-                for (String key : config.getFmus().keySet()) {
-                    String fmuPath = config.getFmus().get(key);
-                    if (!new File(fmuPath).exists()) {
-                        Path resolved = null;
-                        for (File fmuSearchPath : fmuSearchPaths) {
-                            resolved = fmuSearchPath.toPath().resolve(fmuPath);
-
-                            if (resolved.toFile().exists()) {
-                                break;
-                            }
-
-                        }
-
-                        if (resolved != null && resolved.toFile().exists()) {
-                            config.getFmus().put(key, resolved.toUri().toString());
-                        } else {
-                            throw new FileNotFoundException(fmuPath);
-                        }
-                    }
-
-                }
-            }
+            resolveFmuPaths(fmuSearchPaths, config.getFmus());
 
             MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
 
