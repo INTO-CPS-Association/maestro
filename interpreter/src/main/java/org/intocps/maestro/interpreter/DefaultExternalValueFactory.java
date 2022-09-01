@@ -24,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,9 +41,9 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             Arrays.asList(LoggerLifecycleHandler.class, CsvLifecycleHandler.class, ArrayUtilLifecycleHandler.class,
                     JavaClasspathLoaderLifecycleHandler.class, MathLifecycleHandler.class, Fmi2LifecycleHandler.class);
     private final File workingDirectory;
+    private final ByteArrayOutputStream baos;
     protected Map<String, IValueLifecycleHandler> lifecycleHandlers;
     protected Map<Value, IValueLifecycleHandler> values = new HashMap<>();
-
 
     public DefaultExternalValueFactory(File workingDirectory,
             InputStream config) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -52,12 +53,12 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         lifecycleHandlers = new HashMap<>();
 
         for (Class<? extends IValueLifecycleHandler> handler : defaultHandlers) {
-            lifecycleHandlers
-                    .put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(), instantiateHandler(workingDirectory, handler));
+            lifecycleHandlers.put(handler.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
+                    instantiateHandler(workingDirectory, handler));
         }
 
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos = new ByteArrayOutputStream();
         if (config != null) {
             config.transferTo(baos);
         }
@@ -179,6 +180,12 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         throw new InterpreterException("UnLoad of unknown type: " + value);
     }
 
+    @Override
+    public IExternalValueFactory changeWorkingDirectory(Path newSuggestion,
+            InputStream config) throws IOException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException {
+        return new DefaultExternalValueFactory(newSuggestion.toFile(), config == null ? new ByteArrayInputStream(baos.toByteArray()) : config);
+    }
+
     protected abstract static class BaseLifecycleHandler implements IValueLifecycleHandler {
         @Override
         public void destroy(Value value) {
@@ -283,7 +290,8 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                     }
 
 
-                } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+                } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException |
+                         InvocationTargetException e) {
                     return Either.left(e);
                 }
             }
@@ -372,6 +380,16 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             } catch (ClassNotFoundException e) {
                 return Either.left(new AnalysisException("The path passed to load is not a URI", e));
             }
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "ModelTransition")
+    public static class ModelTransitionLifecycleHandler extends BaseLifecycleHandler {
+
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            String transitionPath = ((StringValue) args.get(0)).getValue();
+            return Either.right(new ModelTransitionValue(transitionPath));
         }
     }
 
@@ -506,9 +524,9 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                                 dataWriterFileName = val.get("filename").asText();
                             }
                             if (val.has("filter")) {
-                                dataWriterFilter = StreamSupport
-                                        .stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED), false)
-                                        .map(v -> v.asText()).collect(Collectors.toList());
+                                dataWriterFilter =
+                                        StreamSupport.stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED),
+                                                false).map(v -> v.asText()).collect(Collectors.toList());
                             }
 
                         }
@@ -525,16 +543,6 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
             return Either.right(new DataWriterValue(Collections.singletonList(new CsvDataWriter(
                     workingDirectory == null ? new File(dataWriterFileNameFinal) : new File(workingDirectory, dataWriterFileNameFinal),
                     dataWriterFilterFinal))));
-        }
-    }
-
-    @IValueLifecycleHandler.ValueLifecycle(name = "ModelTransition")
-    public static class ModelTransitionLifecycleHandler extends BaseLifecycleHandler {
-
-        @Override
-        public Either<Exception, Value> instantiate(List<Value> args) {
-            String transitionPath = ((StringValue) args.get(0)).getValue();
-            return Either.right(new ModelTransitionValue(transitionPath));
         }
     }
 }

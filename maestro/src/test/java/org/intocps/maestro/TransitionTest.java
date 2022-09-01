@@ -1,7 +1,5 @@
 package org.intocps.maestro;
 
-import org.apache.commons.io.IOUtils;
-import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
 import org.intocps.maestro.interpreter.*;
@@ -15,7 +13,6 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -96,18 +93,18 @@ public class TransitionTest {
         File stage2Spec = stageOutput2.resolve("spec.mabl").toFile();
         utilStage2.parse(Arrays.asList(stage2Spec));
 
-        ITTransitionManager.ISpecificationProvider specificationProvider = new ITTransitionManager.ISpecificationProvider() {
-            final Map<String, ARootDocument> candidates = new HashMap<>() {{
-                put(stage2Spec.getAbsolutePath(), utilStage2.getMainSimulationUnit());
+        ITransitionManager.ISpecificationProvider specificationProvider = new ITransitionManager.ISpecificationProvider() {
+            final Map<Path, ARootDocument> candidates = new HashMap<>() {{
+                put(stage2Spec.toPath(), utilStage2.getMainSimulationUnit());
             }};
 
             @Override
-            public Map<String, ARootDocument> get() {
+            public Map<Path, ARootDocument> get() {
                 return candidates;
             }
 
             @Override
-            public Map<String, ARootDocument> get(String name) {
+            public Map<Path, ARootDocument> get(String name) {
                 return get();
             }
 
@@ -118,16 +115,12 @@ public class TransitionTest {
             }
         };
 
-        ITTransitionManager tm = new TransitionManager() {
-            @Override
-            public ISpecificationProvider getSpecificationProvider() {
-                return specificationProvider;
-            }
+        ITransitionManager tm = new TransitionManager(specificationProvider) {
 
             @Override
-            public void transfer(Interpreter interpreter, ITTransitionInfo info) throws AnalysisException {
+            public void transfer(Interpreter interpreter, ITTransitionInfo info) {
                 try {
-                    super.transfer(new Interpreter(new DefaultExternalValueFactory(stageOutput2.toFile(), c), this), info);
+                    super.transfer(new Interpreter(interpreter.getLoadFactory().changeWorkingDirectory(stageOutput2, null), this), info);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

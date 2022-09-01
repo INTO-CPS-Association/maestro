@@ -1,7 +1,6 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
@@ -32,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,28 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
             Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
+    BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
+        try {
+
+            switch (source.scalarVariable.causality) {
+
+
+                case Input:
+                    source.breakLink();
+                    target.linkTo(source);
+                    break;
+                case Output:
+                    target.breakLink();
+                    source.linkTo(target);
+                    break;
+                default:
+                    break;
+            }
+
+        } catch (Fmi2Builder.Port.PortLinkException e) {
+            e.printStackTrace();
+        }
+    };
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
         return Stream.of(fixedStepFunc, variableStepFunc, fixedStepTransferFunc).collect(Collectors.toSet());
@@ -171,9 +194,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
                         .collect(Collectors.toSet()));
 
-                //                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
-                // fixme: only add swap instances
-                componentsToPortsWithValues.put(instance, instance.get());
+                componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
             });
 
             // Share
@@ -253,7 +274,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             for (ModelSwapInfo info : swapInfoList) {
                 BooleanVariableFmi2Api swapVar = dynamicScope.store("swapCondition" + index, false);
                 BooleanVariableFmi2Api stepVar = dynamicScope.store("stepCondition" + index, false);
-                DoubleVariableFmi2Api currentCommunicationTimeOffset= dynamicScope.store("jac_current_communication_point_offset" + index, 0.0);
+                DoubleVariableFmi2Api currentCommunicationTimeOffset = dynamicScope.store("jac_current_communication_point_offset" + index, 0.0);
                 modelSwapConditions.put(info, Triple.of(swapVar, stepVar, currentCommunicationTimeOffset));
                 index++;
             }
@@ -319,39 +340,39 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     //  else if instance has source ports
                     //      inst.setLinked()
 
+                    Predicate<PortFmi2Api> onlyInputs = p -> p.scalarVariable.causality == Fmi2ModelDescription.Causality.Input;
+
+
                     Set<Fmi2SimulationEnvironment.Relation> swapRelations = env.getModelSwapRelations();
-                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoSource =
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoOutput =
                             env.getModelSwaps().stream().filter(e -> e.getKey().equals(instance.getName())).findFirst();
-                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoTarget =
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoInput =
                             env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(instance.getName())).findFirst();
 
-                    if (swapInfoSource.isPresent()) {
-                        if (instance.getPorts().stream().anyMatch(port -> port.getSourcePort() != null)) {
-                            PredicateFmi2Api swapPredicate = modelSwapConditions.get(swapInfoSource.get().getValue()).getLeft().toPredicate();
+                    if (swapInfoOutput.isPresent()) {
+                        if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
+                            PredicateFmi2Api swapPredicate = modelSwapConditions.get(swapInfoOutput.get().getValue()).getLeft().toPredicate();
                             dynamicScope.enterIf(swapPredicate.not());
                             instance.setLinked();
                             dynamicScope.leave();
                         }
-                    } else if (swapInfoTarget.isPresent()) {
-                        instance.getPorts().forEach(port -> {
+                    } else if (swapInfoInput.isPresent()) {
+                        instance.getPorts().stream().filter(onlyInputs).forEach(port -> {
                             PortFmi2Api sourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
                             if (sourcePort != null) {
-                                try {
-                                    sourcePort.linkTo(port);
-                                } catch (Fmi2Builder.Port.PortLinkException e) {
-                                    e.printStackTrace();
-                                }
+                                relinkPorts.accept(sourcePort, port);
                             }
                         });
 
-                        if (instance.getPorts().stream().anyMatch(port -> port.getSourcePort() != null)) {
-                            PredicateFmi2Api stepPredicate = modelSwapConditions.get(swapInfoTarget.get().getValue()).getMiddle().toPredicate();
+                        if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
+                            PredicateFmi2Api stepPredicate = modelSwapConditions.get(swapInfoInput.get().getValue()).getMiddle().toPredicate();
                             dynamicScope.enterIf(stepPredicate);
                             instance.setLinked();
                             dynamicScope.leave();
                         }
-                    } else if (instance.getPorts().stream().anyMatch(port -> getSwapSourcePort(port, swapRelations, fmuInstances) != null)) {
-                        instance.getPorts().forEach(port -> {
+                    } else if (instance.getPorts().stream().filter(onlyInputs)
+                            .anyMatch(port -> getSwapSourcePort(port, swapRelations, fmuInstances) != null)) {
+                        instance.getPorts().stream().filter(onlyInputs).forEach(port -> {
                             PortFmi2Api swapSourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
 
                             if (swapSourcePort != null) {
@@ -365,11 +386,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                     port.breakLink();
                                 }
 
-                                try {
-                                    swapSourcePort.linkTo(port);
-                                } catch (Fmi2Builder.Port.PortLinkException e) {
-                                    e.printStackTrace();
-                                }
+                                relinkPorts.accept(swapSourcePort, port);
 
                                 dynamicScope.enterIf(swapPredicate);
                                 instance.setLinked(port);
@@ -379,7 +396,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                                 instance.setLinked(port);
                             }
                         });
-                    } else if (instance.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
+                    } else if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
                         instance.setLinked();
                     }
                 });

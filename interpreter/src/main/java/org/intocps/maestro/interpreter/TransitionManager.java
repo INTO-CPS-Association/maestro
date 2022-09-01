@@ -8,12 +8,18 @@ import org.intocps.maestro.ast.node.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class TransitionManager implements ITTransitionManager {
+public class TransitionManager implements ITransitionManager {
     final static Logger logger = LoggerFactory.getLogger(TransitionManager.class);
+    private final ISpecificationProvider specificationProvider;
+
+    public TransitionManager(ISpecificationProvider specificationProvider) {
+        this.specificationProvider = specificationProvider;
+    }
 
     @Override
     public ITTransitionInfo getTransferInfo(ATransferStm node, Context ctxt, String transferToName) throws AnalysisException {
@@ -21,9 +27,9 @@ public class TransitionManager implements ITTransitionManager {
         ISpecificationProvider provider = getSpecificationProvider();
         if (provider != null) {
             logger.trace("Transfer look for specifications");
-            Map<String, ARootDocument> candidates = transferToName == null ? provider.get() : provider.get(transferToName);
+            Map<Path, ARootDocument> candidates = transferToName == null ? provider.get() : provider.get(transferToName);
             logger.trace("Transfer {} candidates found", candidates.size());
-            for (Map.Entry<String, ARootDocument> candidate : candidates.entrySet()) {
+            for (Map.Entry<Path, ARootDocument> candidate : candidates.entrySet()) {
 
                 Map<String, PType> externals = extractExternals(candidate.getValue());
 
@@ -39,7 +45,13 @@ public class TransitionManager implements ITTransitionManager {
                     return new ITTransitionInfo() {
                         @Override
                         public String describe() {
-                            return candidate.getKey();
+                            return candidate.getKey().toString();
+                        }
+
+                        @Override
+                        public Path workingDirectory() {
+                            //we set the candidate parent file as the working directory
+                            return candidate.getKey().getParent();
                         }
 
                         @Override
@@ -132,7 +144,7 @@ public class TransitionManager implements ITTransitionManager {
 
     @Override
     public ISpecificationProvider getSpecificationProvider() {
-        return null;
+        return specificationProvider;
     }
 }
 
