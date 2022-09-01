@@ -55,7 +55,7 @@ public class MablCppCodeGenerator {
 
 
         String[] libraries = {"DataWriter", "Logger", "SimFmi2", "SimMath", "MEnv", "BooleanLogic", "DataWriterConfig", "unzip", "FmiComponentState",
-                "VariableStep", "VariableStepConfig", "uri", "MaestroRunTimeException"};
+                "VariableStep", "VariableStepConfig", "uri", "MaestroRunTimeException", "SimulationControl"};
 
         for (String libraryName : libraries) {
             for (String ext : new String[]{"cpp", "c", "h"}) {

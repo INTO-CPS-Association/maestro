@@ -127,7 +127,7 @@ public class Maestro2ScenarioController {
         File zipDir = Files.createTempDirectory(null).toFile();
         try {
             ErrorReporter reporter = new ErrorReporter();
-            Maestro2Broker broker = new Maestro2Broker(zipDir, reporter);
+            Maestro2Broker broker = new Maestro2Broker(zipDir, reporter, () -> false);
 
             SigverSimulateRequestBody requestBody = new SigverSimulateRequestBody(executableModel.getExecutionParameters().getStartTime(),
                     executableModel.getExecutionParameters().getEndTime(), Map.of(), false, 0d,

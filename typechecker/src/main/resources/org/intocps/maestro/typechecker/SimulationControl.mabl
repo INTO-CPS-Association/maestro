@@ -1,0 +1,4 @@
+module SimulationControl
+{
+     bool stopRequested();
+}

@@ -206,7 +206,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return globalFmiStatus;
     }
 
-    private IntVariableFmi2Api storeStatusVariable(ScopeFmi2Api rootScope, String name, int errorCode){
+    private IntVariableFmi2Api storeStatusVariable(ScopeFmi2Api rootScope, String name, int errorCode) {
         return rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(name), errorCode);
     }
 
@@ -578,6 +578,10 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
     public DataWriter getDataWriter() {
         return load("DataWriter", runtime -> new DataWriter(this, runtime));
+    }
+
+    public SimulationControl getSimulationControl() {
+        return load("SimulationControl", runtime -> new SimulationControl(this, runtime));
     }
 
     public ConsolePrinter getConsolePrinter() {

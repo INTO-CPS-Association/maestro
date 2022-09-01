@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -43,10 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,13 +72,12 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/upload/{sessionId}", method = RequestMethod.POST)
     public void uploadFile(@PathVariable String sessionId,
-            @ApiParam(value = "File", required = true) @RequestParam("fieldFile") MultipartFile file) throws IOException {
-        throw new NotImplementedException("/upload/{sessionId} has not been implemented.");
-        //        try (InputStream is = file.getInputStream()) {
-        //            logger.debug("Uploaded file: {}", file.getOriginalFilename());
-        //            File targetFile = new File(sessions.get(sessionId).getResultRoot(), file.getOriginalFilename());
-        //            IOUtils.copy(is, new FileOutputStream(targetFile));
-        //        }
+            @ApiParam(value = "File", required = true) @RequestParam("file") MultipartFile file) throws IOException {
+        try (InputStream is = file.getInputStream()) {
+            logger.debug("Uploaded file: {}", file.getOriginalFilename());
+            File targetFile = new File(sessionController.getSessionLogic(sessionId).getRootDirectory(), file.getOriginalFilename());
+            IOUtils.copy(is, new FileOutputStream(targetFile));
+        }
 
     }
 
@@ -121,8 +118,7 @@ public class Maestro2SimulationController {
         //        logger.debug("Got initial data: {}", new ObjectMapper().writeValueAsString(body1));
         logger.debug("Got initial data");
         SessionLogic logic = sessionController.getSessionLogic(sessionId);
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-                false);
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.writeValue(new File(logic.rootDirectory, "initialize.json"), body);
 
         if (body == null) {
@@ -238,7 +234,7 @@ public class Maestro2SimulationController {
             String dumpDirectory = logic.rootDirectory.getAbsolutePath();
             List<String> arguments = new ArrayList<>(
                     List.of("cliMain", "import", "-output", dumpDirectory, "--dump-intermediate", "sg1", initializeJsonPath, simulateJsonPath, "-i",
-                            "-v", "FMI2"));
+                            "-v", "FMI2", "--fmu-search-path", sessionController.getSessionLogic(sessionId).getRootDirectory().getAbsolutePath()));
 
             List<String> error = new ArrayList<>();
             List<String> out = new ArrayList<>();
@@ -276,13 +272,12 @@ public class Maestro2SimulationController {
 
     }
 
-    @RequestMapping(value = "/stopsimulation/{sessionId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/stopsimulation/{sessionId}", method = {RequestMethod.POST, RequestMethod.GET})
     public void stop(@PathVariable String sessionId) {
-        throw new NotImplementedException("/stopsimulation/{sessionId} has not been implemented.");
-        //sessionController.getSessionLogic(sessionId).setStatus(SessionLogic.SessionStatus.Stopping);
-        //        if (sessions.containsKey(sessionId)) {
-        //            sessions.get(sessionId).stopSimulation();
-        //        }
+        SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
+        if (sessionLogic != null) {
+            sessionLogic.setStopRequested(true);
+        }
     }
 
     @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET, produces = "text/csv")
@@ -360,11 +355,6 @@ public class Maestro2SimulationController {
         return null;
     }
 
-    @FunctionalInterface
-    private interface IBuildAndRun {
-        void apply(Maestro2Broker broker) throws Exception;
-    }
-
     private StatusModel runSimulation(IBuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
         mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
 
@@ -373,8 +363,9 @@ public class Maestro2SimulationController {
         long postSimTime;
         logic.setStatus(SessionLogic.SessionStatus.Simulating);
 
+        logic.setStopRequested(false);
         preSimTime = System.currentTimeMillis();
-        func.apply(new Maestro2Broker(logic.rootDirectory, reporter));
+        func.apply(new Maestro2Broker(logic.rootDirectory, reporter, () -> logic.isStopRequested()));
         postSimTime = System.currentTimeMillis();
         logic.setExecTime(postSimTime - preSimTime);
 
@@ -393,6 +384,11 @@ public class Maestro2SimulationController {
         return new StatusModel("Simulation completed", sessionId, 0,
                 reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
                 reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+    }
+
+    @FunctionalInterface
+    private interface IBuildAndRun {
+        void apply(Maestro2Broker broker) throws Exception;
     }
 
     //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)

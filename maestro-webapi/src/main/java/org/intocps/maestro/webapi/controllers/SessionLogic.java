@@ -11,6 +11,7 @@ public class SessionLogic {
      * Whether to run the co-simulation internally via CLI or not. Disallows websocket.
      */
     public boolean cliExecution = false;
+    boolean stopRequested = false;
     private InitializationData initializationData;
     private WebSocketSession socket;
     private SessionStatus status = SessionStatus.Unitialized;
@@ -20,6 +21,18 @@ public class SessionLogic {
         rootDirectory.mkdir();
         this.rootDirectory = rootDirectory;
 
+    }
+
+    public boolean isStopRequested() {
+        return stopRequested;
+    }
+
+    public void setStopRequested(boolean stopRequested) {
+        this.stopRequested = stopRequested;
+    }
+
+    public File getRootDirectory() {
+        return rootDirectory;
     }
 
     public boolean getCliExecution() {
