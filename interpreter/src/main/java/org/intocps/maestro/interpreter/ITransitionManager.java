@@ -4,9 +4,10 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.ATransferStm;
 
+import java.nio.file.Path;
 import java.util.Map;
 
-public interface ITTransitionManager {
+public interface ITransitionManager {
 
     /**
      * Check if the manager has a new spec available that is type compatible for transfer
@@ -47,6 +48,13 @@ public interface ITTransitionManager {
         public String describe();
 
         /**
+         * Returns a path to the working directory for this transision
+         *
+         * @return the path to the working directory
+         */
+        Path workingDirectory();
+
+        /**
          * The context for which interpretation of the specification is valid
          *
          * @return a context with the external state variables of the {@link #getSpecification()}
@@ -70,17 +78,17 @@ public interface ITTransitionManager {
         /**
          * Get possible specifications
          *
-         * @return a map of identifier to specification
+         * @return a map of path of the specification to the specification
          */
-        Map<String, ARootDocument> get();
+        Map<Path, ARootDocument> get();
 
         /**
          * Get possible specifications
          *
          * @param name a name used as a discovery filter
-         * @return a map of identifier to specification
+         * @return a map of path of the specification to the specification
          */
-        Map<String, ARootDocument> get(String name);
+        Map<Path, ARootDocument> get(String name);
 
         /**
          * Removes a specification. After this it must not be returned by either {@link #get()} or {@link #get(String)}

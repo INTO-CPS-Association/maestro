@@ -10,8 +10,9 @@ import java.time.Instant;
 
 public class MableInterpreter {
 
+
     final static Logger logger = LoggerFactory.getLogger(MableInterpreter.class);
-    final ITTransitionManager transitionManager;
+    final ITransitionManager transitionManager;
     private final DefaultExternalValueFactory loadFactory;
 
 
@@ -19,7 +20,7 @@ public class MableInterpreter {
         this(loadFactory, null);
     }
 
-    public MableInterpreter(DefaultExternalValueFactory loadFactory, ITTransitionManager transitionManager) {
+    public MableInterpreter(DefaultExternalValueFactory loadFactory, ITransitionManager transitionManager) {
         this.loadFactory = loadFactory;
         this.transitionManager = transitionManager;
     }

@@ -19,15 +19,18 @@ import java.util.stream.Collectors;
 public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final IExternalValueFactory loadFactory;
-    private final ITTransitionManager transitionManager;
-
+    private final ITransitionManager transitionManager;
     public Interpreter(IExternalValueFactory loadFactory) {
         this(loadFactory, null);
     }
 
-    public Interpreter(IExternalValueFactory loadFactory, ITTransitionManager transitionManager) {
+    public Interpreter(IExternalValueFactory loadFactory, ITransitionManager transitionManager) {
         this.loadFactory = loadFactory;
         this.transitionManager = transitionManager;
+    }
+
+    public IExternalValueFactory getLoadFactory() {
+        return loadFactory;
     }
 
     List<Value> evaluate(List<? extends PExp> list, Context ctxt) throws AnalysisException {
@@ -564,7 +567,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     public Value caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
         if (transitionManager != null) {
 
-            ITTransitionManager.ITTransitionInfo info = transitionManager.getTransferInfo(node, question,
+            ITransitionManager.ITTransitionInfo info = transitionManager.getTransferInfo(node, question,
                     node.getNames().stream().limit(1).map(AStringLiteralExp::getValue).findFirst().orElse(null));
             if (info != null) {
 
