@@ -21,7 +21,7 @@ public class DirectorySpecificationProvider implements ITransitionManager.ISpeci
     final Function<File, ARootDocument> parseAndCheck;
     final Map<Path, ARootDocument> candidates = new HashMap<>();
     final Set<Path> removedCandidates = new HashSet<>();
-    final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob::**/*.mabl");
+    final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.mabl");
     private final int checkFrequency;
     long lastChecked;
 
