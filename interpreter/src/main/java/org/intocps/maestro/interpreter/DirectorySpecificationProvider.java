@@ -23,28 +23,30 @@ public class DirectorySpecificationProvider implements ITransitionManager.ISpeci
     final Set<Path> removedCandidates = new HashSet<>();
     final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.mabl");
     private final int checkFrequency;
+    private final int minimumStepBeforeOffering;
+    int offeringCounter = 0;
     long lastChecked;
 
     public DirectorySpecificationProvider(File root, Function<File, ARootDocument> parseAndCheck) {
-        this(root, parseAndCheck, 10);
+        this(root, parseAndCheck, 10, 0);
     }
 
-    public DirectorySpecificationProvider(File root, Function<File, ARootDocument> parseAndCheck, int checkFrequency) {
+    public DirectorySpecificationProvider(File root, Function<File, ARootDocument> parseAndCheck, int checkFrequency, int minimumStepBeforeOffering) {
         this.root = root;
         this.parseAndCheck = parseAndCheck;
         this.checkFrequency = checkFrequency;
+        this.minimumStepBeforeOffering = minimumStepBeforeOffering;
     }
 
     @Override
     public Map<Path, ARootDocument> get() {
-
         if (System.currentTimeMillis() - lastChecked > (checkFrequency * 1000L)) {
             if (root != null && root.exists()) {
                 try (Stream<Path> walker = Files.walk(root.toPath())) {
                     List<Path> specPaths = walker.filter(Files::isRegularFile).filter(pathMatcher::matches).collect(Collectors.toList());
 
                     for (Path path : specPaths) {
-                        if (!removedCandidates.contains(path.toString())) {
+                        if (!removedCandidates.contains(path) && !candidates.containsKey(path)) {
                             try {
                                 logger.debug("Processing path: {}", path);
                                 ARootDocument spec = parseAndCheck.apply(path.toFile());
@@ -55,7 +57,7 @@ public class DirectorySpecificationProvider implements ITransitionManager.ISpeci
                                     logger.debug("Processing path: {}. Invalid spec path.", path);
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                logger.error("Failed to parse candidate: " + path, e);
                             }
                         }
                     }
@@ -65,6 +67,14 @@ public class DirectorySpecificationProvider implements ITransitionManager.ISpeci
             }
             lastChecked = System.currentTimeMillis();
         }
+
+        if (!candidates.isEmpty()) {
+            offeringCounter++;
+            if (minimumStepBeforeOffering > offeringCounter) {
+                return new HashMap<>();
+            }
+        }
+
         return candidates;
     }
 
@@ -78,6 +88,7 @@ public class DirectorySpecificationProvider implements ITransitionManager.ISpeci
         candidates.entrySet().stream().filter(map -> map.getValue().equals(specification)).map(Map.Entry::getKey).findFirst().ifPresent(key -> {
             candidates.remove(key);
             removedCandidates.add(key);
+            offeringCounter = 0;
         });
     }
 }

@@ -124,7 +124,7 @@ public class MablCliUtil {
         return !hasErrorAndPrintErrorsAndWarnings(verbose, reporter);
     }
 
-    public void setTransitionPath(Path transitionPath) {
+    public void setTransitionPath(Path transitionPath, int transitionCheckFrequency, int transitionMinStep) {
 
         ITransitionManager.ISpecificationProvider specificationProvider = new DirectorySpecificationProvider(transitionPath.toFile(), (f) -> {
             Mabl m = new Mabl(f.getParentFile(), f.getParentFile(), mabl.getSettings());
@@ -138,7 +138,7 @@ public class MablCliUtil {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, transitionCheckFrequency, transitionMinStep);
 
         tm = new TransitionManager(specificationProvider) {
 

@@ -49,6 +49,13 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = "-transition", description = "Path to a directory with a transition specification")
     Path transitionPath;
 
+    @CommandLine.Option(names = {"-thz", "--transition-check-frequency"}, description = "The interval which transition spec will be " + "checked at.")
+    int transitionCheckFrequency;
+    @CommandLine.Option(names = {"-tms", "--transition-minimum-step"},
+            description = "The minimum step per for each none empty offering of " + "candidates. It reset once a candidate is removed" +
+                    "checked at.")
+    int transitionMinStep;
+
     private static void waitForProfiling(int wait) throws InterruptedException {
         System.out.printf("Initial wait activated, waiting... %d", wait);
         for (int i = 0; i < wait; i++) {
@@ -98,7 +105,7 @@ public class InterpreterCmd implements Callable<Integer> {
 
         try {
             if (transitionPath != null) {
-                util.setTransitionPath(transitionPath);
+                util.setTransitionPath(transitionPath, transitionCheckFrequency, transitionMinStep);
             }
             if (runtime != null) {
                 util.interpret(runtime);
