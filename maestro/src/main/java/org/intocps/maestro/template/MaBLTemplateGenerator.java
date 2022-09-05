@@ -132,8 +132,9 @@ public class MaBLTemplateGenerator {
 
         if (faultInject != null) {
             AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
+            ATransferAsStm transferAsStm = new ATransferAsStm(Arrays.asList(newAStringLiteralExp(instanceLexName)));
             PStm ficomp = newVariable(faultInject.lexName, newANameType("FMI2Component"), newNullExp());
-            rootStatements.addAll(Arrays.asList(fiToEnvMapping, ficomp));
+            rootStatements.addAll(Arrays.asList(fiToEnvMapping, transferAsStm, ficomp));
             tryBlockStatements.addAll(Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
                     newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
                             Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
