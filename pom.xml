@@ -686,7 +686,7 @@
             </activation>
             <distributionManagement>
                 <snapshotRepository>
-                    <id>au-artifactory-snapshots</id>
+                    <id>overture.au.dk</id>
                     <name>overture.au.dk-snapshots</name>
                     <url>https://overture.au.dk/artifactory/into-cps</url>
                 </snapshotRepository>

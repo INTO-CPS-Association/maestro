@@ -12,7 +12,7 @@ on:
 
 env:
   JAVA_VERSION: 11.0.3
-  SERVER_ID: snapshots
+  SERVER_ID: overture.au.dk
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
