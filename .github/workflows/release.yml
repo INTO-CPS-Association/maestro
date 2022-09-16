@@ -1,0 +1,294 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Release new version
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseversion:
+        description: 'Release version'
+#        required: true
+#        default: '2.4.0'
+#      snapshotversion:
+#        description: 'Next snapshot version'
+#        required: true
+#        default: '2.4.1'
+
+env:
+  JAVA_VERSION: 11.0.3
+  SERVER_ID: ossrh
+  PYTHON_VERSION: '3.9.9'
+
+
+
+jobs:
+
+  version_change:
+    name: Create version and tag
+    runs-on: ubuntu-latest
+    outputs:
+      build_tag: ${{ steps.tagging.outputs.build_tag }} # map step output to job output
+      build_tag_created: ${{ steps.tagging.outputs.build_tag_created }}
+      build_version: ${{ steps.tagging.outputs.build_version }} # map step output to job output
+      build_branch: ${{ steps.tagging.outputs.build_branch }}
+      previous_release_tag: ${{ steps.tagging.outputs.previous_release_tag }}
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: setup git config
+        run: |
+          # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Maven download
+        run: mvn validate dependency:resolve-plugins -B --quiet
+
+      - name: Set release version
+        id: tagging
+        run: |
+          # make sure we are at the head of development
+          NEW_RELEASE_VERSION=${{ github.event.inputs.releaseversion }}
+          echo "Input version is $NEW_RELEASE_VERSION"
+          # remove all but the release version
+          mvn -B --quiet versions:set-property -Dproperty=changelist "-DnewVersion="
+          mvn -B --quiet versions:set-property -Dproperty=sha1 "-DnewVersion="
+          # detect if a override version is given
+          if [ "$NEW_RELEASE_VERSION" == "" ]; then
+            echo "Input version not set. Use current version"
+            NEW_RELEASE_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          fi
+          # set the version to be released
+          NEW_RELEASE_TAG="Release/${NEW_RELEASE_VERSION}"
+          NEW_RELEASE_BRANCH="prepare-release/${NEW_RELEASE_VERSION}"
+          
+          echo "::set-output name=build_tag::${NEW_RELEASE_TAG}"
+          echo "::set-output name=build_version::${NEW_RELEASE_VERSION}"
+          echo "::set-output name=build_branch::${NEW_RELEASE_BRANCH}"
+          PREVIOUS_RELEASE_TAG=$(git tag | sort -V | tail -1)
+          echo "::set-output name=previous_release_tag::${PREVIOUS_RELEASE_TAG}"
+          
+          
+          echo "release version is $NEW_RELEASE_VERSION"
+          echo "Tag release version is now $NEW_RELEASE_TAG"
+          mvn -B --quiet versions:set-property -Dproperty=revision "-DnewVersion=${NEW_RELEASE_VERSION}"
+          git checkout -b $NEW_RELEASE_BRANCH
+          git push -f --set-upstream origin $NEW_RELEASE_BRANCH
+          git add pom.xml
+          git commit -m "New release version ${NEW_RELEASE_VERSION}"
+          git tag -a "${NEW_RELEASE_TAG}" -m "Release version ${NEW_RELEASE_VERSION}"
+          git push origin "${NEW_RELEASE_TAG}"
+          echo "::set-output name=build_tag_created::YES"
+          # prepare next snapshot for development
+          mvn  -B --quiet ci-friendly-flatten:version -Dprefix.regex="Release/*"
+          SNAPSHOTVERSION=$(cat revision.txt)
+          mvn -B --quiet versions:set-property -Dproperty=revision "-DnewVersion=$SNAPSHOTVERSION"
+          mvn -B --quiet versions:set-property -Dproperty=changelist "-DnewVersion=-SNAPSHOT"
+          mvn -B --quiet versions:set-property -Dproperty=sha1 "-DnewVersion="
+          git add pom.xml
+          git commit -m "Next snapshot version $SNAPSHOTVERSION"
+          git push
+
+
+  build:
+    name: Java and Native Compilation
+    runs-on: ${{ matrix.os }}
+    needs: version_change
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ] # ubuntu-latest, , macos-latest
+        platform: [ x64 ] #x32, x64 ]
+        exclude:
+          - os: macos-latest
+            platform: x32
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v1.4.3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up maven
+        uses: stCarolas/setup-maven@v4.2
+        with:
+          maven-version: ${{ ENV.MAVEN_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python Pipenv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
+
+      - name: Put MSYS2_MinGW64 on PATH for windows
+        if: ${{matrix.os == env.WINDOWS_VERSION }}
+        # there is not yet an environment variable for this path from msys2/setup-msys2
+        run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - uses: actions/checkout@v2
+
+      - name: Maven Build
+        run: mvn -B package --file pom.xml -DskipTests -fae
+
+      - name: Maven Test
+        #        if: matrix.os == env.WINDOWS_VERSION
+        #        shell: msys2 {0}
+        run: mvn -Pinclude-fullSpecCppTest test
+
+      - name: Install Python Dependencies
+        run: |
+          cd external_tester
+          pipenv install
+
+      - name: CLI Test
+        timeout-minutes: 5
+        run: |
+          cd external_tester
+          pipenv run python maestro_cli_test.py --includeSlowTests
+
+      - name: Web API Test
+        timeout-minutes: 2
+        run: |
+          cd external_tester
+          pipenv run python webapi_test.py
+
+      - name: Legacy CLI Test
+        timeout-minutes: 2
+        run: |
+          cd external_tester
+          pipenv run python cli_legacy_test.py
+
+
+  final:
+    name: Build and Deploy Combined Release
+    runs-on: ubuntu-latest
+
+    needs: [ version_change , build ]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          ref: ${{ needs.version_change.outputs.build_tag }}
+
+      - id: install-secret-key
+        name: Install gpg secret key
+        run: |
+          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: Environment variables
+        run: echo ${{ env.SERVER_ID }}
+
+      - name: Deploy server
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          server-id: ${{ env.SERVER_ID }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+
+      - name: Maven download
+        run: mvn validate dependency:resolve-plugins -B --quiet
+
+      - name: Maven Build Final
+        run: mvn -B package --file pom.xml -Dmaven.test.skip=true
+
+      - name: Maven Deploy RELEASE
+        # If autorelease is false then it must be released from here: https://oss.sonatype.org/#stagingRepositories
+        run: mvn -B deploy -Dchangelist= -Dsha1= -Dmaven.test.skip=true -DskipITs -fae -Prelease -DautoReleaseAfterClose=true
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+
+
+      - name: Create changelog config
+        run: echo '{"max_back_track_time_days":1095}' > configuration.json
+
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        with:
+          configuration: "configuration.json"
+          toTag: ${{ needs.version_change.outputs.build_tag }}
+          fromTag: ${{ needs.version_change.outputs.previous_release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version_change.outputs.build_tag }}
+          release_name: ${{ needs.version_change.outputs.build_tag }}
+          body: |
+            Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.fmi/jnifmuapi/${{ needs.version_change.outputs.build_version }}/jar:
+
+            ```
+            <dependency>
+              <groupId>org.into-cps.fmi</groupId>
+              <artifactId>jnifmuapi</artifactId>
+              <version>${{ needs.version_change.outputs.build_version }}</version>
+            </dependency>
+            ```
+
+            ### Things that changed in this release
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+
+  rollback:
+    name: Rollback on error
+    runs-on: ubuntu-latest
+
+    needs: [ version_change , build, final ]
+    if: always() && (needs.version_change.result == 'failure' || needs.build.result == 'failure' || needs.final.result == 'failure')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Rolling back tag
+        continue-on-error: true
+        if: needs.version_change.outputs.build_tag_created == 'YES'
+        # we don't want to accidentally delete an existing tag from an existing release
+        run: git push --delete origin ${{ needs.version_change.outputs.build_tag }}
+
+      - name: Rolling back branch
+        continue-on-error: true
+        run: git push origin --delete ${{ needs.version_change.outputs.build_branch }}
+
+  cleanup:
+    name: Update development and master with new release
+    runs-on: ubuntu-latest
+
+    needs: [ final,version_change ]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Merging release
+        run: |
+          git fetch origin ${{ needs.version_change.outputs.build_branch }}
+          git checkout development
+          git merge origin/${{ needs.version_change.outputs.build_branch }}
+          git push
+          git checkout master
+          git reset --hard ${{ needs.version_change.outputs.build_tag }}
+          git push -f origin master
