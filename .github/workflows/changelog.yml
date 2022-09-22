@@ -45,7 +45,32 @@ jobs:
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v2.9.0
         with:
-          configuration: "configuration.json"
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+              "categories": [
+                {
+                    "title": "## 🚀 Features",
+                    "labels": ["feature"]
+                },
+                {
+                    "title": "## 🐛 Fixes",
+                    "labels": ["fix"]
+                },
+                {
+                    "title": "## 🧪 Tests",
+                    "labels": ["test"]
+                },
+                {
+                    "title": "## 💬 Other",
+                    "labels": ["other"]
+                },
+                {
+                    "title": "## 📦 Dependencies",
+                    "labels": ["dependencies"]
+                }
+              ]
+            }
           toTag: Release/2.2.1
           fromTag: Manual-Release/2.2.0
         env:
