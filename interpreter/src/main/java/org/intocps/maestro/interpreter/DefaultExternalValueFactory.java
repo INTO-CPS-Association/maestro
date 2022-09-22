@@ -13,6 +13,7 @@ import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
 import org.intocps.maestro.interpreter.values.derivativeestimator.DerivativeEstimatorValue;
 import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 import org.intocps.maestro.interpreter.values.modeltransition.ModelTransitionValue;
+import org.intocps.maestro.interpreter.values.simulationcontrol.SimulationControlValue;
 import org.intocps.maestro.interpreter.values.utilities.ArrayUtilValue;
 import org.intocps.maestro.interpreter.values.variablestep.VariableStepValue;
 import org.reflections.Reflections;
@@ -81,6 +82,26 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
                 new ModelTransitionLifecycleHandler());
     }
 
+    public void addLifecycleHandler(
+            Class<? extends IValueLifecycleHandler> handlerClass) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        IValueLifecycleHandler.ValueLifecycle annotation = handlerClass.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class);
+        if (annotation != null) {
+            IValueLifecycleHandler value = instantiateHandler(workingDirectory, handlerClass);
+            if (value != null) {
+                lifecycleHandlers.put(annotation.name(), value);
+            }
+        }
+    }
+
+    public void addLifecycleHandler(IValueLifecycleHandler handler) {
+        IValueLifecycleHandler.ValueLifecycle annotation = handler.getClass().getAnnotation(IValueLifecycleHandler.ValueLifecycle.class);
+        if (annotation != null) {
+            if (handler != null) {
+                lifecycleHandlers.put(annotation.name(), handler);
+            }
+        }
+    }
+
     private IValueLifecycleHandler instantiateHandler(File workingDirectory,
             Class<? extends IValueLifecycleHandler> handler) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         IValueLifecycleHandler value;
@@ -109,7 +130,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         if (known != null) {
             return known;
         } else {
-            List<Class<? extends IValueLifecycleHandler>> handlers = scanForLifecucleHandlers(IValueLifecycleHandler.class);
+            List<Class<? extends IValueLifecycleHandler>> handlers = scanForLifecycleHandlers(IValueLifecycleHandler.class);
 
             for (Class<? extends IValueLifecycleHandler> handler : handlers.stream()
                     .filter(h -> !this.lifecycleHandlers.containsKey(h.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name()))
@@ -131,7 +152,7 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         return null;
     }
 
-    private <T> List<Class<? extends T>> scanForLifecucleHandlers(Class<T> type) {
+    private <T> List<Class<? extends T>> scanForLifecycleHandlers(Class<T> type) {
         Reflections reflections = new Reflections("org.intocps.maestro", this.getClass().getClassLoader(), new SubTypesScanner());
 
         try {
@@ -390,6 +411,14 @@ public class DefaultExternalValueFactory implements IExternalValueFactory {
         public Either<Exception, Value> instantiate(List<Value> args) {
             String transitionPath = ((StringValue) args.get(0)).getValue();
             return Either.right(new ModelTransitionValue(transitionPath));
+        }
+    }
+
+    @IValueLifecycleHandler.ValueLifecycle(name = "SimulationControl")
+    public static class SimulationControlDefaultLifecycleHandler extends BaseLifecycleHandler {
+        @Override
+        public Either<Exception, Value> instantiate(List<Value> args) {
+            return Either.right(new SimulationControlValue());
         }
     }
 

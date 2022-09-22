@@ -61,7 +61,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
-            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic").collect(Collectors.toList());
+            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl").collect(Collectors.toList());
     BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
         try {
 
@@ -183,6 +183,9 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
             dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
 
+            // Create simulation control to allow for user interactive loop stopping
+            SimulationControl simulationControl = builder.getSimulationControl();
+
             // Create the iteration predicate
             PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(currentStepSize).lessThan(endTime);
 
@@ -281,6 +284,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
+            	ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
+                stoppingThenScope.add(new AErrorStm(newAStringLiteralExp("Simulation stopped by user")));
+                stoppingThenScope.leave();
+                
                 //mark a safe point for a transfer to another specification
                 dynamicScope.markTransferPoint();
 

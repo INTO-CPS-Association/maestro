@@ -83,6 +83,7 @@ add_executable(sim
     libs/MEnv.cpp
     libs/unzip.cpp
     libs/VariableStep.cpp
+    libs/SimulationControl.cpp
     co-sim.cxx
     main.cpp)
 

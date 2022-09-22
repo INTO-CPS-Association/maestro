@@ -12,12 +12,15 @@ on:
 
 env:
   JAVA_VERSION: 11.0.3
-  SERVER_ID: snapshots
+  SERVER_ID: overture.au.dk
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
   UBUNTU_VERSION: 'ubuntu-latest'
   MACOS_VERSION: 'macos-latest'
+
+  MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
 
 
 jobs:
@@ -27,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2019, macos-latest]
+        os: [ ubuntu-latest, windows-2019, macos-latest ]
 
     steps:
 
@@ -59,12 +62,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Maven Build
-        run: mvn "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" "-Dhttp.keepAlive=false" "-Dmaven.wagon.http.pool=false" "-Dmaven.wagon.httpconnectionManager.ttlSeconds=120" -B package --file pom.xml -DskipTests -fae
+        run: mvn -B package --file pom.xml -DskipTests -fae
 
       - name: Maven Test
         #        if: matrix.os == env.WINDOWS_VERSION
         #        shell: msys2 {0}
-        run: mvn "-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn" "-Dhttp.keepAlive=false" "-Dmaven.wagon.http.pool=false" "-Dmaven.wagon.httpconnectionManager.ttlSeconds=120" -Pinclude-fullSpecCppTest test
+        run: mvn -Pinclude-fullSpecCppTest test
 
       #      - name: Maven Test
       #        if: matrix.os != env.WINDOWS_VERSION
@@ -122,14 +125,20 @@ jobs:
       #    python test_simultaneous_simulations.py
 
   deploy:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
-
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Environment variables
         run: echo ${{ env.SERVER_ID }}
+
+      - id: install-secret-key
+        name: Install gpg secret key
+        run: |
+          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -137,8 +146,23 @@ jobs:
           server-id: ${{ env.SERVER_ID }}
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
-      - name: Deploy
-        run: mvn "-Dhttp.keepAlive=false" "-Dmaven.wagon.http.pool=false" "-Dmaven.wagon.httpconnectionManager.ttlSeconds=120" -B -Prelease-sources-javadoc deploy -DskipTests -DskipITs -fae
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+
+      - name: Maven Deploy
+        if: github.event_name == 'push' && (github.ref != 'refs/heads/development' && github.ref != 'refs/heads/master' )
+        run: mvn -P au -B deploy -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g"`  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} -X
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+
+      - name: Maven Deploy SNAPSHOT
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
+        run: mvn -P au -B deploy -Dsha1=  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        env:
+          MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+
+
