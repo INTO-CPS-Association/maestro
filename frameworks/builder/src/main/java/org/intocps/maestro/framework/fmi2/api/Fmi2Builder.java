@@ -15,6 +15,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
     SETTINGS getSettings();
 
+    IFunctionBuilder getFunctionBuilder();
+
     /**
      * Returns whether the build has been used
      *
@@ -81,6 +83,22 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     }
 
     interface NumericValue {
+    }
+
+    interface IFunctionBuilder {
+        IFunctionBuilder setName(String name);
+
+        IFunctionBuilder setReturnType(String name);
+
+        IFunctionBuilder setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+
+        IFunctionBuilder addArgument(String name, Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+
+        IFunctionBuilder useVargs();
+
+        IFunctionBuilder addArgument(String name, String type);
+
+        Fmi2Builder.RuntimeFunction build();
     }
 
     interface RuntimeFunction {

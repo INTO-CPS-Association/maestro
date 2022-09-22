@@ -134,17 +134,17 @@
             <artifactId>mabl2cpp</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.into-cps.maestro.frameworks</groupId>
-            <artifactId>fmi2api</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
             <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro.frameworks</groupId>
+            <artifactId>fmi2api-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

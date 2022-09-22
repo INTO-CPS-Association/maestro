@@ -26,7 +26,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ComponentVariableFmi2ApiTest extends BaseApiTest {
+public class ComponentVariableFmi2ApiTest extends BaseApiAssertTest {
+
 
     @Test
     public void setDebugLoggingTest() throws Exception {

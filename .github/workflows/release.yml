@@ -77,7 +77,7 @@ jobs:
           echo "::set-output name=build_tag::${NEW_RELEASE_TAG}"
           echo "::set-output name=build_version::${NEW_RELEASE_VERSION}"
           echo "::set-output name=build_branch::${NEW_RELEASE_BRANCH}"
-          PREVIOUS_RELEASE_TAG=$(git tag | sort -V | tail -1)
+          PREVIOUS_RELEASE_TAG=$(git tag  | grep Release | sort -V | tail -1)
           echo "::set-output name=previous_release_tag::${PREVIOUS_RELEASE_TAG}"
           
           
@@ -230,9 +230,34 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        uses: mikepenz/release-changelog-builder-action@v3.2.0
         with:
-          configuration: "configuration.json"
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+              "categories": [
+                {
+                    "title": "## 🚀 Features",
+                    "labels": ["feature"]
+                },
+                {
+                    "title": "## 🐛 Fixes",
+                    "labels": ["fix"]
+                },
+                {
+                    "title": "## 🧪 Tests",
+                    "labels": ["test"]
+                },
+                {
+                    "title": "## 💬 Other",
+                    "labels": ["other"]
+                },
+                {
+                    "title": "## 📦 Dependencies",
+                    "labels": ["dependencies"]
+                }
+              ]
+            }
           toTag: ${{ needs.version_change.outputs.build_tag }}
           fromTag: ${{ needs.version_change.outputs.previous_release_tag }}
         env:
@@ -247,7 +272,8 @@ jobs:
           tag_name: ${{ needs.version_change.outputs.build_tag }}
           release_name: ${{ needs.version_change.outputs.build_tag }}
           body: |
-            Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.fmi/jnifmuapi/${{ needs.version_change.outputs.build_version }}/jar:
+            Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.maestro/maestro/${{ needs.version_change.outputs.build_version }}/jar 
+            and https://search.maven.org/artifact/org.into-cps.maestro/maestro-webapi/${{ needs.version_change.outputs.build_version }}/jar:
 
             ```
             <dependency>

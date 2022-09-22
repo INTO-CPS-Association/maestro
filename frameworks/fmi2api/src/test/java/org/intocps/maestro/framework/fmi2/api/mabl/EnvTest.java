@@ -12,7 +12,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EnvTest extends BaseApiTest {
+public class EnvTest extends BaseApiAssertTest {
+
+
     @Test
     public void test() throws AnalysisException, IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();

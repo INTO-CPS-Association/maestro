@@ -156,7 +156,7 @@ jobs:
 
       - name: Maven Deploy
         if: github.event_name == 'push' && (github.ref != 'refs/heads/development' && github.ref != 'refs/heads/master' )
-        run: mvn -P au -B deploy -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g"`  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} 
+        run: mvn -P au -B deploy -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g"`  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}

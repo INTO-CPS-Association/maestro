@@ -1,11 +1,13 @@
 package org.intocps.maestro;
 
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.framework.fmi2.api.mabl.BaseApiTest;
 import org.intocps.maestro.framework.fmi2.api.mabl.ConsolePrinter;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.StringVariableFmi2Api;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Set;
 
-public class ConsolePrinterInterfaceTest extends BaseApiTest {
+public class ConsolePrinterInterfaceTest extends BaseApiTestAssertion {
     private MablApiBuilder builder;
     private DynamicActiveBuilderScope dynamicScope;
 
@@ -59,7 +61,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
     }
 
     @Test
-    public void printRawValuesTest() throws Exception{
+    public void printRawValuesTest() throws Exception {
         int intTestVal = 1;
         double doubleTestVal = 1.0;
         boolean booleanTestVal = true;
@@ -72,12 +74,13 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
         String booleanTestValFormatted = String.format("%b", booleanTestVal);
         String stringTestValFormatted = String.format("%s", stringTestVal);
 
-        String expectedResult =
-                msg.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ").concat(stringTestValFormatted);
+        String expectedResult = msg.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ")
+                .concat(stringTestValFormatted);
 
         ConsolePrinter consolePrinter = builder.getConsolePrinter();
 
-        consolePrinter.println(msg.concat("%d, ").concat("%.1f, ").concat("%b, ").concat("%s"), intTestVal, doubleTestVal, booleanTestVal, stringTestVal);
+        consolePrinter.println(msg.concat("%d, ").concat("%.1f, ").concat("%b, ").concat("%s"), intTestVal, doubleTestVal, booleanTestVal,
+                stringTestVal);
 
         String spec = PrettyPrinter.print(builder.build());
         // Create a stream to hold console output
@@ -120,11 +123,12 @@ public class ConsolePrinterInterfaceTest extends BaseApiTest {
         String stringTestValFormatted = String.format("%s", stringTestVal);
 
         String allValuesConcat =
-                allValues.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ").concat(stringTestValFormatted);
+                allValues.concat(intTestValFormatted + ", ").concat(doubleTestValFormatted + ", ").concat(booleanTestValFormatted + ", ")
+                        .concat(stringTestValFormatted);
 
-        Set<String> toContain = Set.of(integerMsg.concat(intTestValFormatted), doubleMsg.concat(doubleTestValFormatted),
-                booleanMsg.concat(booleanTestValFormatted), stringMsg.concat(stringTestValFormatted), allValuesConcat);
-
+        Set<String> toContain =
+                Set.of(integerMsg.concat(intTestValFormatted), doubleMsg.concat(doubleTestValFormatted), booleanMsg.concat(booleanTestValFormatted),
+                        stringMsg.concat(stringTestValFormatted), allValuesConcat);
 
 
         IntVariableFmi2Api intTestValVar = dynamicScope.store("int_val", intTestVal);
