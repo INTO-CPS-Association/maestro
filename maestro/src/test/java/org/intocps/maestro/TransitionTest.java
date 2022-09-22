@@ -4,15 +4,14 @@ import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
 import org.intocps.maestro.interpreter.*;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -129,6 +128,34 @@ public class TransitionTest {
 
         new MableInterpreter(new DefaultExternalValueFactory(stageOutput.toFile(), c), tm).execute(util.getMainSimulationUnit());
 
+        // check that the two stages was taken
+        Assertions.assertTrue(stageOutput.resolve("outputs.csv").toFile().exists());
+        Assertions.assertTrue(stageOutput2.resolve("outputs.csv").toFile().exists());
+
+        List<List<String>> records0 = readCsv(stageOutput.resolve("outputs.csv").toFile(), 10);
+        Assertions.assertEquals(2, records0.size());
+        Assertions.assertEquals("0.0", records0.get(1).get(0));
+        List<List<String>> records2 = readCsv(stageOutput2.resolve("outputs.csv").toFile(), 100);
+        Assertions.assertTrue(2 < records2.size());
+        Assertions.assertEquals("0.0", records0.get(1).get(0));
+        Assertions.assertTrue(records2.get(0).stream().anyMatch(col -> col.equals("{x3}.crtlInstance3.valve")));
+
+    }
+
+    List<List<String>> readCsv(File path, int rowLimit) throws IOException {
+        List<List<String>> records = new ArrayList<>();
+        int rowCount = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                records.add(Arrays.asList(values));
+                if (rowCount++ > rowLimit - 1) {
+                    break;
+                }
+            }
+        }
+        return records;
     }
 
     class MablCliUtilTesting extends MablCliUtil {
