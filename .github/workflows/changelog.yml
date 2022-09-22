@@ -43,7 +43,7 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        uses: mikepenz/release-changelog-builder-action@v3.2.0
         with:
           configurationJson: |
             {
