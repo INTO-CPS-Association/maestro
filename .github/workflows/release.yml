@@ -18,7 +18,11 @@ on:
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: ossrh
-  PYTHON_VERSION: '3.9.9'
+  PYTHON_VERSION: '3.9.7'
+  MAVEN_VERSION: 3.8.1
+  WINDOWS_VERSION: 'windows-2019'
+  UBUNTU_VERSION: 'ubuntu-latest'
+  MACOS_VERSION: 'macos-latest'
 
 
 
@@ -242,8 +246,14 @@ jobs:
 
             ```
             <dependency>
-              <groupId>org.into-cps.fmi</groupId>
-              <artifactId>jnifmuapi</artifactId>
+              <groupId>org.into-cps.maestro</groupId>
+              <artifactId>maestro</artifactId>
+              <version>${{ needs.version_change.outputs.build_version }}</version>
+            </dependency>
+            
+            <dependency>
+              <groupId>org.into-cps.maestro</groupId>
+              <artifactId>maestro-webapi</artifactId>
               <version>${{ needs.version_change.outputs.build_version }}</version>
             </dependency>
             ```
