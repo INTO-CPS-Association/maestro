@@ -31,7 +31,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-public class DerivativeEstimatorInterfaceTest extends BaseApiTest {
+public class DerivativeEstimatorInterfaceTest extends BaseApiTestAssertion {
     private final Path dirPath = Paths.get("src", "test", "resources", "derivative_estimator_interface");
 
     /**

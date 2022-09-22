@@ -21,6 +21,7 @@
         <module>fmi2</module>
         <module>builder</module>
         <module>fmi2api</module>
+        <module>fmi2api-test</module>
     </modules>
 
     <build>

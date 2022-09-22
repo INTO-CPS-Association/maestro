@@ -19,19 +19,6 @@
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     </properties>
 
-    <!--    <repositories>-->
-    <!--        <repository>-->
-    <!--            <id>overture.au.dk-releases</id>-->
-    <!--            <name>overture.au.dk-releases</name>-->
-    <!--            <url>https://overture.au.dk/artifactory/into-cps</url>-->
-    <!--        </repository>-->
-    <!--        <repository>-->
-    <!--            <id>overture.au.dk-snapshots</id>-->
-    <!--            <name>overture.au.dk-snapshots</name>-->
-    <!--            <url>https://overture.au.dk/artifactory/into-cps</url>-->
-    <!--        </repository>-->
-    <!--    </repositories>-->
-
     <build>
         <plugins>
             <plugin>
@@ -156,6 +143,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro.frameworks</groupId>
+            <artifactId>fmi2api-test</artifactId>
+            <version>2.2.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
