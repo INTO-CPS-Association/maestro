@@ -20,15 +20,36 @@ import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.VoidValue;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
-import org.junit.jupiter.api.Assertions;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public abstract class BaseApiTest {
+    static BiConsumer<Boolean, String> assertTrueFunc = null;
+    static BiConsumer<Boolean, String> assertFalseFunc = null;
+
+    protected BaseApiTest(BiConsumer<Boolean, String> assertTrueFunc, BiConsumer<Boolean, String> assertFalseFunc) {
+
+        BaseApiTest.assertTrueFunc = assertTrueFunc;
+        BaseApiTest.assertFalseFunc = assertFalseFunc;
+
+        if (assertTrueFunc == null || assertFalseFunc == null) {
+            throw new IllegalStateException("Assertions must be set");
+        }
+    }
+
+    public static void assertTrue(boolean condition, String message) {
+        assertTrueFunc.accept(condition, message);
+    }
+
+    public static void assertFalse(boolean condition, String message) {
+        assertFalseFunc.accept(condition, message);
+    }
+
     public static List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {
         List<String> allModules = TypeChecker.getRuntimeModules();
         List<ARootDocument> documents = new ArrayList<>();
@@ -76,7 +97,7 @@ public abstract class BaseApiTest {
             reporter.printErrors(writer);
         }
 
-        Assertions.assertTrue(res, "Type check errors:" + out);
+        assertTrue(res, "Type check errors:" + out);
 
         new MableInterpreter(
                 new DefaultExternalValueFactory(new File("target"), new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(
@@ -84,15 +105,15 @@ public abstract class BaseApiTest {
     }
 
     public static class MDebugAssert {
-        private final MablApiBuilder builder;
+        private final Fmi2Builder builder;
         private final Fmi2Builder.RuntimeModule<PStm> mdebugAssert;
 
-        public MDebugAssert(MablApiBuilder builder, Fmi2Builder.RuntimeModule<PStm> mdebugAssert) {
+        public MDebugAssert(Fmi2Builder builder, Fmi2Builder.RuntimeModule<PStm> mdebugAssert) {
             this.builder = builder;
             this.mdebugAssert = mdebugAssert;
         }
 
-        static public MDebugAssert create(MablApiBuilder builder) {
+        public static MDebugAssert create(Fmi2Builder builder) {
             Fmi2Builder.RuntimeModule<PStm> mdebugAssert = builder.loadRuntimeModule(MDebugAssert.class.getSimpleName());
             return new MDebugAssert(builder, mdebugAssert);
 
@@ -135,12 +156,12 @@ public abstract class BaseApiTest {
                 Map<String, Value> members = new HashMap<>();
                 members.put("assertEquals", new FunctionValue.ExternalFunctionValue(a -> {
 
-                    Assertions.assertTrue(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
+                    assertTrue(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
                     return new VoidValue();
                 }));
                 members.put("assertNotEquals", new FunctionValue.ExternalFunctionValue(a -> {
 
-                    Assertions.assertFalse(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
+                    assertFalse(0 == a.get(0).deref().compareTo(a.get(1).deref()), "values does not match");
                     return new VoidValue();
                 }));
                 return members;

@@ -1,35 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>org.into-cps.maestro.frameworks</groupId>
-    <artifactId>fmi2api</artifactId>
-    <version>2.2.1-SNAPSHOT</version>
-    <name>Fmi2 API framework</name>
 
     <parent>
         <groupId>org.into-cps.maestro</groupId>
         <artifactId>frameworks</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
+        <version>${revision}${sha1}${changelist}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <groupId>org.into-cps.maestro.frameworks</groupId>
+    <artifactId>fmi2api</artifactId>
+    <name>Fmi2 API framework</name>
 
     <properties>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>overture.au.dk-releases</id>
-            <name>overture.au.dk-releases</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </repository>
-        <repository>
-            <id>overture.au.dk-snapshots</id>
-            <name>overture.au.dk-snapshots</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </repository>
-    </repositories>
 
     <build>
         <plugins>
@@ -115,37 +103,37 @@
         <dependency>
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>fmi2</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro.frameworks</groupId>
             <artifactId>builder</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>typechecker</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>parser</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>interpreter</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>fmi</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -155,6 +143,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.into-cps.maestro.frameworks</groupId>
+            <artifactId>fmi2api-test</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

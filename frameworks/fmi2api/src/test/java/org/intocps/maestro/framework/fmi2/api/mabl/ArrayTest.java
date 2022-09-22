@@ -22,12 +22,16 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 
-public class ArrayTest extends BaseApiTest{
+public class ArrayTest extends BaseApiAssertTest {
+
+
     @Test
     public void mdArrayFaultyAssignmentTest() throws Exception {
         //Arrange
@@ -65,8 +69,8 @@ public class ArrayTest extends BaseApiTest{
         }
 
         //Assert
-        Assertions.assertFalse(res, "Expected error: Invalid assignment to cannot assign: 'real' to 'real[]' in: multidimensionalarray[0] = " +
-                "realvar; null");
+        Assertions.assertFalse(res,
+                "Expected error: Invalid assignment to cannot assign: 'real' to 'real[]' in: multidimensionalarray[0] = " + "realvar; null");
         Assertions.assertThrows(RuntimeException.class,
                 () -> new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(doc));
 

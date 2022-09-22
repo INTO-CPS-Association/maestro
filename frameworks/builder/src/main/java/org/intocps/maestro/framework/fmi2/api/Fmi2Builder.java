@@ -15,6 +15,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
     SETTINGS getSettings();
 
+    IFunctionBuilder getFunctionBuilder();
+
     /**
      * Returns whether the build has been used
      *
@@ -81,6 +83,22 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     }
 
     interface NumericValue {
+    }
+
+    interface IFunctionBuilder {
+        IFunctionBuilder setName(String name);
+
+        IFunctionBuilder setReturnType(String name);
+
+        IFunctionBuilder setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+
+        IFunctionBuilder addArgument(String name, Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+
+        IFunctionBuilder useVargs();
+
+        IFunctionBuilder addArgument(String name, String type);
+
+        Fmi2Builder.RuntimeFunction build();
     }
 
     interface RuntimeFunction {
@@ -461,6 +479,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         //        }
         //    }
         Fmi2ComponentVariable<S> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
+
         Fmi2ComponentVariable<S> instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
                 String environmentName, boolean loggingOn);
 

@@ -4,17 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.into-cps.maestro</groupId>
-    <artifactId>root</artifactId>
-    <version>2.2.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>Maestro Root</name>
-
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
+
+    <groupId>org.into-cps.maestro</groupId>
+    <artifactId>root</artifactId>
+    <version>${revision}${sha1}${changelist}</version>
+    <packaging>pom</packaging>
+    <name>Maestro Root</name>
+    <description>This is a FMI simulation framework</description>
+    <url>https://github.com/INTO-CPS-Association/maestro</url>
 
 
     <properties>
@@ -28,7 +30,10 @@
         <scala.version>2.13.5</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
         <dokka.version>1.5.0</dokka.version>
-        <jackson.version>2.13.2</jackson.version>
+        <jackson.version>2.13.3</jackson.version>
+        <revision>2.2.2</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <sha1/>
     </properties>
 
     <repositories>
@@ -66,6 +71,7 @@
     </modules>
 
     <build>
+        <defaultGoal>package</defaultGoal>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -84,6 +90,19 @@
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.outbrain.swinfra</groupId>
+                <artifactId>ci-friendly-flatten-maven-plugin</artifactId>
+                <version>1.0.14</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>clean</goal>
+                            <goal>flatten</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -157,17 +176,13 @@
                     </configuration>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
-                </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
                     <version>3.0.0-M1</version>
                     <configuration>
-                        <releaseProfiles>release-sign-artifacts,release-sources-javadoc
+                        <releaseProfiles>release
                         </releaseProfiles>
                         <tagNameFormat>Release/@{project.version}</tagNameFormat>
                     </configuration>
@@ -192,16 +207,73 @@
                     </configuration>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.4.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                        <quiet>true</quiet>
+                        <doclint>all,-missing</doclint>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.0-M1</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.0.0-M2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.2.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jarsigner-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.0.1</version>
+                </plugin>
+
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.1.0</version>
                 </plugin>
-                <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
-                <plugin>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
+
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
@@ -220,18 +292,7 @@
                         </excludes>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M1</version>
-                </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
@@ -263,6 +324,13 @@
 
             </plugins>
         </pluginManagement>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>2.4</version>
+            </extension>
+        </extensions>
     </build>
 
     <reporting>
@@ -289,10 +357,10 @@
                 <artifactId>maven-surefire-report-plugin</artifactId>
                 <version>3.0.0-M5</version>
             </plugin>
-            <plugin>
-                <groupId>org.jetbrains.dokka</groupId>
-                <artifactId>dokka-maven-plugin</artifactId>
-            </plugin>
+            <!--            <plugin>-->
+            <!--                <groupId>org.jetbrains.dokka</groupId>-->
+            <!--                <artifactId>dokka-maven-plugin</artifactId>-->
+            <!--            </plugin>-->
         </plugins>
     </reporting>
 
@@ -528,15 +596,48 @@
         </profile>
 
         <profile>
-            <id>release-sign-artifacts</id>
+            <id>release</id>
             <activation>
                 <property>
                     <name>performRelease</name>
                     <value>true</value>
                 </property>
             </activation>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <!--                    <plugin>-->
+                    <!--                        <groupId>org.jetbrains.dokka</groupId>-->
+                    <!--                        <artifactId>dokka-maven-plugin</artifactId>-->
+                    <!--                    </plugin>-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.12</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <!--autoReleaseAfterClose>true</autoReleaseAfterClose-->
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -549,41 +650,65 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
 
         <profile>
-            <id>release-sources-javadoc</id>
+            <id>au</id>
             <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
+                <activeByDefault>true</activeByDefault>
             </activation>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>overture.au.dk</id>
+                    <name>overture.au.dk-snapshots</name>
+                    <url>https://overture.au.dk/artifactory/into-cps</url>
+                </snapshotRepository>
+            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.jetbrains.dokka</groupId>
-                        <artifactId>dokka-maven-plugin</artifactId>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
                     </plugin>
+                    <!--                    <plugin>-->
+                    <!--                        <groupId>org.jetbrains.dokka</groupId>-->
+                    <!--                        <artifactId>dokka-maven-plugin</artifactId>-->
+                    <!--                    </plugin>-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
     </profiles>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>overture.au.dk-snapshots</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-
 </project>
