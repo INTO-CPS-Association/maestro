@@ -59,8 +59,8 @@ jobs:
           NEW_RELEASE_VERSION=${{ github.event.inputs.releaseversion }}
           echo "Input version is $NEW_RELEASE_VERSION"
           # remove all but the release version
-          mvn -B --quiet versions:set-property -Dproperty=changelist "-DnewVersion="
-          mvn -B --quiet versions:set-property -Dproperty=sha1 "-DnewVersion="
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=changelist "-DnewVersion="
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=sha1 "-DnewVersion="
           # detect if a override version is given
           if [ "$NEW_RELEASE_VERSION" == "" ]; then
             echo "Input version not set. Use current version"
@@ -79,7 +79,7 @@ jobs:
           
           echo "release version is $NEW_RELEASE_VERSION"
           echo "Tag release version is now $NEW_RELEASE_TAG"
-          mvn -B --quiet versions:set-property -Dproperty=revision "-DnewVersion=${NEW_RELEASE_VERSION}"
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=revision "-DnewVersion=${NEW_RELEASE_VERSION}"
           git checkout -b $NEW_RELEASE_BRANCH
           git push -f --set-upstream origin $NEW_RELEASE_BRANCH
           git add pom.xml
@@ -90,9 +90,9 @@ jobs:
           # prepare next snapshot for development
           mvn  -B --quiet ci-friendly-flatten:version -Dprefix.regex="Release/*"
           SNAPSHOTVERSION=$(cat revision.txt)
-          mvn -B --quiet versions:set-property -Dproperty=revision "-DnewVersion=$SNAPSHOTVERSION"
-          mvn -B --quiet versions:set-property -Dproperty=changelist "-DnewVersion=-SNAPSHOT"
-          mvn -B --quiet versions:set-property -Dproperty=sha1 "-DnewVersion="
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=revision "-DnewVersion=$SNAPSHOTVERSION"
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=changelist "-DnewVersion=-SNAPSHOT"
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=sha1 "-DnewVersion="
           git add pom.xml
           git commit -m "Next snapshot version $SNAPSHOTVERSION"
           git push
