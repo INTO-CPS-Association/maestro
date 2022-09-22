@@ -33,20 +33,6 @@
             <scope>compile</scope>
         </dependency>
 
-
-        <!--        <dependency>-->
-        <!--            <groupId>org.into-cps.fmi</groupId>-->
-        <!--            <artifactId>fmi2</artifactId>-->
-        <!--            <version>${fmu.api.version}</version>-->
-        <!--            <exclusions>-->
-        <!--                <exclusion>-->
-        <!--                    <artifactId>org.slf4j</artifactId>-->
-        <!--                    <groupId>slf4j-api</groupId>-->
-
-        <!--                </exclusion>-->
-        <!--            </exclusions>-->
-        <!--        </dependency>-->
-
         <dependency>
             <groupId>org.into-cps.fmi</groupId>
             <artifactId>jnifmuapi</artifactId>
