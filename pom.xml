@@ -52,7 +52,6 @@
             <name>overture.au.dk-vdmj</name>
             <url>https://overture.au.dk/artifactory/vdmj</url>
         </repository>
-
     </repositories>
 
     <modules>
@@ -731,6 +730,43 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+
+            <id>github</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <repositories>
+
+                <repository>
+                    <id>maestro2-third-party</id>
+                    <name>maestro2-third-party</name>
+                    <url>https://overture.au.dk/artifactory/maestro2-third-party</url>
+                    <snapshots>
+                        <updatePolicy>interval:30</updatePolicy>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>overture.au.dk</id>
+                    <name>overture.au.dk-releases</name>
+                    <url>https://overture.au.dk/artifactory/into-cps</url>
+                    <snapshots>
+                        <updatePolicy>interval:30</updatePolicy>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>vdmj</id>
+                    <name>overture.au.dk-vdmj</name>
+                    <url>https://overture.au.dk/artifactory/vdmj</url>
+                    <snapshots>
+                        <updatePolicy>interval:30</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
         </profile>
     </profiles>
 </project>
