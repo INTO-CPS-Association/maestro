@@ -61,6 +61,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
@@ -85,7 +86,7 @@
         <dependency>
             <groupId>org.into-cps.maestro</groupId>
             <artifactId>parser</artifactId>
-            <version>2.2.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
