@@ -143,6 +143,14 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests -fae
 
@@ -208,6 +216,14 @@ jobs:
         uses: stCarolas/setup-maven@v4.2
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
 
       - name: Maven download
