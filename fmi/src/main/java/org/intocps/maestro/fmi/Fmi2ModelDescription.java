@@ -52,19 +52,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class Fmi2ModelDescription extends ModelDescription {
-    // final private File file;
+    private final Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
     private List<ScalarVariable> scalarVariables = null;
     private List<ScalarVariable> outputs = null;
     private List<ScalarVariable> derivatives = null;
-    private final Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
     private List<ScalarVariable> initialUnknowns = null;
 
     public Fmi2ModelDescription(File file) throws ParserConfigurationException, SAXException, IOException {
-        super(getStream(file), new StreamSource(Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd")));
+        super(getStream(file), new StreamSource(IOUtils.toBufferedInputStream(new org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema().getSchema())));
     }
 
     public Fmi2ModelDescription(InputStream file) throws ParserConfigurationException, SAXException, IOException {
-        super(file, new StreamSource(Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd")));
+        super(file, new StreamSource(IOUtils.toBufferedInputStream(new org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema().getSchema())));
     }
 
 
@@ -75,7 +74,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     public String getModelId() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/@modelName");
-        if(name == null){
+        if (name == null) {
             return "";
         }
         return name.getNodeValue();
@@ -83,7 +82,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     public String getGuid() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/@guid");
-        if(name == null){
+        if (name == null) {
             return "";
         }
         return name.getNodeValue();

@@ -28,9 +28,10 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.into-cps.fmi</groupId>
-            <artifactId>fmi2</artifactId>
+            <artifactId>jnifmuapi</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
