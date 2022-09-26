@@ -1,0 +1,127 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Release new version-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseversion:
+        description: 'Release version'
+#        required: true
+#        default: '2.4.0'
+#      snapshotversion:
+#        description: 'Next snapshot version'
+#        required: true
+#        default: '2.4.1'
+
+env:
+  JAVA_VERSION: 11.0.3
+  SERVER_ID: ossrh
+  PYTHON_VERSION: '3.9.7'
+  MAVEN_VERSION: 3.8.1
+  WINDOWS_VERSION: 'windows-2019'
+  UBUNTU_VERSION: 'ubuntu-latest'
+  MACOS_VERSION: 'macos-latest'
+
+
+
+jobs:
+
+
+  final:
+    name: Build and Deploy Combined Release
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
+
+      - id: install-secret-key
+        name: Install gpg secret key
+        run: |
+          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: Environment variables
+        run: echo ${{ env.SERVER_ID }}
+
+      - name: Deploy server
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          server-id: ${{ env.SERVER_ID }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Set up maven
+        uses: stCarolas/setup-maven@v4.2
+        with:
+          maven-version: ${{ ENV.MAVEN_VERSION }}
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+
+      - name: Maven download
+        run: mvn validate dependency:resolve-plugins -B --quiet
+
+      - name: Maven Build Final
+        run: mvn -B package --file pom.xml -Dmaven.test.skip=true
+
+
+
+      - name: md5sum
+        id: release_asserts_md5sum
+        run: |
+          echo "::set-output name=maestro_md5::${md5sum  maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar}"
+          echo "::set-output name=maestro_web_md5::${md5sum  maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar}"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: Release/2.2.1
+          release_name: Release/2.2.1-test
+          body: |
+            
+            
+            ${{ release_asserts_md5sum.outputs.maestro_md5 }}
+            ${{ release_asserts_md5sum.outputs.maestro_web_md5 }}
+          
+
+          draft: true
+          prerelease: true
+      - name: Upload Release Asset - maestro
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
+          asset_name: maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset - maestro-webapi-bundle
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
+          asset_name: maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
+          asset_content_type: application/zip
+
