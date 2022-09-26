@@ -29,7 +29,7 @@
         <kotlin.version>1.5.0</kotlin.version>
         <scala.version>2.13.5</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
-        <dokka.version>1.5.0</dokka.version>
+        <dokka.version>1.7.10</dokka.version>
         <jackson.version>2.13.3</jackson.version>
         <revision>2.2.2</revision>
         <changelist>-SNAPSHOT</changelist>
@@ -644,6 +644,10 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                     </plugin>
+                    <!--                    <plugin>-->
+                    <!--                        <groupId>org.jetbrains.dokka</groupId>-->
+                    <!--                        <artifactId>dokka-maven-plugin</artifactId>-->
+                    <!--                    </plugin>-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
