@@ -32,9 +32,6 @@ jobs:
   final:
     name: Build and Deploy Combined Release
     runs-on: ubuntu-latest
-    outputs:
-      maestro_md5: ${{ steps.release_asserts_md5sum.outputs.maestro_md5 }} # map step output to job output
-      maestro_web_md5: ${{ steps.release_asserts_md5sum.outputs.maestro_web_md5 }}
 
 
     steps:
@@ -100,8 +97,8 @@ jobs:
           body: |
             
             
-            ${{ release_asserts_md5sum.outputs.maestro_md5 }}
-            ${{ release_asserts_md5sum.outputs.maestro_web_md5 }}
+            ${{ steps.release_asserts_md5sum.outputs.maestro_md5 }}
+            ${{ steps.release_asserts_md5sum.outputs.maestro_web_md5 }}
           
 
           draft: true
