@@ -282,8 +282,8 @@ jobs:
       - name: md5sum
         id: release_asserts_md5sum
         run: |
-          echo "::set-output name=maestro_md5::${md5sum  maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar}"
-          echo "::set-output name=maestro_web_md5::${md5sum  maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar}"
+          echo "::set-output name=maestro_md5::$(md5sum  maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar)"
+          echo "::set-output name=maestro_web_md5::$(md5sum  maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar)"
 
       - name: Create GitHub Release
         id: create_release
@@ -311,14 +311,15 @@ jobs:
             </dependency>
             ```
             
-            ${{ release_asserts_md5sum.outputs.maestro_md5 }}
-            ${{ release_asserts_md5sum.outputs.maestro_web_md5 }}
+            ${{ steps.release_asserts_md5sum.outputs.maestro_md5 }}
+            ${{ steps.release_asserts_md5sum.outputs.maestro_web_md5 }}
             
             
             ### Things that changed in this release
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
+
       - name: Upload Release Asset - maestro
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -331,7 +332,7 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload Release Asset - maestro-webapi-bundle
-        id: upload-release-asset
+        id: upload-release-asset-web
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
