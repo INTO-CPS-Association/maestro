@@ -279,6 +279,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: md5sum
+        id: release_asserts_md5sum
+        run: |
+          echo "::set-output name=maestro_md5::${md5sum  maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar}"
+          echo "::set-output name=maestro_web_md5::${md5sum  maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar}"
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -304,11 +310,36 @@ jobs:
               <version>${{ needs.version_change.outputs.build_version }}</version>
             </dependency>
             ```
-
+            
+            ${{ release_asserts_md5sum.outputs.maestro_md5 }}
+            ${{ release_asserts_md5sum.outputs.maestro_web_md5 }}
+            
+            
             ### Things that changed in this release
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
+      - name: Upload Release Asset - maestro
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
+          asset_name: maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset - maestro-webapi-bundle
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
+          asset_name: maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
+          asset_content_type: application/zip
 
 
   rollback:
