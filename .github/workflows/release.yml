@@ -122,7 +122,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.2
+        uses: stCarolas/setup-maven@v4.4
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
@@ -213,7 +213,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.2
+        uses: stCarolas/setup-maven@v4.4
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
