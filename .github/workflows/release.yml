@@ -327,8 +327,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
-          asset_name: maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar
+          asset_path: maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
+          asset_name: maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
           asset_content_type: application/zip
 
       - name: Upload Release Asset - maestro-webapi-bundle
@@ -338,8 +338,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
-          asset_name: maestro-webapi-2.2.2-SNAPSHOT-bundle.jar
+          asset_path: maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
+          asset_name: maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
           asset_content_type: application/zip
 
 
