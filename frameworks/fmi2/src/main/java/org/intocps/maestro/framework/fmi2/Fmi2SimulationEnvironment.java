@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimulationEnvironmentTransfer {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
