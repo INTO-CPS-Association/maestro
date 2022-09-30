@@ -16,25 +16,18 @@
     <artifactId>fmi2</artifactId>
     <name>Fmi2 framework</name>
 
-    <repositories>
-        <repository>
-            <id>overture.au.dk-releases</id>
-            <name>overture.au.dk-releases</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </repository>
-        <repository>
-            <id>overture.au.dk-snapshots</id>
-            <name>overture.au.dk-snapshots</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </repository>
-    </repositories>
-
     <dependencies>
 
         <dependency>
             <groupId>org.into-cps.vdmcheck.fmi2</groupId>
             <artifactId>vdmcheck2</artifactId>
             <version>1.1.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

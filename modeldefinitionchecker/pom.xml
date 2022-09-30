@@ -21,41 +21,19 @@
 
     <pluginRepositories>
         <pluginRepository>
-
             <id>overture-m2-dev</id>
             <url>
                 http://overture.au.dk/artifactory/simple/overture-development/
             </url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
-
-
         </pluginRepository>
     </pluginRepositories>
 
     <repositories>
-
         <repository>
             <id>overture-m2-dev</id>
             <url>
                 http://overture.au.dk/artifactory/simple/overture-development/
             </url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </snapshots>
         </repository>
     </repositories>
 
@@ -63,6 +41,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.overturetool.core.codegen</groupId>
@@ -191,5 +170,28 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <id>github</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>overture-m2-dev</id>
+                    <url>
+                        http://overture.au.dk/artifactory/simple/overture-development/
+                    </url>
+                    <snapshots>
+                        <updatePolicy>interval:30</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 </project>
 

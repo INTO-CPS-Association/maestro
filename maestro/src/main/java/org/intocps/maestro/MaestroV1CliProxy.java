@@ -268,7 +268,7 @@ public class MaestroV1CliProxy {
     private static boolean checkNativeFmi() {
         logger.debug("Checking native FMI support");
         try {
-            Factory.checkApi();
+            // Factory.checkApi();
         } catch (Throwable e) {
             System.err.println("Failed to load FMI API");
             logger.error("Failed to load FMI API", e);

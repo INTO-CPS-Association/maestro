@@ -1,17 +1,15 @@
 package org.intocps.maestro.fmi
 
+import org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema
+import org.intocps.fmi.jnifmuapi.xml.SchemaResourceResolver
 import org.intocps.maestro.fmi.xml.NamedNodeMapIterator
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
-import org.w3c.dom.ls.LSInput
-import org.w3c.dom.ls.LSResourceResolver
 import org.xml.sax.SAXException
-import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.Reader
 import java.util.*
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
@@ -29,7 +27,7 @@ abstract class ModelDescription
     SAXException::class,
     IOException::class,
     ParserConfigurationException::class
-) constructor(xmlInputStream: InputStream, schemaSource: Source) {
+) constructor(xmlInputStream: InputStream, schemaModelDescription: Source) {
     private val DEBUG = false
 
     @JvmField
@@ -40,7 +38,7 @@ abstract class ModelDescription
 
     init {
         val docBuilderFactory = DocumentBuilderFactory.newInstance()
-        validateAgainstXSD(StreamSource(xmlInputStream), schemaSource)
+        validateAgainstXSD(StreamSource(xmlInputStream), schemaModelDescription)
         xmlInputStream.reset()
         doc = docBuilderFactory.newDocumentBuilder().parse(xmlInputStream)
         val xPathfactory = XPathFactory.newInstance()
@@ -153,6 +151,7 @@ abstract class ModelDescription
         return categories
     }
 
+
     // Default experiment attribute
     fun getDefaultExperiment(): DefaultExperiment? {
         try {
@@ -176,7 +175,7 @@ abstract class ModelDescription
         @Throws(SAXException::class, IOException::class)
         fun validateAgainstXSD(document: Source, schemaSource: Source) {
             SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
-                this.resourceResolver = ResourceResolver()
+                this.resourceResolver = SchemaResourceResolver(Fmi2Schema())
                 this.newSchema(schemaSource).newValidator().validate(document)
             }
         }
@@ -323,7 +322,62 @@ abstract class ModelDescription
             fun setOffset(offset: Double) = apply { this.offset = offset }
             fun build() = BaseUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as BaseUnit
+
+            if (kg != other.kg) return false
+            if (m != other.m) return false
+            if (s != other.s) return false
+            if (A != other.A) return false
+            if (K != other.K) return false
+            if (mol != other.mol) return false
+            if (cd != other.cd) return false
+            if (rad != other.rad) return false
+            if (factor != other.factor) return false
+            if (offset != other.offset) return false
+
+            return true
+        }
+
+        fun equalsAutoConvert(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as BaseUnit
+
+            if (kg != other.kg) return false
+            if (m != other.m) return false
+            if (s != other.s) return false
+            if (A != other.A) return false
+            if (K != other.K) return false
+            if (mol != other.mol) return false
+            if (cd != other.cd) return false
+            if (rad != other.rad) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = kg
+            result = 31 * result + m
+            result = 31 * result + s
+            result = 31 * result + A
+            result = 31 * result + K
+            result = 31 * result + mol
+            result = 31 * result + cd
+            result = 31 * result + rad
+            result = 31 * result + factor.hashCode()
+            result = 31 * result + offset.hashCode()
+            return result
+        }
+
+
     }
+
 
     class LogCategory(val name: String, val description: String) {
         override fun toString(): String {
@@ -331,85 +385,5 @@ abstract class ModelDescription
         }
     }
 
-    class ResourceResolver : LSResourceResolver {
-        override fun resolveResource(
-            type: String?,
-            namespaceURI: String?,
-            publicId: String?,
-            systemId: String?,
-            baseURI: String?
-        ): LSInput {
 
-            // note: in this sample, the XSD's are expected to be in the root of the classpath
-            val resourceAsStream = this.javaClass.classLoader.getResourceAsStream(systemId)
-            return Input(publicId ?: "", systemId ?: "", resourceAsStream)
-        }
-    }
-
-    class Input(private var publicId: String, private var systemId: String, input: InputStream?) :
-        LSInput {
-        var inputStream: BufferedInputStream? = if (input == null) null else BufferedInputStream(input)
-
-        override fun getPublicId(): String {
-            return publicId
-        }
-
-        override fun setPublicId(publicId: String) {
-            this.publicId = publicId
-        }
-
-        override fun getBaseURI(): String? {
-            return null
-        }
-
-        override fun setBaseURI(baseURI: String) {}
-
-        override fun getByteStream(): InputStream? {
-            return null
-        }
-
-        override fun setByteStream(byteStream: InputStream) {}
-
-        override fun getCertifiedText(): Boolean {
-            return false
-        }
-
-        override fun setCertifiedText(certifiedText: Boolean) {}
-
-        override fun getCharacterStream(): Reader? {
-            return null
-        }
-
-        override fun setCharacterStream(characterStream: Reader) {}
-
-        override fun getEncoding(): String? {
-            return null
-        }
-
-        override fun setEncoding(encoding: String) {}
-        override fun getStringData(): String? {
-            synchronized(inputStream!!) {
-                return try {
-                    val input = ByteArray(inputStream!!.available())
-                    inputStream!!.read(input)
-                    String(input)
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    println("Exception $e")
-                    null
-                }
-            }
-        }
-
-        override fun setStringData(stringData: String) {}
-
-        override fun getSystemId(): String {
-            return systemId
-        }
-
-        override fun setSystemId(systemId: String) {
-            this.systemId = systemId
-        }
-
-    }
 }

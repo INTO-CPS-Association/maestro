@@ -37,11 +37,13 @@ package org.intocps.maestro.fmi;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.intocps.maestro.fmi.fmi2.Fmi2ModelDescriptionUnit;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi2.Fmi2Unit;
 import org.intocps.maestro.fmi.xml.NodeIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-import org.w3c.dom.ls.LSInput;
-import org.w3c.dom.ls.LSResourceResolver;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -50,23 +52,23 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class Fmi2ModelDescription extends ModelDescription {
-    // final private File file;
+public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
+    final static Logger logger = LoggerFactory.getLogger(Fmi2ModelDescription.class);
+    private final Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
     private List<ScalarVariable> scalarVariables = null;
     private List<ScalarVariable> outputs = null;
     private List<ScalarVariable> derivatives = null;
-    private final Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
     private List<ScalarVariable> initialUnknowns = null;
 
     public Fmi2ModelDescription(File file) throws ParserConfigurationException, SAXException, IOException {
-        super(getStream(file), new StreamSource(Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd")));
+        super(getStream(file), new StreamSource(IOUtils.toBufferedInputStream(new org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema().getSchema())));
     }
 
     public Fmi2ModelDescription(InputStream file) throws ParserConfigurationException, SAXException, IOException {
-        super(file, new StreamSource(Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd")));
+        super(file, new StreamSource(IOUtils.toBufferedInputStream(new org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema().getSchema())));
     }
-
 
     private static InputStream getStream(File file) throws IOException {
         byte[] bytes = IOUtils.toByteArray(new FileInputStream(file));
@@ -75,7 +77,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     public String getModelId() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/@modelName");
-        if(name == null){
+        if (name == null) {
             return "";
         }
         return name.getNodeValue();
@@ -83,7 +85,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     public String getGuid() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/@guid");
-        if(name == null){
+        if (name == null) {
             return "";
         }
         return name.getNodeValue();
@@ -105,7 +107,6 @@ public class Fmi2ModelDescription extends ModelDescription {
         }
         return name.getNodeValue();
     }
-
 
     public boolean getCanInterpolateInputs() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canInterpolateInputs");
@@ -158,7 +159,10 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     @Override
     public synchronized void parse() throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
-        Map<String, simpleTypeDefinition> typeDefinitions = parseTypeDefinitions();
+        Collection<Fmi2Unit> units = getUnitDefinitions();
+        Map<String, Fmi2Unit> unitMap = units.stream().collect(Collectors.toMap(Fmi2Unit::getName, u -> u));
+
+        Map<String, SimpleTypeDefinition> typeDefinitions = parseTypeDefinitions(unitMap);
 
         List<ScalarVariable> vars = new Vector<>();
         Map<Integer, ScalarVariable> indexMap = new HashMap<>();
@@ -187,7 +191,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
             Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
 
-            sc.type = parseType(Objects.requireNonNull(child, "Unable to lookup type when parsing variable"), typeDefinitions);
+            sc.type = parseType(Objects.requireNonNull(child, "Unable to lookup type when parsing variable"), typeDefinitions, unitMap);
             if (sc.type.type == Types.Real && ((RealType) sc.type).derivative != null) {
                 ders.add(sc);
             }
@@ -271,11 +275,12 @@ public class Fmi2ModelDescription extends ModelDescription {
 
     }
 
-    private Map<String, simpleTypeDefinition> parseTypeDefinitions() throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
-        Map<String, simpleTypeDefinition> typeDefinitions = new HashMap<>();
+    private Map<String, SimpleTypeDefinition> parseTypeDefinitions(
+            Map<String, Fmi2Unit> unitMap) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        Map<String, SimpleTypeDefinition> typeDefinitions = new HashMap<>();
 
         for (Node n : new NodeIterator(lookup(doc, xpath, "fmiModelDescription/TypeDefinitions/SimpleType"))) {
-            simpleTypeDefinition def = new simpleTypeDefinition();
+            SimpleTypeDefinition def = new SimpleTypeDefinition();
 
             Node attribute = n.getAttributes().getNamedItem("name");
             if (attribute != null) {
@@ -288,7 +293,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
             Node child = lookupSingle(n, xpath, "Real[1] | Boolean[1] | String[1] | Integer[1] | Enumeration[1]");
 
-            def.type = parseType(Objects.requireNonNull(child, "Unable to lookup type when parsing type definitions"), typeDefinitions);
+            def.type = parseType(Objects.requireNonNull(child, "Unable to lookup type when parsing type definitions"), typeDefinitions, unitMap);
 
             typeDefinitions.put(def.name, def);
         }
@@ -297,12 +302,16 @@ public class Fmi2ModelDescription extends ModelDescription {
     }
 
     private void copyDefaults(Type type, Node node,
-            Map<String, simpleTypeDefinition> typeDefinitions) throws InvocationTargetException, IllegalAccessException {
+            Map<String, SimpleTypeDefinition> typeDefinitions) throws InvocationTargetException, IllegalAccessException {
         Node attribute = node.getAttributes().getNamedItem("declaredType");
         if (attribute != null) {
             String declaredType = attribute.getNodeValue();
             if (typeDefinitions.containsKey(declaredType)) {
                 typeDefinitions.get(declaredType).setDefaults(type);
+            } else {
+                if (!declaredType.isEmpty()) {
+                    logger.warn("Could not find declared type: '{}'", declaredType);
+                }
             }
         }
     }
@@ -403,7 +412,8 @@ public class Fmi2ModelDescription extends ModelDescription {
         }
     }
 
-    private Type parseType(Node child, Map<String, simpleTypeDefinition> typeDefinitions) throws InvocationTargetException, IllegalAccessException {
+    private Type parseType(Node child, Map<String, SimpleTypeDefinition> typeDefinitions,
+            Map<String, Fmi2Unit> unitMap) throws InvocationTargetException, IllegalAccessException {
         Types typeId = Types.valueOfIgnorecase(child.getNodeName());
 
         Type type = null;
@@ -442,7 +452,37 @@ public class Fmi2ModelDescription extends ModelDescription {
                 break;
         }
 
+        if (type != null) {
+
+            type.unit = getUnit(child, unitMap);
+            if (type.unit == null) {
+                //lets propagate declaredType units
+                Node attributeDeclaredType = child.getAttributes().getNamedItem("declaredType");
+                if (attributeDeclaredType != null) {
+                    String declaredType = attributeDeclaredType.getNodeValue();
+                    if (typeDefinitions.containsKey(declaredType)) {
+                        type.unit = typeDefinitions.get(declaredType).type.unit;
+                    } else {
+                        if (!declaredType.isEmpty()) {
+                            logger.warn("Could not find declared type: '{}'", declaredType);
+                        }
+                    }
+                }
+            }
+        }
+
         return type;
+    }
+
+    private Fmi2Unit getUnit(Node node, Map<String, Fmi2Unit> unitMap) {
+        Node attribute = node.getAttributes().getNamedItem("unit");
+        if (attribute != null) {
+            String declaredUnit = attribute.getNodeValue();
+            if (unitMap.containsKey(declaredUnit)) {
+                return unitMap.get(declaredUnit);
+            }
+        }
+        return null;
     }
 
     private void decodeUnknownElement(Map<Integer, ScalarVariable> indexMap, Node n, IOptainUnknownDestination handler,
@@ -454,7 +494,7 @@ public class Fmi2ModelDescription extends ModelDescription {
         ScalarVariable sc = indexMap.get(index);
 
         if (sc == null) {
-            throw new ModelDescriptionParseException("Invalid index attribut value in Unknown: //Unknown[@index='" + index + "']");
+            throw new ModelDescriptionParseException("Invalid index attribute value in Unknown: //Unknown[@index='" + index + "']");
         }
 
         if (handler.getList() != null) {
@@ -489,7 +529,7 @@ public class Fmi2ModelDescription extends ModelDescription {
 
                     ScalarVariable key = indexMap.get(Integer.valueOf(dependencyArr[i]));
                     if (key == null) {
-                        throw new ModelDescriptionParseException("Invalid index attribut value in Unknown: //Unknown[@index='" + index + "']");
+                        throw new ModelDescriptionParseException("Invalid index attribute value in Unknown: //Unknown[@index='" + index + "']");
                     }
                     handler.get(sc).put(key, kind);
                 }
@@ -650,10 +690,27 @@ public class Fmi2ModelDescription extends ModelDescription {
     public static class Type {
         public Types type;
         public Object start;
+        public Fmi2Unit unit;
 
         @Override
         public String toString() {
             return type + (start != null ? " " + start : "");
+        }
+
+
+        public boolean isAssignableFrom(Type other, boolean autoConvert) {
+
+            //connection holds if any base units are null
+            if (unit == null || other.unit == null || this.unit.getBaseUnit() == null || other.unit.getBaseUnit() == null) {
+                return true;
+            }
+
+            if (autoConvert) {
+                return unit.getBaseUnit().equalsAutoConvert(other.unit.getBaseUnit());
+            }
+
+            return unit.getBaseUnit().equals(other.unit.getBaseUnit());
+
         }
 
     }
@@ -705,7 +762,7 @@ public class Fmi2ModelDescription extends ModelDescription {
         }
     }
 
-    public static class simpleTypeDefinition {
+    public static class SimpleTypeDefinition {
         public Type type;
         public String name;
         public String description;
@@ -787,123 +844,5 @@ public class Fmi2ModelDescription extends ModelDescription {
         }
     }
 
-    public static class ResourceResolver implements LSResourceResolver {
-
-        @Override
-        public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
-
-            // note: in this sample, the XSD's are expected to be in the root of the classpath
-            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(systemId);
-            return new Input(publicId, systemId, resourceAsStream);
-        }
-
-    }
-
-    public static class Input implements LSInput {
-
-        private String publicId;
-
-        private String systemId;
-        private BufferedInputStream inputStream;
-
-        public Input(String publicId, String sysId, InputStream input) {
-            this.publicId = publicId;
-            this.systemId = sysId;
-            this.inputStream = new BufferedInputStream(input);
-        }
-
-        @Override
-        public String getPublicId() {
-            return publicId;
-        }
-
-        @Override
-        public void setPublicId(String publicId) {
-            this.publicId = publicId;
-        }
-
-        @Override
-        public String getBaseURI() {
-            return null;
-        }
-
-        @Override
-        public void setBaseURI(String baseURI) {
-        }
-
-        @Override
-        public InputStream getByteStream() {
-            return null;
-        }
-
-        @Override
-        public void setByteStream(InputStream byteStream) {
-        }
-
-        @Override
-        public boolean getCertifiedText() {
-            return false;
-        }
-
-        @Override
-        public void setCertifiedText(boolean certifiedText) {
-        }
-
-        @Override
-        public Reader getCharacterStream() {
-            return null;
-        }
-
-        @Override
-        public void setCharacterStream(Reader characterStream) {
-        }
-
-        @Override
-        public String getEncoding() {
-            return null;
-        }
-
-        @Override
-        public void setEncoding(String encoding) {
-        }
-
-        @Override
-        public String getStringData() {
-            synchronized (inputStream) {
-                try {
-                    byte[] input = new byte[inputStream.available()];
-                    inputStream.read(input);
-                    String contents = new String(input);
-                    return contents;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println("Exception " + e);
-                    return null;
-                }
-            }
-        }
-
-        @Override
-        public void setStringData(String stringData) {
-        }
-
-        @Override
-        public String getSystemId() {
-            return systemId;
-        }
-
-        @Override
-        public void setSystemId(String systemId) {
-            this.systemId = systemId;
-        }
-
-        public BufferedInputStream getInputStream() {
-            return inputStream;
-        }
-
-        public void setInputStream(BufferedInputStream inputStream) {
-            this.inputStream = inputStream;
-        }
-    }
 
 }

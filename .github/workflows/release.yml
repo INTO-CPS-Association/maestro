@@ -122,7 +122,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.2
+        uses: stCarolas/setup-maven@v4.4
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
@@ -142,6 +142,14 @@ jobs:
         run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - uses: actions/checkout@v2
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Maven Build
         run: mvn -B package --file pom.xml -DskipTests -fae
@@ -205,9 +213,17 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.2
+        uses: stCarolas/setup-maven@v4.4
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
 
       - name: Maven download
@@ -263,6 +279,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: md5sum
+        id: release_asserts_md5sum
+        run: |
+          echo "::set-output name=maestro_md5::$(md5sum  maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar)"
+          echo "::set-output name=maestro_web_md5::$(md5sum  maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar)"
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -288,11 +310,37 @@ jobs:
               <version>${{ needs.version_change.outputs.build_version }}</version>
             </dependency>
             ```
-
+            
+            ${{ steps.release_asserts_md5sum.outputs.maestro_md5 }}
+            ${{ steps.release_asserts_md5sum.outputs.maestro_web_md5 }}
+            
+            
             ### Things that changed in this release
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
+
+      - name: Upload Release Asset - maestro
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
+          asset_name: maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset - maestro-webapi-bundle
+        id: upload-release-asset-web
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
+          asset_name: maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
+          asset_content_type: application/zip
 
 
   rollback:

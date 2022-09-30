@@ -10,6 +10,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.framework.core.IRelation;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -201,6 +202,10 @@ public class MaBLTemplateGenerator {
         }
 
         Fmi2SimulationEnvironment unitRelationShip = templateConfiguration.getUnitRelationship();
+
+        checkConnectionUnits(unitRelationShip);
+
+
         boolean faultInject =
                 unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
         if (faultInject) {
@@ -409,6 +414,32 @@ public class MaBLTemplateGenerator {
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
 
         return unit;
+    }
+
+    private static void checkConnectionUnits(Fmi2SimulationEnvironment unitRelationShip) {
+        StringBuilder sbUnitError = new StringBuilder();
+        //check scalar variable unit compatibility
+        for (Map.Entry<String, ComponentInfo> instance : unitRelationShip.getInstances()) {
+            for (Fmi2SimulationEnvironment.Relation relation : unitRelationShip.getRelations(instance.getKey())) {
+                if (relation.getOrigin() == IRelation.InternalOrExternal.External && relation.getDirection() == IRelation.Direction.OutputToInput) {
+                    for (Map.Entry<LexIdentifier, Fmi2SimulationEnvironment.Variable> target : relation.getTargets().entrySet()) {
+
+                        if (!target.getValue().getScalarVariable().getScalarVariable().getType()
+                                .isAssignableFrom(relation.getSource().getScalarVariable().getScalarVariable().getType(), false)) {
+                            sbUnitError.append(String.format("Invalid unit for connection: %s.%s [%s] -> %s.%s [%s]", instance.getKey(),
+                                    relation.getSource().getScalarVariable().getScalarVariable().name,
+                                    relation.getSource().getScalarVariable().getScalarVariable().getType().unit.getName(), target.getKey().getText(),
+                                    target.getValue().getScalarVariable().getScalarVariable().name,
+                                    target.getValue().getScalarVariable().getScalarVariable().getType().unit.getName()));
+                        }
+                    }
+                }
+            }
+
+        }
+        if (sbUnitError.length() > 0) {
+            throw new RuntimeException(sbUnitError.toString());
+        }
     }
 
 

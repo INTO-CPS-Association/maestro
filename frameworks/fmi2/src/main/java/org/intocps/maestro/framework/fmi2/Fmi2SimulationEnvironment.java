@@ -4,6 +4,7 @@ package org.intocps.maestro.framework.fmi2;
 import org.antlr.v4.runtime.CharStreams;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -20,11 +21,9 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.intocps.maestro.ast.MableAstFactory.newLexIdentifier;
 
 public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimulationEnvironmentTransfer {
     final static Logger logger = LoggerFactory.getLogger(Fmi2SimulationEnvironment.class);
@@ -40,8 +39,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
     Map<String, ModelSwapInfo> instanceToModelSwap = new HashMap<>();
     private String faultInjectionConfigurationPath;
 
-    protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
-        initialize(msg);
+    protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg, ModelDescriptionResolver resolver) throws Exception {
+        initialize(msg, resolver);
     }
 
     public static Fmi2SimulationEnvironment of(File file, IErrorReporter reporter) throws Exception {
@@ -50,8 +49,13 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         }
     }
 
+    public static Fmi2SimulationEnvironment of(Fmi2SimulationEnvironmentConfiguration msg, IErrorReporter reporter,
+            ModelDescriptionResolver resolver) throws Exception {
+        return new Fmi2SimulationEnvironment(msg, resolver);
+    }
+
     public static Fmi2SimulationEnvironment of(Fmi2SimulationEnvironmentConfiguration msg, IErrorReporter reporter) throws Exception {
-        return new Fmi2SimulationEnvironment(msg);
+        return of(msg, reporter, new FileModelDescriptionResolver());
     }
 
     public static Fmi2SimulationEnvironment of(InputStream inputStream, IErrorReporter reporter) throws Exception {
@@ -87,12 +91,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
     @Override
     public List<RelationVariable> getConnectedOutputs() {
-        return getInstances().stream().flatMap(instance -> {
-            Stream<RelationVariable> relationOutputs = this.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
-                    .filter(relation -> (relation.getOrigin() == Relation.InternalOrExternal.External) &&
-                            (relation.getDirection() == Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable);
-            return relationOutputs;
-        }).collect(Collectors.toList());
+        return getInstances().stream().flatMap(instance -> this.getRelations(new LexIdentifier(instance.getKey(), null)).stream()
+                        .filter(relation -> (relation.getOrigin() == Relation.InternalOrExternal.External) &&
+                                (relation.getDirection() == Relation.Direction.OutputToInput)).map(x -> x.getSource().scalarVariable))
+                .collect(Collectors.toList());
 
     }
 
@@ -172,7 +174,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 modelSwap.swapConnections = swap.swapConnections);
     }
 
-    private void initialize(Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
+    private void initialize(Fmi2SimulationEnvironmentConfiguration msg, ModelDescriptionResolver resolver) throws Exception {
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
 
@@ -181,7 +183,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         List<ModelConnection> connections = buildConnections(msg.getConnections());
         List<ModelConnection> swapConnections = buildConnections(msg.getModelSwapConnections());
 
-        HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI);
+        HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI, resolver);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
         if (msg.faultInjectConfigurationPath != null && msg.faultInjectConfigurationPath.length() > 0) {
@@ -355,7 +357,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
                     List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
                     for (RelationVariable rv : variablesToLogForInstance) {
-                        if (existingRVs.contains(rv) == false) {
+                        if (!existingRVs.contains(rv)) {
                             existingRVs.add(rv);
                         }
                     }
@@ -372,14 +374,12 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
 
-    private HashMap<String, Fmi2ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus) throws Exception {
+    private HashMap<String, Fmi2ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus, ModelDescriptionResolver resolver) throws Exception {
         HashMap<String, Fmi2ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
         for (Map.Entry<String, URI> entry : fmus.entrySet()) {
             String key = entry.getKey();
             URI value = entry.getValue();
-            IFmu fmu = FmuFactory.create(null, value);
-            Fmi2ModelDescription md = new ExplicitModelDescription(fmu.getModelDescription());
-            fmuKeyToFmuWithMD.put(key, md);
+            fmuKeyToFmuWithMD.put(key, resolver.apply(key, value));
         }
 
         return fmuKeyToFmuWithMD;
@@ -441,7 +441,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         if (identifiers == null) {
             return Collections.emptySet();
         }
-        return this.getRelations(Arrays.stream(identifiers).map(x -> newLexIdentifier(x)).collect(Collectors.toList()));
+        return this.getRelations(Arrays.stream(identifiers).map(MableAstFactory::newLexIdentifier).collect(Collectors.toList()));
     }
 
     @Override
@@ -469,6 +469,9 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
     public String getFaultInjectionConfigurationPath() {
         return this.faultInjectionConfigurationPath;
+    }
+
+    public interface ModelDescriptionResolver extends BiFunction<String, URI, Fmi2ModelDescription> {
     }
 
     public static class Relation implements FrameworkVariableInfo, IRelation {
@@ -556,6 +559,18 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         @Override
         public String toString() {
             return scalarVariable.toString();
+        }
+    }
+
+    public static class FileModelDescriptionResolver implements ModelDescriptionResolver {
+        @Override
+        public Fmi2ModelDescription apply(String s, URI uri) {
+            try {
+                IFmu fmu = FmuFactory.create(null, uri);
+                return new ExplicitModelDescription(fmu.getModelDescription());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
