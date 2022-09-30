@@ -27,7 +27,7 @@ abstract class ModelDescription
     SAXException::class,
     IOException::class,
     ParserConfigurationException::class
-) constructor(xmlInputStream: InputStream, schemaSource: Source) {
+) constructor(xmlInputStream: InputStream, schemaModelDescription: Source) {
     private val DEBUG = false
 
     @JvmField
@@ -38,7 +38,7 @@ abstract class ModelDescription
 
     init {
         val docBuilderFactory = DocumentBuilderFactory.newInstance()
-        validateAgainstXSD(StreamSource(xmlInputStream), schemaSource)
+        validateAgainstXSD(StreamSource(xmlInputStream), schemaModelDescription)
         xmlInputStream.reset()
         doc = docBuilderFactory.newDocumentBuilder().parse(xmlInputStream)
         val xPathfactory = XPathFactory.newInstance()
@@ -150,6 +150,7 @@ abstract class ModelDescription
         }
         return categories
     }
+
 
     // Default experiment attribute
     fun getDefaultExperiment(): DefaultExperiment? {
@@ -321,7 +322,62 @@ abstract class ModelDescription
             fun setOffset(offset: Double) = apply { this.offset = offset }
             fun build() = BaseUnit(kg, m, s, A, K, mol, cd, rad, factor, offset)
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as BaseUnit
+
+            if (kg != other.kg) return false
+            if (m != other.m) return false
+            if (s != other.s) return false
+            if (A != other.A) return false
+            if (K != other.K) return false
+            if (mol != other.mol) return false
+            if (cd != other.cd) return false
+            if (rad != other.rad) return false
+            if (factor != other.factor) return false
+            if (offset != other.offset) return false
+
+            return true
+        }
+
+        fun equalsAutoConvert(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as BaseUnit
+
+            if (kg != other.kg) return false
+            if (m != other.m) return false
+            if (s != other.s) return false
+            if (A != other.A) return false
+            if (K != other.K) return false
+            if (mol != other.mol) return false
+            if (cd != other.cd) return false
+            if (rad != other.rad) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = kg
+            result = 31 * result + m
+            result = 31 * result + s
+            result = 31 * result + A
+            result = 31 * result + K
+            result = 31 * result + mol
+            result = 31 * result + cd
+            result = 31 * result + rad
+            result = 31 * result + factor.hashCode()
+            result = 31 * result + offset.hashCode()
+            return result
+        }
+
+
     }
+
 
     class LogCategory(val name: String, val description: String) {
         override fun toString(): String {

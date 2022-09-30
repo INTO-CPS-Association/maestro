@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AVariableDeclaration;
@@ -15,6 +16,8 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.framework.fmi2.ExplicitModelDescription;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
@@ -25,15 +28,18 @@ import org.intocps.maestro.util.MablModuleProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 
 import static org.intocps.maestro.template.MaBLTemplateGenerator.FAULTINJECT_POSTFIX;
 
@@ -125,6 +131,100 @@ public class MaBLTemplateGeneratorTest {
 
         MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithmConfig(algorithmConfig).setFramework(Framework.FMI2)
                 .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
+
+
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(mtc);
+        System.out.println(PrettyPrinter.print(aSimulationSpecificationCompilationUnit));
+    }
+
+    @Test
+    public void unitCompatibleTestCheckNegativeTemplate() {
+
+        BiFunction<Map<String, String>, Map<String, String>, Boolean> check = (levelUnitMapping, levelDeclaredTypeMapping) -> {
+            boolean success = true;
+            try {
+                checkUnitTest(levelUnitMapping, levelDeclaredTypeMapping);
+            } catch (Exception e) {
+                success = false;
+            }
+            return success;
+        };
+
+        if (check.apply(new HashMap<>() {{
+            put("{x1}", "length");
+            put("{x2}", "bar");
+        }}, new HashMap<>())) {
+            Assertions.fail("Missing error for invalid unit combination");
+        }
+
+        if (check.apply(new HashMap<>() {{
+            put("{x1}", "length");
+        }}, new HashMap<>() {{
+
+            put("{x2}", "My.Bar");
+        }})) {
+            Assertions.fail("Missing error for invalid unit combination");
+        }
+    }
+
+    @Test
+    public void unitCompatibleTestCheckPositiveTemplate() throws Exception {
+        checkUnitTest(new HashMap<>() {{
+            put("{x1}", "length");
+            put("{x2}", "length");
+        }}, new HashMap<>());
+
+        checkUnitTest(new HashMap<>() {{
+            put("{x1}", "length");
+            put("{x2}", "");
+        }}, new HashMap<>());
+
+
+        checkUnitTest(new HashMap<>() {{
+            put("{x1}", "length");
+            put("{x2}", "");
+        }}, new HashMap<>() {{
+            put("{x2}", "My.Length");
+        }});
+    }
+
+    private void checkUnitTest(Map<String, String> levelUnitMapping, Map<String, String> levelDeclaredTypeMapping) throws Exception {
+        final double endTime = 10.0;
+        final double stepSize = 0.1;
+        File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
+
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
+
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
+
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = endTime;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(stepSize);
+
+        //we keep the connections as is but use two different model descriptions with unit definitions
+
+        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithmConfig(algorithmConfig).setFramework(Framework.FMI2)
+                .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration,
+                        Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter(), (key, uri) -> {
+                            try {
+
+                                Path path = key.equals("{x1}") ? Paths.get("src", "test", "resources", "fmi2_unit", "watertankcontroller-c",
+                                        "modelDescription" + ".xml") : Paths.get("src", "test", "resources", "fmi2_unit", "singlewatertank-20sim",
+                                        "modelDescription" + ".xml");
+                                byte[] buf = FileUtils.readFileToByteArray(path.toFile());
+                                String md = new String(buf, StandardCharsets.UTF_8);
+
+                                md = md.replace("REPLACE_UNIT", levelUnitMapping.getOrDefault(key, ""))
+                                        .replace("REPLACE_DECLARED_TYPE", levelDeclaredTypeMapping.getOrDefault(key, ""));
+
+
+                                return new ExplicitModelDescription(new ByteArrayInputStream(md.getBytes(StandardCharsets.UTF_8)));
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        })).build();
 
 
         ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(mtc);

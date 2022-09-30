@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="SingleWatertank" guid="{cfc65592-9ece-4563-9705-1581b6e7071c}"
+                     generationTool="20-sim" numberOfEventIndicators="0" copyright="Controllab Products B.V."
+                     license="-">
+    <CoSimulation modelIdentifier="SingleWatertank" needsExecutionTool="false"
+                  canHandleVariableCommunicationStepSize="true" canInterpolateInputs="false"
+                  maxOutputDerivativeOrder="0" canRunAsynchronuously="false" canBeInstantiatedOnlyOncePerProcess="true"
+                  canNotUseMemoryManagementFunctions="true" canGetAndSetFMUstate="false" canSerializeFMUstate="false"
+                  providesDirectionalDerivative="false"/>
+
+    <UnitDefinitions>
+        <Unit
+                name="s">
+            <BaseUnit s="1"/>
+        </Unit>
+        <Unit
+                name="N.m">
+            <BaseUnit kg="1" m="2" s="-2"/>
+        </Unit>
+        <Unit
+                name="bar">
+            <BaseUnit kg="1" m="-1" s="-2" factor="1.0e5" offset="0"/>
+        </Unit>
+        <Unit
+                name="length">
+            <BaseUnit m="1"/>
+        </Unit>
+    </UnitDefinitions>
+
+    <TypeDefinitions>
+        <SimpleType
+                name="My.Bar">
+            <Real unit="bar"/>
+        </SimpleType>
+        <SimpleType
+                name="My.Length">
+            <Real
+                    unit="length"/>
+        </SimpleType>
+    </TypeDefinitions>
+
+    <DefaultExperiment startTime="0.0" stopTime="16.0" stepSize="0.01"/>
+    <ModelVariables>
+
+        <ScalarVariable name="Drain.r" valueReference="0" variability="tunable" causality="parameter">
+            <Real start="9.0"/>
+        </ScalarVariable>
+        <ScalarVariable name="FlowSource.phi" valueReference="1" description="flow rate" variability="tunable"
+                        causality="parameter">
+            <Real start="1.0"/>
+        </ScalarVariable>
+        <ScalarVariable name="tank.Tank.area" valueReference="2" variability="tunable" causality="parameter">
+            <Real start="1.0"/>
+        </ScalarVariable>
+        <ScalarVariable name="tank.Tank.gravity" valueReference="3" variability="tunable" causality="parameter">
+            <Real start="9.81"/>
+        </ScalarVariable>
+        <ScalarVariable name="tank.Tank.liquid_density" valueReference="4" variability="tunable" causality="parameter">
+            <Real start="1.0"/>
+        </ScalarVariable>
+
+
+        <ScalarVariable name="valvecontrol" valueReference="16" variability="continuous" causality="input">
+            <Real start="0.0"/>
+        </ScalarVariable>
+        <ScalarVariable name="level" valueReference="17" variability="continuous" causality="output">
+            <Real unit="REPLACE_UNIT" declaredType="REPLACE_DECLARED_TYPE"/>
+        </ScalarVariable>
+
+        <ScalarVariable name="tank.Tank.volume_initial" valueReference="5" variability="fixed" causality="parameter">
+            <Real start="0.0"/>
+        </ScalarVariable>
+
+
+        <ScalarVariable name="Valve.outflow_int_initial" valueReference="6" variability="fixed" causality="parameter">
+            <Real start="0.0"/>
+        </ScalarVariable>
+    </ModelVariables>
+    <ModelStructure>
+        <Outputs>
+            <Unknown index="7"/>
+        </Outputs>
+    </ModelStructure>
+</fmiModelDescription>
