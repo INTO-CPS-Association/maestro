@@ -40,6 +40,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.fmi.fmi2.Fmi2ModelDescriptionUnit;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi2.Fmi2Unit;
 import org.intocps.maestro.fmi.xml.NodeIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -53,6 +55,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
+    final static Logger logger = LoggerFactory.getLogger(Fmi2ModelDescription.class);
     private final Map<ScalarVariable, ScalarVariable> derivativesMap = new HashMap<>();
     private List<ScalarVariable> scalarVariables = null;
     private List<ScalarVariable> outputs = null;
@@ -66,7 +69,6 @@ public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
     public Fmi2ModelDescription(InputStream file) throws ParserConfigurationException, SAXException, IOException {
         super(file, new StreamSource(IOUtils.toBufferedInputStream(new org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema().getSchema())));
     }
-
 
     private static InputStream getStream(File file) throws IOException {
         byte[] bytes = IOUtils.toByteArray(new FileInputStream(file));
@@ -105,7 +107,6 @@ public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
         }
         return name.getNodeValue();
     }
-
 
     public boolean getCanInterpolateInputs() throws XPathExpressionException {
         Node name = lookupSingle(doc, xpath, "fmiModelDescription/CoSimulation/@canInterpolateInputs");
@@ -307,6 +308,10 @@ public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
             String declaredType = attribute.getNodeValue();
             if (typeDefinitions.containsKey(declaredType)) {
                 typeDefinitions.get(declaredType).setDefaults(type);
+            } else {
+                if (!declaredType.isEmpty()) {
+                    logger.warn("Could not find declared type: '{}'", declaredType);
+                }
             }
         }
     }
@@ -457,6 +462,10 @@ public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
                     String declaredType = attributeDeclaredType.getNodeValue();
                     if (typeDefinitions.containsKey(declaredType)) {
                         type.unit = typeDefinitions.get(declaredType).type.unit;
+                    } else {
+                        if (!declaredType.isEmpty()) {
+                            logger.warn("Could not find declared type: '{}'", declaredType);
+                        }
                     }
                 }
             }

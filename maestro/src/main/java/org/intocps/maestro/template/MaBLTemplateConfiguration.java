@@ -111,15 +111,17 @@ public class MaBLTemplateConfiguration {
             return this;
         }
 
-        //        public MaBLTemplateConfigurationBuilder setUnitRelationship(Fmi2SimulationEnvironment unitRelationship) {
-        //            this.unitRelationship = unitRelationship;
-        //            return this;
-        //        }
-
         public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework,
                 Fmi2SimulationEnvironmentConfiguration configuration) throws Exception {
             this.frameworkConfig = Pair.of(framework, configuration);
             this.simulationEnvironment = Fmi2SimulationEnvironment.of(configuration, new IErrorReporter.SilentReporter());
+            return this;
+        }
+
+        public MaBLTemplateConfigurationBuilder setFrameworkConfig(Framework framework, Fmi2SimulationEnvironmentConfiguration configuration,
+                Fmi2SimulationEnvironment simulationEnvironment) {
+            this.frameworkConfig = Pair.of(framework, configuration);
+            this.simulationEnvironment = simulationEnvironment;
             return this;
         }
 
