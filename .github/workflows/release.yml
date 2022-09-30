@@ -282,8 +282,8 @@ jobs:
       - name: md5sum
         id: release_asserts_md5sum
         run: |
-          echo "::set-output name=maestro_md5::$(md5sum  maestro/target/maestro-2.2.2-SNAPSHOT-jar-with-dependencies.jar)"
-          echo "::set-output name=maestro_web_md5::$(md5sum  maestro-webapi/target/maestro-webapi-2.2.2-SNAPSHOT-bundle.jar)"
+          echo "::set-output name=maestro_md5::$(md5sum  maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar)"
+          echo "::set-output name=maestro_web_md5::$(md5sum  maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar)"
 
       - name: Create GitHub Release
         id: create_release
