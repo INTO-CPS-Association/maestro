@@ -410,9 +410,9 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         boolean shadowReported = false;
         if (shadowingOrigin != null) {
             shadowReported = true;
-            errorReporter
-                    .report(0, "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
-                            node.getName().getSymbol());
+            errorReporter.report(0,
+                    "Name '" + node.getName().getText() + "' shadows previous definition " + shadowingOrigin.getSymbol() + "" + " " + ".",
+                    node.getName().getSymbol());
         }
 
         if (!shadowReported) {
@@ -450,7 +450,10 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             }
         }
 
-        if (node.getInitializer() != null) {
+        if (node.getExternal() != null && node.getExternal() && node.getInitializer() != null) {
+            errorReporter.report(0, "External variable declarations cannot have an initializer", node.getName().getSymbol());
+
+        } else if (node.getInitializer() != null) {
             PType initType = node.getInitializer().apply(this, ctxt);
             if (!typeComparator.compatible(type, initType)) {
                 errorReporter.report(0, type + " cannot be initialized with type: " + initType, node.getName().getSymbol());
@@ -551,6 +554,16 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     @Override
     public PType defaultPStm(PStm node, Context ctxt) throws AnalysisException {
         throw new InternalException(-5, "Node unknown to typechecker: " + node + " type: " + node.getClass().getSimpleName());
+    }
+
+    @Override
+    public PType caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
+        return MableAstFactory.newAVoidType();
+    }
+
+    @Override
+    public PType caseATransferAsStm(ATransferAsStm node, Context question) throws AnalysisException {
+        return MableAstFactory.newAVoidType();
     }
 
     @Override
@@ -1013,7 +1026,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         // Find all importedModuleCompilationUnits and typecheck these twice.
         List<AImportedModuleCompilationUnit> importedModuleUnits = rootDocuments.stream().flatMap(
-                x -> x.getContent().stream().filter(AImportedModuleCompilationUnit.class::isInstance).map(AImportedModuleCompilationUnit.class::cast))
+                        x -> x.getContent().stream().filter(AImportedModuleCompilationUnit.class::isInstance).map(AImportedModuleCompilationUnit.class::cast))
                 .collect(Collectors.toList());
 
 

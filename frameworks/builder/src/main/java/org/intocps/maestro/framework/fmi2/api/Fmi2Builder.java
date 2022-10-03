@@ -266,6 +266,11 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         <V> Variable<T, V> store(Value<V> tag);
 
         Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
+
+        void markTransferPoint(String... names);
+
+        void addTransferAs(String... names);
+
     }
 
     /**
@@ -376,6 +381,27 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
          * Break the source link
          */
         void breakLink() throws PortLinkException;
+
+        /**
+         * Indicates if the current port is linked
+         *
+         * @return true if linked
+         */
+        boolean isLinked();
+
+        /**
+         * Indicates if this is linked into other @{@link Port}s
+         *
+         * @return true if linked
+         */
+        boolean isLinkedAsOutputProvider();
+
+        /**
+         * Indicates if another @{@link Port} is linked into this
+         *
+         * @return true if linked
+         */
+        boolean isLinkedAsInputConsumer();
 
         class PortLinkException extends Exception {
             Port port;

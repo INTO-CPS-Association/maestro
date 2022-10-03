@@ -4,18 +4,46 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <RollingFile name="LogFile" fileName="maestro.log" append="false"
-                     filePattern="target/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log">
+        <RollingFile name="LogFile" fileName="target/coe.log" append="false" filePattern = "target/coe%i.log">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
             <Policies>
-                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <SizeBasedTriggeringPolicy size = "1 MB"/>
             </Policies>
-            <DefaultRolloverStrategy min="1" max="3"/>
+            <DefaultRolloverStrategy min = "1" max="3"/>
         </RollingFile>
     </Appenders>
     <Loggers>
 
-        <Root level="WARN">
+        <Logger name="org.apache" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+
+        <Logger name="org.springframework" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+
+        <Logger name="org.flywaydb" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+
+        <Logger name="springfox.documentation" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+
+        <Logger name="org.hibernate" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+        <Logger name="org.reflections.Reflections" level="INFO"
+                additivity="false">
+            <Appender-ref ref="Console" level="INFO"/>
+        </Logger>
+
+        <Root level="DEBUG">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="LogFile"/>
         </Root>

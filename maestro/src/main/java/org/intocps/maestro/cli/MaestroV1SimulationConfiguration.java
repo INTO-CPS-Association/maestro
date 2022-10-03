@@ -3,6 +3,7 @@ package org.intocps.maestro.cli;
 import com.fasterxml.jackson.annotation.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.core.dto.MultiModel;
+import scala.reflect.internal.Mode;
 
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,13 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
             @JsonProperty("logLevels") Map<String, List<String>> logLevels, @JsonProperty("startTime") double startTime,
             @JsonProperty("endTime") double endTime, @JsonProperty("reportProgress") Boolean reportProgress,
             @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
-            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
+            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
+            @JsonProperty("convergenceAttempts") int convergenceAttempts,
+            @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
+            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters,
-                logLevels, faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts);
+                logLevels, faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts, modelTransfers, modelSwaps);
         this.startTime = startTime;
         this.endTime = endTime;
         this.reportProgress = reportProgress;
@@ -43,4 +47,6 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
     public Boolean getReportProgress() {return reportProgress;}
     public String getFaultInjectConfigurationPath(){return faultInjectConfigurationPath;}
     public Map<String, String> getFaultInjectInstances() {return faultInjectInstances;}
+    public Map<String, String> getModelTransfers() {return modelTransfers;}
+    public Map<String, ModelSwap> getModelSwaps() {return modelSwaps;}
 }

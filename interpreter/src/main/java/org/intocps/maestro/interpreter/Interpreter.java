@@ -16,12 +16,21 @@ import java.util.Optional;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
+public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final IExternalValueFactory loadFactory;
-
+    private final ITransitionManager transitionManager;
     public Interpreter(IExternalValueFactory loadFactory) {
+        this(loadFactory, null);
+    }
+
+    public Interpreter(IExternalValueFactory loadFactory, ITransitionManager transitionManager) {
         this.loadFactory = loadFactory;
+        this.transitionManager = transitionManager;
+    }
+
+    public IExternalValueFactory getLoadFactory() {
+        return loadFactory;
     }
 
     List<Value> evaluate(List<? extends PExp> list, Context ctxt) throws AnalysisException {
@@ -161,7 +170,7 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         Value currentValue = node.getTarget().apply(this, question);
         if (!(currentValue instanceof UpdatableValue)) {
-            throw new InterpreterException("Cannot assign to a constant value");
+            throw new InterpreterException("Cannot assign to a constant value. " + node);
         }
 
         try {
@@ -207,6 +216,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseAVariableDeclaration(AVariableDeclaration node, Context question) throws AnalysisException {
 
+        if (node.getExternal() != null && node.getExternal()) {
+            //external variables already exists in the context
+            return new VoidValue();
+        }
 
         if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
@@ -319,8 +332,10 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         Value function = callContext.lookup(node.getMethodName());
 
         if (function instanceof FunctionValue) {
-            try{
+            try {
                 return ((FunctionValue) function).evaluate(evaluate(node.getArgs(), callContext));
+            } catch (InterpreterTransitionException te) {
+                throw te;
             } catch (Exception e) {
                 throw new InterpreterException("Unable to evaluate node: " + node, e);
             }
@@ -353,6 +368,9 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             logger.info("Continuing with finally");
             node.getFinally().apply(this, question);
             throw e;
+        } catch (StopException e) {
+            logger.info("Stop in simulation: " + e.getMessage());
+            logger.info("Continuing with finally");
         }
         node.getFinally().apply(this, question);
         return new VoidValue();
@@ -543,6 +561,28 @@ class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         }
 
         return new IntegerValue(x.intValue() * y.intValue());
+    }
+
+    @Override
+    public Value caseATransferStm(ATransferStm node, Context question) throws AnalysisException {
+        if (transitionManager != null) {
+
+            ITransitionManager.ITTransitionInfo info = transitionManager.getTransferInfo(node, question,
+                    node.getNames().stream().limit(1).map(AStringLiteralExp::getValue).findFirst().orElse(null));
+            if (info != null) {
+
+                transitionManager.transfer(this, info);
+                //if we get back here we need to break out of the current state and run the shutdown actions from finally
+                throw new StopException("Stopping previous simulation as a result of a model transfer: " + info.describe());
+            }
+        }
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseATransferAsStm(ATransferAsStm node, Context question) {
+        //this has no semantic meaning during normal execution
+        return new VoidValue();
     }
 
     @Override

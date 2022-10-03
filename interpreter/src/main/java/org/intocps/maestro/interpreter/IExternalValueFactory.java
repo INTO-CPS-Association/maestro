@@ -3,6 +3,8 @@ package org.intocps.maestro.interpreter;
 import com.spencerwi.either.Either;
 import org.intocps.maestro.interpreter.values.Value;
 
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -34,4 +36,14 @@ public interface IExternalValueFactory {
      * @throws InterpreterException any destruction error description
      */
     Value destroy(Value value) throws InterpreterException;
+
+
+    /**
+     * Requests the current factory to return a new instance with the working directory changed
+     *
+     * @param newSuggestion a suggested path for a new directory
+     * @param config        optionally a new config can be null
+     * @return a new factory which operates from the suggested path
+     */
+    IExternalValueFactory changeWorkingDirectory(Path newSuggestion, InputStream config) throws Exception;
 }

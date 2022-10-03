@@ -70,4 +70,26 @@ public class ImportCliTest {
         Assert.assertEquals(0, exitCode);
 
     }
+
+
+    @Test
+    public void importTestRelativeFmusSwap() throws IOException {
+
+        Path outputPath = getOutputPath();
+
+        File destFile = new File(new File(outputPath.toFile(), "other"), "singlewatertank-20sim.fmu");
+        destFile.getParentFile().mkdirs();
+        FileUtils.copyFile(Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toFile(), destFile);
+        FileUtils.copyFile(Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toFile(),
+                new File(outputPath.toFile(), "watertankcontroller-c.fmu"));
+
+        String arguments = String.format(Locale.US, "import sg1 --inline-framework-config --fmu-search-path %s --fmu-search-path %s -output %s %s %s",
+                Paths.get("src", "test", "resources"), outputPath.toAbsolutePath(), outputPath.toAbsolutePath(),
+                simulationConfigPath.getAbsolutePath(), new File(resourcesConfigPrefix, "config-relative-model-swap.json").toPath());
+        String[] s = arguments.split(" ");
+
+        int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
+        Assert.assertEquals(0, exitCode);
+
+    }
 }

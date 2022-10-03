@@ -23,10 +23,13 @@ public class ExtendedMultiModel extends MultiModel {
             @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
             @JsonProperty("environmentParameters") List<String> environmentParameters, @JsonProperty("logLevels") Map<String, List<String>> logLevels,
             @JsonProperty("sigver") Sigver sigver, @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
-            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances, @JsonProperty("convergenceAttempts") int convergenceAttempts) {
+            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
+            @JsonProperty("convergenceAttempts") int convergenceAttempts,
+            @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
+            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters,
-                logLevels, faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts);
+                logLevels, faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts, modelTransfers, modelSwaps);
         this.sigver = sigver;
     }
 

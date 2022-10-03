@@ -2,9 +2,11 @@ package org.intocps.maestro.cli;
 
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.interpreter.InterpreterTransitionException;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -43,6 +45,16 @@ public class InterpreterCmd implements Callable<Integer> {
     @CommandLine.Option(names = "-wait", description = "Wait the specified seconds before processing. Intended for allowing a debugger or profiler " +
             "to be attached before the processing starts.")
     int wait = 0;
+
+    @CommandLine.Option(names = "-transition", description = "Path to a directory with a transition specification")
+    Path transitionPath;
+
+    @CommandLine.Option(names = {"-thz", "--transition-check-frequency"}, description = "The interval which transition spec will be " + "checked at.")
+    int transitionCheckFrequency;
+    @CommandLine.Option(names = {"-tms", "--transition-minimum-step"},
+            description = "The minimum step per for each none empty offering of " + "candidates. It reset once a candidate is removed" +
+                    "checked at.")
+    int transitionMinStep;
 
     private static void waitForProfiling(int wait) throws InterruptedException {
         System.out.printf("Initial wait activated, waiting... %d", wait);
@@ -91,11 +103,20 @@ public class InterpreterCmd implements Callable<Integer> {
             }
         }
 
-        if (runtime != null) {
-            util.interpret(runtime);
-        } else {
-            util.interpret();
-
+        try {
+            if (transitionPath != null) {
+                util.setTransitionPath(transitionPath, transitionCheckFrequency, transitionMinStep);
+            }
+            if (runtime != null) {
+                util.interpret(runtime);
+            } else {
+                util.interpret();
+            }
+        } catch (InterpreterTransitionException e) {
+            files.clear();
+            files.add(e.getTransitionFile());
+            useTypeCheck = false; //XXX: remove
+            this.call();
         }
         return 0;
     }

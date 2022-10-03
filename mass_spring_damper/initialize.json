@@ -1,0 +1,58 @@
+{
+    "fmus": {
+        "{m2}": "MassSpringDamper2.fmu",
+        "{m1}": "MassSpringDamper1.fmu"
+    },
+    "connections": {
+        "{m2}.i2.fk": [
+            "{m1}.i1.fk"
+        ],
+        "{m1}.i1.x1": [
+            "{m2}.i2.x1"
+        ],
+        "{m1}.i1.v1": [
+            "{m2}.i2.v1"
+        ]
+    },
+    "parameters": {
+        "{m2}.i2.m2": 1,
+        "{m2}.i2.dc": 100,
+        "{m2}.i2.d2": 2,
+        "{m2}.i2.cc": 100,
+        "{m2}.i2.c2": 1,
+        "{m2}.i2.v2_initial": 0,
+        "{m2}.i2.x2_initial": 1,
+        "{m1}.i1.v1_initial": 0,
+        "{m1}.i1.x1_initial": 1,
+        "{m1}.i1.m1": 1,
+        "{m1}.i1.d1": 1,
+        "{m1}.i1.c1": 1
+    },
+    "logVariables": {},
+    "parallelSimulation": false,
+    "stabalizationEnabled": true,
+    "global_absolute_tolerance": 0.0,
+    "global_relative_tolerance": 0.01,
+    "loggingOn": false,
+    "visible": false,
+    "simulationProgramDelay": false,
+    "algorithm": {
+        "type": "fixed-step",
+        "size": 0.001
+    },
+    "overrideLogLevel": null,
+    "environmentParameters": null,
+    "logLevels": null,
+    "livestream": {
+        "{m1}.i1": [
+            "x1"
+        ],
+        "{m2}.i2": [
+            "x2"
+        ]
+    },
+    "hasExternalSignals": false,
+    "convergenceAttempts": 0,
+    "faultInjectConfigurationPath": "",
+    "faultInjectInstances": {}
+}

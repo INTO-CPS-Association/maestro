@@ -32,6 +32,7 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class MaBLTemplateGenerator {
     public static final String START_TIME_NAME = "START_TIME";
+    public static final String START_TIME_NAME_OFFSET = "START_TIME_OFFSET";
     public static final String END_TIME_NAME = "END_TIME";
     public static final String STEP_SIZE_NAME = "STEP_SIZE";
     public static final String MATH_MODULE_NAME = "Math";
@@ -41,8 +42,9 @@ public class MaBLTemplateGenerator {
     public static final String FMI2_MODULE_NAME = "FMI2";
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
+    public static final String INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME = "initialize_transfer";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
-    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSize";
+    public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSizeTransfer";
     public static final String VARIABLESTEP_FUNCTION_NAME = "variableStepSize";
     public static final String JACOBIANSTEP_EXPANSION_MODULE_NAME = "JacobianStepBuilder";
     public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
@@ -50,6 +52,7 @@ public class MaBLTemplateGenerator {
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
     public static final String COMPONENTS_ARRAY_NAME = "components";
+    public static final String COMPONENTS_TRANSFER_ARRAY_NAME = "componentsTransfer";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String STATUS = IMaestroPlugin.FMI_STATUS_VARIABLE_NAME;
     public static final String LOGLEVELS_POSTFIX = "_log_levels";
@@ -98,27 +101,21 @@ public class MaBLTemplateGenerator {
         return statements;
     }
 
+
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
 
         String path = uriFromFMUName.toString();
         return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
                 call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
-        //        return newVariable(fmuLexName, newANameType("FMI2"),
-        //                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
-
     }
 
-    public static PStm createFMUUnload(String fmuLexName) {
-        return MableAstFactory.newExpressionStm(
-                MableAstFactory.newACallExp(MableAstFactory.newAIdentifier("unload"), Arrays.asList(MableAstFactory.newAIdentifierExp(fmuLexName))));
-    }
 
-    public static List<PStm> createFmuInstanceVariable(String instanceLexName, String instanceEnvironmentKey) {
+    public static List<PStm> createFmuInstanceVariable(String instanceLexName, boolean external, String instanceEnvironmentKey) {
         List<PStm> statements = new ArrayList<>();
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
         statements.add(mapping);
-        PStm var = newVariable(instanceLexName, newANameType("FMI2Component"), newNullExp());
+        PStm var = newVariable(external, instanceLexName, newANameType("FMI2Component"), external ? null : newNullExp());
         statements.add(var);
         return statements;
     }
@@ -136,8 +133,9 @@ public class MaBLTemplateGenerator {
 
         if (faultInject != null) {
             AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
+            ATransferAsStm transferAsStm = new ATransferAsStm(Arrays.asList(newAStringLiteralExp(instanceLexName)));
             PStm ficomp = newVariable(faultInject.lexName, newANameType("FMI2Component"), newNullExp());
-            rootStatements.addAll(Arrays.asList(fiToEnvMapping, ficomp));
+            rootStatements.addAll(Arrays.asList(fiToEnvMapping, transferAsStm, ficomp));
             tryBlockStatements.addAll(Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
                     newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
                             Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
@@ -172,7 +170,7 @@ public class MaBLTemplateGenerator {
                 throw new IllegalArgumentException("Algorithm type is unknown.");
         }
 
-        return new ExpandStatements(Arrays.asList(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), Arrays.asList(algorithmStm));
+        return new ExpandStatements(List.of(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), List.of(algorithmStm));
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -180,6 +178,8 @@ public class MaBLTemplateGenerator {
 
         // This variable determines whether an expansion should be wrapped in globalExecutionContinue or not.
         boolean wrapExpansionPluginInGlobalExecutionContinue = false;
+
+        boolean modelSwapActive = templateConfiguration.getFrameworkConfig().getValue().hasModelSwap();
 
         //TODO: mable builder
         ABasicBlockStm rootScope = newABlockStm();
@@ -210,7 +210,7 @@ public class MaBLTemplateGenerator {
                 unitRelationShip.getInstances().stream().anyMatch(x -> x.getValue() != null && x.getValue().getFaultInject().isPresent());
         if (faultInject) {
             Map.Entry<PStm, List<PStm>> fiinjectLoadStatement = createLoadStatement(FAULT_INJECT_MODULE_NAME,
-                    Arrays.asList(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath())));
+                    List.of(newAStringLiteralExp(unitRelationShip.getFaultInjectionConfigurationPath())));
             if (fiinjectLoadStatement.getKey() != null) {
                 rootScopeBody.add(fiinjectLoadStatement.getKey());
                 if (fiinjectLoadStatement.getValue() != null) {
@@ -240,22 +240,45 @@ public class MaBLTemplateGenerator {
             invalidNames.add(instanceLexName);
             instanceLexToInstanceName.put(instanceLexName, entry.getKey());
             instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
-            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, entry.getKey()));
+
+            //determine if fmu is external
+            boolean external = unitRelationShip.getModelTransfers().stream().anyMatch(p -> p.getKey().equals(entry.getKey()));
+
+            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, external, entry.getKey()));
         });
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
 
-        // Create FMU load statements
+        // Create FMU and instance model transfers
+        Set<String> fmuTransfers = new HashSet<>();
+        Set<String> instanceTransfers = new HashSet<>();
+
+        for (Map.Entry<String, String> entry : unitRelationShip.getModelTransfers()) {
+            ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
+            String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
+            fmuTransfers.add(fmuLexName);
+
+            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+            instanceTransfers.add(instanceLexName);
+        }
+
+        // Create FMU load statements for FMUs not transferred
         List<PStm> unloadFmuStatements = new ArrayList<>();
 
         for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = fmuNameToLexIdentifier.get((entry.getKey()));
+
+            // If FMU already transferred skip this iteration
+            if (fmuTransfers.contains(fmuLexName)) {
+                continue;
+            }
+
             stmMaintainer.add(createFMULoad(fmuLexName, entry, unitRelationShip.getUriFromFMUName(entry.getKey())));
             stmMaintainer.add(checkNullAndStop(fmuLexName));
             unloadFmuStatements.add(createUnloadStatement(fmuLexName).getKey());
         }
 
-        // Create Instantiate Statements
+        // Create Instantiate Statements for instances not transferred
         List<PStm> freeInstanceStatements = new ArrayList<>();
         List<PStm> terminateStatements = new ArrayList<>();
 
@@ -265,6 +288,11 @@ public class MaBLTemplateGenerator {
             String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
             // Get instanceName
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+
+            // If instance already transferred skip this iteration
+            if (instanceTransfers.contains(instanceLexName)) {
+                return;
+            }
 
             // Instance shall be faultinjected
             if (entry.getValue().getFaultInject().isPresent()) {
@@ -290,10 +318,8 @@ public class MaBLTemplateGenerator {
 
         // Debug logging
         if (templateConfiguration.getLoggingOn()) {
-            //            if (templateConfiguration.getLogLevels() != null) {
             stmMaintainer.addAll(createDebugLoggingStms(instaceNameToInstanceLex, templateConfiguration.getLogLevels()));
             stmMaintainer.wrapInIfBlock();
-            //            }
         }
 
 
@@ -308,6 +334,9 @@ public class MaBLTemplateGenerator {
         }
         // Components Array
         stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToComponentsArray));
+        if (modelSwapActive) {
+            stmMaintainer.add(createComponentsArray(COMPONENTS_TRANSFER_ARRAY_NAME, instanceTransfers));
+        }
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
         if (templateConfiguration.getStepAlgorithmConfig() == null) {
@@ -320,7 +349,14 @@ public class MaBLTemplateGenerator {
         }
 
         // add variable statements for start time and end time.
-        stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
+        if (unitRelationShip.getModelTransfers().isEmpty()) {
+            stmMaintainer.add(createRealVariable(START_TIME_NAME, jacobianStepConfig.startTime));
+        } else {
+            stmMaintainer.add(MableAstFactory.newALocalVariableStm(
+                    MableAstFactory.newAVariableDeclaration(true, new LexIdentifier(START_TIME_NAME, null),
+                            MableAstFactory.newARealNumericPrimitiveType(), null)));
+            stmMaintainer.add(createRealVariable(START_TIME_NAME_OFFSET, 0.0));
+        }
         stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
 
         // Add the initializer expand stm
@@ -329,7 +365,11 @@ public class MaBLTemplateGenerator {
                 stmMaintainer.add(new AConfigStm(StringEscapeUtils.escapeJava(templateConfiguration.getInitialize().getValue())));
             }
 
-            stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            if (modelSwapActive) {
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME));
+            } else {
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+            }
         }
 
         // Add the algorithm expand stm
@@ -348,14 +388,12 @@ public class MaBLTemplateGenerator {
         stmMaintainer.addAllCleanup(freeInstanceStatements);
 
         // Unload the FMUs
-        //        stmMaintainer.addAllCleanup(unloadFmuStatements);
         finallyBody.getBody().addAll(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))).stream().map(x -> x.getKey())
                 .collect(Collectors.toList()));
-        //        stmMaintainer.addAllCleanup(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))));
         if (faultInject) {
             finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
-            //            stmMaintainer.addAllCleanup(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME)));
         }
+
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
                 Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
@@ -366,8 +404,6 @@ public class MaBLTemplateGenerator {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
 
-        //        ASimulationSpecificationCompilationUnit unit =
-        //                newASimulationSpecificationCompilationUnit(imports, newABlockStm(stmMaintainer.getStatements()));
         tryBody.getBody().addAll(stmMaintainer.getStatements());
         rootScopeBody.add(newTry(tryBody, finallyBody));
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(imports, rootScope);
@@ -546,6 +582,15 @@ public class MaBLTemplateGenerator {
 
     private static Map.Entry<PStm, List<PStm>> createLoadStatement(String moduleName) {
         return createLoadStatement(moduleName, null);
+    }
+
+    public static PStm createExpandInitialize(String componentsArrayLexName, String componentsTransferArrayLexName, String startTimeLexName,
+            String endTimeLexName) {
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(componentsTransferArrayLexName),
+                                aIdentifierExpFromString(startTimeLexName), aIdentifierExpFromString(endTimeLexName))));
     }
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {

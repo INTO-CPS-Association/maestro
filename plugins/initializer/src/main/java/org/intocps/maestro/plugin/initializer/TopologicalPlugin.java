@@ -1,5 +1,6 @@
 package org.intocps.maestro.plugin.initializer;
 
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.ExpandException;
 import org.intocps.topologicalsorting.TarjanGraph;
@@ -14,8 +15,9 @@ import java.util.stream.Collectors;
 public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
-    public List<Fmi2SimulationEnvironment.Variable> findInstantiationOrder(Set<Fmi2SimulationEnvironment.Relation> relations) throws ExpandException {
-        TarjanGraph graphSolver = getTarjanGraph(relations);
+    public List<Fmi2SimulationEnvironment.Variable> findInstantiationOrder(Set<Fmi2SimulationEnvironment.Relation> relations,
+            Set<LexIdentifier> filterTargets) throws ExpandException {
+        TarjanGraph graphSolver = getTarjanGraph(relations, filterTargets);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSort();
         if (topologicalOrderToInstantiate instanceof CyclicDependencyResult) {
@@ -27,8 +29,9 @@ public class TopologicalPlugin {
                 .seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
     }
 
-    public List<Set<Fmi2SimulationEnvironment.Variable>> findInstantiationOrderStrongComponents(Set<Fmi2SimulationEnvironment.Relation> relations) {
-        TarjanGraph graphSolver = getTarjanGraph(relations);
+    public List<Set<Fmi2SimulationEnvironment.Variable>> findInstantiationOrderStrongComponents(Set<Fmi2SimulationEnvironment.Relation> relations,
+            Set<LexIdentifier> filterTargets) {
+        TarjanGraph graphSolver = getTarjanGraph(relations, filterTargets);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSCC();
 
@@ -50,7 +53,7 @@ public class TopologicalPlugin {
     }
 
 
-    private TarjanGraph getTarjanGraph(Set<Fmi2SimulationEnvironment.Relation> relations) {
+    private TarjanGraph getTarjanGraph(Set<Fmi2SimulationEnvironment.Relation> relations, Set<LexIdentifier> filterTargets) {
         var externalRelations = relations.stream().filter(RelationsPredicates.external()).collect(Collectors.toList());
         var internalRelations = relations.stream().filter(RelationsPredicates.internal()).collect(Collectors.toList());
 
@@ -61,6 +64,7 @@ public class TopologicalPlugin {
 
         var edges = new Vector<Edge11<Fmi2SimulationEnvironment.Variable, Fmi2SimulationEnvironment.Relation.InternalOrExternal>>();
         externalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
+            if (filterTargets != null && filterTargets.contains(e.getScalarVariable().getInstance())) { return; }
             edges.add(new Edge11(o.getSource(), e, o.getOrigin()));
         }));
         internalRelations.forEach(o -> o.getTargets().values().forEach(e -> {

@@ -12,6 +12,7 @@ import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.AInstanceMappingStm;
 import org.intocps.maestro.ast.node.ALocalVariableStm;
 import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.node.ATransferAsStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -89,6 +90,9 @@ public class MaBLTemplateGeneratorTest {
                         ABasicBlockStm parentBlockTyped = (ABasicBlockStm) parentBlockUntyped;
                         var parentStmIndex = parentBlockTyped.getBody().indexOf(parentStm);
                         var instanceMappingStmUntyped = parentBlockTyped.getBody().get(--parentStmIndex);
+                        if (instanceMappingStmUntyped instanceof ATransferAsStm) {
+                            instanceMappingStmUntyped = parentBlockTyped.getBody().get(--parentStmIndex);
+                        }
                         assert instanceMappingStmUntyped instanceof AInstanceMappingStm;
                         var instanceMappingStm = (AInstanceMappingStm) instanceMappingStmUntyped;
                         foundMapping.set(instanceMappingStm.getIdentifier().getText().contains(FAULTINJECT_POSTFIX) &&

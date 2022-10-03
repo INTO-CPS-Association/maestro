@@ -134,6 +134,31 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     }
 
+
+    @Override
+    public INode visitTransfer(MablParser.TransferContext ctx) {
+        ATransferStm stm = new ATransferStm();
+
+        if (ctx.names != null && !ctx.names.isEmpty()) {
+            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(s.substring(1, s.length() - 1)))
+                    .collect(Collectors.toList()));
+        }
+
+        return stm;
+    }
+
+    @Override
+    public INode visitTransferAs(MablParser.TransferAsContext ctx) {
+        ATransferAsStm stm = new ATransferAsStm();
+
+        if (ctx.names != null && !ctx.names.isEmpty()) {
+            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(s.substring(1, s.length() - 1)))
+                    .collect(Collectors.toList()));
+        }
+
+        return stm;
+    }
+
     @Override
     public INode visitFrameworkConfigs(MablParser.FrameworkConfigsContext ctx) {
         AConfigFramework config = new AConfigFramework();
@@ -407,6 +432,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitVariableDeclarator(MablParser.VariableDeclaratorContext ctx) {
         AVariableDeclaration def = new AVariableDeclaration();
 
+        def.setExternal(ctx.EXTERNAL() != null);
         PType primitiveType = (PType) this.visit(ctx.typeType());
         def.setType(primitiveType);
         def.setName(convert(ctx.IDENTIFIER()));

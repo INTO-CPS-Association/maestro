@@ -210,6 +210,16 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
+    public void markTransferPoint(String... names) {
+        activeScope.markTransferPoint(names);
+    }
+
+    @Override
+    public void addTransferAs(String... names) {
+        activeScope.addTransferAs(names);
+    }
+
+    @Override
     public FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception {
         return activeScope.createFMU(name, modelDescription, path);
     }

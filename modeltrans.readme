@@ -1,0 +1,9 @@
+1) tmuxinator start maestro
+
+2) build:
+> cd ~/maestro
+> mvn package
+
+3) test: (test window)
+> ./start.sh
+

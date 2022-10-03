@@ -1,10 +1,14 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
+import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
@@ -12,6 +16,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ModelSwapInfo;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
@@ -26,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,19 +48,46 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+
+    final AFunctionDeclaration fixedStepTransferFunc = newAFunctionDeclaration(newAIdentifier("fixedStepSizeTransfer"),
+            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+
     final AFunctionDeclaration variableStepFunc = newAFunctionDeclaration(newAIdentifier("variableStepSize"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
     private final List<String> imports =
-            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl")
-                    .collect(Collectors.toList());
+            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl").collect(Collectors.toList());
+    BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
+        try {
+
+            switch (source.scalarVariable.causality) {
+
+
+                case Input:
+                    source.breakLink();
+                    target.linkTo(source);
+                    break;
+                case Output:
+                    target.breakLink();
+                    source.linkTo(target);
+                    break;
+                default:
+                    break;
+            }
+
+        } catch (Fmi2Builder.Port.PortLinkException e) {
+            e.printStackTrace();
+        }
+    };
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(fixedStepFunc, variableStepFunc).collect(Collectors.toSet());
+        return Stream.of(fixedStepFunc, variableStepFunc, fixedStepTransferFunc).collect(Collectors.toSet());
     }
-
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
@@ -79,6 +113,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             algorithm = StepAlgorithm.VARIABLESTEP;
             selectedFun = variableStepFunc;
             imports.add("VariableStep");
+        } else if (declaredFunction.getName().toString().equals("fixedStepSizeTransfer")) {
+            algorithm = StepAlgorithm.FIXEDSTEP;
+            selectedFun = fixedStepFunc;
+            logger.debug("Activated model transfer");
         } else {
             algorithm = StepAlgorithm.FIXEDSTEP;
             selectedFun = fixedStepFunc;
@@ -120,11 +158,14 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             }
 
             // Convert raw MaBL to API
-            DoubleVariableFmi2Api externalStepSize = (DoubleVariableFmi2Api) formalArguments.get(1), currentStepSize =
-                    dynamicScope.store("jac_current_step_size", 0.0), stepSize = dynamicScope.store("jac_step_size", 0.0), externalStartTime =
-                    (DoubleVariableFmi2Api) formalArguments.get(2), currentCommunicationTime =
-                    dynamicScope.store("jac_current_communication_point", 0.0), externalEndTime = (DoubleVariableFmi2Api) formalArguments.get(3),
-                    endTime = dynamicScope.store("jac_end_time", 0.0);
+            DoubleVariableFmi2Api externalStepSize = (DoubleVariableFmi2Api) formalArguments.get(1);
+            DoubleVariableFmi2Api currentStepSize = dynamicScope.store("jac_current_step_size", 0.0);
+            DoubleVariableFmi2Api stepSize = dynamicScope.store("jac_step_size", 0.0);
+            DoubleVariableFmi2Api externalStartTime = (DoubleVariableFmi2Api) formalArguments.get(2);
+            dynamicScope.addTransferAs(externalStartTime.getName());
+            DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
+            DoubleVariableFmi2Api externalEndTime = (DoubleVariableFmi2Api) formalArguments.get(3);
+            DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
 
             currentStepSize.setValue(externalStepSize);
             stepSize.setValue(externalStepSize);
@@ -228,11 +269,43 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
             BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
+
+            // Initialise swap and step condition variables
+            Map<ModelSwapInfo, Triple<BooleanVariableFmi2Api, BooleanVariableFmi2Api, DoubleVariableFmi2Api>> modelSwapConditions = new HashMap<>();
+            List<ModelSwapInfo> swapInfoList = env.getModelSwaps().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+            int index = 0;
+            for (ModelSwapInfo info : swapInfoList) {
+                BooleanVariableFmi2Api swapVar = dynamicScope.store("swapCondition" + index, false);
+                BooleanVariableFmi2Api stepVar = dynamicScope.store("stepCondition" + index, false);
+                DoubleVariableFmi2Api currentCommunicationTimeOffset = dynamicScope.store("jac_current_communication_point_offset" + index, 0.0);
+                modelSwapConditions.put(info, Triple.of(swapVar, stepVar, currentCommunicationTimeOffset));
+                index++;
+            }
+
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
-                ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
+            	ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
                 stoppingThenScope.add(new AErrorStm(newAStringLiteralExp("Simulation stopped by user")));
                 stoppingThenScope.leave();
+                
+                //mark a safe point for a transfer to another specification
+                dynamicScope.markTransferPoint();
+
+                Map<String, PExp> replaceRule = componentsToPortsWithValues.entrySet().stream().flatMap(c -> c.getValue().entrySet().stream()
+                                .map(p -> Map.entry(p.getKey().getMultiModelScalarVariableNameWithoutFmu(),
+                                        p.getKey().getSharedAsVariable().getReferenceExp())))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Update all swap and step condition variables
+                modelSwapConditions.forEach((info, value) -> {
+                    BooleanVariableFmi2Api swapVar = value.getLeft();
+                    BooleanVariableFmi2Api stepVar = value.getMiddle();
+                    swapVar.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null,
+                            MableAstFactory.newOr(swapVar.getExp(), IdentifierReplacer.replaceFields(info.swapCondition, replaceRule))));
+                    stepVar.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null,
+                            MableAstFactory.newOr(stepVar.getExp(), IdentifierReplacer.replaceFields(info.stepCondition, replaceRule))));
+                });
+
                 // Get fmu states
                 if (everyFMUSupportsGetState) {
                     for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
@@ -251,7 +324,86 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 // SET ALL LINKED VARIABLES
                 // This has to be carried out regardless of stabilisation or not.
                 fmuInstances.values().forEach(instance -> {
-                    if (instance.getPorts().stream().anyMatch(p -> p.getSourcePort() != null)) {
+                    //  HE: fixme, remove this comment block - only for devel
+                    //  if instance is source in swap and has existing source ports
+                    //      enterif(swapCond.not)
+                    //      inst.setLinked() // all ports
+                    //  else if instance is target in swap and has swap source ports
+                    //      create links from swap source ports to ports
+                    //      enterif(stepCond)
+                    //      inst.setLinked() // all ports
+                    //  else if instance is connected in swap relation
+                    //      for each port of instance
+                    //              if port is target in swap relation
+                    //                  if port has existing source port
+                    //                      enterIf(swapCond.not)
+                    //                      instance.setLinked(port)
+                    //                      p.breakLink()
+                    //                  create link from swap source port to port
+                    //                  enterIf(swapCond)
+                    //                  instance.setLinked(p)
+                    //              else
+                    //                  instance.setLinked(p)
+                    //  else if instance has source ports
+                    //      inst.setLinked()
+
+                    Predicate<PortFmi2Api> onlyInputs = p -> p.scalarVariable.causality == Fmi2ModelDescription.Causality.Input;
+
+
+                    Set<Fmi2SimulationEnvironment.Relation> swapRelations = env.getModelSwapRelations();
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoOutput =
+                            env.getModelSwaps().stream().filter(e -> e.getKey().equals(instance.getName())).findFirst();
+                    Optional<Map.Entry<String, ModelSwapInfo>> swapInfoInput =
+                            env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(instance.getName())).findFirst();
+
+                    if (swapInfoOutput.isPresent()) {
+                        if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
+                            PredicateFmi2Api swapPredicate = modelSwapConditions.get(swapInfoOutput.get().getValue()).getLeft().toPredicate();
+                            dynamicScope.enterIf(swapPredicate.not());
+                            instance.setLinked();
+                            dynamicScope.leave();
+                        }
+                    } else if (swapInfoInput.isPresent()) {
+                        instance.getPorts().stream().filter(onlyInputs).forEach(port -> {
+                            PortFmi2Api sourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
+                            if (sourcePort != null) {
+                                relinkPorts.accept(sourcePort, port);
+                            }
+                        });
+
+                        if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
+                            PredicateFmi2Api stepPredicate = modelSwapConditions.get(swapInfoInput.get().getValue()).getMiddle().toPredicate();
+                            dynamicScope.enterIf(stepPredicate);
+                            instance.setLinked();
+                            dynamicScope.leave();
+                        }
+                    } else if (instance.getPorts().stream().filter(onlyInputs)
+                            .anyMatch(port -> getSwapSourcePort(port, swapRelations, fmuInstances) != null)) {
+                        instance.getPorts().stream().filter(onlyInputs).forEach(port -> {
+                            PortFmi2Api swapSourcePort = getSwapSourcePort(port, swapRelations, fmuInstances);
+
+                            if (swapSourcePort != null) {
+                                ModelSwapInfo swapInfo = getSwapSourceInfo(port, swapRelations, fmuInstances, env);
+                                PredicateFmi2Api swapPredicate = modelSwapConditions.get(swapInfo).getLeft().toPredicate();
+
+                                if (port.getSourcePort() != null) {
+                                    dynamicScope.enterIf(swapPredicate.not());
+                                    instance.setLinked(port);
+                                    dynamicScope.leave();
+                                    port.breakLink();
+                                }
+
+                                relinkPorts.accept(swapSourcePort, port);
+
+                                dynamicScope.enterIf(swapPredicate);
+                                instance.setLinked(port);
+                                dynamicScope.leave();
+
+                            } else if (port.getSourcePort() != null) {
+                                instance.setLinked(port);
+                            }
+                        });
+                    } else if (instance.getPorts().stream().filter(onlyInputs).anyMatch(PortFmi2Api::isLinkedAsInputConsumer)) {
                         instance.setLinked();
                     }
                 });
@@ -272,8 +424,31 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
                 // STEP ALL
                 fmuInstanceToCommunicationPoint.forEach((instance, communicationPoint) -> {
+                    PredicateFmi2Api stepPredicate = null;
+                    DoubleVariableFmi2Api communicationTime = currentCommunicationTime;
+                    for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry : env.getModelSwaps()) {
+                        if (instance.getName().equals(modelSwapInfoEntry.getKey()) ||
+                                instance.getName().equals(modelSwapInfoEntry.getValue().swapInstance)) {
+
+                            //fixme handle cases where we cannot replace all field expressions
+                            if (instance.getName().equals(modelSwapInfoEntry.getKey())) {
+                                // instance swapped out -> stepPredicate = !swapCondition
+                                stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getLeft().toPredicate().not();
+                            } else {
+                                // instance swapped in -> stepPredicate = stepCondition
+                                stepPredicate = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getMiddle().toPredicate();
+                                communicationTime = modelSwapConditions.get(modelSwapInfoEntry.getValue()).getRight();
+                            }
+                            break;
+                        }
+                    }
+
+                    if (stepPredicate != null) {
+                        dynamicScope.enterIf(stepPredicate);
+                    }
+
                     Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
-                            instance.step(currentCommunicationTime, currentStepSize);
+                            instance.step(communicationTime, currentStepSize);
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
 
@@ -282,11 +457,15 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     dynamicScope.enterIf(didDiscard);
                     {
                         builder.getLogger().debug("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f",
-                                instance.getName(), currentCommunicationTime, currentStepSize,
+                                instance.getName(), communicationTime, currentStepSize,
                                 new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                         discard.getValue().getExp()));
                         anyDiscards.setValue(
                                 new BooleanVariableFmi2Api(null, null, dynamicScope, null, anyDiscards.toPredicate().or(didDiscard).getExp()));
+                        dynamicScope.leave();
+                    }
+
+                    if (stepPredicate != null) {
                         dynamicScope.leave();
                     }
                 });
@@ -435,6 +614,18 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     // Update currentCommunicationTime
                     currentCommunicationTime.setValue(currentCommunicationTime.toMath().addition(currentStepSize));
 
+                    modelSwapConditions.forEach((info, value) -> {
+                        DoubleVariableFmi2Api communicationTime = value.getRight();
+                        PredicateFmi2Api stepPredicate = value.getMiddle().toPredicate();
+                        if (stepPredicate != null) {
+                            dynamicScope.enterIf(stepPredicate);
+                        }
+                        communicationTime.setValue(communicationTime.toMath().addition(currentStepSize));
+                        if (stepPredicate != null) {
+                            dynamicScope.leave();
+                        }
+                    });
+
                     // Log values at current communication point
                     dataWriterInstance.log(currentCommunicationTime);
                     currentStepSize.setValue(stepSize);
@@ -457,6 +648,36 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         return new EmptyRuntimeConfig<>();
     }
 
+    private PortFmi2Api getSwapSourcePort(PortFmi2Api port, Set<Fmi2SimulationEnvironment.Relation> swapRelations,
+            Map<String, ComponentVariableFmi2Api> fmuInstances) {
+        PortFmi2Api sourcePort = null;
+        Optional<Fmi2SimulationEnvironment.Relation> relation = swapRelations.stream()
+                .filter(r -> r.getTargets().values().stream().anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu())))
+                .findFirst();
+        if (relation.isPresent()) {
+            String source = relation.get().getSource().scalarVariable.instance.getText();
+            sourcePort = fmuInstances.get(source).getPort(relation.get().getSource().scalarVariable.scalarVariable.getName());
+        }
+        return sourcePort;
+    }
+
+    private ModelSwapInfo getSwapSourceInfo(PortFmi2Api port, Set<Fmi2SimulationEnvironment.Relation> swapRelations,
+            Map<String, ComponentVariableFmi2Api> fmuInstances, Fmi2SimulationEnvironment env) {
+        ModelSwapInfo swapInfo = null;
+        Optional<Fmi2SimulationEnvironment.Relation> relation = swapRelations.stream()
+                .filter(r -> r.getTargets().values().stream().anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu())))
+                .findFirst();
+        if (relation.isPresent()) {
+            String source = relation.get().getSource().scalarVariable.instance.getText();
+            Optional<Map.Entry<String, ModelSwapInfo>> infoEntry =
+                    env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(source)).findFirst();
+            if (infoEntry.isPresent()) {
+                swapInfo = infoEntry.get().getValue();
+            }
+        }
+
+        return swapInfo;
+    }
 
     @Override
     public ConfigOption getConfigRequirement() {
@@ -487,6 +708,73 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
     @Override
     public String getVersion() {
         return "0.1.1";
+    }
+
+    static class IdentifierReplacer {
+        public static PExp replaceIdentifier(PExp tree, String oldIdentifier, String newIdentifier) {
+            return replaceIdentifier(tree, new HashMap<>() {
+                {
+                    put(oldIdentifier, newIdentifier);
+                }
+            });
+        }
+
+        static public PExp replaceIdentifier(PExp tree, Map<String, String> old2New) {
+            try {
+                tree.apply(new IdentifierReplace(old2New));
+            } catch (AnalysisException e) {
+                throw new RuntimeException(e);
+            }
+            return tree;
+        }
+
+        static public PExp replaceFields(PExp tree, Map<String, PExp> old2New) {
+            try {
+                tree.apply(new FieldExpReplace(old2New));
+            } catch (AnalysisException e) {
+                throw new RuntimeException(e);
+            }
+            return tree;
+        }
+
+        static class IdentifierReplace extends DepthFirstAnalysisAdaptor {
+            final Map<String, String> old2New;
+
+            public IdentifierReplace(Map<String, String> old2New) {
+                this.old2New = old2New;
+            }
+
+            @Override
+            public void caseAIdentifierExp(AIdentifierExp node) throws AnalysisException {
+                for (Map.Entry<String, String> replacing : old2New.entrySet()) {
+                    if (node.getName().getText().equals(replacing.getKey())) {
+                        node.parent().replaceChild(node, new AIdentifierExp(new LexIdentifier(replacing.getValue(), null)));
+                    }
+                }
+            }
+        }
+
+        static class FieldExpReplace extends DepthFirstAnalysisAdaptor {
+            final Map<String, PExp> old2New;
+
+            public FieldExpReplace(Map<String, PExp> old2New) {
+                this.old2New = old2New;
+            }
+
+            @Override
+            public void caseAFieldExp(AFieldExp node) throws AnalysisException {
+                for (Map.Entry<String, PExp> replacing : old2New.entrySet()) {
+                    String[] parts = replacing.getKey().split("\\.");
+                    if (node.getRoot() instanceof AIdentifierExp && ((AIdentifierExp) node.getRoot()).getName().getText().equals(parts[0]) &&
+                            node.getField().getText().equals(parts[1])) {
+                        node.parent().replaceChild(node, replacing.getValue().clone());
+                    }
+                }
+            }
+
+
+        }
+
     }
 }
 

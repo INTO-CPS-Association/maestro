@@ -1,0 +1,5 @@
+simulation
+{
+    int FMUA = 1;
+    external int FMUA = 1;
+}

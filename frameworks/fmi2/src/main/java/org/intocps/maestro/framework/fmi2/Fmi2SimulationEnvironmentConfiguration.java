@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.framework.core.EnvironmentException;
 
 import java.io.File;
@@ -29,6 +30,20 @@ public class Fmi2SimulationEnvironmentConfiguration {
     public Map<String, List<String>> variablesToLog;
     public String faultInjectConfigurationPath;
     public Map<String, String> faultInjectInstances;
+    public Map<String, String> modelTransfers;
+    public Map<String, MultiModel.ModelSwap> modelSwaps;
+
+    public Fmi2SimulationEnvironmentConfiguration(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
+        if (connections == null || connections.size() < 1) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without any connections");
+        }
+        if (fmus == null || fmus.size() < 1) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
+        }
+        validateFmusInConnectionsMatchesFmus(connections, fmus);
+        this.fmus = fmus;
+        this.connections = connections;
+    }
 
     public static Fmi2SimulationEnvironmentConfiguration createFromJsonString(String jsonData) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
@@ -48,24 +63,12 @@ public class Fmi2SimulationEnvironmentConfiguration {
         return mapper.readerForUpdating(new Fmi2SimulationEnvironmentConfiguration(connections, fmus)).readValue(node);
     }
 
-    public Fmi2SimulationEnvironmentConfiguration(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
-        if (connections == null || connections.size() < 1) {
-            throw new EnvironmentException("Cannot generate simulation environment configuration without any connections");
-        }
-        if (fmus == null || fmus.size() < 1) {
-            throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
-        }
-        validateFmusInConnectionsMatchesFmus(connections, fmus);
-        this.fmus = fmus;
-        this.connections = connections;
-    }
-
     private void validateFmusInConnectionsMatchesFmus(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
         // The following format is expected: {FMU_NAME}.INSTANCE_NAME.PORT_NAME
         List<String> fmuNames = fmus.keySet().stream().map(key -> key.replaceAll("[{}]", "").strip()).collect(Collectors.toList());
-        List<String> fmuNamesInConnections = connections.entrySet().stream().flatMap(entry ->
-            Stream.concat(Stream.of(entry.getKey()), entry.getValue().stream()).map(connection -> connection.split("}")[0].replace("{", "").strip())
-        ).collect(Collectors.toList());
+        List<String> fmuNamesInConnections = connections.entrySet().stream().flatMap(
+                entry -> Stream.concat(Stream.of(entry.getKey()), entry.getValue().stream())
+                        .map(connection -> connection.split("}")[0].replace("{", "").strip())).collect(Collectors.toList());
 
         for (String fmuNameInConnection : fmuNamesInConnections) {
             if (!fmuNames.contains(fmuNameInConnection)) {
@@ -80,6 +83,24 @@ public class Fmi2SimulationEnvironmentConfiguration {
 
     public Map<String, List<String>> getConnections() {
         return connections;
+    }
+
+    public Map<String, List<String>> getModelSwapConnections() {
+        if (modelSwaps != null) {
+            Map<String, List<String>> connections = new HashMap<>();
+            for (Map.Entry<String, MultiModel.ModelSwap> entry : modelSwaps.entrySet()) {
+                MultiModel.ModelSwap swap = entry.getValue();
+                if (swap.swapConnections != null) {
+                    connections.putAll(swap.swapConnections);
+                }
+            }
+            return connections;
+        }
+        return null;
+    }
+
+    public boolean hasModelSwap() {
+        return modelSwaps != null && !modelSwaps.isEmpty();
     }
 
     @JsonIgnore

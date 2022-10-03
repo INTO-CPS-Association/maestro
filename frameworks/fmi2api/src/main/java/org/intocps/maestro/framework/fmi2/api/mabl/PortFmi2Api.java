@@ -85,6 +85,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
                         receiverPort);
             }
 
+            // HEJ: TBD - This check fails with "already linked" in expansion since both rbmq fmus connect to single actuation
             if (receiverPort.getSourcePort() != null) {
                 throw new PortLinkException("Cannot port already linked please break link first", receiver);
             }
@@ -101,7 +102,26 @@ public class PortFmi2Api implements Fmi2Builder.Port {
 
     @Override
     public void breakLink() {
+        if (sourcePort != null) {
+            //delete this from the source port
+            sourcePort.targetPorts.remove(this);
+        }
         sourcePort = null;
+    }
+
+    @Override
+    public boolean isLinked() {
+        return isLinkedAsInputConsumer() || isLinkedAsOutputProvider();
+    }
+
+    @Override
+    public boolean isLinkedAsOutputProvider() {
+        return targetPorts.isEmpty();
+    }
+
+    @Override
+    public boolean isLinkedAsInputConsumer() {
+        return this.sourcePort != null;
     }
 
     public String toLexName() {
@@ -111,6 +131,10 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     public String getMultiModelScalarVariableName() {
         return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getEnvironmentName() + "." +
                 this.getName();
+    }
+
+    public String getMultiModelScalarVariableNameWithoutFmu() {
+        return this.aMablFmi2ComponentAPI.getEnvironmentName() + "." + this.getName();
     }
 
     public List<PortFmi2Api> getTargetPorts() {

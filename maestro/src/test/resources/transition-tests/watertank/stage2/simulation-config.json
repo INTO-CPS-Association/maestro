@@ -1,0 +1,25 @@
+{
+  "startTime": 0,
+  "endTime": 100,
+  "reportProgress": true,
+  "liveLogInterval": 0,
+  "logLevels": {
+    "{x1}.controller": [
+      "logAll",
+      "logError",
+      "logFmiCall",
+      "Protocol",
+      "VdmErr",
+      "VdmOut"
+    ],
+    "{x3}.crtlInstance3": [
+      "logAll",
+      "logError",
+      "logFmiCall",
+      "Protocol",
+      "VdmErr",
+      "VdmOut"
+    ],
+    "{x2}.tank": []
+  }
+}

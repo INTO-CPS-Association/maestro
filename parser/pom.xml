@@ -37,6 +37,12 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.codepoetics</groupId>
+            <artifactId>protonpack</artifactId>
+            <version>1.13</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
