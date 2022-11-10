@@ -1,0 +1,300 @@
+module FMI3 import FMI2Component;
+import FMI3Instance;
+import FMI2;
+{
+    FMI3Instance instantiateCoSimulation(string instanceName, string instantiationToken, string resourceLocation, bool visible, bool loggingOn,
+            bool eventModeUsed, bool earlyReturnAllowed, uint[] requiredIntermediateVariables); //, ILogMessageCallback logMessage,IIntermediateUpdateCallback intermediateUpdate
+            
+    FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string instantiationToken, string resourceLocation, bool visible, bool loggingOn,
+            bool eventModeUsed, bool earlyReturnAllowed, uint[] requiredIntermediateVariables);//, ILogMessageCallback logMessage,IIntermediateUpdateCallback intermediateUpdate
+
+    void freeInstance(FMI2Component comp);
+    void freeInstance(FMI3Instance comp);
+
+}
+
+
+
+
+
+module FMUS3tate{}
+module FMI3Instance import FMUS3tate;{
+
+
+      /**
+         * size_t nCategories is ignored as it is calculated from categories[].
+         *
+         * @param instance
+         * @param loggingOn
+         * @param categories
+         * @return
+         */
+        int setDebugLogging(bool loggingOn, string categories[]);
+    
+        /* tag::FreeInstance[] */
+        void freeInstance();
+        /* end::FreeInstance[] */
+    
+        /* Enter and exit initialization mode, enter event mode, terminate and reset */
+        /* tag::EnterInitializationMode[] */
+        int enterInitializationMode(bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined,
+                real stopTime);
+        /* end::EnterInitializationMode[] */
+    
+        /* tag::ExitInitializationMode[] */
+        int exitInitializationMode();
+        /* end::ExitInitializationMode[] */
+    
+        /* tag::EnterEventMode[] */
+        int enterEventMode();
+        /* end::EnterEventMode[] */
+    
+        /* tag::Terminate[] */
+        int terminate();
+        /* end::Terminate[] */
+    
+        /* tag::Reset[] */
+        int reset();
+        /* end::Reset[] */
+    
+        /* getting and setting variable values */
+        /* tag::getters[] */
+        int getFloat32(uint valueReferences[], int nValueReferences, float values[], int nValues);
+    
+        int getFloat64(uint valueReferences[], int nValueReferences, real values[], int nValues);
+    
+        int getInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+    
+        int getUInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+    
+        int getInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+    
+        int getUInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+    
+        int getInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+    
+        int getUInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+    
+        int getInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+    
+        int getUInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+    
+        int getBoolean(uint valueReferences[], int nValueReferences, bool values[], int nValues);
+    
+        int getString(uint valueReferences[], int nValueReferences, string values[], int nValues);
+    
+        int getBinary(uint valueReferences[], int nValueReferences, byte values[][], int nValues);
+        /* end::getters[] */
+    
+        /* tag::setters[] */
+        int setFloat32(uint valueReferences[], int nValueReferences, float values[], int nValues);
+    
+        int setFloat64(uint valueReferences[], int nValueReferences, real values[], int nValues);
+    
+        int setInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+    
+        int setUInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+    
+        int setInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+    
+        int setUInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+    
+        int setInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+    
+        int setUInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+    
+        int setInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+    
+        int setUInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+    
+        int setBoolean(uint valueReferences[], int nValueReferences, bool values[], int nValues);
+    
+        int setString(uint valueReferences[], int nValueReferences, string values[], int nValues);
+    
+        int setBinary(uint valueReferences[], int nValueReferences, long sizes[], byte array_name[][], int nValues);
+        /* end::setters[] */
+    
+        /* getting Variable Dependency Information */
+        /* tag::getNumberOfVariableDependencies[] */
+        int getNumberOfVariableDependencies(uint valueReference, out int nDependencies);
+        /* end::getNumberOfVariableDependencies[] */
+    
+        /* tag::getVariableDependencies[] */
+        int getVariableDependencies(uint dependent, int elementIndicesOfDependent[], uint independents[],
+                uint elementIndicesOfIndependents[], int dependencyKinds[], int nDependencies);
+        /* end::getVariableDependencies[] */
+    
+        /* getting and setting the internal FMU state */
+        /* tag::getFMUState[] */
+        int getFMUState(out FMUS3tate FMUState);
+        /* end::getFMUState[] */
+    
+        /* tag::setFMUState[] */
+        int setFMUState(FMUS3tate FMUState);
+        /* end::setFMUState[] */
+    
+        /* tag::FreeFMUState[] */
+        int freeFMUState(out FMUS3tate  FMUState);
+        /* end::FreeFMUState[] */
+    
+        /* tag::SerializedFMUStateSize[] */
+        //int serializedFMUStateSize(long FMUState, int[] size);
+        /* end::SerializedFMUStateSize[] */
+    
+        /* tag::SerializeFMUState[] */
+        //int serializeFMUState(long FMUState, byte serializedState[], int size);
+        /* end::SerializeFMUState[] */
+    
+        /* tag::DeserializeFMUState[] */
+        //int deserializeFMUState(byte serializedState[], int size, long[] FMUState);
+        /* end::DeserializeFMUState[] */
+    
+        /* getting partial derivatives */
+        /* tag::getDirectionalDerivative[] */
+        int getDirectionalDerivative(uint unknowns[], int nUnknowns, uint knowns[], int nKnowns, real seed[], int nSeed,
+                real sensitivity[], int nSensitivity);
+        /* end::getDirectionalDerivative[] */
+    
+        /* tag::getAdjointDerivative[] */
+        int getAdjointDerivative(uint unknowns[], int nUnknowns, uint knowns[], int nKnowns, real seed[], int nSeed,
+                real sensitivity[], int nSensitivity);
+        /* end::getAdjointDerivative[] */
+    
+    
+        /* Entering and exiting the Configuration or Reconfiguration Mode */
+        /* tag::EnterConfigurationMode[] */
+        int enterConfigurationMode();
+        /* end::EnterConfigurationMode[] */
+    
+        /* tag::ExitConfigurationMode[] */
+        int exitConfigurationMode();
+        /* end::ExitConfigurationMode[] */
+    
+        /* Clock related functions */
+        /* tag::getClock[] */
+        int getClock(uint valueReferences[], int nValueReferences, bool values[]);
+        /* end::getClock[] */
+    
+        /* tag::setClock[] */
+        int setClock(uint valueReferences[], int nValueReferences, bool values[]);
+        /* end::setClock[] */
+    
+        /* tag::getIntervalDecimal[] */
+        int getIntervalDecimal(uint valueReferences[], int nValueReferences, real intervals[],
+                int qualifiers[]);
+        /* end::getIntervalDecimal[] */
+    
+        /* tag::getIntervalFraction[] */
+        int getIntervalFraction(uint valueReferences[], int nValueReferences, uint intervalCounters[], uint resolutions[],
+                int qualifiers[]);
+        /* end::getIntervalFraction[] */
+    
+        /* tag::getShiftDecimal[] */
+        int getShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+        /* end::getShiftDecimal[] */
+    
+        /* tag::getShiftFraction[] */
+        int getShiftFraction(uint valueReferences[], int nValueReferences, uint shiftCounters[], uint resolutions[]);
+        /* end::getShiftFraction[] */
+    
+        /* tag::setIntervalDecimal[] */
+        int setIntervalDecimal(uint valueReferences[], int nValueReferences, real interval[]);
+        /* end::setIntervalDecimal[] */
+    
+        /* tag::setIntervalFraction[] */
+        int setIntervalFraction(uint valueReferences[], int nValueReferences, uint intervalCounter[], uint resolution[]);
+        /* end::setIntervalFraction[] */
+    
+        /* tag::setShiftDecimal[] */
+        int setShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+        /* end::setShiftDecimal[] */
+    
+        /* tag::setShiftFraction[] */
+        int setShiftFraction(uint valueReferences[], int nValueReferences, uint counters[], uint resolutions[]);
+        /* end::setShiftFraction[] */
+    
+    
+        /* tag::EvaluateDiscreteStates[] */
+        int evaluateDiscreteStates();
+        /* end::EvaluateDiscreteStates[] */
+    
+        /* tag::UpdateDiscreteStates[] */
+        int updateDiscreteStates(bool[] discreteStatesNeedUpdate, bool[] terminateSimulation,
+                bool[] nominalsOfContinuousStatesChanged, bool[] valuesOfContinuousStatesChanged, bool[] nextEventTimeDefined,
+                real[] nextEventTime);
+        /* end::UpdateDiscreteStates[] */
+    
+        /***************************************************
+         Types for Functions for Model Exchange
+         ****************************************************/
+    
+        /* tag::EnterContinuousTimeMode[] */
+        int enterContinuousTimeMode();
+        /* end::EnterContinuousTimeMode[] */
+    
+        /* tag::CompletedIntegratorStep[] */
+        int completedIntegratorStep(bool nosetFMUStatePriorToCurrentPoint, bool[] enterEventMode,
+                bool[] terminateSimulation);
+        /* end::CompletedIntegratorStep[] */
+    
+        /* Providing independent variables and re-initialization of caching */
+        /* tag::setTime[] */
+        int setTime(real time);
+        /* end::setTime[] */
+    
+        /* tag::setContinuousStates[] */
+        int setContinuousStates(real continuousStates[], int nContinuousStates);
+        /* end::setContinuousStates[] */
+    
+        /* Evaluation of the model equations */
+        /* tag::getDerivatives[] */
+        int getContinuousStateDerivatives(real derivatives[], int nContinuousStates);
+        /* end::getDerivatives[] */
+    
+        /* tag::getEventIndicators[] */
+        int getEventIndicators(real eventIndicators[], int nEventIndicators);
+        /* end::getEventIndicators[] */
+    
+        /* tag::getContinuousStates[] */
+        int getContinuousStates(real continuousStates[], int nContinuousStates);
+        /* end::getContinuousStates[] */
+    
+        /* tag::getNominalsOfContinuousStates[] */
+        int getNominalsOfContinuousStates(real nominals[], int nContinuousStates);
+        /* end::getNominalsOfContinuousStates[] */
+    
+        /* tag::getNumberOfEventIndicators[] */
+        int getNumberOfEventIndicators(int[] nEventIndicators);
+        /* end::getNumberOfEventIndicators[] */
+    
+        /* tag::getNumberOfContinuousStates[] */
+        int getNumberOfContinuousStates(int[] nContinuousStates);
+        /* end::getNumberOfContinuousStates[] */
+    
+        /***************************************************
+         Types for Functions for Co-Simulation
+         ****************************************************/
+    
+        /* Simulating the FMU */
+    
+        /* tag::EnterStepMode[] */
+        int enterStepMode();
+        /* end::EnterStepMode[] */
+    
+        /* tag::getOutputDerivatives[] */
+        int getOutputDerivatives(uint valueReferences[], int nValueReferences, int orders[], real values[], int nValues);
+        /* end::getOutputDerivatives[] */
+    
+        /* tag::DoStep[] */
+        int doStep(real currentCommunicationPoint, real communicationStepSize, bool nosetFMUStatePriorToCurrentPoint,
+                bool[] eventHandlingNeeded, bool[] terminateSimulation, bool[] earlyReturn, real[] lastSuccessfulTime);
+        /* end::DoStep[] */
+    
+        /***************************************************
+         Types for Functions for Scheduled Execution
+         ****************************************************/
+        /* tag::ActivateModelPartition[] */
+        int activateModelPartition(uint clockReference, real activationTime);
+
+}
+

@@ -159,6 +159,10 @@ primitiveType
     | BOOL                              #boolType
     | QUESTION                          #unknownType
     | VOID                              #voidType
+    | LONG                              #longType
+    | BYTE                              #byteType
+    | FLOAT                             #floatType
+    | SHORT                             #shortType
     ;
 
 literal
