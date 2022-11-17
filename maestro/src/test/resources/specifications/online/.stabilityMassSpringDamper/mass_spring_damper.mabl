@@ -25,9 +25,9 @@ IFmuComponent components[2]={m1,m2};
 
 bool global_execution_continue = true;
 
-//expand initialize(components,START_TIME, END_TIME);
+//expand initialize(components,START_TIME, END_TIME,true);
 
-expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
+expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME,true);
 
 tankcontroller.freeInstance(roller);
 SingleWatertank.freeInstance(cont);

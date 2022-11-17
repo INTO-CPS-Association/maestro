@@ -27,9 +27,9 @@ bool global_execution_continue = true;
 int status = 0;
 
 @Config("@file: config.json");
-Initializer.expand initialize(components,START_TIME, END_TIME);
+Initializer.expand initialize(components,START_TIME, END_TIME,true);
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME);
+JacobianStepBuilder.expand variableStepSize(components,STEP_SIZE,START_TIME,END_TIME,true);
 tankcontroller.freeInstance(ctrlInstance);
 SingleWatertank.freeInstance(wtInstance);
 

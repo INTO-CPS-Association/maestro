@@ -24,10 +24,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue
 import org.intocps.maestro.framework.fmi2.api.mabl.values.StringExpressionValue
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.IntVariableFmi2Api
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*
 import org.intocps.maestro.plugin.*
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin.EmptyRuntimeConfig
 import org.intocps.maestro.plugin.initializer.instructions.*
@@ -62,6 +59,10 @@ class Initializer : BasicMaestroExpansionPlugin {
             MableAstFactory.newAFormalParameter(
                 MableAstFactory.newRealType(),
                 MableAstFactory.newAIdentifier("endTime")
+            ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newABoleanPrimitiveType(),
+                MableAstFactory.newAIdentifier("endTimeDefined")
             )
         ),
         MableAstFactory.newAVoidType()
@@ -82,6 +83,10 @@ class Initializer : BasicMaestroExpansionPlugin {
             MableAstFactory.newAFormalParameter(
                 MableAstFactory.newRealType(),
                 MableAstFactory.newAIdentifier("endTime")
+            ),
+            MableAstFactory.newAFormalParameter(
+                MableAstFactory.newABoleanPrimitiveType(),
+                MableAstFactory.newAIdentifier("endTimeDefined")
             )
         ),
         MableAstFactory.newAVoidType()
@@ -168,10 +173,12 @@ class Initializer : BasicMaestroExpansionPlugin {
                     ) { LinkedHashMap() });
             val startTimeIndex = if (declaredFunction == f1) 1 else 2;
             val endTimeIndex = if (declaredFunction == f1) 2 else 3;
+            val endTimeDefinedIndex = endTimeIndex + 1;
 
             // Convert raw MaBL to API
             val externalStartTime = formalArguments[startTimeIndex] as DoubleVariableFmi2Api
             val externalEndTime = formalArguments[endTimeIndex] as DoubleVariableFmi2Api
+            val externalEndTimeDefined = formalArguments[endTimeDefinedIndex] as BooleanVariableFmi2Api
             val endTimeVar = dynamicScope.store("fixed_end_time", 0.0) as DoubleVariableFmi2Api
             endTimeVar.setValue(externalEndTime)
 
@@ -197,6 +204,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 fmuInstancesTransfer,
                 externalStartTime,
                 externalEndTime,
+                externalEndTimeDefined,
                 env,
                 builder,
                 booleanLogic,
@@ -222,6 +230,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         fmuInstancesTransfer: Map<String, ComponentVariableFmi2Api>,
         externalStartTime: DoubleVariableFmi2Api,
         externalEndTime: DoubleVariableFmi2Api,
+        externalEndTimeDefined: BooleanVariableFmi2Api,
         env: Fmi2SimulationEnvironment,
         builder: MablApiBuilder,
         booleanLogic: BooleanBuilderFmi2Api,
@@ -244,6 +253,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             i.setupExperiment(
                 externalStartTime,
                 externalEndTime,
+                externalEndTimeDefined,
                 this.config!!.relativeTolerance
             )
         };
@@ -310,9 +320,11 @@ class Initializer : BasicMaestroExpansionPlugin {
 
         val startTimeIndex = if (declaredFunction == f1) 1 else 2;
         val endTimeIndex = if (declaredFunction == f1) 2 else 3;
+        val endTimeDefinedIndex = endTimeIndex + 1;
 
         val startTime = formalArguments[startTimeIndex].clone()
         val endTime = formalArguments[endTimeIndex].clone()
+        val endTimeDefined = formalArguments[endTimeDefinedIndex].clone()
 
         return try {
             val setting = MablApiBuilder.MablSettings()
@@ -327,6 +339,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             val externalStartTime = DoubleVariableFmi2Api(null, null, null, null, startTime)
             // TODO: Create a reference value type
             val externalEndTime = DoubleVariableFmi2Api(null, null, null, null, endTime)
+            val externalEndTimeDefined = BooleanVariableFmi2Api(null, null, null, null, endTimeDefined)
             val endTimeVar = dynamicScope.store("fixed_end_time", 0.0) as DoubleVariableFmi2Api
             endTimeVar.setValue(externalEndTime)
 
@@ -348,6 +361,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 fmuInstancesTransfer,
                 externalStartTime,
                 externalEndTime,
+                externalEndTimeDefined,
                 env,
                 builder,
                 booleanLogic,

@@ -529,7 +529,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         void setDebugLogging(List<String> categories, boolean enableLogging);
 
-        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, Double tolerance);
+        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined, Double tolerance);
 
         void setupExperiment(double startTime, Double endTime, Double tolerance);
 
@@ -537,7 +537,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         void exitInitializationMode();
 
-        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, Double tolerance);
+        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined,
+                Double tolerance);
 
         void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
 

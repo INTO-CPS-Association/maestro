@@ -155,7 +155,8 @@ public class MaBLTemplateGenerator {
                         newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
+                                MableAstFactory.newABoolLiteralExp(true))));
                 break;
 
             case VARIABLESTEP:
@@ -163,7 +164,8 @@ public class MaBLTemplateGenerator {
                         newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
+                                MableAstFactory.newABoolLiteralExp(true))));
                 break;
 
             default:
@@ -366,9 +368,10 @@ public class MaBLTemplateGenerator {
             }
 
             if (modelSwapActive) {
-                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME));
+                stmMaintainer.add(
+                        createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME, true));
             } else {
-                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME));
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME, true));
             }
         }
 
@@ -585,20 +588,21 @@ public class MaBLTemplateGenerator {
     }
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String componentsTransferArrayLexName, String startTimeLexName,
-            String endTimeLexName) {
+            String endTimeLexName, boolean endTimeDefined) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(componentsTransferArrayLexName),
-                                aIdentifierExpFromString(startTimeLexName), aIdentifierExpFromString(endTimeLexName))));
+                                aIdentifierExpFromString(startTimeLexName), aIdentifierExpFromString(endTimeLexName),
+                                MableAstFactory.newABoolLiteralExp(endTimeDefined))));
     }
 
-    public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName) {
+    public static PStm createExpandInitialize(String componentsArrayLexName, String startTimeLexName, String endTimeLexName, boolean endTimeDefined) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
-                                aIdentifierExpFromString(endTimeLexName))));
+                                aIdentifierExpFromString(endTimeLexName), MableAstFactory.newABoolLiteralExp(endTimeDefined))));
     }
 
     public static AIdentifierExp aIdentifierExpFromString(String x) {

@@ -32,7 +32,7 @@ FMI2Component tank2 = tank2FMU.instantiate("tank2", false, false);
 
 FMI2Component components[3] = {controller, tank1, tank2};
 @Config("@file: config.json");
-Initializer.expand initialize(components,START_TIME, END_TIME);
+Initializer.expand initialize(components,START_TIME, END_TIME,true);
 
 
 controllerFMU.freeInstance(controller);

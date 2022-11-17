@@ -69,8 +69,8 @@ public class InitializerTest {
 
     private List<PExp> setupFormalArguments(List<String> componentInstances, int startTime, int endTime) {
         var decl = MableAstFactory.newAVariableDeclaration(new LexIdentifier("components", null), newAArrayType(newANameType("FMI2Component")),
-                componentInstances.size(), MableAstFactory
-                        .newAArrayInitializer(componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
+                componentInstances.size(), MableAstFactory.newAArrayInitializer(
+                        componentInstances.stream().map(MableAstFactory::newAIdentifierExp).collect(Collectors.toList())));
 
         var stm = MableAstFactory.newALocalVariableStm(decl);
         //components
@@ -83,6 +83,8 @@ public class InitializerTest {
         arguments.add(MableAstFactory.newAIntLiteralExp(startTime));
         //end time
         arguments.add(MableAstFactory.newAIntLiteralExp(endTime));
+        //end time defined
+        arguments.add(MableAstFactory.newABoolLiteralExp(true));
 
         return arguments;
     }

@@ -5,7 +5,10 @@ import core.*;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
+import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
+import org.intocps.maestro.ast.node.PExp;
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
@@ -45,7 +48,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newBoleanType(), newAIdentifier("endTimeDefined"))), newAVoidType());
     private MathBuilderFmi2Api mathModule;
     private LoggerFmi2Api loggerModule;
     private BooleanBuilderFmi2Api booleanLogicModule;
@@ -93,6 +97,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         DoubleVariableFmi2Api stepSize = (DoubleVariableFmi2Api) formalArguments.get(1);
         DoubleVariableFmi2Api startTime = (DoubleVariableFmi2Api) formalArguments.get(2);
         DoubleVariableFmi2Api endTime = (DoubleVariableFmi2Api) formalArguments.get(3);
+        BooleanVariableFmi2Api endTimeDefined = (BooleanVariableFmi2Api) formalArguments.get(4);
 
         SigverConfig configuration = (SigverConfig) config;
         relTol = configuration.relTol;
@@ -116,8 +121,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             // Get FMU instances
             // use LinkedHashMap to preserve added order
             Map<String, ComponentVariableFmi2Api> fmuInstances =
-                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream()
-                            .collect(Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
+                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream().collect(
+                            Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
 
             // Rename FMU instance-name keys to master model format: <fmu-name>_<instance-name>
             Set<String> fmuKeys = new HashSet<>(fmuInstances.keySet());
@@ -139,7 +144,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             //TODO: Instantiate section from master model contains instantiate and setup experiment instruction, but these are ignored for now.
 
             // Generate setup experiment section
-            fmuInstances.values().forEach(instance -> instance.setupExperiment(startTime, endTime, configuration.relTol));
+            fmuInstances.values().forEach(instance -> instance.setupExperiment(startTime, endTime, endTimeDefined, configuration.relTol));
 
             // Generate set parameters section
             setSEA(fmuInstances, configuration.parameters);
@@ -155,9 +160,9 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             DoubleVariableFmi2Api currentStepSize = dynamicScope.store("current_step_size", 0.0);
 
             // Get and share logging variables that are not yet shared
-            fmuInstances.values().forEach(instance ->
-                instance.getAndShare(instance.getVariablesToLog().stream().filter(var -> var.getSharedAsVariable() == null).map(PortFmi2Api::getName).toArray(String[]::new))
-            );
+            fmuInstances.values().forEach(instance -> instance.getAndShare(
+                    instance.getVariablesToLog().stream().filter(var -> var.getSharedAsVariable() == null).map(PortFmi2Api::getName)
+                            .toArray(String[]::new)));
 
             dataWriterInstance.log(currentCommunicationPoint);
             WhileMaBLScope coSimStepLoop = dynamicScope.enterWhile(currentCommunicationPoint.toMath().addition(stepSize).lessThan(endTime));
@@ -171,9 +176,9 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                     CollectionConverters.asJava(scenarioModel.connections()), sharedPortVars, currentStepSize);
 
             // Get and share variables that are not connected
-            fmuInstances.values().forEach(instance ->
-                    instance.getAndShare(instance.getVariablesToLog().stream().filter(var -> var.getTargetPorts().size() < 1).map(PortFmi2Api::getName).toArray(String[]::new))
-            );
+            fmuInstances.values().forEach(instance -> instance.getAndShare(
+                    instance.getVariablesToLog().stream().filter(var -> var.getTargetPorts().size() < 1).map(PortFmi2Api::getName)
+                            .toArray(String[]::new)));
 
             currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(currentStepSize));
             dataWriterInstance.log(currentCommunicationPoint);
@@ -225,10 +230,9 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                     parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
                             .collect(Collectors.toMap(e -> {
                                 String[] instanceNameSplit = e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER);
-                                return String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER, Arrays.copyOfRange(instanceNameSplit, 2,
-                                        instanceNameSplit.length));
+                                return String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER,
+                                        Arrays.copyOfRange(instanceNameSplit, 2, instanceNameSplit.length));
                             }, Map.Entry::getValue));
-
 
 
             // Map each parameter to matching expression value but only for ports with the causality of parameter which are tunable
@@ -449,8 +453,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                             }, () -> tentativePortMapVars.add(Map.entry(port, portValue)));
 
                     // Check for convergence
-                    convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getEnvironmentName(), port.getName())).findAny()
-                            .ifPresent(portRef -> convergedVariables.add(
+                    convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getEnvironmentName(), port.getName()))
+                            .findAny().ifPresent(portRef -> convergedVariables.add(
                                     createCheckConvergenceSection(Map.entry(port, portValue), portRef, absTolVar, relTolVar)));
                 });
             } else if (instruction instanceof SetTentative) {
@@ -506,7 +510,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         // Generate convergence section
         List<BooleanVariableFmi2Api> convergedVariables = new ArrayList<>();
         for (PortRef portRef : CollectionConverters.asJava(instruction.untilConverged())) {
-            sharedPortVars.stream().filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(), entry.getKey().getName()))
+            sharedPortVars.stream()
+                    .filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(), entry.getKey().getName()))
                     .findAny().ifPresent(portMap -> convergedVariables.add(createCheckConvergenceSection(portMap, portRef, absTolVar, relTolVar)));
         }
 
