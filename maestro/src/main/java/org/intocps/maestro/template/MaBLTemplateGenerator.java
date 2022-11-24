@@ -146,7 +146,7 @@ public class MaBLTemplateGenerator {
         return new AbstractMap.SimpleEntry(rootStatements, tryBlockStatements);
     }
 
-    public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig) {
+    public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig, boolean endTimeDefined) {
         PStm algorithmStm;
 
         switch (algorithmConfig.getAlgorithmType()) {
@@ -156,7 +156,7 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
                                 aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
-                                MableAstFactory.newABoolLiteralExp(true))));
+                                MableAstFactory.newABoolLiteralExp(endTimeDefined))));
                 break;
 
             case VARIABLESTEP:
@@ -165,7 +165,7 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAIdentifier(VARIABLESTEP_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
                                 aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
-                                MableAstFactory.newABoolLiteralExp(true))));
+                                MableAstFactory.newABoolLiteralExp(endTimeDefined))));
                 break;
 
             default:
@@ -345,7 +345,7 @@ public class MaBLTemplateGenerator {
             throw new RuntimeException("No step algorithm config found");
         }
         JacobianStepConfig jacobianStepConfig = (JacobianStepConfig) templateConfiguration.getStepAlgorithmConfig();
-        ExpandStatements algorithmStatements = generateAlgorithmStms(jacobianStepConfig.stepAlgorithm);
+        ExpandStatements algorithmStatements = generateAlgorithmStms(jacobianStepConfig.stepAlgorithm, jacobianStepConfig.endTime != null);
         if (algorithmStatements.variablesToTopOfMabl != null) {
             stmMaintainer.addAll(algorithmStatements.variablesToTopOfMabl);
         }
@@ -359,7 +359,7 @@ public class MaBLTemplateGenerator {
                             MableAstFactory.newARealNumericPrimitiveType(), null)));
             stmMaintainer.add(createRealVariable(START_TIME_NAME_OFFSET, 0.0));
         }
-        stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime));
+        stmMaintainer.add(createRealVariable(END_TIME_NAME, jacobianStepConfig.endTime == null ? 0d : jacobianStepConfig.endTime));
 
         // Add the initializer expand stm
         if (templateConfiguration.getInitialize().getKey()) {
@@ -368,10 +368,10 @@ public class MaBLTemplateGenerator {
             }
 
             if (modelSwapActive) {
-                stmMaintainer.add(
-                        createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME, true));
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME,
+                        jacobianStepConfig.endTime != null));
             } else {
-                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME, true));
+                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME, jacobianStepConfig.endTime != null));
             }
         }
 
@@ -418,6 +418,7 @@ public class MaBLTemplateGenerator {
 
         return unit;
     }
+
 
     private static void checkConnectionUnits(Fmi2SimulationEnvironment unitRelationShip) {
         StringBuilder sbUnitError = new StringBuilder();

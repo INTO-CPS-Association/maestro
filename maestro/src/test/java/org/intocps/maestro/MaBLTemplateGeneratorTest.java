@@ -5,14 +5,13 @@ import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.ABasicBlockStm;
+import org.intocps.maestro.ast.ANotUnaryExp;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.display.PrettyPrinter;
-import org.intocps.maestro.ast.node.AInstanceMappingStm;
-import org.intocps.maestro.ast.node.ALocalVariableStm;
-import org.intocps.maestro.ast.node.ASimulationSpecificationCompilationUnit;
-import org.intocps.maestro.ast.node.ATransferAsStm;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -139,6 +138,104 @@ public class MaBLTemplateGeneratorTest {
 
         ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(mtc);
         System.out.println(PrettyPrinter.print(aSimulationSpecificationCompilationUnit));
+
+
+    }
+
+
+    @Test
+    public void generateSingleWaterTankNoEndTime() throws Exception {
+        final double stepSize = 0.1;
+        File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
+
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
+
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder b = new MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder();
+
+        JacobianStepConfig algorithmConfig = new JacobianStepConfig();
+        algorithmConfig.startTime = 0.0;
+        algorithmConfig.endTime = null;
+        algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(stepSize);
+
+        MaBLTemplateConfiguration mtc = b.useInitializer(true, "{}").setStepAlgorithmConfig(algorithmConfig).setFramework(Framework.FMI2)
+                .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration).build();
+
+
+        ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = MaBLTemplateGenerator.generateTemplate(mtc);
+        System.out.println(PrettyPrinter.print(aSimulationSpecificationCompilationUnit));
+
+        //check that the initialize and fixedstep is called with false for endtime
+        AtomicBoolean flagInitialize = new AtomicBoolean(false);
+        AtomicBoolean flagFixedStep = new AtomicBoolean(false);
+        aSimulationSpecificationCompilationUnit.apply(new DepthFirstAnalysisAdaptor() {
+            @Override
+            public void caseACallExp(ACallExp node) throws AnalysisException {
+                if (node.getExpand() != null && !node.getArgs().isEmpty()) {
+                    PExp lastArg = node.getArgs().get(node.getArgs().size() - 1);
+                    //ok we have the expand calls lets check the two methods. Last parameter must be false
+                    if (lastArg instanceof ABoolLiteralExp && !((ABoolLiteralExp) lastArg).getValue()) {
+                        if (node.getMethodName().getText().equals("initialize")) {
+                            flagInitialize.set(true);
+                        } else if (node.getMethodName().getText().equals("fixedStepSizeTransfer") ||
+                                node.getMethodName().getText().equals("fixedStepSize")) {
+                            flagFixedStep.set(true);
+                        }
+                    }
+                }
+            }
+        });
+        Assertions.assertTrue(flagInitialize.get(), "Initialize not called with endtime defined false");
+        Assertions.assertTrue(flagFixedStep.get(), "Fixedstep not called with endtime defined false");
+
+
+        File workingDir = Paths.get("target", "MaBLTemplateGeneratorTest", "generateSingleWaterTankNoEndTime").toFile();
+        Mabl.MableSettings settings = new Mabl.MableSettings();
+        settings.dumpIntermediateSpecs = false;
+        Mabl mabl = new Mabl(workingDir, workingDir, settings);
+        IErrorReporter reporter = new ErrorReporter();
+        mabl.setReporter(reporter);
+        mabl.setVerbose(true);
+        mabl.parse(CharStreams.fromString(PrettyPrinter.print(aSimulationSpecificationCompilationUnit)));
+        mabl.expand();
+        mabl.typeCheck();
+        mabl.verify(Framework.FMI2);
+        System.out.println(PrettyPrinter.print(mabl.getMainSimulationUnit()));
+
+        AtomicBoolean flag = new AtomicBoolean(false);
+        try {
+            mabl.getMainSimulationUnit().apply(new DepthFirstAnalysisAdaptor() {
+                @Override
+                public void caseAWhileStm(AWhileStm node) throws AnalysisException {
+
+
+                    if (node.getBody() instanceof ABasicBlockStm) {
+                        ABasicBlockStm block = (ABasicBlockStm) node.getBody();
+                        if (block.getBody().stream().anyMatch(s -> s instanceof ATransferStm)) {
+                            //ok we probably found the main simulation loop. Lets check if it terminates. We look for !false
+                            node.getTest().apply(new DepthFirstAnalysisAdaptor() {
+                                @Override
+                                public void caseANotUnaryExp(ANotUnaryExp node) throws AnalysisException {
+                                    if (node.getExp() instanceof ABoolLiteralExp && !((ABoolLiteralExp) node.getExp()).getValue()) {
+                                        //found !false
+                                        flag.set(true);
+                                        throw new AnalysisException();
+                                    }
+                                }
+                            });
+
+                        }
+                    }
+
+
+                    super.caseAWhileStm(node);
+                }
+            });
+        } catch (AnalysisException e) {
+            //ignore we use this to stop
+        }
+
+        Assertions.assertTrue(flag.get(), "Did not find the infinite simulation loop");
     }
 
     @Test
