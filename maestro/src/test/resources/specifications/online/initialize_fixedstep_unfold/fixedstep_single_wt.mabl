@@ -28,7 +28,7 @@ FMI2Component components[2]={wtInstance,crtlInstance};
 
 bool global_execution_continue = true;
 @Config("@file: config.json");
-Initializer.expand initialize(components,START_TIME, END_TIME);
+Initializer.expand initialize(components,START_TIME, END_TIME,true);
 
 FixedStep.expand fixedStep(components,STEP_SIZE,START_TIME,END_TIME);
 

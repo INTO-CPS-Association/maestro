@@ -74,20 +74,22 @@ public class TemplateGeneratorFromScenario {
                         throw new RuntimeException("The FMU: " + entry.getKey() + " from the scenario is not defined in the multi model");
                     }
                     String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
-                    return fmuFromScenario.get().instantiate(instanceNameInEnvironment, dynamicScope.findParentScope(TryMaBlScope.class),
-                            dynamicScope, instanceNameInEnvironment, configuration.getLoggingOn());
+                    return fmuFromScenario.get()
+                            .instantiate(instanceNameInEnvironment, dynamicScope.findParentScope(TryMaBlScope.class), dynamicScope,
+                                    instanceNameInEnvironment, configuration.getLoggingOn());
                 }));
 
         Map<String, ComponentVariableFmi2Api> fmuInstances;
         Map<String, ComponentVariableFmi2Api> faultInjectInstances = new HashMap<>();
 
-        if(doFaultInject) {
+        if (doFaultInject) {
             FaultInject faultInject = builder.getFaultInject(simulationEnvironment.getFaultInjectionConfigurationPath());
             // We need to use the fault inject fmu instead of the original.
             fmuInstances = originalFmuInstances.entrySet().stream().map(entry -> {
                 String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
                 Optional<Map.Entry<String, ComponentInfo>> simEnvInstance =
-                        simulationEnvironment.getInstances().stream().filter(ins -> Objects.equals(ins.getKey(), instanceNameInEnvironment)).findFirst();
+                        simulationEnvironment.getInstances().stream().filter(ins -> Objects.equals(ins.getKey(), instanceNameInEnvironment))
+                                .findFirst();
                 if (simEnvInstance.isPresent() && simEnvInstance.get().getValue().getFaultInject().isPresent()) {
                     String constraintId = simEnvInstance.get().getValue().getFaultInject().get().constraintId;
                     ComponentVariableFmi2Api faultInjectedInstance =
@@ -100,14 +102,17 @@ public class TemplateGeneratorFromScenario {
         } else {
             fmuInstances = originalFmuInstances;
         }
-        fmuInstances.values().forEach(instance -> instance.setVariablesToLog(configuration.getSimulationEnvironment().getVariablesToLog(instance.getEnvironmentName())));
-        if(configuration.getLoggingOn()) {
+        fmuInstances.values().forEach(
+                instance -> instance.setVariablesToLog(configuration.getSimulationEnvironment().getVariablesToLog(instance.getEnvironmentName())));
+        if (configuration.getLoggingOn()) {
             Map<String, List<String>> logLevelsMap = configuration.getLogLevels();
-            fmuInstances.forEach((k,v) -> {
-                logLevelsMap.entrySet().stream().filter(entry -> entry.getKey().contains(v.getEnvironmentName()) && entry.getKey().contains(v.getOwner().getFmuIdentifier())).findAny().ifPresent(entry -> {
-                    v.setDebugLogging(entry.getValue(), true);
-                    logLevelsMap.remove(entry.getKey());
-                });
+            fmuInstances.forEach((k, v) -> {
+                logLevelsMap.entrySet().stream()
+                        .filter(entry -> entry.getKey().contains(v.getEnvironmentName()) && entry.getKey().contains(v.getOwner().getFmuIdentifier()))
+                        .findAny().ifPresent(entry -> {
+                            v.setDebugLogging(entry.getValue(), true);
+                            logLevelsMap.remove(entry.getKey());
+                        });
             });
         }
 
@@ -133,11 +138,11 @@ public class TemplateGeneratorFromScenario {
                 MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(SIGVER_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(Sigver.EXECUTE_ALGORITHM_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME))));
+                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME), newABoolLiteralExp(true))));
         dynamicScope.add(algorithmStm);
 
         // Terminate instances, free instances, unload FMUs
-        if(doFaultInject){
+        if (doFaultInject) {
             originalFmuInstances.putAll(faultInjectInstances);
         }
         originalFmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);

@@ -141,7 +141,7 @@ while( (global_execution_continue) )
 }
 
 @Config("@file: jacobianconfig.json");
-JacobianStepBuilder.expand fixedStepSize(components,STEP_SIZE,START_TIME,END_TIME);
+JacobianStepBuilder.expand fixedStepSize(components,STEP_SIZE,START_TIME,END_TIME,true);
 m1.freeInstance(mi1);
 m2.freeInstance(mi2);
 unload(math);

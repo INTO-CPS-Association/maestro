@@ -16,7 +16,7 @@ public class JacobianStepConfig implements IPluginConfiguration {
     public boolean simulationProgramDelay;
     public boolean setGetDerivatives;
     public double startTime;
-    public double endTime;
+    public Double endTime;
     public IAlgorithmConfig stepAlgorithm;
 
     public Set<String> getVariablesOfInterest() {

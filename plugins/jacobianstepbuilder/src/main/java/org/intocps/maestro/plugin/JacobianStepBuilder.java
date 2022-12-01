@@ -47,21 +47,25 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newBoleanType(), newAIdentifier("endTimeDefined"))), newAVoidType());
 
     final AFunctionDeclaration fixedStepTransferFunc = newAFunctionDeclaration(newAIdentifier("fixedStepSizeTransfer"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newBoleanType(), newAIdentifier("endTimeDefined"))), newAVoidType());
 
     final AFunctionDeclaration variableStepFunc = newAFunctionDeclaration(newAIdentifier("variableStepSize"),
             Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("initSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
-                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime"))), newAVoidType());
+                    newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
+                    newAFormalParameter(newBoleanType(), newAIdentifier("endTimeDefined"))), newAVoidType());
     private final List<String> imports =
-            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl").collect(Collectors.toList());
+            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl")
+                    .collect(Collectors.toList());
     BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
         try {
 
@@ -109,11 +113,11 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
         AFunctionDeclaration selectedFun;
 
         StepAlgorithm algorithm;
-        if (declaredFunction.getName().toString().equals("variableStepSize")) {
+        if (declaredFunction.getName().toString().equals(variableStepFunc.getName().getText())) {
             algorithm = StepAlgorithm.VARIABLESTEP;
             selectedFun = variableStepFunc;
             imports.add("VariableStep");
-        } else if (declaredFunction.getName().toString().equals("fixedStepSizeTransfer")) {
+        } else if (declaredFunction.getName().toString().equals(fixedStepTransferFunc.getName().getText())) {
             algorithm = StepAlgorithm.FIXEDSTEP;
             selectedFun = fixedStepFunc;
             logger.debug("Activated model transfer");
@@ -165,6 +169,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             dynamicScope.addTransferAs(externalStartTime.getName());
             DoubleVariableFmi2Api currentCommunicationTime = dynamicScope.store("jac_current_communication_point", 0.0);
             DoubleVariableFmi2Api externalEndTime = (DoubleVariableFmi2Api) formalArguments.get(3);
+            BooleanVariableFmi2Api externalEndTimeDefined = (BooleanVariableFmi2Api) formalArguments.get(4);
             DoubleVariableFmi2Api endTime = dynamicScope.store("jac_end_time", 0.0);
 
             currentStepSize.setValue(externalStepSize);
@@ -187,7 +192,9 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             SimulationControl simulationControl = builder.getSimulationControl();
 
             // Create the iteration predicate
-            PredicateFmi2Api loopPredicate = currentCommunicationTime.toMath().addition(currentStepSize).lessThan(endTime);
+            PredicateFmi2Api loopPredicate =
+                    externalEndTimeDefined.toPredicate().not().or(currentCommunicationTime.toMath().addition(currentStepSize).lessThan(endTime));
+
 
             // Get all variables related to outputs or logging.
             Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = new HashMap<>();
@@ -284,10 +291,10 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
-            	ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
+                ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
                 stoppingThenScope.add(new AErrorStm(newAStringLiteralExp("Simulation stopped by user")));
                 stoppingThenScope.leave();
-                
+
                 //mark a safe point for a transfer to another specification
                 dynamicScope.markTransferPoint();
 
@@ -707,7 +714,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
     @Override
     public String getVersion() {
-        return "0.1.1";
+        return "1.0.0";
     }
 
     static class IdentifierReplacer {
