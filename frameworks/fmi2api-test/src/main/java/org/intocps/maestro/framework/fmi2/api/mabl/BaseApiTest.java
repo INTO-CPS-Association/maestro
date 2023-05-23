@@ -100,7 +100,8 @@ public abstract class BaseApiTest {
         assertTrue(res, "Type check errors:" + out);
 
         new MableInterpreter(
-                new DefaultExternalValueFactory(new File("target"), new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(
+                new DefaultExternalValueFactory(new File("target"),typeChecker::findModule,
+                        new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(
                 doc);
     }
 

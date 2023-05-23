@@ -16,6 +16,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -65,46 +66,37 @@ public class TemplateGeneratorFromScenarioTest {
 
         // Setup values from JSON
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {
-                }), jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {
-        }));
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("connections")), new TypeReference<>() {}),
+                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("fmus")), new TypeReference<>() {}));
 
-        Map<String, Object> parameters =
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")), new TypeReference<>() {
-                });
+        Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("multiModel").get("parameters")),
+                new TypeReference<>() {});
         Double relTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceRelativeTolerance")),
-                new TypeReference<>() {
-                });
+                new TypeReference<>() {});
         Double absTol = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAbsoluteTolerance")),
-                new TypeReference<>() {
-                });
-        Integer convergenceAttempts =
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")),
-                        new TypeReference<>() {
-                        });
-        Double startTime =
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("startTime")), new TypeReference<>() {
-                });
-        Double endTime = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("endTime")), new TypeReference<>() {
-        });
-        Double stepSize =
-                jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")), new TypeReference<>() {
-                });
+                new TypeReference<>() {});
+        Integer convergenceAttempts = jsonMapper.readValue(
+                jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("convergenceAttempts")), new TypeReference<>() {});
+        Double startTime = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("startTime")),
+                new TypeReference<>() {});
+        Double endTime = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("endTime")),
+                new TypeReference<>() {});
+        Double stepSize = jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")),
+                new TypeReference<>() {});
 
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes()));
 
         // Setup scenarioConfiguration
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
-        ScenarioConfiguration scenarioConfiguration =
-                new ScenarioConfiguration(simulationEnvironment, masterModel, parameters, relTol, absTol, convergenceAttempts, startTime, endTime,
-                        stepSize, Pair.of(Framework.FMI2, simulationConfiguration), false, Map.of());
+        ScenarioConfiguration scenarioConfiguration = new ScenarioConfiguration(simulationEnvironment, masterModel, parameters, relTol, absTol,
+                convergenceAttempts, startTime, endTime, stepSize, Pair.of(Framework.FMI2, simulationConfiguration), false, Map.of());
 
         // ACT
         // This calls TemplateGeneratorFromScenario.generateTemplate which is the method to test
         mabl.generateSpec(scenarioConfiguration);
 
         mabl.expand();
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
 
         // ASSERT
@@ -119,7 +111,7 @@ public class TemplateGeneratorFromScenarioTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, n -> TypeChecker.findModule(tcRes.getValue(), n),
                 IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
 

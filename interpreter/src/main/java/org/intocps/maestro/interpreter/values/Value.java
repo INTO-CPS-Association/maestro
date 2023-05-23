@@ -7,6 +7,10 @@ import java.util.Objects;
 
 public abstract class Value {
 
+    public <T> T as(Class<T> type) {
+        return type.cast(this);
+    }
+
     public static void checkArgLength(List<Value> values, int size) {
         if (values == null) {
             throw new InterpreterException("No values passed");
@@ -32,4 +36,20 @@ public abstract class Value {
     public Value deref() {
         return this;
     }
+
+    public boolean isNumeric() {
+        return false;
+    }
+
+    public boolean isNumericDecimal() {
+        return false;
+    }
+
+    public boolean isUpdatable() {
+        return false;
+    }
+
+    //    public abstract PType getType();
+
+    //    public abstract Value cast(Value targetType)
 }

@@ -48,8 +48,10 @@ public class Fmi2Interpreter {
 
         value = value.deref();
 
-        if (value instanceof RealValue) {
-            return ((RealValue) value).getValue();
+        if (value.isNumericDecimal()) {
+            return ((NumericValue) value).doubleValue();
+        } else if (value.isNumeric()) {
+            return ((NumericValue) value).intValue();
         }
         throw new InterpreterException("Value is not double");
     }
@@ -61,8 +63,8 @@ public class Fmi2Interpreter {
         if (value instanceof UnsignedIntegerValue) {
             return ((UnsignedIntegerValue) value).getValue();
         }
-        if (value instanceof IntegerValue) {
-            return ((IntegerValue) value).getValue();
+        if (value instanceof NumericValue) {
+            return ((NumericValue) value).intValue();
         }
         throw new InterpreterException("Value is not unsigned integer");
     }
@@ -77,7 +79,7 @@ public class Fmi2Interpreter {
         throw new InterpreterException("Value is not string");
     }
 
-    static void checkArgLength(List<Value> values, int size) {
+  public  static void checkArgLength(List<Value> values, int size) {
         if (values == null) {
             throw new InterpreterException("No values passed");
         }
@@ -87,11 +89,14 @@ public class Fmi2Interpreter {
         }
 
         if (values.size() != size) {
+            String predix;
             if (values.size() < size) {
-                throw new InterpreterException("Too few arguments");
+                predix = "Too few arguments.";
             } else {
-                throw new InterpreterException("Too many arguments");
+                predix = "Too many arguments.";
             }
+            throw new InterpreterException(String.format("%s Excepted: %d, Actual: %s, Args: '%s'", predix, size, values.size(),
+                    values.stream().map(v -> v.deref().toString()).collect(Collectors.joining(","))));
         }
     }
 
@@ -99,7 +104,7 @@ public class Fmi2Interpreter {
         return getArrayValue(value, Optional.empty(), clz);
     }
 
-    static <T extends Value> List<T> getArrayValue(Value value, Optional<Long> limit, Class<T> clz) {
+    public static <T extends Value> List<T> getArrayValue(Value value, Optional<Long> limit, Class<T> clz) {
 
         value = value.deref();
 
@@ -201,7 +206,7 @@ public class Fmi2Interpreter {
 
             checkArgLength(fcargs, 3);
 
-            if (!(fcargs.get(2) instanceof UpdatableValue)) {
+            if (!(fcargs.get(2).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
             long elementsToUse = getUint(fcargs.get(1));
@@ -239,7 +244,7 @@ public class Fmi2Interpreter {
                     getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().mapToLong(NumericValue::longValue)
                             .toArray();
             int[] values =
-                    getArrayValue(fcargs.get(2), Optional.of(elementsToUse), IntegerValue.class).stream().mapToInt(IntegerValue::getValue).toArray();
+                    getArrayValue(fcargs.get(2), Optional.of(elementsToUse), NumericValue.class).stream().mapToInt(NumericValue::intValue).toArray();
 
             try {
                 Fmi2Status res = component.setIntegers(scalarValueIndices, values);
@@ -253,7 +258,7 @@ public class Fmi2Interpreter {
             checkArgLength(fcargs, 3);
             long elementsToUse = getUint(fcargs.get(1));
 
-            if (!(fcargs.get(2) instanceof UpdatableValue)) {
+            if (!(fcargs.get(2).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
@@ -305,7 +310,7 @@ public class Fmi2Interpreter {
 
             checkArgLength(fcargs, 3);
 
-            if (!(fcargs.get(2) instanceof UpdatableValue)) {
+            if (!(fcargs.get(2).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
@@ -360,7 +365,7 @@ public class Fmi2Interpreter {
 
             checkArgLength(fcargs, 3);
 
-            if (!(fcargs.get(2) instanceof UpdatableValue)) {
+            if (!(fcargs.get(2).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
@@ -440,7 +445,7 @@ public class Fmi2Interpreter {
 
             checkArgLength(fcargs, 1);
 
-            if (!(fcargs.get(0) instanceof UpdatableValue)) {
+            if (!(fcargs.get(0).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
@@ -488,17 +493,17 @@ public class Fmi2Interpreter {
 
             checkArgLength(fcargs, 2);
 
-            if (!(fcargs.get(1) instanceof UpdatableValue)) {
+            if (!(fcargs.get(1).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
             Value kindValue = fcargs.get(0).deref();
 
-            if (!(kindValue instanceof IntegerValue)) {
+            if (!kindValue.isNumeric()) {
                 throw new InterpreterException("Invalid kind value: " + kindValue);
             }
 
-            int kind = ((IntegerValue) kindValue).getValue();
+            int kind = ((NumericValue) kindValue).intValue();
 
             Fmi2StatusKind kindEnum = Arrays.stream(Fmi2StatusKind.values()).filter(v -> v.value == kind).findFirst().orElse(null);
 
@@ -525,7 +530,7 @@ public class Fmi2Interpreter {
             //   int getRealOutputDerivatives(long[] scalarValueIndices, UInt nvr, int[] order, ref double[] derivatives);
             checkArgLength(fcargs, 4);
 
-            if (!(fcargs.get(3) instanceof UpdatableValue)) {
+            if (!(fcargs.get(3).isUpdatable())) {
                 throw new InterpreterException("value not a reference value");
             }
 
@@ -744,11 +749,8 @@ public class Fmi2Interpreter {
             System.out.println("Interpretation load took: " + (stopTime - startExecTime));
             return new FmuValue(functions, fmu);
 
-        } catch (IOException | FmuInvocationException | FmuMissingLibraryException e) {
-
-            e.printStackTrace();
-            return new NullValue();
         } catch (Exception e) {
+
             e.printStackTrace();
             return new NullValue();
         }
@@ -768,7 +770,8 @@ public class Fmi2Interpreter {
             System.out.println("Interpretation load took: " + (stopTime - startExecTime));
             return new FmuValue(functions, fmu);
 
-        } catch (IOException | FmuInvocationException | FmuMissingLibraryException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException | ParserConfigurationException | SAXException | XPathExpressionException e) {
+        } catch (IOException | FmuInvocationException | FmuMissingLibraryException | NoSuchMethodException | IllegalAccessException |
+                 InstantiationException | InvocationTargetException | ParserConfigurationException | SAXException | XPathExpressionException e) {
 
             e.printStackTrace();
             return new NullValue();

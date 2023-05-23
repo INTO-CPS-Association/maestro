@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -30,10 +32,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -83,9 +82,31 @@ public class FullSpecTest {
             // Compute diff. Get the Patch object. Patch is the container for computed deltas.
             Patch patch = DiffUtils.diff(original, revised);
 
+            System.err.println("Diff");
             for (Delta delta : patch.getDeltas()) {
-                System.err.println(delta);
-                Assertions.fail("Expected result and actual differ: " + delta);
+                StringBuilder sb = new StringBuilder();
+                switch (delta.getType()) {
+
+                    case CHANGE:
+                        sb.append("--- CHANGE ---\n");
+                        break;
+                    case DELETE:
+                        sb.append("--- DELETE ---\n");
+                        break;
+                    case INSERT:
+                        sb.append("--- INSERT ---\n");
+                        break;
+                }
+
+                sb.append(original.stream().skip(delta.getOriginal().getPosition() - 1).map(l -> " " + l).limit(1).collect(Collectors.joining("\n")));
+                sb.append("\n");
+                sb.append(delta.getOriginal().getLines().stream().map(l -> ">" + l).limit(3).collect(Collectors.joining("\n")));
+                sb.append("\n");
+                sb.append("---  \n");
+                sb.append(revised.stream().skip(delta.getOriginal().getPosition() - 1).map(l -> " " + l).limit(1).collect(Collectors.joining("\n")));
+                sb.append("\n");
+                sb.append(delta.getRevised().getLines().stream().map(l -> "<" + l).limit(3).collect(Collectors.joining("\n")));
+                Assertions.fail("Expected result and actual differ: \n" + sb);
             }
 
         }
@@ -101,7 +122,7 @@ public class FullSpecTest {
         boolean actualOutputsCsvExists = actualCsvFile.exists();
         boolean expectedOutputsCsvExists = expectedCsvFile.exists();
         if (actualOutputsCsvExists && expectedOutputsCsvExists) {
-            assertResultEqualsDiff(new FileInputStream(actualCsvFile), new FileInputStream(expectedCsvFile));
+            assertResultEqualsDiff(new FileInputStream(expectedCsvFile), new FileInputStream(actualCsvFile));
         } else {
 
             StringBuilder sb = new StringBuilder();
@@ -147,27 +168,28 @@ public class FullSpecTest {
         mabl.setReporter(reporter);
         mabl.setVerbose(getMablVerbose());
 
-        ARootDocument spec = generateSpec(mabl, directory, workingDirectory);
-        postProcessSpec(name, directory, workingDirectory, mabl, spec);
+        Map.Entry<ARootDocument, Map<INode, PType>> res = generateSpec(mabl, directory, workingDirectory);
+        postProcessSpec(name, directory, workingDirectory, mabl, res.getKey(), res.getValue());
     }
 
     protected boolean getMablVerbose() {
         return true;
     }
 
-    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
-        interpretSpec(directory, workingDirectory, mabl, spec);
+    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec,
+            Map<INode, PType> types) throws Exception {
+        interpretSpec(directory, workingDirectory, mabl, spec, types);
     }
 
-    protected void interpretSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+    protected void interpretSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec, Map<INode, PType> types) throws Exception {
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(types, name),
                 IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(spec);
 
         compareCSVs(new File(directory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
     }
 
     @NotNull
-    private ARootDocument generateSpec(Mabl mabl, File directory, File workingDirectory) throws Exception {
+    private Map.Entry<ARootDocument, Map<INode, PType>> generateSpec(Mabl mabl, File directory, File workingDirectory) throws Exception {
         File specFolder = new File(workingDirectory, "specs");
         specFolder.mkdirs();
 
@@ -190,16 +212,16 @@ public class FullSpecTest {
         postParse(mabl);
         if (useTemplate) {
 
-            Fmi2EnvironmentConfiguration simulationConfiguration =
-                    new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2EnvironmentConfiguration.class);
+            Fmi2EnvironmentConfiguration simulationConfiguration = new ObjectMapper().readValue(new File(directory, "env.json"),
+                    Fmi2EnvironmentConfiguration.class);
 
             Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
                     new String(Files.readAllBytes(Paths.get(new File(directory, "env.json").getAbsolutePath()))));
 
 
-            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(testJsonObject.initialize, "{}")
-                            .setFramework(Framework.FMI2).setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration);
+            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder = MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder()
+                    .useInitializer(testJsonObject.initialize, "{}").setFramework(Framework.FMI2)
+                    .setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration);
 
             Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, mabl.getReporter());
             if (testJsonObject.useLogLevels) {
@@ -207,8 +229,7 @@ public class FullSpecTest {
             }
 
             if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
-                Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
-                        (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
+                Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a = (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
 
                 JacobianStepConfig algorithmConfig = new JacobianStepConfig();
                 algorithmConfig.startTime = 0.0;
@@ -225,7 +246,7 @@ public class FullSpecTest {
         }
 
         mabl.expand();
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
 
 
@@ -240,7 +261,7 @@ public class FullSpecTest {
         mabl.dump(workingDirectory);
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_FILENAME).exists(), "Spec file must exist");
         Assertions.assertTrue(new File(workingDirectory, Mabl.MAIN_SPEC_DEFAULT_RUNTIME_FILENAME).exists(), "Spec file must exist");
-        return mabl.getMainSimulationUnit();
+        return Map.entry(mabl.getMainSimulationUnit(), tcRes.getValue());
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {

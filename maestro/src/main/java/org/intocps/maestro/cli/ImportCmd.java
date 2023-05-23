@@ -237,6 +237,10 @@ public class ImportCmd implements Callable<Integer> {
 
             JsonNode rootNode = null;
             for (File jsonFile : files) {
+                if (!jsonFile.exists()) {
+                    System.err.println("JSON File does not exist " + jsonFile);
+                    return false;
+                }
                 JsonNode tempNode = mapper.readTree(jsonFile);
                 rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
             }

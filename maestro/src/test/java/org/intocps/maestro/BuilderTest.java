@@ -20,6 +20,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -37,8 +38,8 @@ public class BuilderTest {
     public void wt() throws Exception {
 
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("buildertester/buildertester.json");
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
-                Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(Objects.requireNonNull(is).readAllBytes()));
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
+                new String(Objects.requireNonNull(is).readAllBytes()));
 
 
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
@@ -66,8 +67,8 @@ public class BuilderTest {
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
                 .createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
-        FmuVariableFmi2Api tankFMU =
-                builder.getDynamicScope().createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+        FmuVariableFmi2Api tankFMU = builder.getDynamicScope()
+                .createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");
@@ -143,14 +144,14 @@ public class BuilderTest {
 
         mabl.parse(Collections.singletonList(specFile));
 
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             Assertions.fail();
         }
         mabl.dump(workingDirectory);
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRes.getValue(), name),
                 IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
     }

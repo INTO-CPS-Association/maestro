@@ -2,13 +2,13 @@ module FMI3 import FMI2Component;
 import FMI3Instance;
 import FMI2;
 {
-    FMI3Instance instantiateCoSimulation(string instanceName, string instantiationToken, string resourceLocation, bool visible, bool loggingOn,
+    FMI3Instance instantiateCoSimulation(string instanceName,  bool visible, bool loggingOn,
             bool eventModeUsed, bool earlyReturnAllowed, uint[] requiredIntermediateVariables); //, ILogMessageCallback logMessage,IIntermediateUpdateCallback intermediateUpdate
             
-    FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string instantiationToken, string resourceLocation, bool visible, bool loggingOn,
+    FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName,  bool visible, bool loggingOn,
             bool eventModeUsed, bool earlyReturnAllowed, uint[] requiredIntermediateVariables);//, ILogMessageCallback logMessage,IIntermediateUpdateCallback intermediateUpdate
 
-    void freeInstance(FMI2Component comp);
+    //void freeInstance(FMI2Component comp);
     void freeInstance(FMI3Instance comp);
 
 }
@@ -17,8 +17,8 @@ import FMI2;
 
 
 
-module FMUS3tate{}
-module FMI3Instance import FMUS3tate;{
+module FMU3State{}
+module FMI3Instance import FMU3State;{
 
 
       /**
@@ -59,59 +59,59 @@ module FMI3Instance import FMUS3tate;{
     
         /* getting and setting variable values */
         /* tag::getters[] */
-        int getFloat32(uint valueReferences[], int nValueReferences, float values[], int nValues);
+        int getFloat32(uint valueReferences[],  float values[]);
     
-        int getFloat64(uint valueReferences[], int nValueReferences, real values[], int nValues);
+        int getFloat64(uint valueReferences[],  real values[]);
     
-        int getInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+        int getInt8(uint valueReferences[],  byte values[]);
     
-        int getUInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+        int getUInt8(uint valueReferences[],  byte values[]);
     
-        int getInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+        int getInt16(uint valueReferences[],  short values[]);
     
-        int getUInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+        int getUInt16(uint valueReferences[],  short values[]);
     
-        int getInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+        int getInt32(uint valueReferences[],  int values[]);
     
-        int getUInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+        int getUInt32(uint valueReferences[],  int values[]);
     
-        int getInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+        int getInt64(uint valueReferences[],  long values[]);
     
-        int getUInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+        int getUInt64(uint valueReferences[],  long values[]);
     
-        int getBoolean(uint valueReferences[], int nValueReferences, bool values[], int nValues);
+        int getBoolean(uint valueReferences[],  bool values[]);
     
-        int getString(uint valueReferences[], int nValueReferences, string values[], int nValues);
+        int getString(uint valueReferences[],  string values[]);
     
-        int getBinary(uint valueReferences[], int nValueReferences, byte values[][], int nValues);
+        int getBinary(uint valueReferences[],  byte values[][]);
         /* end::getters[] */
     
         /* tag::setters[] */
-        int setFloat32(uint valueReferences[], int nValueReferences, float values[], int nValues);
+        int setFloat32(uint valueReferences[],  float values[]);
     
-        int setFloat64(uint valueReferences[], int nValueReferences, real values[], int nValues);
+        int setFloat64(uint valueReferences[],  real values[]);
     
-        int setInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+        int setInt8(uint valueReferences[],  byte values[]);
     
-        int setUInt8(uint valueReferences[], int nValueReferences, byte values[], int nValues);
+        int setUInt8(uint valueReferences[],  byte values[]);
     
-        int setInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+        int setInt16(uint valueReferences[],  short values[]);
     
-        int setUInt16(uint valueReferences[], int nValueReferences, short values[], int nValues);
+        int setUInt16(uint valueReferences[],  short values[]);
     
-        int setInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+        int setInt32(uint valueReferences[],  int values[]);
     
-        int setUInt32(uint valueReferences[], int nValueReferences, int values[], int nValues);
+        int setUInt32(uint valueReferences[],  int values[]);
     
-        int setInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+        int setInt64(uint valueReferences[],  long values[]);
     
-        int setUInt64(uint valueReferences[], int nValueReferences, long values[], int nValues);
+        int setUInt64(uint valueReferences[],  long values[]);
     
-        int setBoolean(uint valueReferences[], int nValueReferences, bool values[], int nValues);
+        int setBoolean(uint valueReferences[],  bool values[]);
     
-        int setString(uint valueReferences[], int nValueReferences, string values[], int nValues);
+        int setString(uint valueReferences[],  string values[]);
     
-        int setBinary(uint valueReferences[], int nValueReferences, long sizes[], byte array_name[][], int nValues);
+        int setBinary(uint valueReferences[],  long sizes[], byte array_name[][]);
         /* end::setters[] */
     
         /* getting Variable Dependency Information */
@@ -126,15 +126,15 @@ module FMI3Instance import FMUS3tate;{
     
         /* getting and setting the internal FMU state */
         /* tag::getFMUState[] */
-        int getFMUState(out FMUS3tate FMUState);
+        int getFMUState(out FMU3State FMU3State);
         /* end::getFMUState[] */
     
         /* tag::setFMUState[] */
-        int setFMUState(FMUS3tate FMUState);
+        int setFMUState(FMU3State FMU3State);
         /* end::setFMUState[] */
     
         /* tag::FreeFMUState[] */
-        int freeFMUState(out FMUS3tate  FMUState);
+        int freeFMUState(out FMU3State  FMU3State);
         /* end::FreeFMUState[] */
     
         /* tag::SerializedFMUStateSize[] */
@@ -287,7 +287,7 @@ module FMI3Instance import FMUS3tate;{
     
         /* tag::DoStep[] */
         int doStep(real currentCommunicationPoint, real communicationStepSize, bool nosetFMUStatePriorToCurrentPoint,
-                bool[] eventHandlingNeeded, bool[] terminateSimulation, bool[] earlyReturn, real[] lastSuccessfulTime);
+               out bool eventHandlingNeeded,out bool terminateSimulation,out bool earlyReturn,out real lastSuccessfulTime);
         /* end::DoStep[] */
     
         /***************************************************

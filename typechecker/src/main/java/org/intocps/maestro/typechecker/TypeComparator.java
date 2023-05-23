@@ -1,10 +1,14 @@
 package org.intocps.maestro.typechecker;
 
 import org.intocps.maestro.ast.node.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Vector;
 
 public class TypeComparator {
+    final static Logger logger = LoggerFactory.getLogger(TypeComparator.class);
 
     public synchronized boolean compatible(Class<? extends PType> to, PType from) {
         if (to == AUnknownType.class) {
@@ -50,6 +54,45 @@ public class TypeComparator {
         if (to instanceof AReferenceType && from instanceof AReferenceType) {
             return compatible(((AReferenceType) to).getType(), ((AReferenceType) from).getType());
         }
+
+        /*
+        * #primitive
+    =   {boolean}
+    |   {string}
+    |   #numeric
+    ;
+
+#numeric
+    =   {real}
+    |   {int}
+    |   {uInt}
+    |   {float}
+    |   {short}
+    |   {byte}
+    |   {long}
+    ;
+    *
+    * _Bool < char < short < int < long < long long
+    *
+    * float < double < long double
+*/
+        //ABooleanPrimitiveType.class,
+        Class types[] = new Class[]{AByteNumericPrimitiveType.class, AShortNumericPrimitiveType.class, AIntNumericPrimitiveType.class,
+                AUIntNumericPrimitiveType.class, ALongNumericPrimitiveType.class, AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
+
+        //        Class typesDecimal[] = new Class[]{AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
+        List<Class> primitiveTypeRanks = new Vector<>();
+
+        for (Class type : types) {
+            primitiveTypeRanks.add(type);
+        }
+        int toIndex = primitiveTypeRanks.indexOf(to.getClass());
+        int fromIndex = primitiveTypeRanks.indexOf(from.getClass());
+        if (toIndex > -1 && fromIndex > -1 && fromIndex <= toIndex) {
+            //            logger.info("Type compatability {} -> {} OK", from.getClass().getSimpleName(), to.getClass().getSimpleName());
+            return true;
+        }
+
 
         //numbers
         if (to instanceof ARealNumericPrimitiveType && (from instanceof ARealNumericPrimitiveType || from instanceof AIntNumericPrimitiveType)) {

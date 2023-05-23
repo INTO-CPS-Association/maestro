@@ -41,9 +41,9 @@ public class ArrayTest extends BaseApiAssertTest {
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
         IErrorReporter reporter = new ErrorReporter();
         TypeChecker typeChecker = new TypeChecker(reporter);
-        List<AImportedModuleCompilationUnit> maestro2EmbeddedModules =
-                getModuleDocuments(TypeChecker.getRuntimeModules()).stream().map(x -> NodeCollector.collect(x, AImportedModuleCompilationUnit.class))
-                        .filter(Optional::isPresent).flatMap(x -> x.get().stream()).collect(Collectors.toList());
+        List<AImportedModuleCompilationUnit> maestro2EmbeddedModules = getModuleDocuments(TypeChecker.getRuntimeModules()).stream()
+                .map(x -> NodeCollector.collect(x, AImportedModuleCompilationUnit.class)).filter(Optional::isPresent).flatMap(x -> x.get().stream())
+                .collect(Collectors.toList());
         ARootDocument defaultModules = new ARootDocument();
         defaultModules.setContent(maestro2EmbeddedModules);
         StringWriter out = new StringWriter();
@@ -72,7 +72,7 @@ public class ArrayTest extends BaseApiAssertTest {
         Assertions.assertFalse(res,
                 "Expected error: Invalid assignment to cannot assign: 'real' to 'real[]' in: multidimensionalarray[0] = " + "realvar; null");
         Assertions.assertThrows(RuntimeException.class,
-                () -> new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(doc));
+                () -> new MableInterpreter(new DefaultExternalValueFactory(new File("target"), typeChecker::findModule, null)).execute(doc));
 
     }
 }

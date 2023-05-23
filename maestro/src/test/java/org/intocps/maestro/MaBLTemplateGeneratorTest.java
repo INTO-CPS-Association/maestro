@@ -24,6 +24,7 @@ import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.MaBLTemplateGenerator;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.util.MablModuleProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -94,8 +95,8 @@ public class MaBLTemplateGeneratorTest {
                         }
                         assert instanceMappingStmUntyped instanceof AInstanceMappingStm;
                         var instanceMappingStm = (AInstanceMappingStm) instanceMappingStmUntyped;
-                        foundMapping.set(instanceMappingStm.getIdentifier().getText().contains(FAULTINJECT_POSTFIX) &&
-                                instanceMappingStm.getName().equalsIgnoreCase("wtinstance"));
+                        foundMapping.set(instanceMappingStm.getIdentifier().getText().contains(FAULTINJECT_POSTFIX) && instanceMappingStm.getName()
+                                .equalsIgnoreCase("wtinstance"));
 
                     }
                 }
@@ -177,8 +178,8 @@ public class MaBLTemplateGeneratorTest {
                     if (lastArg instanceof ABoolLiteralExp && !((ABoolLiteralExp) lastArg).getValue()) {
                         if (node.getMethodName().getText().equals("initialize")) {
                             flagInitialize.set(true);
-                        } else if (node.getMethodName().getText().equals("fixedStepSizeTransfer") ||
-                                node.getMethodName().getText().equals("fixedStepSize")) {
+                        } else if (node.getMethodName().getText().equals("fixedStepSizeTransfer") || node.getMethodName().getText()
+                                .equals("fixedStepSize")) {
                             flagFixedStep.set(true);
                         }
                     }
@@ -369,7 +370,7 @@ public class MaBLTemplateGeneratorTest {
         mabl.setVerbose(true);
         mabl.parse(CharStreams.fromString(PrettyPrinter.print(aSimulationSpecificationCompilationUnit)));
         mabl.expand();
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         mabl.setRuntimeEnvironmentVariables((Map<String, Object>) configData.get("parameters"));
         mabl.dump(workingDir);
@@ -383,7 +384,7 @@ public class MaBLTemplateGeneratorTest {
             reporter.printWarnings(new PrintWriter(System.out, true));
         }
 
-        new MableInterpreter(new DefaultExternalValueFactory(workingDir,
+        new MableInterpreter(new DefaultExternalValueFactory(workingDir, name -> TypeChecker.findModule(tcRes.getValue(), name),
                 IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
     }
@@ -393,8 +394,8 @@ public class MaBLTemplateGeneratorTest {
         final double endTime = 10.0;
         final double stepSize = 0.1;
         File configurationDirectory = Paths.get("src", "test", "resources", "specifications", "full", "initialize_singleWaterTank").toFile();
-        File faultInjectionFile =
-                Paths.get("src", "test", "resources", "org", "into-cps", "maestro", "faultinjection", "dummyfaultinjectfile.xml").toFile();
+        File faultInjectionFile = Paths.get("src", "test", "resources", "org", "into-cps", "maestro", "faultinjection", "dummyfaultinjectfile.xml")
+                .toFile();
         Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
                 new String(Files.readAllBytes(Paths.get(new File(configurationDirectory, "env.json").getAbsolutePath()))));
         simulationEnvironmentConfiguration.faultInjectInstances = Map.of("crtlInstance", "constraintid");

@@ -10,6 +10,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.*;
 import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.typechecker.TypeChecker;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -116,7 +117,7 @@ public class MablCliUtil {
 
     private DefaultExternalValueFactory createValueFactory(File workingDirectory,
             InputStream c) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        return new DefaultExternalValueFactory(workingDirectory, c);
+        return new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(typeCheckResult.getValue(), name), c);
     }
 
     public boolean generateSpec(ScenarioConfiguration scenarioConfiguration) throws Exception {

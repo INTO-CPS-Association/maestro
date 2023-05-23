@@ -1,7 +1,9 @@
 package org.intocps.maestro.typechecker;
 
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.PDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
+import org.intocps.maestro.ast.node.AImportedModuleCompilationUnit;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.INode;
 import org.intocps.maestro.ast.node.PType;
@@ -43,5 +45,15 @@ public class TypeChecker {
         checker.typecheck(documents, globalFunctions);
         checkedTypes.putAll(checker.checkedTypes);
         return errorReporter.getErrorCount() == 0;
+    }
+
+    public AModuleDeclaration findModule(String name) {
+        return findModule(checkedTypes, name);
+    }
+
+    public static AModuleDeclaration findModule(Map<INode, PType> tcResult, String name) {
+        return tcResult.keySet().stream().filter(AImportedModuleCompilationUnit.class::isInstance)
+                .map(im -> ((AImportedModuleCompilationUnit) im).getModule()).filter(m -> m.getName().getText().equals(name)).findFirst()
+                .orElse(null);
     }
 }

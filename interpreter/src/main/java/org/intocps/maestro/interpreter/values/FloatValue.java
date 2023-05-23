@@ -15,7 +15,7 @@ public class FloatValue extends NumericValue {
 
     @Override
     public String toString() {
-        return "FloatValue{" + "value=" + value + '}';
+        return "" + value;
     }
 
     @Override
@@ -50,6 +50,16 @@ public class FloatValue extends NumericValue {
     }
 
     @Override
+    public double doubleValue() {
+        return value;
+    }
+
+    @Override
+    public float floatValue() {
+        return value;
+    }
+
+    @Override
     public int compareTo(Value value) {
 
         Value other = value.deref();
@@ -65,4 +75,10 @@ public class FloatValue extends NumericValue {
 
         return super.compareTo(value);
     }
+
+    @Override
+    public boolean isNumericDecimal() {
+        return true;
+    }
+
 }

@@ -9,9 +9,9 @@ import org.intocps.fmi.FmiInvalidNativeStateException;
 import org.intocps.fmi.FmuResult;
 import org.intocps.fmi.IFmiComponent;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.FmiInstanceConfig;
 import org.intocps.maestro.fmi.FmiSimulationInstance;
-import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.ModelConnection;
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
@@ -145,7 +145,7 @@ public class VariableStepValue extends ModuleValue {
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
-                double time = ((RealValue) fcargs.get(1).deref()).getValue();
+                double time = ((NumericValue) fcargs.get(1).deref()).realValue();
                 List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(2), Value.class);
                 variableStepConfigValue.addDataPoint(time, portValues);
             } else {
@@ -157,7 +157,7 @@ public class VariableStepValue extends ModuleValue {
             checkArgLength(fcargs, 3);
 
             Value cv = fcargs.get(0).deref();
-            double time = ((RealValue) fcargs.get(1).deref()).getValue();
+            double time = ((NumericValue) fcargs.get(1).deref()).realValue();
             if (cv instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfig = (VariableStepConfigValue) cv;
                 Value arrVal = fcargs.get(2).deref();
@@ -165,8 +165,8 @@ public class VariableStepValue extends ModuleValue {
                     ArrayValue<Value> array = (ArrayValue) arrVal;
                     if (array.getValues().stream().allMatch(v -> v.deref() instanceof ArrayValue)) {
                         try {
-                            List<List<RealValue>> ders = array.getValues().stream()
-                                    .map(subArr -> ((ArrayValue<Value>) subArr.deref()).getValues().stream().map(v -> (RealValue) v)
+                            List<List<NumericValue>> ders = array.getValues().stream()
+                                    .map(subArr -> ((ArrayValue<Value>) subArr.deref()).getValues().stream().map(v -> (NumericValue) v)
                                             .collect(Collectors.toList())).collect(Collectors.toList());
                             variableStepConfig.addDerivatives(ders, time);
                         } catch (Exception e) {
@@ -197,7 +197,7 @@ public class VariableStepValue extends ModuleValue {
             checkArgLength(fcargs, 2);
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
-                ((VariableStepConfigValue) cv).setEndTime(((RealValue) fcargs.get(1).deref()).getValue());
+                ((VariableStepConfigValue) cv).setEndTime(((NumericValue) fcargs.get(1).deref()).realValue());
             } else {
                 throw new InterpreterException("Invalid arguments");
             }
@@ -209,7 +209,7 @@ public class VariableStepValue extends ModuleValue {
             Value cv = fcargs.get(0).deref();
             if (cv instanceof VariableStepConfigValue) {
                 VariableStepConfigValue variableStepConfigValue = (VariableStepConfigValue) cv;
-                double nextTime = ((RealValue) fcargs.get(1).deref()).getValue();
+                double nextTime = ((NumericValue) fcargs.get(1).deref()).realValue();
                 boolean supportsRollBack = ((BooleanValue) fcargs.get(2).deref()).getValue();
                 List<Value> portValues = ValueExtractionUtilities.getArrayValue(fcargs.get(3), Value.class);
                 return new BooleanValue(variableStepConfigValue.isStepValid(nextTime, portValues, supportsRollBack));

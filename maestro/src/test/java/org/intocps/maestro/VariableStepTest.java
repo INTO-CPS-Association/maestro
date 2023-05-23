@@ -7,6 +7,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +24,8 @@ public class VariableStepTest {
     public void variableStepSizeMablTest() throws Exception {
         File testFilesDirectory = new File(Objects.requireNonNull(VariableStepTest.class.getClassLoader().getResource("variable_step")).getPath());
 
-        List<File> sourceFiles = Collections
-                .singletonList(new File(testFilesDirectory.toPath().resolve("variableStepSizeMablTest").resolve("variableStepTest.mabl").toString()));
+        List<File> sourceFiles = Collections.singletonList(
+                new File(testFilesDirectory.toPath().resolve("variableStepSizeMablTest").resolve("variableStepTest.mabl").toString()));
         File specificationDirectory = new File("target", "variable_step/spec");
         File workingDirectory = new File("target", "variable_step/working");
 
@@ -37,14 +38,14 @@ public class VariableStepTest {
         mabl.setVerbose(true);
 
         mabl.parse(sourceFiles);
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             assert (false);
         } else {
             reporter.printWarnings(new PrintWriter(System.out, true));
-            new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+            new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRes.getValue(), name),
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
             FullSpecTest.compareCsvResults(
@@ -69,8 +70,8 @@ public class VariableStepTest {
     }
 
     private void interpretMablSpec(Function<File, List<File>> generateSourceFilesFunc) throws Exception {
-        List<File> sourceFiles = generateSourceFilesFunc
-                .apply(new File(Objects.requireNonNull(VariableStepTest.class.getClassLoader().getResource("variable_step")).getPath()));
+        List<File> sourceFiles = generateSourceFilesFunc.apply(
+                new File(Objects.requireNonNull(VariableStepTest.class.getClassLoader().getResource("variable_step")).getPath()));
 
         IErrorReporter reporter = new ErrorReporter();
         File specificationDirectory = new File("target", "variable_step/spec");
@@ -83,7 +84,7 @@ public class VariableStepTest {
         mabl.setVerbose(true);
 
         mabl.parse(sourceFiles);
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
@@ -91,8 +92,7 @@ public class VariableStepTest {
         }
 
         reporter.printWarnings(new PrintWriter(System.out, true));
-        new MableInterpreter(
-                new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8)))
-                .execute(mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRes.getValue(), name),
+                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
     }
 }

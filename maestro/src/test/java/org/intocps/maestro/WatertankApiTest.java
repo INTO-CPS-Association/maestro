@@ -22,6 +22,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2A
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -41,11 +42,11 @@ public class WatertankApiTest {
 
         DynamicActiveBuilderScope ds = builder.getDynamicScope();
 
-        FmuVariableFmi2Api controllerFmu =
-                ds.createFMU("controllerFmu", "FMI2", Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toUri().toASCIIString());
+        FmuVariableFmi2Api controllerFmu = ds.createFMU("controllerFmu", "FMI2",
+                Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toUri().toASCIIString());
 
-        FmuVariableFmi2Api tankFmu =
-                ds.createFMU("tankFmu", "FMI2", Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toUri().toASCIIString());
+        FmuVariableFmi2Api tankFmu = ds.createFMU("tankFmu", "FMI2",
+                Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toUri().toASCIIString());
 
 
         ComponentVariableFmi2Api controller = controllerFmu.instantiate("controller");
@@ -132,8 +133,8 @@ public class WatertankApiTest {
         }
         mabl.dump(workingDirectory);
 
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8))).execute(
-                mabl.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRef.getValue(), name),
+                IOUtils.toInputStream(runtimeData, StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
 
         MablCppCodeGenerator cppCodeGenerator = new MablCppCodeGenerator(workingDirectory);
         cppCodeGenerator.generate(mabl.getMainSimulationUnit(), tcRef.getValue());

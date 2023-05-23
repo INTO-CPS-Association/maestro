@@ -15,7 +15,7 @@ public class RealValue extends NumericValue {
 
     @Override
     public String toString() {
-        return "RealValue{" + "value=" + value + '}';
+        return "" + value;
     }
 
     @Override
@@ -50,6 +50,16 @@ public class RealValue extends NumericValue {
     }
 
     @Override
+    public double doubleValue() {
+        return value;
+    }
+
+    @Override
+    public float floatValue() {
+        return (float) value;
+    }
+
+    @Override
     public int compareTo(Value value) {
 
         Value other = value.deref();
@@ -58,11 +68,17 @@ public class RealValue extends NumericValue {
             RealValue ro = (RealValue) other;
             return (int) Math.round(Math.signum(this.value - ro.getValue()));
 
-        } else if (other instanceof IntegerValue) {
-            IntegerValue ro = (IntegerValue) other;
-            return (int) Math.round(Math.signum(this.value - ro.getValue()));
+        } else if (other instanceof NumericValue) {
+            NumericValue ro = (NumericValue) other;
+            return (int) Math.round(Math.signum(this.value - ro.intValue()));
         }
 
         return super.compareTo(value);
     }
+
+    @Override
+    public boolean isNumericDecimal() {
+        return true;
+    }
+
 }

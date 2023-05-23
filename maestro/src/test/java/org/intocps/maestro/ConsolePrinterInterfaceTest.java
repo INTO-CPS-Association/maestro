@@ -63,7 +63,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTestAssertion {
     @Test
     public void printRawValuesTest() throws Exception {
         int intTestVal = 1;
-        double doubleTestVal = 1.0;
+        double doubleTestVal = 1.1;
         boolean booleanTestVal = true;
         String stringTestVal = "a string";
 
@@ -113,7 +113,7 @@ public class ConsolePrinterInterfaceTest extends BaseApiTestAssertion {
         String booleanMsg = "Boolean value: ";
         String allValues = "All values: ";
         int intTestVal = 1;
-        double doubleTestVal = 1.0;
+        double doubleTestVal = 1.1;
         boolean booleanTestVal = true;
         String stringTestVal = "a string";
 

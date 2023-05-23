@@ -21,16 +21,11 @@ public class LoggerValue extends ExternalModuleValue<Object> {
     static Object[] getValues(List<Value> values) {
         return values.stream().map(Value::deref).map(v -> {
 
-            if (v instanceof IntegerValue) {
-                return ((IntegerValue) v).intValue();
-            }
-            if (v instanceof BooleanValue) {
-                return ((BooleanValue) v).getValue();
-            }
-            if (v instanceof RealValue) {
-                return ((RealValue) v).getValue();
-            }
-            if (v instanceof StringValue) {
+            if (v.isNumericDecimal()) {
+                return ((NumericValue) v).doubleValue();
+            } else if (v.isNumeric()) {
+                return ((NumericValue) v).intValue();
+            } else if (v instanceof StringValue) {
                 return ((StringValue) v).getValue();
             }
 
@@ -56,7 +51,7 @@ public class LoggerValue extends ExternalModuleValue<Object> {
                 throw new InterpreterException("Too few arguments");
             }
 
-            IntegerValue level = (IntegerValue) fcargs.get(0).deref();
+            NumericValue level = (NumericValue) fcargs.get(0).deref();
 
             StringValue msg = (StringValue) fcargs.get(1).deref();
 
@@ -64,17 +59,24 @@ public class LoggerValue extends ExternalModuleValue<Object> {
 
             String logMsg = String.format(msg.getValue(), getValues(fcargs.stream().skip(2).collect(Collectors.toList())));
 
-            if (level.getValue() == 0) {
-                logger.trace(logMsg);
-            } else if (level.getValue() == 1) {
-                logger.debug(logMsg);
-            } else if (level.intValue() == 2) {
-                logger.info(logMsg);
-            } else if (level.intValue() == 3) {
-                logger.warn(logMsg);
-            } else if (level.getValue() == 4) {
-                logger.error(logMsg);
+            switch (level.intValue()) {
+                case 0:
+                    logger.trace(logMsg);
+                    break;
+                case 1:
+                    logger.debug(logMsg);
+                    break;
+                case 2:
+                    logger.info(logMsg);
+                    break;
+                case 3:
+                    logger.warn(logMsg);
+                    break;
+                case 4:
+                    logger.error(logMsg);
+                    break;
             }
+
 
             return new VoidValue();
         }));
