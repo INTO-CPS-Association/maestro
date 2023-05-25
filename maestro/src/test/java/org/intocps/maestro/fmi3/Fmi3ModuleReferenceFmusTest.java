@@ -1,6 +1,7 @@
-package org.intocps.maestro;
+package org.intocps.maestro.fmi3;
 
 import org.apache.commons.io.FileUtils;
+import org.intocps.maestro.FullSpecTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -19,11 +20,13 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static org.intocps.maestro.fmi3.Fmi3ModuleTest.hasMablSpec;
+
 public class Fmi3ModuleReferenceFmusTest extends FullSpecTest {
 
     private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "fmi3","reference").toFile().listFiles()))
-                .filter(n -> !n.getName().startsWith(".")).map(f -> Arguments.arguments(f.getName(), f));
+                .filter(n -> !n.getName().startsWith(".")).filter(hasMablSpec).map(f -> Arguments.arguments(f.getName(), f));
     }
 
     protected List<File> getSpecificationFiles(File specFolder) {
