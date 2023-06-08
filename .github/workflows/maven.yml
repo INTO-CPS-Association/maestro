@@ -16,7 +16,7 @@ env:
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
-  UBUNTU_VERSION: 'ubuntu-latest'
+  UBUNTU_VERSION: 'ubuntu-20.04'
   MACOS_VERSION: 'macos-latest'
 
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-2019, macos-latest ]
+        os: [ ubuntu-20.04, windows-2019, macos-latest ]
 
     steps:
 
