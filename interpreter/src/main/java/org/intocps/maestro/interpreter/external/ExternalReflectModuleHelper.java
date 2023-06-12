@@ -21,7 +21,8 @@ public class ExternalReflectModuleHelper {
             throw new IllegalArgumentException("Target must not be null");
         }
 
-        Function<PType, IArgMapping> costumeArgMapper = t -> {
+        Function<ExternalReflectCallHelper.ArgMappingContext, IArgMapping> costumeArgMapper = tctxt -> {
+            PType t = tctxt.getArgType();
             if (t instanceof ANameType) {
                 if (((ANameType) t).getName().getText().equals("FMI3Instance")) {
                     return new IArgMapping() {
@@ -41,6 +42,11 @@ public class ExternalReflectModuleHelper {
                         }
 
                         @Override
+                        public void setDirection(ExternalReflectCallHelper.ArgMapping.InOut direction) {
+
+                        }
+
+                        @Override
                         public Object map(Value v) {
                             if (v instanceof ExternalModuleValue) {
                                 return ((ExternalModuleValue<?>) v).getModule();
@@ -54,9 +60,8 @@ public class ExternalReflectModuleHelper {
                         }
 
                         @Override
-                        public Value mapOut(Object value) {
-                            return new ExternalModuleValue<>(null, value) {
-                            };
+                        public Value mapOut(Object value, Map<IArgMapping, Value> outputArgs) {
+                            return new ExternalModuleValue<>(null, value) {};
                         }
 
                         @Override

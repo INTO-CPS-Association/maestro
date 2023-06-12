@@ -3,9 +3,8 @@ package org.intocps.maestro.interpreter.extensions;
 import com.spencerwi.either.Either;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
-import org.intocps.maestro.interpreter.Fmi3Interpreter;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
+import org.intocps.maestro.interpreter.extensions.fmi3.Fmi3Interpreter;
 import org.intocps.maestro.interpreter.values.FunctionValue;
 import org.intocps.maestro.interpreter.values.StringValue;
 import org.intocps.maestro.interpreter.values.Value;
@@ -46,6 +45,6 @@ public class Fmi3LifecycleHandler extends BaseLifecycleHandler {
         } catch (URISyntaxException e) {
             return Either.left(new AnalysisException("The path passed to load is not a URI", e));
         }
-        return Either.right(new Fmi3Interpreter(workingDirectory,resolver).createFmiValue(path, guid));
+        return Either.right(new Fmi3Interpreter(workingDirectory, resolver).createFmiValue(path, guid));
     }
 }

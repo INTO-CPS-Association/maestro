@@ -27,7 +27,8 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
         this.object = object;
     }
 
-    public ExternalReflectCallHelper(AFunctionDeclaration functionDeclaration, Object object, Function<PType, IArgMapping> costumeArgMapper) {
+    public ExternalReflectCallHelper(AFunctionDeclaration functionDeclaration, Object object,
+            Function<ArgMappingContext, IArgMapping> costumeArgMapper) {
         this(functionDeclaration.getName().getText(), object);
         autoBuild(functionDeclaration, costumeArgMapper);
     }
@@ -146,18 +147,48 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
         return sb.toString();
     }
 
-    private void autoBuild(AFunctionDeclaration functionDeclaration, Function<PType, IArgMapping> costumeArgMapper) {
+    public static class ArgMappingContext {
+        final String functionName;
+        final String argName;
+
+        public String getFunctionName() {
+            return functionName;
+        }
+
+        public String getArgName() {
+            return argName;
+        }
+
+        public PType getArgType() {
+            return argType;
+        }
+
+        final PType argType;
+
+        public ArgMappingContext(String functionName, String argName, PType argType) {
+            this.functionName = functionName;
+            this.argName = argName;
+            this.argType = argType;
+        }
+    }
+
+    private void autoBuild(AFunctionDeclaration functionDeclaration, Function<ArgMappingContext, IArgMapping> costumeArgMapper) {
         PType returnType = functionDeclaration.getReturnType();
         if (returnType != null && !(returnType instanceof AVoidType)) {
             try {
-                addReturn(getReverseType(returnType).getKey());
-            } catch (ExceptionUnknownTypeMapping e) {
                 IArgMapping ca;
-                if (costumeArgMapper != null && (ca = costumeArgMapper.apply(returnType)) != null) {
+                if (costumeArgMapper != null && (ca = costumeArgMapper.apply(new ArgMappingContext(this.functionName, null, returnType))) != null) {
                     addReturn(ca);
                 } else {
-                    throw new RuntimeException(e);
+                    addReturn(getReverseType(returnType).getKey());
                 }
+            } catch (ExceptionUnknownTypeMapping e) {
+                //                IArgMapping ca;
+                //                if (costumeArgMapper != null && (ca = costumeArgMapper.apply(new ArgMappingContext(this.functionName, null, returnType))) != null) {
+                //                    addReturn(ca);
+                //                } else {
+                throw new RuntimeException(e);
+                //                }
             }
         }
 
@@ -167,7 +198,8 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                 addArg(tDim.getKey(), tDim.getValue(), formal.getType() instanceof AReferenceType ? ArgMapping.InOut.Output : ArgMapping.InOut.Input);
             } catch (ExceptionUnknownTypeMapping e) {
                 IArgMapping ca;
-                if (costumeArgMapper != null && (ca = costumeArgMapper.apply(formal.getType())) != null) {
+                if (costumeArgMapper != null && (ca = costumeArgMapper.apply(
+                        new ArgMappingContext(this.functionName, formal.getName().getText(), formal.getType()))) != null) {
                     add(ca);
                 } else {
                     throw new RuntimeException(e);
@@ -209,7 +241,9 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
 
         final List<IArgMapping> args = Collections.unmodifiableList(this);
         final IArgMapping rArg = returnArg;
-        final Method method = object.getClass().getMethod(functionName, args.stream().map(IArgMapping::getType).toArray(Class[]::new));
+        final Method method = object.getClass().getMethod(functionName,
+                args.stream().filter(arg -> arg.getDirection() != ArgMapping.InOut.OutputThroughReturn).map(IArgMapping::getType)
+                        .toArray(Class[]::new));
 
 
         return new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -217,30 +251,41 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
             checkArgLength(fcargs, args.size());
 
             //map inputs
-            var vitr = fcargs.iterator();
-            var mitr = args.iterator();
+            var passedArgItr = fcargs.iterator();
+            var declaredArgItr = args.iterator();
             List argValues = new ArrayList(args.size());
-            while (vitr.hasNext() && mitr.hasNext()) {
-                var v = vitr.next();
-                IArgMapping mapper = mitr.next();
-                // if (mapper.direction == ArgMapping.InOut.Input) {
-                argValues.add(mapper.map(v));
-                //}
+            while (passedArgItr.hasNext() && declaredArgItr.hasNext()) {
+                var v = passedArgItr.next();
+                IArgMapping mapper = declaredArgItr.next();
+                if (mapper.getDirection() != ArgMapping.InOut.OutputThroughReturn) {
+                    argValues.add(mapper.map(v));
+                }
             }
 
             try {
                 var ret = method.invoke(object, argValues.toArray());
 
                 //map outputs
-                vitr = fcargs.iterator();
-                var voitr = argValues.iterator();
-                mitr = args.iterator();
-                while (vitr.hasNext() && voitr.hasNext() && mitr.hasNext()) {
-                    var original = vitr.next();
-                    var passedValue = voitr.next();
-                    IArgMapping mapper = mitr.next();
-                    if (mapper.getDirection() == ArgMapping.InOut.Output) {
-                        mapper.mapOut(original, passedValue);
+                passedArgItr = fcargs.iterator();
+                var passedValuesItr = argValues.iterator();
+                declaredArgItr = args.iterator();
+                Map<IArgMapping, Value> outputThroughReturn = new HashMap<>();
+
+                // process arguments. All inputs should be skipped and output mapped out. All out through return should be collected and handled
+                // through the mapout of return as additional info
+                while (passedArgItr.hasNext() && declaredArgItr.hasNext()) {
+                    IArgMapping mapper = declaredArgItr.next();
+                    var original = passedArgItr.next();
+
+                    if (mapper.getDirection() == ArgMapping.InOut.OutputThroughReturn) {
+                        outputThroughReturn.put(mapper, original);
+                        continue;
+                    }
+                    if (passedValuesItr.hasNext()) {
+                        var passedValue = passedValuesItr.next();
+                        if (mapper.getDirection() == ArgMapping.InOut.Output) {
+                            mapper.mapOut(original, passedValue);
+                        }
                     }
                 }
 
@@ -248,7 +293,7 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                 if (rArg == null) {
                     return new VoidValue();
                 }
-                return rArg.mapOut(ret);
+                return rArg.mapOut(ret, outputThroughReturn);
 
 
             } catch (IllegalAccessException | InvocationTargetException e) {
@@ -269,7 +314,7 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
         final int dimension;
         final long[] limits;
 
-        final InOut direction;
+        InOut direction;
 
         public ArgMapping(TP type, int dimension, InOut direction, long[] limits) {
             this.type = type;
@@ -295,6 +340,11 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
         @Override
         public InOut getDirection() {
             return direction;
+        }
+
+        @Override
+        public void setDirection(InOut direction) {
+            this.direction = direction;
         }
 
         @Override
@@ -390,31 +440,32 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                                 .limit(elementsToUse).map(BooleanValue::new).collect(Collectors.toList());
                         break;
                     case Byte:
-                        values = Arrays.stream(ArrayUtils.toObject((byte[]) (value.getClass().isArray() ?value: new byte[]{(byte) value}))).limit(elementsToUse).map(ByteValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((byte[]) (value.getClass().isArray() ? value : new byte[]{(byte) value})))
+                                .limit(elementsToUse).map(ByteValue::new).collect(Collectors.toList());
                         break;
                     case Float:
-                        values = Arrays.stream(ArrayUtils.toObject((float[])(value.getClass().isArray() ? value: new float[]{(float) value}))).limit(elementsToUse).map(FloatValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((float[]) (value.getClass().isArray() ? value : new float[]{(float) value})))
+                                .limit(elementsToUse).map(FloatValue::new).collect(Collectors.toList());
                         break;
                     case Int:
-                        values = Arrays.stream(ArrayUtils.toObject((int[])(value.getClass().isArray() ? value: new int[]{(int) value}))).limit(elementsToUse).map(IntegerValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((int[]) (value.getClass().isArray() ? value : new int[]{(int) value})))
+                                .limit(elementsToUse).map(IntegerValue::new).collect(Collectors.toList());
                         break;
                     case Long:
-                        values = Arrays.stream(ArrayUtils.toObject((long[])(value.getClass().isArray() ? value: new long[]{(long) value}))).limit(elementsToUse).map(LongValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((long[]) (value.getClass().isArray() ? value : new long[]{(long) value})))
+                                .limit(elementsToUse).map(LongValue::new).collect(Collectors.toList());
                         break;
                     case Real:
-                        values = Arrays.stream(ArrayUtils.toObject((double[])(value.getClass().isArray() ? value: new double[]{(double) value}))).limit(elementsToUse).map(RealValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((double[]) (value.getClass().isArray() ? value : new double[]{(double) value})))
+                                .limit(elementsToUse).map(RealValue::new).collect(Collectors.toList());
                         break;
                     case Short:
-                        values = Arrays.stream(ArrayUtils.toObject((short[])(value.getClass().isArray() ? value: new short[]{(short) value}))).limit(elementsToUse).map(ShortValue::new)
-                                .collect(Collectors.toList());
+                        values = Arrays.stream(ArrayUtils.toObject((short[]) (value.getClass().isArray() ? value : new short[]{(short) value})))
+                                .limit(elementsToUse).map(ShortValue::new).collect(Collectors.toList());
                         break;
                     case String:
-                        values = Arrays.stream((String[])(value.getClass().isArray() ? value: new String[]{(String) value})).limit(elementsToUse).map(StringValue::new).collect(Collectors.toList());
+                        values = Arrays.stream((String[]) (value.getClass().isArray() ? value : new String[]{(String) value})).limit(elementsToUse)
+                                .map(StringValue::new).collect(Collectors.toList());
                         break;
                 }
                 ref.setValue(new ArrayValue<>(values));
@@ -423,26 +474,71 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
         }
 
         @Override
-        public Value mapOut(Object value) {
+        public Value mapOut(Object value, Map<IArgMapping, Value> outputThroughReturn) {
             //todo create value from value
-            switch (type) {
 
-                case Bool:
-                    return new BooleanValue((Boolean) value);
-                case Byte:
-                    return new ByteValue((Integer) value);
-                case Float:
-                    return new FloatValue((Float) value);
-                case Int:
-                    return new IntegerValue((Integer) value);
-                case Long:
-                    return new LongValue((Long) value);
-                case Real:
-                    return new RealValue((Double) value);
-                case Short:
-                    return new ShortValue((Short) value);
-                case String:
-                    return new StringValue((String) value);
+
+            if (dimension == 2) {
+                List<Value> values = null;
+                long elementsToUse = limits == null ? Long.MAX_VALUE : limits[0];
+                switch (type) {
+
+                    case Bool:
+                        values = Arrays.stream(ArrayUtils.toObject((boolean[]) (value.getClass().isArray() ? value : new boolean[]{(boolean) value})))
+                                .limit(elementsToUse).map(BooleanValue::new).collect(Collectors.toList());
+                        break;
+                    case Byte:
+                        values = Arrays.stream(ArrayUtils.toObject((byte[]) (value.getClass().isArray() ? value : new byte[]{(byte) value})))
+                                .limit(elementsToUse).map(ByteValue::new).collect(Collectors.toList());
+                        break;
+                    case Float:
+                        values = Arrays.stream(ArrayUtils.toObject((float[]) (value.getClass().isArray() ? value : new float[]{(float) value})))
+                                .limit(elementsToUse).map(FloatValue::new).collect(Collectors.toList());
+                        break;
+                    case Int:
+                        values = Arrays.stream(ArrayUtils.toObject((int[]) (value.getClass().isArray() ? value : new int[]{(int) value})))
+                                .limit(elementsToUse).map(IntegerValue::new).collect(Collectors.toList());
+                        break;
+                    case Long:
+                        values = Arrays.stream(ArrayUtils.toObject((long[]) (value.getClass().isArray() ? value : new long[]{(long) value})))
+                                .limit(elementsToUse).map(LongValue::new).collect(Collectors.toList());
+                        break;
+                    case Real:
+                        values = Arrays.stream(ArrayUtils.toObject((double[]) (value.getClass().isArray() ? value : new double[]{(double) value})))
+                                .limit(elementsToUse).map(RealValue::new).collect(Collectors.toList());
+                        break;
+                    case Short:
+                        values = Arrays.stream(ArrayUtils.toObject((short[]) (value.getClass().isArray() ? value : new short[]{(short) value})))
+                                .limit(elementsToUse).map(ShortValue::new).collect(Collectors.toList());
+                        break;
+                    case String:
+                        values = Arrays.stream((String[]) (value.getClass().isArray() ? value : new String[]{(String) value})).limit(elementsToUse)
+                                .map(StringValue::new).collect(Collectors.toList());
+                        break;
+                }
+                return new ArrayValue<>(values);
+            } else {
+
+
+                switch (type) {
+
+                    case Bool:
+                        return new BooleanValue((Boolean) value);
+                    case Byte:
+                        return new ByteValue((Integer) value);
+                    case Float:
+                        return new FloatValue((Float) value);
+                    case Int:
+                        return new IntegerValue((Integer) value);
+                    case Long:
+                        return new LongValue((Long) value);
+                    case Real:
+                        return new RealValue((Double) value);
+                    case Short:
+                        return new ShortValue((Short) value);
+                    case String:
+                        return new StringValue((String) value);
+                }
             }
             throw new IllegalArgumentException("No mapping for value:" + value);
         }
