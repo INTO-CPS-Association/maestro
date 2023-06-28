@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@CommandLine.Command(name = "import", description = "Created a specification from various import types. Remember to place all necessary plugin extensions in the classpath. \n\nHint for sg1 import where menv shoudl be enabled. Use the follding to " +
+@CommandLine.Command(name = "import", description = "Created a specification from various import types. Remember to place all necessary plugin extensions in the classpath. \n\nHint for sg1 import where menv should be enabled. Use the following to " +
         "generate the extra input file:'jq '.parameters|keys|{\"environmentParameters\":.}' mm.json > menv.json'", mixinStandardHelpOptions = true)
 public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> jsonFileFilter = f -> f.getName().toLowerCase().endsWith(".json");
