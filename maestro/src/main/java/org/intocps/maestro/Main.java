@@ -6,7 +6,7 @@ import picocli.CommandLine.Command;
 
 import java.util.concurrent.Callable;
 
-@Command(name = "mabl", mixinStandardHelpOptions = true, versionProvider = MablCmdVersionProvider.class,
+@Command(name = "maestro", mixinStandardHelpOptions = true, versionProvider = MablCmdVersionProvider.class,
         description = "Mable for co-simulating models", usageHelpAutoWidth = true,
         subcommands = {InterpreterCmd.class, ExportCmd.class, ImportCmd.class, SigverCmd.class},
         headerHeading = "@|bold,underline " +
