@@ -2,6 +2,8 @@ name: Docs
 on: [ push, pull_request, workflow_dispatch ]
 permissions:
   contents: write
+env:
+  JAVA_VERSION: 11.0.3
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -11,6 +13,11 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.9'
+          
+      - name: Set up Java
+        uses: actions/setup-java@v1.4.3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Install dependencies
         run: |
