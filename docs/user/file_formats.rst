@@ -12,7 +12,7 @@ These properties are new to maestro V2
 * :code:`faultInjectInstances`: Used for fault injection
 * :code:`modelTransfers`: Used for model swapping during simulation
 * :code:`modelSwaps`: Used for model swapping during simulation
-* :code:`reportProgress`
+
 
 For more on fault injection see the paper "Fault Injecting Co-simulations for Safety" at https://ieeexplore.ieee.org/document/9660728
 
@@ -152,4 +152,4 @@ The following properties are used in maestro using sg1 import/ web api:
 * :code:`global_absolute_tolerance`: for stabilisation
 * :code:`global_relative_tolerance`: for stabilisation
 * :code:`simulationProgramDelay`: slow down simulation doStep to make sure its not faster than the step time itself
-
+* :code:`reportProgress`: Not used in maestroV2
