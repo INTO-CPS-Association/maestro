@@ -32,6 +32,7 @@ Legacy Configuration / INTO-CPS Multi-model and coe config File Format
     }
 
 The multi model shown above contains the following:
+
 * :code:`fmus`: This is a mapping from fmu name specified in :code:`{}` to a either path from the FMUs folder or a URI using a custom format*
 * :code:`connections`: The is a mapping between triples to a list of triples. The triples takes the form (fmu name, instance name, scalar variable name). The domain of the map must only contain scalar variables with causality output where the scalar variables in the list in the range of the map all must be of causality input
 * :code:`parameters`: The is also a mapping from triples but with causality parameter. The range must contain the value that should be used instead of the value specified in the model description.
@@ -81,27 +82,27 @@ The multi model shown above contains the following:
 
 The following shows the coe config aka simulation configuration. Note that these properties are only used by the app and not maestro:
 
-* multimodel_path
-* liveGraphColumns
-* liveGraphVisibleRowCount
-* graphs
-* postProcessingScript
-* multimodel_crc
+* :code:`multimodel_path`
+* :code:`liveGraphColumns`
+* :code:`liveGraphVisibleRowCount`
+* :code:`graphs`
+* :code:`postProcessingScript`
+* :code:`multimodel_crc`
 
 The following properties are used in maestro using sg1 import/ web api:
 
-* startTime: the simulation start time
-* endTime: the simulation end time (could be left out)
-* livestreamInterval
-* livestream: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be transmitted over the web socket while simulating (similar to the output.csv but just live | only for the webapi)
-* logVariables: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be logged (included in the output.csv)
-* visible: fmu visible flag
-* loggingOn: fmu logging on flag
-* overrideLogLevel: override the maestro log level
-* enableAllLogCategoriesPerInstance: automatically enable all log categories in all fmus
-* algorithm: the algorithm to be used, default is type='fixed-step' with size=<decimal number>
-* parallelSimulation: run the simulation steps in parallel when ever possible. Eg in jaccobian all instances can get/set/doStep in parallel
-* stabalizationEnabled: if algebraic loops exists then attempt stabilisation (will use global_absolute_tolerance, global_relative_tolerance)
-* global_absolute_tolerance: for stabilisation
-* global_relative_tolerance: for stabilisation
-* simulationProgramDelay: slow down simulation doStep to make sure its not faster than the step time itself
+* :code:`startTime`: the simulation start time
+* :code:`endTime`: the simulation end time (could be left out)
+* :code:`livestreamInterval`: the live stream max report interval. This is used to skip updates if the simulation perform many updates withing a very short time frame
+* :code:`livestream`: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be transmitted over the web socket while simulating (similar to the output.csv but just live | only for the webapi)
+* :code:`logVariables`: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be logged (included in the output.csv)
+* :code:`visible`: fmu visible flag
+* :code:`loggingOn`: fmu logging on flag
+* :code:`overrideLogLevel`: override the maestro log level
+* :code:`enableAllLogCategoriesPerInstance`: automatically enable all log categories in all fmus
+* :code:`algorithm`: the algorithm to be used, default is type='fixed-step' with size=<decimal number>
+* :code:`parallelSimulation`: run the simulation steps in parallel when ever possible. Eg in jaccobian all instances can get/set/doStep in parallel
+* :code:`stabalizationEnabled`: if algebraic loops exists then attempt stabilisation (will use global_absolute_tolerance, global_relative_tolerance)
+* :code:`global_absolute_tolerance`: for stabilisation
+* :code:`global_relative_tolerance`: for stabilisation
+* :code:`simulationProgramDelay`: slow down simulation doStep to make sure its not faster than the step time itself
