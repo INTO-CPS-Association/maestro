@@ -5,6 +5,44 @@ Configuration File Formats
 .. note::
    This section will contain the file formats and their structure.
 
+These properties are new to maestro V2
+
+* :code:`faultInjectInstances`: Used for fault injection
+* :code:`faultInjectConfigurationPath`: Used for fault injection
+* :code:`faultInjectInstances`: Used for fault injection
+* :code:`modelTransfers`: Used for model swapping during simulation
+* :code:`modelSwaps`: Used for model swapping during simulation
+* :code:`reportProgress`
+
+For more on fault injection see the paper "Fault Injecting Co-simulations for Safety" at https://ieeexplore.ieee.org/document/9660728 
+
+For more on model swapping se the paper "fmiSwap: Run-time Swapping of Models for Co-simulation and Digital Twins" at https://arxiv.org/pdf/2304.07328.pdf
+
+.. code-block:: json
+
+    {
+      "modelSwaps": {
+        "controller": {
+          "swapInstance": "crtlInstance3",
+          "stepCondition": "(true)",
+          "swapCondition": "(controller.valve ==true)",
+          "swapConnections": {
+            "{x3}.crtlInstance3.valve": [
+              "{x2}.tank.valvecontrol"
+            ],
+            "{x2}.tank.level": [
+              "{x3}.crtlInstance3.level"
+            ]
+          }
+        }
+      },
+      "modelTransfers": {
+        "controller": "controller",
+        "tank": "tank"
+      }
+    }
+
+
 .. _sec-legacy-config-format:
 
 Legacy Configuration / INTO-CPS Multi-model and coe config File Format
@@ -106,3 +144,4 @@ The following properties are used in maestro using sg1 import/ web api:
 * :code:`global_absolute_tolerance`: for stabilisation
 * :code:`global_relative_tolerance`: for stabilisation
 * :code:`simulationProgramDelay`: slow down simulation doStep to make sure its not faster than the step time itself
+
