@@ -11,6 +11,7 @@ Legacy Configuration / INTO-CPS Multi-model and coe config File Format
 --------------------------------
 
 .. code-block:: json
+
     {
       "fmus": {
         "{control}": "watertankcontroller-c.fmu",
@@ -31,11 +32,12 @@ Legacy Configuration / INTO-CPS Multi-model and coe config File Format
     }
 
 The multi model shown above contains the following:
-* fmus: This is a mapping from fmu name specified in '{}' to a either path from the FMUs folder or a URI using a custom format*
-* connections: The is a mapping between triples to a list of triples. The triples takes the form (fmu name, instance name, scalar variable name). The domain of the map must only contain scalar variables with causality output where the scalar variables in the list in the range of the map all must be of causality input
-* parameters: The is also a mapping from triples but with causality parameter. The range must contain the value that should be used instead of the value specified in the model description.
+* :code:`fmus`: This is a mapping from fmu name specified in :code:`{}` to a either path from the FMUs folder or a URI using a custom format*
+* :code:`connections`: The is a mapping between triples to a list of triples. The triples takes the form (fmu name, instance name, scalar variable name). The domain of the map must only contain scalar variables with causality output where the scalar variables in the list in the range of the map all must be of causality input
+* :code:`parameters`: The is also a mapping from triples but with causality parameter. The range must contain the value that should be used instead of the value specified in the model description.
 
 .. code-block:: json
+
     {
       "startTime": 0,
       "endTime": 30,
