@@ -3,7 +3,7 @@
 Configuration File Formats
 ==========================
 .. note::
-   This section will contain the file formats and their structure.
+   These configuration files was in maestro v1 / coe called multi-model (:code:`*.mm.json`) and co-simulation configuration (:code:`*.coe.json`) files. Maestro v2 just accept any json files during its (:code:`sg1`) import phase and merges them into one object for processing.
 
 These properties are new to maestro V2
 
@@ -14,7 +14,7 @@ These properties are new to maestro V2
 * :code:`modelSwaps`: Used for model swapping during simulation
 * :code:`reportProgress`
 
-For more on fault injection see the paper "Fault Injecting Co-simulations for Safety" at https://ieeexplore.ieee.org/document/9660728 
+For more on fault injection see the paper "Fault Injecting Co-simulations for Safety" at https://ieeexplore.ieee.org/document/9660728
 
 For more on model swapping se the paper "fmiSwap: Run-time Swapping of Models for Co-simulation and Digital Twins" at https://arxiv.org/pdf/2304.07328.pdf
 
@@ -48,6 +48,10 @@ For more on model swapping se the paper "fmiSwap: Run-time Swapping of Models fo
 Legacy Configuration / INTO-CPS Multi-model and coe config File Format
 --------------------------------
 
+.. note::
+   This file is a multi-model (:code:`*.mm.json`) file and originally developed for maestro v1
+
+
 .. code-block:: json
 
     {
@@ -74,6 +78,10 @@ The multi model shown above contains the following:
 * :code:`fmus`: This is a mapping from fmu name specified in :code:`{}` to a either path from the FMUs folder or a URI using a custom format*
 * :code:`connections`: The is a mapping between triples to a list of triples. The triples takes the form (fmu name, instance name, scalar variable name). The domain of the map must only contain scalar variables with causality output where the scalar variables in the list in the range of the map all must be of causality input
 * :code:`parameters`: The is also a mapping from triples but with causality parameter. The range must contain the value that should be used instead of the value specified in the model description.
+
+.. note::
+   This file is a co-simulation configuration (:code:`*.coe.json`) file and originally developed for maestro v1.
+
 
 .. code-block:: json
 
