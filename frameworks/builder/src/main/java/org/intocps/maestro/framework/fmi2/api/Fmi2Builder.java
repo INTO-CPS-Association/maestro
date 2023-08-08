@@ -267,6 +267,8 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         Fmu2Variable<T> createFMU(String name, String loaderName, String... args) throws Exception;
 
+        Fmu3Variable<T> createFMU3(String name, String loaderName, String... args) throws Exception;
+
         void markTransferPoint(String... names);
 
         void addTransferAs(String... names);
@@ -518,6 +520,15 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         //        void unload();
         //
         //        void unload(Scope<S> scope);
+    }
+
+    /**
+     * Handle for an fmu for the creation of component
+     */
+    interface Fmu3Variable<S> extends Variable<S, NamedVariable<S>> {
+
+
+
     }
 
     /**

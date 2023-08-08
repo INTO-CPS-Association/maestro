@@ -25,7 +25,7 @@ import static org.intocps.maestro.fmi3.Fmi3ModuleTest.hasMablSpec;
 public class Fmi3ModuleReferenceFmusTest extends FullSpecTest {
 
     private static Stream<Arguments> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "fmi3","reference").toFile().listFiles()))
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "fmi3", "reference").toFile().listFiles()))
                 .filter(n -> !n.getName().startsWith(".")).filter(hasMablSpec).map(f -> Arguments.arguments(f.getName(), f));
     }
 
@@ -52,12 +52,14 @@ public class Fmi3ModuleReferenceFmusTest extends FullSpecTest {
 
         return specFiles;
     }
-final static Path destination = Paths.get("target", Fmi3ModuleReferenceFmusTest.class.getSimpleName(), "cache");
+
+    final static Path destination = Paths.get("target", Fmi3ModuleReferenceFmusTest.class.getSimpleName(), "cache");
+
     @BeforeAll
     public static void downloadReferenceFmus() throws IOException {
 
         final String referenceFmuBundle = "https://github.com/modelica/Reference-FMUs/releases/download/v0.0.23/Reference-FMUs-0.0.23.zip";
-        Path referenceFmuZipPath = destination.resolve( "Reference-FMUs.zip");
+        Path referenceFmuZipPath = destination.resolve("Reference-FMUs.zip");
         if (referenceFmuZipPath.toFile().exists()) {
             return;
         }
@@ -66,7 +68,7 @@ final static Path destination = Paths.get("target", Fmi3ModuleReferenceFmusTest.
 
         FileUtils.copyURLToFile(new URL(referenceFmuBundle), referenceFmuZipPath.toFile());
 
-//        Path destination = referenceFmuZipPath.getParent();
+        //        Path destination = referenceFmuZipPath.getParent();
 
         ZipInputStream zipIn = new ZipInputStream(new FileInputStream(referenceFmuZipPath.toFile()));
         ZipEntry entry = zipIn.getNextEntry();

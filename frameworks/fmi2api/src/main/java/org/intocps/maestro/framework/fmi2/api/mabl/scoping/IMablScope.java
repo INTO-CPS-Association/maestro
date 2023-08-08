@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
@@ -96,6 +97,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
+
+    FmuVariableFmi3Api createFMU(String name, Fmi3ModelDescription modelDescription, URI path) throws Exception;
+    FmuVariableFmi3Api createFMU3(String name, String loaderName, String... args) throws Exception;
 
     <Var extends VariableFmi2Api> Var copy(String name, Var variable);
 

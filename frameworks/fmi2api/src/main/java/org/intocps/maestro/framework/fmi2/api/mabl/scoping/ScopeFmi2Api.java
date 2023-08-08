@@ -5,6 +5,7 @@ import org.intocps.maestro.ast.AParallelBlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
@@ -493,6 +494,16 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     @Override
     public FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception {
         return VariableCreatorFmi2Api.createFMU(builder, builder.getNameGenerator(), builder.getDynamicScope(), name, loaderName, args, this);
+    }
+
+    @Override
+    public FmuVariableFmi3Api createFMU(String name, Fmi3ModelDescription modelDescription, URI path) throws Exception {
+        return null;
+    }
+
+    @Override
+    public FmuVariableFmi3Api createFMU3(String name, String loaderName, String... args) throws Exception {
+        return null;
     }
 
     @Override

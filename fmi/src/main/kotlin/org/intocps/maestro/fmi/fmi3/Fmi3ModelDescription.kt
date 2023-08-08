@@ -1,12 +1,12 @@
 package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
+import org.intocps.fmi.jnifmuapi.fmi3.schemas.Fmi3Schema
+import org.intocps.maestro.fmi.Fmi3SchemaProvider
 import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
 import javax.xml.transform.stream.StreamSource
@@ -21,17 +21,17 @@ class Fmi3ModelDescription : ModelDescription {
     private var derivatives: List<Fmi3ScalarVariable>? = null
     private var derivativeToDerivativeSource: Map<Fmi3ScalarVariable, Fmi3ScalarVariable>? = null
 
-    constructor(file: File) : super(
-        ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
-            Fmi3ModelDescription::class.java.classLoader.getResourceAsStream(
-                "fmi3ModelDescription.xsd"
-            )
-        )
-    )
+//    constructor(file: File) : super(
+//        ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
+//            Fmi3ModelDescription::class.java.classLoader.getResourceAsStream(
+//                "fmi3ModelDescription.xsd"
+//            )
+//        )
+//    )
 
     constructor(file: InputStream) : super(
         file,
-        StreamSource(Fmi3ModelDescription::class.java.classLoader.getResourceAsStream("fmi3ModelDescription.xsd"))
+        StreamSource(ByteArrayInputStream(IOUtils.toByteArray(Fmi3Schema().schema))), Fmi3SchemaProvider()
     )
 
     fun getScalarVariables(): List<Fmi3ScalarVariable> {
@@ -100,12 +100,15 @@ class Fmi3ModelDescription : ModelDescription {
                         Fmi3ModelStructureElementEnum.Output -> variable.outputDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
+
                         Fmi3ModelStructureElementEnum.ContinuousStateDerivative -> variable.derivativesDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
+
                         Fmi3ModelStructureElementEnum.ClockedState -> {
                             //TODO: Implement
                         }
+
                         Fmi3ModelStructureElementEnum.InitialUnknown -> variable.initialUnknownsDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
@@ -218,9 +221,11 @@ class Fmi3ModelDescription : ModelDescription {
                         "BaseUnit" -> {
                             setBaseUnit(parseBaseUnit(childNode))
                         }
+
                         "DisplayUnit" -> {
                             displayUnits.add(parseDisplayUnit(childNode))
                         }
+
                         "Annotations" -> {
                         }
                     }

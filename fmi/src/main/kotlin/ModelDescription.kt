@@ -1,6 +1,6 @@
 package org.intocps.maestro.fmi
 
-import org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema
+import org.intocps.fmi.jnifmuapi.xml.SchemaProvider
 import org.intocps.fmi.jnifmuapi.xml.SchemaResourceResolver
 import org.intocps.maestro.fmi.xml.NamedNodeMapIterator
 import org.intocps.maestro.fmi.xml.NodeIterator
@@ -27,7 +27,7 @@ abstract class ModelDescription
     SAXException::class,
     IOException::class,
     ParserConfigurationException::class
-) constructor(xmlInputStream: InputStream, schemaModelDescription: Source) {
+) constructor(xmlInputStream: InputStream, schemaModelDescription: Source, provider: SchemaProvider) {
     private val DEBUG = false
 
     @JvmField
@@ -38,7 +38,7 @@ abstract class ModelDescription
 
     init {
         val docBuilderFactory = DocumentBuilderFactory.newInstance()
-        validateAgainstXSD(StreamSource(xmlInputStream), schemaModelDescription)
+        validateAgainstXSD(StreamSource(xmlInputStream), schemaModelDescription, provider)
         xmlInputStream.reset()
         doc = docBuilderFactory.newDocumentBuilder().parse(xmlInputStream)
         val xPathfactory = XPathFactory.newInstance()
@@ -173,9 +173,9 @@ abstract class ModelDescription
 
     companion object {
         @Throws(SAXException::class, IOException::class)
-        fun validateAgainstXSD(document: Source, schemaSource: Source) {
+        fun validateAgainstXSD(document: Source, schemaSource: Source, provider: SchemaProvider) {
             SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).run {
-                this.resourceResolver = SchemaResourceResolver(Fmi2Schema())
+                this.resourceResolver = SchemaResourceResolver(provider)
                 this.newSchema(schemaSource).newValidator().validate(document)
             }
         }
