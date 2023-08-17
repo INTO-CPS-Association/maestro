@@ -170,17 +170,17 @@ jobs:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
 
-      - name: Maven Deploy feature SNAPSHOT
+      - name: Maven Package feature SNAPSHOT
         if: github.event_name == 'push' && (github.ref != 'refs/heads/development' && github.ref != 'refs/heads/master' )
-        run: mvn -P au -B deploy -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g;s|#||g;s|<||g;s|>||g;s|:||g;s|\"||g;s|/||g;s|\|||g;s|?||g;s|*||g;s|;||g"`   -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run: mvn -P au -B package -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g;s|#||g;s|<||g;s|>||g;s|:||g;s|\"||g;s|/||g;s|\|||g;s|?||g;s|*||g;s|;||g"`   -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
 
-      - name: Maven Deploy SNAPSHOT
+      - name: Maven Package SNAPSHOT
         if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
-        run: mvn -P au -B deploy -Dsha1=  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run: mvn -P au -B package -Dsha1=  -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
           MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
