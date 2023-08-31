@@ -202,7 +202,6 @@ public class BuilderTest {
 
         @Override
         public void destroy() {
-
         }
     }
 }

@@ -1,10 +1,12 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
+import org.intocps.fmi.jnifmuapi.fmi3.Fmi3Instance;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
+import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext3;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
@@ -15,29 +17,32 @@ import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmu3Variable<PStm> {
-    public FmuVariableFmi3Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
-            PStateDesignator designator, PExp referenceExp) {
-        super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
+//    public FmuVariableFmi3Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+//            PStateDesignator designator, PExp referenceExp) {
+//        super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
+//    }
+
+
+    private final ModelDescriptionContext3 modelDescriptionContext;
+    private final MablApiBuilder builder;
+    private String fmuIdentifier;
+//
+    public FmuVariableFmi3Api(String fmuIdentifier, MablApiBuilder builder, ModelDescriptionContext3 modelDescriptionContext, PStm declaration,
+            PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
+        this(builder, modelDescriptionContext, declaration, type, declaredScope, dynamicScope, designator, referenceExp);
+        this.fmuIdentifier = fmuIdentifier;
     }
 
-    //    private final ModelDescriptionContext modelDescriptionContext;
-//    private final MablApiBuilder builder;
-//    private String fmuIdentifier;
+
+    public FmuVariableFmi3Api(MablApiBuilder builder, ModelDescriptionContext3 modelDescriptionContext, PStm declaration, PType type,
+            IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
+        super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
+        this.builder = builder;
+        this.modelDescriptionContext = modelDescriptionContext;
+    }
+
 //
-//    public FmuVariableFmi2Api(String fmuIdentifier, MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration,
-//            PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
-//        this(builder, modelDescriptionContext, declaration, type, declaredScope, dynamicScope, designator, referenceExp);
-//        this.fmuIdentifier = fmuIdentifier;
-//    }
-//
-//    public FmuVariableFmi2Api(MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration, PType type,
-//            IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
-//        super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
-//        this.builder = builder;
-//        this.modelDescriptionContext = modelDescriptionContext;
-//    }
-//
-//    public ModelDescriptionContext getModelDescriptionContext() {
+//    public ModelDescriptionContext3 getModelDescriptionContext() {
 //        return modelDescriptionContext;
 //    }
 //

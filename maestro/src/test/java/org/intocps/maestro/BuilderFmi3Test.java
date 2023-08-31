@@ -20,6 +20,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi3Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
@@ -82,7 +83,8 @@ public class BuilderFmi3Test {
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());
 
 
-        builder.getDynamicScope().createFMU("ball", md3Ball, ballUri);
+        FmuVariableFmi3Api ballFmu = builder.getDynamicScope().createFMU("ball", md3Ball, ballUri);
+
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()

@@ -508,8 +508,12 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         config.setName(newAIdentifier("FMI2"));
         //config.setConfig(StringEscapeUtils.escapeJava(simulationEnvironment.));
         // unit.setFrameworkConfigs(Arrays.asList(config));
-        unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")), importedModules.stream().map(MableAstFactory::newAIdentifier))
+
+        // TODO: added "import FMI3" after "import FMI2". Should probably figure out a smarter way to do this
+        unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")),
+                Stream.concat(Stream.of(newAIdentifier("FMI3")), importedModules.stream().map(MableAstFactory::newAIdentifier)))
                 .collect(Collectors.toList()));
+
 
         return unit;
 
