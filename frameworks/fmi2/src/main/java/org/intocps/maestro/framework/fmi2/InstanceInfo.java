@@ -1,17 +1,17 @@
 package org.intocps.maestro.framework.fmi2;
 
-import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.core.FaultInject;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 
 import java.util.Optional;
 
-public class ComponentInfo implements FrameworkUnitInfo {
-    public final Fmi2ModelDescription modelDescription;
+public class InstanceInfo implements FrameworkUnitInfo {
+    public final Fmi3ModelDescription modelDescription;
     public final String fmuIdentifier;
     public Optional<FaultInject> faultInject = Optional.empty();
 
-    public ComponentInfo(Fmi2ModelDescription modelDescription, String fmuIdentifier) {
+    public InstanceInfo(Fmi3ModelDescription modelDescription, String fmuIdentifier) {
         this.modelDescription = modelDescription;
         this.fmuIdentifier = fmuIdentifier;
     }
@@ -24,7 +24,7 @@ public class ComponentInfo implements FrameworkUnitInfo {
         this.faultInject = Optional.of(new FaultInject(constraintId));
     }
 
-    public Fmi2ModelDescription getModelDescription() {
+    public Fmi3ModelDescription getModelDescription() {
         return modelDescription;
     }
 

@@ -7,7 +7,8 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.framework.fmi2.RelationVariable;
+
+import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -99,7 +100,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     public void setVariablesToLog(List<RelationVariable> variablesToLog) {
-        this.variabesToLog = variablesToLog.stream().map(x -> x.scalarVariable.getName()).collect(Collectors.toList());
+        this.variabesToLog = variablesToLog.stream().map(RelationVariable::getName).collect(Collectors.toList());
     }
 
     @Override

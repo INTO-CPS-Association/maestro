@@ -10,8 +10,10 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.IRelation;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.plugin.IMaestroPlugin;
@@ -40,6 +42,7 @@ public class MaBLTemplateGenerator {
     public static final String LOGGER_MODULE_NAME = "Logger";
     public static final String DATAWRITER_MODULE_NAME = "DataWriter";
     public static final String FMI2_MODULE_NAME = "FMI2";
+    public static final String FMI3_MODULE_NAME = "FMI3";
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
     public static final String INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME = "initialize_transfer";
@@ -102,12 +105,23 @@ public class MaBLTemplateGenerator {
     }
 
 
-    public static PStm createFMULoad(String fmuLexName, Map.Entry<String, Fmi2ModelDescription> entry,
+    public static PStm createFMULoad(String fmuLexName, Map.Entry<String, ModelDescription> entry,
             URI uriFromFMUName) throws XPathExpressionException {
 
-        String path = uriFromFMUName.toString();
-        return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
-                call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(entry.getValue().getGuid()), newAStringLiteralExp(path)));
+        ModelDescription md = entry.getValue();
+
+        if (md instanceof Fmi2ModelDescription) {
+            String path = uriFromFMUName.toString();
+            return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
+                    call("load", newAStringLiteralExp("FMI2"), newAStringLiteralExp(((Fmi2ModelDescription) md).getGuid()),
+                            newAStringLiteralExp(path)));
+        } else if (md instanceof Fmi3ModelDescription) {
+            String path = uriFromFMUName.toString();
+            return newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fmuLexName)),
+                    call("load", newAStringLiteralExp("FMI3"), newAStringLiteralExp(((Fmi3ModelDescription) md).getInstantiationToken()),
+                            newAStringLiteralExp(path)));
+        }
+        return null;
     }
 
 
@@ -224,7 +238,7 @@ public class MaBLTemplateGenerator {
         // First create the FMU variables and assign to null
         HashMap<String, String> fmuNameToLexIdentifier = new HashMap<>();
         NameMapper.NameMapperState nameMapperState = new NameMapper.NameMapperState();
-        for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
+        for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
             fmuLexName = NameMapper.makeSafeFMULexName(fmuLexName, nameMapperState);
             rootScopeBody.addAll(createFmuVariable(fmuLexName, entry.getKey()));
@@ -256,8 +270,8 @@ public class MaBLTemplateGenerator {
         Set<String> instanceTransfers = new HashSet<>();
 
         for (Map.Entry<String, String> entry : unitRelationShip.getModelTransfers()) {
-            ComponentInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
-            String fmuLexName = removeFmuKeyBraces(inst.fmuIdentifier);
+            FrameworkUnitInfo inst = unitRelationShip.getInstanceByLexName(entry.getKey());
+            String fmuLexName = removeFmuKeyBraces(inst.getOwnerIdentifier());
             fmuTransfers.add(fmuLexName);
 
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
@@ -267,7 +281,7 @@ public class MaBLTemplateGenerator {
         // Create FMU load statements for FMUs not transferred
         List<PStm> unloadFmuStatements = new ArrayList<>();
 
-        for (Map.Entry<String, Fmi2ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
+        for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = fmuNameToLexIdentifier.get((entry.getKey()));
 
             // If FMU already transferred skip this iteration
@@ -287,7 +301,7 @@ public class MaBLTemplateGenerator {
         Map<String, FaultInjectWithLexName> faultInjectedInstances = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Find parent lex
-            String parentLex = fmuNameToLexIdentifier.get(entry.getValue().fmuIdentifier);
+            String parentLex = fmuNameToLexIdentifier.get(entry.getValue().getOwnerIdentifier());
             // Get instanceName
             String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
 
@@ -401,8 +415,9 @@ public class MaBLTemplateGenerator {
         List<LexIdentifier> imports = new ArrayList<>(
                 Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
-                        newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME), newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME),
-                        newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME), newAIdentifier("MEnv")));
+                        newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(FMI3_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME),
+                        newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME), newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME),
+                        newAIdentifier("MEnv")));
         if (faultInject) {
             imports.add(newAIdentifier(FAULT_INJECT_MODULE_NAME));
         }
@@ -423,7 +438,7 @@ public class MaBLTemplateGenerator {
     private static void checkConnectionUnits(Fmi2SimulationEnvironment unitRelationShip) {
         StringBuilder sbUnitError = new StringBuilder();
         //check scalar variable unit compatibility
-        for (Map.Entry<String, ComponentInfo> instance : unitRelationShip.getInstances()) {
+        for (Map.Entry<String, ? extends FrameworkUnitInfo> instance : unitRelationShip.getInstances()) {
             for (Fmi2SimulationEnvironment.Relation relation : unitRelationShip.getRelations(instance.getKey())) {
                 if (relation.getOrigin() == IRelation.InternalOrExternal.External && relation.getDirection() == IRelation.Direction.OutputToInput) {
                     for (Map.Entry<LexIdentifier, Fmi2SimulationEnvironment.Variable> target : relation.getTargets().entrySet()) {

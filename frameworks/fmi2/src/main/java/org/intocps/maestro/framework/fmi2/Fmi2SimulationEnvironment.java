@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2;
 
 
 import org.antlr.v4.runtime.CharStreams;
+import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -9,15 +10,23 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.core.*;
 import org.intocps.maestro.parser.template.MablSwapConditionParserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
@@ -31,14 +40,15 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
     private final Map<String, String> instanceLexToInstanceName = new HashMap<>();
     private final Map<String, List<String>> instanceNameToLogLevels = new HashMap<>();
     Map<LexIdentifier, Set<Relation>> variableToRelations = new HashMap<>();
-    Map<String, ComponentInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
-    HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = new HashMap<>();
+    Map<String, FrameworkUnitInfo> instanceNameToInstanceComponentInfo = new HashMap<>();
+    HashMap<String, ModelDescription> fmuKeyToModelDescription = new HashMap<>();
     Map<String, URI> fmuToUri = null;
     Map<String, Variable> variables = new HashMap<>();
-    Map<String, List<org.intocps.maestro.framework.fmi2.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
+    Map<String, List<org.intocps.maestro.framework.core.RelationVariable>> globalVariablesToLogForInstance = new HashMap<>();
     Map<String, String> instanceToModelTransfer = new HashMap<>();
     Map<String, ModelSwapInfo> instanceToModelSwap = new HashMap<>();
     private String faultInjectionConfigurationPath;
+
 
     protected Fmi2SimulationEnvironment(Fmi2SimulationEnvironmentConfiguration msg, ModelDescriptionResolver resolver) throws Exception {
         initialize(msg, resolver);
@@ -126,7 +136,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         this.instanceLexToInstanceName.put(lexName, instanceName);
     }
 
-    public ComponentInfo getInstanceByLexName(String lexName) {
+    public FrameworkUnitInfo getInstanceByLexName(String lexName) {
         if (!this.instanceNameToInstanceComponentInfo.containsKey(lexName)) {
             throw new RuntimeException("Unable to locate instance named " + lexName + " in the simulation environment.");
         }
@@ -140,8 +150,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
      * @return
      */
     @Override
-    public List<org.intocps.maestro.framework.fmi2.RelationVariable> getVariablesToLog(String instanceName) {
-        List<org.intocps.maestro.framework.fmi2.RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
+    public List<org.intocps.maestro.framework.core.RelationVariable> getVariablesToLog(String instanceName) {
+        List<org.intocps.maestro.framework.core.RelationVariable> vars = this.globalVariablesToLogForInstance.get(instanceName);
         if (vars == null) {
             return new ArrayList<>();
         } else {
@@ -149,12 +159,12 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         }
     }
 
-    public Set<Map.Entry<String, Fmi2ModelDescription>> getFmusWithModelDescriptions() {
+    public Set<Map.Entry<String, ModelDescription>> getFmusWithModelDescriptions() {
         return this.fmuKeyToModelDescription.entrySet();
     }
 
     @Override
-    public Set<Map.Entry<String, ComponentInfo>> getInstances() {
+    public Set<? extends Map.Entry<String, ? extends FrameworkUnitInfo>> getInstances() {
         return this.instanceNameToInstanceComponentInfo.entrySet();
     }
 
@@ -175,6 +185,31 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 modelSwap.swapConnections = swap.swapConnections);
     }
 
+
+    private void addInstance(ModelConnection.Variable var, Fmi2SimulationEnvironmentConfiguration msg) throws Exception {
+
+        if (!instanceNameToInstanceComponentInfo.containsKey(var.instance.instanceName)) {
+            ModelDescription md = fmuKeyToModelDescription.get(var.instance.key);
+            if (md instanceof Fmi2ModelDescription) {
+                ComponentInfo instanceComponentInfo = new ComponentInfo((Fmi2ModelDescription) md, var.instance.key);
+                if (msg.faultInjectInstances != null && msg.faultInjectInstances.containsKey(var.instance.instanceName)) {
+                    instanceComponentInfo.setFaultInject(msg.faultInjectInstances.get(var.instance.instanceName));
+                }
+                if (msg.modelSwaps != null && msg.modelSwaps.containsKey(var.instance.instanceName)) {
+                    instanceToModelSwap.put(var.instance.instanceName, convert(msg.modelSwaps.get(var.instance.instanceName)));
+                }
+                if (msg.modelTransfers != null && msg.modelTransfers.containsKey(var.instance.instanceName)) {
+                    instanceToModelTransfer.put(var.instance.instanceName, msg.modelTransfers.get(var.instance.instanceName));
+                }
+                instanceNameToInstanceComponentInfo.put(var.instance.instanceName, instanceComponentInfo);
+            } else if (md instanceof Fmi3ModelDescription) {
+                instanceNameToInstanceComponentInfo.put(var.instance.instanceName, new InstanceInfo((Fmi3ModelDescription) md, var.instance.key));
+            } else {
+                logger.warn("Cannot add instance as model description type is unknown: {}", var.instance.key);
+            }
+        }
+    }
+
     private void initialize(Fmi2SimulationEnvironmentConfiguration msg, ModelDescriptionResolver resolver) throws Exception {
         // Remove { } around fmu name.
         Map<String, URI> fmuToURI = msg.getFmuFiles();
@@ -184,7 +219,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         List<ModelConnection> connections = buildConnections(msg.getConnections());
         List<ModelConnection> swapConnections = buildConnections(msg.getModelSwapConnections());
 
-        HashMap<String, Fmi2ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI, resolver);
+        HashMap<String, ModelDescription> fmuKeyToModelDescription = buildFmuKeyToFmuMD(fmuToURI, resolver);
         this.fmuKeyToModelDescription = fmuKeyToModelDescription;
 
         if (msg.faultInjectConfigurationPath != null && msg.faultInjectConfigurationPath.length() > 0) {
@@ -200,34 +235,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         for (ModelConnection instance : Stream.concat(connections.stream(), swapConnections.stream()).collect(Collectors.toList())) {
             instancesFromConnections.add(instance.from.instance);
             instancesFromConnections.add(instance.to.instance);
-            if (!instanceNameToInstanceComponentInfo.containsKey(instance.from.instance.instanceName)) {
-                ComponentInfo instanceComponentInfo =
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.from.instance.key), instance.from.instance.key);
-                if (msg.faultInjectInstances != null && msg.faultInjectInstances.containsKey(instance.from.instance.instanceName)) {
-                    instanceComponentInfo.setFaultInject(msg.faultInjectInstances.get(instance.from.instance.instanceName));
-                }
-                if (msg.modelSwaps != null && msg.modelSwaps.containsKey(instance.from.instance.instanceName)) {
-                    instanceToModelSwap.put(instance.from.instance.instanceName, convert(msg.modelSwaps.get(instance.from.instance.instanceName)));
-                }
-                if (msg.modelTransfers != null && msg.modelTransfers.containsKey(instance.from.instance.instanceName)) {
-                    instanceToModelTransfer.put(instance.from.instance.instanceName, msg.modelTransfers.get(instance.from.instance.instanceName));
-                }
-                instanceNameToInstanceComponentInfo.put(instance.from.instance.instanceName, instanceComponentInfo);
-            }
-            if (!instanceNameToInstanceComponentInfo.containsKey(instance.to.instance.instanceName)) {
-                ComponentInfo instanceComponentInfo =
-                        new ComponentInfo(fmuKeyToModelDescription.get(instance.to.instance.key), instance.to.instance.key);
-                if (msg.faultInjectInstances != null && msg.faultInjectInstances.containsKey(instance.to.instance.instanceName)) {
-                    instanceComponentInfo.setFaultInject(msg.faultInjectInstances.get(instance.to.instance.instanceName));
-                }
-                if (msg.modelSwaps != null && msg.modelSwaps.containsKey(instance.to.instance.instanceName)) {
-                    instanceToModelSwap.put(instance.to.instance.instanceName, convert(msg.modelSwaps.get(instance.to.instance.instanceName)));
-                }
-                if (msg.modelTransfers != null && msg.modelTransfers.containsKey(instance.to.instance.instanceName)) {
-                    instanceToModelTransfer.put(instance.to.instance.instanceName, msg.modelTransfers.get(instance.to.instance.instanceName));
-                }
-                instanceNameToInstanceComponentInfo.put(instance.to.instance.instanceName, instanceComponentInfo);
-            }
+
+            addInstance(instance.from, msg);
+            addInstance(instance.to, msg);
+
         }
         // Build relations
         this.variableToRelations = buildRelations(msg, connections, instancesFromConnections);
@@ -250,15 +261,10 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         Map<LexIdentifier, Set<Relation>> idToRelations = new HashMap<>();
         for (ModelConnection.ModelInstance instance : instancesFromConnections) {
             LexIdentifier instanceLexIdentifier = new LexIdentifier(instance.instanceName, null);
-            //            Set<Relation> instanceRelations = getOrCreateRelationsForLexIdentifier(instanceLexIdentifier);
-            Set<Relation> instanceRelations = idToRelations.computeIfAbsent(instanceLexIdentifier, key -> new HashSet<>());
 
-            List<Fmi2ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
-                    instanceNameToInstanceComponentInfo.get(instance.instanceName).modelDescription.getScalarVariables().stream()
-                            .filter(x -> x.causality == Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
 
             // Add the instance to the globalVariablesToLogForInstance map.
-            List<RelationVariable> globalVariablesToLogForGivenInstance;
+            List<org.intocps.maestro.framework.core.RelationVariable> globalVariablesToLogForGivenInstance;
             if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
                 globalVariablesToLogForGivenInstance = this.globalVariablesToLogForInstance.get(instance.instanceName);
             } else {
@@ -266,40 +272,117 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
             }
             this.globalVariablesToLogForInstance.putIfAbsent(instance.instanceName, globalVariablesToLogForGivenInstance);
 
-            for (Fmi2ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
-                Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
+            {
+                ModelDescription md = this.fmuKeyToModelDescription.get(instance.key);
+                if (md instanceof Fmi2ModelDescription) {
+                    buildFmi2Relation((Fmi2ModelDescription) md, instance, instanceLexIdentifier, idToRelations, connections,
+                            globalVariablesToLogForGivenInstance);
+                } else if (md instanceof Fmi3ModelDescription) {
 
-                // dependantInputs are the inputs on which the current output depends on internally
-                Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
-                for (Fmi2ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
-                    if (inputScalarVariable.causality == Fmi2ModelDescription.Causality.Input) {
-                        Variable inputVariable = getOrCreateVariable(inputScalarVariable, instanceLexIdentifier);
-                        dependantInputs.put(instanceLexIdentifier, inputVariable);
+                }
+            }
+
+            // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
+            HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
+            if (msg != null && msg.logVariables != null) {
+                globalLogVariablesMaps.putAll(msg.logVariables);
+            }
+            if (msg != null && msg.livestream != null) {
+                msg.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
+                    Set<String> set = new TreeSet<>(v1);
+                    set.addAll(v2);
+                    return new ArrayList<>(set);
+                }));
+            }
+
+
+            List<org.intocps.maestro.framework.core.RelationVariable> variablesToLogForInstance = new ArrayList<>();
+            String logVariablesKey = instance.key + "." + instance.instanceName;
+            if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
+                for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
+
+                    ModelDescription md = this.fmuKeyToModelDescription.get(instance.key);
+
+                    org.intocps.maestro.framework.core.RelationVariable rvar = null;
+                    if (md instanceof Fmi2ModelDescription) {
+                        rvar = new RelationVariable(
+                                ((Fmi2ModelDescription) md).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst().get(),
+                                instanceLexIdentifier);
+                    } else if (md instanceof Fmi3ModelDescription) {
+                        rvar = new RelationVariable3(
+                                ((Fmi3ModelDescription) md).getScalarVariables().stream().filter(x -> x.getVariable().getName().equals(s)).findFirst()
+                                        .get(), instanceLexIdentifier);
                     }
-                    // TODO: Add relation from each input to the given output?
+
+
+                    variablesToLogForInstance.add(rvar);
+
+
                 }
-                if (dependantInputs.size() != 0) {
-                    Relation r = new Relation();
-                    r.source = outputVariable;
-                    r.targets = dependantInputs;
-                    r.direction = Relation.Direction.OutputToInput;
-                    r.origin = Relation.InternalOrExternal.Internal;
-                    instanceRelations.add(r);
+                if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
+                    List<org.intocps.maestro.framework.core.RelationVariable> existingRVs =
+                            this.globalVariablesToLogForInstance.get(instance.instanceName);
+                    for (org.intocps.maestro.framework.core.RelationVariable rv : variablesToLogForInstance) {
+                        if (!existingRVs.contains(rv)) {
+                            existingRVs.add(rv);
+                        }
+                    }
+                } else {
+                    this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
                 }
 
-                // externalInputTargets are the inputs that depend on the current output based on the provided connections.
-                List<ModelConnection.Variable> externalInputTargets = connections.stream()
-                        .filter(conn -> conn.from.instance.equals(instance) && conn.from.variable.equals(outputScalarVariable.name))
-                        .map(conn -> conn.to).collect(Collectors.toList());
-                if (externalInputTargets.size() != 0) {
-                    // Log the current output as there is an input depending on it.
-                    globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
-                    // externalInputs are all the external Inputs that depends on the current output
-                    Map<LexIdentifier, Variable> externalInputs = new HashMap<>();
-                    for (ModelConnection.Variable modelConnToVar : externalInputTargets) {
-                        Fmi2ModelDescription md = instanceNameToInstanceComponentInfo.get(modelConnToVar.instance.instanceName).modelDescription;
+            }
+        }
+        return idToRelations;
+    }
+
+    private void buildFmi2Relation(Fmi2ModelDescription md2, ModelConnection.ModelInstance instance, LexIdentifier instanceLexIdentifier,
+            Map<LexIdentifier, Set<Relation>> idToRelations, List<ModelConnection> connections,
+            List<org.intocps.maestro.framework.core.RelationVariable> globalVariablesToLogForGivenInstance) throws XPathExpressionException, InvocationTargetException, IllegalAccessException, EnvironmentException {
+        List<Fmi2ModelDescription.ScalarVariable> instanceOutputScalarVariablesPorts =
+                md2.getScalarVariables().stream().filter(x -> x.causality == Fmi2ModelDescription.Causality.Output).collect(Collectors.toList());
+
+        Set<Relation> instanceRelations = idToRelations.computeIfAbsent(instanceLexIdentifier, key -> new HashSet<>());
+
+        for (Fmi2ModelDescription.ScalarVariable outputScalarVariable : instanceOutputScalarVariablesPorts) {
+            Variable outputVariable = getOrCreateVariable(outputScalarVariable, instanceLexIdentifier);
+
+            // dependantInputs are the inputs on which the current output depends on internally
+            Map<LexIdentifier, Variable> dependantInputs = new HashMap<>();
+            for (Fmi2ModelDescription.ScalarVariable inputScalarVariable : outputScalarVariable.outputDependencies.keySet()) {
+                if (inputScalarVariable.causality == Fmi2ModelDescription.Causality.Input) {
+                    Variable inputVariable = getOrCreateVariable(inputScalarVariable, instanceLexIdentifier);
+                    dependantInputs.put(instanceLexIdentifier, inputVariable);
+                }
+                // TODO: Add relation from each input to the given output?
+            }
+            if (dependantInputs.size() != 0) {
+                Relation r = new Relation();
+                r.source = outputVariable;
+                r.targets = dependantInputs;
+                r.direction = Relation.Direction.OutputToInput;
+                r.origin = Relation.InternalOrExternal.Internal;
+                instanceRelations.add(r);
+            }
+
+            // externalInputTargets are the inputs that depend on the current output based on the provided connections.
+            List<ModelConnection.Variable> externalInputTargets =
+                    connections.stream().filter(conn -> conn.from.instance.equals(instance) && conn.from.variable.equals(outputScalarVariable.name))
+                            .map(conn -> conn.to).collect(Collectors.toList());
+            if (externalInputTargets.size() != 0) {
+                // Log the current output as there is an input depending on it.
+                globalVariablesToLogForGivenInstance.add(outputVariable.scalarVariable);
+                // externalInputs are all the external Inputs that depends on the current output
+                Map<LexIdentifier, Variable> externalInputs = new HashMap<>();
+                for (ModelConnection.Variable modelConnToVar : externalInputTargets) {
+                    FrameworkUnitInfo frameworkUnitInfo = instanceNameToInstanceComponentInfo.get(modelConnToVar.instance.instanceName);
+
+                    if (frameworkUnitInfo instanceof ComponentInfo) {
+
+
                         Optional<Fmi2ModelDescription.ScalarVariable> toScalarVariable =
-                                md.getScalarVariables().stream().filter(sv -> sv.name.equals(modelConnToVar.variable)).findFirst();
+                                ((ComponentInfo) frameworkUnitInfo).getModelDescription().getScalarVariables().stream()
+                                        .filter(sv -> sv.name.equals(modelConnToVar.variable)).findFirst();
                         if (toScalarVariable.isPresent()) {
                             LexIdentifier inputInstanceLexIdentifier = new LexIdentifier(modelConnToVar.instance.instanceName, null);
                             Variable inputVariable = getOrCreateVariable(toScalarVariable.get(), inputInstanceLexIdentifier);
@@ -320,63 +403,27 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                                     "Failed to find the scalar variable " + modelConnToVar.variable + " at " + modelConnToVar.instance +
                                             " when building the dependencies tree");
                         }
+                    } else {
+                        logger.warn("Framework unit is not a component: {}", frameworkUnitInfo.getClass().getName());
                     }
-
-                    Relation r = new Relation();
-                    r.source = outputVariable;
-                    r.targets = externalInputs;
-                    r.direction = Relation.Direction.OutputToInput;
-                    r.origin = Relation.InternalOrExternal.External;
-                    instanceRelations.add(r);
-                }
-            }
-
-            // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
-            HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
-            if (msg != null && msg.logVariables != null) {
-                globalLogVariablesMaps.putAll(msg.logVariables);
-            }
-            if (msg != null && msg.livestream != null) {
-                msg.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
-                    Set<String> set = new TreeSet<>(v1);
-                    set.addAll(v2);
-                    return new ArrayList<>(set);
-                }));
-            }
-
-
-            List<RelationVariable> variablesToLogForInstance = new ArrayList<>();
-            String logVariablesKey = instance.key + "." + instance.instanceName;
-            if (globalLogVariablesMaps.containsKey(logVariablesKey)) {
-                for (String s : globalLogVariablesMaps.get(logVariablesKey)) {
-                    variablesToLogForInstance.add(new RelationVariable(
-                            this.fmuKeyToModelDescription.get(instance.key).getScalarVariables().stream().filter(x -> x.name.equals(s)).findFirst()
-                                    .get(), instanceLexIdentifier));
-
-
-                }
-                if (this.globalVariablesToLogForInstance.containsKey(instance.instanceName)) {
-                    List<RelationVariable> existingRVs = this.globalVariablesToLogForInstance.get(instance.instanceName);
-                    for (RelationVariable rv : variablesToLogForInstance) {
-                        if (!existingRVs.contains(rv)) {
-                            existingRVs.add(rv);
-                        }
-                    }
-                } else {
-                    this.globalVariablesToLogForInstance.put(instance.instanceName, variablesToLogForInstance);
                 }
 
+                Relation r = new Relation();
+                r.source = outputVariable;
+                r.targets = externalInputs;
+                r.direction = Relation.Direction.OutputToInput;
+                r.origin = Relation.InternalOrExternal.External;
+                instanceRelations.add(r);
             }
         }
-        return idToRelations;
     }
 
     public Map<String, List<String>> getLogLevels() {
         return Collections.unmodifiableMap(this.instanceNameToLogLevels);
     }
 
-    private HashMap<String, Fmi2ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus, ModelDescriptionResolver resolver) throws Exception {
-        HashMap<String, Fmi2ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
+    private HashMap<String, ModelDescription> buildFmuKeyToFmuMD(Map<String, URI> fmus, ModelDescriptionResolver resolver) throws Exception {
+        HashMap<String, ModelDescription> fmuKeyToFmuWithMD = new HashMap<>();
         for (Map.Entry<String, URI> entry : fmus.entrySet()) {
             String key = entry.getKey();
             URI value = entry.getValue();
@@ -464,7 +511,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         }
     }
 
-    public Fmi2ModelDescription getModelDescription(String name) {
+    public ModelDescription getModelDescription(String name) {
         return this.fmuKeyToModelDescription.get(name);
     }
 
@@ -472,7 +519,7 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
         return this.faultInjectionConfigurationPath;
     }
 
-    public interface ModelDescriptionResolver extends BiFunction<String, URI, Fmi2ModelDescription> {
+    public interface ModelDescriptionResolver extends BiFunction<String, URI, ModelDescription> {
     }
 
     public static class Relation implements FrameworkVariableInfo, IRelation {
@@ -564,11 +611,29 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
     }
 
     public static class FileModelDescriptionResolver implements ModelDescriptionResolver {
+        static XPath xPath = XPathFactory.newInstance().newXPath();
+
+        double getFmiVersion(InputStream is) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(is);
+            doc.getDocumentElement().normalize();
+            return Double.parseDouble((String) xPath.compile("fmiModelDescription/@fmiVersion").evaluate(doc, XPathConstants.STRING));
+        }
+
         @Override
-        public Fmi2ModelDescription apply(String s, URI uri) {
+        public ModelDescription apply(String s, URI uri) {
             try {
                 IFmu fmu = FmuFactory.create(null, uri);
-                return new ExplicitModelDescription(fmu.getModelDescription());
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                IOUtils.copy(fmu.getModelDescription(), buffer);
+
+                double fmiVersion = getFmiVersion(new ByteArrayInputStream(buffer.toByteArray()));
+                if (fmiVersion < 3) {
+                    return new ExplicitModelDescription(new ByteArrayInputStream(buffer.toByteArray()));
+                } else {
+                    return new Fmi3ModelDescription(new ByteArrayInputStream(buffer.toByteArray()));
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

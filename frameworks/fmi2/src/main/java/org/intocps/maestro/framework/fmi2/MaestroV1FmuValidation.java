@@ -1,9 +1,9 @@
 package org.intocps.maestro.framework.fmi2;
 
-import org.intocps.fmi.IFmu;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.modeldefinitionchecker.VdmSvChecker;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -16,11 +16,14 @@ public class MaestroV1FmuValidation implements IFmuValidator {
     @Override
     public boolean validate(String id, URI path, IErrorReporter reporter) {
         try {
-            IFmu fmu = FmuFactory.create(null, path);
+            Fmi2SimulationEnvironment.FileModelDescriptionResolver resolver = new Fmi2SimulationEnvironment.FileModelDescriptionResolver();
+            ModelDescription md = resolver.apply(null, path);
 
-            Fmi2ModelDescription md = new Fmi2ModelDescription(fmu.getModelDescription());
-            validateModelDescription(md);
-            VdmSvChecker.validateModelVariables(md.getScalarVariables());
+            if (md instanceof Fmi2ModelDescription) {
+                validateModelDescription((Fmi2ModelDescription) md);
+                VdmSvChecker.validateModelVariables(((Fmi2ModelDescription) md).getScalarVariables());
+
+            }
             return true;
         } catch (Exception e) {
             reporter.report(0, e.getMessage(), null);

@@ -5,11 +5,11 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -27,18 +27,18 @@ public class DataWriterHandler implements GeneratorComponent {
     private final String dataWriter = "dataWriter";
     private final String data_valuesIdentifier = "data_values";
     private final String data_configuration = "dataWriter_configuration";
-    Map<RelationVariable, PExp> csvFields;
+    Map<org.intocps.maestro.framework.core.RelationVariable, PExp> csvFields;
 
     public List<PStm> allocate(Set<Fmi2SimulationEnvironment.Relation> inputRelations,
             Map<LexIdentifier, Map<Fmi2ModelDescription.Types, List<Fmi2ModelDescription.ScalarVariable>>> outputs, Fmi2SimulationEnvironment env) {
         List<PStm> statements = new Vector<>();
         List<String> variableNames = new Vector<>();
 
-        Function<RelationVariable, String> getLogName = k -> k.instance.getText() + "." + k.getScalarVariable().getName();
+        Function<org.intocps.maestro.framework.core.RelationVariable, String> getLogName = k -> k.getInstance().getText() + "." + k.getName();
 
         csvFields = inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
                 .flatMap(h -> {
-                    List<RelationVariable> outputs_ = env.getVariablesToLog(h.scalarVariable.instance.getText());
+                    List<org.intocps.maestro.framework.core.RelationVariable> outputs_ = env.getVariablesToLog(h.scalarVariable.instance.getText());
                     //outputs_.add(h.scalarVariable);
                     return outputs_.stream();
                     //return h.scalarVariable;
@@ -46,20 +46,26 @@ public class DataWriterHandler implements GeneratorComponent {
 
 
                     //the relation should be a one to one relation so just take the first one
-                    RelationVariable fromVar = r;
-                    PExp from = arrayGet(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, DataExchangeHandler.UsageType.Out),
-                            outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                                    .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                                    .indexOf(fromVar.scalarVariable.getName()));
-                    return from;
+                    org.intocps.maestro.framework.core.RelationVariable fromVar = r;
+
+                    if (fromVar instanceof RelationVariable) {
+                        Fmi2ModelDescription.Types fromType = ((RelationVariable) fromVar).getScalarVariable().type.type;
+                        PExp from = arrayGet(getBufferName(fromVar.getInstance(), fromType, DataExchangeHandler.UsageType.Out),
+                                outputs.get(fromVar.getInstance()).get(fromType).stream().map(Fmi2ModelDescription.ScalarVariable::getName)
+                                        .collect(Collectors.toList()).indexOf(fromVar.getName()));
+                        return from;
+                    } else {
+                        throw new RuntimeException("Not a fmi 2 variable");
+                    }
+
 
                 }, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
 
         variableNames.addAll(csvFields.keySet().stream().map(k -> {
 
-            FrameworkUnitInfo info = env.getUnitInfo(k.instance, Framework.FMI2);
+            FrameworkUnitInfo info = env.getUnitInfo(k.getInstance(), Framework.FMI2);
 
-            Stream<String> nameComponents = Stream.of(k.instance.getText(), k.getScalarVariable().getName());
+            Stream<String> nameComponents = Stream.of(k.getInstance().getText(), k.getName());
 
             if (info instanceof ComponentInfo) {
                 nameComponents = Stream.concat(Stream.of(((ComponentInfo) info).fmuIdentifier), nameComponents);

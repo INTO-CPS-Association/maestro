@@ -5,6 +5,7 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -113,23 +114,27 @@ public class BuilderHelper {
             if (exp instanceof AIdentifierExp) {
                 String componentName = ((AIdentifierExp) exp).getName().getText();
 
-                ComponentInfo instance = env.getInstanceByLexName(componentName);
-                ModelDescriptionContext modelDescriptionContext = null;
-                try {
-                    modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
-                } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
+                FrameworkUnitInfo instance = env.getInstanceByLexName(componentName);
+                if (instance instanceof ComponentInfo) {
+                    ModelDescriptionContext modelDescriptionContext = null;
+                    try {
+                        modelDescriptionContext = new ModelDescriptionContext(((ComponentInfo) instance).modelDescription);
+                    } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
+                    PStm dummyStm = newABlockStm();
+                    builder.getDynamicScope().add(dummyStm);
+
+                    FmuVariableFmi2Api fmu =
+                            new FmuVariableFmi2Api(instance.getOwnerIdentifier(), builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
+                                    builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
+                                    new AIdentifierExp(new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
+                    return fmu;
+
                 }
-
-                //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
-                PStm dummyStm = newABlockStm();
-                builder.getDynamicScope().add(dummyStm);
-
-                FmuVariableFmi2Api fmu =
-                        new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
-                                builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
-                return fmu;
+                throw new RuntimeException("exp is not identifying as a component: " + instance);
             } else {
                 throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
             }

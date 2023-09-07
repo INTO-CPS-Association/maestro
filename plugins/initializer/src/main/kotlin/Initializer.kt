@@ -498,6 +498,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                     val b: Double = staticValue as Double
                     comp.set(port, DoubleExpressionValue.of(b))
                 }
+
                 Fmi2ModelDescription.Types.Integer -> comp.set(port, IntExpressionValue.of(staticValue as Int))
                 Fmi2ModelDescription.Types.String -> comp.set(port, StringExpressionValue.of(staticValue as String))
                 Fmi2ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
@@ -509,18 +510,22 @@ class Initializer : BasicMaestroExpansionPlugin {
                     val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
+
                 Fmi2ModelDescription.Types.Real -> {
                     val v = builder.executionEnvironment.getReal(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
+
                 Fmi2ModelDescription.Types.Integer -> {
                     val v = builder.executionEnvironment.getInt(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
+
                 Fmi2ModelDescription.Types.String -> {
                     val v = builder.executionEnvironment.getString(port.multiModelScalarVariableName)
                     comp.set(port, v)
                 }
+
                 Fmi2ModelDescription.Types.Enumeration -> throw ExpandException("Enumeration not supported")
                 else -> throw ExpandException("Not known type")
             }
@@ -580,6 +585,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                     addToPortsAlreadySet(fmu, port.scalarVariable)
                     SetInstruction(fmu, port)
                 }
+
                 else -> throw ExpandException("Internal error")
             }
         } else
@@ -594,7 +600,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         val fmuToPorts = ports.groupBy { i -> i.instance.text }
             .map { i ->
                 i.key to i.value.map { p ->
-                    fmuInstances.getValue(i.key).getPort(p.scalarVariable.getName())
+                    fmuInstances.getValue(i.key).getPort(p.name)
                 }
             }
             .toMap()

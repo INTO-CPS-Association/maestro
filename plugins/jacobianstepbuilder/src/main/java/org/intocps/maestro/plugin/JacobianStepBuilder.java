@@ -14,7 +14,10 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
+import org.intocps.maestro.framework.core.RelationVariable;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelSwapInfo;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
@@ -201,8 +204,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             fmuInstances.forEach((identifier, instance) -> {
                 Set<String> scalarVariablesToGet = instance.getPorts().stream().filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
                         .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName).collect(Collectors.toSet());
-                scalarVariablesToGet.addAll(env.getVariablesToLog(instance.getEnvironmentName()).stream().map(var -> var.scalarVariable.getName())
-                        .collect(Collectors.toSet()));
+                scalarVariablesToGet.addAll(
+                        env.getVariablesToLog(instance.getEnvironmentName()).stream().map(RelationVariable::getName).collect(Collectors.toSet()));
 
                 componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
             });
@@ -218,14 +221,21 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             boolean everyFMUSupportsGetState = true;
             int indexer = 0;
             for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
-                StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null,
-                        MableAstFactory.newAStringLiteralExp(
-                                env.getInstanceByLexName(instance.getEnvironmentName()).getFmuIdentifier() + "." + instance.getName()));
-                fmuNamesToFmuInstances.put(fullyQualifiedFMUInstanceName, instance);
 
-                fmuInstanceToCommunicationPoint.put(instance, fmuCommunicationPoints.items().get(indexer));
+                FrameworkUnitInfo v = env.getInstanceByLexName(instance.getEnvironmentName());
+                if (v instanceof ComponentInfo) {
+                    StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null,
+                            MableAstFactory.newAStringLiteralExp(((ComponentInfo) v).getFmuIdentifier() + "." + instance.getName()));
+                    fmuNamesToFmuInstances.put(fullyQualifiedFMUInstanceName, instance);
 
-                everyFMUSupportsGetState = instance.getModelDescription().getCanGetAndSetFmustate() && everyFMUSupportsGetState;
+                    fmuInstanceToCommunicationPoint.put(instance, fmuCommunicationPoints.items().get(indexer));
+
+                    everyFMUSupportsGetState = instance.getModelDescription().getCanGetAndSetFmustate() && everyFMUSupportsGetState;
+
+                } else {
+                    throw new RuntimeException("instance is not fmi2");
+                }
+
 
                 indexer++;
             }

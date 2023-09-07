@@ -6,5 +6,7 @@ import org.intocps.maestro.fmi.Fmi2ModelDescription;
 public interface RelationVariable {
     LexIdentifier getInstance();
 
-    Fmi2ModelDescription.ScalarVariable getScalarVariable();
+    String getName();
+
+   <T> T getScalarVariable(Class<T> clz);
 }

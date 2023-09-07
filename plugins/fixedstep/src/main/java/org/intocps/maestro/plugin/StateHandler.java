@@ -6,7 +6,9 @@ import org.intocps.maestro.ast.node.ARefExp;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.InstanceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,14 @@ public class StateHandler {
         supportsGetSetState =
                 env.getInstances().stream().filter(f -> componentNames.stream().anyMatch(m -> m.getText().equals(f.getKey()))).allMatch(pair -> {
                     try {
-                        return pair.getValue().modelDescription.getCanGetAndSetFmustate();
+                        if (pair.getValue() instanceof ComponentInfo) {
+                            return ((ComponentInfo) pair.getValue()).modelDescription.getCanGetAndSetFmustate();
+                        } else if (pair.getValue() instanceof InstanceInfo) {
+                            return ((InstanceInfo) pair.getValue()).modelDescription.getCanGetAndSetFmustate();
+                        }
+                        return false;
+
+
                     } catch (XPathExpressionException e) {
                         e.printStackTrace();
                         return false;

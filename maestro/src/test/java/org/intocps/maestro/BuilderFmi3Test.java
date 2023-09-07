@@ -9,6 +9,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -86,9 +87,10 @@ public class BuilderFmi3Test {
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
-                .createFMU("controllerFMU", env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
-        FmuVariableFmi2Api tankFMU =
-                builder.getDynamicScope().createFMU("tankFMU", env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+                .createFMU("controllerFMU", (Fmi2ModelDescription) env.getModelDescription("{controllerFMU}"),
+                        env.getUriFromFMUName("{controllerFMU" + "}"));
+        FmuVariableFmi2Api tankFMU = builder.getDynamicScope()
+                .createFMU("tankFMU", (Fmi2ModelDescription) env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");

@@ -26,7 +26,8 @@ class MasterModelMapper {
         }
 
         private fun multiModelConnectionNameToPortName(name: String): String {
-            return name.split(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER).let { it.subList(2, it.size).joinToString(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER) }
+            return name.split(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER)
+                .let { it.subList(2, it.size).joinToString(Sigver.MULTI_MODEL_FMU_INSTANCE_DELIMITER) }
         }
 
         fun scenarioToMasterModel(scenario: String): MasterModel {
@@ -80,7 +81,8 @@ class MasterModelMapper {
             }.flatten()
 
             // Instantiate a simulationConfiguration to be able to access fmu model descriptions
-            val simulationConfiguration = Fmi2SimulationEnvironmentConfiguration(extendedMultiModel.connections, extendedMultiModel.fmus)
+            val simulationConfiguration =
+                Fmi2SimulationEnvironmentConfiguration(extendedMultiModel.connections, extendedMultiModel.fmus)
 
             // Map fmus to fmu models
             val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
@@ -93,8 +95,9 @@ class MasterModelMapper {
             }.flatten().distinct()
             val fmuNameToFmuModel = fmuInstanceNames.mapNotNull { fmuInstanceName ->
                 fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
-                    ?.let { fmuWithMD ->
-                        val scalarVariables = fmuWithMD.value.scalarVariables
+                    //FIXME we are filtering our fmi3 here
+                    ?.takeIf { p -> p.value is Fmi2ModelDescription }?.let { fmuWithMD ->
+                        val scalarVariables = (fmuWithMD.value as Fmi2ModelDescription).scalarVariables
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
                                 .associate { inputPort ->

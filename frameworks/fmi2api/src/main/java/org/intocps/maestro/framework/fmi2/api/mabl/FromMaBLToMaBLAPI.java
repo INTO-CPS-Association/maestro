@@ -3,12 +3,9 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.core.IRelation;
-import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.core.IVariable;
+import org.intocps.maestro.framework.core.*;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
@@ -40,34 +37,43 @@ public class FromMaBLToMaBLAPI {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
 
-            ComponentInfo instance = env.getInstanceByLexName(environmentComponentName);
-            ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
+            FrameworkUnitInfo inst = env.getInstanceByLexName(environmentComponentName);
+            if (inst instanceof ComponentInfo) {
 
-            //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
-            PStm dummyStm = newABlockStm();
-            builder.getDynamicScope().add(dummyStm);
 
-            FmuVariableFmi2Api fmu = new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
-                    builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                    new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
+                ComponentInfo instance = (ComponentInfo) inst;
+                ModelDescriptionContext modelDescriptionContext = new ModelDescriptionContext(instance.modelDescription);
 
-            ComponentVariableFmi2Api a;
-            if (environmentComponentName == null) {
-                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+                //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
+                PStm dummyStm = newABlockStm();
+                builder.getDynamicScope().add(dummyStm);
+
+                FmuVariableFmi2Api fmu =
+                        new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
+                                builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
+                                new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
+
+                ComponentVariableFmi2Api a;
+                if (environmentComponentName == null) {
+                    a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                            builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+                } else {
+                    a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
+                            builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
+                }
+                List<RelationVariable> variablesToLog = null;
+                if (environmentComponentName == null) {
+                    variablesToLog = env.getVariablesToLog(componentName);
+                } else {
+                    variablesToLog = env.getVariablesToLog(environmentComponentName);
+                }
+                a.setVariablesToLog(variablesToLog.stream().filter(org.intocps.maestro.framework.fmi2.RelationVariable.class::isInstance)
+                        .map(org.intocps.maestro.framework.fmi2.RelationVariable.class::cast).collect(Collectors.toList()));
+
+                return Map.entry(componentName, a);
             } else {
-                a = new ComponentVariableFmi2Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                        builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
+                throw new RuntimeException("instance is not an fmi2 component: " + componentName);
             }
-            List<RelationVariable> variablesToLog = null;
-            if (environmentComponentName == null) {
-                variablesToLog = env.getVariablesToLog(componentName);
-            } else {
-                variablesToLog = env.getVariablesToLog(environmentComponentName);
-            }
-            a.setVariablesToLog(variablesToLog);
-
-            return Map.entry(componentName, a);
         } else {
             throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
         }
@@ -93,9 +99,9 @@ public class FromMaBLToMaBLAPI {
                             }
                         }
 
-                        PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getScalarVariable().getName());
+                        PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getName());
 
-                        String sourcePortName = relation.getSource().getScalarVariable().getScalarVariable().getName();
+                        String sourcePortName = relation.getSource().getScalarVariable().getName();
                         if (targetPort != null) {
                             entry.getValue().getPort(sourcePortName).linkTo(targetPort);
                         } else {

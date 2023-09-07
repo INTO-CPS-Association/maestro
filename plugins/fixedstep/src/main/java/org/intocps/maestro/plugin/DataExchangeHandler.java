@@ -2,9 +2,9 @@ package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.fmi.Fmi2ModelDescription;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -32,10 +32,12 @@ public class DataExchangeHandler {
                 .collect(Collectors.toSet());
 
         // outputs contains both outputs based on relations and outputs based on additional variables to log
-        outputs = outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors
-                .toMap(Function.identity(), s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s)).flatMap(r -> {
+        //FIXME fmi3 is excluded
+        outputs = outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
+                s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s)).flatMap(r -> {
                     List<Fmi2ModelDescription.ScalarVariable> outputs_ =
-                            env.getVariablesToLog(s.getText()).stream().map(x -> x.scalarVariable).collect(Collectors.toList());
+                            env.getVariablesToLog(s.getText()).stream().map(x -> x.getScalarVariable(Fmi2ModelDescription.ScalarVariable.class))
+                                    .filter(Objects::nonNull).collect(Collectors.toList());
                     //outputs_.add(r.getSource().scalarVariable.getScalarVariable());
                     return outputs_.stream();
                 }).distinct().collect(Collectors.groupingBy(sv -> sv.getType().type))));
@@ -200,7 +202,8 @@ public class DataExchangeHandler {
             RelationVariable fromVar = r.getTargets().values().iterator().next().scalarVariable;
             PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)),
                     Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.scalarVariable.getName()))));
+                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
+                            .indexOf(fromVar.scalarVariable.getName()))));
 
             if (r.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type) {
                 //ok the types are not matching, lets use a converter
