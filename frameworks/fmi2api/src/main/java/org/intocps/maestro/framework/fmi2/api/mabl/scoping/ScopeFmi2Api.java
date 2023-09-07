@@ -373,6 +373,11 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             if (length > 1 && value[0] != null) {
                 initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newAIntLiteralExp((Integer) v)).collect(Collectors.toList()));
             }
+        } else if (value instanceof Long[]) {
+            type = new AUIntNumericPrimitiveType();
+            if (length > 1 && value[0] != null) {
+                initializer = newAArrayInitializer(Arrays.stream(value).map(v -> newAUIntLiteralExp((Long) v)).collect(Collectors.toList()));
+            }
         } else if (value instanceof Boolean[]) {
             type = new ABooleanPrimitiveType();
             if (length > 1 && value[0] != null) {
@@ -472,7 +477,6 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
             if (v.get() != null) {
                 initial = newAIntLiteralExp((Integer) v.get());
             }
-
         } else if (v.getType() instanceof ABooleanPrimitiveType) {
             if (v.get() != null) {
                 initial = newABoolLiteralExp((Boolean) v.get());
@@ -505,6 +509,14 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     public FmuVariableFmi3Api createFMU3(String name, String loaderName, String... args) throws Exception {
         return null;
     }
+
+
+    // TODO stuff goes here.
+    @Override
+    public void registerInstanceVariableFmi3Api(InstanceVariableFmi3Api instanceVariableFmi3Api) {
+
+    }
+
 
     @Override
     public void markTransferPoint(String... names) {
@@ -600,6 +612,8 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     public void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api) {
         this.fmi2ComponentVariables.add(componentVariableFmi2Api);
     }
+
+
 
     @Override
     public <S> S findParentScope(Class<S> type) {

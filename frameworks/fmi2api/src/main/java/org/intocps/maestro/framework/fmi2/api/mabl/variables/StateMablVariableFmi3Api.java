@@ -10,13 +10,13 @@ import java.util.Collections;
 import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 import static org.intocps.maestro.ast.MableBuilder.call;
 
-public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements Fmi2Builder.StateVariable<PStm> {
-    private final ComponentVariableFmi2Api owner;
+public class StateMablVariableFmi3Api extends VariableFmi2Api<Object> implements Fmi2Builder.StateVariable<PStm> {
+    private final InstanceVariableFmi3Api owner;
     private final MablApiBuilder builder;
     private boolean valid = true;
 
-    public StateMablVariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
-            PStateDesignator designator, PExp referenceExp, MablApiBuilder builder, ComponentVariableFmi2Api owner) {
+    public StateMablVariableFmi3Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+            PStateDesignator designator, PExp referenceExp, MablApiBuilder builder, InstanceVariableFmi3Api owner) {
         super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.owner = owner;
         this.builder = builder;
@@ -28,8 +28,6 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
         set(builder.getDynamicScope());
     }
 
-
-
     @Override
     public void set(Fmi2Builder.Scope<PStm> scope) throws IllegalStateException {
         if (!valid) {
@@ -39,7 +37,7 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
                 call(owner.getReferenceExp().clone(), "setState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder
+            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
                     .generate(builder, "setState", this.owner, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
                             MablApiBuilder.FmiStatus.FMI_FATAL);
         }
@@ -60,7 +58,7 @@ public class StateMablVariableFmi2Api extends VariableFmi2Api<Object> implements
                 call(owner.getReferenceExp().clone(), "freeState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            ComponentVariableFmi2Api.FmiStatusErrorHandlingBuilder
+            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
                     .generate(builder, "freeState", this.owner, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
                             MablApiBuilder.FmiStatus.FMI_FATAL);
         }

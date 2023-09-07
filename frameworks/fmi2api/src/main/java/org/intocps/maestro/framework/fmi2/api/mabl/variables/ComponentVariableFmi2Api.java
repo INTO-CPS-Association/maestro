@@ -1247,6 +1247,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
     @Override
     public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) throws XPathExpressionException {
+
         if (!this.modelDescriptionContext.getModelDescription().getCanGetAndSetFmustate()) {
             throw new RuntimeException("Unable to get state on fmu: " + this.getOwner() + " with instance name: " + this.getName());
         }

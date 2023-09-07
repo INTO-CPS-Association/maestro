@@ -18,7 +18,7 @@ public class ModelDescriptionContext3 {
         this.modelDescription = modelDescription;
         modelDescription.getScalarVariables().forEach((sv) -> {
             this.nameToSv.put(sv.getVariable().getName(), sv);
-            this.valRefToSv.put((long) 1, sv); //TODO: sv.getVariable().getValueReference()
+            this.valRefToSv.put((long) sv.getVariable().getValueReferenceAsLong(), sv);
         });
     }
     public Fmi3ModelDescription getModelDescription() {
