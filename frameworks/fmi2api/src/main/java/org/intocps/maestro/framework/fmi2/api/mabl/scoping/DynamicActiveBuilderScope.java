@@ -252,6 +252,12 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
     }
 
+
+    @Override
+    public void registerInstanceVariableFmi3Api(InstanceVariableFmi3Api instanceVariableFmi3Api) {
+        // TODO stuff goes here.
+    }
+
     @Override
     public <S> S findParentScope(Class<S> type) {
         return this.activeScope.findParentScope(type);

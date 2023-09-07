@@ -9,7 +9,6 @@ import FMI3;
         {
             error;
         }
-
         string instanceName="fmi3functiontest";
 
         bool visible=true;

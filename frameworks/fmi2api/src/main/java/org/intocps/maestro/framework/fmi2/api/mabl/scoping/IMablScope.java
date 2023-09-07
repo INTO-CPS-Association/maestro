@@ -115,5 +115,8 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
      */
     void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api);
 
+    void registerInstanceVariableFmi3Api(InstanceVariableFmi3Api instanceVariableFmi3Api);
+
+
     <S> S findParentScope(Class<S> type);
 }

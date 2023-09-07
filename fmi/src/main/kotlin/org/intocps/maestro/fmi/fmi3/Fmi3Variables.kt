@@ -14,7 +14,9 @@ abstract class Fmi3Variable protected constructor(
     val previous: UInt? = null,
     val clocks: List<UInt>? = null,
     val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
-)
+) {
+    fun getValueReferenceAsLong():Long { return valueReference.toLong() }
+}
 
 data class Dimension(val valueReference: UInt?, val start: List<Long>?)
 

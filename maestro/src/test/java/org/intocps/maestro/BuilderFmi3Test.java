@@ -19,9 +19,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
@@ -80,10 +78,14 @@ public class BuilderFmi3Test {
 
         URI ballUri = new File("target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu").getAbsoluteFile().toURI();
         Fmu3 ball = new Fmu3(new File(ballUri));
+        ArrayVariableFmi2Api varArray = builder.getDynamicScope().store("varArray", new Long[] {1L});
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());
 
 
-        builder.getDynamicScope().createFMU("ball", md3Ball, ballUri);
+        FmuVariableFmi3Api ballFmu = builder.getDynamicScope().createFMU("ball", md3Ball, ballUri);
+
+        InstanceVariableFmi3Api ballInstance = ballFmu.instantiate("ballInstance", varArray);
+
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
