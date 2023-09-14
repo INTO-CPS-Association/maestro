@@ -30,7 +30,6 @@ public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     private final ModelDescriptionContext3 modelDescriptionContext;
     private final MablApiBuilder builder;
     private String fmuIdentifier;
-//
     public FmuVariableFmi3Api(String fmuIdentifier, MablApiBuilder builder, ModelDescriptionContext3 modelDescriptionContext, PStm declaration,
             PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
         this(builder, modelDescriptionContext, declaration, type, declaredScope, dynamicScope, designator, referenceExp);
@@ -49,33 +48,40 @@ public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         return modelDescriptionContext;
     }
 
-//    @Override
-    public InstanceVariableFmi3Api instantiate(String name, String environmentName, ArrayVariableFmi2Api variables) {
+    public InstanceVariableFmi3Api instantiate(String name, boolean visible, boolean loggingOn, boolean eventModeUsed,
+            boolean earlyReturnAllowed, ArrayVariableFmi2Api requiredIntermediateVariables) {
         IMablScope scope = builder.getDynamicScope().getActiveScope();
-        return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope, environmentName, variables);
+        return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope, visible, loggingOn,
+                eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
     }
 
-    public InstanceVariableFmi3Api instantiate(String name, ArrayVariableFmi2Api variables) {
+    public InstanceVariableFmi3Api instantiate(String name, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
+            boolean visible, boolean loggingOn, boolean eventModeUsed, boolean earlyReturnAllowed,
+            ArrayVariableFmi2Api requiredIntermediateVariables) {
+        return instantiate(name, enclosingTryScope, scope, null, visible, loggingOn, eventModeUsed,
+                earlyReturnAllowed, requiredIntermediateVariables);
+
+    }
+
+    public InstanceVariableFmi3Api instantiate(String name, String environmentName, boolean visible, boolean loggingOn, boolean eventModeUsed,
+            boolean earlyReturnAllowed, ArrayVariableFmi2Api requiredIntermediateVariables) {
         IMablScope scope = builder.getDynamicScope().getActiveScope();
-        return instantiate(name, scope.findParentScope(TryMaBlScope.class), scope, variables);
+        return instantiate(name, scope.findParentScope(TryMaBlScope.class), builder.getDynamicScope(), environmentName,
+                visible, loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
     }
 
 
     public InstanceVariableFmi3Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
-            String environmentName, ArrayVariableFmi2Api variables) {
-        return instantiate(namePrefix, enclosingTryScope, scope, environmentName, true, variables );
-    }
-    public InstanceVariableFmi3Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
-            String environmentName, boolean loggingOn, ArrayVariableFmi2Api variables) {
+            String environmentName, boolean visible, boolean loggingOn, boolean eventModeUsed, boolean earlyReturnAllowed,
+            ArrayVariableFmi2Api requiredIntermediateVariables) {
 
         String name = builder.getNameGenerator().getName(namePrefix);
-        //TODO: Extract bool visible and bool loggingOn from configuration
         var var = newVariable(name, newANameType("FMI3Instance"), newNullExp());
 
         PStm instantiateAssign = newAAssignmentStm(newAIdentifierStateDesignator(name),
-                    call(getReferenceExp().clone(), "instantiateCoSimulation", newAStringLiteralExp(name), newABoolLiteralExp(true),
-                        newABoolLiteralExp(loggingOn), newABoolLiteralExp(true), newABoolLiteralExp(true),
-                            variables.getReferenceExp().clone()));
+                call(getReferenceExp().clone(), "instantiateCoSimulation", newAStringLiteralExp(name), newABoolLiteralExp(visible),
+                        newABoolLiteralExp(loggingOn), newABoolLiteralExp(eventModeUsed), newABoolLiteralExp(earlyReturnAllowed),
+                        requiredIntermediateVariables.getReferenceExp().clone()));
 
         if (enclosingTryScope == null) {
             throw new IllegalArgumentException("Call to instantiate is not allowed with a null enclosing try scope");
@@ -85,29 +91,29 @@ public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         TryMaBlScope mTryScope = (TryMaBlScope) enclosingTryScope;
         mTryScope.parent().addBefore(mTryScope.getDeclaration(), var);
 
-        InstanceVariableFmi3Api compVar;
+        InstanceVariableFmi3Api instanceVar;
         if (environmentName == null) {
-            compVar = new InstanceVariableFmi3Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
+            instanceVar = new InstanceVariableFmi3Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
                     newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
         } else {
 
             AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(name), environmentName);
-            compVar = new InstanceVariableFmi3Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
+            instanceVar = new InstanceVariableFmi3Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
                     newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name), environmentName);
             scope.add(mapping);
         }
 
         scope.add(instantiateAssign);
 
-        mTryScope.getFinallyBody().addAfterOrTop(null, newIf(newNotEqual(compVar.getReferenceExp().clone(), newNullExp()),
-                newABlockStm(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance", compVar.getReferenceExp().clone())),
-                        newAAssignmentStm(compVar.getDesignatorClone(), newNullExp())), null));
+        mTryScope.getFinallyBody().addAfterOrTop(null, newIf(newNotEqual(instanceVar.getReferenceExp().clone(), newNullExp()),
+                newABlockStm(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance", instanceVar.getReferenceExp().clone())),
+                        newAAssignmentStm(instanceVar.getDesignatorClone(), newNullExp())), null));
 
         scope.activate();
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
             ScopeFmi2Api thenScope =
-                    (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(compVar.getReferenceExp().clone(), newNullExp()))).enterThen();
+                    (ScopeFmi2Api) scope.enterIf(new PredicateFmi2Api(newEqual(instanceVar.getReferenceExp().clone(), newNullExp()))).enterThen();
 
             builder.getLogger().error(thenScope, "Instantiate failed on fmu: '%s' for instance: '%s'", this.getFmuIdentifier(), namePrefix);
             thenScope.add(new AErrorStm(
@@ -115,13 +121,12 @@ public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
             thenScope.leave();
         }
 
-        ((IMablScope) scope).registerInstanceVariableFmi3Api(compVar);
+        ((IMablScope) scope).registerInstanceVariableFmi3Api(instanceVar);
 
-        return compVar;
+        return instanceVar;
     }
-    public InstanceVariableFmi3Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope, ArrayVariableFmi2Api variables) {
-        return instantiate(namePrefix, enclosingTryScope, scope, null, variables);
-    }
+
+
 
     public String getFmuIdentifier() {
         return fmuIdentifier;

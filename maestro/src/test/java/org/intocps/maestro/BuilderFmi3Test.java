@@ -84,12 +84,21 @@ public class BuilderFmi3Test {
 
         FmuVariableFmi3Api ballFmu = builder.getDynamicScope().createFMU("ball", md3Ball, ballUri);
 
-        InstanceVariableFmi3Api ballInstance = ballFmu.instantiate("ballInstance", varArray);
+        boolean visible = true;
+        boolean loggingOn = true;
+        boolean eventModeUsed = true;
+        boolean earlyReturnAllowed = true;
+        InstanceVariableFmi3Api ballInstance = ballFmu.instantiate("ballInstance", visible, loggingOn, eventModeUsed, earlyReturnAllowed,
+                varArray);
 
         int res = ballInstance.enterInitializationMode(false, 0.0, 0.0, true,10.0);
         res = ballInstance.exitInitializationMode();
-
         res = ballInstance.terminate();
+        ballInstance.freeInstance();
+
+
+
+
 
 
 

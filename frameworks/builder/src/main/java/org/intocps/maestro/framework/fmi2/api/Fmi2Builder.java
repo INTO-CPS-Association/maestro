@@ -786,9 +786,9 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         int terminate();
 
-//        void freeInstance();
-//
-//        void freeInstance(Scope<T> scope);
+        void freeInstance();
+
+        void freeInstance(Scope<T> scope);
 
         /**
          * @param scope

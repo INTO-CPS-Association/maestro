@@ -1123,17 +1123,15 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         return Fmi3Status.OK.value;
     }
 
-//        public void freeInstance() {
-//            this.terminate(builder.getDynamicScope());
-//        }
-//
-//        public void freeInstance(Fmi2Builder.Scope<PStm> scope) {
-//            scope.add(newABlockStm(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "fmi3FreeInstance"))))
-//            scope.add(newIf(newNotEqual(((InstanceVariableFmi3Api) inst).getReferenceExp().clone(), newNullExp()), newABlockStm(
-//                    MableAstFactory.newExpressionStm(
-//                            call(getReferenceExp().clone(), "freeInstance", ((InstanceVariableFmi3Api) inst).getReferenceExp().clone())),
-//                    newAAssignmentStm(((InstanceVariableFmi3Api) inst).getDesignatorClone(), newNullExp())), null));
-//        }
+    public void freeInstance() {
+        this.freeInstance(builder.getDynamicScope());
+    }
+
+    public void freeInstance(Fmi2Builder.Scope<PStm> scope) {
+        // TODO: add fault checks???
+        scope.add(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "freeInstance")));
+    }
+
 
 
     // TODO: implement this from the other share function below. This for now to build.
