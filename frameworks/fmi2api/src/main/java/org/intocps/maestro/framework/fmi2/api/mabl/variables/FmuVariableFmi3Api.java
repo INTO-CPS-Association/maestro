@@ -72,10 +72,6 @@ public class FmuVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         //TODO: Extract bool visible and bool loggingOn from configuration
         var var = newVariable(name, newANameType("FMI3Instance"), newNullExp());
 
-
-
-
-
         PStm instantiateAssign = newAAssignmentStm(newAIdentifierStateDesignator(name),
                     call(getReferenceExp().clone(), "instantiateCoSimulation", newAStringLiteralExp(name), newABoolLiteralExp(true),
                         newABoolLiteralExp(loggingOn), newABoolLiteralExp(true), newABoolLiteralExp(true),

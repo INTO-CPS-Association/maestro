@@ -32,8 +32,6 @@ import Logger;
         uint sv_par_e=6;
         int res=0;
 
-
-
         uint svs[2]={sv_par_g, sv_par_e};
         float values_r[2]={-9.81,0.7};
         res=instance.setFloat32(svs,values_r);

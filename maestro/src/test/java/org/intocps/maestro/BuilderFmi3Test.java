@@ -86,6 +86,14 @@ public class BuilderFmi3Test {
 
         InstanceVariableFmi3Api ballInstance = ballFmu.instantiate("ballInstance", varArray);
 
+        int res = ballInstance.enterInitializationMode(false, 0.0, 0.0, true,10.0);
+        res = ballInstance.exitInitializationMode();
+
+        res = ballInstance.terminate();
+
+
+
+
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
@@ -94,7 +102,8 @@ public class BuilderFmi3Test {
         FmuVariableFmi2Api tankFMU = builder.getDynamicScope()
                 .createFMU("tankFMU", (Fmi2ModelDescription) env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
-        // Create the controller and tank instanes
+
+        // Create the controller and tank instances
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");
         ComponentVariableFmi2Api tank = tankFMU.instantiate("tank");
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();

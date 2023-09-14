@@ -755,6 +755,235 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         }
     }
 
+    /**
+     * Interface for an fmi instance.
+     * <p>
+     * Note that all methods that do not take a scope uses the builders dynamic scope and adds the underlying instructions int he active scope.
+     */
+    interface Fmi3InstanceVariable<T> extends Variable<T, NamedVariable<T>> {
+
+        void setDebugLogging(List<String> categories, boolean enableLogging);
+
+        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined, Double tolerance);
+
+        void setupExperiment(double startTime, Double endTime, Double tolerance);
+
+        int enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime);
+
+        int exitInitializationMode();
+
+        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined,
+                Double tolerance);
+
+        void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
+
+        int enterInitializationMode(Scope<T> scope,boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
+                double stopTime);
+
+        int exitInitializationMode(Scope<T> scope);
+
+        int terminate(Scope<T> scope);
+
+        int terminate();
+
+//        void freeInstance();
+//
+//        void freeInstance(Scope<T> scope);
+
+        /**
+         * @param scope
+         * @param currentCommunicationPoint
+         * @param communicationStepSize
+         * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
+         * @return
+         */
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+                DoubleVariable<T> communicationStepSize, BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
+                DoubleVariable<T> communicationStepSize);
+
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
+                BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
+
+
+        List<? extends Port> getPorts();
+
+        /**
+         * Get ports by name
+         *
+         * @param names
+         * @return
+         */
+        List<? extends Port> getPorts(String... names);
+
+        /**
+         * Get ports by ref val
+         *
+         * @param valueReferences
+         * @return
+         */
+        List<? extends Port> getPorts(int... valueReferences);
+
+        /**
+         * Get port by name
+         *
+         * @param name
+         * @return
+         */
+        Port getPort(String name);
+
+        /**
+         * Get port by ref val
+         *
+         * @param valueReference
+         * @return
+         */
+        Port getPort(int valueReference);
+
+        /**
+         * Get port values aka fmiGet
+         *
+         * @param ports
+         * @return
+         */
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(Port... ports);
+
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(Scope<T> scope, Port... ports);
+
+        /**
+         * Get all (linked) port values
+         *
+         * @return
+         */
+        <V> Map<? extends Port, ? extends Variable<T, V>> get();
+
+        /**
+         * get filter by value reference
+         *
+         * @param valueReferences
+         * @return
+         */
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(int... valueReferences);
+
+        /**
+         * Get filter by names
+         *
+         * @param names
+         * @return
+         */
+        <V> Map<? extends Port, ? extends Variable<T, V>> get(String... names);
+
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare(String... names);
+
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare(Port... ports);
+
+        <V> Map<? extends Port, ? extends Variable<T, V>> getAndShare();
+
+        <V> Variable<T, V> getShared(String name);
+
+        <V> Variable<T, V> getShared(Port port);
+
+        /**
+         * Get the value of a single port
+         *
+         * @param name
+         * @return
+         */
+        <V> Variable<T, V> getSingle(String name);
+
+        <V> Variable<T, V> getSingle(Port port);
+
+        <V> void set(Scope<T> scope, PortValueMap<V> value);
+
+
+        <V> void set(Scope<T> scope, PortVariableMap<T, V> value);
+
+        /**
+         * Set port values (if ports is not from this fmu then the links are used to remap)
+         *
+         * @param value
+         */
+        <V> void set(PortValueMap<V> value);
+
+        <V> void set(Port port, Value<V> value);
+
+        <V> void set(Port port, Variable<T, V> value);
+
+        <V> void set(Scope<T> scope, Port port, Variable<T, V> value);
+
+        <V> void set(PortVariableMap<T, V> value);
+
+        /**
+         * Set this fmu port by name and link
+         */
+        void setLinked(Scope<T> scope, Port... filterPorts);
+
+        void setLinked();
+
+        void setLinked(Port... filterPorts);
+
+        void setLinked(String... filterNames);
+
+        void setLinked(long... filterValueReferences);
+
+        /**
+         * Set this fmu ports by val ref
+         *
+         * @param values
+         */
+        void setInt(Map<? extends Integer, ? extends Value<Integer>> values);
+
+        /**
+         * Set this fmy ports by name
+         *
+         * @param value
+         */
+        void setString(Map<? extends String, ? extends Value<String>> value);
+
+        /**
+         * Makes the values publicly available to all linked connections. On next set these ports will be resolved to the values given for
+         * other fmu
+         *
+         * @param values
+         */
+        <V> void share(Map<? extends Port, ? extends Variable<T, V>> values);
+
+        /**
+         * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
+         * other fmu
+         *
+         * @param value
+         */
+        <V> void share(Port port, Variable<T, V> value);
+
+        /**
+         * Get the current state
+         *
+         * @return
+         */
+        StateVariable<T> getState() throws XPathExpressionException;
+
+        /**
+         * Get the current state
+         *
+         * @return
+         */
+        StateVariable<T> getState(Scope<T> scope) throws XPathExpressionException;
+
+
+        interface PortVariableMap<S, V> extends Map<Port, Variable<S, V>> {
+        }
+
+        interface PortValueMap<V> extends Map<Port, Value<V>> {
+        }
+
+        interface PortExpressionValueMap extends Map<Port, ExpressionValue> {
+        }
+    }
+
     interface Variable<T, V> {
         String getName();
 

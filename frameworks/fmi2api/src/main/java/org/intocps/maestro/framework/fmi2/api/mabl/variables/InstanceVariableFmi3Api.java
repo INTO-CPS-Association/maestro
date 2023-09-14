@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
+import org.intocps.fmi.jnifmuapi.fmi3.Fmi3Status;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -36,7 +37,7 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
 @SuppressWarnings("rawtypes")
-public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
+public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi3InstanceVariable<PStm> {
     final static Logger logger = LoggerFactory.getLogger(InstanceVariableFmi3Api.class);
     private final static int FMI_OK = 0;
     private final static int FMI_WARNING = 1;
@@ -255,8 +256,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         scope.add(arrayContent, callStm);
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "setDebugLogging", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "setDebugLogging", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
     }
 
@@ -285,20 +286,19 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
                                 startTime.clone(), endTimeDefined, endTime != null ? endTime.clone() : newARealLiteralExp(0d)))));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "setupExperiment", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "setupExperiment", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
     }
 
     @Override
-    public void enterInitializationMode() {
-        this.enterInitializationMode(builder.getDynamicScope());
-
+    public int enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime) {
+        return this.enterInitializationMode(builder.getDynamicScope(), toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
     }
 
     @Override
-    public void exitInitializationMode() {
-        this.exitInitializationMode(builder.getDynamicScope());
+    public int exitInitializationMode() {
+        return this.exitInitializationMode(builder.getDynamicScope());
     }
 
     @Override
@@ -313,24 +313,31 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         this.setupExperiment(scope, newARealLiteralExp(startTime), newARealLiteralExp(endTime), newABoolLiteralExp(true), tolerance);
     }
 
+    // TODO: probably should return other things than ok also
     @Override
-    public void enterInitializationMode(Fmi2Builder.Scope<PStm> scope) {
-        PStm stm = stateTransitionFunction(FmiFunctionType.ENTERINITIALIZATIONMODE);
+    public int enterInitializationMode(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, double startTime,
+            boolean stopTimeDefined, double stopTime) {
+        PStm stm = stateTransitionFunction(FmiFunctionType.ENTERINITIALIZATIONMODE, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime );
+
+
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "enterInitializationMode", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "enterInitializationMode", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
+        return Fmi3Status.OK.value;
     }
 
+    // TODO: Probably return other things than just ok.
     @Override
-    public void exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
+    public int exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.EXITINITIALIZATIONMODE);
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "exitInitializationMode", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "exitInitializationMode", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
+        return Fmi3Status.OK.value;
     }
 
     @Override
@@ -369,8 +376,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
                                 ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone()))));
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 
 
@@ -391,10 +398,14 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         return Map.entry(getCurrentTimeFullStepVar(), getCurrentTimeVar());
     }
 
-    private PStm stateTransitionFunction(FmiFunctionType type) {
+    private PStm stateTransitionFunction(FmiFunctionType type, boolean toleranceDefined, double tolerance,
+            double startTime, boolean stopTimeDefined, double stopTime) {
         switch (type) {
             case ENTERINITIALIZATIONMODE:
-                break;
+                AAssigmentStm stm = newAAssignmentStm(((IMablScope) this.dynamicScope).getFmiStatusVariable().getDesignator().clone(),
+                        call(this.getReferenceExp().clone(), createFunctionName(type), newABoolLiteralExp(toleranceDefined), newARealLiteralExp(tolerance),
+                                newARealLiteralExp(startTime), newABoolLiteralExp(stopTimeDefined), newARealLiteralExp(stopTime)));
+                return stm;
             case EXITINITIALIZATIONMODE:
                 break;
             case TERMINATE:
@@ -403,6 +414,22 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
                 throw new RuntimeException("Attempting to call state transition function with non-state transition function type: " + type);
         }
 
+
+        AAssigmentStm stm = newAAssignmentStm(((IMablScope) this.dynamicScope).getFmiStatusVariable().getDesignator().clone(),
+                call(this.getReferenceExp().clone(), createFunctionName(type)));
+        return stm;
+    }
+
+
+    private PStm stateTransitionFunction(FmiFunctionType type) {
+        switch (type) {
+            case EXITINITIALIZATIONMODE:
+                break;
+            case TERMINATE:
+                break;
+            default:
+                throw new RuntimeException("Attempting to call state transition function with non-state transition function type: " + type);
+        }
         AAssigmentStm stm = newAAssignmentStm(((IMablScope) this.dynamicScope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(type)));
         return stm;
@@ -543,7 +570,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
                 FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)), this,
-                        (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                        (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
             }
 
             if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
@@ -628,7 +655,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 //                    // If enabled handle potential errors from calling getRealOutputDerivatives
 //                    if (builder.getSettings().fmiErrorHandlingEnabled) {
 //                        FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.GETREALOUTPUTDERIVATIVES), this,
-//                                (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+//                                (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
 //                    }
 //                }
 //            }
@@ -748,12 +775,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
 
     public void set(Fmi2Builder.Port p, Fmi2Builder.ExpressionValue v) {
-        this.set(new PortValueExpresssionMapImpl(Map.of(p, v)));
         ;
+//        this.set(new PortValueExpresssionMapImpl(Map.of(p, v)));
     }
 
     public void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port p, Fmi2Builder.ExpressionValue v) {
-        this.set(scope, new PortValueMapImpl(Map.of(p, v)));
+        ;
+        //        this.set(scope, new PortValueMapImpl(Map.of(p, v)));
     }
 
     public void set(PortExpressionValueMap value) {
@@ -862,7 +890,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
             if (builder.getSettings().fmiErrorHandlingEnabled) {
                 FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)), this, (IMablScope) scope,
-                        MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                        MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
             }
 
             // TODO: IntermediateUpdateMode instead of CanInterpolateInputs?
@@ -968,7 +996,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         // If enabled handle potential errors from calling setRealInputDerivatives
         if (builder.getSettings().fmiErrorHandlingEnabled) {
             FmiStatusErrorHandlingBuilder.generate(builder, createFunctionName(FmiFunctionType.SETREALINPUTDERIVATIVES), this, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+                    MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
     }
 
@@ -979,20 +1007,22 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
     @Override
     public <V> void set(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
-        this.set(new PortVariableMapImpl(Map.of(port, value)));
+        ;
+        //        this.set(new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
     public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
-        this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
+        ;
+//        this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
     public void set(Fmi2Builder.Port port, Fmi2Builder.Value value) {
-        PortValueMap map = new PortValueMapImpl();
-        map.put(port, value);
-        set(map);
-
+        ;
+        //        PortValueMap map = new PortValueMapImpl();
+        //        map.put(port, value);
+        //        set(map);
     }
 
 
@@ -1077,19 +1107,34 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void terminate() {
-        this.terminate(builder.getDynamicScope());
+    public int terminate() {
+        return this.terminate(builder.getDynamicScope());
     }
 
+    // TODO: Return other values but ok?
     @Override
-    public void terminate(Fmi2Builder.Scope<PStm> scope) {
+    public int terminate(Fmi2Builder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.TERMINATE);
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "terminate", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "terminate", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
+        return Fmi3Status.OK.value;
     }
+
+//        public void freeInstance() {
+//            this.terminate(builder.getDynamicScope());
+//        }
+//
+//        public void freeInstance(Fmi2Builder.Scope<PStm> scope) {
+//            scope.add(newABlockStm(MableAstFactory.newExpressionStm(call(getReferenceExp().clone(), "fmi3FreeInstance"))))
+//            scope.add(newIf(newNotEqual(((InstanceVariableFmi3Api) inst).getReferenceExp().clone(), newNullExp()), newABlockStm(
+//                    MableAstFactory.newExpressionStm(
+//                            call(getReferenceExp().clone(), "freeInstance", ((InstanceVariableFmi3Api) inst).getReferenceExp().clone())),
+//                    newAAssignmentStm(((InstanceVariableFmi3Api) inst).getDesignatorClone(), newNullExp())), null));
+//        }
+
 
     // TODO: implement this from the other share function below. This for now to build.
     @Override
@@ -1280,8 +1325,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.FmiStatus.FMI_ERROR,
-                    MablApiBuilder.FmiStatus.FMI_FATAL);
+            FmiStatusErrorHandlingBuilder.generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 
         return state;
@@ -1322,12 +1367,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
      */
     static class FmiStatusErrorHandlingBuilder {
         static void generate(MablApiBuilder builder, String method, InstanceVariableFmi3Api instance, IMablScope scope,
-                MablApiBuilder.FmiStatus... statusesToFail) {
+                MablApiBuilder.Fmi3Status... statusesToFail) {
             if (statusesToFail == null || statusesToFail.length == 0) {
                 return;
             }
 
-            Function<MablApiBuilder.FmiStatus, PExp> checkStatusEq =
+            Function<MablApiBuilder.Fmi3Status, PExp> checkStatusEq =
                     s -> newEqual(((IMablScope) scope).getFmiStatusVariable().getReferenceExp().clone(),
                             builder.getFmiStatusConstant(s).getReferenceExp().clone());
 
@@ -1341,7 +1386,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
             // thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
 
-            for (MablApiBuilder.FmiStatus status : statusesToFail) {
+            for (MablApiBuilder.Fmi3Status status : statusesToFail) {
                 ScopeFmi2Api s = thenScope.enterIf(new PredicateFmi2Api(checkStatusEq.apply(status))).enterThen();
                 builder.getLogger()
                         .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
