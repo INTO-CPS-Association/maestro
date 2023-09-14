@@ -158,7 +158,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         for (int i = 0; i < node.getIndices().size(); i++) {
             // If this happens, then we are finished already.
             if (!(iterationType instanceof AArrayType)) {
-                errorReporter.report(0, "Canont index none array expression", null);
+                errorReporter.report(0, "Cannot index none array expression", null);
                 return store(node, MableAstFactory.newAUnknownType());
             } else {
                 iterationType = ((AArrayType) iterationType).getType();
@@ -270,14 +270,22 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         }
 
         boolean isNumeric = types.stream().allMatch(t -> t instanceof SNumericPrimitiveType);
-        if (!isNumeric) {
-            return types.get(0);
-        }
+
+        //FIXME we allow bool to act as a numeric type in array initializers
+        isNumeric |= types.stream().anyMatch(t -> t instanceof ABooleanPrimitiveType);
+
         PType type = types.get(0);
         for (int i = 1; i < types.size(); i++) {
             PType from = types.get(i);
             if (!typeComparator.compatible(type, from)) {
-                type = from;
+                if (isNumeric) {
+                    //for numeric types we expand the type if not fitting
+                    type = from;
+                } else {
+                    errorReporter.report(-5,
+                            String.format("Array initializer contains mixed types. Expected '%s', got '%s' at position %d", type + "", from + "", i),
+                            null);
+                }
             }
         }
         return type;
