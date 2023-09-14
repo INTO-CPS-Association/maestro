@@ -14,8 +14,10 @@ import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.IRelation;
+import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.InstanceInfo;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.slf4j.Logger;
@@ -54,7 +56,10 @@ public class MaBLTemplateGenerator {
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
     public static final String FMI2COMPONENT_TYPE = "FMI2Component";
+    public static final String FMI3INSTANCE_TYPE = "FMI3Instance";
     public static final String COMPONENTS_ARRAY_NAME = "components";
+
+    public static final String INSTANCES_ARRAY_NAME = "instances";
     public static final String COMPONENTS_TRANSFER_ARRAY_NAME = "componentsTransfer";
     public static final String GLOBAL_EXECUTION_CONTINUE = IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE;
     public static final String STATUS = IMaestroPlugin.FMI_STATUS_VARIABLE_NAME;
@@ -95,11 +100,11 @@ public class MaBLTemplateGenerator {
      * @param fmuKey     The multimodel FMU key
      * @return
      */
-    public static List<PStm> createFmuVariable(String fmuLexName, String fmuKey) {
+    public static List<PStm> createFmuVariable(String fmuLexName, String fmuKey, String type) {
         List<PStm> statements = new ArrayList<>();
         AFmuMappingStm mapping = newAFMUMappingStm(newAIdentifier(fmuLexName), fmuKey);
         statements.add(mapping);
-        PStm var = newVariable(fmuLexName, newANameType("FMI2"), newNullExp());
+        PStm var = newVariable(fmuLexName, newANameType(type), newNullExp());
         statements.add(var);
         return statements;
     }
@@ -125,25 +130,38 @@ public class MaBLTemplateGenerator {
     }
 
 
-    public static List<PStm> createFmuInstanceVariable(String instanceLexName, boolean external, String instanceEnvironmentKey) {
+    public static List<PStm> createFmuInstanceVariable(String instanceLexName, boolean external, String instanceEnvironmentKey, String type) {
         List<PStm> statements = new ArrayList<>();
         AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(instanceLexName), instanceEnvironmentKey);
         statements.add(mapping);
-        PStm var = newVariable(external, instanceLexName, newANameType("FMI2Component"), external ? null : newNullExp());
+        PStm var = newVariable(external, instanceLexName, newANameType(type), external ? null : newNullExp());
         statements.add(var);
         return statements;
     }
 
-    public static Map.Entry<List<PStm>, List<PStm>> createFMUInstantiateStatement(String instanceLexName, String instanceEnvironmentKey,
-            String fmuLexName, boolean visible, boolean loggingOn, FaultInjectWithLexName faultInject) {
+    public static Map.Entry<List<PStm>, List<PStm>> createFMUInstantiateStatement(TemplateInstanceList.TemplateInstance instance, String fmuLexName,
+            boolean visible, boolean loggingOn, FaultInjectWithLexName faultInject) {
         List<PStm> rootStatements = new ArrayList<>();
         List<PStm> tryBlockStatements = new ArrayList<>();
-        String instanceLexName_ = instanceLexName;
+        String instanceLexName = instance.getLexName();
+        String instanceEnvironmentKey = instance.getName();
 
-        List<PStm> instantiate = Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName_)),
-                call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
-                        newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName_));
-        tryBlockStatements.addAll(instantiate);
+        if (instance.source instanceof ComponentInfo) {
+            List<PStm> instantiate = Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                    call(fmuLexName, "instantiate", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                            newABoolLiteralExp(loggingOn))), checkNullAndStop(instanceLexName));
+            tryBlockStatements.addAll(instantiate);
+        } else if (instance.source instanceof InstanceInfo) {
+            String requiredIntermediateVariablesLex = instanceLexName + "_requiredIntermediateVariables";
+
+            List<PStm> instantiate = Arrays.asList(newVariable(requiredIntermediateVariablesLex, new AUIntNumericPrimitiveType(), 0),
+                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                            call(fmuLexName, "instantiateCoSimulation", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                                    newABoolLiteralExp(loggingOn), newABoolLiteralExp(false), newABoolLiteralExp(false),
+                                    newAIdentifierExp(requiredIntermediateVariablesLex))), checkNullAndStop(instanceLexName));
+            tryBlockStatements.addAll(instantiate);
+        }
+
 
         if (faultInject != null) {
             AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
@@ -152,7 +170,7 @@ public class MaBLTemplateGenerator {
             rootStatements.addAll(Arrays.asList(fiToEnvMapping, transferAsStm, ficomp));
             tryBlockStatements.addAll(Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
                     newACallExp(newAIdentifierExp(FAULT_INJECT_MODULE_VARIABLE_NAME), newAIdentifier("faultInject"),
-                            Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName_),
+                            Arrays.asList(newAIdentifierExp(fmuLexName), newAIdentifierExp(instanceLexName),
                                     newAStringLiteralExp(faultInject.constraintId)))), checkNullAndStop(faultInject.lexName)));
         }
 
@@ -187,6 +205,52 @@ public class MaBLTemplateGenerator {
         }
 
         return new ExpandStatements(List.of(createRealVariable(STEP_SIZE_NAME, algorithmConfig.getStepSize())), List.of(algorithmStm));
+    }
+
+    /**
+     * Helper class to hold instances associating the base framework info with name, and lexname
+     */
+    static class TemplateInstanceList extends Vector<TemplateInstanceList.TemplateInstance> {
+        public String getLexNameFromName(String name) {
+            return this.stream().filter(i -> i.getName().equals(name)).findFirst().map(TemplateInstance::getLexName).get();
+
+        }
+
+        public TemplateInstanceList getFmi2List() {
+            TemplateInstanceList list = new TemplateInstanceList();
+            list.addAll(this.stream().filter(i -> i.source instanceof ComponentInfo).collect(Collectors.toList()));
+            return list;
+        }
+
+        public TemplateInstanceList getFmi3List() {
+            TemplateInstanceList list = new TemplateInstanceList();
+            list.addAll(this.stream().filter(i -> i.source instanceof InstanceInfo).collect(Collectors.toList()));
+            return list;
+        }
+
+        public TemplateInstance getByName(String name) {
+            return this.stream().filter(i -> i.getName().equals(name)).findFirst().get();
+        }
+
+        static class TemplateInstance {
+            private final FrameworkUnitInfo source;
+            private final String lexName;
+            private final String name;
+
+            public TemplateInstance(FrameworkUnitInfo source, String lexName, String name) {
+                this.source = source;
+                this.lexName = lexName;
+                this.name = name;
+            }
+
+            public String getLexName() {
+                return lexName;
+            }
+
+            public String getName() {
+                return name;
+            }
+        }
     }
 
     public static ASimulationSpecificationCompilationUnit generateTemplate(
@@ -241,26 +305,28 @@ public class MaBLTemplateGenerator {
         for (Map.Entry<String, ModelDescription> entry : unitRelationShip.getFmusWithModelDescriptions()) {
             String fmuLexName = removeFmuKeyBraces(entry.getKey());
             fmuLexName = NameMapper.makeSafeFMULexName(fmuLexName, nameMapperState);
-            rootScopeBody.addAll(createFmuVariable(fmuLexName, entry.getKey()));
+            rootScopeBody.addAll(createFmuVariable(fmuLexName, entry.getKey(),
+                    entry.getValue() instanceof Fmi2ModelDescription ? FMI2_MODULE_NAME : FMI3_MODULE_NAME));
             fmuNameToLexIdentifier.put(entry.getKey(), fmuLexName);
         }
+
+
+        TemplateInstanceList instances = new TemplateInstanceList();
 
         // Create the FMU Instances and assign to null
         // invalidNames contains all the existing variable names. These cannot be resued
         Set<String> invalidNames = new HashSet<>(fmuNameToLexIdentifier.values());
-        HashMap<String, String> instanceLexToInstanceName = new HashMap<>();
-        Map<String, String> instaceNameToInstanceLex = new HashMap<>();
         unitRelationShip.getInstances().forEach(entry -> {
             // Get instanceName
             String instanceLexName = findInstanceLexName(entry.getKey(), invalidNames);
             invalidNames.add(instanceLexName);
-            instanceLexToInstanceName.put(instanceLexName, entry.getKey());
-            instaceNameToInstanceLex.put(entry.getKey(), instanceLexName);
+            instances.add(new TemplateInstanceList.TemplateInstance(entry.getValue(), instanceLexName, entry.getKey()));
 
             //determine if fmu is external
             boolean external = unitRelationShip.getModelTransfers().stream().anyMatch(p -> p.getKey().equals(entry.getKey()));
 
-            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, external, entry.getKey()));
+            rootScopeBody.addAll(createFmuInstanceVariable(instanceLexName, external, entry.getKey(),
+                    entry.getValue() instanceof ComponentInfo ? FMI2COMPONENT_TYPE : FMI3INSTANCE_TYPE));
         });
 
         StatementMaintainer stmMaintainer = new StatementMaintainer();
@@ -274,7 +340,7 @@ public class MaBLTemplateGenerator {
             String fmuLexName = removeFmuKeyBraces(inst.getOwnerIdentifier());
             fmuTransfers.add(fmuLexName);
 
-            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+            String instanceLexName = instances.getLexNameFromName(entry.getKey());
             instanceTransfers.add(instanceLexName);
         }
 
@@ -303,9 +369,10 @@ public class MaBLTemplateGenerator {
             // Find parent lex
             String parentLex = fmuNameToLexIdentifier.get(entry.getValue().getOwnerIdentifier());
             // Get instanceName
-            String instanceLexName = instaceNameToInstanceLex.get(entry.getKey());
+            TemplateInstanceList.TemplateInstance instance = instances.getByName(entry.getKey());
 
             // If instance already transferred skip this iteration
+            String instanceLexName = instance.getLexName();
             if (instanceTransfers.contains(instanceLexName)) {
                 return;
             }
@@ -319,8 +386,8 @@ public class MaBLTemplateGenerator {
 
             }
             Map.Entry<List<PStm>, List<PStm>> fmuInstantiateStatement =
-                    createFMUInstantiateStatement(instanceLexName, entry.getKey(), parentLex, templateConfiguration.getVisible(),
-                            templateConfiguration.getLoggingOn(), faultInjectedInstances.get(instanceLexName));
+                    createFMUInstantiateStatement(instance, parentLex, templateConfiguration.getVisible(), templateConfiguration.getLoggingOn(),
+                            faultInjectedInstances.get(instanceLexName));
             rootScopeBody.addAll(fmuInstantiateStatement.getKey());
             stmMaintainer.addAll(fmuInstantiateStatement.getValue());
 
@@ -334,13 +401,14 @@ public class MaBLTemplateGenerator {
 
         // Debug logging
         if (templateConfiguration.getLoggingOn()) {
-            stmMaintainer.addAll(createDebugLoggingStms(instaceNameToInstanceLex, templateConfiguration.getLogLevels()));
+            stmMaintainer.addAll(createDebugLoggingStms(instances, templateConfiguration.getLogLevels()));
             stmMaintainer.wrapInIfBlock();
         }
 
 
-        var instanceLexToComponentsArray = new HashSet<String>();
-        for (String instanceLex : instanceLexToInstanceName.keySet()) {
+        var instanceLexToComponentsArray = new Vector<String>();
+        for (String instanceLex : instances.getFmi2List().stream().map(TemplateInstanceList.TemplateInstance::getLexName).distinct()
+                .collect(Collectors.toList())) {
             var fi = faultInjectedInstances.get(instanceLex);
             if (fi != null) {
                 instanceLexToComponentsArray.add(fi.lexName);
@@ -349,9 +417,13 @@ public class MaBLTemplateGenerator {
             }
         }
         // Components Array
-        stmMaintainer.add(createComponentsArray(COMPONENTS_ARRAY_NAME, instanceLexToComponentsArray));
+        stmMaintainer.add(createArray(COMPONENTS_ARRAY_NAME, FMI2COMPONENT_TYPE, instanceLexToComponentsArray));
+        if (!instances.getFmi3List().isEmpty()) {
+            stmMaintainer.add(createArray(INSTANCES_ARRAY_NAME, FMI3INSTANCE_TYPE,
+                    instances.getFmi3List().stream().map(TemplateInstanceList.TemplateInstance::getLexName).distinct().collect(Collectors.toList())));
+        }
         if (modelSwapActive) {
-            stmMaintainer.add(createComponentsArray(COMPONENTS_TRANSFER_ARRAY_NAME, instanceTransfers));
+            stmMaintainer.add(createArray(COMPONENTS_TRANSFER_ARRAY_NAME, FMI2COMPONENT_TYPE, new Vector<>(instanceTransfers)));
         }
 
         // Generate the jacobian step algorithm expand statement. i.e. fixedStep or variableStep and variable statement for step-size.
@@ -484,9 +556,9 @@ public class MaBLTemplateGenerator {
                 null);
     }
 
-    private static Collection<? extends PStm> createDebugLoggingStmsHelper(Map<String, String> instaceNameToInstanceLex, String instanceName,
+    private static Collection<? extends PStm> createDebugLoggingStmsHelper(TemplateInstanceList instances, String instanceName,
             List<String> logLevels) {
-        String instanceLexName = instaceNameToInstanceLex.get(instanceName);
+        String instanceLexName = instances.getLexNameFromName(instanceName);
         if (instanceLexName != null) {
             return createExpandDebugLogging(instanceLexName, logLevels);
         } else {
@@ -496,25 +568,24 @@ public class MaBLTemplateGenerator {
 
     }
 
-    private static Collection<? extends PStm> createDebugLoggingStms(Map<String, String> instaceNameToInstanceLex,
-            Map<String, List<String>> logLevels) {
+    private static Collection<? extends PStm> createDebugLoggingStms(TemplateInstanceList instances, Map<String, List<String>> logLevels) {
         List<PStm> stms = new ArrayList<>();
 
         // If no logLevels have defined, then call setDebugLogging for all instances
         if (logLevels == null) {
-            for (Map.Entry<String, String> entry : instaceNameToInstanceLex.entrySet()) {
-                stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), new ArrayList<>()));
+            for (TemplateInstanceList.TemplateInstance entry : instances) {
+                stms.addAll(createDebugLoggingStmsHelper(instances, entry.getName(), new ArrayList<>()));
             }
         } else {
             // If loglevels have been defined for some instances, then only call setDebugLogging for those instances.
             for (Map.Entry<String, List<String>> entry : logLevels.entrySet()) {
                 // If the instance is available as key in loglevels but has an empty value, then call setDebugLogging with empty loglevels.
                 if (entry.getValue().isEmpty()) {
-                    stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), new ArrayList<>()));
+                    stms.addAll(createDebugLoggingStmsHelper(instances, entry.getKey(), new ArrayList<>()));
                     continue;
                 }
                 // If the instance is available as key in loglevels and has nonempty value, then call setDebugLogging with the relevant values.
-                stms.addAll(createDebugLoggingStmsHelper(instaceNameToInstanceLex, entry.getKey(), entry.getValue()));
+                stms.addAll(createDebugLoggingStmsHelper(instances, entry.getKey(), entry.getValue()));
             }
         }
 
@@ -567,9 +638,9 @@ public class MaBLTemplateGenerator {
         return null;
     }
 
-    private static PStm createComponentsArray(String lexName, Set<String> keySet) {
+    private static PStm createArray(String lexName, String type, List<String> keySet) {
         return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(lexName),
-                MableAstFactory.newAArrayType(MableAstFactory.newANameType(FMI2COMPONENT_TYPE)), keySet.size(),
+                MableAstFactory.newAArrayType(MableAstFactory.newANameType(type)), keySet.size(),
                 MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> aIdentifierExpFromString(x)).collect(Collectors.toList()))));
     }
 
