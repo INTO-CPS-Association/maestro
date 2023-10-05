@@ -427,7 +427,16 @@ class Initializer : BasicMaestroExpansionPlugin {
         logger.debug("Enter initialization Mode")
         fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
         //FIXME: missing parameters
-//        fmu3Instances.values.forEach(Consumer { fmu: InstanceVariableFmi3Api -> fmu.enterInitializationMode() })
+        val fmi3ToloranceDefined = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
+        fmu3Instances.values.forEach(Consumer { fmu: InstanceVariableFmi3Api ->
+            fmu.enterInitializationMode(
+                VarWrap.wrap(false),
+                VarWrap.wrap(0.0),
+                externalStartTime,
+                externalEndTimeDefined,
+                externalEndTime
+            )
+        })
 
         val instructions = instantiationOrder.map { i ->
             createInitInstructions(
