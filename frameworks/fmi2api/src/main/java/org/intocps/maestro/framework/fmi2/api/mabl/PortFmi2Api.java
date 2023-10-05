@@ -2,7 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PortFmi2Api implements Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> {
+public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable> {
 
     public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
     public final Fmi2ModelDescription.ScalarVariable scalarVariable;
@@ -78,7 +78,7 @@ public class PortFmi2Api implements Fmi2Builder.Port<Fmi2ModelDescription.Scalar
 
 
     @Override
-    public void linkTo(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... receivers) throws PortLinkException {
+    public void linkTo(FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable>... receivers) throws PortLinkException {
 
         if (receivers == null || receivers.length == 0) {
             return;
@@ -88,7 +88,7 @@ public class PortFmi2Api implements Fmi2Builder.Port<Fmi2ModelDescription.Scalar
             throw new PortLinkException("Can only link output ports. This port is: " + this.scalarVariable.causality, this);
         }
 
-        for (Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> receiver : receivers) {
+        for (FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable> receiver : receivers) {
             PortFmi2Api receiverPort = (PortFmi2Api) receiver;
 
             if (receiverPort.scalarVariable.causality != Fmi2ModelDescription.Causality.Input) {

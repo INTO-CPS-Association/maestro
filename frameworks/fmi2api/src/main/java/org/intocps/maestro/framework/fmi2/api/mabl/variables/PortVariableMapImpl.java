@@ -1,13 +1,12 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PortVariableMapImpl<V,PS> extends HashMap<Fmi2Builder.Port<PS>, Fmi2Builder.Variable<PStm, V>> implements Fmi2Builder.FmiSimulationInstance.PortVariableMap<PStm,
-        V,PS> {
+public class PortVariableMapImpl<V, PS> extends HashMap<FmiBuilder.Port<PS>, FmiBuilder.Variable<PStm, V>> implements FmiBuilder.FmiSimulationInstance.PortVariableMap<PStm, V, PS> {
     public PortVariableMapImpl(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
     }
@@ -19,7 +18,7 @@ public class PortVariableMapImpl<V,PS> extends HashMap<Fmi2Builder.Port<PS>, Fmi
     public PortVariableMapImpl() {
     }
 
-    public PortVariableMapImpl(Map<? extends Fmi2Builder.Port<PS>, ? extends Fmi2Builder.Variable<PStm, V>> m) {
+    public PortVariableMapImpl(Map<? extends FmiBuilder.Port<PS>, ? extends FmiBuilder.Variable<PStm, V>> m) {
         super(m);
     }
 }

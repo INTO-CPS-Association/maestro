@@ -2,7 +2,6 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.MableBuilder;
 import org.intocps.maestro.ast.node.AErrorStm;
 import org.intocps.maestro.ast.node.ALoadExp;
 import org.intocps.maestro.ast.node.PStm;
@@ -10,7 +9,6 @@ import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -54,18 +52,18 @@ public class VariableCreatorFmi3Api {
         }
     }
 
-//    public static VariableFmi2Api createVariableForPort(TagNameGenerator nameGenerator, PortFmi2Api port, IMablScope scope,
-//            Fmi2Builder.DynamicActiveScope<PStm> dynamicScope) {
-//        var name = nameGenerator.getName(port.toLexName());
-//        var type = MableAstFactory.newAArrayType(fmitypetomabltype(port.scalarVariable.type.type));
-//        var size = 1;
-//        PStm stm = MableBuilder.newVariable(name, type, size);
-//        scope.add(stm);
-//        VariableFmi2Api variable = new VariableFmi2Api(stm, type, scope, dynamicScope,
-//                newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(0)),
-//                newAArrayIndexExp(newAIdentifierExp(name), Arrays.asList(newAIntLiteralExp(0))));
-//        return variable;
-//    }
+    //    public static VariableFmi2Api createVariableForPort(TagNameGenerator nameGenerator, PortFmi2Api port, IMablScope scope,
+    //            Fmi2Builder.DynamicActiveScope<PStm> dynamicScope) {
+    //        var name = nameGenerator.getName(port.toLexName());
+    //        var type = MableAstFactory.newAArrayType(fmitypetomabltype(port.scalarVariable.type.type));
+    //        var size = 1;
+    //        PStm stm = MableBuilder.newVariable(name, type, size);
+    //        scope.add(stm);
+    //        VariableFmi2Api variable = new VariableFmi2Api(stm, type, scope, dynamicScope,
+    //                newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(name)), newAIntLiteralExp(0)),
+    //                newAArrayIndexExp(newAIdentifierExp(name), Arrays.asList(newAIntLiteralExp(0))));
+    //        return variable;
+    //    }
 
     public static FmuVariableFmi3Api createFMU(MablApiBuilder builder, TagNameGenerator nameGenerator, DynamicActiveBuilderScope dynamicScope,
             String name, URI uriPath, IMablScope scope) throws Exception {
@@ -112,8 +110,8 @@ public class VariableCreatorFmi3Api {
             path = uriPath.getPath();
         }
 
-        ALoadExp loadExp = newALoadExp(
-                Arrays.asList(newAStringLiteralExp("FMI3"), newAStringLiteralExp(modelDescription.getInstantiationToken()), newAStringLiteralExp(path)));
+        ALoadExp loadExp = newALoadExp(Arrays.asList(newAStringLiteralExp("FMI3"), newAStringLiteralExp(modelDescription.getInstantiationToken()),
+                newAStringLiteralExp(path)));
 
         final ModelDescriptionContext3 ctxt = new ModelDescriptionContext3(modelDescription);
 

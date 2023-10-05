@@ -20,7 +20,7 @@ import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ModelSwapInfo;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
@@ -87,7 +87,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     break;
             }
 
-        } catch (Fmi2Builder.Port.PortLinkException e) {
+        } catch (FmiBuilder.Port.PortLinkException e) {
             e.printStackTrace();
         }
     };
@@ -98,7 +98,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
-            Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> parentBuilder, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
+            FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> parentBuilder, List<FmiBuilder.Variable<PStm, ?>> formalArguments,
             IPluginConfiguration config, ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
 
@@ -183,7 +183,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
             // Get FMU instances - use LinkedHashMap to preserve added order
             Map<String, ComponentVariableFmi2Api> fmuInstances =
-                    ((List<ComponentVariableFmi2Api>) ((Fmi2Builder.ArrayVariable) formalArguments.get(0)).items()).stream()
+                    ((List<ComponentVariableFmi2Api>) ((FmiBuilder.ArrayVariable) formalArguments.get(0)).items()).stream()
                             .collect(Collectors.toMap(ComponentVariableFmi2Api::getName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
 
             // Create the logging
@@ -284,7 +284,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 realStartTime.setValue(Objects.requireNonNull(realTimeModule).getRealTime());
             }
 
-            List<Fmi2Builder.StateVariable<PStm>> fmuStates = new ArrayList<>();
+            List<FmiBuilder.StateVariable<PStm>> fmuStates = new ArrayList<>();
             BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
 
             // Initialise swap and step condition variables
@@ -464,7 +464,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                         dynamicScope.enterIf(stepPredicate);
                     }
 
-                    Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> discard =
+                    Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> discard =
                             instance.step(communicationTime, currentStepSize);
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getExp()));
@@ -534,7 +534,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     // Rollback
                     dynamicScope.enterIf(convergenceReached.toPredicate().not()).enterThen();
                     {
-                        fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                        fmuStates.forEach(FmiBuilder.StateVariable::set);
                         stabilisation_loop.decrement();
                         dynamicScope.leave();
                     }
@@ -552,7 +552,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                     IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
                     {
                         // Rollback FMUs
-                        fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                        fmuStates.forEach(FmiBuilder.StateVariable::set);
 
                         // Set step-size to lowest
                         currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationTime));
@@ -580,7 +580,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                             IfMaBlScope reducedStepSizeScope = dynamicScope.enterIf(hasReducedStepSize.toPredicate());
                             {
                                 // Rollback FMUs
-                                fmuStates.forEach(Fmi2Builder.StateVariable::set);
+                                fmuStates.forEach(FmiBuilder.StateVariable::set);
 
                                 // Set step-size to suggested size
                                 currentStepSize.setValue(Objects.requireNonNull(variableStepInstance).getReducedStepSize());

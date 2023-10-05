@@ -11,7 +11,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2A
 class DerivativeEstimator(
     private val dynamicScope: DynamicActiveBuilderScope,
     private val mablApiBuilder: MablApiBuilder,
-    private val runtimeModule: Fmi2Builder.RuntimeModule<PStm>?
+    private val runtimeModule: FmiBuilder.RuntimeModule<PStm>?
 ) {
     private val moduleIdentifier: String = runtimeModule?.name ?: "derivativeEstimator"
 
@@ -42,7 +42,7 @@ class DerivativeEstimator(
         private val dynamicScope: DynamicActiveBuilderScope,
         private val mablApiBuilder: MablApiBuilder,
         private val derivativeEstimator: DerivativeEstimator,
-        private val runtimeModule: Fmi2Builder.RuntimeModule<PStm>?
+        private val runtimeModule: FmiBuilder.RuntimeModule<PStm>?
     ) {
 
         private val TYPE_DERIVATIVEESTIMATORINSTANCE = "DerivativeEstimatorInstance"

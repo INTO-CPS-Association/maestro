@@ -10,7 +10,7 @@ import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
@@ -99,45 +99,43 @@ public abstract class BaseApiTest {
 
         assertTrue(res, "Type check errors:" + out);
 
-        new MableInterpreter(
-                new DefaultExternalValueFactory(new File("target"),typeChecker::findModule,
-                        new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(
-                doc);
+        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), typeChecker::findModule,
+                new ByteArrayInputStream(runtimedata.getBytes(StandardCharsets.UTF_8)))).execute(doc);
     }
 
     public static class MDebugAssert {
-        private final Fmi2Builder builder;
-        private final Fmi2Builder.RuntimeModule<PStm> mdebugAssert;
+        private final FmiBuilder builder;
+        private final FmiBuilder.RuntimeModule<PStm> mdebugAssert;
 
-        public MDebugAssert(Fmi2Builder builder, Fmi2Builder.RuntimeModule<PStm> mdebugAssert) {
+        public MDebugAssert(FmiBuilder builder, FmiBuilder.RuntimeModule<PStm> mdebugAssert) {
             this.builder = builder;
             this.mdebugAssert = mdebugAssert;
         }
 
-        public static MDebugAssert create(Fmi2Builder builder) {
-            Fmi2Builder.RuntimeModule<PStm> mdebugAssert = builder.loadRuntimeModule(MDebugAssert.class.getSimpleName());
+        public static MDebugAssert create(FmiBuilder builder) {
+            FmiBuilder.RuntimeModule<PStm> mdebugAssert = builder.loadRuntimeModule(MDebugAssert.class.getSimpleName());
             return new MDebugAssert(builder, mdebugAssert);
 
         }
 
-        public void assertEquals(Fmi2Builder.Variable a, Fmi2Builder.Variable b) {
-            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
-                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertEquals").build(), a, b);
+        public void assertEquals(FmiBuilder.Variable a, FmiBuilder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", FmiBuilder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).setName("assertEquals").build(), a, b);
         }
 
-        public void assertEquals(Object a, Fmi2Builder.Variable b) {
-            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
-                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertEquals").build(), a, b);
+        public void assertEquals(Object a, FmiBuilder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", FmiBuilder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).setName("assertEquals").build(), a, b);
         }
 
-        public void assertNotEquals(Fmi2Builder.Variable a, Fmi2Builder.Variable b) {
-            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
-                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
+        public void assertNotEquals(FmiBuilder.Variable a, FmiBuilder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", FmiBuilder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
         }
 
-        public void assertNotEquals(Object a, Fmi2Builder.Variable b) {
-            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any)
-                    .addArgument("b", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
+        public void assertNotEquals(Object a, FmiBuilder.Variable b) {
+            this.mdebugAssert.callVoid(builder.getFunctionBuilder().addArgument("a", FmiBuilder.RuntimeFunction.FunctionType.Type.Any)
+                    .addArgument("b", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).setName("assertNotEquals").build(), a, b);
         }
 
         @IValueLifecycleHandler.ValueLifecycle(name = "MDebugAssert")

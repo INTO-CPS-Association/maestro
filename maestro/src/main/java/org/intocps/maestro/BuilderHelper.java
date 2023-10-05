@@ -10,7 +10,7 @@ import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
@@ -35,10 +35,10 @@ import static org.intocps.maestro.ast.MableAstFactory.newANameType;
 public class BuilderHelper {
     static final TypeComparator typeComparator = new TypeComparator();
     private final MablApiBuilder builder;
-    List<Fmi2Builder.Variable<PStm, ?>> variables;
+    List<FmiBuilder.Variable<PStm, ?>> variables;
 
     public BuilderHelper(ACallExp callToBeReplaced, Map<INode, PType> typesMap,
-            ISimulationEnvironment simulationEnvironment) throws Fmi2Builder.Port.PortLinkException, AnalysisException {
+            ISimulationEnvironment simulationEnvironment) throws FmiBuilder.Port.PortLinkException, AnalysisException {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = true;
@@ -95,7 +95,7 @@ public class BuilderHelper {
         return graph;
     }
 
-    private static Fmi2Builder.Variable<PStm, ?> wrapAsVariable(MablApiBuilder builder, Map<INode, PType> typesMap,
+    private static FmiBuilder.Variable<PStm, ?> wrapAsVariable(MablApiBuilder builder, Map<INode, PType> typesMap,
             ISimulationEnvironment simulationEnvironment, PType type, PExp exp, Map<String, ComponentVariableFmi2Api> instances,
             Map<String, InstanceVariableFmi3Api> fmi3Instances, DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> graph) {
 
@@ -200,20 +200,19 @@ public class BuilderHelper {
             List<PExp> initializerExps = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
                     .collect(Collectors.toList());
 
-            return new ArrayVariableFmi2Api(null, type.clone(), null, null, null, exp,
-                    initializerExps.stream().map(e -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(e), e, instances,
-                                    fmi3Instances, graph))
-                            .collect(Collectors.toList()));
+            return new ArrayVariableFmi2Api(null, type.clone(), null, null, null, exp, initializerExps.stream()
+                    .map(e -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(e), e, instances, fmi3Instances, graph))
+                    .collect(Collectors.toList()));
         }
 
         return null;
     }
 
-    public Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> getBuilder() {
+    public FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> getBuilder() {
         return this.builder;
     }
 
-    public List<Fmi2Builder.Variable<PStm, ?>> getArgumentVariables() {
+    public List<FmiBuilder.Variable<PStm, ?>> getArgumentVariables() {
         return this.variables;
     }
 }

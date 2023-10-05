@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
@@ -66,7 +66,7 @@ public class BuilderUtil {
         return statements;
     }
 
-    public static List<PStm> createTypeConvertingAssignment(MablApiBuilder builder, Fmi2Builder.Scope<PStm> scope, PStateDesignator designator,
+    public static List<PStm> createTypeConvertingAssignment(MablApiBuilder builder, FmiBuilder.Scope<PStm> scope, PStateDesignator designator,
             PExp value, PType valueType, PType targetType) {
 
         return createTypeConvertingAssignment(designator, value, valueType, targetType);

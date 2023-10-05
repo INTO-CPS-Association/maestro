@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 
@@ -20,7 +20,7 @@ public class DataWriter {
     private final MablApiBuilder mablApiBuilder;
     private final String FUNCTION_CLOSE = "close";
     private String moduleIdentifier;
-    private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
+    private FmiBuilder.RuntimeModule<PStm> runtimeModule;
     private boolean runtimeModuleMode = false;
 
 
@@ -31,7 +31,7 @@ public class DataWriter {
         this.moduleIdentifier = "dataWriter";
     }
 
-    public DataWriter(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+    public DataWriter(MablApiBuilder mablApiBuilder, FmiBuilder.RuntimeModule<PStm> runtimeModule) {
         this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.runtimeModuleMode = true;
         this.runtimeModule = runtimeModule;
@@ -86,7 +86,7 @@ public class DataWriter {
          * The name of the variable with the data writer instance configuration
          */
         private String dataWriterInstanceConfigurationVariableName;
-        private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
+        private FmiBuilder.RuntimeModule<PStm> runtimeModule;
 
         public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, DataWriter dataWriter) {
 
@@ -96,7 +96,7 @@ public class DataWriter {
         }
 
         public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, DataWriter dataWriter,
-                Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+                FmiBuilder.RuntimeModule<PStm> runtimeModule) {
             this(dynamicScope, mablApiBuilder, dataWriter);
             this.runtimeModuleMode = true;
             this.runtimeModule = runtimeModule;
@@ -141,8 +141,8 @@ public class DataWriter {
             if (!initialized) {
                 throw new RuntimeException("DataWriter has not been initialized!");
             }
-            AExpressionStm stm = MableAstFactory.newExpressionStm(MableAstFactory
-                    .newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
+            AExpressionStm stm = MableAstFactory.newExpressionStm(
+                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
                             MableAstFactory.newAIdentifier(this.FUNCTION_WRITEDATAPOINT), Stream.concat(
                                     Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName),
                                             time.getReferenceExp().clone()).stream(),

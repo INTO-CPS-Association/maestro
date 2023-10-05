@@ -46,8 +46,9 @@ public class ImportCliTest {
     @Test
     public void importTestExistingFmu3Mix() {
 
-        String arguments = String.format(Locale.US, "import sg1  --inline-framework-config -output %s %s %s", getOutputPath().toAbsolutePath(),
-                simulationConfigPath.getAbsolutePath(), new File(resourcesConfigPrefix, "config-fmi3.json").toPath());
+        String arguments = String.format(Locale.US, "import sg1 --interpret --dump-intermediate --inline-framework-config -output %s %s %s",
+                getOutputPath().toAbsolutePath(), simulationConfigPath.getAbsolutePath(),
+                new File(resourcesConfigPrefix, "config-fmi3.json").toPath());
         String[] s = arguments.split(" ");
 
         int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);

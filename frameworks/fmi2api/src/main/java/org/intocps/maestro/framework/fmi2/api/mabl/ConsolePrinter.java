@@ -1,23 +1,23 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 
 public class ConsolePrinter {
-    private final Fmi2Builder.RuntimeModule<PStm> module;
-    private final Fmi2Builder.RuntimeFunction printFunc;
-    private final Fmi2Builder.RuntimeFunction printlnFunc;
+    private final FmiBuilder.RuntimeModule<PStm> module;
+    private final FmiBuilder.RuntimeFunction printFunc;
+    private final FmiBuilder.RuntimeFunction printlnFunc;
 
-    public ConsolePrinter(MablApiBuilder builder, Fmi2Builder.RuntimeModule<PStm> module) {
+    public ConsolePrinter(MablApiBuilder builder, FmiBuilder.RuntimeModule<PStm> module) {
         this.module = module;
 
-        printFunc = builder.getFunctionBuilder().setName("print").addArgument("format", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
-                .addArgument("args", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).useVargs()
-                .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Void).build();
+        printFunc = builder.getFunctionBuilder().setName("print").addArgument("format", FmiBuilder.RuntimeFunction.FunctionType.Type.String)
+                .addArgument("args", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).useVargs()
+                .setReturnType(FmiBuilder.RuntimeFunction.FunctionType.Type.Void).build();
 
-        printlnFunc = builder.getFunctionBuilder().setName("println").addArgument("format", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
-                .addArgument("args", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).useVargs()
-                .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Void).build();
+        printlnFunc = builder.getFunctionBuilder().setName("println").addArgument("format", FmiBuilder.RuntimeFunction.FunctionType.Type.String)
+                .addArgument("args", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).useVargs()
+                .setReturnType(FmiBuilder.RuntimeFunction.FunctionType.Type.Void).build();
 
         module.initialize(printFunc, printlnFunc);
     }

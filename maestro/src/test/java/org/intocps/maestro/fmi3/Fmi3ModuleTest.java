@@ -1,7 +1,6 @@
 package org.intocps.maestro.fmi3;
 
 import org.intocps.maestro.FullSpecTest;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.File;
@@ -20,11 +19,11 @@ import java.util.stream.Stream;
 
 public class Fmi3ModuleTest extends FullSpecTest {
 
-  public static final  Predicate<File> hasMablSpec=
-          path-> path.isDirectory()&& Arrays.stream(Objects.requireNonNull(path.listFiles())).anyMatch(f->f.getName().endsWith(".mabl"));
+    public static final Predicate<File> hasMablSpec =
+            path -> path.isDirectory() && Arrays.stream(Objects.requireNonNull(path.listFiles())).anyMatch(f -> f.getName().endsWith(".mabl"));
 
     private static Stream<Arguments> data() {
-        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "fmi3","basic").toFile().listFiles()))
+        return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "fmi3", "basic").toFile().listFiles()))
                 .filter(n -> !n.getName().startsWith(".")).filter(hasMablSpec).map(f -> Arguments.arguments(f.getName(), f));
     }
 
@@ -41,8 +40,7 @@ public class Fmi3ModuleTest extends FullSpecTest {
             String content = null;
             try {
                 content = Files.readString(path, charset);
-                content = content.replace("file:",
-                        Paths.get("src","test","resources","fmi3","basic").toAbsolutePath().toUri().toString());
+                content = content.replace("file:", Paths.get("src", "test", "resources", "fmi3", "basic").toAbsolutePath().toUri().toString());
                 Files.write(path, content.getBytes(charset));
             } catch (IOException e) {
                 throw new RuntimeException(e);

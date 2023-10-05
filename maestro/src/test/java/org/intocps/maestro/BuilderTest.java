@@ -11,7 +11,7 @@ import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
@@ -39,8 +39,8 @@ public class BuilderTest {
     public void wt() throws Exception {
 
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("buildertester/buildertester.json");
-        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
-                new String(Objects.requireNonNull(is).readAllBytes()));
+        Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration =
+                Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(Objects.requireNonNull(is).readAllBytes()));
 
 
         Fmi2SimulationEnvironment env = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, new IErrorReporter.SilentReporter());
@@ -62,14 +62,15 @@ public class BuilderTest {
 
         LoggerFmi2Api logger = builder.getLogger();
 
-        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().enterTry().enter().store(6);
+        FmiBuilder.IntVariable<PStm> v8 = builder.getDynamicScope().enterTry().enter().store(6);
         // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
         // Create the two FMUs
         FmuVariableFmi2Api controllerFMU = builder.getDynamicScope()
-                .createFMU("controllerFMU",(Fmi2ModelDescription) env.getModelDescription("{controllerFMU}"), env.getUriFromFMUName("{controllerFMU}"));
+                .createFMU("controllerFMU", (Fmi2ModelDescription) env.getModelDescription("{controllerFMU}"),
+                        env.getUriFromFMUName("{controllerFMU}"));
         FmuVariableFmi2Api tankFMU = builder.getDynamicScope()
-                .createFMU("tankFMU", (Fmi2ModelDescription)env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
+                .createFMU("tankFMU", (Fmi2ModelDescription) env.getModelDescription("{tankFMU}"), env.getUriFromFMUName("{tankFMU}"));
 
         // Create the controller and tank instanes
         ComponentVariableFmi2Api controller = controllerFMU.instantiate("controller");
@@ -106,9 +107,9 @@ public class BuilderTest {
 
         tank.setLinked();
         //        tank.set();
-        Fmi2Builder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
-        Fmi2Builder.DoubleVariable<PStm> current_time_point = dynamicScope.store(0.0);
-        Fmi2Builder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
+        FmiBuilder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
+        FmiBuilder.DoubleVariable<PStm> current_time_point = dynamicScope.store(0.0);
+        FmiBuilder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
         tank.step(current_time_point, step);
         //Fmi2Builder.StateVariable<PStm> s = tank.getState();
 
@@ -179,7 +180,7 @@ public class BuilderTest {
     static class Logger extends ExternalVariable {
         final ExtFunc logFunc = null;
 
-        void log(Level level, String message, Fmi2Builder.IntVariable<PStm> errorCode) {
+        void log(Level level, String message, FmiBuilder.IntVariable<PStm> errorCode) {
             this.callVoid(logFunc, level == Level.Debug ? 1 : 0, message, errorCode);
         }
 

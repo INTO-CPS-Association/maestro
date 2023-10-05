@@ -3,14 +3,14 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
-public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.DynamicActiveScope<PStm> {
+public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.DynamicActiveScope<PStm> {
 
     final private IMablScope root;
     private IMablScope activeScope;
@@ -29,18 +29,18 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
         return this.activeScope;
     }
 
-    Fmi2Builder.Scope<PStm> getRootScope() {
+    FmiBuilder.Scope<PStm> getRootScope() {
         return root;
     }
 
 
     @Override
-    public WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate) {
+    public WhileMaBLScope enterWhile(FmiBuilder.Predicate predicate) {
         return activeScope.enterWhile(predicate);
     }
 
     @Override
-    public IfMaBlScope enterIf(Fmi2Builder.Predicate predicate) {
+    public IfMaBlScope enterIf(FmiBuilder.Predicate predicate) {
         return activeScope.enterIf(predicate);
     }
 
@@ -56,7 +56,7 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
 
 
     @Override
-    public Fmi2Builder.ScopeElement<PStm> parent() {
+    public FmiBuilder.ScopeElement<PStm> parent() {
         return this.activeScope.parent();
     }
 
@@ -66,7 +66,7 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
-    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+    public <P extends FmiBuilder.ScopeElement<PStm>> P findParent(Class<P> clz) {
         return this.activeScope.findParent(clz);
     }
 
@@ -186,7 +186,7 @@ public class DynamicActiveBuilderScope implements IMablScope, Fmi2Builder.Dynami
     }
 
     @Override
-    public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
+    public <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag) {
         return activeScope.store(tag);
     }
 

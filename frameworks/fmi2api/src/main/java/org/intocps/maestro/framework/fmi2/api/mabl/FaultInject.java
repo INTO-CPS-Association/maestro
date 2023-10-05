@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.node.AInstanceMappingStm;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
@@ -29,7 +29,7 @@ public class FaultInject {
         this.moduleIdentifier = "faultInject";
     }
 
-    public FaultInject(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+    public FaultInject(MablApiBuilder mablApiBuilder, FmiBuilder.RuntimeModule<PStm> runtimeModule) {
         this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.moduleIdentifier = runtimeModule.getName();
     }
@@ -65,11 +65,10 @@ public class FaultInject {
         this.dynamicScope.add(mapping);
 
         this.dynamicScope.addAll((Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fiComponentName)),
-                        newACallExp(newAIdentifierExp(getModuleIdentifier()), newAIdentifier("faultInject"),
-                                Arrays.asList(newAIdentifierExp(creator.getName()), newAIdentifierExp(component.getName()),
-                                        newAStringLiteralExp(constraintId)))),
-                newIf(newEqual(newAIdentifierExp(fiComponentName), newNullExp()),
-                        newABlockStm(newError(newAStringLiteralExp(fiComponentName + " IS NULL "))), null))));
+                newACallExp(newAIdentifierExp(getModuleIdentifier()), newAIdentifier("faultInject"),
+                        Arrays.asList(newAIdentifierExp(creator.getName()), newAIdentifierExp(component.getName()),
+                                newAStringLiteralExp(constraintId)))), newIf(newEqual(newAIdentifierExp(fiComponentName), newNullExp()),
+                newABlockStm(newError(newAStringLiteralExp(fiComponentName + " IS NULL "))), null))));
         return fiComp;
     }
 

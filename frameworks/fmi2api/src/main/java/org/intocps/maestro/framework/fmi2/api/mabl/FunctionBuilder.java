@@ -1,16 +1,16 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-public class FunctionBuilder implements Fmi2Builder.IFunctionBuilder {
+public class FunctionBuilder implements FmiBuilder.IFunctionBuilder {
 
     String name;
-    Fmi2Builder.RuntimeFunction.FunctionType returnType;
-    List<Map.Entry<String, Fmi2Builder.RuntimeFunction.FunctionType>> args = new Vector<>();
+    FmiBuilder.RuntimeFunction.FunctionType returnType;
+    List<Map.Entry<String, FmiBuilder.RuntimeFunction.FunctionType>> args = new Vector<>();
     boolean usingVargs = false;
 
     @Override
@@ -21,19 +21,19 @@ public class FunctionBuilder implements Fmi2Builder.IFunctionBuilder {
 
     @Override
     public FunctionBuilder setReturnType(String name) {
-        returnType = new Fmi2Builder.RuntimeFunction.FunctionType(name);
+        returnType = new FmiBuilder.RuntimeFunction.FunctionType(name);
         return this;
     }
 
     @Override
-    public FunctionBuilder setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type type) {
-        returnType = new Fmi2Builder.RuntimeFunction.FunctionType(type);
+    public FunctionBuilder setReturnType(FmiBuilder.RuntimeFunction.FunctionType.Type type) {
+        returnType = new FmiBuilder.RuntimeFunction.FunctionType(type);
         return this;
     }
 
     @Override
-    public FunctionBuilder addArgument(String name, Fmi2Builder.RuntimeFunction.FunctionType.Type type) {
-        Fmi2Builder.RuntimeFunction.FunctionType t = new Fmi2Builder.RuntimeFunction.FunctionType(type);
+    public FunctionBuilder addArgument(String name, FmiBuilder.RuntimeFunction.FunctionType.Type type) {
+        FmiBuilder.RuntimeFunction.FunctionType t = new FmiBuilder.RuntimeFunction.FunctionType(type);
         args.add(Map.entry(name, t));
         return this;
     }
@@ -46,20 +46,20 @@ public class FunctionBuilder implements Fmi2Builder.IFunctionBuilder {
 
     @Override
     public FunctionBuilder addArgument(String name, String type) {
-        Fmi2Builder.RuntimeFunction.FunctionType t = new Fmi2Builder.RuntimeFunction.FunctionType(type);
+        FmiBuilder.RuntimeFunction.FunctionType t = new FmiBuilder.RuntimeFunction.FunctionType(type);
         args.add(Map.entry(name, t));
         return this;
     }
 
 
     @Override
-    public Fmi2Builder.RuntimeFunction build() {
+    public FmiBuilder.RuntimeFunction build() {
 
         final String name = this.name;
-        final Fmi2Builder.RuntimeFunction.FunctionType returnType = this.returnType;
-        final List<Map.Entry<String, Fmi2Builder.RuntimeFunction.FunctionType>> args = new Vector<>(this.args);
+        final FmiBuilder.RuntimeFunction.FunctionType returnType = this.returnType;
+        final List<Map.Entry<String, FmiBuilder.RuntimeFunction.FunctionType>> args = new Vector<>(this.args);
 
-        return new Fmi2Builder.RuntimeFunction() {
+        return new FmiBuilder.RuntimeFunction() {
             @Override
             public String getName() {
                 return name;

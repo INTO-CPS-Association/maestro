@@ -6,7 +6,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.*;
@@ -21,11 +21,11 @@ import java.util.stream.IntStream;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
+public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     private final MablApiBuilder builder;
     private final SBlockStm block;
     private final List<ComponentVariableFmi2Api> fmi2ComponentVariables = new ArrayList<>();
-    Fmi2Builder.ScopeElement<PStm> parent;
+    FmiBuilder.ScopeElement<PStm> parent;
     IntVariableFmi2Api fmiStatusVariable = null;
 
     public ScopeFmi2Api(MablApiBuilder builder) {
@@ -35,7 +35,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
     }
 
-    public ScopeFmi2Api(MablApiBuilder builder, Fmi2Builder.ScopeElement<PStm> parent, SBlockStm block) {
+    public ScopeFmi2Api(MablApiBuilder builder, FmiBuilder.ScopeElement<PStm> parent, SBlockStm block) {
         this.builder = builder;
         this.parent = parent;
         this.block = block;
@@ -46,7 +46,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate) {
+    public WhileMaBLScope enterWhile(FmiBuilder.Predicate predicate) {
         if (predicate instanceof PredicateFmi2Api) {
             PredicateFmi2Api predicate_ = (PredicateFmi2Api) predicate;
             SBlockStm whileBlock = new ABasicBlockStm();
@@ -75,7 +75,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
 
     @Override
-    public IfMaBlScope enterIf(Fmi2Builder.Predicate predicate) {
+    public IfMaBlScope enterIf(FmiBuilder.Predicate predicate) {
 
         if (predicate instanceof PredicateFmi2Api) {
             PredicateFmi2Api predicate_ = (PredicateFmi2Api) predicate;
@@ -324,7 +324,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         List<VariableFmi2Api<V>> variables = new ArrayList<>();
         for (int i = 0; i < array.length; i++) {
             PType type;
-            Fmi2Builder.ExpressionValue value;
+            FmiBuilder.ExpressionValue value;
 
             if (array instanceof Double[]) {
                 type = newARealNumericPrimitiveType();
@@ -420,7 +420,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
 
 
     @Override
-    public <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag) {
+    public <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag) {
 
         return storePrivate(builder.getNameGenerator().getName(), tag);
     }
@@ -456,7 +456,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 newAIdentifierExp(name), Arrays.asList(variables));
     }
 
-    private <V> Fmi2Builder.Variable<PStm, V> storePrivate(String name, Fmi2Builder.Value<V> tag) {
+    private <V> FmiBuilder.Variable<PStm, V> storePrivate(String name, FmiBuilder.Value<V> tag) {
 
         if (!(tag instanceof ValueFmi2Api)) {
             throw new IllegalArgumentException();
@@ -465,7 +465,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
         ValueFmi2Api<V> v = (ValueFmi2Api<V>) tag;
 
         PExp initial = null;
-        Fmi2Builder.Variable<PStm, V> variable;
+        FmiBuilder.Variable<PStm, V> variable;
 
         if (v.getType() instanceof ARealNumericPrimitiveType) {
             if (v.get() != null) {
@@ -559,7 +559,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public Fmi2Builder.ScopeElement<PStm> parent() {
+    public FmiBuilder.ScopeElement<PStm> parent() {
         return this.parent;
     }
 
@@ -569,7 +569,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
     @Override
-    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+    public <P extends FmiBuilder.ScopeElement<PStm>> P findParent(Class<P> clz) {
         return this.findParentScope(clz);
     }
 
@@ -595,7 +595,7 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
                 }
             } else {
                 //ignore try and if
-                Fmi2Builder.ScopeElement<PStm> p = parent;
+                FmiBuilder.ScopeElement<PStm> p = parent;
                 while ((p = p.parent()) != null) {
                     if (p instanceof ScopeFmi2Api) {
                         return ((ScopeFmi2Api) p).getFmiStatusVariable();
@@ -614,10 +614,9 @@ public class ScopeFmi2Api implements IMablScope, Fmi2Builder.WhileScope<PStm> {
     }
 
 
-
     @Override
     public <S> S findParentScope(Class<S> type) {
-        Fmi2Builder.ScopeElement<PStm> p = this;
+        FmiBuilder.ScopeElement<PStm> p = this;
         while ((p = p.parent()) != null) {
             if (type.isAssignableFrom(p.getClass())) {
                 return type.cast(p);

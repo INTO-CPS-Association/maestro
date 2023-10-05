@@ -7,7 +7,7 @@ import org.intocps.maestro.framework.core.*;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi3Api;
@@ -82,8 +82,7 @@ public class FromMaBLToMaBLAPI {
         }
     }
 
-    public static Map.Entry<String, InstanceVariableFmi3Api> getInstanceVariableFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env,
+    public static Map.Entry<String, InstanceVariableFmi3Api> getInstanceVariableFrom(MablApiBuilder builder, PExp exp, Fmi2SimulationEnvironment env,
             String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
@@ -131,7 +130,7 @@ public class FromMaBLToMaBLAPI {
     }
 
     public static void createBindings(Map<String, ComponentVariableFmi2Api> instances,
-            ISimulationEnvironment env) throws Fmi2Builder.Port.PortLinkException {
+            ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
         for (Map.Entry<String, ComponentVariableFmi2Api> entry : instances.entrySet()) {
             java.util.Set<? extends IRelation> relations = getRelations(entry, env);
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
@@ -172,7 +171,7 @@ public class FromMaBLToMaBLAPI {
     }
 
     public static void createBindings3(Map<String, InstanceVariableFmi3Api> instances,
-            ISimulationEnvironment env) throws Fmi2Builder.Port.PortLinkException {
+            ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
         for (Map.Entry<String, InstanceVariableFmi3Api> entry : instances.entrySet()) {
             java.util.Set<? extends IRelation> relations = getRelations3(entry, env);
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&

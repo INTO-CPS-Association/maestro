@@ -8,7 +8,7 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.DerivativeEstimator;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
@@ -25,7 +25,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
-public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
+public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
 
     static ScopeFmi2Api rootScope;
     final ScopeFmi2Api externalScope = new ScopeFmi2Api(this);
@@ -511,7 +511,7 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
 
         // TODO: added "import FMI3" after "import FMI2". Should probably figure out a smarter way to do this
         unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")),
-                Stream.concat(Stream.of(newAIdentifier("FMI3")), importedModules.stream().map(MableAstFactory::newAIdentifier)))
+                        Stream.concat(Stream.of(newAIdentifier("FMI3")), importedModules.stream().map(MableAstFactory::newAIdentifier)))
                 .collect(Collectors.toList()));
 
 
@@ -596,12 +596,12 @@ public class MablApiBuilder implements Fmi2Builder<PStm, ASimulationSpecificatio
         return load("RealTime", runtime -> new RealTime(this, runtime));
     }
 
-    <T> T load(String moduleType, Function<Fmi2Builder.RuntimeModule<PStm>, T> creator, Object... args) {
+    <T> T load(String moduleType, Function<FmiBuilder.RuntimeModule<PStm>, T> creator, Object... args) {
         if (instanceCache.containsKey(moduleType)) {
             return (T) instanceCache.get(moduleType);
         }
 
-        Fmi2Builder.RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> {
+        FmiBuilder.RuntimeModule<PStm> runtimeModule = this.loadRuntimeModule(this.mainErrorHandlingScope, (s, var) -> {
             if (args == null || args.length == 0) {
                 ((ScopeFmi2Api) s).getBlock().getBody().addAll(0, var);
             } else {

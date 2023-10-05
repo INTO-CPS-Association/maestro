@@ -14,7 +14,7 @@ import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription
 import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
@@ -72,13 +72,13 @@ public class BuilderFmi3Test {
 
         LoggerFmi2Api logger = builder.getLogger();
 
-        Fmi2Builder.IntVariable<PStm> v8 = builder.getDynamicScope().enterTry().enter().store(6);
+        FmiBuilder.IntVariable<PStm> v8 = builder.getDynamicScope().enterTry().enter().store(6);
         // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
 
         URI ballUri = new File("target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu").getAbsoluteFile().toURI();
         Fmu3 ball = new Fmu3(new File(ballUri));
-        ArrayVariableFmi2Api varArray = builder.getDynamicScope().store("varArray", new Long[] {1L});
+        ArrayVariableFmi2Api varArray = builder.getDynamicScope().store("varArray", new Long[]{1L});
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());
 
 
@@ -129,9 +129,9 @@ public class BuilderFmi3Test {
 
         tank.setLinked();
         //        tank.set();
-        Fmi2Builder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
-        Fmi2Builder.DoubleVariable<PStm> current_time_point = dynamicScope.store(0.0);
-        Fmi2Builder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
+        FmiBuilder.DoubleVariable<PStm> var = dynamicScope.store(123.123);
+        FmiBuilder.DoubleVariable<PStm> current_time_point = dynamicScope.store(0.0);
+        FmiBuilder.DoubleVariable<PStm> step = dynamicScope.store(0.1);
         tank.step(current_time_point, step);
         //Fmi2Builder.StateVariable<PStm> s = tank.getState();
 
@@ -202,7 +202,7 @@ public class BuilderFmi3Test {
     static class Logger extends ExternalVariable {
         final ExtFunc logFunc = null;
 
-        void log(Level level, String message, Fmi2Builder.IntVariable<PStm> errorCode) {
+        void log(Level level, String message, FmiBuilder.IntVariable<PStm> errorCode) {
             this.callVoid(logFunc, level == Level.Debug ? 1 : 0, message, errorCode);
         }
 

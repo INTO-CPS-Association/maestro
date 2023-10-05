@@ -1,7 +1,7 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 
@@ -17,11 +17,11 @@ public class BooleanBuilderFmi2Api {
     private final DynamicActiveBuilderScope dynamicScope;
     private final MablApiBuilder builder;
     private String moduleIdentifier;
-    private Fmi2Builder.RuntimeModule<PStm> runtimeModule;
+    private FmiBuilder.RuntimeModule<PStm> runtimeModule;
     private boolean runtimeModuleMode = false;
 
 
-    public BooleanBuilderFmi2Api(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+    public BooleanBuilderFmi2Api(MablApiBuilder mablApiBuilder, FmiBuilder.RuntimeModule<PStm> runtimeModule) {
         this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.runtimeModuleMode = true;
         this.runtimeModule = runtimeModule;
@@ -36,15 +36,15 @@ public class BooleanBuilderFmi2Api {
 
     }
 
-    public BooleanVariableFmi2Api allTrue(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
+    public BooleanVariableFmi2Api allTrue(String variablePrefix, List<? extends FmiBuilder.ProvidesTypedReferenceExp> parameters) {
         return allTrueFalse(variablePrefix, parameters, ALL_TRUE_FUNCTION_NAME);
     }
 
-    public BooleanVariableFmi2Api allFalse(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters) {
+    public BooleanVariableFmi2Api allFalse(String variablePrefix, List<? extends FmiBuilder.ProvidesTypedReferenceExp> parameters) {
         return allTrueFalse(variablePrefix, parameters, ALL_FALSE_FUNCTION_NAME);
     }
 
-    private BooleanVariableFmi2Api allTrueFalse(String variablePrefix, List<? extends Fmi2Builder.ProvidesTypedReferenceExp> parameters,
+    private BooleanVariableFmi2Api allTrueFalse(String variablePrefix, List<? extends FmiBuilder.ProvidesTypedReferenceExp> parameters,
             String function) {
         String variableName = dynamicScope.getName(variablePrefix);
 

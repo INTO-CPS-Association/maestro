@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public interface Fmi2Builder<S, B, E, SETTINGS> {
+public interface FmiBuilder<S, B, E, SETTINGS> {
     B build() throws Exception;
 
     SETTINGS getSettings();
@@ -63,7 +63,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     <V, T> Variable<T, V> getFmuVariableFrom(E exp);
 
 
-    interface RuntimeModule<S> extends Fmi2Builder.Variable<S, NamedVariable<S>> {
+    interface RuntimeModule<S> extends FmiBuilder.Variable<S, NamedVariable<S>> {
         void initialize(List<RuntimeFunction> declaredFuncs);
 
         void initialize(RuntimeFunction... declaredFuncs);
@@ -90,15 +90,15 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         IFunctionBuilder setReturnType(String name);
 
-        IFunctionBuilder setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+        IFunctionBuilder setReturnType(FmiBuilder.RuntimeFunction.FunctionType.Type type);
 
-        IFunctionBuilder addArgument(String name, Fmi2Builder.RuntimeFunction.FunctionType.Type type);
+        IFunctionBuilder addArgument(String name, FmiBuilder.RuntimeFunction.FunctionType.Type type);
 
         IFunctionBuilder useVargs();
 
         IFunctionBuilder addArgument(String name, String type);
 
-        Fmi2Builder.RuntimeFunction build();
+        FmiBuilder.RuntimeFunction build();
     }
 
     interface RuntimeFunction {
@@ -522,7 +522,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         //    }
         Fmi2ComponentVariable<S, PS> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
 
-        Fmi2ComponentVariable<S, PS> instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
+        Fmi2ComponentVariable<S, PS> instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope, FmiBuilder.Scope<PStm> scope,
                 String environmentName, boolean loggingOn);
 
         Fmi2ComponentVariable<S, PS> instantiate(String name, TryScope<S> enclosingTryScope, Scope<S> scope);
@@ -839,7 +839,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
         Scope<T> getDeclaredScope();
     }
 
-    interface ArrayVariable<T, CV> extends Variable<T, Fmi2Builder.NamedVariable<T>> {
+    interface ArrayVariable<T, CV> extends Variable<T, FmiBuilder.NamedVariable<T>> {
         int size();
 
         List<? extends Variable<T, CV>> items();
@@ -850,7 +850,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     interface ExpressionValue extends ProvidesTypedReferenceExp {
     }
 
-    interface BooleanExpressionValue extends Fmi2Builder.ExpressionValue {
+    interface BooleanExpressionValue extends FmiBuilder.ExpressionValue {
     }
 
     interface DoubleExpressionValue extends NumericExpressionValue {
@@ -859,7 +859,7 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
     interface IntExpressionValue extends NumericExpressionValue {
     }
 
-    interface StringExpressionValue extends Fmi2Builder.ExpressionValue {
+    interface StringExpressionValue extends FmiBuilder.ExpressionValue {
     }
 
 

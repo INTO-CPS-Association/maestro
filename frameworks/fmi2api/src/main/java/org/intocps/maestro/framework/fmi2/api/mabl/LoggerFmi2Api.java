@@ -1,21 +1,21 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 
 public class LoggerFmi2Api {
 
-    final Fmi2Builder.RuntimeModule<PStm> module;
+    final FmiBuilder.RuntimeModule<PStm> module;
 
-    final Fmi2Builder.RuntimeFunction logFunction;
+    final FmiBuilder.RuntimeFunction logFunction;
 
-    public LoggerFmi2Api(MablApiBuilder builder, Fmi2Builder.RuntimeModule<PStm> module) {
+    public LoggerFmi2Api(MablApiBuilder builder, FmiBuilder.RuntimeModule<PStm> module) {
         this.module = module;
 
-        logFunction = builder.getFunctionBuilder().setName("log").addArgument("format", Fmi2Builder.RuntimeFunction.FunctionType.Type.String)
-                .addArgument("args", Fmi2Builder.RuntimeFunction.FunctionType.Type.Any).useVargs()
-                .setReturnType(Fmi2Builder.RuntimeFunction.FunctionType.Type.Void).build();
+        logFunction = builder.getFunctionBuilder().setName("log").addArgument("format", FmiBuilder.RuntimeFunction.FunctionType.Type.String)
+                .addArgument("args", FmiBuilder.RuntimeFunction.FunctionType.Type.Any).useVargs()
+                .setReturnType(FmiBuilder.RuntimeFunction.FunctionType.Type.Void).build();
         module.initialize(logFunction);
     }
 

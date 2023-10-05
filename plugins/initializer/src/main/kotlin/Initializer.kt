@@ -15,8 +15,8 @@ import org.intocps.maestro.framework.core.RelationVariable
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.InvalidVariableStringException
 import org.intocps.maestro.framework.fmi2.ModelConnection
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder.ArrayVariable
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder.ArrayVariable
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api
@@ -106,9 +106,9 @@ class Initializer : BasicMaestroExpansionPlugin {
     var compilationUnit: AImportedModuleCompilationUnit? = null
 
     // Convergence related variables
-    var absoluteTolerance: Fmi2Builder.DoubleVariable<PStm>? = null
-    var relativeTolerance: Fmi2Builder.DoubleVariable<PStm>? = null
-    var maxConvergeAttempts: Fmi2Builder.IntVariable<PStm>? = null
+    var absoluteTolerance: FmiBuilder.DoubleVariable<PStm>? = null
+    var relativeTolerance: FmiBuilder.DoubleVariable<PStm>? = null
+    var maxConvergeAttempts: FmiBuilder.IntVariable<PStm>? = null
 
     constructor() {
         initializationPrologQuery = InitializationPrologQuery()
@@ -144,9 +144,9 @@ class Initializer : BasicMaestroExpansionPlugin {
      */
     fun getArg(
         declaredFunction: AFunctionDeclaration?,
-        formalArguments: MutableList<Fmi2Builder.Variable<PStm, *>>?,
+        formalArguments: MutableList<FmiBuilder.Variable<PStm, *>>?,
         index: ARG_INDEX
-    ): Fmi2Builder.Variable<PStm, *>? {
+    ): FmiBuilder.Variable<PStm, *>? {
         when (declaredFunction) {
             f1 -> {
                 return when (index) {
@@ -193,7 +193,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         env: Fmi2SimulationEnvironment,
         formalArguments: List<PExp>,
         index: ARG_INDEX
-    ): Fmi2Builder.Variable<PStm, *>? {
+    ): FmiBuilder.Variable<PStm, *>? {
         when (declaredFunction) {
             f1 -> {
                 return when (index) {
@@ -205,7 +205,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
-                            .collect(Collectors.toList()) as List<VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>>>?
+                            .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
                     );
                     ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[1].clone());
                     ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
@@ -226,7 +226,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
-                            .collect(Collectors.toList()) as List<VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>>>?
+                            .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
                     );
                     ARG_INDEX.TRANSFER_INSTANCES -> ArrayVariableFmi2Api(
                         null,
@@ -236,7 +236,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[1], env).values.stream()
-                            .collect(Collectors.toList()) as List<VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>>>?
+                            .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
                     );
                     ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
                     ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[3].clone());
@@ -257,7 +257,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
-                            .collect(Collectors.toList()) as List<VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>>>?
+                            .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
                     );
                     ARG_INDEX.FMI3_INSTANCES -> null;
                     ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
@@ -289,8 +289,8 @@ class Initializer : BasicMaestroExpansionPlugin {
 
     override fun <R : Any?> expandWithRuntimeAddition(
         declaredFunction: AFunctionDeclaration?,
-        builder: Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, *>?,
-        formalArguments: MutableList<Fmi2Builder.Variable<PStm, *>>?,
+        builder: FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, *>?,
+        formalArguments: MutableList<FmiBuilder.Variable<PStm, *>>?,
         config: IPluginConfiguration?,
         envIn: ISimulationEnvironment?,
         errorReporter: IErrorReporter?

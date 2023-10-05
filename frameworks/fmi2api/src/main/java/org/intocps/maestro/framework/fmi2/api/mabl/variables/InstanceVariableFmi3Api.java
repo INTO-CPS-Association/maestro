@@ -10,7 +10,7 @@ import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3Causality;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3TypeEnum;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
@@ -34,7 +34,7 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
 @SuppressWarnings("rawtypes")
-public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi3InstanceVariable<PStm, Fmi3ModelDescription.Fmi3ScalarVariable> {
+public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVariable<PStm>> implements FmiBuilder.Fmi3InstanceVariable<PStm, Fmi3ModelDescription.Fmi3ScalarVariable> {
     final static Logger logger = LoggerFactory.getLogger(InstanceVariableFmi3Api.class);
     private final static int FMI_OK = 0;
     private final static int FMI_WARNING = 1;
@@ -56,7 +56,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     private final Map<IMablScope, Map<PType, ArrayVariableFmi2Api<Object>>> tentativeBuffer = new HashMap<>();
     private final Map<IMablScope, Map<PortFmi3Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
     private final String environmentName;
-    Predicate<Fmi2Builder.Port> isLinked = p -> ((PortFmi3Api) p).getSourcePort() != null;
+    Predicate<FmiBuilder.Port> isLinked = p -> ((PortFmi3Api) p).getSourcePort() != null;
     ModelDescriptionContext3 modelDescriptionContext;
     private ArrayVariableFmi2Api<Object> derSharedBuffer;
     private DoubleVariableFmi2Api currentTimeVar = null;
@@ -105,8 +105,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public <V> void share(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, Fmi2Builder.Variable<PStm, V> value) {
-        Map<Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, Fmi2Builder.Variable<PStm, V>> map = new HashMap<>();
+    public <V> void share(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, FmiBuilder.Variable<PStm, V> value) {
+        Map<FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, FmiBuilder.Variable<PStm, V>> map = new HashMap<>();
         map.put(port, value);
         share(map);
     }
@@ -258,8 +258,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void setupExperiment(Fmi2Builder.DoubleVariable<PStm> startTime, Fmi2Builder.DoubleVariable<PStm> endTime,
-            Fmi2Builder.BoolVariable<PStm> endTimeDefined, Double tolerance) {
+    public void setupExperiment(FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.DoubleVariable<PStm> endTime,
+            FmiBuilder.BoolVariable<PStm> endTimeDefined, Double tolerance) {
         this.setupExperiment(((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(),
                 ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone(), ((BooleanVariableFmi2Api) endTimeDefined).getReferenceExp().clone(),
                 tolerance);
@@ -275,7 +275,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         this.setupExperiment(scope, startTime, endTime, endTimeDefined, tolerance);
     }
 
-    private void setupExperiment(Fmi2Builder.Scope<PStm> scope, PExp startTime, PExp endTime, PExp endTimeDefined, Double tolerance) {
+    private void setupExperiment(FmiBuilder.Scope<PStm> scope, PExp startTime, PExp endTime, PExp endTimeDefined, Double tolerance) {
         AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SETUPEXPERIMENT), new ArrayList<>(
                         Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance != null ? tolerance : 0d),
@@ -299,19 +299,19 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.DoubleVariable<PStm> startTime, Fmi2Builder.DoubleVariable<PStm> endTime,
-            Fmi2Builder.BoolVariable<PStm> endTimeDefined, Double tolerance) {
+    public void setupExperiment(FmiBuilder.Scope<PStm> scope, FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.DoubleVariable<PStm> endTime,
+            FmiBuilder.BoolVariable<PStm> endTimeDefined, Double tolerance) {
         this.setupExperiment(scope, ((DoubleVariableFmi2Api) startTime).getReferenceExp().clone(),
                 ((DoubleVariableFmi2Api) endTime).getReferenceExp().clone(), endTimeDefined.getExp().clone(), tolerance);
     }
 
     @Override
-    public void setupExperiment(Fmi2Builder.Scope<PStm> scope, double startTime, Double endTime, Double tolerance) {
+    public void setupExperiment(FmiBuilder.Scope<PStm> scope, double startTime, Double endTime, Double tolerance) {
         this.setupExperiment(scope, newARealLiteralExp(startTime), newARealLiteralExp(endTime), newABoolLiteralExp(true), tolerance);
     }
 
     @Override
-    public void enterInitializationMode(Fmi2Builder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, double startTime,
+    public void enterInitializationMode(FmiBuilder.Scope<PStm> scope, boolean toleranceDefined, double tolerance, double startTime,
             boolean stopTimeDefined, double stopTime) {
         PStm stm = stateTransitionFunction(FmiFunctionType.ENTERINITIALIZATIONMODE);
         scope.add(stm);
@@ -322,7 +322,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void exitInitializationMode(Fmi2Builder.Scope<PStm> scope) {
+    public void exitInitializationMode(FmiBuilder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.EXITINITIALIZATIONMODE);
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -332,33 +332,32 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
-            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
-            Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
+    public Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> step(FmiBuilder.Scope<PStm> scope,
+            FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint, FmiBuilder.DoubleVariable<PStm> communicationStepSize,
+            FmiBuilder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
         return step(scope, currentCommunicationPoint, communicationStepSize, ((VariableFmi2Api) noSetFMUStatePriorToCurrentPoint).getReferenceExp());
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
-            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
+    public Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> step(FmiBuilder.Scope<PStm> scope,
+            FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint, FmiBuilder.DoubleVariable<PStm> communicationStepSize) {
         return step(scope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(
-            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
-            Fmi2Builder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
+    public Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> step(FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint,
+            FmiBuilder.DoubleVariable<PStm> communicationStepSize, FmiBuilder.BoolVariable<PStm> noSetFMUStatePriorToCurrentPoint) {
         return step(dynamicScope, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint);
     }
 
     @Override
-    public Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(
-            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize) {
+    public Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> step(FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint,
+            FmiBuilder.DoubleVariable<PStm> communicationStepSize) {
         return step(dynamicScope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
     }
 
-    private Map.Entry<Fmi2Builder.BoolVariable<PStm>, Fmi2Builder.DoubleVariable<PStm>> step(Fmi2Builder.Scope<PStm> scope,
-            Fmi2Builder.DoubleVariable<PStm> currentCommunicationPoint, Fmi2Builder.DoubleVariable<PStm> communicationStepSize,
+    private Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>> step(FmiBuilder.Scope<PStm> scope,
+            FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint, FmiBuilder.DoubleVariable<PStm> communicationStepSize,
             PExp noSetFMUStatePriorToCurrentPoint) {
 
         scope.add(newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
@@ -436,9 +435,9 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     //TODO: Move tentative buffer and global share buffer logic to its own module so that it is not coupled with the component logic?
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> getTentative(IMablScope scope, String... names) {
         // Get filtered port values
-        Fmi2Builder.Port[] filteredPorts = this.ports.stream()
+        FmiBuilder.Port[] filteredPorts = this.ports.stream()
                 .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output))
-                .toArray(Fmi2Builder.Port[]::new);
+                .toArray(FmiBuilder.Port[]::new);
         Map<PortFmi3Api, VariableFmi2Api<Object>> portToValueMap = get(scope, filteredPorts);
         if (portToValueMap.isEmpty()) {
             return Map.of();
@@ -478,13 +477,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
+    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
         return get(builder.getDynamicScope().getActiveScope(), ports);
     }
 
     @Override
-    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(Fmi2Builder.Scope<PStm> scope,
-            Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
+    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(FmiBuilder.Scope<PStm> scope,
+            FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
 
         List<PortFmi3Api> selectedPorts;
         if (ports == null || ports.length == 0) {
@@ -500,7 +499,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
         selectedPorts.stream().map(p -> p.scalarVariable.getVariable().getTypeIdentifier()).distinct()
                 .map(t -> selectedPorts.stream().filter(p -> p.scalarVariable.getVariable().getTypeIdentifier().equals(t))
-                        .sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList()))
+                        .sorted(Comparator.comparing(FmiBuilder.Port::getPortReferenceValue)).collect(Collectors.toList()))
                 .forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable.getVariable().getTypeIdentifier(), l));
 
         for (Map.Entry<Fmi3TypeEnum, List<PortFmi3Api>> e : typeToSortedPorts.entrySet()) {
@@ -561,7 +560,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
      * @param scope The builder scope.
      * @return Derivative ports with a list of derivative values up to max derivative order
      */
-    public Map<PortFmi3Api, List<VariableFmi2Api<Object>>> getDerivatives(List<PortFmi3Api> ports, Fmi2Builder.Scope<PStm> scope) {
+    public Map<PortFmi3Api, List<VariableFmi2Api<Object>>> getDerivatives(List<PortFmi3Api> ports, FmiBuilder.Scope<PStm> scope) {
         Map<PortFmi3Api, List<VariableFmi2Api<Object>>> derivativePortsToReturn = new HashMap<>();
 
         //        // If any target ports exists that can interpolate the port is also linked and derivatives should be retrieved.
@@ -641,20 +640,20 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
     @Override
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get() {
-        return get(builder.getDynamicScope(), outputPorts.toArray(Fmi2Builder.Port[]::new));
+        return get(builder.getDynamicScope(), outputPorts.toArray(FmiBuilder.Port[]::new));
     }
 
     @Override
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(int... valueReferences) {
         List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
         return get(builder.getDynamicScope(),
-                outputPorts.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).toArray(Fmi2Builder.Port[]::new));
+                outputPorts.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).toArray(FmiBuilder.Port[]::new));
     }
 
     @Override
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(String... names) {
         List<String> accept = Arrays.asList(names);
-        Fmi2Builder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new);
+        FmiBuilder.Port[] ports = this.ports.stream().filter(p -> accept.contains(p.getName())).toArray(FmiBuilder.Port[]::new);
         return get(builder.getDynamicScope(), ports);
     }
 
@@ -671,15 +670,15 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public <V> Map<? extends Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare(
-            Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
+    public <V> Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends FmiBuilder.Variable<PStm, V>> getAndShare(
+            FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... ports) {
         Map<PortFmi3Api, VariableFmi2Api<V>> values = get(ports);
         share(values);
         return values;
     }
 
     @Override
-    public <V> Map<? extends Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare() {
+    public <V> Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends FmiBuilder.Variable<PStm, V>> getAndShare() {
         Map<PortFmi3Api, VariableFmi2Api<V>> values = get();
         share(values);
         return values;
@@ -691,12 +690,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public VariableFmi2Api getShared(Fmi2Builder.Port port) {
+    public VariableFmi2Api getShared(FmiBuilder.Port port) {
         return ((PortFmi3Api) port).getSharedAsVariable();
     }
 
     @Override
-    public <V> VariableFmi2Api<V> getSingle(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port) {
+    public <V> VariableFmi2Api<V> getSingle(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port) {
         return (VariableFmi2Api) this.get(port).entrySet().iterator().next().getValue();
     }
 
@@ -746,12 +745,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
 
-    public void set(Fmi2Builder.Port p, Fmi2Builder.ExpressionValue v) {
+    public void set(FmiBuilder.Port p, FmiBuilder.ExpressionValue v) {
         this.set(new PortValueExpresssionMapImpl(Map.of(p, v)));
         ;
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> p, Fmi2Builder.ExpressionValue v) {
+    public void set(FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> p, FmiBuilder.ExpressionValue v) {
         this.set(scope, new PortValueMapImpl(Map.of(p, v)));
     }
 
@@ -759,7 +758,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         this.set(builder.getDynamicScope().getActiveScope(), value);
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, PortExpressionValueMap<Fmi3ModelDescription.Fmi3ScalarVariable> value) {
+    public void set(FmiBuilder.Scope<PStm> scope, PortExpressionValueMap<Fmi3ModelDescription.Fmi3ScalarVariable> value) {
         if (value == null || value.isEmpty()) {
             return;
         }
@@ -767,13 +766,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         List<PortFmi3Api> selectedPorts = value.keySet().stream().map(PortFmi3Api.class::cast).collect(Collectors.toList());
 
         set(scope, selectedPorts, port -> {
-            Fmi2Builder.ExpressionValue value_ = value.get(port);
+            FmiBuilder.ExpressionValue value_ = value.get(port);
             return Map.entry(value_.getExp(), value_.getType());
         });
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortValueMap<V, Fmi3ModelDescription.Fmi3ScalarVariable> value) {
+    public <V> void set(FmiBuilder.Scope<PStm> scope, PortValueMap<V, Fmi3ModelDescription.Fmi3ScalarVariable> value) {
 
 
         if (value == null || value.isEmpty()) {
@@ -805,7 +804,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortVariableMap<PStm, V, Fmi3ModelDescription.Fmi3ScalarVariable> value) {
+    public <V> void set(FmiBuilder.Scope<PStm> scope, PortVariableMap<PStm, V, Fmi3ModelDescription.Fmi3ScalarVariable> value) {
 
         List<PortFmi3Api> selectedPorts;
         if (value == null || value.isEmpty()) {
@@ -819,7 +818,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
                 port -> Map.entry(((VariableFmi2Api) valueFinal.get(port)).getReferenceExp().clone(), ((VariableFmi2Api) valueFinal.get(port)).type));
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, List<PortFmi3Api> selectedPorts, Function<PortFmi3Api, Map.Entry<PExp, PType>> portToValue) {
+    public void set(FmiBuilder.Scope<PStm> scope, List<PortFmi3Api> selectedPorts, Function<PortFmi3Api, Map.Entry<PExp, PType>> portToValue) {
 
         Set<String> selectedPortsAsStrings = selectedPorts.stream()
                 .map(p -> p.getName() + "-" + p.aMablFmi3InstanceAPI.getName() + "-" + p.aMablFmi3InstanceAPI.getOwner().getName()).collect(toSet());
@@ -832,14 +831,14 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
         }
 
         List<PortFmi3Api> sortedPorts =
-                selectedPorts.stream().sorted(Comparator.comparing(Fmi2Builder.Port::getPortReferenceValue)).collect(Collectors.toList());
+                selectedPorts.stream().sorted(Comparator.comparing(FmiBuilder.Port::getPortReferenceValue)).collect(Collectors.toList());
 
         // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
         sortedPorts.stream().collect(Collectors.groupingBy(i -> i.getType().toString())).forEach((key, value) -> {
             ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
             PType type = value.get(0).getType();
             for (int i = 0; i < value.size(); i++) {
-                Fmi2Builder.Port p = value.get(i);
+                FmiBuilder.Port p = value.get(i);
                 PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
                 scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
             }
@@ -952,7 +951,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
      * @param scope         the builder scope
      */
     public void setDerivatives(ArrayVariableFmi2Api derValInBuf, ArrayVariableFmi2Api derOrderInBuf, ArrayVariableFmi2Api derRefInBuf,
-            Fmi2Builder.Scope<PStm> scope) {
+            FmiBuilder.Scope<PStm> scope) {
         int arraySize = derValInBuf.size();
 
         // Create set derivatives statement which calls setRealOutputDerivatives with derRefInBuf, arraySize, derOrderInBuf and
@@ -977,18 +976,18 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
 
     @Override
-    public <V> void set(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, Fmi2Builder.Variable<PStm, V> value) {
+    public <V> void set(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, FmiBuilder.Variable<PStm, V> value) {
         this.set(new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port,
-            Fmi2Builder.Variable<PStm, V> value) {
+    public <V> void set(FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port,
+            FmiBuilder.Variable<PStm, V> value) {
         this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, Fmi2Builder.Value<V> value) {
+    public <V> void set(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> port, FmiBuilder.Value<V> value) {
         PortValueMap map = new PortValueMapImpl();
         map.put(port, value);
         set(map);
@@ -1000,14 +999,14 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void setLinked(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... filterPorts) {
+    public void setLinked(FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... filterPorts) {
 
         List<PortFmi3Api> selectedPorts = ports.stream().filter(isLinked).collect(Collectors.toList());
         if (filterPorts != null && filterPorts.length != 0) {
 
-            List<Fmi2Builder.Port> filterList = Arrays.asList(filterPorts);
+            List<FmiBuilder.Port> filterList = Arrays.asList(filterPorts);
 
-            for (Fmi2Builder.Port p : filterList) {
+            for (FmiBuilder.Port p : filterList) {
                 if (!isLinked.test(p)) {
                     logger.warn("Filter for setLinked contains unlined port. Its ignored. {}", p);
                 }
@@ -1041,11 +1040,11 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
     @Override
     public void setLinked() {
-        this.setLinked(dynamicScope, (Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>[]) null);
+        this.setLinked(dynamicScope, (FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>[]) null);
     }
 
     @Override
-    public void setLinked(Fmi2Builder.Port... filterPorts) {
+    public void setLinked(FmiBuilder.Port... filterPorts) {
 
         this.setLinked(dynamicScope, filterPorts);
     }
@@ -1053,24 +1052,24 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     @Override
     public void setLinked(String... filterNames) {
         List<String> accept = Arrays.asList(filterNames);
-        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getName())).toArray(Fmi2Builder.Port[]::new));
+        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getName())).toArray(FmiBuilder.Port[]::new));
 
     }
 
     @Override
     public void setLinked(long... filterValueReferences) {
         List<Long> accept = Arrays.stream(filterValueReferences).boxed().collect(Collectors.toList());
-        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getPortReferenceValue())).toArray(Fmi2Builder.Port[]::new));
+        this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getPortReferenceValue())).toArray(FmiBuilder.Port[]::new));
 
     }
 
     @Override
-    public void setInt(Map<? extends Integer, ? extends Fmi2Builder.Value<Integer>> values) {
+    public void setInt(Map<? extends Integer, ? extends FmiBuilder.Value<Integer>> values) {
 
     }
 
     @Override
-    public void setString(Map<? extends String, ? extends Fmi2Builder.Value<String>> value) {
+    public void setString(Map<? extends String, ? extends FmiBuilder.Value<String>> value) {
 
     }
 
@@ -1080,7 +1079,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public void terminate(Fmi2Builder.Scope<PStm> scope) {
+    public void terminate(FmiBuilder.Scope<PStm> scope) {
         PStm stm = stateTransitionFunction(FmiFunctionType.TERMINATE);
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
@@ -1091,7 +1090,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
 
     // TODO: implement this from the other share function below. This for now to build.
     @Override
-    public <V> void share(Map<? extends Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> values) {
+    public <V> void share(Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>, ? extends FmiBuilder.Variable<PStm, V>> values) {
         ;
     }
 
@@ -1256,12 +1255,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<Fmi2Builder.NamedVa
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState() throws XPathExpressionException {
+    public FmiBuilder.StateVariable<PStm> getState() throws XPathExpressionException {
         return getState(builder.getDynamicScope());
     }
 
     @Override
-    public Fmi2Builder.StateVariable<PStm> getState(Fmi2Builder.Scope<PStm> scope) throws XPathExpressionException {
+    public FmiBuilder.StateVariable<PStm> getState(FmiBuilder.Scope<PStm> scope) throws XPathExpressionException {
         if (!this.modelDescriptionContext.getModelDescription().getCanGetAndSetFmustate()) {
             throw new RuntimeException("Unable to get state on fmu: " + this.getOwner() + " with instance name: " + this.getName());
         }
