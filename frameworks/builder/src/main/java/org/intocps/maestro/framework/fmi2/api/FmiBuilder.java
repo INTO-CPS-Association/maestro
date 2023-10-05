@@ -778,7 +778,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
 
         void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
 
-        void enterInitializationMode(Scope<T> scope, boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
+        void enterInitializationMode(Scope<T> scope,boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
                 double stopTime);
 
         void exitInitializationMode(Scope<T> scope);

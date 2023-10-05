@@ -222,11 +222,11 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
-
     @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
+
 
     public DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();

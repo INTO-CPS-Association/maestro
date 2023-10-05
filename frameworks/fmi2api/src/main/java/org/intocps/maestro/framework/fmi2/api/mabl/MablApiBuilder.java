@@ -35,7 +35,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     private final IntVariableFmi2Api globalFmiStatus;
     private final MablToMablAPI mablToMablAPI;
     private final MablSettings settings;
-    private final Map<FmiStatus, IntVariableFmi2Api> fmiStatusVariables;
+    private final Map<FmiStatusInterface, IntVariableFmi2Api> fmiStatusVariables;
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
     int dynamicScopeInitialSize;
     List<String> importedModules = new Vector<>();
@@ -140,74 +140,30 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return this.settings;
     }
 
-    public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {
-        //if (!settings.fmiErrorHandlingEnabled) {
-        //   throw new IllegalStateException("Fmi error handling feature not enabled");
-        // }
+    interface FmiStatusInterface {
+        int getValue();
 
-        if (!this.fmiStatusVariables.containsKey(status)) {
-            switch (status) {
-                case FMI_OK: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_OK.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_OK, var);
-                }
-                break;
-                case FMI_WARNING: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_WARNING.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_WARNING, var);
-                    break;
-                }
-                case FMI_DISCARD: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_DISCARD.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_DISCARD, var);
-                }
-                break;
-                case FMI_ERROR: {
-                    IntVariableFmi2Api var = storeStatusVariable(rootScope, status.name(), FmiStatus.FMI_ERROR.getValue());
-                    //IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_ERROR.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_ERROR, var);
-                    break;
-                }
-                case FMI_FATAL: {
-                    IntVariableFmi2Api var = storeStatusVariable(rootScope, status.name(), FmiStatus.FMI_FATAL.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_FATAL, var);
-                    break;
-                }
-                case FMI_PENDING: {
-                    IntVariableFmi2Api var = rootScope.store(status.name(), FmiStatus.FMI_PENDING.getValue());
-                    //relocate to top of scope
-                    rootScope.addAfterOrTop(null, var.getDeclaringStm());
-                    fmiStatusVariables.put(FmiStatus.FMI_PENDING, var);
-                    break;
-                }
-            }
+        String getName();
+    }
 
+    private IntVariableFmi2Api getFmiStatusConstant_aux(FmiStatusInterface status) {
+        if(!this.fmiStatusVariables.containsKey(status)) {
+            IntVariableFmi2Api var = rootScope.store(status.getName(), status.getValue());
+            rootScope.addAfterOrTop(null, var.getDeclaringStm());
+            fmiStatusVariables.put(status, var);
         }
-
         return this.fmiStatusVariables.get(status);
     }
+
+    public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {return getFmiStatusConstant_aux(status);}
+    public IntVariableFmi2Api getFmiStatusConstant(Fmi3Status status) {return getFmiStatusConstant_aux(status);}
 
     public MablToMablAPI getMablToMablAPI() {
         return this.mablToMablAPI;
     }
 
-
     public IntVariableFmi2Api getGlobalFmiStatus() {
         return globalFmiStatus;
-    }
-
-    private IntVariableFmi2Api storeStatusVariable(ScopeFmi2Api rootScope, String name, int errorCode) {
-        return rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(name), errorCode);
     }
 
     @SuppressWarnings("rawtypes")
@@ -632,7 +588,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return m;
     }
 
-    public enum FmiStatus {
+    public enum FmiStatus implements FmiStatusInterface {
         FMI_OK(0),
         FMI_WARNING(1),
         FMI_DISCARD(2),
@@ -645,11 +601,41 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         private FmiStatus(final int value) {
             this.value = value;
         }
+        public int getValue() { return this.value; }
 
+        // Interface method, not sure how to best preserve enum name() method.
+        public String getName() {
+            for (FmiStatus status : FmiStatus.values()) {
+                if (status.value == this.value) {
+                    return status.name();
+                }
+            }
+            return null;
+        }
+    }
+
+    public enum Fmi3Status implements FmiStatusInterface {
+        FMI_OK(0),
+        FMI_WARNING(1),
+        FMI_DISCARD(2),
+        FMI_ERROR(3),
+        FMI_FATAL(4);
+        private final int value;
+        private Fmi3Status(final int value) {
+            this.value = value;
+        }
         public int getValue() {
             return this.value;
         }
 
+        public String getName() {
+            for (FmiStatus status : FmiStatus.values()) {
+                if (status.value == this.value) {
+                    return status.name();
+                }
+            }
+            return null;
+        }
     }
 
     public static class MablSettings {

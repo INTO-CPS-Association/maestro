@@ -255,7 +255,7 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
 
     @Override
     public void registerInstanceVariableFmi3Api(InstanceVariableFmi3Api instanceVariableFmi3Api) {
-        // TODO stuff goes here.
+        activeScope.registerInstanceVariableFmi3Api((instanceVariableFmi3Api));
     }
 
     @Override

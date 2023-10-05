@@ -37,8 +37,9 @@ public class StateMablVariableFmi3Api extends VariableFmi2Api<Object> implements
                 call(owner.getReferenceExp().clone(), "setState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder.generate(builder, "setState", this.owner, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
+                    .generate(builder, "setState", this.owner, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                            MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
     }
 
@@ -57,8 +58,9 @@ public class StateMablVariableFmi3Api extends VariableFmi2Api<Object> implements
                 call(owner.getReferenceExp().clone(), "freeState", Collections.singletonList(this.getReferenceExp().clone())));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder.generate(builder, "freeState", this.owner, (IMablScope) scope,
-                    MablApiBuilder.FmiStatus.FMI_ERROR, MablApiBuilder.FmiStatus.FMI_FATAL);
+            InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
+                    .generate(builder, "freeState", this.owner, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                            MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 
         valid = false;
