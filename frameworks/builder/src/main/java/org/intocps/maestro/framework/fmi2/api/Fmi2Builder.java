@@ -768,27 +768,28 @@ public interface Fmi2Builder<S, B, E, SETTINGS> {
 
         void setupExperiment(double startTime, Double endTime, Double tolerance);
 
-        int enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime);
+        void enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime);
 
-        int exitInitializationMode();
+        void exitInitializationMode();
 
         void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined,
                 Double tolerance);
 
         void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
 
-        int enterInitializationMode(Scope<T> scope,boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
+        void enterInitializationMode(Scope<T> scope,boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
                 double stopTime);
 
-        int exitInitializationMode(Scope<T> scope);
+        void exitInitializationMode(Scope<T> scope);
 
-        int terminate(Scope<T> scope);
+        void terminate(Scope<T> scope);
 
-        int terminate();
+        void terminate();
 
         void freeInstance();
 
         void freeInstance(Scope<T> scope);
+
 
         /**
          * @param scope
