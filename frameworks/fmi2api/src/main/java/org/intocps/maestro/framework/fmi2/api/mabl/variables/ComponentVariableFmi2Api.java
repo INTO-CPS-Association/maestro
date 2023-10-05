@@ -7,7 +7,6 @@ import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-
 import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
@@ -34,7 +33,7 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
 @SuppressWarnings("rawtypes")
-public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm> {
+public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmi2ComponentVariable<PStm, Fmi2ModelDescription.ScalarVariable> {
     final static Logger logger = LoggerFactory.getLogger(ComponentVariableFmi2Api.class);
     private final static int FMI_OK = 0;
     private final static int FMI_WARNING = 1;
@@ -104,8 +103,8 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void share(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
-        Map<Fmi2Builder.Port, Fmi2Builder.Variable<PStm, V>> map = new HashMap<>();
+    public <V> void share(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> port, Fmi2Builder.Variable<PStm, V> value) {
+        Map<Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>, Fmi2Builder.Variable<PStm, V>> map = new HashMap<>();
         map.put(port, value);
         share(map);
     }
@@ -476,12 +475,13 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Port... ports) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... ports) {
         return get(builder.getDynamicScope().getActiveScope(), ports);
     }
 
     @Override
-    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... ports) {
+    public <V> Map<PortFmi2Api, VariableFmi2Api<V>> get(Fmi2Builder.Scope<PStm> scope,
+            Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... ports) {
 
         List<PortFmi2Api> selectedPorts;
         if (ports == null || ports.length == 0) {
@@ -666,14 +666,15 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare(Fmi2Builder.Port... ports) {
+    public <V> Map<? extends Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare(
+            Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... ports) {
         Map<PortFmi2Api, VariableFmi2Api<V>> values = get(ports);
         share(values);
         return values;
     }
 
     @Override
-    public <V> Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare() {
+    public <V> Map<? extends Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> getAndShare() {
         Map<PortFmi2Api, VariableFmi2Api<V>> values = get();
         share(values);
         return values;
@@ -690,7 +691,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> VariableFmi2Api<V> getSingle(Fmi2Builder.Port port) {
+    public <V> VariableFmi2Api<V> getSingle(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> port) {
         return (VariableFmi2Api) this.get(port).entrySet().iterator().next().getValue();
     }
 
@@ -752,7 +753,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
         this.set(builder.getDynamicScope().getActiveScope(), value);
     }
 
-    public void set(Fmi2Builder.Scope<PStm> scope, PortExpressionValueMap value) {
+    public void set(Fmi2Builder.Scope<PStm> scope, PortExpressionValueMap<Fmi2ModelDescription.ScalarVariable> value) {
         if (value == null || value.isEmpty()) {
             return;
         }
@@ -766,7 +767,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortValueMap<V> value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortValueMap<V, Fmi2ModelDescription.ScalarVariable> value) {
 
 
         if (value == null || value.isEmpty()) {
@@ -798,7 +799,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortVariableMap<PStm, V> value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, PortVariableMap<PStm, V, Fmi2ModelDescription.ScalarVariable> value) {
 
         List<PortFmi2Api> selectedPorts;
         if (value == null || value.isEmpty()) {
@@ -963,17 +964,18 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void set(PortValueMap<V> value) {
+    public <V> void set(PortValueMap<V, Fmi2ModelDescription.ScalarVariable> value) {
         set(builder.getDynamicScope(), value);
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
+    public <V> void set(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> port, Fmi2Builder.Variable<PStm, V> value) {
         this.set(new PortVariableMapImpl(Map.of(port, value)));
     }
 
     @Override
-    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port port, Fmi2Builder.Variable<PStm, V> value) {
+    public <V> void set(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> port,
+            Fmi2Builder.Variable<PStm, V> value) {
         this.set(scope, new PortVariableMapImpl(Map.of(port, value)));
     }
 
@@ -987,12 +989,12 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
 
 
     @Override
-    public <V> void set(PortVariableMap<PStm, V> value) {
+    public <V> void set(PortVariableMap<PStm, V, Fmi2ModelDescription.ScalarVariable> value) {
         set(builder.getDynamicScope(), value);
     }
 
     @Override
-    public void setLinked(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port... filterPorts) {
+    public void setLinked(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... filterPorts) {
 
         List<PortFmi2Api> selectedPorts = ports.stream().filter(isLinked).collect(Collectors.toList());
         if (filterPorts != null && filterPorts.length != 0) {
@@ -1082,7 +1084,7 @@ public class ComponentVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedV
     }
 
     @Override
-    public <V> void share(Map<? extends Fmi2Builder.Port, ? extends Fmi2Builder.Variable<PStm, V>> values) {
+    public <V> void share(Map<? extends Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>, ? extends Fmi2Builder.Variable<PStm, V>> values) {
         // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
         values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi2Api) map.getKey()).getType().toString())).entrySet().stream()
                 .forEach(map -> {

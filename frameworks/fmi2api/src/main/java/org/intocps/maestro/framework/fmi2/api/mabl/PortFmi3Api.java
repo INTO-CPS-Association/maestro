@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PortFmi3Api implements Fmi2Builder.Port {
+public class PortFmi3Api implements Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable> {
 
     public final InstanceVariableFmi3Api aMablFmi3InstanceAPI;
     public final Fmi3ModelDescription.Fmi3ScalarVariable scalarVariable;
@@ -60,6 +60,17 @@ public class PortFmi3Api implements Fmi2Builder.Port {
     }
 
     @Override
+    public String getQualifiedName() {
+        return this.aMablFmi3InstanceAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi3InstanceAPI.getEnvironmentName() + "." +
+                this.getName();
+    }
+
+    @Override
+    public Fmi3ModelDescription.Fmi3ScalarVariable getSourceObject() {
+        return this.scalarVariable;
+    }
+
+    @Override
     public String getName() {
         return this.scalarVariable.getVariable().getName();
     }
@@ -71,7 +82,7 @@ public class PortFmi3Api implements Fmi2Builder.Port {
 
 
     @Override
-    public void linkTo(Fmi2Builder.Port... receivers) throws PortLinkException {
+    public void linkTo(Fmi2Builder.Port<Fmi3ModelDescription.Fmi3ScalarVariable>... receivers) throws PortLinkException {
 
         if (receivers == null || receivers.length == 0) {
             return;

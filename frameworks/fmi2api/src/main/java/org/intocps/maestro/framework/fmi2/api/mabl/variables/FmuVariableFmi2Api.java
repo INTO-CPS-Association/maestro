@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
@@ -14,7 +15,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmu2Variable<PStm> {
+public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmu2Variable<PStm, Fmi2ModelDescription.ScalarVariable> {
 
     private final ModelDescriptionContext modelDescriptionContext;
     private final MablApiBuilder builder;

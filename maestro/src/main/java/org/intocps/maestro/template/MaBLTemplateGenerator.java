@@ -47,6 +47,7 @@ public class MaBLTemplateGenerator {
     public static final String FMI3_MODULE_NAME = "FMI3";
     public static final String TYPECONVERTER_MODULE_NAME = "TypeConverter";
     public static final String INITIALIZE_EXPANSION_FUNCTION_NAME = "initialize";
+    public static final String INITIALIZE23_EXPANSION_FUNCTION_NAME = "initialize23";
     public static final String INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME = "initialize_transfer";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
     public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSizeTransfer";
@@ -457,7 +458,13 @@ public class MaBLTemplateGenerator {
                 stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, COMPONENTS_TRANSFER_ARRAY_NAME, START_TIME_NAME_OFFSET, END_TIME_NAME,
                         jacobianStepConfig.endTime != null));
             } else {
-                stmMaintainer.add(createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME, jacobianStepConfig.endTime != null));
+                if (instances.getFmi3List().isEmpty()) {
+                    stmMaintainer.add(
+                            createExpandInitialize(COMPONENTS_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME, jacobianStepConfig.endTime != null));
+                } else {
+                    stmMaintainer.add(createExpandInitialize23(COMPONENTS_ARRAY_NAME, INSTANCES_ARRAY_NAME, START_TIME_NAME, END_TIME_NAME,
+                            jacobianStepConfig.endTime != null));
+                }
             }
         }
 
@@ -690,6 +697,16 @@ public class MaBLTemplateGenerator {
                         MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_FUNCTION_NAME),
                         Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(startTimeLexName),
                                 aIdentifierExpFromString(endTimeLexName), MableAstFactory.newABoolLiteralExp(endTimeDefined))));
+    }
+
+    public static PStm createExpandInitialize23(String componentsArrayLexName, String instanceArrayLexName, String startTimeLexName,
+            String endTimeLexName, boolean endTimeDefined) {
+        return MableAstFactory.newExpressionStm(
+                MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
+                        MableAstFactory.newAIdentifier(INITIALIZE23_EXPANSION_FUNCTION_NAME),
+                        Arrays.asList(aIdentifierExpFromString(componentsArrayLexName), aIdentifierExpFromString(instanceArrayLexName),
+                                aIdentifierExpFromString(startTimeLexName), aIdentifierExpFromString(endTimeLexName),
+                                MableAstFactory.newABoolLiteralExp(endTimeDefined))));
     }
 
     public static AIdentifierExp aIdentifierExpFromString(String x) {

@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
@@ -36,9 +37,10 @@ public class SetPortsTest {
                 controllerInstance.get(controllerInstance.getPorts().stream().map(PortFmi2Api::getName).toArray(String[]::new));
         controllerInstance.share(controllerPortMap);
 
-        Fmi2Builder.Fmi2ComponentVariable.PortValueMap<Object> portsToSet = new PortValueMapImpl(controllerPortMap);
+        Fmi2Builder.Fmi2ComponentVariable.PortValueMap<Object, Fmi2ModelDescription.ScalarVariable> portsToSet =
+                new PortValueMapImpl(controllerPortMap);
 
         // ASSERT
-        Assertions.assertThrows(RuntimeException.class,() -> tankInstance.set(portsToSet));
+        Assertions.assertThrows(RuntimeException.class, () -> tankInstance.set(portsToSet));
     }
 }

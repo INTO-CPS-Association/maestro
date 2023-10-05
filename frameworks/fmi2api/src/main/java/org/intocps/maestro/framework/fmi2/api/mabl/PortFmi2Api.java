@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PortFmi2Api implements Fmi2Builder.Port {
+public class PortFmi2Api implements Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> {
 
     public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
     public final Fmi2ModelDescription.ScalarVariable scalarVariable;
@@ -56,6 +56,17 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     }
 
     @Override
+    public String getQualifiedName() {
+        return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getEnvironmentName() + "." +
+                this.getName();
+    }
+
+    @Override
+    public Fmi2ModelDescription.ScalarVariable getSourceObject() {
+        return this.scalarVariable;
+    }
+
+    @Override
     public String getName() {
         return this.scalarVariable.getName();
     }
@@ -67,7 +78,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
 
 
     @Override
-    public void linkTo(Fmi2Builder.Port... receivers) throws PortLinkException {
+    public void linkTo(Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable>... receivers) throws PortLinkException {
 
         if (receivers == null || receivers.length == 0) {
             return;
@@ -77,7 +88,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
             throw new PortLinkException("Can only link output ports. This port is: " + this.scalarVariable.causality, this);
         }
 
-        for (Fmi2Builder.Port receiver : receivers) {
+        for (Fmi2Builder.Port<Fmi2ModelDescription.ScalarVariable> receiver : receivers) {
             PortFmi2Api receiverPort = (PortFmi2Api) receiver;
 
             if (receiverPort.scalarVariable.causality != Fmi2ModelDescription.Causality.Input) {
@@ -129,8 +140,7 @@ public class PortFmi2Api implements Fmi2Builder.Port {
     }
 
     public String getMultiModelScalarVariableName() {
-        return this.aMablFmi2ComponentAPI.getOwner().getFmuIdentifier() + "." + this.aMablFmi2ComponentAPI.getEnvironmentName() + "." +
-                this.getName();
+        return getQualifiedName();
     }
 
     public String getMultiModelScalarVariableNameWithoutFmu() {
