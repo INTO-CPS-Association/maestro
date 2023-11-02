@@ -46,6 +46,10 @@ public class Fmi3Interpreter {
 
     static final ExternalReflectCallHelper.ArgMapping intInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Int, 1,
             ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
+
+    static final ExternalReflectCallHelper.ArgMapping longInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Long, 1,
+            ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
+
     static final ExternalReflectCallHelper.ArgMapping doubleInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Real, 1,
             ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
 
@@ -53,6 +57,12 @@ public class Fmi3Interpreter {
             ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
 
     static final ExternalReflectCallHelper.ArgMapping doubleArrayInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Real, 2,
+            ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
+
+    static final ExternalReflectCallHelper.ArgMapping boolArrayInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Bool, 2,
+            ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
+
+    static final ExternalReflectCallHelper.ArgMapping intArrayInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Int, 2,
             ExternalReflectCallHelper.ArgMapping.InOut.Input, null);
 
     static final ExternalReflectCallHelper.ArgMapping longArrayInArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Long, 2,
@@ -301,7 +311,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
 
     private static Value getFmuInstanceValue(BufferedOutputStream fmuLogOutputStream, IFmi3Instance instance,
-            Function<String, AModuleDeclaration> resolver) throws NoSuchMethodException {
+                                             Function<String, AModuleDeclaration> resolver) throws NoSuchMethodException {
 
         //populate component functions
         var module = resolver.apply("FMI3Instance");
@@ -393,6 +403,144 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
         }));
 
+
+        functions.put("getOutputDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            // int getOutputDerivatives(uint valueReferences[], int nValueReferences,
+            //                      int orders[], out real values[], out int nValues);
+
+            checkArgLength(fcargs, 5);
+            try {
+                FmuResult<double[]> res = instance.getOutputDerivatives((long[]) longArrayInArgMapper.map(fcargs.get(0)),
+                        (int[]) intArrayInArgMapper.map(fcargs.get(2)));
+                doubleArrayOutArgMapper.mapOut(fcargs.get(3), res.result);
+                return status2IntValue(res.status);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("getShiftDecimal", new FunctionValue.ExternalFunctionValue(fcargs->{
+            // int getShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+
+            checkArgLength(fcargs, 3);
+            try {
+                FmuResult<double[]> res = instance.getShiftDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                doubleArrayOutArgMapper.mapOut(fcargs.get(2), res.result);
+                return status2IntValue(res.status);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("getShiftFraction", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            //  int getShiftFraction(uint valueReferences[], int nValueReferences, out uint shiftCounters[], out uint resolutions[]);
+
+            checkArgLength(fcargs, 4);
+            try {
+                FmuResult<IFmi3Instance.GetShiftFractionResponse> res = instance.getShiftFraction((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                uintArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getShiftCounters());
+                uintArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getResolutions());
+                return status2IntValue(res.status);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("getVariableDependencies", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            //  int getVariableDependencies(uint dependent, out int elementIndicesOfDependent[], out uint independents[],
+            //              out uint elementIndicesOfIndependents[], out int dependencyKinds[], int nDependencies);
+            checkArgLength(fcargs, 6);
+            try {
+                FmuResult<IFmi3Instance.VariableDependency> res = instance.getVariableDependencies((long) longInArgMapper.map(fcargs.get(0)), (long) intInArgMapper.map(fcargs.get(5)));
+                intArrayOutArgMapper.mapOut(fcargs.get(1), res.result.getElementIndicesOfDependent());
+                longArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getIndependents());
+                longArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getElementIndicesOfIndependents());
+                intArrayOutArgMapper.mapOut(fcargs.get(4), res.result.getDependencyKinds());
+                return status2IntValue(res.status);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("setClock", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setClock(uint valueReferences[], int nValueReferences, bool values[]);
+            checkArgLength(fcargs, 3);
+            try {
+                Fmi3Status res = instance.setClock((long[]) longArrayInArgMapper.map(fcargs.get(0)), (boolean[]) boolArrayInArgMapper.map(fcargs.get(2)));
+                return new IntegerValue(res.value);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("setContinuousStates", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setContinuousStates(real continuousStates[], int nContinuousStates);
+            checkArgLength(fcargs, 2);
+            try {
+                Fmi3Status res = instance.setContinuousStates((double[]) doubleArrayInArgMapper.map(fcargs.get(0)));
+                return new IntegerValue(res.value);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("setIntervalDecimal", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setIntervalDecimal(uint valueReferences[], int nValueReferences, real interval[]);
+            checkArgLength(fcargs, 3);
+            try {
+                Fmi3Status res = instance.setIntervalDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)), (double[]) doubleArrayInArgMapper.map(fcargs.get(2)));
+                return new IntegerValue(res.value);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("setIntervalFraction", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setIntervalFraction(uint valueReferences[], int nValueReferences, uint intervalCounter[], uint resolution[]);
+            checkArgLength(fcargs, 4);
+            try {
+                Fmi3Status res = instance.setIntervalFraction((long[]) longArrayInArgMapper.map(fcargs.get(0)),
+                        (long[]) longArrayInArgMapper.map(fcargs.get(2)), (long[]) longArrayInArgMapper.map(fcargs.get(3)));
+                return new IntegerValue(res.value);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
+        functions.put("setShiftDecimal", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+            checkArgLength(fcargs, 3);
+            Fmi3Status res = instance.setShiftDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)), (double[]) doubleArrayInArgMapper.map(fcargs.get(2)));
+            return new IntegerValue(res.value);
+        }));
+
+        functions.put("setShiftFraction", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setShiftFraction(uint valueReferences[], int nValueReferences, uint counters[], uint resolutions[]);
+            checkArgLength(fcargs, 4);
+            Fmi3Status res = instance.setShiftFraction((long[]) longArrayInArgMapper.map(fcargs.get(0)),
+                    (long[]) longArrayInArgMapper.map(fcargs.get(2)), (long[]) longArrayInArgMapper.map(fcargs.get(3)));
+            return new IntegerValue(res.value);
+        }));
+
+        functions.put("updateDiscreteStates", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int updateDiscreteStates(bool[] discreteStatesNeedUpdate, bool[] terminateSimulation,
+//                    bool[] nominalsOfContinuousStatesChanged, bool[] valuesOfContinuousStatesChanged, bool[] nextEventTimeDefined,
+//                    real[] nextEventTime);
+            checkArgLength(fcargs, 6);
+            try {
+                FmuResult<IFmi3Instance.UpdateDiscreteStates> res = instance.updateDiscreteStates();
+                boolArrayOutArgMapper.mapOut(fcargs.get(0), new boolean[]{res.result.isDiscreteStatesNeedUpdate()});
+                boolArrayOutArgMapper.mapOut(fcargs.get(1), new boolean[]{res.result.isTerminateSimulation()});
+                boolArrayOutArgMapper.mapOut(fcargs.get(2), new boolean[]{res.result.isNominalsOfContinuousStatesChanged()});
+                boolArrayOutArgMapper.mapOut(fcargs.get(3), new boolean[]{res.result.isValuesOfContinuousStatesChanged()});
+                boolArrayOutArgMapper.mapOut(fcargs.get(4), new boolean[]{res.result.isNextEventTimeDefined()});
+                doubleArrayOutArgMapper.mapOut(fcargs.get(5), new double[]{res.result.getNextEventTime()});
+                return status2IntValue(res.status);
+            } catch (FmuInvocationException e) {
+                throw new InterpreterException(e);
+            }
+        }));
+
         functions.put("getClock", new FunctionValue.ExternalFunctionValue(fcargs -> {
             // int getClock(uint valueReferences[], int nValueReferences, bool values[]);
 
@@ -404,8 +552,8 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
             }
-
         }));
+
 
 
         functions.put("getContinuousStateDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {

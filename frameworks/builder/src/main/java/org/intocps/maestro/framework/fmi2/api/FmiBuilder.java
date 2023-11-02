@@ -791,7 +791,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     }
 
     /**
-     * Interface for an fmi compoennt.
+     * Interface for an fmi component.
      * <p>
      * Note that all methods that do not take a scope uses the builders dynamic scope and adds the underlying instructions int he active scope.
      *

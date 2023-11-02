@@ -1,0 +1,664 @@
+simulation 
+import BooleanLogic;
+import DataWriter;
+import DataWriterConfig;
+import FMI2;
+import FMI2Component;
+import Logger;
+import Math;
+import SimulationControl;
+{
+ 	int status = 0;
+	Math math = null;
+	Logger logger = null;
+	DataWriter dataWriter = null;
+	BooleanLogic booleanLogic = null;
+	@mapFmu(x1 -> "{x1}");
+	FMI2 x1 = null;
+	@mapFmu(x2 -> "{x2}");
+	FMI2 x2 = null;
+	@mapInstance(controller -> "controller");
+	FMI2Component controller = null;
+	@mapInstance(tank -> "tank");
+	FMI2Component tank = null;
+	try 
+	{
+		math = load("Math");
+		if( ((math == null)) )
+		{
+				error "math IS NULL ";
+		}
+		logger = load("Logger");
+		if( ((logger == null)) )
+		{
+				error "logger IS NULL ";
+		}
+		dataWriter = load("DataWriter");
+		if( ((dataWriter == null)) )
+		{
+				error "dataWriter IS NULL ";
+		}
+		booleanLogic = load("BooleanLogic");
+		if( ((booleanLogic == null)) )
+		{
+				error "booleanLogic IS NULL ";
+		}
+		x1 = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "file:/C:/Users/nikol/Desktop/maestro/maestro/src/test/resources/watertankcontroller-c.fmu");
+		if( ((x1 == null)) )
+		{
+				error "x1 IS NULL ";
+		}
+		x2 = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}", "file:/C:/Users/nikol/Desktop/maestro/maestro/src/test/resources/singlewatertank-20sim.fmu");
+		if( ((x2 == null)) )
+		{
+				error "x2 IS NULL ";
+		}
+		controller = x1.instantiate("controller", false, false);
+		if( ((controller == null)) )
+		{
+				error "controller IS NULL ";
+		}
+		tank = x2.instantiate("tank", false, false);
+		if( ((tank == null)) )
+		{
+				error "tank IS NULL ";
+		}
+		real STEP_SIZE = 0.1;
+		real START_TIME = 0.0;
+		real END_TIME = 10.0;
+		int FMI_OK = 0;
+		int FMI_DISCARD = 2;
+		int FMI_ERROR = 3;
+		int FMI_FATAL = 4;
+		BooleanLogic booleanLogic1;
+		try 
+		{
+			booleanLogic1 = load("BooleanLogic");
+			if( (booleanLogic1 == null) )
+			{
+					error "Failed load of: booleanLogic1";
+			}
+			real tankRealShare[1];
+			bool controllerBoolShare[1];
+			bool controllerBoolIo[4];
+			real tankRealIo[22];
+			uint tankUintVref[22];
+			real controllerRealIo[4];
+			uint controllerUintVref[4];
+			real fixed_end_time = 0.0;
+			fixed_end_time = END_TIME;
+			status = controller.setupExperiment(true, 0.1, START_TIME, true, END_TIME);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetupExperiment failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetupExperiment failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'setupExperiment' on 'controller'";
+			}
+			status = tank.setupExperiment(true, 0.1, START_TIME, true, END_TIME);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetupExperiment failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetupExperiment failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setupExperiment' on 'tank'";
+			}
+			controllerUintVref[0] = 0;
+			controllerRealIo[0] = 2.0;
+			status = controller.setReal(controllerUintVref, 1, controllerRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'setReal' on 'controller'";
+			}
+			controllerUintVref[0] = 1;
+			controllerRealIo[0] = 1.0;
+			status = controller.setReal(controllerUintVref, 1, controllerRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'setReal' on 'controller'";
+			}
+			tankUintVref[0] = 0;
+			tankRealIo[0] = 9.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 1;
+			tankRealIo[0] = 1.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 2;
+			tankRealIo[0] = 1.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 3;
+			tankRealIo[0] = 9.81;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 4;
+			tankRealIo[0] = 1.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 5;
+			tankRealIo[0] = 0.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 6;
+			tankRealIo[0] = 0.0;
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			status = controller.enterInitializationMode();
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "EnterInitializationMode failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "EnterInitializationMode failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'enterInitializationMode' on 'controller'";
+			}
+			status = tank.enterInitializationMode();
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "EnterInitializationMode failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "EnterInitializationMode failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'enterInitializationMode' on 'tank'";
+			}
+			controllerUintVref[0] = 4;
+			status = controller.getBoolean(controllerUintVref, 1, controllerBoolIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'getBoolean' on 'controller'";
+			}
+			controllerBoolShare[0] = controllerBoolIo[0];
+			tankUintVref[0] = 16;
+			if( (controllerBoolShare[0]) )
+			{
+					tankRealIo[0] = 1.0;
+			}
+			else
+			{
+					tankRealIo[0] = 0.0;
+			}
+			status = tank.setReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'setReal' on 'tank'";
+			}
+			tankUintVref[0] = 17;
+			status = tank.getReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'getReal' on 'tank'";
+			}
+			tankRealShare[0] = tankRealIo[0];
+			controllerUintVref[0] = 3;
+			controllerRealIo[0] = tankRealShare[0];
+			status = controller.setReal(controllerUintVref, 1, controllerRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'setReal' on 'controller'";
+			}
+			status = controller.exitInitializationMode();
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "ExitInitializationMode failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "ExitInitializationMode failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'exitInitializationMode' on 'controller'";
+			}
+			status = tank.exitInitializationMode();
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "ExitInitializationMode failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "ExitInitializationMode failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'exitInitializationMode' on 'tank'";
+			}
+		}		finally 
+		{
+			if( (booleanLogic1 != null) )
+			{
+					unload(booleanLogic1);
+					booleanLogic1 = null;
+			}
+		}
+		BooleanLogic booleanLogic2;
+		DataWriter dataWriter1;
+		SimulationControl simulationControl;
+		try 
+		{
+			simulationControl = load("SimulationControl");
+			if( (simulationControl == null) )
+			{
+					error "Failed load of: simulationControl";
+			}
+			dataWriter1 = load("DataWriter");
+			if( (dataWriter1 == null) )
+			{
+					error "Failed load of: dataWriter1";
+			}
+			booleanLogic2 = load("BooleanLogic");
+			if( (booleanLogic2 == null) )
+			{
+					error "Failed load of: booleanLogic2";
+			}
+			bool tankCurrentTimeFullStep = true;
+			real tankCurrentTime = 0.0;
+			bool controllerCurrentTimeFullStep = true;
+			real controllerCurrentTime = 0.0;
+			real controllerRealIo[4];
+			bool controllerBoolShare[1];
+			real tankRealShare[1];
+			real tankRealIo[22];
+			uint tankUintVref[22];
+			bool controllerBoolIo[4];
+			uint controllerUintVref[4];
+			real jac_current_step_size = 0.0;
+			real jac_step_size = 0.0;
+			@TransferAs("START_TIME");
+			real jac_current_communication_point = 0.0;
+			real jac_end_time = 0.0;
+			jac_current_step_size = STEP_SIZE;
+			jac_step_size = STEP_SIZE;
+			jac_current_communication_point = START_TIME;
+			jac_end_time = END_TIME;
+			string datawriter_headers[2] = { "{x1}.controller.valve" , "{x2}.tank.level" };
+			DataWriterConfig datawriter_configuration = dataWriter1.writeHeader(datawriter_headers);
+			controllerUintVref[0] = 4;
+			status = controller.getBoolean(controllerUintVref, 1, controllerBoolIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_ERROR", controller);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "GetBoolean failed on '%s' with status: FMI_FATAL", controller);
+					}
+					error "Failed to 'getBoolean' on 'controller'";
+			}
+			tankUintVref[0] = 17;
+			status = tank.getReal(tankUintVref, 1, tankRealIo);
+			if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+			{
+					if( (status == FMI_ERROR) )
+					{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_ERROR", tank);
+					}
+					if( (status == FMI_FATAL) )
+					{
+							logger.log(4, "GetReal failed on '%s' with status: FMI_FATAL", tank);
+					}
+					error "Failed to 'getReal' on 'tank'";
+			}
+			tankRealShare[0] = tankRealIo[0];
+			controllerBoolShare[0] = controllerBoolIo[0];
+			real fmu_communicationpoints[2];
+			dataWriter1.writeDataPoint(datawriter_configuration, jac_current_communication_point, controllerBoolShare[0], tankRealShare[0]);
+			bool any_discards = false;
+			while( (!true || ((jac_current_communication_point + jac_current_step_size) < jac_end_time)) )
+			{
+				bool tmp = simulationControl.stopRequested();
+				if( (tmp) )
+				{
+						error "Simulation stopped by user";
+				}
+				@Transfer();
+				controllerUintVref[0] = 3;
+				controllerRealIo[0] = tankRealShare[0];
+				status = controller.setReal(controllerUintVref, 1, controllerRealIo);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", controller);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", controller);
+						}
+						error "Failed to 'setReal' on 'controller'";
+				}
+				tankUintVref[0] = 16;
+				if( (controllerBoolShare[0]) )
+				{
+						tankRealIo[0] = 1.0;
+				}
+				else
+				{
+						tankRealIo[0] = 0.0;
+				}
+				status = tank.setReal(tankUintVref, 1, tankRealIo);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "SetReal failed on '%s' with status: FMI_ERROR", tank);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "SetReal failed on '%s' with status: FMI_FATAL", tank);
+						}
+						error "Failed to 'setReal' on 'tank'";
+				}
+				any_discards = false;
+				status = controller.doStep(jac_current_communication_point, jac_current_step_size, false);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "DoStep failed on '%s' with status: FMI_ERROR", controller);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "DoStep failed on '%s' with status: FMI_FATAL", controller);
+						}
+						error "Failed to 'doStep' on 'controller'";
+				}
+				if( (status != FMI_OK) )
+				{
+						if( (status == FMI_DISCARD) )
+						{
+								status = controller.getRealStatus(2, ref controllerCurrentTime);
+								controllerCurrentTimeFullStep = false;
+						}
+				}
+				else
+				{
+						controllerCurrentTime = jac_current_communication_point + jac_current_step_size;
+						controllerCurrentTimeFullStep = true;
+				}
+				fmu_communicationpoints[0] = controllerCurrentTime;
+				if( (!controllerCurrentTimeFullStep) )
+				{
+						logger.log(1, "## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", "controller", jac_current_communication_point, jac_current_step_size, controllerCurrentTime);
+						any_discards = any_discards || !controllerCurrentTimeFullStep;
+				}
+				status = tank.doStep(jac_current_communication_point, jac_current_step_size, false);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "DoStep failed on '%s' with status: FMI_ERROR", tank);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "DoStep failed on '%s' with status: FMI_FATAL", tank);
+						}
+						error "Failed to 'doStep' on 'tank'";
+				}
+				if( (status != FMI_OK) )
+				{
+						if( (status == FMI_DISCARD) )
+						{
+								status = tank.getRealStatus(2, ref tankCurrentTime);
+								tankCurrentTimeFullStep = false;
+						}
+				}
+				else
+				{
+						tankCurrentTime = jac_current_communication_point + jac_current_step_size;
+						tankCurrentTimeFullStep = true;
+				}
+				fmu_communicationpoints[1] = tankCurrentTime;
+				if( (!tankCurrentTimeFullStep) )
+				{
+						logger.log(1, "## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", "tank", jac_current_communication_point, jac_current_step_size, tankCurrentTime);
+						any_discards = any_discards || !tankCurrentTimeFullStep;
+				}
+				tankUintVref[0] = 17;
+				status = tank.getReal(tankUintVref, 1, tankRealIo);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "GetReal failed on '%s' with status: FMI_ERROR", tank);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "GetReal failed on '%s' with status: FMI_FATAL", tank);
+						}
+						error "Failed to 'getReal' on 'tank'";
+				}
+				controllerUintVref[0] = 4;
+				status = controller.getBoolean(controllerUintVref, 1, controllerBoolIo);
+				if( ((status == FMI_ERROR) || (status == FMI_FATAL)) )
+				{
+						if( (status == FMI_ERROR) )
+						{
+								logger.log(4, "GetBoolean failed on '%s' with status: FMI_ERROR", controller);
+						}
+						if( (status == FMI_FATAL) )
+						{
+								logger.log(4, "GetBoolean failed on '%s' with status: FMI_FATAL", controller);
+						}
+						error "Failed to 'getBoolean' on 'controller'";
+				}
+				tankRealShare[0] = tankRealIo[0];
+				controllerBoolShare[0] = controllerBoolIo[0];
+				if( (!any_discards) )
+				{
+						jac_current_communication_point = jac_current_communication_point + jac_current_step_size;
+						dataWriter1.writeDataPoint(datawriter_configuration, jac_current_communication_point, controllerBoolShare[0], tankRealShare[0]);
+						jac_current_step_size = jac_step_size;
+				}
+			}
+			dataWriter1.close();
+		}		finally 
+		{
+			if( (simulationControl != null) )
+			{
+					unload(simulationControl);
+					simulationControl = null;
+			}
+			if( (dataWriter1 != null) )
+			{
+					unload(dataWriter1);
+					dataWriter1 = null;
+			}
+			if( (booleanLogic2 != null) )
+			{
+					unload(booleanLogic2);
+					booleanLogic2 = null;
+			}
+		}
+		controller.terminate();
+		tank.terminate();
+	}	finally 
+	{
+		if( ((controller != null)) )
+		{
+				x1.freeInstance(controller);
+				controller = null;
+		}
+		if( ((tank != null)) )
+		{
+				x2.freeInstance(tank);
+				tank = null;
+		}
+		if( ((x1 != null)) )
+		{
+				unload(x1);
+				x1 = null;
+		}
+		if( ((x2 != null)) )
+		{
+				unload(x2);
+				x2 = null;
+		}
+		if( ((math != null)) )
+		{
+				unload(math);
+				math = null;
+		}
+		if( ((logger != null)) )
+		{
+				unload(logger);
+				logger = null;
+		}
+		if( ((dataWriter != null)) )
+		{
+				unload(dataWriter);
+				dataWriter = null;
+		}
+		if( ((booleanLogic != null)) )
+		{
+				unload(booleanLogic);
+				booleanLogic = null;
+		}
+	}
+}
