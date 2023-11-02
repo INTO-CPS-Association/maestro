@@ -216,9 +216,9 @@ module FMI3Instance import FMU3State;{
         /* end::EvaluateDiscreteStates[] */
     
         /* tag::UpdateDiscreteStates[] */
-        int updateDiscreteStates(bool[] discreteStatesNeedUpdate, bool[] terminateSimulation,
-                bool[] nominalsOfContinuousStatesChanged, bool[] valuesOfContinuousStatesChanged, bool[] nextEventTimeDefined,
-                real[] nextEventTime);
+        int updateDiscreteStates(out bool[] discreteStatesNeedUpdate, out bool[] terminateSimulation,
+                out bool[] nominalsOfContinuousStatesChanged, out bool[] valuesOfContinuousStatesChanged, out bool[] nextEventTimeDefined,
+                out real[] nextEventTime);
         /* end::UpdateDiscreteStates[] */
     
         /***************************************************

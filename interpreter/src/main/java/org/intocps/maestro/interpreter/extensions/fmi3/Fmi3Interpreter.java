@@ -523,9 +523,9 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
         }));
 
         functions.put("updateDiscreteStates", new FunctionValue.ExternalFunctionValue(fcargs -> {
-//            int updateDiscreteStates(bool[] discreteStatesNeedUpdate, bool[] terminateSimulation,
-//                    bool[] nominalsOfContinuousStatesChanged, bool[] valuesOfContinuousStatesChanged, bool[] nextEventTimeDefined,
-//                    real[] nextEventTime);
+//            int updateDiscreteStates(out bool[] discreteStatesNeedUpdate, out bool[] terminateSimulation,
+//            out bool[] nominalsOfContinuousStatesChanged, out bool[] valuesOfContinuousStatesChanged, out bool[] nextEventTimeDefined,
+//            out real[] nextEventTime);
             checkArgLength(fcargs, 6);
             try {
                 FmuResult<IFmi3Instance.UpdateDiscreteStates> res = instance.updateDiscreteStates();
