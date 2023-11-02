@@ -672,8 +672,8 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 .filter(r -> r.getTargets().values().stream().anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu())))
                 .findFirst();
         if (relation.isPresent()) {
-            String source = relation.get().getSource().scalarVariable.instance.getText();
-            sourcePort = fmuInstances.get(source).getPort(relation.get().getSource().scalarVariable.scalarVariable.getName());
+            String source = relation.get().getSource().getInstance().getText();
+            sourcePort = fmuInstances.get(source).getPort(relation.get().getSource().getName());
         }
         return sourcePort;
     }
@@ -685,7 +685,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
                 .filter(r -> r.getTargets().values().stream().anyMatch(v -> v.toString().equals(port.getMultiModelScalarVariableNameWithoutFmu())))
                 .findFirst();
         if (relation.isPresent()) {
-            String source = relation.get().getSource().scalarVariable.instance.getText();
+            String source = relation.get().getSource().getInstance().getText();
             Optional<Map.Entry<String, ModelSwapInfo>> infoEntry =
                     env.getModelSwaps().stream().filter(e -> e.getValue().swapInstance.equals(source)).findFirst();
             if (infoEntry.isPresent()) {

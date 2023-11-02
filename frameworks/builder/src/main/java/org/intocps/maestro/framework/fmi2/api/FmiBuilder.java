@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public interface FmiBuilder<S, B, E, SETTINGS> {
+public interface FmiBuilder<AST, B, E, SETTINGS> {
     B build() throws Exception;
 
     SETTINGS getSettings();
@@ -31,18 +31,18 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
 
     PStm buildRaw() throws Exception;
 
-    RuntimeModule<S> loadRuntimeModule(String name, Object... args);
+    RuntimeModule<AST> loadRuntimeModule(String name, Object... args);
 
-    RuntimeModule<S> loadRuntimeModule(TryScope<S> scope, String name, Object... args);
+    RuntimeModule<AST> loadRuntimeModule(TryScope<AST> scope, String name, Object... args);
 
     /**
      * Gets the default scope
      *
      * @return
      */
-    Scope<S> getRootScope();
+    Scope<AST> getRootScope();
 
-    DynamicActiveScope<S> getDynamicScope();
+    DynamicActiveScope<AST> getDynamicScope();
 
     /**
      * Gets a tag to the last value obtained for the given port
@@ -52,18 +52,18 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
      */
     <V, T> Variable<T, V> getCurrentLinkedValue(Port port);
 
-    DoubleVariable<S> getDoubleVariableFrom(E exp);
+    DoubleVariable<AST> getDoubleVariableFrom(E exp);
 
-    IntVariable<S> getIntVariableFrom(E exp);
+    IntVariable<AST> getIntVariableFrom(E exp);
 
-    StringVariable<S> getStringVariableFrom(E exp);
+    StringVariable<AST> getStringVariableFrom(E exp);
 
-    BoolVariable<S> getBooleanVariableFrom(E exp);
+    BoolVariable<AST> getBooleanVariableFrom(E exp);
 
     <V, T> Variable<T, V> getFmuVariableFrom(E exp);
 
 
-    interface RuntimeModule<S> extends FmiBuilder.Variable<S, NamedVariable<S>> {
+    interface RuntimeModule<AST> extends FmiBuilder.Variable<AST, NamedVariable<AST>> {
         void initialize(List<RuntimeFunction> declaredFuncs);
 
         void initialize(RuntimeFunction... declaredFuncs);
@@ -71,11 +71,11 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
         //not sure how to allow a mix of double, int and var except for object
         void callVoid(RuntimeFunction functionId, Object... args);
 
-        void callVoid(Scope<S> scope, RuntimeFunction functionId, Object... args);
+        void callVoid(Scope<AST> scope, RuntimeFunction functionId, Object... args);
 
-        <V> Variable<S, V> call(Scope<S> scope, RuntimeFunction functionId, Object... args);
+        <V> Variable<AST, V> call(Scope<AST> scope, RuntimeFunction functionId, Object... args);
 
-        <V> Variable<S, V> call(RuntimeFunction functionId, Object... args);
+        <V> Variable<AST, V> call(RuntimeFunction functionId, Object... args);
 
         //        void destroy();
         //
@@ -116,7 +116,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
         boolean usingVargs();
 
 
-        static public class FunctionType {
+        class FunctionType {
             final Type nativeType;
             final String namedType;
 
@@ -160,23 +160,23 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     /**
      * Scoping element which defines a scope like a block, if, while etc.
      *
-     * @param <T> the type the scoping element encloses
+     * @param <AST> the type the scoping element encloses
      */
 
-    interface ScopeElement<T> {
+    interface ScopeElement<AST> {
         /**
          * The parent element of this element or null if root
          *
          * @return the parent
          */
-        ScopeElement<T> parent();
+        ScopeElement<AST> parent();
 
         /**
          * The declaration node that defined the underlying scope
          *
          * @return the scope
          */
-        T getDeclaration();
+        AST getDeclaration();
 
         /**
          * Find a prent element of a specific type
@@ -185,36 +185,36 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param <P> the type of class
          * @return the parent of the specified type or null
          */
-        <P extends ScopeElement<T>> P findParent(Class<P> clz);
+        <P extends ScopeElement<AST>> P findParent(Class<P> clz);
     }
 
 
     /**
      * Scoping functions
      */
-    interface Scoping<T> extends ScopeElement<T> {
-        WhileScope<T> enterWhile(Predicate predicate);
+    interface Scoping<AST> extends ScopeElement<AST> {
+        WhileScope<AST> enterWhile(Predicate predicate);
 
-        IfScope<T> enterIf(Predicate predicate);
+        IfScope<AST> enterIf(Predicate predicate);
 
-        TryScope<T> enterTry();
+        TryScope<AST> enterTry();
 
-        Scoping<T> parallel();
+        Scoping<AST> parallel();
 
-        Scoping<T> enterScope();
+        Scoping<AST> enterScope();
 
-        Scope<T> leave();
+        Scope<AST> leave();
 
 
-        void add(T... commands);
+        void add(AST... commands);
 
-        void addAll(Collection<T> commands);
+        void addAll(Collection<AST> commands);
 
-        void addBefore(T item, T... commands);
+        void addBefore(AST item, AST... commands);
 
-        void addAfter(T item, T... commands);
+        void addAfter(AST item, AST... commands);
 
-        Scoping<T> activate();
+        Scoping<AST> activate();
 
 
     }
@@ -222,9 +222,9 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     /**
      * Basic scope. Allows a value to be stored or override a tag
      */
-    interface Scope<T> extends Scoping<T> {
+    interface Scope<AST> extends Scoping<AST> {
         @Override
-        Scope<T> activate();
+        Scope<AST> activate();
 
         /**
          * Store a given value
@@ -232,13 +232,13 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param value
          * @return
          */
-        DoubleVariable<T> store(double value);
+        DoubleVariable<AST> store(double value);
 
-        StringVariable<T> store(String value);
+        StringVariable<AST> store(String value);
 
-        BoolVariable<T> store(boolean value);
+        BoolVariable<AST> store(boolean value);
 
-        IntVariable<T> store(int value);
+        IntVariable<AST> store(int value);
 
         /**
          * Store a given value with a prefix name
@@ -246,15 +246,15 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param value
          * @return
          */
-        DoubleVariable<T> store(String name, double value);
+        DoubleVariable<AST> store(String name, double value);
 
-        StringVariable<T> store(String name, String value);
+        StringVariable<AST> store(String name, String value);
 
-        BoolVariable<T> store(String name, boolean value);
+        BoolVariable<AST> store(String name, boolean value);
 
-        IntVariable<T> store(String name, int value);
+        IntVariable<AST> store(String name, int value);
 
-        <CV> ArrayVariable<T, CV> store(String name, CV value[]);
+        <CV> ArrayVariable<AST, CV> store(String name, CV value[]);
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -263,11 +263,11 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @return
          */
         @Deprecated
-        <V> Variable<T, V> store(Value<V> tag);
+        <V> Variable<AST, V> store(Value<V> tag);
 
-        <PS> Fmu2Variable<T, PS> createFMU(String name, String loaderName, String... args) throws Exception;
+        <PS> Fmu2Variable<AST, PS> createFMU(String name, String loaderName, String... args) throws Exception;
 
-        <PS> Fmu3Variable<T> createFMU3(String name, String loaderName, String... args) throws Exception;
+        <PS> Fmu3Variable<AST> createFMU3(String name, String loaderName, String... args) throws Exception;
 
         void markTransferPoint(String... names);
 
@@ -278,61 +278,61 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     /**
      * Dynamic scope which always reflects the current active scope of the builder
      */
-    interface DynamicActiveScope<T> extends Scope<T> {
+    interface DynamicActiveScope<AST> extends Scope<AST> {
 
     }
 
     /**
      * If scope, default scope is then
      */
-    interface IfScope<T> extends ScopeElement<T> {
+    interface IfScope<AST> extends ScopeElement<AST> {
         /**
          * Switch to then scope
          *
          * @return
          */
-        Scope<T> enterThen();
+        Scope<AST> enterThen();
 
         /**
          * Switch to else scope
          *
          * @return
          */
-        Scope<T> enterElse();
+        Scope<AST> enterElse();
 
-        Scope<T> leave();
+        Scope<AST> leave();
     }
 
     /**
      * Try finally scope, default scope is body
      */
-    interface TryScope<T> extends ScopeElement<T> {
+    interface TryScope<AST> extends ScopeElement<AST> {
         /**
          * Switch to body scope
          *
          * @return
          */
-        Scope<T> enter();
+        Scope<AST> enter();
 
         /**
          * Switch to finally scope
          *
          * @return
          */
-        Scope<T> enterFinally();
+        Scope<AST> enterFinally();
 
-        Scope<T> leave();
+        Scope<AST> leave();
 
 
-        Scope<T> getBody();
+        Scope<AST> getBody();
 
-        Scope<T> getFinallyBody();
+        Scope<AST> getFinallyBody();
     }
 
     /**
      * While
      */
-    interface WhileScope<T> extends Scope<T>, ScopeElement<T> {
+    interface WhileScope<AST> extends Scope<AST>, ScopeElement<AST> {
 
     }
 
@@ -356,7 +356,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     }
 
 
-    interface Port<T> {
+    interface Port<PORT_SCALAR_TYPE, AST> {
 
         /**
          * Gets the fully qualified port name including its source reference. Often on the form source.name
@@ -365,12 +365,20 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          */
         String getQualifiedName();
 
+
+        /**
+         * Get the owner of this port. This is the object that should be used to get/set its values
+         *
+         * @return the instance owning the port
+         */
+        FmiSimulationInstance<AST, PORT_SCALAR_TYPE> getOwner();
+
         /**
          * Gets the underlying objects from which the port is created
          *
          * @return
          */
-        T getSourceObject();
+        PORT_SCALAR_TYPE getSourceObject();
 
         /**
          * Get the port name
@@ -391,7 +399,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          *
          * @param receiver
          */
-        void linkTo(Port<T>... receiver) throws PortLinkException;
+        void linkTo(Port< PORT_SCALAR_TYPE,AST>... receiver) throws PortLinkException;
 
         /**
          * Break the source link
@@ -439,7 +447,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     }
 
 
-    interface IntVariable<T> extends Variable<T, IntExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+    interface IntVariable<AST> extends Variable<AST, IntExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
         void decrement();
 
         void increment();
@@ -456,12 +464,12 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     interface NumericTypedReferenceExp extends ProvidesTypedReferenceExp {
     }
 
-    interface DoubleVariable<T> extends Variable<T, DoubleExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+    interface DoubleVariable<AST> extends Variable<AST, DoubleExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
 
         void set(Double value);
     }
 
-    interface BoolVariable<T> extends Variable<T, BooleanExpressionValue>, ProvidesTypedReferenceExp {
+    interface BoolVariable<AST> extends Variable<AST, BooleanExpressionValue>, ProvidesTypedReferenceExp {
         Predicate toPredicate();
     }
 
@@ -470,10 +478,10 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     }
 
 
-    interface NamedVariable<T> extends Variable<T, NamedValue> {
+    interface NamedVariable<AST> extends Variable<AST, NamedValue> {
     }
 
-    interface StateVariable<T> extends Variable<T, Object> {
+    interface StateVariable<AST> extends Variable<AST, Object> {
         /**
          * Sets this state on the owning component in the active scope
          */
@@ -482,7 +490,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
         /**
          * Sets this state on the owning component in the given scope
          */
-        void set(Scope<T> scope) throws IllegalStateException;
+        void set(Scope<AST> scope) throws IllegalStateException;
 
         /**
          * Destroys the state in the active scope. After this no other operation on the state is allowed
@@ -492,17 +500,17 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
         /**
          * Destroys the state in the active scope. After this no other operation on the state is allowed
          */
-        void destroy(Scope<T> scope) throws IllegalStateException;
+        void destroy(Scope<AST> scope) throws IllegalStateException;
     }
 
 
     /**
      * Handle for an fmu for the creation of component
      */
-    interface Fmu2Variable<S, PS> extends Variable<S, NamedVariable<S>> {
-        Fmi2ComponentVariable<S, PS> instantiate(String name, String environmentname);
+    interface Fmu2Variable<AST, PORT_SCALAR_TYPE> extends Variable<AST, NamedVariable<AST>> {
+        Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String name, String environmentname);
 
-        Fmi2ComponentVariable<S, PS> instantiate(String name);
+        Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String name);
 
         //    /**
         //     * Performs null check and frees the instance
@@ -520,12 +528,13 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
         //            throw new RuntimeException("Argument is not an FMU instance - it is not an instance of ComponentVariableFmi2API");
         //        }
         //    }
-        Fmi2ComponentVariable<S, PS> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope, String environmentName);
+        Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope,
+                String environmentName);
 
-        Fmi2ComponentVariable<S, PS> instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope, FmiBuilder.Scope<PStm> scope,
-                String environmentName, boolean loggingOn);
+        Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope,
+                FmiBuilder.Scope<PStm> scope, String environmentName, boolean loggingOn);
 
-        Fmi2ComponentVariable<S, PS> instantiate(String name, TryScope<S> enclosingTryScope, Scope<S> scope);
+        Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String name, TryScope<AST> enclosingTryScope, Scope<AST> scope);
 
         //void freeInstance(Fmi2ComponentVariable<S> comp);
 
@@ -539,7 +548,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     /**
      * Handle for an fmu for the creation of component
      */
-    interface Fmu3Variable<S> extends Variable<S, NamedVariable<S>> {
+    interface Fmu3Variable<AST> extends Variable<AST, NamedVariable<AST>> {
 
 
     }
@@ -547,18 +556,18 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
     /**
      * Generic type for all simulation instances
      *
-     * @param <T>
+     * @param <AST>
      */
-    interface SimulationInstance<T> extends Variable<T, NamedVariable<T>> {
+    interface SimulationInstance<AST> extends Variable<AST, NamedVariable<AST>> {
     }
 
     /**
      * Type that represents common FMI functions accross versions for now 2 and 3
      *
-     * @param <T>  the construction type. Often a kind of AST statement
-     * @param <PS> the port internal reference type. Often a kind of scalar variable from FMI
+     * @param <AST>              the construction type. Often a kind of AST statement
+     * @param <PORT_SCALAR_TYPE> the port internal reference type. Often a kind of scalar variable from FMI
      */
-    interface FmiSimulationInstance<T, PS> extends SimulationInstance<T> {
+    interface FmiSimulationInstance<AST, PORT_SCALAR_TYPE> extends SimulationInstance<AST> {
 
         void setDebugLogging(List<String> categories, boolean enableLogging);
 
@@ -570,19 +579,20 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
          * @return
          */
-        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
-                DoubleVariable<T> communicationStepSize, BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
+                DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(Scope<T> scope, DoubleVariable<T> currentCommunicationPoint,
-                DoubleVariable<T> communicationStepSize);
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
+                DoubleVariable<AST> communicationStepSize);
 
-        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize,
-                BoolVariable<T> noSetFMUStatePriorToCurrentPoint);
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
+                DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
 
-        Map.Entry<BoolVariable<T>, DoubleVariable<T>> step(DoubleVariable<T> currentCommunicationPoint, DoubleVariable<T> communicationStepSize);
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
+                DoubleVariable<AST> communicationStepSize);
 
 
-        List<? extends Port<PS>> getPorts();
+        List<? extends Port<PORT_SCALAR_TYPE, AST>> getPorts();
 
         /**
          * Get ports by name
@@ -590,7 +600,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param names
          * @return
          */
-        List<? extends Port<PS>> getPorts(String... names);
+        List<? extends Port<PORT_SCALAR_TYPE, AST>> getPorts(String... names);
 
         /**
          * Get ports by ref val
@@ -598,7 +608,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param valueReferences
          * @return
          */
-        List<? extends Port<PS>> getPorts(int... valueReferences);
+        List<? extends Port<PORT_SCALAR_TYPE, AST>> getPorts(int... valueReferences);
 
         /**
          * Get port by name
@@ -606,7 +616,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param name
          * @return
          */
-        Port<PS> getPort(String name);
+        Port<PORT_SCALAR_TYPE, AST> getPort(String name);
 
         /**
          * Get port by ref val
@@ -614,7 +624,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param valueReference
          * @return
          */
-        Port<PS> getPort(int valueReference);
+        Port<PORT_SCALAR_TYPE, AST> getPort(int valueReference);
 
         /**
          * Get port values aka fmiGet
@@ -622,16 +632,16 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param ports
          * @return
          */
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> get(Port<PS>... ports);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> get(Port<PORT_SCALAR_TYPE, AST>... ports);
 
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> get(Scope<T> scope, Port<PS>... ports);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> get(Scope<AST> scope, Port<PORT_SCALAR_TYPE, AST>... ports);
 
         /**
          * Get all (linked) port values
          *
          * @return
          */
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> get();
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> get();
 
         /**
          * get filter by value reference
@@ -639,7 +649,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param valueReferences
          * @return
          */
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> get(int... valueReferences);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> get(int... valueReferences);
 
         /**
          * Get filter by names
@@ -647,17 +657,17 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param names
          * @return
          */
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> get(String... names);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> get(String... names);
 
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> getAndShare(String... names);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> getAndShare(String... names);
 
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> getAndShare(Port<PS>... ports);
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> getAndShare(Port<PORT_SCALAR_TYPE, AST>... ports);
 
-        <V> Map<? extends Port<PS>, ? extends Variable<T, V>> getAndShare();
+        <V> Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> getAndShare();
 
-        <V> Variable<T, V> getShared(String name);
+        <V> Variable<AST, V> getShared(String name);
 
-        <V> Variable<T, V> getShared(Port<PS> port);
+        <V> Variable<AST, V> getShared(Port<PORT_SCALAR_TYPE, AST> port);
 
         /**
          * Get the value of a single port
@@ -665,38 +675,38 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          * @param name
          * @return
          */
-        <V> Variable<T, V> getSingle(String name);
+        <V> Variable<AST, V> getSingle(String name);
 
-        <V> Variable<T, V> getSingle(Port<PS> port);
+        <V> Variable<AST, V> getSingle(Port<PORT_SCALAR_TYPE, AST> port);
 
-        <V> void set(Scope<T> scope, PortValueMap<V, PS> value);
+        <V> void set(Scope<AST> scope, PortValueMap<V, PORT_SCALAR_TYPE, AST> value);
 
 
-        <V> void set(Scope<T> scope, PortVariableMap<T, V, PS> value);
+        <V> void set(Scope<AST> scope, PortVariableMap< V, PORT_SCALAR_TYPE, AST> value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
          *
          * @param value
          */
-        <V> void set(PortValueMap<V, PS> value);
+        <V> void set(PortValueMap<V, PORT_SCALAR_TYPE, AST> value);
 
-        <V> void set(Port<PS> port, Value<V> value);
+        <V> void set(Port<PORT_SCALAR_TYPE, AST> port, Value<V> value);
 
-        <V> void set(Port<PS> port, Variable<T, V> value);
+        <V> void set(Port<PORT_SCALAR_TYPE, AST> port, Variable<AST, V> value);
 
-        <V> void set(Scope<T> scope, Port<PS> port, Variable<T, V> value);
+        <V> void set(Scope<AST> scope, Port<PORT_SCALAR_TYPE, AST> port, Variable<AST, V> value);
 
-        <V> void set(PortVariableMap<T, V, PS> value);
+        <V> void set(PortVariableMap< V, PORT_SCALAR_TYPE, AST> value);
 
         /**
          * Set this fmu port by name and link
          */
-        void setLinked(Scope<T> scope, Port<PS>... filterPorts);
+        void setLinked(Scope<AST> scope, Port<PORT_SCALAR_TYPE, AST>... filterPorts);
 
         void setLinked();
 
-        void setLinked(Port<PS>... filterPorts);
+        void setLinked(Port<PORT_SCALAR_TYPE, AST>... filterPorts);
 
         void setLinked(String... filterNames);
 
@@ -722,7 +732,7 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          *
          * @param values
          */
-        <V> void share(Map<? extends Port<PS>, ? extends Variable<T, V>> values);
+        <V> void share(Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends Variable<AST, V>> values);
 
         /**
          * Makes the value publicly available to all linked connections. On next set these ports will be resolved to the values given for
@@ -730,64 +740,66 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
          *
          * @param value
          */
-        <V> void share(Port<PS> port, Variable<T, V> value);
+        <V> void share(Port<PORT_SCALAR_TYPE, AST> port, Variable<AST, V> value);
 
         /**
          * Get the current state
          *
          * @return
          */
-        StateVariable<T> getState() throws XPathExpressionException;
+        StateVariable<AST> getState() throws XPathExpressionException;
 
         /**
          * Get the current state
          *
          * @return
          */
-        StateVariable<T> getState(Scope<T> scope) throws XPathExpressionException;
+        StateVariable<AST> getState(Scope<AST> scope) throws XPathExpressionException;
 
-        interface PortVariableMap<S, V, PS> extends Map<Port<PS>, Variable<S, V>> {
+        interface PortVariableMap< V, PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, Variable<AST, V>> {
         }
 
-        interface PortValueMap<V, PS> extends Map<Port<PS>, Value<V>> {
+        interface PortValueMap<V, PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, Value<V>> {
         }
 
-        interface PortExpressionValueMap<PS> extends Map<Port<PS>, ExpressionValue> {
+        interface PortExpressionValueMap<PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, ExpressionValue> {
         }
     }
 
     /**
      * Simulation instance for FMI3
      *
-     * @param <T>  building block
-     * @param <PS> fmi3 scalar variable type
+     * @param <AST>  building block
+     * @param <PORT_SCALAR_TYPE> fmi3 scalar variable type
      */
-    interface Fmi3InstanceVariable<T, PS> extends FmiSimulationInstance<T, PS> {
+    interface Fmi3InstanceVariable<AST, PORT_SCALAR_TYPE> extends FmiSimulationInstance<AST, PORT_SCALAR_TYPE> {
 
 
-        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined, Double tolerance);
+        void setupExperiment(DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined, Double tolerance);
 
         void setupExperiment(double startTime, Double endTime, Double tolerance);
 
         void enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime);
 
-        void enterInitializationMode(Scope<T> scope,FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance, FmiBuilder.DoubleVariable<PStm> startTime,
-                FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
-        void enterInitializationMode(FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance, FmiBuilder.DoubleVariable<PStm> startTime,
-                FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
+        void enterInitializationMode(Scope<AST> scope, FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance,
+                FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
+
+        void enterInitializationMode(FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance,
+                FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
+
         void exitInitializationMode();
 
-        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined,
+        void setupExperiment(Scope<AST> scope, DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined,
                 Double tolerance);
 
-        void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
+        void setupExperiment(Scope<AST> scope, double startTime, Double endTime, Double tolerance);
 
-        void enterInitializationMode(Scope<T> scope,boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
+        void enterInitializationMode(Scope<AST> scope, boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
                 double stopTime);
 
-        void exitInitializationMode(Scope<T> scope);
+        void exitInitializationMode(Scope<AST> scope);
 
-        void terminate(Scope<T> scope);
+        void terminate(Scope<AST> scope);
 
         void terminate();
 
@@ -799,14 +811,14 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
      * <p>
      * Note that all methods that do not take a scope uses the builders dynamic scope and adds the underlying instructions int he active scope.
      *
-     * @param <T>  building block
-     * @param <PS> fmi2 scalar variable type
+     * @param <AST>  building block
+     * @param <PORT_SCALAR_TYPE> fmi2 scalar variable type
      */
-    interface Fmi2ComponentVariable<T, PS> extends FmiSimulationInstance<T, PS> {
+    interface Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> extends FmiSimulationInstance<AST, PORT_SCALAR_TYPE> {
 
         void setDebugLogging(List<String> categories, boolean enableLogging);
 
-        void setupExperiment(DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined, Double tolerance);
+        void setupExperiment(DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined, Double tolerance);
 
         void setupExperiment(double startTime, Double endTime, Double tolerance);
 
@@ -814,39 +826,39 @@ public interface FmiBuilder<S, B, E, SETTINGS> {
 
         void exitInitializationMode();
 
-        void setupExperiment(Scope<T> scope, DoubleVariable<T> startTime, DoubleVariable<T> endTime, BoolVariable<T> endTimeDefined,
+        void setupExperiment(Scope<AST> scope, DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined,
                 Double tolerance);
 
-        void setupExperiment(Scope<T> scope, double startTime, Double endTime, Double tolerance);
+        void setupExperiment(Scope<AST> scope, double startTime, Double endTime, Double tolerance);
 
-        void enterInitializationMode(Scope<T> scope);
+        void enterInitializationMode(Scope<AST> scope);
 
-        void exitInitializationMode(Scope<T> scope);
+        void exitInitializationMode(Scope<AST> scope);
 
-        void terminate(Scope<T> scope);
+        void terminate(Scope<AST> scope);
 
         void terminate();
     }
 
-    interface Variable<T, V> {
+    interface Variable<AST, V> {
         String getName();
 
         void setValue(V value);
 
-        void setValue(Variable<T, V> variable);
+        void setValue(Variable<AST, V> variable);
 
-        void setValue(Scope<T> scope, Variable<T, V> variable);
+        void setValue(Scope<AST> scope, Variable<AST, V> variable);
 
-        void setValue(Scope<T> scope, V value);
+        void setValue(Scope<AST> scope, V value);
 
 
-        Scope<T> getDeclaredScope();
+        Scope<AST> getDeclaredScope();
     }
 
-    interface ArrayVariable<T, CV> extends Variable<T, FmiBuilder.NamedVariable<T>> {
+    interface ArrayVariable<AST, CV> extends Variable<AST, FmiBuilder.NamedVariable<AST>> {
         int size();
 
-        List<? extends Variable<T, CV>> items();
+        List<? extends Variable<AST, CV>> items();
 
         void setValue(IntExpressionValue index, ExpressionValue value);
     }

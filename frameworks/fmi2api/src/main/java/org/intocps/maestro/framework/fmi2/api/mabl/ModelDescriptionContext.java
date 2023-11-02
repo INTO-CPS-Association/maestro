@@ -1,7 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +12,7 @@ public class ModelDescriptionContext {
     private final Fmi2ModelDescription modelDescription;
     public Map<String, Fmi2ModelDescription.ScalarVariable> nameToSv = new HashMap<>();
     public Map<Long, Fmi2ModelDescription.ScalarVariable> valRefToSv = new HashMap<>();
+
     public ModelDescriptionContext(
             Fmi2ModelDescription modelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         this.modelDescription = modelDescription;
@@ -21,6 +21,7 @@ public class ModelDescriptionContext {
             this.valRefToSv.put(sv.valueReference, sv);
         });
     }
+
     public Fmi2ModelDescription getModelDescription() {
         return modelDescription;
     }

@@ -1,4 +1,4 @@
-package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
+package org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
 import org.intocps.fmi.jnifmuapi.fmi3.schemas.Fmi3Schema
@@ -491,6 +491,9 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.StringType,
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.let { att ->
                     val startValues: MutableList<String> = mutableListOf()
                     for (i in 0 until att.length) {
@@ -571,6 +574,9 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong(),
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong(),
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() },
                 getDimensionsFromVariableNode(node)
             )

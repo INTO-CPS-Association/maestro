@@ -27,7 +27,7 @@ import FMI3;
         float f1 = 1;
         byte b1 = 2;
         byte valu8[3]={100,0,0};
-        instance.setUInt8(sv,valu8);
+        instance.setUInt8(sv,3,valu8,3);
 
         x1.freeInstance(instance);
 

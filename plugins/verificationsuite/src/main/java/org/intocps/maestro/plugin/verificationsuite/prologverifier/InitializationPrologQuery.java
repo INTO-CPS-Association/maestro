@@ -2,6 +2,7 @@ package org.intocps.maestro.plugin.verificationsuite.prologverifier;
 
 import com.ugos.jiprolog.engine.*;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +24,7 @@ public class InitializationPrologQuery {
         this.prologGenerator = new PrologGenerator();
     }
 
-    public boolean initializationOrderIsValid(List<Fmi2SimulationEnvironment.Variable> instantiationOrder,
-            Set<Fmi2SimulationEnvironment.Relation> relations) {
+    public boolean initializationOrderIsValid(List<RelationVariable> instantiationOrder, Set<Fmi2SimulationEnvironment.Relation> relations) {
         // New instance of prolog engine
         JIPEngine jip = new JIPEngine();
         JIPTerm queryTerm = null;

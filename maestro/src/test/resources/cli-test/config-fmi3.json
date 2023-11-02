@@ -4,7 +4,7 @@
     "{x2}": "src/test/resources/singlewatertank-20sim.fmu"
   },
   "connections": {
-    "{x1}.controller.valve": [
+    "{x1}.controller.h": [
       "{x2}.tank.valvecontrol"
     ],
     "{x2}.tank.level": [

@@ -2,7 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 

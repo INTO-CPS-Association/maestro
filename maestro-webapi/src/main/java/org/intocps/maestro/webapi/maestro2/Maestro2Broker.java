@@ -55,8 +55,9 @@ public class Maestro2Broker {
     final File workingDirectory;
     final ErrorReporter reporter;
     private final Supplier<Boolean> isStopRequsted;
-    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds = map -> map.entrySet().stream()
-            .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v)).collect(Collectors.toList());
+    private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
+            map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
+                    .collect(Collectors.toList());
     private Map.Entry<Boolean, Map<INode, PType>> typeCheckResult;
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter, Supplier<Boolean> isStopRequsted) {
@@ -74,18 +75,20 @@ public class Maestro2Broker {
     public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel,
             SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(
-                MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel), multiModel.getFmus());
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
+                        multiModel.getFmus());
         simulationConfiguration.logVariables = multiModel.getLogVariables();
         if (simulationConfiguration.logVariables == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
 
         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, reporter);
-        ScenarioConfiguration configuration = new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(),
-                multiModel.getGlobal_relative_tolerance(), multiModel.getGlobal_absolute_tolerance(), multiModel.getConvergenceAttempts(),
-                body.getStartTime(), body.getEndTime(), multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration),
-                multiModel.isLoggingOn(), multiModel.getLogLevels());
+        ScenarioConfiguration configuration =
+                new ScenarioConfiguration(simulationEnvironment, masterModel, multiModel.getParameters(), multiModel.getGlobal_relative_tolerance(),
+                        multiModel.getGlobal_absolute_tolerance(), multiModel.getConvergenceAttempts(), body.getStartTime(), body.getEndTime(),
+                        multiModel.getAlgorithm().getStepSize(), Pair.of(Framework.FMI2, simulationConfiguration), multiModel.isLoggingOn(),
+                        multiModel.getLogLevels());
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
@@ -101,7 +104,7 @@ public class Maestro2Broker {
 
         List<String> portsToLog = Stream.concat(simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.getName());
         }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
@@ -117,8 +120,8 @@ public class Maestro2Broker {
         //Initially resolve any FMUs to the local folder in case they are uploaded
         ImportCmd.resolveFmuPaths(Collections.singletonList(workingDirectory), initializeRequest.getFmus());
 
-        Fmi2SimulationEnvironmentConfiguration simulationConfiguration = new Fmi2SimulationEnvironmentConfiguration(
-                initializeRequest.getConnections(), initializeRequest.getFmus());
+        Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
+                new Fmi2SimulationEnvironmentConfiguration(initializeRequest.getConnections(), initializeRequest.getFmus());
 
         simulationConfiguration.logVariables = initializeRequest.getLogVariables();
         if (simulationConfiguration.logVariables == null) {
@@ -162,10 +165,11 @@ public class Maestro2Broker {
         config.startTime = body.getStartTime();
         config.endTime = body.getEndTime();
 
-        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder = MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder()
-                .setFrameworkConfig(Framework.FMI2, simulationConfiguration).useInitializer(true, new ObjectMapper().writeValueAsString(initialize))
-                .setFramework(Framework.FMI2).setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
-                .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithmConfig(config);
+        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
+                MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().setFrameworkConfig(Framework.FMI2, simulationConfiguration)
+                        .useInitializer(true, new ObjectMapper().writeValueAsString(initialize)).setFramework(Framework.FMI2)
+                        .setLogLevels(removedFMUKeyFromLogLevels).setVisible(initializeRequest.isVisible())
+                        .setLoggingOn(initializeRequest.isLoggingOn()).setStepAlgorithmConfig(config);
 
 
         MaBLTemplateConfiguration configuration = builder.build();
@@ -187,8 +191,8 @@ public class Maestro2Broker {
             if (filesNotResolved.size() > 0) {
                 errMsg = "Cannot resolve path to spec files: " + nonMablFiles.stream().map(File::getName).reduce("", (prev, cur) -> prev + " " + cur);
             } else if (nonMablFiles.size() > 0) {
-                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName)
-                        .reduce("", (prev, cur) -> prev + " " + cur) + ". Only mabl files should be " + "included as " + "external specs.";
+                errMsg = "Cannot load spec files: " + nonMablFiles.stream().map(File::getName).reduce("", (prev, cur) -> prev + " " + cur) +
+                        ". Only mabl files should be " + "included as " + "external specs.";
             }
 
             if (!errMsg.equals("")) {
@@ -198,8 +202,8 @@ public class Maestro2Broker {
             mabl.parse(initializeRequest.getExternalSpecs());
         }
         // If fault injection is configured then the faultinject.mabl file should be included as an external spec.
-        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals(
-                "") && !didLocateFaultInjectionFile.get()) {
+        if (initializeRequest.faultInjectConfigurationPath != null && !initializeRequest.faultInjectConfigurationPath.equals("") &&
+                !didLocateFaultInjectionFile.get()) {
             throw new Exception("Remember to include FaultInject.mabl as an external spec");
         }
         String runtimeJsonConfigString = generateSpecification(configuration, parameters);
@@ -215,7 +219,7 @@ public class Maestro2Broker {
 
         List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.getName());
         }).collect(Collectors.toList());
 
 

@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin.initializer;
 
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 
 import static org.intocps.maestro.fmi.Fmi2ModelDescription.*;
 
@@ -13,16 +14,12 @@ public class PhasePredicates {
                 (o.causality == Causality.Parameter && o.variability == Variability.Tunable);
     }
 
-    public static Predicate<ScalarVariable> iniePhase() {
-        return o -> o.initial == Initial.Exact && o.variability != Variability.Constant;
-    }
 
     public static Predicate<ScalarVariable> inPhase() {
         return o -> (o.causality == Causality.Input && o.initial == Initial.Calculated ||
                 o.causality == Causality.Parameter && o.variability == Variability.Tunable);
     }
 
-    public static Predicate<ScalarVariable> initPhase() {
-        return o -> o.causality == Causality.Output;
-    }
+
+
 }

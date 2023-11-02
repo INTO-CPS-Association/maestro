@@ -1,6 +1,6 @@
 package org.intocps.maestro.framework.fmi2;
 
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.core.FaultInject;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 

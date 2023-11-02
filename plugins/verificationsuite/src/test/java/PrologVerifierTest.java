@@ -71,10 +71,10 @@ public class PrologVerifierTest {
     }
 */
 
-    private Fmi2SimulationEnvironment.Variable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
+    private RelationVariable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
         var scalarVar = new Fmi2ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
-        return new Fmi2SimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
+        return new RelationVariable(scalarVar, scalarVar.getName(), new LexIdentifier(fmuName, null));
     }
 
 }

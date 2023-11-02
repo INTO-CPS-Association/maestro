@@ -1,4 +1,4 @@
-package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
+package org.intocps.maestro.fmi.fmi3
 
 import org.intocps.maestro.fmi.ModelDescription
 

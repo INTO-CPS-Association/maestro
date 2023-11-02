@@ -1,6 +1,5 @@
-package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
+package org.intocps.maestro.fmi.fmi3
 
-import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.fmi.ModelDescription
 
 abstract class Fmi3Variable protected constructor(
@@ -13,9 +12,20 @@ abstract class Fmi3Variable protected constructor(
     val intermediateUpdate: Boolean? = false,
     val previous: UInt? = null,
     val clocks: List<UInt>? = null,
-    val typeIdentifier: Fmi3TypeEnum // This is for easier type identification and is not part of the official spec
+    val typeIdentifier: Fmi3TypeEnum, // This is for easier type identification and is not part of the official spec
+    val initial: ModelDescription.Initial? = null //this is not present for all but added for convenience
 ) {
-    fun getValueReferenceAsLong():Long { return valueReference.toLong() }
+    fun getValueReferenceAsLong(): Long {
+        return valueReference.toLong()
+    }
+
+    override fun toString(): String {
+        return "$name: ${typeIdentifier.name}"
+    }
+
+    abstract fun isScalar(): Boolean;
+
+
 }
 
 data class Dimension(val valueReference: UInt?, val start: List<Long>?)
@@ -32,7 +42,7 @@ class FloatVariable(
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
-    val initial: ModelDescription.Initial? = null,
+    initial: ModelDescription.Initial? = null,
     val quantity: String? = null,
     val unit: String? = null,
     val displayUnit: String? = null,
@@ -44,7 +54,7 @@ class FloatVariable(
     val start: Collection<Double>? = null,
     val derivative: UInt? = null,
     val reinit: Boolean? = false,
-    val dimensions: List<Dimension>?  = null
+    val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
     name,
     valueReference,
@@ -55,8 +65,13 @@ class FloatVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+) {
+    override fun isScalar(): Boolean {
+        return dimensions.isNullOrEmpty()
+    }
+}
 
 class Int64Variable(
     name: String,
@@ -70,7 +85,7 @@ class Int64Variable(
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
-    val initial: ModelDescription.Initial? = null,
+    initial: ModelDescription.Initial? = null,
     val quantity: String? = null,
     val min: Long? = null,
     val max: Long? = null,
@@ -86,8 +101,11 @@ class Int64Variable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class IntVariable(
     name: String,
@@ -101,7 +119,7 @@ class IntVariable(
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
-    val initial: ModelDescription.Initial? = null,
+    initial: ModelDescription.Initial? = null,
     val quantity: String? = null,
     val min: Int? = null,
     val max: Int? = null,
@@ -117,8 +135,11 @@ class IntVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class BooleanVariable(
     name: String,
@@ -132,7 +153,7 @@ class BooleanVariable(
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
-    val initial: ModelDescription.Initial? = null,
+    initial: ModelDescription.Initial? = null,
     val start: List<Boolean>? = null,
     val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
@@ -145,8 +166,11 @@ class BooleanVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class StringVariable(
     name: String,
@@ -159,6 +183,7 @@ class StringVariable(
     previous: UInt? = null,
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
+    initial: ModelDescription.Initial? = null,
     val start: List<String>? = null,
     val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
@@ -171,8 +196,11 @@ class StringVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class BinaryVariable(
     name: String,
@@ -186,7 +214,7 @@ class BinaryVariable(
     clocks: List<UInt>? = null,
     typeIdentifier: Fmi3TypeEnum,
     val declaredType: String? = null,
-    val initial: ModelDescription.Initial? = null,
+    initial: ModelDescription.Initial? = null,
     val mimeType: String? = null,
     val maxSize: UInt? = null,
     val start: List<ByteArray>? = null,
@@ -201,8 +229,11 @@ class BinaryVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class EnumerationVariable(
     name: String,
@@ -219,6 +250,7 @@ class EnumerationVariable(
     val quantity: String? = null,
     val min: Long? = null,
     val max: Long? = null,
+    initial: ModelDescription.Initial? = null,
     val start: List<Long>? = null,
     val dimensions: List<Dimension>? = null
 ) : Fmi3Variable(
@@ -231,8 +263,11 @@ class EnumerationVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    initial
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 class ClockVariable(
     name: String,
@@ -266,8 +301,11 @@ class ClockVariable(
     intermediateUpdate,
     previous,
     clocks,
-    typeIdentifier
-)
+    typeIdentifier,
+    null
+){ override fun isScalar(): Boolean {
+    return dimensions.isNullOrEmpty()
+}}
 
 enum class Fmi3Causality {
     StructuralParameter,

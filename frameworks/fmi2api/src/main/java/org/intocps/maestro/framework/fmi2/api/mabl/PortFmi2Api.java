@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable> {
+public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable, PStm> {
 
     public final ComponentVariableFmi2Api aMablFmi2ComponentAPI;
     public final Fmi2ModelDescription.ScalarVariable scalarVariable;
@@ -62,6 +63,11 @@ public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarV
     }
 
     @Override
+    public FmiBuilder.FmiSimulationInstance<PStm, Fmi2ModelDescription.ScalarVariable> getOwner() {
+        return this.aMablFmi2ComponentAPI;
+    }
+
+    @Override
     public Fmi2ModelDescription.ScalarVariable getSourceObject() {
         return this.scalarVariable;
     }
@@ -78,7 +84,7 @@ public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarV
 
 
     @Override
-    public void linkTo(FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable>... receivers) throws PortLinkException {
+    public void linkTo(FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable, PStm>... receivers) throws PortLinkException {
 
         if (receivers == null || receivers.length == 0) {
             return;
@@ -88,7 +94,7 @@ public class PortFmi2Api implements FmiBuilder.Port<Fmi2ModelDescription.ScalarV
             throw new PortLinkException("Can only link output ports. This port is: " + this.scalarVariable.causality, this);
         }
 
-        for (FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable> receiver : receivers) {
+        for (FmiBuilder.Port<Fmi2ModelDescription.ScalarVariable, PStm> receiver : receivers) {
             PortFmi2Api receiverPort = (PortFmi2Api) receiver;
 
             if (receiverPort.scalarVariable.causality != Fmi2ModelDescription.Causality.Input) {

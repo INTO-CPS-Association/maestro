@@ -34,7 +34,7 @@ import Logger;
 
         uint svs[2]={sv_par_g, sv_par_e};
         float values_r[2]={-9.81,0.7};
-        res=instance.setFloat32(svs,values_r);
+        res=instance.setFloat32(svs,2,values_r,2);
         logger.log(3,"setFloat32 status %d",res);
 
         res=instance.enterInitializationMode(false, 0.0, 0.0, true,10.0);

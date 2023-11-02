@@ -30,9 +30,9 @@ import static org.intocps.maestro.ast.MableBuilder.newVariable;
 class DerivativesHandler {
 
     final static Logger logger = LoggerFactory.getLogger(DerivativesHandler.class);
-    final BiPredicate<Fmi2SimulationEnvironment, Fmi2SimulationEnvironment.Variable> canInterpolateInputsFilter = (env, v) -> {
+    final BiPredicate<Fmi2SimulationEnvironment, RelationVariable> canInterpolateInputsFilter = (env, v) -> {
         try {
-            return ((ComponentInfo) env.getUnitInfo(v.scalarVariable.instance, Framework.FMI2)).modelDescription.getCanInterpolateInputs();
+            return ((ComponentInfo) env.getUnitInfo(v.getInstance(), Framework.FMI2)).modelDescription.getCanInterpolateInputs();
         } catch (XPathExpressionException e) {
             return false;
         }
@@ -50,7 +50,7 @@ class DerivativesHandler {
     Map<LexIdentifier, GetDerivativesInfo> derivativesGetInfo = new HashMap<>();
     private boolean allocated = false;
     private boolean requireArrayUtilUnload = false;
-    private Map<Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Relation>>, LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>>>
+    private Map<Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Relation>>, LinkedHashMap<RelationVariable, Map.Entry<RelationVariable, GetDerivativesInfo>>>
             resolvedInputData;
 
     public List<PStm> allocateMemory(List<LexIdentifier> componentNames, Set<Fmi2SimulationEnvironment.Relation> inputRelations,
@@ -58,20 +58,19 @@ class DerivativesHandler {
         allocated = true;
 
 
-        Set<Map<LexIdentifier, Fmi2SimulationEnvironment.Variable>> tmp =
-                inputRelations.stream().filter(r -> canInterpolateInputsFilter.test(env, r.getSource()))
-                        .map(Fmi2SimulationEnvironment.Relation::getTargets).collect(Collectors.toSet());
+        Set<Map<LexIdentifier, RelationVariable>> tmp = inputRelations.stream().filter(r -> canInterpolateInputsFilter.test(env, r.getSource()))
+                .map(Fmi2SimulationEnvironment.Relation::getTargets).collect(Collectors.toSet());
 
 
-        Map<LexIdentifier, List<Fmi2SimulationEnvironment.Variable>> vars = new HashMap<>();
-        for (Map<LexIdentifier, Fmi2SimulationEnvironment.Variable> map : tmp) {
-            for (Map.Entry<LexIdentifier, Fmi2SimulationEnvironment.Variable> entry : map.entrySet()) {
+        Map<LexIdentifier, List<RelationVariable>> vars = new HashMap<>();
+        for (Map<LexIdentifier, RelationVariable> map : tmp) {
+            for (Map.Entry<LexIdentifier, RelationVariable> entry : map.entrySet()) {
                 vars.computeIfAbsent(entry.getKey(), key -> new Vector<>()).add(entry.getValue());
             }
         }
 
-        for (Map.Entry<LexIdentifier, List<Fmi2SimulationEnvironment.Variable>> entry : vars.entrySet()) {
-            entry.getValue().sort(Comparator.comparing(v -> v.getScalarVariable().getScalarVariable().valueReference));
+        for (Map.Entry<LexIdentifier, List<RelationVariable>> entry : vars.entrySet()) {
+            entry.getValue().sort(Comparator.comparing(v -> v.getValueReference()));
         }
 
 
@@ -92,7 +91,7 @@ class DerivativesHandler {
                 varDerInfo.varMaxOrder = order;
 
                 for (int i = 0; i < f.getValue().size(); i++) {
-                    Fmi2SimulationEnvironment.Variable var = f.getValue().get(i);
+                    RelationVariable var = f.getValue().get(i);
                     varDerInfo.varStartIndex.put(var, varDerInfo.varStartIndex.size() * order);
                 }
 
@@ -108,8 +107,8 @@ class DerivativesHandler {
                         .collect(Collectors.toList())));
                 varDerInfo.orderArrayId = orderArrayName;
                 String varSelectName = id.getText() + "_der_select";
-                statements.add(newVariable(varSelectName, newUIntType(), f.getValue().stream().flatMap(v -> IntStream.range(1, order + 1)
-                        .mapToObj(o -> newAIntLiteralExp((int) v.getScalarVariable().getScalarVariable().valueReference)))
+                statements.add(newVariable(varSelectName, newUIntType(), f.getValue().stream()
+                        .flatMap(v -> IntStream.range(1, order + 1).mapToObj(o -> newAIntLiteralExp((int) v.getValueReference())))
                         .collect(Collectors.toList())));
                 varDerInfo.valueSelectArrayId = varSelectName;
                 derivativesGetInfo.put(id, varDerInfo);
@@ -130,20 +129,18 @@ class DerivativesHandler {
 
     private List<PStm> allocateForInput(Set<Fmi2SimulationEnvironment.Relation> inputRelations, Fmi2SimulationEnvironment env) {
         resolvedInputData = inputRelations.stream().filter(r -> canInterpolateInputsFilter.test(env, r.getSource()))
-                .collect(Collectors.groupingBy(s -> s.getSource().getScalarVariable().instance)).entrySet().stream().collect(Collectors
-                        .toMap(Function.identity(), mapped -> mapped.getValue().stream()
-                                .sorted(Comparator.comparing(map -> map.getSource().getScalarVariable().getScalarVariable().valueReference))
+                .collect(Collectors.groupingBy(s -> s.getSource().getInstance())).entrySet().stream().collect(Collectors.toMap(Function.identity(),
+                        mapped -> mapped.getValue().stream().sorted(Comparator.comparing(map -> map.getSource().getValueReference()))
                                 .collect(Collectors.toMap(Fmi2SimulationEnvironment.Relation::getSource, map -> {
 
                                     //the relation should be a one to one relation so just take the first one
-                                    Fmi2SimulationEnvironment.Variable next = map.getTargets().values().iterator().next();
-                                    RelationVariable fromVar = next.scalarVariable;
+                                    RelationVariable next = map.getTargets().values().iterator().next();
+                                    RelationVariable fromVar = next;
 
                                     GetDerivativesInfo fromVarDerivativeInfo = derivativesGetInfo.get(fromVar.instance);
                                     if (fromVarDerivativeInfo != null) {
-                                        logger.trace("Derivative mapping {}.{} to {}.{}", fromVar.instance, fromVar.scalarVariable.name,
-                                                map.getSource().getScalarVariable().instance,
-                                                map.getSource().getScalarVariable().scalarVariable.name);
+                                        logger.trace("Derivative mapping {}.{} to {}.{}", fromVar.instance, fromVar.getName(),
+                                                map.getSource().getInstance(), map.getSource().getName());
                                     }
 
                                     return Map.entry(next, fromVarDerivativeInfo);
@@ -161,12 +158,11 @@ class DerivativesHandler {
         List<PStm> allocationStatements = Stream.concat(Stream.of(newVariable("der_input_buffer", newARealNumericPrimitiveType(), size)),
                 resolvedInputData.entrySet().stream().flatMap(map -> {
 
-                    LinkedHashMap<Fmi2SimulationEnvironment.Variable, Map.Entry<Fmi2SimulationEnvironment.Variable, GetDerivativesInfo>> resolved =
-                            map.getValue();
+                    LinkedHashMap<RelationVariable, Map.Entry<RelationVariable, GetDerivativesInfo>> resolved = map.getValue();
 
                     List<Integer> inputSelectIndices = resolved.entrySet().stream().flatMap(
-                            m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1)
-                                    .mapToObj(i -> Long.valueOf(m.getKey().getScalarVariable().scalarVariable.valueReference).intValue()))
+                                    m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1)
+                                            .mapToObj(i -> Long.valueOf(m.getKey().getValueReference()).intValue()))
                             .collect(Collectors.toList());
                     List<Integer> inputOrders =
                             resolved.entrySet().stream().flatMap(m -> IntStream.range(1, m.getValue().getValue().varMaxOrder + 1).mapToObj(i -> i))
@@ -175,7 +171,7 @@ class DerivativesHandler {
                     LexIdentifier name = map.getKey().getKey();
 
                     return Stream.of(newVariable("der_input_select_" + name.getText(), newAIntNumericPrimitiveType(),
-                            inputSelectIndices.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())),
+                                    inputSelectIndices.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())),
 
                             newVariable("der_input_order" + "_" + name.getText(), newAIntNumericPrimitiveType(),
                                     inputOrders.stream().map(MableAstFactory::newAIntLiteralExp).collect(Collectors.toList())));
@@ -282,7 +278,7 @@ class DerivativesHandler {
         String orderArrayId;
         String valueSelectArrayId;
         PExp valueDestIdentifier;
-        Map<Fmi2SimulationEnvironment.Variable, Integer> varStartIndex = new HashMap<>();
+        Map<RelationVariable, Integer> varStartIndex = new HashMap<>();
         Integer varMaxOrder;
     }
 }

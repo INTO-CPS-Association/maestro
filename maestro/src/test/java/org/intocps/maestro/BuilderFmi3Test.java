@@ -10,7 +10,7 @@ import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -79,7 +78,7 @@ public class BuilderFmi3Test {
 
         URI ballUri = new File("target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu").getAbsoluteFile().toURI();
         Fmu3 ball = new Fmu3(new File(ballUri));
-        ArrayVariableFmi2Api requiredIntermediateVariables = builder.getDynamicScope().store("requiredIntermediateVariables", new Long[] {1L});
+        ArrayVariableFmi2Api requiredIntermediateVariables = builder.getDynamicScope().store("requiredIntermediateVariables", new Long[]{1L});
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());
 
 
@@ -89,25 +88,20 @@ public class BuilderFmi3Test {
         boolean loggingOn = true;
         boolean eventModeUsed = true;
         boolean earlyReturnAllowed = true;
-        InstanceVariableFmi3Api ballInstance = ballFmu.instantiate("ballInstance", visible, loggingOn, eventModeUsed, earlyReturnAllowed,
-                requiredIntermediateVariables);
+        InstanceVariableFmi3Api ballInstance =
+                ballFmu.instantiate("ballInstance", visible, loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
 
-        ballInstance.enterInitializationMode(false, 0.0, 0.0, true,10.0);
+        ballInstance.enterInitializationMode(false, 0.0, 0.0, true, 10.0);
         ballInstance.exitInitializationMode();
 
-//        ArrayVariableFmi2Api svs = builder.getDynamicScope().store("svs", new Long[] {5L, 6L});
-//        ArrayVariableFmi2Api values_r = builder.getDynamicScope().store("values_r", new Double[] {-9.81, 0.7});
+        //        ArrayVariableFmi2Api svs = builder.getDynamicScope().store("svs", new Long[] {5L, 6L});
+        //        ArrayVariableFmi2Api values_r = builder.getDynamicScope().store("values_r", new Double[] {-9.81, 0.7});
 
 
         ballInstance.terminate();
 
 
-//        ballInstance.freeInstance();
-
-
-
-
-
+        //        ballInstance.freeInstance();
 
 
         // Create the two FMUs

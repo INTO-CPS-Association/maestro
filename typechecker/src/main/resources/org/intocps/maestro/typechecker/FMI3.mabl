@@ -84,29 +84,29 @@ module FMI3Instance import FMU3State;{
         /* end::getters[] */
     
         /* tag::setters[] */
-        int setFloat32(uint valueReferences[],  float values[]);
+        int setFloat32(uint valueReferences[],int nvr,  float values[],int nv);
     
-        int setFloat64(uint valueReferences[],  real values[]);
+        int setFloat64(uint valueReferences[],int nvr,  real values[],int nv);
     
-        int setInt8(uint valueReferences[],  byte values[]);
+        int setInt8(uint valueReferences[],int nvr,  byte values[],int nv);
     
-        int setUInt8(uint valueReferences[],  byte values[]);
+        int setUInt8(uint valueReferences[],int nvr,  byte values[],int nv);
     
-        int setInt16(uint valueReferences[],  short values[]);
+        int setInt16(uint valueReferences[],int nvr,  short values[],int nv);
     
-        int setUInt16(uint valueReferences[],  short values[]);
+        int setUInt16(uint valueReferences[],int nvr,  short values[],int nv);
     
-        int setInt32(uint valueReferences[],  int values[]);
+        int setInt32(uint valueReferences[],int nvr,  int values[],int nv);
     
-        int setUInt32(uint valueReferences[],  int values[]);
+        int setUInt32(uint valueReferences[],int nvr,  int values[],int nv);
     
-        int setInt64(uint valueReferences[],  long values[]);
+        int setInt64(uint valueReferences[],int nvr,  long values[],int nv);
     
-        int setUInt64(uint valueReferences[],  long values[]);
+        int setUInt64(uint valueReferences[],int nvr,  long values[],int nv);
     
-        int setBoolean(uint valueReferences[],  bool values[]);
+        int setBoolean(uint valueReferences[],int nvr,  bool values[],int nv);
     
-        int setString(uint valueReferences[],  string values[]);
+        int setString(uint valueReferences[],int nvr,  string values[],int nv);
     
         int setBinary(uint valueReferences[],  long sizes[], byte array_name[][]);
         /* end::setters[] */

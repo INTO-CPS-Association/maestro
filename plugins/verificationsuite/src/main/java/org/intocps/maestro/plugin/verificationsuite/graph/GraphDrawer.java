@@ -6,6 +6,7 @@ import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +17,8 @@ import static guru.nidi.graphviz.model.Factory.mutGraph;
 import static guru.nidi.graphviz.model.Factory.mutNode;
 
 public class GraphDrawer {
-    private String getInstanceName(Fmi2SimulationEnvironment.Variable o) {
-        return o.scalarVariable.instance.getText() + "." + o.scalarVariable.scalarVariable.getName();
+    private String getInstanceName(RelationVariable o) {
+        return o.getInstance().getText() + "." + o.getName();
     }
 
     public void plotGraph(Set<? extends Fmi2SimulationEnvironment.Relation> relations, String name) throws IOException {

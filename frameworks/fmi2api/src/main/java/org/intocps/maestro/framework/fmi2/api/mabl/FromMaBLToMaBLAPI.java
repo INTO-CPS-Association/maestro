@@ -3,10 +3,13 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.core.*;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
+import org.intocps.maestro.framework.core.IRelation;
+import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
+import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
@@ -136,8 +139,8 @@ public class FromMaBLToMaBLAPI {
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                     x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
 
-                for (IVariable targetVar : relation.getTargets().values()) {
-                    String targetName = targetVar.getScalarVariable().getInstance().getText();
+                for (var targetVar : relation.getTargets().values()) {
+                    String targetName = targetVar.getInstance().getText();
                     if (instances.containsKey(targetName) ||
                             instances.values().stream().anyMatch(x -> x.getEnvironmentName().equalsIgnoreCase(targetName))) {
                         ComponentVariableFmi2Api instance = instances.get(targetName);
@@ -149,9 +152,9 @@ public class FromMaBLToMaBLAPI {
                             }
                         }
 
-                        PortFmi2Api targetPort = instance.getPort(targetVar.getScalarVariable().getName());
+                        PortFmi2Api targetPort = instance.getPort(targetVar.getName());
 
-                        String sourcePortName = relation.getSource().getScalarVariable().getName();
+                        String sourcePortName = relation.getSource().getName();
                         if (targetPort != null) {
                             entry.getValue().getPort(sourcePortName).linkTo(targetPort);
                         } else {
@@ -177,8 +180,8 @@ public class FromMaBLToMaBLAPI {
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
                     x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
 
-                for (IVariable targetVar : relation.getTargets().values()) {
-                    String targetName = targetVar.getScalarVariable().getInstance().getText();
+                for (var targetVar : relation.getTargets().values()) {
+                    String targetName = targetVar.getInstance().getText();
                     if (instances.containsKey(targetName) ||
                             instances.values().stream().anyMatch(x -> x.getEnvironmentName().equalsIgnoreCase(targetName))) {
                         InstanceVariableFmi3Api instance = instances.get(targetName);
@@ -190,9 +193,9 @@ public class FromMaBLToMaBLAPI {
                             }
                         }
 
-                        PortFmi3Api targetPort = instance.getPort(targetVar.getScalarVariable().getName());
+                        PortFmi3Api targetPort = instance.getPort(targetVar.getName());
 
-                        String sourcePortName = relation.getSource().getScalarVariable().getName();
+                        String sourcePortName = relation.getSource().getName();
                         if (targetPort != null) {
                             entry.getValue().getPort(sourcePortName).linkTo(targetPort);
                         } else {

@@ -33,11 +33,11 @@ public class DataExchangeHandler {
 
         // outputs contains both outputs based on relations and outputs based on additional variables to log
         //FIXME fmi3 is excluded
-        outputs = outputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
-                s -> outputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s)).flatMap(r -> {
-                    List<Fmi2ModelDescription.ScalarVariable> outputs_ =
-                            env.getVariablesToLog(s.getText()).stream().map(x -> x.getScalarVariable(Fmi2ModelDescription.ScalarVariable.class))
-                                    .filter(Objects::nonNull).collect(Collectors.toList());
+        outputs = outputRelations.stream().map(r -> r.getSource().getInstance()).distinct().collect(
+                Collectors.toMap(Function.identity(), s -> outputRelations.stream().filter(r -> r.getSource().getInstance().equals(s)).flatMap(r -> {
+                    List<Fmi2ModelDescription.ScalarVariable> outputs_ = env.getVariablesToLog(s.getText()).stream()
+                            .map(x -> (Fmi2ModelDescription.ScalarVariable) x.getScalarVariable(Fmi2ModelDescription.ScalarVariable.class))
+                            .filter(Objects::nonNull).collect(Collectors.toList());
                     //outputs_.add(r.getSource().scalarVariable.getScalarVariable());
                     return outputs_.stream();
                 }).distinct().collect(Collectors.groupingBy(sv -> sv.getType().type))));
@@ -47,9 +47,10 @@ public class DataExchangeHandler {
         inputRelations = relations.stream().filter(r -> r.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.InputToOutput)
                 .collect(Collectors.toSet());
 
-        inputs = inputRelations.stream().map(r -> r.getSource().scalarVariable.instance).distinct().collect(Collectors.toMap(Function.identity(),
-                s -> inputRelations.stream().filter(r -> r.getSource().scalarVariable.instance.equals(s))
-                        .map(r -> r.getSource().scalarVariable.getScalarVariable()).collect(Collectors.groupingBy(sv -> sv.getType().type))));
+        inputs = inputRelations.stream().map(r -> r.getSource().getInstance()).distinct().collect(Collectors.toMap(Function.identity(),
+                s -> inputRelations.stream().filter(r -> r.getSource().getInstance().equals(s))
+                        .map(r -> (Fmi2ModelDescription.ScalarVariable) r.getSource().getScalarVariable(Fmi2ModelDescription.ScalarVariable.class))
+                        .collect(Collectors.groupingBy(sv -> sv.getType().type))));
 
     }
 
@@ -189,32 +190,35 @@ public class DataExchangeHandler {
     public List<PStm> exchangeData() {
 
         Consumer<List<PStm>> exchangeData = (list) -> inputRelations.forEach(r -> {
-            int toIndex =
-                    inputs.get(r.getSource().scalarVariable.instance).get(r.getSource().scalarVariable.getScalarVariable().getType().type).stream()
-                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                            .indexOf(r.getSource().scalarVariable.scalarVariable.getName());
 
-            AArrayStateDesignator to = newAArayStateDesignator(newAIdentifierStateDesignator(
-                    getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
-                            UsageType.In)), newAIntLiteralExp(toIndex));
+            Fmi2ModelDescription.Types sourceType = r.getSource().getType2().get().type;
+
+            int toIndex = inputs.get(r.getSource().getInstance()).get(sourceType).stream().map(Fmi2ModelDescription.ScalarVariable::getName)
+                    .collect(Collectors.toList()).indexOf(r.getSource().getName());
+
+            AArrayStateDesignator to =
+                    newAArayStateDesignator(newAIdentifierStateDesignator(getBufferName(r.getSource().getInstance(), sourceType, UsageType.In)),
+                            newAIntLiteralExp(toIndex));
 
             //the relation should be a one to one relation so just take the first one
-            RelationVariable fromVar = r.getTargets().values().iterator().next().scalarVariable;
-            PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getScalarVariable().type.type, UsageType.Out)),
-                    Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getScalarVariable().getType().type).stream()
-                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList())
-                            .indexOf(fromVar.scalarVariable.getName()))));
+            RelationVariable fromVar = r.getTargets().values().iterator().next();
 
-            if (r.getSource().scalarVariable.getScalarVariable().getType().type != fromVar.getScalarVariable().getType().type) {
+            Fmi2ModelDescription.Types fromVarType = fromVar.getType2().get().type;
+
+            PExp from = newAArrayIndexExp(newAIdentifierExp(getBufferName(fromVar.instance, fromVar.getType2().get().type, UsageType.Out)),
+                    Collections.singletonList(newAIntLiteralExp(outputs.get(fromVar.instance).get(fromVar.getType2().get().type).stream()
+                            .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.getName()))));
+
+            if (sourceType != fromVar.getType2().get().type) {
                 //ok the types are not matching, lets use a converter
 
-                AArrayIndexExp toAsExp = newAArrayIndexExp(newAIdentifierExp(
-                        getBufferName(r.getSource().scalarVariable.instance, r.getSource().scalarVariable.getScalarVariable().getType().type,
-                                UsageType.In)), Arrays.asList(newAIntLiteralExp(toIndex)));
+                AArrayIndexExp toAsExp = newAArrayIndexExp(
+                        newAIdentifierExp(getBufferName(r.getSource().getInstance(), r.getSource().getType2().get().type, UsageType.In)),
+                        Arrays.asList(newAIntLiteralExp(toIndex)));
 
-                list.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifierExp("TypeConverter"), newAIdentifier(
-                        "convert" + fromVar.getScalarVariable().getType().type + "2" +
-                                r.getSource().scalarVariable.getScalarVariable().getType().type), Arrays.asList(from, toAsExp))));
+                list.add(newExpressionStm(newACallExp(newExpandToken(), newAIdentifierExp("TypeConverter"),
+                        newAIdentifier("convert" + fromVar.getType2().get().type + "2" + r.getSource().getType2().get().type),
+                        Arrays.asList(from, toAsExp))));
 
 
             } else {

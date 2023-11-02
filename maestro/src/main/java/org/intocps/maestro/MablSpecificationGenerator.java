@@ -66,7 +66,7 @@ public class MablSpecificationGenerator {
         //load recursive plugin dependencies
 
         List<IMaestroExpansionPlugin> pluginsToUnfoldWithDependencies = Stream.concat(pluginsToUnfold.stream(),
-                pluginsToUnfold.stream().map(p -> collectPluginDependencies(plugins, p, new Vector<>()).stream()).flatMap(Function.identity()))
+                        pluginsToUnfold.stream().map(p -> collectPluginDependencies(plugins, p, new Vector<>()).stream()).flatMap(Function.identity()))
                 .distinct().collect(Collectors.toList());
 
 
@@ -95,7 +95,7 @@ public class MablSpecificationGenerator {
         }
 
         return Stream.concat(requiredPlugins.stream(),
-                requiredPlugins.stream().map(p -> collectPluginDependencies(plugins, p, checked).stream()).flatMap(Function.identity()))
+                        requiredPlugins.stream().map(p -> collectPluginDependencies(plugins, p, checked).stream()).flatMap(Function.identity()))
                 .collect(Collectors.toList());
     }
 
@@ -203,8 +203,7 @@ public class MablSpecificationGenerator {
                             .collect(Collectors.toList()));
                 });
 
-        for (Map.Entry<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> callReplacement : replaceWith
-                .entrySet()) {
+        for (Map.Entry<ACallExp, Optional<Map.Entry<AImportedModuleCompilationUnit, AFunctionDeclaration>>> callReplacement : replaceWith.entrySet()) {
             ACallExp call = callReplacement.getKey();
             AFunctionDeclaration replacement = callReplacement.getValue().get().getValue();
             IMaestroExpansionPlugin replacementPlugin =
@@ -255,8 +254,8 @@ public class MablSpecificationGenerator {
             BuilderHelper builderHelper = new BuilderHelper(callToBeReplaced, typesMap, simulationEnvironment);
 
             builderHelper.getBuilder().resetDirty();
-            IMaestroExpansionPlugin.RuntimeConfigAddition<Object> runtimeConfigProduced = replacementPlugin
-                    .expandWithRuntimeAddition(replacement, builderHelper.getBuilder(), builderHelper.getArgumentVariables(), config,
+            IMaestroExpansionPlugin.RuntimeConfigAddition<Object> runtimeConfigProduced =
+                    replacementPlugin.expandWithRuntimeAddition(replacement, builderHelper.getBuilder(), builderHelper.getArgumentVariables(), config,
                             simulationEnvironment, reporter);
 
             if (builderHelper.getBuilder().isDirty()) {
@@ -273,19 +272,19 @@ public class MablSpecificationGenerator {
             //2: see fallback to the raw interface
             {
                 if (unfoled == null) {
-                    unfoled = replacementPlugin
-                            .expandWithRuntimeAddition(replacement, callToBeReplaced.getArgs(), config, simulationEnvironment, reporter);
+                    unfoled = replacementPlugin.expandWithRuntimeAddition(replacement, callToBeReplaced.getArgs(), config, simulationEnvironment,
+                            reporter);
                 }
             }
 
         } catch (ExpandException e) {
-            logger.error("Internal error in plug-in '{}' at {}. Message: {}", replacementPlugin.getName(),
-                    callToBeReplaced.getMethodName().toString(), e.getMessage());
+            logger.error(String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
+                    callToBeReplaced.getMethodName().toString(), e.getMessage()), e);
             reporter.report(999, String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
                     callToBeReplaced.getMethodName().toString(), e.getMessage()), callToBeReplaced.getMethodName().getSymbol());
         } catch (Exception e) {
-            logger.error("Internal error while processing builder for in plug-in '{}' at {}. Message: {}", replacementPlugin.getName(),
-                    callToBeReplaced.getMethodName().toString(), e.getMessage());
+            logger.error(String.format("Internal error while processing builder for in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
+                    callToBeReplaced.getMethodName().toString(), e.getMessage()), e);
             reporter.report(998, String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
                     callToBeReplaced.getMethodName().toString(), e.getMessage()), callToBeReplaced.getMethodName().getSymbol());
         }
@@ -452,8 +451,9 @@ public class MablSpecificationGenerator {
         if (simulationModule.getBody() instanceof SBlockStm) {
             Optional<List<AInstanceMappingStm>> instanceMappings = NodeCollector.collect(simulationModule.getBody(), AInstanceMappingStm.class);
             if (instanceMappings.isPresent()) {
-                instanceMappings.get().forEach(x -> ((Fmi2SimulationEnvironment) this.simulationEnvironment)
-                        .setLexNameToInstanceNameMapping(x.getIdentifier().getText(), x.getName()));
+                instanceMappings.get().forEach(
+                        x -> ((Fmi2SimulationEnvironment) this.simulationEnvironment).setLexNameToInstanceNameMapping(x.getIdentifier().getText(),
+                                x.getName()));
             }
         }
     }

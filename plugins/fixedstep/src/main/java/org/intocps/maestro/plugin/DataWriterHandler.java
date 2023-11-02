@@ -4,6 +4,8 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.ast.node.SPrimitiveType;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
@@ -34,11 +36,11 @@ public class DataWriterHandler implements GeneratorComponent {
         List<PStm> statements = new Vector<>();
         List<String> variableNames = new Vector<>();
 
-        Function<org.intocps.maestro.framework.core.RelationVariable, String> getLogName = k -> k.getInstance().getText() + "." + k.getName();
+        Function<RelationVariable, String> getLogName = k -> k.getInstance().getText() + "." + k.getName();
 
         csvFields = inputRelations.stream().map(r -> r.getTargets().values().stream().findFirst()).filter(Optional::isPresent).map(Optional::get)
                 .flatMap(h -> {
-                    List<org.intocps.maestro.framework.core.RelationVariable> outputs_ = env.getVariablesToLog(h.scalarVariable.instance.getText());
+                    List<RelationVariable> outputs_ = env.getVariablesToLog(h.getInstance().getText());
                     //outputs_.add(h.scalarVariable);
                     return outputs_.stream();
                     //return h.scalarVariable;
@@ -46,17 +48,14 @@ public class DataWriterHandler implements GeneratorComponent {
 
 
                     //the relation should be a one to one relation so just take the first one
-                    org.intocps.maestro.framework.core.RelationVariable fromVar = r;
+                    RelationVariable fromVar = r;
 
-                    if (fromVar instanceof RelationVariable) {
-                        Fmi2ModelDescription.Types fromType = ((RelationVariable) fromVar).getScalarVariable().type.type;
-                        PExp from = arrayGet(getBufferName(fromVar.getInstance(), fromType, DataExchangeHandler.UsageType.Out),
-                                outputs.get(fromVar.getInstance()).get(fromType).stream().map(Fmi2ModelDescription.ScalarVariable::getName)
-                                        .collect(Collectors.toList()).indexOf(fromVar.getName()));
-                        return from;
-                    } else {
-                        throw new RuntimeException("Not a fmi 2 variable");
-                    }
+
+                    PType fromType = fromVar.getType().getLexType();
+                    PExp from = arrayGet(getBufferName(fromVar.getInstance(), (SPrimitiveType) fromType, DataExchangeHandler.UsageType.Out),
+                            outputs.get(fromVar.getInstance()).get(fromVar.getType2().get().type).stream()
+                                    .map(Fmi2ModelDescription.ScalarVariable::getName).collect(Collectors.toList()).indexOf(fromVar.getName()));
+                    return from;
 
 
                 }, (oldValue, newValue) -> oldValue, LinkedHashMap::new));

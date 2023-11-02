@@ -11,13 +11,10 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.ModelDescription;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.IRelation;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
-import org.intocps.maestro.framework.fmi2.FaultInjectWithLexName;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.InstanceInfo;
+import org.intocps.maestro.framework.fmi2.*;
 import org.intocps.maestro.plugin.IMaestroPlugin;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.slf4j.Logger;
@@ -520,15 +517,12 @@ public class MaBLTemplateGenerator {
         for (Map.Entry<String, ? extends FrameworkUnitInfo> instance : unitRelationShip.getInstances()) {
             for (Fmi2SimulationEnvironment.Relation relation : unitRelationShip.getRelations(instance.getKey())) {
                 if (relation.getOrigin() == IRelation.InternalOrExternal.External && relation.getDirection() == IRelation.Direction.OutputToInput) {
-                    for (Map.Entry<LexIdentifier, Fmi2SimulationEnvironment.Variable> target : relation.getTargets().entrySet()) {
+                    for (Map.Entry<LexIdentifier, RelationVariable> target : relation.getTargets().entrySet()) {
 
-                        if (!target.getValue().getScalarVariable().getScalarVariable().getType()
-                                .isAssignableFrom(relation.getSource().getScalarVariable().getScalarVariable().getType(), false)) {
+                        if (!target.getValue().getType().isAssignableFrom(relation.getSource().getType().get(), false)) {
                             sbUnitError.append(String.format("Invalid unit for connection: %s.%s [%s] -> %s.%s [%s]", instance.getKey(),
-                                    relation.getSource().getScalarVariable().getScalarVariable().name,
-                                    relation.getSource().getScalarVariable().getScalarVariable().getType().unit.getName(), target.getKey().getText(),
-                                    target.getValue().getScalarVariable().getScalarVariable().name,
-                                    target.getValue().getScalarVariable().getScalarVariable().getType().unit.getName()));
+                                    relation.getSource().getName(), relation.getSource().getType2().get().unit.getName(), target.getKey().getText(),
+                                    target.getValue().getName(), target.getValue().getType2().get().unit.getName()));
                         }
                     }
                 }

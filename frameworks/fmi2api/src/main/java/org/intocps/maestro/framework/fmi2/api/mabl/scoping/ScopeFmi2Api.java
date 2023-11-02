@@ -5,7 +5,8 @@ import org.intocps.maestro.ast.AParallelBlockStm;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;

@@ -9,6 +9,7 @@ import org.intocps.maestro.ast.node.*
 import org.intocps.maestro.core.Framework
 import org.intocps.maestro.core.messages.IErrorReporter
 import org.intocps.maestro.fmi.Fmi2ModelDescription
+import org.intocps.maestro.fmi.fmi3.*
 import org.intocps.maestro.framework.core.IRelation
 import org.intocps.maestro.framework.core.ISimulationEnvironment
 import org.intocps.maestro.framework.core.RelationVariable
@@ -17,6 +18,7 @@ import org.intocps.maestro.framework.fmi2.InvalidVariableStringException
 import org.intocps.maestro.framework.fmi2.ModelConnection
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder.ArrayVariable
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder.SimulationInstance
 import org.intocps.maestro.framework.fmi2.api.mabl.*
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api
@@ -97,7 +99,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         ), MableAstFactory.newAVoidType()
     )
 
-    private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<Fmi2ModelDescription.ScalarVariable>>()
+    private val portsAlreadySet = HashMap<FmiBuilder.SimulationInstance<PStm>, Set<Any?>>()
     private val topologicalPlugin: TopologicalPlugin
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
@@ -359,11 +361,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 math
             )
 
-//            val algorithm = builder.buildRaw() as SBlockStm
-//            algorithm.apply(ToParExp())
-//
-//
-//            algorithm.body
+
         } catch (e: Exception) {
             throw ExpandException("Internal error: ", e)
         }
@@ -422,11 +420,12 @@ class Initializer : BasicMaestroExpansionPlugin {
 
         //Set variables for all components in IniPhase
         setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
+        setInstanceVariables(fmu3Instances, PhasePredicates3.iniPhase(), builder)
 
         //Enter initialization Mode
         logger.debug("Enter initialization Mode")
         fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
-        //FIXME: missing parameters
+
         val fmi3ToloranceDefined = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
         fmu3Instances.values.forEach(Consumer { fmu: InstanceVariableFmi3Api ->
             fmu.enterInitializationMode(
@@ -438,6 +437,8 @@ class Initializer : BasicMaestroExpansionPlugin {
             )
         })
 
+
+        //TODO not sure what this is - stabilization maybe
         val instructions = instantiationOrder.map { i ->
             createInitInstructions(
                 i.toList(), dynamicScope, fmuInstances, booleanLogic, math
@@ -459,9 +460,11 @@ class Initializer : BasicMaestroExpansionPlugin {
             stabilisationScope.activate()
             stabilisationScope.leave();
         }
+        //TODO end
 
 
         setRemainingInputs(fmuInstances, builder)
+        setRemainingInputs3(fmu3Instances, builder)
 
         //Exit initialization Mode
         fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
@@ -527,76 +530,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 booleanLogic,
                 math
             );
-//
-//            // Create bindings
-//            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
-//
-//            this.config = config as InitializationConfig
-//
-//            this.modelParameters = config.modelParameters
-//            this.envParameters = config.envParameters
-//
-//            // Convergence related variables
-//            absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
-//            relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
-//            maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
-//
-//            logger.debug("Setup experiment for all components")
-//            fmuInstances.values.forEach { i ->
-//                i.setupExperiment(
-//                    externalStartTime,
-//                    externalEndTime,
-//                    this.config!!.relativeTolerance
-//                )
-//            };
-//            val connections = createConnections(env, fmuInstances)
-//
-//            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-//            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
-//
-//            //Verification against prolog should only be done if it turned on and there is no loops
-//            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
-//                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
-//
-//
-//            //Set variables for all components in IniPhase
-//            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
-//
-//            //Enter initialization Mode
-//            logger.debug("Enter initialization Mode")
-//            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
-//
-//            val instructions = instantiationOrder.map { i ->
-//                createInitInstructions(
-//                    i.toList(),
-//                    dynamicScope,
-//                    fmuInstances,
-//                    booleanLogic,
-//                    math
-//                )
-//            }
-//            var stabilisationScope: ScopeFmi2Api? = null
-//            var stabilisationLoop: IntVariableFmi2Api? = null
-//            if (this.config!!.stabilisation) {
-//                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
-//                stabilisationScope = dynamicScope.enterWhile(
-//                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
-//                )
-//            }
-//
-//            instructions.forEach { i -> i.perform() }
-//
-//            if (stabilisationScope != null) {
-//                stabilisationLoop!!.decrement();
-//                stabilisationScope.activate()
-//                stabilisationScope.leave();
-//            }
-//
-//
-//            setRemainingInputs(fmuInstances, builder)
-//
-//            //Exit initialization Mode
-//            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
+
 
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
@@ -615,7 +549,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             try {
                 val scalarVariables = comp.modelDescription.scalarVariables
                 val inputsScalars = scalarVariables.filter { x ->
-                    PhasePredicates.inPhase().test(x) && !portSet(comp, x)
+                    PhasePredicates.inPhase().test(x) && !isPortSet(comp, x)
                 }
 
                 val ports =
@@ -631,9 +565,35 @@ class Initializer : BasicMaestroExpansionPlugin {
         }
     }
 
-    private fun portSet(comp: ComponentVariableFmi2Api, x: Fmi2ModelDescription.ScalarVariable?): Boolean {
+    private fun setRemainingInputs3(
+        fmuInstances: Map<String, InstanceVariableFmi3Api>, builder: MablApiBuilder
+    ) {
+        for (comp in fmuInstances.values) {
+            try {
+                val scalarVariables = comp.modelDescription.getScalarVariables()
+                val inputsScalars = scalarVariables.filter { x ->
+                    PhasePredicates3.inPhase().test(x.variable) && !isPortSet(comp, x.variable)
+                }
+
+                val ports =
+                    comp.getPorts(
+                        *inputsScalars.stream()
+                            .mapToInt { sv -> Math.toIntExact(sv.variable.getValueReferenceAsLong()) }
+                            .toArray())
+
+                for (port in ports) {
+                    setParameterOnPort(port, comp, builder)
+                }
+            } catch (e: Exception) {
+                throw ExpandException("Initializer failed to read scalarvariables", e)
+            }
+        }
+    }
+
+    private fun isPortSet(comp: SimulationInstance<PStm>, x: Any?): Boolean {
         return if (portsAlreadySet.containsKey(comp)) portsAlreadySet.getValue(comp).contains(x) else false
     }
+
 
     private fun setParameterOnPort(
         port: PortFmi2Api, comp: ComponentVariableFmi2Api, builder: MablApiBuilder
@@ -691,7 +651,69 @@ class Initializer : BasicMaestroExpansionPlugin {
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
-    private fun addToPortsAlreadySet(comp: ComponentVariableFmi2Api, port: Fmi2ModelDescription.ScalarVariable) {
+    private fun setParameterOnPort(
+        port: PortFmi3Api, comp: InstanceVariableFmi3Api, builder: MablApiBuilder
+    ) {
+        val fmuName = comp.name
+//        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
+
+        val useEnvForPort = this.envParameters?.contains(port.multiModelScalarVariableName)
+        if (useEnvForPort == null || !useEnvForPort) {
+
+            var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
+            when (port.scalarVariable.variable.typeIdentifier!!) {
+                Fmi3TypeEnum.BooleanType -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
+                Fmi3TypeEnum.Float64Type -> {
+
+                    if (port.scalarVariable.variable.isScalar()) {
+                        staticValue = (staticValue as List<Any>).get(0)
+
+
+                        if (staticValue is Int) {
+                            staticValue = staticValue.toDouble()
+                        }
+                        val b: Double = staticValue as Double
+                        comp.set(port, DoubleExpressionValue.of(b))
+                    }
+                }
+
+                Fmi3TypeEnum.Int32Type -> comp.set(port, IntExpressionValue.of(staticValue as Int))
+                Fmi3TypeEnum.StringType -> comp.set(port, StringExpressionValue.of(staticValue as String))
+                Fmi3TypeEnum.EnumerationType -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
+            }
+        } else {
+            when (port.scalarVariable.variable.typeIdentifier!!) {
+                Fmi3TypeEnum.BooleanType -> {
+                    val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+
+                Fmi3TypeEnum.Float64Type -> {
+                    val v = builder.executionEnvironment.getReal(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+
+                Fmi3TypeEnum.Int32Type -> {
+                    val v = builder.executionEnvironment.getInt(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+
+                Fmi3TypeEnum.StringType -> {
+                    val v = builder.executionEnvironment.getString(port.multiModelScalarVariableName)
+                    comp.set(port, v)
+                }
+
+                Fmi3TypeEnum.EnumerationType -> throw ExpandException("Enumeration not supported")
+                else -> throw ExpandException("Not known type")
+            }
+        }
+
+
+        addToPortsAlreadySet(comp, port.scalarVariable)
+    }
+
+    private fun addToPortsAlreadySet(comp: FmiBuilder.SimulationInstance<PStm>, port: Any?) {
         if (portsAlreadySet.containsKey(comp)) {
             portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
         } else {
@@ -700,7 +722,7 @@ class Initializer : BasicMaestroExpansionPlugin {
     }
 
     private fun createInitInstructions(
-        ports: List<Fmi2SimulationEnvironment.Variable>,
+        ports: List<org.intocps.maestro.framework.fmi2.RelationVariable<Any>>,
         dynamicScope: DynamicActiveBuilderScope,
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
         booleanLogic: BooleanBuilderFmi2Api,
@@ -712,8 +734,8 @@ class Initializer : BasicMaestroExpansionPlugin {
         } else {
             val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, c) }
             val outputPorts =
-                ports.filter { p -> p.scalarVariable.scalarVariable.causality == Fmi2ModelDescription.Causality.Output }
-                    .map { i -> i.scalarVariable }
+                ports.filter { p -> p.has(Fmi2ModelDescription.Causality.Output) }
+                    .map { i -> i }
             LoopSimInstruction(
                 dynamicScope,
                 maxConvergeAttempts!!,
@@ -728,22 +750,22 @@ class Initializer : BasicMaestroExpansionPlugin {
     }
 
     private fun fmuCoSimInstruction(
-        fmuInstances: Map<String, ComponentVariableFmi2Api>, p: Fmi2SimulationEnvironment.Variable
+        fmuInstances: Map<String, ComponentVariableFmi2Api>, p: org.intocps.maestro.framework.fmi2.RelationVariable<Any>
     ): FMUCoSimInstruction {
-        val fmu = fmuInstances.values.find { x -> x.environmentName.equals(p.scalarVariable.instance.text) }
+        val instance = fmuInstances.values.find { x -> x.environmentName.equals(p.getInstance().text) }
 //        val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
-        if (fmu != null) {
-            val port = fmu.getPort(p.scalarVariable.scalarVariable.name)
-            return when (p.scalarVariable.scalarVariable.causality) {
-                Fmi2ModelDescription.Causality.Output -> GetInstruction(fmu, port, false)
-                Fmi2ModelDescription.Causality.Input -> {
-                    addToPortsAlreadySet(fmu, port.scalarVariable)
-                    SetInstruction(fmu, port)
+        if (instance != null) {
+            val port = instance.getPort(p.name)
+            return when {
+                p.has(Fmi2ModelDescription.Causality.Output) -> GetInstruction(instance, port, false)
+                p.has(Fmi2ModelDescription.Causality.Input) -> {
+                    addToPortsAlreadySet(instance, port.scalarVariable)
+                    SetInstruction(instance, port)
                 }
 
                 else -> throw ExpandException("Internal error")
             }
-        } else throw ExpandException("Failed to retrieve FMUInstance by name: " + p.scalarVariable.instance.text)
+        } else throw ExpandException("Failed to retrieve FMUInstance by name: " + p.name)
     }
 
 
@@ -805,6 +827,19 @@ class Initializer : BasicMaestroExpansionPlugin {
     ) {
         fmuInstances.entries.forEach { (fmuName, comp) ->
             for (sv in comp.modelDescription.scalarVariables.filter { i -> predicate.test(i) }) {
+                val port = comp.getPort(sv.name)
+                setParameterOnPort(port, comp, builder)
+            }
+        }
+    }
+
+    private fun setInstanceVariables(
+        fmuInstances: Map<String, InstanceVariableFmi3Api>,
+        predicate: Predicate<Fmi3Variable>,
+        builder: MablApiBuilder
+    ) {
+        fmuInstances.entries.forEach { (fmuName, comp) ->
+            for (sv in comp.modelDescription.getModelVariables().filter { i -> predicate.test(i) }) {
                 val port = comp.getPort(sv.name)
                 setParameterOnPort(port, comp, builder)
             }
@@ -939,6 +974,29 @@ class Initializer : BasicMaestroExpansionPlugin {
             val parameterValue =
                 modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.name }
             return if (parameterValue != null) parameterValue.value else sv.type.start
+        }
+
+        private fun findParameterOrDefault(
+            compName: String, sv: Fmi3ModelDescription.Fmi3ScalarVariable, modelParameters: List<ModelParameter>?
+        ): Any? {
+            val parameterValue =
+                modelParameters?.firstOrNull { x: ModelParameter -> x.variable.instance.instanceName == compName && x.variable.variable == sv.variable.name }
+            return if (parameterValue != null) parameterValue.value else getStartValue(sv.variable)
+        }
+
+        private fun getStartValue(variable: Fmi3Variable): Any? {
+            return when (variable) {
+                is FloatVariable -> variable.start
+                is Int64Variable -> variable.start
+                is IntVariable -> variable.start
+                is BooleanVariable -> variable.start
+                is StringVariable -> variable.start
+                is BinaryVariable -> variable.start
+                is EnumerationVariable -> variable.start
+                is ClockVariable -> null
+                else -> null
+
+            }
         }
 
 //        /**
