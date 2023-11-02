@@ -117,8 +117,8 @@ module FMI3Instance import FMU3State;{
         /* end::getNumberOfVariableDependencies[] */
     
         /* tag::getVariableDependencies[] */
-        int getVariableDependencies(uint dependent, int elementIndicesOfDependent[], uint independents[],
-                uint elementIndicesOfIndependents[], int dependencyKinds[], int nDependencies);
+        int getVariableDependencies(uint dependent, out int elementIndicesOfDependent[], out uint independents[],
+                out uint elementIndicesOfIndependents[], out int dependencyKinds[], int nDependencies);
         /* end::getVariableDependencies[] */
     
         /* getting and setting the internal FMU state */
@@ -191,7 +191,7 @@ module FMI3Instance import FMU3State;{
         /* end::getShiftDecimal[] */
     
         /* tag::getShiftFraction[] */
-        int getShiftFraction(uint valueReferences[], int nValueReferences, uint shiftCounters[], uint resolutions[]);
+        int getShiftFraction(uint valueReferences[], int nValueReferences, out uint shiftCounters[], out uint resolutions[]);
         /* end::getShiftFraction[] */
     
         /* tag::setIntervalDecimal[] */
@@ -216,9 +216,9 @@ module FMI3Instance import FMU3State;{
         /* end::EvaluateDiscreteStates[] */
     
         /* tag::UpdateDiscreteStates[] */
-        int updateDiscreteStates(bool[] discreteStatesNeedUpdate, bool[] terminateSimulation,
-                bool[] nominalsOfContinuousStatesChanged, bool[] valuesOfContinuousStatesChanged, bool[] nextEventTimeDefined,
-                real[] nextEventTime);
+        int updateDiscreteStates(out bool[] discreteStatesNeedUpdate, out bool[] terminateSimulation,
+                out bool[] nominalsOfContinuousStatesChanged, out bool[] valuesOfContinuousStatesChanged, out bool[] nextEventTimeDefined,
+                out real[] nextEventTime);
         /* end::UpdateDiscreteStates[] */
     
         /***************************************************
@@ -279,7 +279,7 @@ module FMI3Instance import FMU3State;{
         /* end::EnterStepMode[] */
     
         /* tag::getOutputDerivatives[] */
-        int getOutputDerivatives(uint valueReferences[], int nValueReferences, int orders[], real values[], int nValues);
+        int getOutputDerivatives(uint valueReferences[], int nValueReferences, int orders[], out real values[], out int nValues);
         /* end::getOutputDerivatives[] */
     
         /* tag::DoStep[] */

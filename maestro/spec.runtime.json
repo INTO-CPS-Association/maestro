@@ -1,0 +1,10 @@
+{
+  "environment_variables" : {
+    "{x1}.controller.maxLevel" : 2,
+    "{x1}.controller.minLevel" : 4
+  },
+  "DataWriter" : [ {
+    "filename" : "outputs.csv",
+    "type" : "CSV"
+  } ]
+}
