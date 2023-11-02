@@ -2,7 +2,6 @@ package org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
 import org.intocps.fmi.jnifmuapi.fmi3.schemas.Fmi3Schema
-import org.intocps.maestro.fmi.Fmi3SchemaProvider
 import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Node
@@ -32,7 +31,7 @@ class Fmi3ModelDescription : ModelDescription {
 
     constructor(file: InputStream) : super(
         file,
-        StreamSource(ByteArrayInputStream(IOUtils.toByteArray(Fmi3Schema().schema))), Fmi3SchemaProvider()
+        StreamSource(ByteArrayInputStream(IOUtils.toByteArray(Fmi3Schema().schema))), Fmi3Schema()
     )
 
     fun getScalarVariables(): List<Fmi3ScalarVariable> {
