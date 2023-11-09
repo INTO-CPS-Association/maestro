@@ -15,7 +15,10 @@ import FMI2;
 
 
 module FMU3State{}
-module FMI3Instance import FMU3State;{
+module FMI3Instance
+    import FMU3State;
+    import ByteArrayArray;
+{
 
 
       /**
@@ -80,7 +83,7 @@ module FMI3Instance import FMU3State;{
     
         int getString(uint valueReferences[],out  string values[]);
     
-        int getBinary(uint valueReferences[], out byte values[][]);
+        int getBinary(uint valueReferences[], out ByteArrayArray data);
         /* end::getters[] */
     
         /* tag::setters[] */
@@ -108,7 +111,7 @@ module FMI3Instance import FMU3State;{
     
         int setString(uint valueReferences[],int nvr,  string values[],int nv);
     
-        int setBinary(uint valueReferences[],  long sizes[], byte array_name[][]);
+        int setBinary(uint valueReferences[],int nvr,  ByteArrayArray data);
         /* end::setters[] */
     
         /* getting Variable Dependency Information */

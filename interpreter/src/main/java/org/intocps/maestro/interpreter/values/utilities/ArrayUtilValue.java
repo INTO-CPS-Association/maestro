@@ -91,6 +91,12 @@ public class ArrayUtilValue extends ExternalModuleValue<Object> {
             return new VoidValue();
         }));
 
+        componentMembers.put("createByteArrayArray", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 1);
+            int size = ((NumericValue) fcargs.get(0).deref()).intValue();
+            return new ByteArrayArrayValue(size);
+        }));
+
         return componentMembers;
 
     }

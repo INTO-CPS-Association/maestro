@@ -1,4 +1,16 @@
- module ArrayUtil
- {
+module ArrayUtil
+import ByteArrayArray;
+{
     void copyRealArray(real[] source, int fromIndex, int count,out real[] destination, int destinationStart );
+
+    ByteArrayArray createByteArrayArray(int size);
+}
+
+module ByteArrayArray
+{
+    void set(int index, byte[] arr);
+    byte[] get(int index);
+
+    int[] getArraySizes();
+
 }

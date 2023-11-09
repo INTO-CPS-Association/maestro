@@ -1,0 +1,90 @@
+simulation
+import FMI3;
+import Logger;
+import ArrayUtil;
+{
+    FMI3 fmuFeedThrough =null;
+    ArrayUtil arrayUtil=null;
+    try
+    {
+
+        int res=0;
+        Logger logger = load("Logger");
+        fmuFeedThrough = load("FMI3", "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}", "file:Feedthrough.fmu");
+        if (fmuFeedThrough == null)
+        {
+            error "Oh we cannot load the FeedThrough fmu";
+        }
+        arrayUtil = load("ArrayUtil");
+
+
+        string instanceName="my feed through instance";
+
+        bool visible=true;
+        bool loggingOn=true;
+        bool eventModeUsed=true;
+        bool earlyReturnAllowed=true;
+        uint requiredIntermediateVariables[0];
+
+        FMI3Instance instance = fmuFeedThrough.instantiateCoSimulation( instanceName,  visible,  loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+        if (instance == null)
+        {
+            error "instance not created";
+        }
+
+//BEFORE_INIT
+        instance.enterInitializationMode(false,0d,0d,true,10d);
+
+
+//IN_INIT
+        instance.exitInitializationMode();
+//AFTER_INIT
+
+        res=instance.enterStepMode();
+        logger.log(3,"enterStepMode status %d",res);
+
+//IN_STEP_MODE_BEFORE_LOOP
+
+        real step =0.1;
+        real time=0;
+        real end=10;
+
+        bool nosetFMUStatePriorToCurrentPoint=false;
+        bool eventHandlingNeeded=false;
+        bool terminateSimulation=false;
+        bool earlyReturn=false;
+        real lastSuccessfulTime=0.0;
+
+
+        while(time < end-step)
+        {
+            res = instance.doStep(time,
+                                    step,
+                                    nosetFMUStatePriorToCurrentPoint,
+                                    ref eventHandlingNeeded,
+                                    ref terminateSimulation,
+                                    ref earlyReturn,
+                                    ref lastSuccessfulTime);
+            logger.log(3,"doStep status %d, earlyreturn %b, lassSuccessfulTime %f",res,earlyReturn, lastSuccessfulTime);
+
+
+
+            //IN_STEP_MODE_IN_LOOP
+            time = time + step;
+        }
+
+        res=instance.terminate();
+        logger.log(3,"terminate status %d",res);
+
+  //AFTER_TERMINATE
+
+        unload(logger);
+        fmuFeedThrough.freeInstance(instance);
+
+    }
+    finally
+    {
+        unload(fmuFeedThrough);
+        unload(arrayUtil);
+    }
+}

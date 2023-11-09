@@ -5,6 +5,7 @@ import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.intocps.fmi.FmiInvalidNativeStateException;
 import org.intocps.fmi.FmuInvocationException;
 import org.intocps.fmi.jnifmuapi.fmi3.*;
 import org.intocps.maestro.ast.AFunctionDeclaration;
@@ -23,6 +24,7 @@ import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.interpreter.values.fmi.Fmu3InstanceValue;
 import org.intocps.maestro.interpreter.values.fmi.Fmu3StateValue;
 import org.intocps.maestro.interpreter.values.fmi.Fmu3Value;
+import org.intocps.maestro.interpreter.values.utilities.ByteArrayArrayValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -419,7 +421,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             }
         }));
 
-        functions.put("getShiftDecimal", new FunctionValue.ExternalFunctionValue(fcargs->{
+        functions.put("getShiftDecimal", new FunctionValue.ExternalFunctionValue(fcargs -> {
             // int getShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
 
             checkArgLength(fcargs, 3);
@@ -553,7 +555,6 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 throw new InterpreterException(e);
             }
         }));
-
 
 
         functions.put("getContinuousStateDerivatives", new FunctionValue.ExternalFunctionValue(fcargs -> {
@@ -790,6 +791,43 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             }
 
             throw new InterpreterException("Invalid value");
+
+
+        }));
+
+
+        functions.put("setBinary", new FunctionValue.ExternalFunctionValue(fcargs -> {
+//            int setShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+            checkArgLength(fcargs, 3);
+
+            long elementsToUse = getUint(fcargs.get(1));
+
+            long[] scalarValueIndices =
+                    getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().mapToLong(NumericValue::longValue)
+                            .toArray();
+
+            ByteArrayArrayValue buffer = (ByteArrayArrayValue) fcargs.get(2).deref();
+
+
+            List<int[]> elements = buffer.getModule().stream().map(a -> a.stream().mapToInt(ByteValue::intValue).toArray()).collect(Collectors.toList());
+            byte[][] data = new byte[elements.size()][];
+            for (int i = 0; i < data.length; i++) {
+
+                byte[] bytes = new byte[elements.get(i).length];
+                for (int j = 0; j < elements.get(i).length; j++) {
+                    bytes[j] = Integer.valueOf(elements.get(i)[j]).byteValue();
+                }
+
+                data[i] = bytes;
+            }
+
+
+            try {
+                Fmi3Status res = instance.setBinary(scalarValueIndices, data);
+                return new IntegerValue(res.value);
+            } catch (FmiInvalidNativeStateException e) {
+                throw new InterpreterException(e);
+            }
 
 
         }));

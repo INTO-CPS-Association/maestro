@@ -27,6 +27,8 @@ public class LoggerValue extends ExternalModuleValue<Object> {
                 return ((NumericValue) v).intValue();
             } else if (v instanceof StringValue) {
                 return ((StringValue) v).getValue();
+            } else if (v instanceof BooleanValue) {
+                return ((BooleanValue) v).value;
             }
 
             return v.toString();
