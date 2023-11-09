@@ -654,6 +654,28 @@ import ArrayUtil;
 
 
 
+		ByteArrayArray var_201=arrayUtil.createByteArrayArray(0);
+		uint vref_201[1]={30};
+
+		int status_201= instance.getBinary(vref_201,1,ref var_201);
+		if( status_201 != 0) 
+			error "An error occurred during setBinary"; 
+		else 
+			logger.log(3,"getBinary status %d for variable 'Binary_input'",status_201);
+
+
+
+		ByteArrayArray var_202=arrayUtil.createByteArrayArray(0);
+		uint vref_202[1]={31};
+
+		int status_202= instance.getBinary(vref_202,1,ref var_202);
+		if( status_202 != 0) 
+			error "An error occurred during setBinary"; 
+		else 
+			logger.log(3,"getBinary status %d for variable 'Binary_output'",status_202);
+
+
+
 		int var_203[1000];
 		uint vref_203[1]={32};
 
@@ -696,7 +718,7 @@ import ArrayUtil;
         bool earlyReturn=false;
         real lastSuccessfulTime=0.0;
 
-       
+
         while(time < end-step)
         {
             res = instance.doStep(time,
@@ -1100,6 +1122,28 @@ import ArrayUtil;
 			logger.log(3,"getString status %d for variable 'String_parameter'",status_234);
 		if( status_234 == 0)
 			logger.log(3,"	String_parameter --> %s",var_234[0]);
+
+
+
+		ByteArrayArray var_235=arrayUtil.createByteArrayArray(0);
+		uint vref_235[1]={30};
+
+		int status_235= instance.getBinary(vref_235,1,ref var_235);
+		if( status_235 != 0) 
+			error "An error occurred during setBinary"; 
+		else 
+			logger.log(3,"getBinary status %d for variable 'Binary_input'",status_235);
+
+
+
+		ByteArrayArray var_236=arrayUtil.createByteArrayArray(0);
+		uint vref_236[1]={31};
+
+		int status_236= instance.getBinary(vref_236,1,ref var_236);
+		if( status_236 != 0) 
+			error "An error occurred during setBinary"; 
+		else 
+			logger.log(3,"getBinary status %d for variable 'Binary_output'",status_236);
 
 
 

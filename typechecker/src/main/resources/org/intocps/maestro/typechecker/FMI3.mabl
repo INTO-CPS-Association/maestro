@@ -83,7 +83,7 @@ module FMI3Instance
     
         int getString(uint valueReferences[],out  string values[]);
     
-        int getBinary(uint valueReferences[], out ByteArrayArray data);
+        int getBinary(uint valueReferences[],int nvr, out ByteArrayArray data);
         /* end::getters[] */
     
         /* tag::setters[] */

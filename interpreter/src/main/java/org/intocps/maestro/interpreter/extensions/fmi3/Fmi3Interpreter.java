@@ -797,7 +797,6 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
 
         functions.put("setBinary", new FunctionValue.ExternalFunctionValue(fcargs -> {
-//            int setShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
             checkArgLength(fcargs, 3);
 
             long elementsToUse = getUint(fcargs.get(1));
@@ -829,6 +828,38 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 throw new InterpreterException(e);
             }
 
+
+        }));
+
+        functions.put("getBinary", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 3);
+
+            long elementsToUse = getUint(fcargs.get(1));
+
+            long[] scalarValueIndices =
+                    getArrayValue(fcargs.get(0), Optional.of(elementsToUse), NumericValue.class).stream().mapToLong(NumericValue::longValue)
+                            .toArray();
+
+            ByteArrayArrayValue buffer = (ByteArrayArrayValue) fcargs.get(2).deref();
+
+
+            try {
+                FmuResult<byte[][]> res = instance.getBinary(scalarValueIndices);
+
+                buffer.getModule().clear();
+                for (int i = 0; i < res.result.length; i++) {
+                    int[] values = new int[res.result[i].length];
+                    for (int j = 0; j < values.length; j++) {
+                        values[j] = res.result[i][j];
+                    }
+
+                    buffer.getModule().add(
+                            Arrays.stream(values).mapToObj(ByteValue::new).collect(Collectors.toList()));
+                }
+                return new IntegerValue(res.status.value);
+            } catch (FmiInvalidNativeStateException e) {
+                throw new InterpreterException(e);
+            }
 
         }));
 
