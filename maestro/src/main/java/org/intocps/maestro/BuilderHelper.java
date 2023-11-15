@@ -23,10 +23,7 @@ import org.jgrapht.traverse.DepthFirstIterator;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.newABlockStm;
@@ -38,7 +35,7 @@ public class BuilderHelper {
     List<FmiBuilder.Variable<PStm, ?>> variables;
 
     public BuilderHelper(ACallExp callToBeReplaced, Map<INode, PType> typesMap,
-            ISimulationEnvironment simulationEnvironment) throws FmiBuilder.Port.PortLinkException, AnalysisException {
+                         ISimulationEnvironment simulationEnvironment) throws FmiBuilder.Port.PortLinkException, AnalysisException {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = true;
@@ -79,7 +76,7 @@ public class BuilderHelper {
         spec.apply(new DepthFirstAnalysisAdaptorQuestion<>() {
             @Override
             public void caseAInstanceMappingStm(AInstanceMappingStm node,
-                    DefaultDirectedGraph<String, DefaultEdge> question) throws AnalysisException {
+                                                DefaultDirectedGraph<String, DefaultEdge> question) throws AnalysisException {
                 super.caseAInstanceMappingStm(node, question);
 
                 String source = node.getIdentifier().getText();
@@ -96,8 +93,8 @@ public class BuilderHelper {
     }
 
     private static FmiBuilder.Variable<PStm, ?> wrapAsVariable(MablApiBuilder builder, Map<INode, PType> typesMap,
-            ISimulationEnvironment simulationEnvironment, PType type, PExp exp, Map<String, ComponentVariableFmi2Api> instances,
-            Map<String, InstanceVariableFmi3Api> fmi3Instances, DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> graph) {
+                                                               ISimulationEnvironment simulationEnvironment, PType type, PExp exp, Map<String, ComponentVariableFmi2Api> instances,
+                                                               Map<String, InstanceVariableFmi3Api> fmi3Instances, DefaultDirectedGraph<String, org.jgrapht.graph.DefaultEdge> graph) {
 
         Fmi2SimulationEnvironment env = null;
 
@@ -190,15 +187,19 @@ public class BuilderHelper {
                             .filter(decl -> decl.getName().equals(itemName) && !decl.getSize().isEmpty() && decl.getInitializer() != null)
                             .findFirst();
 
+
+            List<PExp> initializerExps;
             if (itemDecl.isEmpty()) {
-                throw new RuntimeException("Could not find names for components");
+//                throw new RuntimeException("Could not find names for components");
+                initializerExps = new ArrayList<>();
+            } else {
+
+                AArrayInitializer initializer = (AArrayInitializer) itemDecl.get().getInitializer();
+
+
+                initializerExps = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
+                        .collect(Collectors.toList());
             }
-
-            AArrayInitializer initializer = (AArrayInitializer) itemDecl.get().getInitializer();
-
-
-            List<PExp> initializerExps = initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast)
-                    .collect(Collectors.toList());
 
             return new ArrayVariableFmi2Api(null, type.clone(), null, null, null, exp, initializerExps.stream()
                     .map(e -> wrapAsVariable(builder, typesMap, simulationEnvironment, typesMap.get(e), e, instances, fmi3Instances, graph))

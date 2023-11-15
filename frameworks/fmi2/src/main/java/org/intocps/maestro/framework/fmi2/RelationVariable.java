@@ -118,11 +118,13 @@ public class RelationVariable<SCALAR_TYPE> implements org.intocps.maestro.framew
 
 
     public Optional<Fmi2ModelDescription.ScalarVariable> getFmi2ScalarVariable() {
-        return Optional.of(getScalarVariable(Fmi2ModelDescription.ScalarVariable.class));
+        Fmi2ModelDescription.ScalarVariable sv = getScalarVariable(Fmi2ModelDescription.ScalarVariable.class);
+        return sv == null ? Optional.empty() : Optional.of(sv);
     }
 
     public Optional<Fmi3ModelDescription.Fmi3ScalarVariable> getFmi3ScalarVariable() {
-        return Optional.of(getScalarVariable(Fmi3ModelDescription.Fmi3ScalarVariable.class));
+        Fmi3ModelDescription.Fmi3ScalarVariable sv = getScalarVariable(Fmi3ModelDescription.Fmi3ScalarVariable.class);
+        return sv == null ? Optional.empty() : Optional.of(sv);
     }
 
     public SCALAR_TYPE getScalarVariable() {

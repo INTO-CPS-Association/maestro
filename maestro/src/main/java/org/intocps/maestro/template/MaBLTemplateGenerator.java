@@ -109,7 +109,7 @@ public class MaBLTemplateGenerator {
 
 
     public static PStm createFMULoad(String fmuLexName, Map.Entry<String, ModelDescription> entry,
-            URI uriFromFMUName) throws XPathExpressionException {
+                                     URI uriFromFMUName) throws XPathExpressionException {
 
         ModelDescription md = entry.getValue();
 
@@ -138,7 +138,7 @@ public class MaBLTemplateGenerator {
     }
 
     public static Map.Entry<List<PStm>, List<PStm>> createFMUInstantiateStatement(TemplateInstanceList.TemplateInstance instance, String fmuLexName,
-            boolean visible, boolean loggingOn, FaultInjectWithLexName faultInject) {
+                                                                                  boolean visible, boolean loggingOn, FaultInjectWithLexName faultInject) {
         List<PStm> rootStatements = new ArrayList<>();
         List<PStm> tryBlockStatements = new ArrayList<>();
         String instanceLexName = instance.getLexName();
@@ -558,7 +558,7 @@ public class MaBLTemplateGenerator {
     }
 
     private static Collection<? extends PStm> createDebugLoggingStmsHelper(TemplateInstanceList instances, String instanceName,
-            List<String> logLevels) {
+                                                                           List<String> logLevels) {
         String instanceLexName = instances.getLexNameFromName(instanceName);
         if (instanceLexName != null) {
             return createExpandDebugLogging(instanceLexName, logLevels);
@@ -640,9 +640,10 @@ public class MaBLTemplateGenerator {
     }
 
     private static PStm createArray(String lexName, String type, List<String> keySet) {
+        AArrayInitializer initializer = newAArrayInitializer(keySet.stream().map(MaBLTemplateGenerator::aIdentifierExpFromString).collect(Collectors.toList()));
         return MableAstFactory.newALocalVariableStm(MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(lexName),
                 MableAstFactory.newAArrayType(MableAstFactory.newANameType(type)), keySet.size(),
-                MableAstFactory.newAArrayInitializer(keySet.stream().map(x -> aIdentifierExpFromString(x)).collect(Collectors.toList()))));
+                initializer.getExp().isEmpty() ? null : initializer));
     }
 
     private static Map.Entry<PStm, List<PStm>> createUnloadStatement(String moduleName) {
@@ -676,7 +677,7 @@ public class MaBLTemplateGenerator {
     }
 
     public static PStm createExpandInitialize(String componentsArrayLexName, String componentsTransferArrayLexName, String startTimeLexName,
-            String endTimeLexName, boolean endTimeDefined) {
+                                              String endTimeLexName, boolean endTimeDefined) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME),
@@ -694,7 +695,7 @@ public class MaBLTemplateGenerator {
     }
 
     public static PStm createExpandInitialize23(String componentsArrayLexName, String instanceArrayLexName, String startTimeLexName,
-            String endTimeLexName, boolean endTimeDefined) {
+                                                String endTimeLexName, boolean endTimeDefined) {
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(newExpandToken(), newAIdentifierExp(MableAstFactory.newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME)),
                         MableAstFactory.newAIdentifier(INITIALIZE23_EXPANSION_FUNCTION_NAME),

@@ -441,7 +441,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         //TODO not sure what this is - stabilization maybe
         val instructions = instantiationOrder.map { i ->
             createInitInstructions(
-                i.toList(), dynamicScope, fmuInstances, booleanLogic, math
+                i.toList(), dynamicScope, fmuInstances, fmu3Instances, booleanLogic, math
             )
         }
         var stabilisationScope: ScopeFmi2Api? = null
@@ -725,16 +725,17 @@ class Initializer : BasicMaestroExpansionPlugin {
         ports: List<org.intocps.maestro.framework.fmi2.RelationVariable<Any>>,
         dynamicScope: DynamicActiveBuilderScope,
         fmuInstances: Map<String, ComponentVariableFmi2Api>,
+        fmu3Instances: Map<String, InstanceVariableFmi3Api>,
         booleanLogic: BooleanBuilderFmi2Api,
         mathBuilder: MathBuilderFmi2Api
     ): CoSimInstruction {
         return if (ports.size == 1) {
             val p = ports.last()
-            fmuCoSimInstruction(fmuInstances, p)
+            fmuCoSimInstruction(fmuInstances, fmu3Instances, p)
         } else {
-            val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, c) }
+            val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, fmu3Instances, c) }
             val outputPorts =
-                ports.filter { p -> p.has(Fmi2ModelDescription.Causality.Output) }
+                ports.filter { p -> p.has(Fmi2ModelDescription.Causality.Output) || p.has(Fmi3Causality.Output) }
                     .map { i -> i }
             LoopSimInstruction(
                 dynamicScope,
@@ -750,8 +751,10 @@ class Initializer : BasicMaestroExpansionPlugin {
     }
 
     private fun fmuCoSimInstruction(
-        fmuInstances: Map<String, ComponentVariableFmi2Api>, p: org.intocps.maestro.framework.fmi2.RelationVariable<Any>
-    ): FMUCoSimInstruction {
+        fmuInstances: Map<String, ComponentVariableFmi2Api>,
+        fmu3Instances: Map<String, InstanceVariableFmi3Api>,
+        p: org.intocps.maestro.framework.fmi2.RelationVariable<Any>
+    ): CoSimInstruction {
         val instance = fmuInstances.values.find { x -> x.environmentName.equals(p.getInstance().text) }
 //        val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
         if (instance != null) {
@@ -765,7 +768,24 @@ class Initializer : BasicMaestroExpansionPlugin {
 
                 else -> throw ExpandException("Internal error")
             }
-        } else throw ExpandException("Failed to retrieve FMUInstance by name: " + p.name)
+        } else {
+            val instance3 = fmu3Instances.values.find { x -> x.environmentName.equals(p.getInstance().text) }
+//        val fmu = fmuInstances.getValue(p.scalarVariable.instance.text)
+            if (instance3 != null) {
+                val port = instance3.getPort(p.name)
+                return when {
+                    p.has(Fmi3Causality.Output) -> GetInstruction3(instance3, port, false)
+                    p.has(Fmi3Causality.Input) -> {
+                        addToPortsAlreadySet(instance3, port.scalarVariable)
+                        SetInstruction3(instance3, port)
+                    }
+
+                    else -> throw ExpandException("Internal error")
+                }
+
+            } else
+                throw ExpandException("Failed to retrieve FMUInstance by name: " + p.name)
+        }
     }
 
 

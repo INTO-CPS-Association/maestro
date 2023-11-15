@@ -1,0 +1,30 @@
+{
+  "fmus": {
+    "{ftFmu}": "/Users/kgl/data/au/Reference-FMUs/fmus/Feedthrough.fmu",
+    "{sgFmu}": "/Users/kgl/data/au/Reference-FMUs/fmus/SignalGenerator.fmu"
+  },
+  "connections": {
+    "{sgFmu}.sg.Float32_continuous_output": [ "{ftFmu}.ft.Float32_continuous_input" ],
+    "{sgFmu}.sg.Float32_discrete_output": [ "{ftFmu}.ft.Float32_discrete_input" ],
+    "{sgFmu}.sg.Float64_continuous_output": [ "{ftFmu}.ft.Float64_continuous_input" ],
+    "{sgFmu}.sg.Float64_discrete_output": [ "{ftFmu}.ft.Float64_discrete_input" ],
+    "{sgFmu}.sg.Int8_output": [ "{ftFmu}.ft.Int8_input" ],
+    "{sgFmu}.sg.UInt8_output": [ "{ftFmu}.ft.UInt8_input" ],
+    "{sgFmu}.sg.Int16_output": [ "{ftFmu}.ft.Int16_input" ],
+    "{sgFmu}.sg.UInt16_output": [ "{ftFmu}.ft.UInt16_input" ],
+    "{sgFmu}.sg.Int32_output": [ "{ftFmu}.ft.Int32_input" ],
+    "{sgFmu}.sg.UInt32_output": [ "{ftFmu}.ft.UInt32_input" ],
+    "{sgFmu}.sg.Int64_output": [ "{ftFmu}.ft.Int64_input" ],
+    "{sgFmu}.sg.UInt64_output": [ "{ftFmu}.ft.UInt64_input" ],
+    "{sgFmu}.sg.Boolean_output": [ "{ftFmu}.ft.Boolean_input" ],
+    "{sgFmu}.sg.Binary_output": [ "{ftFmu}.ft.Binary_input" ],
+    "{sgFmu}.sg.Enumeration_output": [ "{ftFmu}.ft.Enumeration_input" ]
+  },
+  "parameters": {},
+  "algorithm": {
+    "type": "fixed-step",
+    "size": 0.1
+  },
+  "startTime": 0,
+  "endTime": 10
+}

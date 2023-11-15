@@ -259,7 +259,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 }
             }
         } else {
-            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
+//            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
         }
         return store(node, newAArrayType(type).clone());
     }

@@ -59,29 +59,29 @@ module FMI3Instance
     
         /* getting and setting variable values */
         /* tag::getters[] */
-        int getFloat32(uint valueReferences[], out float values[]);
+        int getFloat32(uint valueReferences[], uint nvr, out float values[]);
     
-        int getFloat64(uint valueReferences[],out  real values[]);
+        int getFloat64(uint valueReferences[], uint nvr,out  real values[]);
     
-        int getInt8(uint valueReferences[], out byte values[]);
+        int getInt8(uint valueReferences[], uint nvr, out byte values[]);
     
-        int getUInt8(uint valueReferences[],out  byte values[]);
+        int getUInt8(uint valueReferences[], uint nvr,out  byte values[]);
     
-        int getInt16(uint valueReferences[], out short values[]);
+        int getInt16(uint valueReferences[], uint nvr, out short values[]);
     
-        int getUInt16(uint valueReferences[],out  short values[]);
+        int getUInt16(uint valueReferences[], uint nvr,out  short values[]);
     
-        int getInt32(uint valueReferences[], out int values[]);
+        int getInt32(uint valueReferences[], uint nvr, out int values[]);
     
-        int getUInt32(uint valueReferences[], out int values[]);
+        int getUInt32(uint valueReferences[], uint nvr, out int values[]);
     
-        int getInt64(uint valueReferences[], out long values[]);
+        int getInt64(uint valueReferences[], uint nvr, out long values[]);
     
-        int getUInt64(uint valueReferences[], out long values[]);
+        int getUInt64(uint valueReferences[], uint nvr, out long values[]);
     
-        int getBoolean(uint valueReferences[],out  bool values[]);
+        int getBoolean(uint valueReferences[], uint nvr,out  bool values[]);
     
-        int getString(uint valueReferences[],out  string values[]);
+        int getString(uint valueReferences[], uint nvr,out  string values[]);
     
         int getBinary(uint valueReferences[],int nvr, out ByteArrayArray data);
         /* end::getters[] */

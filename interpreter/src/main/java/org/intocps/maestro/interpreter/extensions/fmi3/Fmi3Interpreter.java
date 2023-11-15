@@ -844,7 +844,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
 
             try {
-                FmuResult<byte[][]> res = instance.getBinary(scalarValueIndices);
+                FmuResult<byte[][]> res = instance.getBinary(scalarValueIndices, scalarValueIndices.length);
 
                 buffer.getModule().clear();
                 for (int i = 0; i < res.result.length; i++) {

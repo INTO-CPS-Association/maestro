@@ -4,8 +4,8 @@ import org.intocps.maestro.ast.node.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
 public class TypeComparator {
     final static Logger logger = LoggerFactory.getLogger(TypeComparator.class);
@@ -77,17 +77,28 @@ public class TypeComparator {
     * float < double < long double
 */
         //ABooleanPrimitiveType.class,
-        Class types[] = new Class[]{AByteNumericPrimitiveType.class, AShortNumericPrimitiveType.class, AIntNumericPrimitiveType.class,
-                AUIntNumericPrimitiveType.class, ALongNumericPrimitiveType.class, AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
+        Class types[] = new Class[]{AByteNumericPrimitiveType.class, AShortNumericPrimitiveType.class, AUIntNumericPrimitiveType.class, AIntNumericPrimitiveType.class, ALongNumericPrimitiveType.class, AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
 
         //        Class typesDecimal[] = new Class[]{AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
-        List<Class> primitiveTypeRanks = new Vector<>();
+        List<Class> primitiveTypeRanks = Arrays.asList(types);
 
-        for (Class type : types) {
-            primitiveTypeRanks.add(type);
-        }
+//        for (Class type : types) {
+//            primitiveTypeRanks.add(type);
+//        }
         int toIndex = primitiveTypeRanks.indexOf(to.getClass());
         int fromIndex = primitiveTypeRanks.indexOf(from.getClass());
+
+        //rank for int and uint shall be the same
+        int indexInt = primitiveTypeRanks.indexOf(AIntNumericPrimitiveType.class);
+        int indexUInt = primitiveTypeRanks.indexOf(AUIntNumericPrimitiveType.class);
+        if (toIndex == indexInt) {
+            toIndex = indexUInt;
+        }
+        if (fromIndex == indexInt) {
+            fromIndex = indexUInt;
+        }
+
+
         if (toIndex > -1 && fromIndex > -1 && fromIndex <= toIndex) {
             //            logger.info("Type compatability {} -> {} OK", from.getClass().getSimpleName(), to.getClass().getSimpleName());
             return true;

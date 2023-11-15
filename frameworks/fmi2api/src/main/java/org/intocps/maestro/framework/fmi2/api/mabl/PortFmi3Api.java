@@ -1,5 +1,6 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.fmi3.Fmi3Causality;
 import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable,PStm> {
+public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm> {
 
     public final InstanceVariableFmi3Api aMablFmi3InstanceAPI;
     public final Fmi3ModelDescription.Fmi3ScalarVariable scalarVariable;
@@ -75,26 +76,26 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
             case ClockType:
                 return new AFloatNumericPrimitiveType();
             case Int8Type:
-                return new AShortNumericPrimitiveType();
             case UInt8Type:
+                return new AByteNumericPrimitiveType();
             case Int16Type:
             case UInt16Type:
+                return new AShortNumericPrimitiveType();
             case Int32Type:
-                return newIntType();
             case UInt32Type:
+                return newIntType();
             case Int64Type:
             case UInt64Type:
-                new ALongNumericPrimitiveType();
+            case EnumerationType:
+                return new ALongNumericPrimitiveType();
             case BooleanType:
                 return newBoleanType();
             case StringType:
                 return newStringType();
             case BinaryType:
-                return null;
-            case EnumerationType:
-                new ALongNumericPrimitiveType();
+                return new ANameType(new LexIdentifier("ByteArrayArray", null));
             default:
-                return null;
+                throw new RuntimeException("Unknown port type mapping. Port type: " + scalarVariable.getVariable().getTypeIdentifier());
         }
     }
 
@@ -125,7 +126,7 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
 
 
     @Override
-    public void linkTo(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable,PStm>... receivers) throws PortLinkException {
+    public void linkTo(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>... receivers) throws PortLinkException {
 
         if (receivers == null || receivers.length == 0) {
             return;
