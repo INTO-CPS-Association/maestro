@@ -1,32 +1,35 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.AFunctionDeclaration;
-import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.StepAlgorithm;
 import org.intocps.maestro.core.messages.IErrorReporter;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.ModelSwapInfo;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,65 +37,29 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.plugin.JacobianStepBuilder.ARG_INDEX.*;
 
 @SimulationFramework(framework = Framework.FMI2)
-public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
+public class JacobianStepBuilder3 extends JacobianStepBuilder {
 
-    protected enum ARG_INDEX {
-        FMI2_INSTANCES, FMI3_INSTANCES, START_TIME, STEP_SIZE, END_TIME, END_TIME_DEFINED
+    final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder3.class);
+
+    final IndexedFunctionDeclarationContainer<ARG_INDEX> fixedStep3Func = IndexedFunctionDeclarationContainer.newBuilder("fixedStep3Size", ARG_INDEX.class).
+            addArg(FMI2_INSTANCES, "component", newAArrayType(newANameType("FMI2Component"))).
+            addArg(STEP_SIZE, "stepSize", newARealNumericPrimitiveType()).
+            addArg(START_TIME, "startTime", newARealNumericPrimitiveType()).
+            addArg(END_TIME, "endTime", newARealNumericPrimitiveType()).
+            addArg(END_TIME_DEFINED, "endTimeDefined", newBoleanType()).build();
+
+
+    public JacobianStepBuilder3() {
+        imports.add("FMI3");
     }
 
-    protected final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder.class);
 
-    protected final IndexedFunctionDeclarationContainer<ARG_INDEX> fixedStepFunc = IndexedFunctionDeclarationContainer.newBuilder("fixedStepSize", ARG_INDEX.class).
-            addArg(FMI2_INSTANCES, "component", newAArrayType(newANameType("FMI2Component"))).
-            addArg(STEP_SIZE, "stepSize", newARealNumericPrimitiveType()).
-            addArg(START_TIME, "startTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME, "endTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME_DEFINED, "endTimeDefined", newBoleanType()).build();
-
-    protected final IndexedFunctionDeclarationContainer<ARG_INDEX> fixedStepTransferFunc = IndexedFunctionDeclarationContainer.newBuilder("fixedStepSizeTransfer", ARG_INDEX.class).
-            addArg(FMI2_INSTANCES, "component", newAArrayType(newANameType("FMI2Component"))).
-            addArg(STEP_SIZE, "stepSize", newARealNumericPrimitiveType()).
-            addArg(START_TIME, "startTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME, "endTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME_DEFINED, "endTimeDefined", newBoleanType()).build();
-
-    protected final IndexedFunctionDeclarationContainer<ARG_INDEX> variableStepFunc = IndexedFunctionDeclarationContainer.newBuilder("variableStepSize", ARG_INDEX.class).
-            addArg(FMI2_INSTANCES, "component", newAArrayType(newANameType("FMI2Component"))).
-            addArg(STEP_SIZE, "initSize", newARealNumericPrimitiveType()).
-            addArg(START_TIME, "startTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME, "endTime", newARealNumericPrimitiveType()).
-            addArg(END_TIME_DEFINED, "endTimeDefined", newBoleanType()).build();
-
-
-    protected final List<String> imports =
-            Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "ArrayUtil", "BooleanLogic", "SimulationControl")
-                    .collect(Collectors.toList());
-    static BiConsumer<PortFmi2Api, PortFmi2Api> relinkPorts = (source, target) -> {
-        try {
-
-            switch (source.scalarVariable.causality) {
-
-
-                case Input:
-                    source.breakLink();
-                    target.linkTo(source);
-                    break;
-                case Output:
-                    target.breakLink();
-                    source.linkTo(target);
-                    break;
-                default:
-                    break;
-            }
-
-        } catch (FmiBuilder.Port.PortLinkException e) {
-            e.printStackTrace();
-        }
-    };
 
     public Set<AFunctionDeclaration> getDeclaredUnfoldFunctions() {
-        return Stream.of(fixedStepFunc.getDecl(), variableStepFunc.getDecl(), fixedStepTransferFunc.getDecl()).collect(Collectors.toSet());
+        return Stream.of(fixedStep3Func.getDecl()).collect(Collectors.toSet());
     }
+
+
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
@@ -402,38 +369,6 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
 
         return new EmptyRuntimeConfig<>();
     }
-
-    @Override
-    public ConfigOption getConfigRequirement() {
-        return ConfigOption.Optional;
-    }
-
-    @Override
-    public IPluginConfiguration parseConfig(InputStream is) throws IOException {
-        return (new ObjectMapper().readValue(is, JacobianStepConfig.class));
-    }
-
-    @Override
-    public AImportedModuleCompilationUnit getDeclaredImportUnit() {
-        AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(imports.stream().map(MableAstFactory::newAIdentifier).collect(Collectors.toList()));
-        AModuleDeclaration module = new AModuleDeclaration();
-        module.setName(newAIdentifier(getName()));
-        module.setFunctions(new ArrayList<>(getDeclaredUnfoldFunctions()));
-        unit.setModule(module);
-        return unit;
-    }
-
-    @Override
-    public String getName() {
-        return getClass().getSimpleName();
-    }
-
-    @Override
-    public String getVersion() {
-        return "1.0.0";
-    }
-
 }
 
 

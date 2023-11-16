@@ -526,7 +526,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
             AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                     call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, e.getValue().get(0)),
-                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), newARefExp(valBuf.getReferenceExp().clone())));
+                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), newARefExp(valBuf.getReferenceExp().clone()),newAUIntLiteralExp((long) e.getValue().size())));
             scope.add(stm);
 
             handleError(scope, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)));
@@ -711,7 +711,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         functionName += type.name().substring(0, type.name().length() - "Type".length());
 
         if (functionName.endsWith("Enumeration")) {
-            functionName = functionName.replace("Enumeration", "UInt64");
+            functionName = functionName.replace("Enumeration", "Int64");
         }
         return functionName;
     }

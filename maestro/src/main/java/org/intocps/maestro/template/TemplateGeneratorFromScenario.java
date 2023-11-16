@@ -166,7 +166,7 @@ public class TemplateGeneratorFromScenario {
         List<LexIdentifier> imports = new ArrayList<>();
         imports.addAll(unit.getImports());
         imports.addAll(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
-        unit.setImports(imports);
+        unit.setImports(imports.stream().distinct().collect(Collectors.toList()));
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));

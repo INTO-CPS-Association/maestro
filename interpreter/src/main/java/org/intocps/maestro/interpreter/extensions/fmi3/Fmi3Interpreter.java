@@ -271,13 +271,17 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
         return functions;
     }
 
-    static void checkRequiredFunctions(AModuleDeclaration module, Map<String, Value> functions) {
+    static boolean checkRequiredFunctions(AModuleDeclaration module, Map<String, Value> functions) {
         var expectedFunctions = module.getFunctions().stream().map(f -> f.getName().getText()).collect(Collectors.toSet());
 
-        if (expectedFunctions.size() != functions.size() || !functions.keySet().equals(expectedFunctions)) {
+        var missingFunctions=expectedFunctions.stream().filter(f->!functions.containsKey(f)).collect(Collectors.toList());
+
+        if (!missingFunctions.isEmpty()) {
             logger.warn("Runtime type '{}' does not match declaration. Missing: '{}'", module.getName().getText(),
-                    expectedFunctions.stream().filter(n -> !functions.containsKey(n)).sorted().collect(Collectors.joining(",\n\t", "\n\t", "")));
+                    missingFunctions.stream().sorted().collect(Collectors.joining(",\n\t", "\n\t", "")));
+            return false;
         }
+        return true;
     }
 
     public static Function<ExternalReflectCallHelper.ArgMappingContext, IArgMapping> getFmi3InstanceCustomArgMapper() {
@@ -330,7 +334,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
         final var costumeArgMapper = getFmi3InstanceCustomArgMapper();
 
-
+        List<String> autobindWarnings = new Vector<>();
         for (AFunctionDeclaration function : module.getFunctions()) {
             if (functionFilter == null || functionFilter.test(function)) {
 
@@ -343,7 +347,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                             return builder.build();
                         }
                     } catch (NoSuchMethodException | RuntimeException e) {
-                        logger.warn("Auto binding faild for: " + e.getMessage());
+                        autobindWarnings.add("Auto binding faild for: " + e.getMessage());
                         return null;
                     }
                 });
@@ -864,7 +868,9 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
         }));
 
 
-        checkRequiredFunctions(module, functions);
+        if(!checkRequiredFunctions(module, functions)){
+            autobindWarnings.forEach(logger::warn);
+        }
 
         return new Fmu3InstanceValue(functions, instance, fmuLogOutputStream);
     }

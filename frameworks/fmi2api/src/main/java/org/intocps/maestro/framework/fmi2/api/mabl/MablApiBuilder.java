@@ -38,7 +38,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     private final Map<FmiStatusInterface, IntVariableFmi2Api> fmiStatusVariables;
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
     int dynamicScopeInitialSize;
-    List<String> importedModules = new Vector<>();
+    Set<String> importedModules = new TreeSet<>();
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
     Map<String, Object> instanceCache = new HashMap<>();
     private MathBuilderFmi2Api mathBuilderApi;
@@ -468,7 +468,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         // TODO: added "import FMI3" after "import FMI2". Should probably figure out a smarter way to do this
         unit.setImports(Stream.concat(Stream.of(newAIdentifier("FMI2")),
                         Stream.concat(Stream.of(newAIdentifier("FMI3")), importedModules.stream().map(MableAstFactory::newAIdentifier)))
-                .collect(Collectors.toList()));
+                .distinct().collect(Collectors.toList()));
 
 
         return unit;

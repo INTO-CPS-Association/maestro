@@ -71,7 +71,7 @@ import Logger;
             logger.log(3,"doStep status %d, earlyreturn %b, lassSuccessfulTime %f",res,earlyReturn, lastSuccessfulTime);
 
 
-            res = instance.getFloat64(svs,ref values_r);
+            res = instance.getFloat64(svs,2,ref values_r,2);
             logger.log(3,"doStep status %d, h %f, v %f",res,values_r[0], values_r[1]);
 
 

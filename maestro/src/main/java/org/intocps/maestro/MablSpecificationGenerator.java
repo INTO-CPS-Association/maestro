@@ -159,7 +159,7 @@ public class MablSpecificationGenerator {
                                         .sorted(Comparator.comparing(LexIdentifier::getText)).collect(Collectors.toList());
 
 
-                        unit.setImports(requiredImports);
+                        unit.setImports(requiredImports.stream().distinct().collect(Collectors.toList()));
                     }));
             return simulationModule;
         }
@@ -199,7 +199,7 @@ public class MablSpecificationGenerator {
 
                     Stream<? extends LexIdentifier> imports = replaceWith.values().stream().filter(Optional::isPresent).map(Optional::get)
                             .flatMap(p -> p.getKey().getImports().stream());
-                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).sorted(Comparator.comparing(LexIdentifier::getText))
+                    unit.setImports(Stream.concat(unit.getImports().stream(), imports).distinct().sorted(Comparator.comparing(LexIdentifier::getText))
                             .collect(Collectors.toList()));
                 });
 
