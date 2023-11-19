@@ -99,7 +99,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         ), MableAstFactory.newAVoidType()
     )
 
-    private val portsAlreadySet = HashMap<FmiBuilder.SimulationInstance<PStm>, Set<Any?>>()
+    private val portsAlreadySet = HashMap<SimulationInstance<PStm>, Set<Any?>>()
     private val topologicalPlugin: TopologicalPlugin
     private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
@@ -152,33 +152,33 @@ class Initializer : BasicMaestroExpansionPlugin {
         when (declaredFunction) {
             f1 -> {
                 return when (index) {
-                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0);
-                    ARG_INDEX.START_TIME -> formalArguments?.get(1);
-                    ARG_INDEX.END_TIME -> formalArguments?.get(2);
-                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(3);
-                    else -> null;
+                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0)
+                    ARG_INDEX.START_TIME -> formalArguments?.get(1)
+                    ARG_INDEX.END_TIME -> formalArguments?.get(2)
+                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(3)
+                    else -> null
                 }
             }
 
             f1_transfer -> {
                 return when (index) {
-                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0);
-                    ARG_INDEX.TRANSFER_INSTANCES -> formalArguments?.get(1);
-                    ARG_INDEX.START_TIME -> formalArguments?.get(2);
-                    ARG_INDEX.END_TIME -> formalArguments?.get(3);
-                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(4);
-                    else -> null;
+                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0)
+                    ARG_INDEX.TRANSFER_INSTANCES -> formalArguments?.get(1)
+                    ARG_INDEX.START_TIME -> formalArguments?.get(2)
+                    ARG_INDEX.END_TIME -> formalArguments?.get(3)
+                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(4)
+                    else -> null
                 }
             }
 
             f2_3 -> {
                 return when (index) {
-                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0);
-                    ARG_INDEX.FMI3_INSTANCES -> formalArguments?.get(1);
-                    ARG_INDEX.START_TIME -> formalArguments?.get(2);
-                    ARG_INDEX.END_TIME -> formalArguments?.get(3);
-                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(4);
-                    else -> null;
+                    ARG_INDEX.FMI2_INSTANCES -> formalArguments?.get(0)
+                    ARG_INDEX.FMI3_INSTANCES -> formalArguments?.get(1)
+                    ARG_INDEX.START_TIME -> formalArguments?.get(2)
+                    ARG_INDEX.END_TIME -> formalArguments?.get(3)
+                    ARG_INDEX.END_TIME_DEFINED -> formalArguments?.get(4)
+                    else -> null
                 }
             }
 
@@ -208,13 +208,15 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
                             .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
-                    );
-                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[1].clone());
-                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
+                    )
+
+                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[1].clone())
+                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone())
                     ARG_INDEX.END_TIME_DEFINED -> BooleanVariableFmi2Api(
                         null, null, null, null, formalArguments[3].clone()
-                    );
-                    else -> null;
+                    )
+
+                    else -> null
                 }
             }
 
@@ -229,7 +231,8 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
                             .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
-                    );
+                    )
+
                     ARG_INDEX.TRANSFER_INSTANCES -> ArrayVariableFmi2Api(
                         null,
                         null,
@@ -239,13 +242,15 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[1], env).values.stream()
                             .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
-                    );
-                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
-                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[3].clone());
+                    )
+
+                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone())
+                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[3].clone())
                     ARG_INDEX.END_TIME_DEFINED -> BooleanVariableFmi2Api(
                         null, null, null, null, formalArguments[4].clone()
-                    );
-                    else -> null;
+                    )
+
+                    else -> null
                 }
             }
 
@@ -260,14 +265,26 @@ class Initializer : BasicMaestroExpansionPlugin {
                         null,
                         FromMaBLToMaBLAPI.getComponentVariablesFrom(builder, formalArguments[0], env).values.stream()
                             .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
-                    );
-                    ARG_INDEX.FMI3_INSTANCES -> null;
-                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone());
-                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[3].clone());
+                    )
+
+                    ARG_INDEX.FMI3_INSTANCES -> ArrayVariableFmi2Api(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        FromMaBLToMaBLAPI.getInstanceVariablesFrom(builder, formalArguments[1], env).values.stream()
+                            .collect(Collectors.toList()) as List<VariableFmi2Api<FmiBuilder.NamedVariable<PStm>>>?
+                    )
+
+                    ARG_INDEX.START_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[2].clone())
+                    ARG_INDEX.END_TIME -> DoubleVariableFmi2Api(null, null, null, null, formalArguments[3].clone())
                     ARG_INDEX.END_TIME_DEFINED -> BooleanVariableFmi2Api(
                         null, null, null, null, formalArguments[4].clone()
-                    );
-                    else -> null;
+                    )
+
+                    else -> null
                 }
             }
 
@@ -305,7 +322,7 @@ class Initializer : BasicMaestroExpansionPlugin {
             throw ExpandException("Simulation environment must not be null")
         }
 
-        if (formalArguments == null || formalArguments.size != getActiveDeclaration(declaredFunction).getFormals().size) {
+        if (formalArguments == null || formalArguments.size != getActiveDeclaration(declaredFunction).formals.size) {
             throw ExpandException("Invalid args")
         }
 
@@ -326,7 +343,7 @@ class Initializer : BasicMaestroExpansionPlugin {
 
             val fmuInstancesTransfer: List<ComponentVariableFmi2Api>? = ((getArg(
                 declaredFunction, formalArguments, ARG_INDEX.TRANSFER_INSTANCES
-            ) as? ArrayVariable<*, *>)?.items()) as? List<ComponentVariableFmi2Api>;
+            ) as? ArrayVariable<*, *>)?.items()) as? List<ComponentVariableFmi2Api>
 
             val externalStartTime =
                 getArg(declaredFunction, formalArguments, ARG_INDEX.START_TIME) as DoubleVariableFmi2Api
@@ -393,15 +410,15 @@ class Initializer : BasicMaestroExpansionPlugin {
         relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
         maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
 
-        val fmuInstances = fmuInstancesIn.filterKeys { !fmuInstancesTransfer.keys.contains(it) };
-        val fmu3Instances = fmu3InstancesIn.filterKeys { !fmuInstancesTransfer.keys.contains(it) };
+        val fmuInstances = fmuInstancesIn.filterKeys { !fmuInstancesTransfer.keys.contains(it) }
+        val fmu3Instances = fmu3InstancesIn.filterKeys { !fmuInstancesTransfer.keys.contains(it) }
 
         logger.debug("Setup experiment for all components")
         fmuInstances.values.forEach { i ->
             i.setupExperiment(
                 externalStartTime, externalEndTime, externalEndTimeDefined, this.config!!.relativeTolerance
             )
-        };
+        }
 
 
         val connections = createConnections(env, fmuInstances).plus(createConnections3(env, fmu3Instances))
@@ -456,9 +473,9 @@ class Initializer : BasicMaestroExpansionPlugin {
         instructions.forEach { i -> i.perform() }
 
         if (stabilisationScope != null) {
-            stabilisationLoop!!.decrement();
+            stabilisationLoop!!.decrement()
             stabilisationScope.activate()
-            stabilisationScope.leave();
+            stabilisationScope.leave()
         }
         //TODO end
 
@@ -529,7 +546,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 builder,
                 booleanLogic,
                 math
-            );
+            )
 
 
             val algorithm = builder.buildRaw() as SBlockStm
@@ -661,7 +678,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         if (useEnvForPort == null || !useEnvForPort) {
 
             var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
-            when (port.scalarVariable.variable.typeIdentifier!!) {
+            when (port.scalarVariable.variable.typeIdentifier) {
                 Fmi3TypeEnum.BooleanType -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
                 Fmi3TypeEnum.Float64Type -> {
 
@@ -683,7 +700,7 @@ class Initializer : BasicMaestroExpansionPlugin {
                 else -> throw ExpandException("Not known type")
             }
         } else {
-            when (port.scalarVariable.variable.typeIdentifier!!) {
+            when (port.scalarVariable.variable.typeIdentifier) {
                 Fmi3TypeEnum.BooleanType -> {
                     val v = builder.executionEnvironment.getBool(port.multiModelScalarVariableName)
                     comp.set(port, v)
@@ -713,7 +730,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         addToPortsAlreadySet(comp, port.scalarVariable)
     }
 
-    private fun addToPortsAlreadySet(comp: FmiBuilder.SimulationInstance<PStm>, port: Any?) {
+    private fun addToPortsAlreadySet(comp: SimulationInstance<PStm>, port: Any?) {
         if (portsAlreadySet.containsKey(comp)) {
             portsAlreadySet.replace(comp, portsAlreadySet.getValue(comp).plus(port))
         } else {

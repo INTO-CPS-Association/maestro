@@ -4,32 +4,27 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.framework.core.RelationVariable;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.VariableStep;
+import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
-import org.intocps.maestro.framework.fmi2.api.mabl.variables.StringVariableFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JacobianVariableStepBuilder {
 
-  public static   class JacobianVariableStepContext{
-      VariableStep variableStep;
-      VariableStep.VariableStepInstance variableStepInstance = null;
+    public static class JacobianVariableStepContext {
+        VariableStep variableStep;
+        VariableStep.VariableStepInstance variableStepInstance = null;
     }
 
-    public static JacobianVariableStepContext init(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianStepConfig jacobianStepConfig, DynamicActiveBuilderScope dynamicScope, MablApiBuilder builder, Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToFmuInstances) throws JsonProcessingException {
+    public static JacobianVariableStepContext init(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianStepConfig jacobianStepConfig,
+                                                   DynamicActiveBuilderScope dynamicScope, MablApiBuilder builder,
+                                                   Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToFmuInstances) throws JsonProcessingException {
         JacobianVariableStepContext varCtxt = new JacobianVariableStepContext();
         // Initialize variable step module
         List<PortFmi2Api> ports = ctxt.fmuInstances.values().stream().map(ComponentVariableFmi2Api::getPorts).flatMap(Collection::stream)
@@ -44,7 +39,8 @@ public class JacobianVariableStepBuilder {
         return varCtxt;
     }
 
-    public static void updateCurrentStepTiming(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianVariableStepContext varStep, DynamicActiveBuilderScope dynamicScope, BooleanVariableFmi2Api anyDiscards){
+    public static void updateCurrentStepTiming(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianVariableStepContext varStep,
+                                               DynamicActiveBuilderScope dynamicScope, BooleanVariableFmi2Api anyDiscards) {
         // Get variable step
         DoubleVariableFmi2Api variableStepSize = dynamicScope.store("variable_step_size", 0.0);
         dynamicScope.enterIf(anyDiscards.toPredicate().not());
@@ -56,7 +52,9 @@ public class JacobianVariableStepBuilder {
         }
     }
 
-    public static void step(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianVariableStepContext varStep, DynamicActiveBuilderScope dynamicScope, MablApiBuilder builder, BooleanVariableFmi2Api allFMUsSupportGetState, List<FmiBuilder.StateVariable<PStm>> fmuStates, BooleanVariableFmi2Api anyDiscards){           // Validate step
+    public static void step(JacobianInternalBuilder.BaseJacobianContext ctxt, JacobianVariableStepContext varStep, DynamicActiveBuilderScope dynamicScope,
+                            MablApiBuilder builder, BooleanVariableFmi2Api allFMUsSupportGetState, List<FmiBuilder.StateVariable<PStm>> fmuStates,
+                            BooleanVariableFmi2Api anyDiscards) {           // Validate step
         PredicateFmi2Api notValidStepPred = Objects.requireNonNull(varStep.variableStepInstance).validateStepSize(
                         new DoubleVariableFmi2Api(null, null, dynamicScope, null,
                                 ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize).getExp()), allFMUsSupportGetState).toPredicate()
@@ -92,5 +90,42 @@ public class JacobianVariableStepBuilder {
             }
 
             dynamicScope.leave();
-        }}
+        }
+    }
+
+     static Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> getAllInstancePortsWithOutputOrLog(Map<String, InstanceVariableFmi3Api> fmuInstances3, JacobianStepConfig jacobianStepConfig, Fmi2SimulationEnvironment env) {
+
+        Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> instancesToPortsWithValues = new HashMap<>();
+        fmuInstances3.forEach((identifier, instance) -> {
+            Set<String> scalarVariablesToGet = instance.getPorts().stream()
+                    .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
+                            .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                    .map(PortFmi3Api::getName).collect(Collectors.toSet());
+            scalarVariablesToGet.addAll(
+                    env.getVariablesToLog(instance.getEnvironmentName()).stream().map(RelationVariable::getName)
+                            .collect(Collectors.toSet()));
+
+            instancesToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
+        });
+        return instancesToPortsWithValues;
+    }
+
+     static Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> getAllComponentPortsWithOutputOrLog(
+            Map<String, ComponentVariableFmi2Api> fmuInstances, JacobianStepConfig jacobianStepConfig, Fmi2SimulationEnvironment env) {
+
+        Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = new HashMap<>();
+        fmuInstances.forEach((identifier, instance) -> {
+            Set<String> scalarVariablesToGet = instance.getPorts().stream()
+                    .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
+                            .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
+                    .map(PortFmi2Api::getName).collect(Collectors.toSet());
+            scalarVariablesToGet.addAll(
+                    env.getVariablesToLog(instance.getEnvironmentName()).stream().map(RelationVariable::getName)
+                            .collect(Collectors.toSet()));
+
+            componentsToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));
+        });
+
+        return componentsToPortsWithValues;
+    }
 }

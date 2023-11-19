@@ -45,7 +45,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     public static final String EXECUTE_ALGORITHM_FUNCTION_NAME = "executeAlgorithm";
     final static Logger logger = LoggerFactory.getLogger(Sigver.class);
     private final AFunctionDeclaration func = newAFunctionDeclaration(newAIdentifier(EXECUTE_ALGORITHM_FUNCTION_NAME),
-            Arrays.asList(newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
+            Arrays.asList(
+                    newAFormalParameter(newAArrayType(newANameType("FMI2Component")), newAIdentifier("component")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("stepSize")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("startTime")),
                     newAFormalParameter(newARealNumericPrimitiveType(), newAIdentifier("endTime")),
@@ -65,8 +66,11 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
-            FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> providedBuilder, List<FmiBuilder.Variable<PStm, ?>> formalArguments,
-            IPluginConfiguration config, ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+                                                                  FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> providedBuilder,
+                                                                  List<FmiBuilder.Variable<PStm, ?>> formalArguments,
+                                                                  IPluginConfiguration config,
+                                                                  ISimulationEnvironment envIn,
+                                                                  IErrorReporter errorReporter) throws ExpandException {
 
         //TODO: A Scenario and a multi-model does not agree on the format of identifying a FMU/instance.
         // E.g: FMU in a multi-model is defined as: "{<fmu-name>}" where in a scenario no curly braces are used i.e. "<fmu-name>". Furthermore an
@@ -90,8 +94,9 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         }
 
         if (!(providedBuilder instanceof MablApiBuilder)) {
-            throw new ExpandException("Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " +
-                    providedBuilder.getClass().getSimpleName());
+            throw new ExpandException(
+                    "Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " +
+                            providedBuilder.getClass().getSimpleName());
         }
 
         DoubleVariableFmi2Api stepSize = (DoubleVariableFmi2Api) formalArguments.get(1);
@@ -107,7 +112,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         // GENERATE MaBL
         try {
 
-            MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
+            MasterModel masterModel = ScenarioLoader.load(
+                    new ByteArrayInputStream(configuration.masterModel.getBytes()));
             ScenarioModel scenarioModel = masterModel.scenario();
             adaptiveModel = scenarioModel.config();
 
@@ -121,15 +127,18 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             // Get FMU instances
             // use LinkedHashMap to preserve added order
             Map<String, ComponentVariableFmi2Api> fmuInstances =
-                    ((List<ComponentVariableFmi2Api>) ((FmiBuilder.ArrayVariable) formalArguments.get(0)).items()).stream().collect(
-                            Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(), (u, v) -> u, LinkedHashMap::new));
+                    ((List<ComponentVariableFmi2Api>) ((FmiBuilder.ArrayVariable) formalArguments.get(
+                            0)).items()).stream().collect(
+                            Collectors.toMap(ComponentVariableFmi2Api::getEnvironmentName, Function.identity(),
+                                    (u, v) -> u, LinkedHashMap::new));
 
             // Rename FMU instance-name keys to master model format: <fmu-name>_<instance-name>
             Set<String> fmuKeys = new HashSet<>(fmuInstances.keySet());
             fmuKeys.forEach(key -> {
                 ComponentVariableFmi2Api fmuInstance = fmuInstances.get(key);
                 String fmuIdentifier = fmuInstance.getOwner().getFmuIdentifier();
-                String newKey = fmuIdentifier.substring(1, fmuIdentifier.length() - 1) + MASTER_MODEL_FMU_INSTANCE_DELIMITER + key;
+                String newKey = fmuIdentifier.substring(1,
+                        fmuIdentifier.length() - 1) + MASTER_MODEL_FMU_INSTANCE_DELIMITER + key;
                 fmuInstances.remove(key);
                 fmuInstances.put(newKey, fmuInstance);
             });
@@ -139,19 +148,23 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(scenarioModel, LoopStrategy.maximum());
                 masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
-            dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()).collect(Collectors.toList()));
+            dataWriterInstance.initialize(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()
+                    .map(xsv -> new DataWriter.DataWriterInstance.LogEntry(xsv.getMultiModelScalarVariableName(),
+                            () -> xsv.getSharedAsVariable().getReferenceExp().clone()))).collect(Collectors.toList()));
 
             //TODO: Instantiate section from master model contains instantiate and setup experiment instruction, but these are ignored for now.
 
             // Generate setup experiment section
-            fmuInstances.values().forEach(instance -> instance.setupExperiment(startTime, endTime, endTimeDefined, configuration.relTol));
+            fmuInstances.values().forEach(
+                    instance -> instance.setupExperiment(startTime, endTime, endTimeDefined, configuration.relTol));
 
             // Generate set parameters section
             setSEA(fmuInstances, configuration.parameters);
 
             // Generate initialization section
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars =
-                    mapInitializationActionsToMaBL(CollectionConverters.asJava(masterModel.initialization()), fmuInstances,
+                    mapInitializationActionsToMaBL(CollectionConverters.asJava(masterModel.initialization()),
+                            fmuInstances,
                             CollectionConverters.asJava(scenarioModel.connections()));
 
             // Generate step loop section
@@ -161,15 +174,18 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
             // Get and share logging variables that are not yet shared
             fmuInstances.values().forEach(instance -> instance.getAndShare(
-                    instance.getVariablesToLog().stream().filter(var -> var.getSharedAsVariable() == null).map(PortFmi2Api::getName)
+                    instance.getVariablesToLog().stream().filter(var -> var.getSharedAsVariable() == null)
+                            .map(PortFmi2Api::getName)
                             .toArray(String[]::new)));
 
             dataWriterInstance.log(currentCommunicationPoint);
-            WhileMaBLScope coSimStepLoop = dynamicScope.enterWhile(currentCommunicationPoint.toMath().addition(stepSize).lessThan(endTime));
+            WhileMaBLScope coSimStepLoop = dynamicScope.enterWhile(
+                    currentCommunicationPoint.toMath().addition(stepSize).lessThan(endTime));
 
             currentStepSize.setValue(stepSize);
 
-            Map<String, List<CosimStepInstruction>> coSimStepsMap = CollectionConverters.asJava(masterModel.cosimStep()).entrySet().stream()
+            Map<String, List<CosimStepInstruction>> coSimStepsMap = CollectionConverters.asJava(masterModel.cosimStep())
+                    .entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> CollectionConverters.asJava(e.getValue())));
 
             mapCoSimStepInstructionsToMaBL(coSimStepsMap, fmuInstances, currentCommunicationPoint, new HashSet<>(),
@@ -177,7 +193,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
             // Get and share variables that are not connected
             fmuInstances.values().forEach(instance -> instance.getAndShare(
-                    instance.getVariablesToLog().stream().filter(var -> var.getTargetPorts().size() < 1).map(PortFmi2Api::getName)
+                    instance.getVariablesToLog().stream().filter(var -> var.getTargetPorts().size() < 1)
+                            .map(PortFmi2Api::getName)
                             .toArray(String[]::new)));
 
             currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(currentStepSize));
@@ -205,7 +222,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     @Override
     public AImportedModuleCompilationUnit getDeclaredImportUnit() {
         AImportedModuleCompilationUnit unit = new AImportedModuleCompilationUnit();
-        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "BooleanLogic").map(MableAstFactory::newAIdentifier)
+        unit.setImports(Stream.of("FMI2", "TypeConverter", "Math", "Logger", "DataWriter", "BooleanLogic")
+                .map(MableAstFactory::newAIdentifier)
                 .collect(Collectors.toList()));
         AModuleDeclaration module = new AModuleDeclaration();
         module.setName(newAIdentifier(getName()));
@@ -227,9 +245,11 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     private void setSEA(Map<String, ComponentVariableFmi2Api> fmuInstances, Map<String, Object> parameters) {
         fmuInstances.forEach((instanceName, fmuInstance) -> {
             Map<String, Object> portNameToValueMap =
-                    parameters.entrySet().stream().filter(entry -> entry.getKey().contains(masterMRepresentationToMultiMRepresentation(instanceName)))
+                    parameters.entrySet().stream().filter(entry -> entry.getKey()
+                                    .contains(masterMRepresentationToMultiMRepresentation(instanceName)))
                             .collect(Collectors.toMap(e -> {
-                                String[] instanceNameSplit = e.getKey().split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER);
+                                String[] instanceNameSplit = e.getKey()
+                                        .split("\\" + MULTI_MODEL_FMU_INSTANCE_DELIMITER);
                                 return String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER,
                                         Arrays.copyOfRange(instanceNameSplit, 2, instanceNameSplit.length));
                             }, Map.Entry::getValue));
@@ -239,7 +259,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             Map<? extends FmiBuilder.Port, ? extends FmiBuilder.ExpressionValue> PortToExpressionValue =
                     portNameToValueMap.entrySet().stream().filter(e -> {
                         PortFmi2Api port = fmuInstance.getPort(e.getKey());
-                        boolean isTunableParameter = port.scalarVariable.variability.equals(Fmi2ModelDescription.Variability.Tunable) &&
+                        boolean isTunableParameter = port.scalarVariable.variability.equals(
+                                Fmi2ModelDescription.Variability.Tunable) &&
                                 port.scalarVariable.causality.equals(Fmi2ModelDescription.Causality.Parameter);
                         boolean isEligibleVariable = port.scalarVariable.variability != Fmi2ModelDescription.Variability.Constant &&
                                 (port.scalarVariable.initial.equals(Fmi2ModelDescription.Initial.Exact) ||
@@ -256,7 +277,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                         } else if (e.getValue() instanceof String) {
                             return StringExpressionValue.of((String) e.getValue());
                         } else {
-                            throw new RuntimeException("Unable to set parameter of class: " + e.getValue().getClass().toString());
+                            throw new RuntimeException(
+                                    "Unable to set parameter of class: " + e.getValue().getClass());
                         }
                     }));
             fmuInstance.set(new PortValueExpresssionMapImpl(PortToExpressionValue));
@@ -264,22 +286,26 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     }
 
     private List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> mapInitializationActionsToMaBL(
-            List<InitializationInstruction> initializationInstructions, Map<String, ComponentVariableFmi2Api> fmuInstances,
+            List<InitializationInstruction> initializationInstructions,
+            Map<String, ComponentVariableFmi2Api> fmuInstances,
             List<ConnectionModel> connections) {
 
         List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars = new ArrayList<>();
         // Loop over initialization instructions and map them to MaBL
         initializationInstructions.forEach(instruction -> {
             if (instruction instanceof InitGet) {
-                Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((InitGet) instruction).port(), fmuInstances);
+                Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(
+                        ((InitGet) instruction).port(), fmuInstances);
                 portsWithGets.forEach((key, value) -> sharedPortVars.stream()
-                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(key.getMultiModelScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName()
+                                .contains(key.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> sharedPortVars.add(Map.entry(key, value))));
             } else if (instruction instanceof InitSet) {
                 mapSetInstruction(((InitSet) instruction).port(), sharedPortVars, fmuInstances, connections);
             } else if (instruction instanceof AlgebraicLoopInit) {
-                mapAlgebraicLoopInitializationInstruction((AlgebraicLoopInit) instruction, fmuInstances, connections, sharedPortVars);
+                mapAlgebraicLoopInitializationInstruction((AlgebraicLoopInit) instruction, fmuInstances, connections,
+                        sharedPortVars);
             } else if (instruction instanceof EnterInitMode) {
                 fmuInstances.get(((EnterInitMode) instruction).fmu()).enterInitializationMode();
             } else if (instruction instanceof ExitInitMode) {
@@ -292,9 +318,12 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     }
 
     private Map<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> mapCoSimStepInstructionsToMaBL(
-            Map<String, List<CosimStepInstruction>> coSimStepInstructionsMap, Map<String, ComponentVariableFmi2Api> fmuInstances,
-            DoubleVariableFmi2Api currentCommunicationPoint, Set<FmiBuilder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
-            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars, DoubleVariableFmi2Api currentStepSize) {
+            Map<String, List<CosimStepInstruction>> coSimStepInstructionsMap,
+            Map<String, ComponentVariableFmi2Api> fmuInstances,
+            DoubleVariableFmi2Api currentCommunicationPoint, Set<FmiBuilder.StateVariable<PStm>> fmuStates,
+            List<ConnectionModel> connections,
+            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars,
+            DoubleVariableFmi2Api currentStepSize) {
 
         Map<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> fmuInstanceWithStepVar =
                 new HashMap<>();
@@ -312,14 +341,17 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             if (instruction instanceof core.Set) {
                 mapSetInstruction(((core.Set) instruction).port(), sharedPortVars, fmuInstances, connections);
             } else if (instruction instanceof Get) {
-                Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((Get) instruction).port(), fmuInstances);
+                Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((Get) instruction).port(),
+                        fmuInstances);
                 portsWithGets.forEach((key, value) -> sharedPortVars.stream()
-                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(key.getMultiModelScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName()
+                                .contains(key.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> sharedPortVars.add(Map.entry(key, value))));
             } else if (instruction instanceof Step) {
                 Map.Entry<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> instanceWithStep =
-                        mapStepInstruction((Step) instruction, fmuInstances, fmuInstanceWithStepVar, currentCommunicationPoint, currentStepSize);
+                        mapStepInstruction((Step) instruction, fmuInstances, fmuInstanceWithStepVar,
+                                currentCommunicationPoint, currentStepSize);
                 fmuInstanceWithStepVar.put(instanceWithStep.getKey(), instanceWithStep.getValue());
             } else if (instruction instanceof SaveState) {
                 String MasterModelInstanceName = ((SaveState) instruction).fmu();
@@ -330,23 +362,29 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                 }
             } else if (instruction instanceof RestoreState) {
                 fmuStates.stream().filter(state -> state.getName()
-                                .contains(((RestoreState) instruction).fmu().toLowerCase(Locale.ROOT).split(MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]))
+                                .contains(((RestoreState) instruction).fmu().toLowerCase(Locale.ROOT)
+                                        .split(MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1]))
                         .findAny().ifPresent(FmiBuilder.StateVariable::set);
             } else if (instruction instanceof AlgebraicLoop) {
-                mapAlgebraicLoopCoSimStepInstruction(algorithmIdentifier, (AlgebraicLoop) instruction, fmuInstances, currentCommunicationPoint,
-                        fmuStates, connections, sharedPortVars, currentStepSize).forEach(fmuInstanceWithStepVar::putIfAbsent);
+                mapAlgebraicLoopCoSimStepInstruction(algorithmIdentifier, (AlgebraicLoop) instruction, fmuInstances,
+                        currentCommunicationPoint,
+                        fmuStates, connections, sharedPortVars, currentStepSize).forEach(
+                        fmuInstanceWithStepVar::putIfAbsent);
             } else if (instruction instanceof StepLoop) {
-                mapStepLoopCoSimStepInstruction(algorithmIdentifier, (StepLoop) instruction, fmuInstances, currentCommunicationPoint, fmuStates,
+                mapStepLoopCoSimStepInstruction(algorithmIdentifier, (StepLoop) instruction, fmuInstances,
+                        currentCommunicationPoint, fmuStates,
                         connections, sharedPortVars, currentStepSize);
             } else if (instruction instanceof GetTentative) {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets =
                         mapGetTentativeInstruction(((GetTentative) instruction).port(), fmuInstances);
                 portsWithGets.forEach((port, portValue) -> tentativePortVars.stream()
-                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName())).findAny()
+                        .filter(entry -> entry.getKey().getMultiModelScalarVariableName()
+                                .contains(port.getMultiModelScalarVariableName())).findAny()
                         .ifPresentOrElse(item -> {
                         }, () -> tentativePortVars.add(Map.entry(port, portValue))));
             } else if (instruction instanceof SetTentative) {
-                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortVars, fmuInstances, connections);
+                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortVars, fmuInstances,
+                        connections);
             } else {
                 throw new RuntimeException("Unknown CoSimStep instruction: " + instruction.toString());
             }
@@ -358,17 +396,22 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                     .share(Map.ofEntries(tentativePortMapEntry));
 
             sharedPortVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
-                    .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny().ifPresentOrElse(item -> {
-            }, () -> sharedPortVars.add(Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
+                            .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny()
+                    .ifPresentOrElse(item -> {
+                    }, () -> sharedPortVars.add(
+                            Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
         });
 
         return fmuInstanceWithStepVar;
     }
 
     private void mapStepLoopCoSimStepInstruction(String parentAlgorithmIdentifier, StepLoop instruction,
-            Map<String, ComponentVariableFmi2Api> fmuInstances, DoubleVariableFmi2Api currentCommunicationPoint,
-            Set<FmiBuilder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
-            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet, DoubleVariableFmi2Api currentStepSize) {
+                                                 Map<String, ComponentVariableFmi2Api> fmuInstances,
+                                                 DoubleVariableFmi2Api currentCommunicationPoint,
+                                                 Set<FmiBuilder.StateVariable<PStm>> fmuStates,
+                                                 List<ConnectionModel> connections,
+                                                 List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
+                                                 DoubleVariableFmi2Api currentStepSize) {
 
         ArrayVariableFmi2Api<Double> fmuCommunicationPoints =
                 dynamicScope.store("fmu_communication_points", new Double[fmuInstances.entrySet().size()]);
@@ -378,32 +421,40 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // Map iterate instructions to MaBL
         Map<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> fmuInstanceWithStepVar =
-                mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.iterate())), fmuInstances,
+                mapCoSimStepInstructionsToMaBL(
+                        Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.iterate())),
+                        fmuInstances,
                         currentCommunicationPoint, fmuStates, connections, portsWithGet, currentStepSize);
 
         // Get step accepted boolean from each fmu instance of interest.
         List<FmiBuilder.BoolVariable<PStm>> acceptedStepVariables = new ArrayList<>();
         List<String> acceptFmuRefs = CollectionConverters.asJava(instruction.untilStepAccept());
         fmuInstanceWithStepVar.forEach((fmuInstance, stepWithAccept) -> {
-            if (acceptFmuRefs.stream().anyMatch(name -> name.toLowerCase(Locale.ROOT).contains(fmuInstance.getName()))) {
+            if (acceptFmuRefs.stream()
+                    .anyMatch(name -> name.toLowerCase(Locale.ROOT).contains(fmuInstance.getName()))) {
                 acceptedStepVariables.add(stepWithAccept.getKey());
                 dynamicScope.enterIf(stepWithAccept.getKey().toPredicate().not());
                 {
-                    loggerModule.trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f",
+                    loggerModule.trace(
+                            "## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f",
                             fmuInstance.getName(), currentCommunicationPoint, currentStepSize,
-                            new VariableFmi2Api<>(null, stepWithAccept.getValue().getType(), dynamicScope, dynamicScope, null,
+                            new VariableFmi2Api<>(null, stepWithAccept.getValue().getType(), dynamicScope, dynamicScope,
+                                    null,
                                     stepWithAccept.getValue().getExp()));
                 }
                 dynamicScope.leave();
             }
         });
 
-        stepAcceptedPredicate.setValue(booleanLogicModule.allTrue("all_fmus_accepted_step_size", acceptedStepVariables));
+        stepAcceptedPredicate.setValue(
+                booleanLogicModule.allTrue("all_fmus_accepted_step_size", acceptedStepVariables));
 
         dynamicScope.enterIf(stepAcceptedPredicate.toPredicate().not());
         {
             // Map retry instructions to MaBL
-            mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.ifRetryNeeded())), fmuInstances,
+            mapCoSimStepInstructionsToMaBL(
+                    Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(instruction.ifRetryNeeded())),
+                    fmuInstances,
                     currentCommunicationPoint, fmuStates, connections, portsWithGet, currentStepSize);
 
             // Set the step size to the lowest accepted step-size
@@ -412,9 +463,11 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             for (int i = 0; i < stepSizes.size(); i++) {
                 fmuCommunicationPoints.items().get(i).setValue(new DoubleExpressionValue(stepSizes.get(i).getExp()));
             }
-            currentStepSize.setValue(mathModule.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(currentCommunicationPoint));
+            currentStepSize.setValue(mathModule.minRealFromArray(fmuCommunicationPoints).toMath()
+                    .subtraction(currentCommunicationPoint));
 
-            loggerModule.trace("## Step size was not accepted by every FMU! It has been changed to the smallest accepted step size of: %f",
+            loggerModule.trace(
+                    "## Step size was not accepted by every FMU! It has been changed to the smallest accepted step size of: %f",
                     currentStepSize);
         }
         dynamicScope.leave();
@@ -422,8 +475,10 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     }
 
     private Map<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> mapAlgebraicLoopCoSimStepInstruction(
-            String parentAlgorithmIdentifier, AlgebraicLoop algebraicLoopInstruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
-            DoubleVariableFmi2Api currentCommunicationPoint, Set<FmiBuilder.StateVariable<PStm>> fmuStates, List<ConnectionModel> connections,
+            String parentAlgorithmIdentifier, AlgebraicLoop algebraicLoopInstruction,
+            Map<String, ComponentVariableFmi2Api> fmuInstances,
+            DoubleVariableFmi2Api currentCommunicationPoint, Set<FmiBuilder.StateVariable<PStm>> fmuStates,
+            List<ConnectionModel> connections,
             List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars, DoubleVariableFmi2Api currentStepSize) {
 
         Map<ComponentVariableFmi2Api, Map.Entry<FmiBuilder.BoolVariable<PStm>, FmiBuilder.DoubleVariable<PStm>>> fmuWithStep = new HashMap<>();
@@ -439,7 +494,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // Enter while loop
         ScopeFmi2Api convergenceScope = dynamicScope.enterWhile(
-                convergencePredicate.toPredicate().not().and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
+                convergencePredicate.toPredicate().not()
+                        .and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
 
         // Handle and map each iterate instruction to MaBL
         for (CosimStepInstruction instruction : CollectionConverters.asJava(algebraicLoopInstruction.iterate())) {
@@ -448,19 +504,24 @@ public class Sigver extends BasicMaestroExpansionPlugin {
                         mapGetTentativeInstruction(((GetTentative) instruction).port(), fmuInstances);
                 portsWithGets.forEach((port, portValue) -> {
                     tentativePortMapVars.stream()
-                            .filter(entry -> entry.getKey().getMultiModelScalarVariableName().contains(port.getMultiModelScalarVariableName()))
+                            .filter(entry -> entry.getKey().getMultiModelScalarVariableName()
+                                    .contains(port.getMultiModelScalarVariableName()))
                             .findAny().ifPresentOrElse(item -> {
                             }, () -> tentativePortMapVars.add(Map.entry(port, portValue)));
 
                     // Check for convergence
-                    convergedPortRefs.stream().filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getEnvironmentName(), port.getName()))
+                    convergedPortRefs.stream()
+                            .filter(ref -> portRefMatch(ref, port.aMablFmi2ComponentAPI.getEnvironmentName(),
+                                    port.getName()))
                             .findAny().ifPresent(portRef -> convergedVariables.add(
                                     createCheckConvergenceSection(Map.entry(port, portValue), portRef, absTolVar, relTolVar)));
                 });
             } else if (instruction instanceof SetTentative) {
-                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances, connections);
+                mapSetTentativeInstruction(((SetTentative) instruction).port(), tentativePortMapVars, fmuInstances,
+                        connections);
             } else {
-                mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, List.of(instruction)), fmuInstances, currentCommunicationPoint,
+                mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, List.of(instruction)), fmuInstances,
+                        currentCommunicationPoint,
                         fmuStates, connections, portMapVars, currentStepSize).forEach(fmuWithStep::put);
             }
         }
@@ -473,8 +534,10 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             fmuInstances.get(instanceName).share(Map.ofEntries(tentativePortMapEntry));
 
             portMapVars.stream().filter(portMapVarEntry -> portMapVarEntry.getKey().getMultiModelScalarVariableName()
-                    .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny().ifPresentOrElse(item -> {
-            }, () -> portMapVars.add(Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
+                            .contains(tentativePortMapEntry.getKey().getMultiModelScalarVariableName())).findAny()
+                    .ifPresentOrElse(item -> {
+                    }, () -> portMapVars.add(
+                            Map.entry(tentativePortMapEntry.getKey(), tentativePortMapEntry.getValue())));
         });
 
         // Check if all instances have converged
@@ -482,10 +545,12 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         dynamicScope.enterIf(convergencePredicate.toPredicate().not());
         {
             // Map retry instructions to MaBL
-            mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier, CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded())),
+            mapCoSimStepInstructionsToMaBL(Map.of(parentAlgorithmIdentifier,
+                            CollectionConverters.asJava(algebraicLoopInstruction.ifRetryNeeded())),
                     fmuInstances, currentCommunicationPoint, fmuStates, connections, portMapVars, currentStepSize);
 
-            loggerModule.trace("## Convergence was not reached at sim-time: %f with step size: %f... %d convergence attempts remaining",
+            loggerModule.trace(
+                    "## Convergence was not reached at sim-time: %f with step size: %f... %d convergence attempts remaining",
                     currentCommunicationPoint, currentStepSize, convergenceAttempts);
 
             convergenceAttempts.decrement();
@@ -495,14 +560,17 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         return fmuWithStep;
     }
 
-    private void mapAlgebraicLoopInitializationInstruction(AlgebraicLoopInit instruction, Map<String, ComponentVariableFmi2Api> fmuInstances,
-            List<ConnectionModel> connections, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars) {
+    private void mapAlgebraicLoopInitializationInstruction(AlgebraicLoopInit instruction,
+                                                           Map<String, ComponentVariableFmi2Api> fmuInstances,
+                                                           List<ConnectionModel> connections,
+                                                           List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> sharedPortVars) {
         BooleanVariableFmi2Api convergencePredicate = dynamicScope.store("initialization_convergence_predicate", false);
         IntVariableFmi2Api convergenceAttempts = dynamicScope.store("initialization_converge_attempts", convAtt);
         DoubleVariableFmi2Api relTolVar = dynamicScope.store("initialization_relative_tolerance", relTol);
         DoubleVariableFmi2Api absTolVar = dynamicScope.store("initialization_absolute_tolerance", absTol);
         ScopeFmi2Api convergenceScope = dynamicScope.enterWhile(
-                convergencePredicate.toPredicate().not().and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
+                convergencePredicate.toPredicate().not()
+                        .and(convergenceAttempts.toMath().greaterThan(IntExpressionValue.of(0))));
 
         // Map iterate instructions to MaBL
         mapInitializationActionsToMaBL(CollectionConverters.asJava(instruction.iterate()), fmuInstances, connections);
@@ -511,21 +579,26 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         List<BooleanVariableFmi2Api> convergedVariables = new ArrayList<>();
         for (PortRef portRef : CollectionConverters.asJava(instruction.untilConverged())) {
             sharedPortVars.stream()
-                    .filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(), entry.getKey().getName()))
-                    .findAny().ifPresent(portMap -> convergedVariables.add(createCheckConvergenceSection(portMap, portRef, absTolVar, relTolVar)));
+                    .filter(entry -> portRefMatch(portRef, entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(),
+                            entry.getKey().getName()))
+                    .findAny().ifPresent(portMap -> convergedVariables.add(
+                            createCheckConvergenceSection(portMap, portRef, absTolVar, relTolVar)));
         }
 
 
         convergencePredicate.setValue(booleanLogicModule.allTrue("converged", convergedVariables));
         dynamicScope.enterIf(convergencePredicate.toPredicate().not());
         {
-            loggerModule.trace("## Convergence was not reached during initialization... %d convergence attempts remaining", convergenceAttempts);
+            loggerModule.trace(
+                    "## Convergence was not reached during initialization... %d convergence attempts remaining",
+                    convergenceAttempts);
             convergenceAttempts.decrement();
         }
         convergenceScope.leave();
     }
 
-    private BooleanVariableFmi2Api createCheckConvergenceSection(Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> portMap, PortRef portRef,
+    private BooleanVariableFmi2Api createCheckConvergenceSection(
+            Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> portMap, PortRef portRef,
             DoubleVariableFmi2Api absTolVar, DoubleVariableFmi2Api relTolVar) {
         VariableFmi2Api oldVariable = portMap.getKey().getSharedAsVariable();
         VariableFmi2Api<Object> newVariable = portMap.getValue();
@@ -536,7 +609,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         dynamicScope.enterIf(isClose.toPredicate().not());
         {
             loggerModule.trace("Unstable signal %s = %.15E during algebraic loop",
-                    masterMRepresentationToMultiMRepresentation(portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
+                    masterMRepresentationToMultiMRepresentation(
+                            portRef.fmu()) + MULTI_MODEL_FMU_INSTANCE_DELIMITER + portRef.port(),
                     portMap.getValue());
             dynamicScope.leave();
         }
@@ -554,7 +628,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
         // Step with the proper step size according to the instruction
         if (instruction.by() instanceof AbsoluteStepSize) {
             step = instance.step(currentCommunicationPoint,
-                    new DoubleVariableFmi2Api(null, null, null, null, DoubleExpressionValue.of(((AbsoluteStepSize) instruction.by()).H()).getExp()));
+                    new DoubleVariableFmi2Api(null, null, null, null,
+                            DoubleExpressionValue.of(((AbsoluteStepSize) instruction.by()).H()).getExp()));
         } else if (instruction.by() instanceof RelativeStepSize) {
             ComponentVariableFmi2Api fmuInstance = fmuInstances.get(((RelativeStepSize) instruction.by()).fmu());
             step = instance.step(currentCommunicationPoint, fmuWithStep.get(fmuInstance).getValue());
@@ -565,45 +640,56 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     }
 
     private void mapSetInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars,
-            Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
-        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portMapVars, connections);
+                                   Map<String, ComponentVariableFmi2Api> fmuInstances,
+                                   List<ConnectionModel> connections) {
+        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef,
+                portMapVars, connections);
 
         // Create set call only if a source port with a prior get call is present.
         if (sourcePortWithValue != null) {
-            Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef, fmuInstances);
+            Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef,
+                    fmuInstances);
             // Set value from the shared value buffer.
-            instanceWithPort.getKey().set(instanceWithPort.getValue(), sourcePortWithValue.getKey().getSharedAsVariable());
+            instanceWithPort.getKey()
+                    .set(instanceWithPort.getValue(), sourcePortWithValue.getKey().getSharedAsVariable());
         }
     }
 
-    private void mapSetTentativeInstruction(PortRef portRef, List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
-            Map<String, ComponentVariableFmi2Api> fmuInstances, List<ConnectionModel> connections) {
-        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef, portsWithGet, connections);
+    private void mapSetTentativeInstruction(PortRef portRef,
+                                            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portsWithGet,
+                                            Map<String, ComponentVariableFmi2Api> fmuInstances,
+                                            List<ConnectionModel> connections) {
+        Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> sourcePortWithValue = getSourcePortFromPortRef(portRef,
+                portsWithGet, connections);
 
         // Create set call only if a source port with a prior get call is present.
         if (sourcePortWithValue != null) {
-            Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef, fmuInstances);
+            Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> instanceWithPort = getInstanceWithPortFromPortRef(portRef,
+                    fmuInstances);
             // Set value from the IO value buffer.
             instanceWithPort.getKey().set(instanceWithPort.getValue(), sourcePortWithValue.getValue());
         }
     }
 
     private Map.Entry<ComponentVariableFmi2Api, PortFmi2Api> getInstanceWithPortFromPortRef(PortRef portRef,
-            Map<String, ComponentVariableFmi2Api> fmuInstances) {
+                                                                                            Map<String, ComponentVariableFmi2Api> fmuInstances) {
         ComponentVariableFmi2Api instance = fmuInstances.get(portRef.fmu());
         PortFmi2Api port = instance.getPort(portRef.port());
         return Map.entry(instance, port);
     }
 
     private Map.Entry<PortFmi2Api, VariableFmi2Api<Object>> getSourcePortFromPortRef(PortRef portRef,
-            List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars, List<ConnectionModel> connections) {
+                                                                                     List<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portMapVars,
+                                                                                     List<ConnectionModel> connections) {
         Optional<ConnectionModel> connectionModel = connections.stream()
-                .filter(connection -> connection.trgPort().port().equals(portRef.port()) && connection.trgPort().fmu().equals(portRef.fmu()))
+                .filter(connection -> connection.trgPort().port().equals(portRef.port()) && connection.trgPort().fmu()
+                        .equals(portRef.fmu()))
                 .findAny();
 
         if (connectionModel.isPresent()) {
             Optional<Map.Entry<PortFmi2Api, VariableFmi2Api<Object>>> portWithValue = portMapVars.stream()
-                    .filter(entry -> portRefMatch(connectionModel.get().srcPort(), entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(),
+                    .filter(entry -> portRefMatch(connectionModel.get().srcPort(),
+                            entry.getKey().aMablFmi2ComponentAPI.getEnvironmentName(),
                             entry.getKey().getName())).findAny();
 
             if (portWithValue.isPresent()) {
@@ -614,11 +700,12 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     }
 
     private Map<PortFmi2Api, VariableFmi2Api<Object>> mapGetTentativeInstruction(PortRef portRef,
-            Map<String, ComponentVariableFmi2Api> fmuInstances) {
+                                                                                 Map<String, ComponentVariableFmi2Api> fmuInstances) {
         return fmuInstances.get(portRef.fmu()).getTentative(dynamicScope, portRef.port());
     }
 
-    private Map<PortFmi2Api, VariableFmi2Api<Object>> mapGetInstruction(PortRef portRef, Map<String, ComponentVariableFmi2Api> fmuInstances) {
+    private Map<PortFmi2Api, VariableFmi2Api<Object>> mapGetInstruction(PortRef portRef,
+                                                                        Map<String, ComponentVariableFmi2Api> fmuInstances) {
         ComponentVariableFmi2Api instance = fmuInstances.get(portRef.fmu());
         Map<PortFmi2Api, VariableFmi2Api<Object>> portMapVar = instance.get(portRef.port());
         instance.share(portMapVar);
@@ -633,6 +720,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
     private String masterMRepresentationToMultiMRepresentation(String masterModelRepresentation) {
         String[] interMediateRepresentation = masterModelRepresentation.split(MASTER_MODEL_FMU_INSTANCE_DELIMITER);
         return "{" + interMediateRepresentation[0] + "}" + MULTI_MODEL_FMU_INSTANCE_DELIMITER +
-                String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER, Arrays.copyOfRange(interMediateRepresentation, 1, interMediateRepresentation.length));
+                String.join(MULTI_MODEL_FMU_INSTANCE_DELIMITER,
+                        Arrays.copyOfRange(interMediateRepresentation, 1, interMediateRepresentation.length));
     }
 }

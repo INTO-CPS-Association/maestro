@@ -37,6 +37,15 @@ public class FromMaBLToMaBLAPI {
         }
     }
 
+    public static Map.Entry<String, InstanceVariableFmi3Api> getInstanceVariableFrom(MablApiBuilder builder, PExp exp,
+                                                                                       Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        if (exp instanceof AIdentifierExp) {
+            return getInstanceVariableFrom(builder, exp, env, ((AIdentifierExp) exp).getName().getText());
+        } else {
+            throw new RuntimeException("exp is not of type AIdentifierExp, but of type: " + exp.getClass());
+        }
+    }
+
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
             Fmi2SimulationEnvironment env,
             String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
@@ -255,6 +264,38 @@ public class FromMaBLToMaBLAPI {
 
         for (PExp componentName : componentIdentifiers) {
             Map.Entry<String, ComponentVariableFmi2Api> component = getComponentVariableFrom(builder, componentName, env);
+            fmuInstances.put(component.getKey(), component.getValue());
+        }
+
+
+        return fmuInstances;
+    }
+
+
+    public static Map<String, InstanceVariableFmi3Api> getInstanceVariablesFrom(MablApiBuilder builder, PExp exp,
+                                                                                  Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+        LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
+        SBlockStm containingBlock = exp.getAncestor(SBlockStm.class);
+        Optional<AVariableDeclaration> componentDeclaration =
+                containingBlock.getBody().stream().filter(ALocalVariableStm.class::isInstance).map(ALocalVariableStm.class::cast)
+                        .map(ALocalVariableStm::getDeclaration)
+                        .filter(decl -> decl.getName().equals(componentsArrayName) && !decl.getSize().isEmpty() && decl.getInitializer() != null)
+                        .findFirst();
+
+        if (!componentDeclaration.isPresent()) {
+            throw new RuntimeException("Could not find names for components");
+        }
+
+        AArrayInitializer initializer = (AArrayInitializer) componentDeclaration.get().getInitializer();
+
+
+        List<PExp> componentIdentifiers =
+                initializer.getExp().stream().filter(AIdentifierExp.class::isInstance).map(AIdentifierExp.class::cast).collect(Collectors.toList());
+
+        HashMap<String, InstanceVariableFmi3Api> fmuInstances = new HashMap<>();
+
+        for (PExp componentName : componentIdentifiers) {
+            Map.Entry<String, InstanceVariableFmi3Api> component = getInstanceVariableFrom(builder, componentName, env);
             fmuInstances.put(component.getKey(), component.getValue());
         }
 

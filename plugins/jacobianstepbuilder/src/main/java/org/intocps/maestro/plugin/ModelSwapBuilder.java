@@ -55,7 +55,9 @@ class ModelSwapBuilder {
         Map<ModelSwapInfo, Triple<BooleanVariableFmi2Api, BooleanVariableFmi2Api, DoubleVariableFmi2Api>> modelSwapConditions;
     }
 
-    public static Map.Entry<DoubleVariableFmi2Api, Optional<PredicateFmi2Api>> updateStep(ModelSwapContext swapCtxt, Fmi2SimulationEnvironment env, ComponentVariableFmi2Api instance, DoubleVariableFmi2Api communicationTime) {
+    public static Map.Entry<DoubleVariableFmi2Api, Optional<PredicateFmi2Api>> updateStep(ModelSwapContext swapCtxt, Fmi2SimulationEnvironment env,
+                                                                                          ComponentVariableFmi2Api instance,
+                                                                                          DoubleVariableFmi2Api communicationTime) {
 
         PredicateFmi2Api stepPredicate = null;
         for (Map.Entry<String, ModelSwapInfo> modelSwapInfoEntry : env.getModelSwaps()) {
@@ -110,7 +112,8 @@ class ModelSwapBuilder {
         return ctxt;
     }
 
-    public static void updateSwapConditionVariables(ModelSwapContext swapCtxt, DynamicActiveBuilderScope dynamicScope, Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues) {
+    public static void updateSwapConditionVariables(ModelSwapContext swapCtxt, DynamicActiveBuilderScope dynamicScope,
+                                                    Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues) {
 
         Map<String, PExp> replaceRule = componentsToPortsWithValues.entrySet().stream().flatMap(c -> c.getValue().entrySet().stream()
                         .map(p -> Map.entry(p.getKey().getMultiModelScalarVariableNameWithoutFmu(),
@@ -130,7 +133,8 @@ class ModelSwapBuilder {
     }
 
 
-    public static void generateLinking(Map<String, ComponentVariableFmi2Api> fmuInstances, Fmi2SimulationEnvironment env, DynamicActiveBuilderScope dynamicScope, ModelSwapContext swapCtxt) {
+    public static void setWithModelSwapLinking(Map<String, ComponentVariableFmi2Api> fmuInstances, Fmi2SimulationEnvironment env,
+                                               DynamicActiveBuilderScope dynamicScope, ModelSwapContext swapCtxt) {
         // SET ALL LINKED VARIABLES
         // This has to be carried out regardless of stabilisation or not.
         fmuInstances.values().forEach(instance -> {

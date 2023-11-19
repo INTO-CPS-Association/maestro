@@ -142,7 +142,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
                 return nativeType != null;
             }
 
-            static public enum Type {
+            public enum Type {
                 Void,
                 Int,
                 UInt,
@@ -254,7 +254,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
 
         IntVariable<AST> store(String name, int value);
 
-        <CV> ArrayVariable<AST, CV> store(String name, CV value[]);
+        <CV> ArrayVariable<AST, CV> store(String name, CV[] value);
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -399,7 +399,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          *
          * @param receiver
          */
-        void linkTo(Port< PORT_SCALAR_TYPE,AST>... receiver) throws PortLinkException;
+        void linkTo(Port<PORT_SCALAR_TYPE, AST>... receiver) throws PortLinkException;
 
         /**
          * Break the source link
@@ -529,10 +529,10 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         //        }
         //    }
         Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String namePrefix, TryScope<PStm> enclosingTryScope, Scope<PStm> scope,
-                String environmentName);
+                                                                 String environmentName);
 
         Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope,
-                FmiBuilder.Scope<PStm> scope, String environmentName, boolean loggingOn);
+                                                                 FmiBuilder.Scope<PStm> scope, String environmentName, boolean loggingOn);
 
         Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> instantiate(String name, TryScope<AST> enclosingTryScope, Scope<AST> scope);
 
@@ -570,26 +570,6 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     interface FmiSimulationInstance<AST, PORT_SCALAR_TYPE> extends SimulationInstance<AST> {
 
         void setDebugLogging(List<String> categories, boolean enableLogging);
-
-
-        /**
-         * @param scope
-         * @param currentCommunicationPoint
-         * @param communicationStepSize
-         * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
-         * @return
-         */
-        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
-                DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
-
-        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
-                DoubleVariable<AST> communicationStepSize);
-
-        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
-                DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
-
-        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
-                DoubleVariable<AST> communicationStepSize);
 
 
         List<? extends Port<PORT_SCALAR_TYPE, AST>> getPorts();
@@ -682,7 +662,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         <V> void set(Scope<AST> scope, PortValueMap<V, PORT_SCALAR_TYPE, AST> value);
 
 
-        <V> void set(Scope<AST> scope, PortVariableMap< V, PORT_SCALAR_TYPE, AST> value);
+        <V> void set(Scope<AST> scope, PortVariableMap<V, PORT_SCALAR_TYPE, AST> value);
 
         /**
          * Set port values (if ports is not from this fmu then the links are used to remap)
@@ -697,7 +677,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
 
         <V> void set(Scope<AST> scope, Port<PORT_SCALAR_TYPE, AST> port, Variable<AST, V> value);
 
-        <V> void set(PortVariableMap< V, PORT_SCALAR_TYPE, AST> value);
+        <V> void set(PortVariableMap<V, PORT_SCALAR_TYPE, AST> value);
 
         /**
          * Set this fmu port by name and link
@@ -756,7 +736,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          */
         StateVariable<AST> getState(Scope<AST> scope) throws XPathExpressionException;
 
-        interface PortVariableMap< V, PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, Variable<AST, V>> {
+        interface PortVariableMap<V, PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, Variable<AST, V>> {
         }
 
         interface PortValueMap<V, PORT_SCALAR_TYPE, AST> extends Map<Port<PORT_SCALAR_TYPE, AST>, Value<V>> {
@@ -769,7 +749,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     /**
      * Simulation instance for FMI3
      *
-     * @param <AST>  building block
+     * @param <AST>              building block
      * @param <PORT_SCALAR_TYPE> fmi3 scalar variable type
      */
     interface Fmi3InstanceVariable<AST, PORT_SCALAR_TYPE> extends FmiSimulationInstance<AST, PORT_SCALAR_TYPE> {
@@ -782,20 +762,22 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         void enterInitializationMode(boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined, double stopTime);
 
         void enterInitializationMode(Scope<AST> scope, FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance,
-                FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
+                                     FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined,
+                                     FmiBuilder.DoubleVariable<PStm> stopTime);
 
         void enterInitializationMode(FmiBuilder.BoolVariable<PStm> toleranceDefined, FmiBuilder.DoubleVariable<PStm> tolerance,
-                FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined, FmiBuilder.DoubleVariable<PStm> stopTime);
+                                     FmiBuilder.DoubleVariable<PStm> startTime, FmiBuilder.BoolVariable<PStm> stopTimeDefined,
+                                     FmiBuilder.DoubleVariable<PStm> stopTime);
 
         void exitInitializationMode();
 
         void setupExperiment(Scope<AST> scope, DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined,
-                Double tolerance);
+                             Double tolerance);
 
         void setupExperiment(Scope<AST> scope, double startTime, Double endTime, Double tolerance);
 
         void enterInitializationMode(Scope<AST> scope, boolean toleranceDefined, double tolerance, double startTime, boolean stopTimeDefined,
-                double stopTime);
+                                     double stopTime);
 
         void exitInitializationMode(Scope<AST> scope);
 
@@ -811,7 +793,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
      * <p>
      * Note that all methods that do not take a scope uses the builders dynamic scope and adds the underlying instructions int he active scope.
      *
-     * @param <AST>  building block
+     * @param <AST>              building block
      * @param <PORT_SCALAR_TYPE> fmi2 scalar variable type
      */
     interface Fmi2ComponentVariable<AST, PORT_SCALAR_TYPE> extends FmiSimulationInstance<AST, PORT_SCALAR_TYPE> {
@@ -827,7 +809,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         void exitInitializationMode();
 
         void setupExperiment(Scope<AST> scope, DoubleVariable<AST> startTime, DoubleVariable<AST> endTime, BoolVariable<AST> endTimeDefined,
-                Double tolerance);
+                             Double tolerance);
 
         void setupExperiment(Scope<AST> scope, double startTime, Double endTime, Double tolerance);
 
@@ -838,6 +820,26 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         void terminate(Scope<AST> scope);
 
         void terminate();
+
+
+        /**
+         * @param scope
+         * @param currentCommunicationPoint
+         * @param communicationStepSize
+         * @param noSetFMUStatePriorToCurrentPoint a pair representing (full step completed, current time after step)
+         * @return
+         */
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
+                                                               DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(Scope<AST> scope, DoubleVariable<AST> currentCommunicationPoint,
+                                                               DoubleVariable<AST> communicationStepSize);
+
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
+                                                               DoubleVariable<AST> communicationStepSize, BoolVariable<AST> noSetFMUStatePriorToCurrentPoint);
+
+        Map.Entry<BoolVariable<AST>, DoubleVariable<AST>> step(DoubleVariable<AST> currentCommunicationPoint,
+                                                               DoubleVariable<AST> communicationStepSize);
     }
 
     interface Variable<AST, V> {

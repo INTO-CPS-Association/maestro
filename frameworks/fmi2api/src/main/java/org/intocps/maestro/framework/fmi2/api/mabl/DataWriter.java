@@ -8,7 +8,9 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderS
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,7 +53,8 @@ public class DataWriter {
     }
 
     public void unload() {
-        mablApiBuilder.getDynamicScope().add(newExpressionStm(newUnloadExp(Arrays.asList(getReferenceExp().clone()))));
+        mablApiBuilder.getDynamicScope().add(newExpressionStm(newUnloadExp(
+                Collections.singletonList(getReferenceExp().clone()))));
     }
 
     private PExp getReferenceExp() {
@@ -59,7 +62,17 @@ public class DataWriter {
     }
 
     // TODO: Only works for shared variables. Fixed this.
-    public class DataWriterInstance {
+    public static class DataWriterInstance {
+        public static class LogEntry {
+            final String name;
+            final Supplier<PExp> exp;
+
+            public LogEntry(String name, Supplier<PExp> exp) {
+                this.name = name;
+                this.exp = exp;
+            }
+        }
+
         private final String FUNCTION_WRITEHEADER = "writeHeader";
         private final String FUNCTION_WRITEDATAPOINT = "writeDataPoint";
         private final String TYPE_DATAWRITERCONFIG = "DataWriterConfig";
@@ -67,7 +80,7 @@ public class DataWriter {
         private final MablApiBuilder mablApiBuilder;
         private final DataWriter dataWriter;
         private boolean runtimeModuleMode;
-        private List<PortFmi2Api> portsToLog;
+        private List<LogEntry> portsToLog;
         /**
          * A String Array of the names of the variables to log
          */
@@ -88,49 +101,56 @@ public class DataWriter {
         private String dataWriterInstanceConfigurationVariableName;
         private FmiBuilder.RuntimeModule<PStm> runtimeModule;
 
-        public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, DataWriter dataWriter) {
+        public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder,
+                                  DataWriter dataWriter) {
 
             this.dynamicScope = dynamicScope;
             this.mablApiBuilder = mablApiBuilder;
             this.dataWriter = dataWriter;
         }
 
-        public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder, DataWriter dataWriter,
-                FmiBuilder.RuntimeModule<PStm> runtimeModule) {
+        public DataWriterInstance(DynamicActiveBuilderScope dynamicScope, MablApiBuilder mablApiBuilder,
+                                  DataWriter dataWriter,
+                                  FmiBuilder.RuntimeModule<PStm> runtimeModule) {
             this(dynamicScope, mablApiBuilder, dataWriter);
             this.runtimeModuleMode = true;
             this.runtimeModule = runtimeModule;
         }
 
-        public void initialize(PortFmi2Api... portsToLog) {
+        public void initialize(LogEntry... portsToLog) {
             this.initialize(Arrays.asList(portsToLog));
         }
 
-        public void initialize(List<PortFmi2Api> portsToLog) {
+        public void initialize(List<LogEntry> portsToLog) {
 
             this.portsToLog = portsToLog;
 
             this.logHeadersVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_headers");
-            this.dataWriterInstanceConfigurationVariableName = mablApiBuilder.getNameGenerator().getName("datawriter_configuration");
+            this.dataWriterInstanceConfigurationVariableName = mablApiBuilder.getNameGenerator()
+                    .getName("datawriter_configuration");
 
             List<AStringLiteralExp> variablesNamesToLog =
-                    this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.getMultiModelScalarVariableName()))
+                    this.portsToLog.stream().map(x -> MableAstFactory.newAStringLiteralExp(x.name))
                             .collect(Collectors.toList());
 
             AVariableDeclaration datawriter_configuration =
                     MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(logHeadersVariableName),
-                            MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()), variablesNamesToLog.size(),
+                            MableAstFactory.newAArrayType(MableAstFactory.newAStringPrimitiveType()),
+                            variablesNamesToLog.size(),
                             MableAstFactory.newAArrayInitializer(variablesNamesToLog));
 
             this.logHeadersStm = MableAstFactory.newALocalVariableStm(datawriter_configuration);
 
 
             this.writeHeadersStm = MableAstFactory.newALocalVariableStm(
-                    MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(this.dataWriterInstanceConfigurationVariableName),
+                    MableAstFactory.newAVariableDeclaration(
+                            MableAstFactory.newAIdentifier(this.dataWriterInstanceConfigurationVariableName),
                             MableAstFactory.newANameType(TYPE_DATAWRITERCONFIG), MableAstFactory.newAExpInitializer(
-                                    MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
+                                    MableAstFactory.newACallExp(
+                                            MableAstFactory.newAIdentifierExp(this.dataWriter.getModuleIdentifier()),
                                             MableAstFactory.newAIdentifier(FUNCTION_WRITEHEADER),
-                                            Arrays.asList(MableAstFactory.newAIdentifierExp(logHeadersVariableName))))));
+                                            List.of(
+                                                    newAIdentifierExp(logHeadersVariableName))))));
 
             this.mablApiBuilder.getDynamicScope().add(logHeadersStm, writeHeadersStm);
 
@@ -144,16 +164,17 @@ public class DataWriter {
             AExpressionStm stm = MableAstFactory.newExpressionStm(
                     MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
                             MableAstFactory.newAIdentifier(this.FUNCTION_WRITEDATAPOINT), Stream.concat(
-                                    Arrays.asList(MableAstFactory.newAIdentifierExp(this.dataWriterInstanceConfigurationVariableName),
+                                    Arrays.asList(MableAstFactory.newAIdentifierExp(
+                                                    this.dataWriterInstanceConfigurationVariableName),
                                             time.getReferenceExp().clone()).stream(),
-                                    portsToLog.stream().map(x -> x.getSharedAsVariable().getReferenceExp().clone())).collect(Collectors.toList())));
+                                    portsToLog.stream().map(x -> x.exp.get().clone())).collect(Collectors.toList())));
             this.dynamicScope.add(stm);
         }
 
         public void close() {
             AExpressionStm stm = MableAstFactory.newExpressionStm(
                     MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(this.dataWriter.moduleIdentifier),
-                            MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE), Arrays.asList()));
+                            MableAstFactory.newAIdentifier(this.dataWriter.FUNCTION_CLOSE), List.of()));
             this.dynamicScope.add(stm);
         }
 

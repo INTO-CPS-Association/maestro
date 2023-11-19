@@ -48,8 +48,11 @@ public class MaBLTemplateGenerator {
     public static final String INITIALIZE_TRANSFER_EXPANSION_FUNCTION_NAME = "initialize_transfer";
     public static final String INITIALIZE_EXPANSION_MODULE_NAME = "Initializer";
     public static final String FIXEDSTEP_FUNCTION_NAME = "fixedStepSizeTransfer";
+    public static final String FIXEDSTEP3_FUNCTION_NAME = "fixedStep3Size";
+
     public static final String VARIABLESTEP_FUNCTION_NAME = "variableStepSize";
     public static final String JACOBIANSTEP_EXPANSION_MODULE_NAME = "JacobianStepBuilder";
+    public static final String JACOBIANSTEP3_EXPANSION_MODULE_NAME = "JacobianStepBuilder3";
     public static final String ARRAYUTIL_EXPANSION_MODULE_NAME = "ArrayUtil";
     public static final String DEBUG_LOGGING_EXPANSION_FUNCTION_NAME = "enableDebugLogging";
     public static final String DEBUG_LOGGING_MODULE_NAME = "DebugLogging";
@@ -163,7 +166,7 @@ public class MaBLTemplateGenerator {
 
         if (faultInject != null) {
             AInstanceMappingStm fiToEnvMapping = newAInstanceMappingStm(newAIdentifier(faultInject.lexName), instanceEnvironmentKey);
-            ATransferAsStm transferAsStm = new ATransferAsStm(Arrays.asList(newAStringLiteralExp(instanceLexName)));
+            ATransferAsStm transferAsStm = new ATransferAsStm(List.of(newAStringLiteralExp(instanceLexName)));
             PStm ficomp = newVariable(faultInject.lexName, newANameType("FMI2Component"), newNullExp());
             rootStatements.addAll(Arrays.asList(fiToEnvMapping, transferAsStm, ficomp));
             tryBlockStatements.addAll(Arrays.asList(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(faultInject.lexName)),
@@ -176,17 +179,27 @@ public class MaBLTemplateGenerator {
         return new AbstractMap.SimpleEntry(rootStatements, tryBlockStatements);
     }
 
-    public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig, boolean endTimeDefined) {
+    public static ExpandStatements generateAlgorithmStms(IAlgorithmConfig algorithmConfig, boolean endTimeDefined, boolean fmi2Only) {
         PStm algorithmStm;
 
         switch (algorithmConfig.getAlgorithmType()) {
             case FIXEDSTEP:
-                algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
-                        newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
-                        MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
-                        Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
-                                aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
-                                MableAstFactory.newABoolLiteralExp(endTimeDefined))));
+                if (fmi2Only) {
+                    algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                            newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME)),
+                            MableAstFactory.newAIdentifier(FIXEDSTEP_FUNCTION_NAME),
+                            Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                    aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
+                                    MableAstFactory.newABoolLiteralExp(endTimeDefined))));
+                } else {
+                    algorithmStm = MableAstFactory.newExpressionStm(MableAstFactory.newACallExp(newExpandToken(),
+                            newAIdentifierExp(MableAstFactory.newAIdentifier(JACOBIANSTEP3_EXPANSION_MODULE_NAME)),
+                            MableAstFactory.newAIdentifier(FIXEDSTEP3_FUNCTION_NAME),
+                            Arrays.asList(aIdentifierExpFromString(COMPONENTS_ARRAY_NAME), aIdentifierExpFromString(INSTANCES_ARRAY_NAME), aIdentifierExpFromString(STEP_SIZE_NAME),
+                                    aIdentifierExpFromString(START_TIME_NAME), aIdentifierExpFromString(END_TIME_NAME),
+                                    MableAstFactory.newABoolLiteralExp(endTimeDefined))));
+
+                }
                 break;
 
             case VARIABLESTEP:
@@ -429,7 +442,7 @@ public class MaBLTemplateGenerator {
             throw new RuntimeException("No step algorithm config found");
         }
         JacobianStepConfig jacobianStepConfig = (JacobianStepConfig) templateConfiguration.getStepAlgorithmConfig();
-        ExpandStatements algorithmStatements = generateAlgorithmStms(jacobianStepConfig.stepAlgorithm, jacobianStepConfig.endTime != null);
+        ExpandStatements algorithmStatements = generateAlgorithmStms(jacobianStepConfig.stepAlgorithm, jacobianStepConfig.endTime != null, instances.getFmi3List().isEmpty());
         if (algorithmStatements.variablesToTopOfMabl != null) {
             stmMaintainer.addAll(algorithmStatements.variablesToTopOfMabl);
         }
@@ -484,12 +497,12 @@ public class MaBLTemplateGenerator {
         finallyBody.getBody().addAll(generateLoadUnloadStms(x -> createUnloadStatement(StringUtils.uncapitalize(x))).stream().map(x -> x.getKey())
                 .collect(Collectors.toList()));
         if (faultInject) {
-            finallyBody.getBody().addAll(Arrays.asList(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey()));
+            finallyBody.getBody().add(createUnloadStatement(FAULT_INJECT_MODULE_VARIABLE_NAME).getKey());
         }
 
         // Create the toplevel
         List<LexIdentifier> imports = new ArrayList<>(
-                Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
+                Arrays.asList(newAIdentifier(JACOBIANSTEP_EXPANSION_MODULE_NAME), newAIdentifier(JACOBIANSTEP3_EXPANSION_MODULE_NAME), newAIdentifier(INITIALIZE_EXPANSION_MODULE_NAME),
                         newAIdentifier(DEBUG_LOGGING_MODULE_NAME), newAIdentifier(TYPECONVERTER_MODULE_NAME), newAIdentifier(DATAWRITER_MODULE_NAME),
                         newAIdentifier(FMI2_MODULE_NAME), newAIdentifier(FMI3_MODULE_NAME), newAIdentifier(MATH_MODULE_NAME),
                         newAIdentifier(ARRAYUTIL_EXPANSION_MODULE_NAME), newAIdentifier(LOGGER_MODULE_NAME), newAIdentifier(BOOLEANLOGIC_MODULE_NAME),
@@ -503,7 +516,7 @@ public class MaBLTemplateGenerator {
         ASimulationSpecificationCompilationUnit unit = newASimulationSpecificationCompilationUnit(imports, rootScope);
         unit.setFramework(Collections.singletonList(new LexIdentifier(templateConfiguration.getFramework().name(), null)));
 
-        unit.setFrameworkConfigs(Arrays.asList(
+        unit.setFrameworkConfigs(List.of(
                 new AConfigFramework(new LexIdentifier(templateConfiguration.getFrameworkConfig().getKey().name(), null),
                         StringEscapeUtils.escapeJava(objectMapper.writeValueAsString(templateConfiguration.getFrameworkConfig().getValue())))));
 
@@ -564,7 +577,7 @@ public class MaBLTemplateGenerator {
             return createExpandDebugLogging(instanceLexName, logLevels);
         } else {
             logger.warn("Could not set log levels for " + instanceName);
-            return Arrays.asList();
+            return List.of();
         }
 
     }
@@ -625,13 +638,13 @@ public class MaBLTemplateGenerator {
         }
         return MableAstFactory.newExpressionStm(
                 MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(instanceLexName), MableAstFactory.newAIdentifier("terminate"),
-                        Arrays.asList()));
+                        List.of()));
     }
 
     private static PStm createFMUFreeInstanceStatement(String instanceLexName, String fmuLexName) {
         return newIf(newNotEqual(newAIdentifierExp(instanceLexName), newNullExp()), newABlockStm(MableAstFactory.newExpressionStm(
                         MableAstFactory.newACallExp(MableAstFactory.newAIdentifierExp(fmuLexName), MableAstFactory.newAIdentifier("freeInstance"),
-                                Arrays.asList(MableAstFactory.newAIdentifierExp(instanceLexName)))),
+                                List.of(newAIdentifierExp(instanceLexName)))),
                 MableAstFactory.newAAssignmentStm(MableAstFactory.newAIdentifierStateDesignator(instanceLexName), newNullExp())), null);
     }
 
@@ -648,7 +661,7 @@ public class MaBLTemplateGenerator {
 
     private static Map.Entry<PStm, List<PStm>> createUnloadStatement(String moduleName) {
         AIfStm ifNotNull = newIf(newNotEqual(newAIdentifierExp(moduleName), newNullExp()),
-                newABlockStm(newExpressionStm(newUnloadExp(Arrays.asList(newAIdentifierExp(moduleName)))),
+                newABlockStm(newExpressionStm(newUnloadExp(List.of(newAIdentifierExp(moduleName)))),
                         newAAssignmentStm(newAIdentifierStateDesignator(moduleName), newNullExp())), null);
         return new AbstractMap.SimpleEntry(ifNotNull, null);
     }
