@@ -17,6 +17,10 @@ import java.util.stream.Collectors;
 
 public class CsvDataWriter implements IDataListener {
     final List<String> filter;
+    static final String CSV_DATA_WRITER_PRECISION = "CSV_DATA_WRITER_PRECISION";
+
+    static final String floatFormatter = System.getProperty(CSV_DATA_WRITER_PRECISION) != null ? ("%." + System.getProperty(
+            CSV_DATA_WRITER_PRECISION) + "f") : null;
     private final DataFileRotater dataFileRotater;
     HashMap<UUID, CsvDataWriterInstance> instances = new HashMap<>();
 
@@ -51,14 +55,18 @@ public class CsvDataWriter implements IDataListener {
     @Override
     public void writeDataPoint(UUID uuid, double time, List<Value> dataPoint) {
         List<String> data = new Vector<>();
-        data.add(Double.toString(time));
+        data.add(floatFormatter == null ? Double.toString(time) : String.format(Locale.US, floatFormatter, time));
 
         for (Integer i : instances.get(uuid).indicesOfInterest) {
             Value d = dataPoint.get(i).deref();
 
             Object value = null;
             if (d.isNumericDecimal()) {
-                value = ((NumericValue) d).doubleValue();
+                if (floatFormatter == null)
+                    value = ((NumericValue) d).doubleValue();
+                else {
+                    value = String.format(Locale.US, floatFormatter, ((NumericValue) d).doubleValue());
+                }
             } else if (d.isNumeric()) {
                 value = ((NumericValue) d).intValue();
             } else if (d instanceof BooleanValue) {
