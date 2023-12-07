@@ -1,7 +1,7 @@
 package org.intocps.maestro.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -17,9 +17,16 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFm
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.Sigver;
 import org.intocps.maestro.plugin.SigverConfig;
+import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.ModelEncoding;
+import org.intocps.verification.scenarioverifier.core.ScenarioGenerator;
 import scala.jdk.javaapi.CollectionConverters;
-import synthesizer.ConfParser.ScenarioConfGenerator;
+import scala.reflect.io.Directory;
 
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -124,7 +131,12 @@ public class TemplateGeneratorFromScenario {
 
         // Setup and add scenario verifier config
         SigverConfig expansionConfig = new SigverConfig();
-        expansionConfig.masterModel = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+
+       File f= ScenarioGenerator.generateUppaalFile(masterModel.name(),new ModelEncoding(masterModel),new Directory(new File(System.getProperty(
+               "java.io" +
+                ".tmpdir"))));
+
+        expansionConfig.masterModel = Files.readString(f.toPath(), StandardCharsets.UTF_8);
         expansionConfig.parameters = configuration.getParameters();
         expansionConfig.relTol = configuration.getExecutionParameters().getConvergenceRelativeTolerance();
         expansionConfig.absTol = configuration.getExecutionParameters().getConvergenceAbsoluteTolerance();

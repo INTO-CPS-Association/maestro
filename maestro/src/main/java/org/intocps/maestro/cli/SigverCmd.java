@@ -1,10 +1,10 @@
 package org.intocps.maestro.cli;
 
-import cli.VerifyTA;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.*;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
@@ -15,10 +15,14 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.verification.scenarioverifier.core.*;
+import org.intocps.verification.scenarioverifier.synthesizer.*;
+import org.intocps.verification.scenarioverifier.traceanalyzer.*;
+import org.intocps.verification.scenarioverifier.cli.*;
 import picocli.CommandLine;
 import scala.jdk.javaapi.CollectionConverters;
-import synthesizer.ConfParser.ScenarioConfGenerator;
-import trace_analyzer.TraceAnalyzer;
+import scala.reflect.io.Directory;
+
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -54,21 +58,24 @@ class VisualizeTracesCmd implements Callable<Integer> {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
 
-        if (!VerifyTA.checkEnvironment()) {
-            System.out.println("Verification environment is not setup correctly");
-            return -1;
-        }
+//        if (!VerifyTA.checkEnvironment()) {
+//            System.out.println("Verification environment is not setup correctly");
+//            return -1;
+//        }
 
         File tempDir = Files.createTempDirectory("tmpDir").toFile();
         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
         File uppaalFile = Path.of(tempDir.getPath(), "uppaal.xml").toFile();
         File traceFile = Path.of(tempDir.getPath(), "trace.log").toFile();
-        try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
-            fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
-        } catch (Exception e) {
-            System.out.println("Unable to write encoded master model to file: " + e);
-            return -1;
-        }
+
+        File f=ScenarioGenerator.generateUppaalFile(masterModel.name(),new ModelEncoding(masterModel),new Directory(output));
+        Files.copy(f.toPath(),uppaalFile.toPath());
+//        try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
+//            fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
+//        } catch (Exception e) {
+//            System.out.println("Unable to write encoded master model to file: " + e);
+//            return -1;
+//        }
         // This verifies the algorithm and writes to the trace file.
         int resultCode = VerifyTA.saveTraceToFile(uppaalFile, traceFile);
 
@@ -120,17 +127,21 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
         File uppaalFile = output.toPath().resolve("uppaal.xml").toFile();
-        if (VerifyTA.checkEnvironment()) {
-            try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
-                fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
-            } catch (Exception e) {
-                System.out.println("Unable to write encoded master model to file: " + e);
-            }
-            resultCode = VerifyTA.verify(uppaalFile);
-        } else {
-            System.out.println("Verification environment is not setup correctly");
-            return -1;
+        //if (VerifyTA.checkEnvironment())
+        {
+//            try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
+//                fileWriter.write();
+//            } catch (Exception e) {
+//                System.out.println("Unable to write encoded master model to file: " + e);
+//            }
+            uppaalFile=  ScenarioGenerator.generateUppaalFile("uupaal",new ModelEncoding(masterModel),
+                    new Directory(output.getAbsoluteFile()));
+            resultCode = VerifyTA.verify(uppaalFile,false);
         }
+//        else {
+//            System.out.println("Verification environment is not setup correctly");
+//            return -1;
+//        }
 
         System.out.println("Output written to: " + output.getPath());
 
@@ -172,9 +183,10 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
             return -1;
         }
 
-        String algorithm = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+       File f= ScenarioGenerator.generateUppaalFile(masterModel.name(),new ModelEncoding(masterModel), new Directory(output)) ;
         Path algorithmPath = output.toPath().resolve("masterModel.conf");
-        Files.write(algorithmPath, algorithm.getBytes(StandardCharsets.UTF_8));
+        Files.copy(f.toPath(),algorithmPath);
+//        Files.write(algorithmPath, algorithm.getBytes(StandardCharsets.UTF_8));
 
         return 0;
     }
@@ -249,9 +261,11 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
                 ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(extendedMultiModelFile, ExtendedMultiModel.class);
                 MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
 
-                masterModelAsString = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+                //FIXME class removed ScenarioConfGenerator
+                throw new RuntimeException("ScenarioConfGenerator removed");
+//                masterModelAsString = ScenarioConfGenerator.generate(masterModel, masterModel.name());
 
-                Files.write(algorithmPath, masterModelAsString.getBytes(StandardCharsets.UTF_8));
+//                Files.write(algorithmPath, masterModelAsString.getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
                 System.out.println("Unable to generate masterModel: " + e);
                 return -1;

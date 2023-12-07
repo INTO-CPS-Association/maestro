@@ -2,8 +2,7 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
-import core.MasterModel;
-import core.ScenarioLoader;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -30,6 +29,8 @@ import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.interpreter.WebApiInterpreterFactory;
+import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;

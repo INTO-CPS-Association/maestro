@@ -15,9 +15,9 @@ import java.util.List;
 public class Fmi2FmuValidator implements IFmuValidator {
     final static Logger logger = LoggerFactory.getLogger(Fmi2FmuValidator.class);
 
-    static {
-        System.setProperty("vdmj.mapping.search_path", "/annotations");
-    }
+//    static {
+//        System.setProperty("vdmj.mapping.search_path", "/annotations");
+//    }
 
     /**
      * returns true if validation could be performed. I.e. true does NOT indicate that no errors were found.

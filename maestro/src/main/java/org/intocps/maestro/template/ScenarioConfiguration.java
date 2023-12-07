@@ -1,10 +1,11 @@
 package org.intocps.maestro.template;
 
-import core.MasterModel;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.verification.scenarioverifier.core.MasterModel;
 
 import java.util.List;
 import java.util.Map;

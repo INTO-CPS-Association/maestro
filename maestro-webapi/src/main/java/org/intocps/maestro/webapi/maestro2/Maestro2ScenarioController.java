@@ -1,12 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
 
-import api.TraceResult;
-import api.VerificationAPI;
-import cli.VerifyTA;
-import core.MasterModel;
-import core.ModelEncoding;
-import core.ScenarioGenerator;
-import core.ScenarioLoader;
+
 import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.plugin.MasterModelMapper;
@@ -14,6 +8,11 @@ import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
 import org.intocps.maestro.webapi.dto.VerificationDTO;
 import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.util.ZipDirectory;
+import org.intocps.verification.scenarioverifier.api.TraceResult;
+import org.intocps.verification.scenarioverifier.cli.VerifyTA;
+import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.ModelEncoding;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
-import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
