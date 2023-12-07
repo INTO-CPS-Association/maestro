@@ -28,7 +28,7 @@ jobs:
       run: mvn -B package --file pom.xml -DskipTests
     - name: Maven Test
       run: mvn test
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v3
       with:
         name: maestro.jar
         path: orchestration/coe/target/coe-*-SNAPSHOT-jar-with-dependencies.jar
