@@ -24,6 +24,8 @@
             <groupId>com.ugos</groupId>
             <artifactId>JIProlog</artifactId>
             <version>4.1.6.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/jiprolog-4.1.6.1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>guru.nidi</groupId>
@@ -41,4 +43,6 @@
             <artifactId>junit-jupiter</artifactId>
         </dependency>
     </dependencies>
+
+
 </project>
