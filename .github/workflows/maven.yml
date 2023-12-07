@@ -31,4 +31,5 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: maestro.jar
-        path: orchestration/coe/target/coe-1.0.7-SNAPSHOT-jar-with-dependencies.jar
+        path: orchestration/coe/target/coe-*-SNAPSHOT-jar-with-dependencies.jar
+        retention-days: 5
