@@ -1,12 +1,12 @@
 package org.intocps.maestro.plugin
 
-import api.GenerationAPI
-import core.*
 import org.intocps.maestro.core.dto.ExtendedMultiModel
 import org.intocps.maestro.fmi.Fmi2ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import scala.jdk.javaapi.CollectionConverters
+import org.intocps.verification.scenarioverifier.api.GenerationAPI
+import org.intocps.verification.scenarioverifier.core.*
 
 class MasterModelMapper {
     companion object {
@@ -32,7 +32,7 @@ class MasterModelMapper {
         fun scenarioToMasterModel(scenario: String): MasterModel {
             // Load master model without algorithm
             val masterModel = ScenarioLoader.load(scenario.byteInputStream())
-            return GenerationAPI.generateAlgorithm(masterModel.name(), masterModel.scenario())
+            return GenerationAPI.synthesizeAlgorithm(masterModel.name(), masterModel.scenario())
         }
 
         fun masterModelConnectionsToMultiModelConnections(masterModel: MasterModel): HashMap<String, MutableList<String>> {
@@ -157,7 +157,7 @@ class MasterModelMapper {
             )
 
             // Generate the master model from the scenario
-            return GenerationAPI.generateAlgorithm("generatedFromMultiModel", scenarioModel)
+            return GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)
         }
     }
 }
