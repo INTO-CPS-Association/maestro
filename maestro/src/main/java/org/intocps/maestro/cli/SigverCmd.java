@@ -159,14 +159,16 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        System.out.println("Generating algorithm from scenario or multi-model");
         Path filePath = file.toPath();
         MasterModel masterModel;
         if (FilenameUtils.getExtension(filePath.toString()).equals("conf")) {
+            System.out.println("Generating algorithm from scenario");
             String scenario = Files.readString(filePath);
             masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
         } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
-            ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
             System.out.println("Generating algorithm from multi-model");
+            ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         } else {
             return -1;
