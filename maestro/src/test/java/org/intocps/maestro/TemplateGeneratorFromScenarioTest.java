@@ -3,8 +3,8 @@ package org.intocps.maestro;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
-import core.ScenarioLoader;
+import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoader; 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 
 import static org.intocps.maestro.FullSpecTest.getWorkingDirectory;
 import static org.intocps.maestro.JacobianStepBuilderTest.csvCompare;
-
 public class TemplateGeneratorFromScenarioTest {
     /**
      * Data Provider
