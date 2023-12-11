@@ -1,7 +1,6 @@
 {
   "parameters": {
   },
-  "verifyAgainstProlog": false,
   "stabilisation": false,
   "fixedPointIteration": 5,
   "absoluteTolerance": 0.0,

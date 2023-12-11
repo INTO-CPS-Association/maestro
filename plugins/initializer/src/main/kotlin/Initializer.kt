@@ -28,7 +28,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*
 import org.intocps.maestro.plugin.*
 import org.intocps.maestro.plugin.IMaestroExpansionPlugin.EmptyRuntimeConfig
 import org.intocps.maestro.plugin.initializer.instructions.*
-import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -94,7 +93,6 @@ class Initializer : BasicMaestroExpansionPlugin {
 
     private val portsAlreadySet = HashMap<ComponentVariableFmi2Api, Set<Fmi2ModelDescription.ScalarVariable>>()
     private val topologicalPlugin: TopologicalPlugin
-    private val initializationPrologQuery: InitializationPrologQuery
     var config: InitializationConfig? = null
     var modelParameters: List<ModelParameter>? = null
     var envParameters: List<String>? = null
@@ -106,13 +104,11 @@ class Initializer : BasicMaestroExpansionPlugin {
     var maxConvergeAttempts: Fmi2Builder.IntVariable<PStm>? = null
 
     constructor() {
-        initializationPrologQuery = InitializationPrologQuery()
         topologicalPlugin = TopologicalPlugin()
     }
 
-    constructor(topologicalPlugin: TopologicalPlugin, initializationPrologQuery: InitializationPrologQuery) {
+    constructor(topologicalPlugin: TopologicalPlugin) {
         this.topologicalPlugin = topologicalPlugin
-        this.initializationPrologQuery = initializationPrologQuery
     }
 
     override fun getName(): String {
@@ -264,11 +260,6 @@ class Initializer : BasicMaestroExpansionPlugin {
         //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
         val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections, filterTargets)
 
-        //Verification against prolog should only be done if it turned on and there is no loops
-        if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
-            initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
-
-
         //Set variables for all components in IniPhase
         setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
 
@@ -393,10 +384,6 @@ class Initializer : BasicMaestroExpansionPlugin {
 //
 //            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
 //            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
-//
-//            //Verification against prolog should only be done if it turned on and there is no loops
-//            if (this.config!!.verifyAgainstProlog && instantiationOrder.all { i -> i.size == 1 })
-//                initializationPrologQuery.initializationOrderIsValid(instantiationOrder.flatten(), connections)
 //
 //
 //            //Set variables for all components in IniPhase
@@ -676,7 +663,6 @@ class Initializer : BasicMaestroExpansionPlugin {
         }
         val parameters = root["parameters"]
         val envParameters = root["environmentParameters"]
-        val verify = root["verifyAgainstProlog"]
         val stabilisation = root["stabilisation"]
         val fixedPointIteration = root["fixedPointIteration"]
         val absoluteTolerance = root["absoluteTolerance"]
@@ -686,7 +672,6 @@ class Initializer : BasicMaestroExpansionPlugin {
             conf = InitializationConfig(
                 if (parameters is NullNode) null else parameters,
                 if (envParameters is NullNode) null else envParameters,
-                verify,
                 stabilisation,
                 fixedPointIteration,
                 absoluteTolerance,
@@ -720,7 +705,6 @@ class Initializer : BasicMaestroExpansionPlugin {
     class InitializationConfig(
         parameters: JsonNode?,
         envParameters: JsonNode?,
-        verify: JsonNode?,
         stabilisation: JsonNode?,
         fixedPointIteration: JsonNode?,
         absoluteTolerance: JsonNode?,
@@ -729,11 +713,9 @@ class Initializer : BasicMaestroExpansionPlugin {
         var stabilisation = false
         val modelParameters: List<ModelParameter>?
         val envParameters: List<String>?
-        var verifyAgainstProlog = false
         var maxIterations = 0
         var absoluteTolerance = 0.0
         var relativeTolerance = 0.0
-
 
         init {
             val mapper = ObjectMapper()
@@ -756,7 +738,6 @@ class Initializer : BasicMaestroExpansionPlugin {
                 List::class.java
             ) as List<String>
 
-            verifyAgainstProlog = verify?.asBoolean(false) ?: false
             this.stabilisation = stabilisation?.asBoolean(false) ?: false
             maxIterations = fixedPointIteration?.asInt(5) ?: 5
             if (absoluteTolerance == null) {

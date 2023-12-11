@@ -9,8 +9,6 @@ import org.intocps.maestro.plugin.IMaestroExpansionPlugin;
 import org.intocps.maestro.plugin.IPluginConfiguration;
 import org.intocps.maestro.plugin.initializer.Initializer;
 import org.intocps.maestro.plugin.initializer.TopologicalPlugin;
-import org.intocps.maestro.plugin.verificationsuite.prologverifier.InitializationPrologQuery;
-import org.intocps.maestro.plugin.verificationsuite.prologverifier.PrologGenerator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import scala.Console;
@@ -33,9 +31,7 @@ public class InitializerTest {
     public void parseConfig() throws IOException {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
-        var prologGenerator = new PrologGenerator();
-        var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
-        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
+        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin);
         plugin.parseConfig(minimalConfiguration);
     }
 
@@ -43,9 +39,7 @@ public class InitializerTest {
     public void unfoldCallsSpecGen() throws Exception {
         InputStream pluginConfiguration = minimalConfiguration;
         var topologicalPlugin = new TopologicalPlugin();
-        var prologGenerator = new PrologGenerator();
-        var initializationPrologQuery = new InitializationPrologQuery(prologGenerator);
-        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin, initializationPrologQuery);
+        IMaestroExpansionPlugin plugin = new Initializer(topologicalPlugin);
         AFunctionDeclaration funcDecl = plugin.getDeclaredImportUnit().getModule().getFunctions().iterator().next();
         IPluginConfiguration parsedPluginConfiguration = plugin.parseConfig(pluginConfiguration);
 
