@@ -166,6 +166,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
             masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
         } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
             ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
+            System.out.println("Generating algorithm from multi-model");
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         } else {
             return -1;
