@@ -156,6 +156,9 @@ class MasterModelMapper {
                 maxPossibleStepSize
             )
 
+            print("Hello from multiModelToMasterModel!")
+            print("Scenario model: ${scenarioModel.toConf(0)}")
+
             // Generate the master model from the scenario
             return GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)
         }

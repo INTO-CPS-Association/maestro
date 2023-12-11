@@ -171,6 +171,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
             ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         } else {
+            System.out.println("Unable to generate algorithm from file: " + filePath.toString() + " - file extension must be .conf or .json");
             return -1;
         }
 

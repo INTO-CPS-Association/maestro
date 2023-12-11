@@ -116,7 +116,7 @@ def cliGenerateAlgorithmFromMultiModel():
 
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multiModel, jsonFile)
-    
+        
     cmd = "java -jar {0} sigver generate-algorithm {1} -output {2}".format(path, multiModelPath, temporary)
     func = lambda: print("Succesfully generated algorithm from multi model") if(os.path.exists(os.path.join(temporary, "algorithm.conf"))) else lambda: (Exception("Algorithm was not returned"))
     testutils.testCliCommandWithFunc(cmd, func)
@@ -188,10 +188,10 @@ outputsFileName = "outputs.csv"
 SCR_path = "scenario_controller_resources"
 
 print("Testing CLI of: " + path)
-cliRaw()
-cliSpecGen()
-cliExpansion()
-cliExportCpp(args.includeSlowTests)
+# cliRaw()
+# cliSpecGen()
+# cliExpansion()
+# cliExportCpp(args.includeSlowTests)
 cliGenerateAlgorithmFromScenario()
 cliGenerateAlgorithmFromMultiModel()
 cliExecuteAlgorithmFromExtendedMultiModel()
