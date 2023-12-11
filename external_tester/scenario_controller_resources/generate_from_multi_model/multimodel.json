@@ -12,7 +12,6 @@
     "sigver": {
         "reactivity": {
             "{Controller}.cont.level": "Delayed"
-        },
-        "verification": false
+        }
     }
 }
