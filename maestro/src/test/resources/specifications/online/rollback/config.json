@@ -9,7 +9,6 @@
         "{crtl}.crtlInstance.maxlevel": 2,
         "{crtl}.crtlInstance.minlevel": 1
       },
-      "verifyAgainstProlog": true,
       "stabilisation": false,
       "fixedPointIteration": 5,
       "absoluteTolerance": 0.1,

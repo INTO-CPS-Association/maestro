@@ -3,7 +3,6 @@
 		"{ctrl}.ctrlInstance.maxLevel":2,
 		"{ctrl}.ctrlInstance.minLevel":1
 	},
-	"verifyAgainstProlog": false,
 	"stabilisation": false,
 	"fixedPointIteration": 5,
 	"absoluteTolerance": 0.3,

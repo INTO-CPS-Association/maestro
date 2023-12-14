@@ -5,7 +5,6 @@
     "{pump}.pump.tLength":0.05,
     "{pump}.pump.h":0.5
   },
-  "verifyAgainstProlog": false,
   "stabilisation": false,
   "fixedPointIteration": 5,
   "absoluteTolerance": 0.0,
