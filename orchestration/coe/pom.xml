@@ -9,7 +9,7 @@
     </parent>
 
     <properties>
-        <jackson-2-version>2.9.10.3</jackson-2-version>
+        <jackson-2-version>2.12.7.1</jackson-2-version>
     </properties>
 
     <groupId>org.into-cps.orchestration</groupId>
@@ -30,6 +30,8 @@
             <url>http://scala-tools.org/repo-releases</url>
         </pluginRepository>
     </pluginRepositories>
+
+
 
     <dependencies>
 
@@ -87,6 +89,16 @@
             <groupId>org.into-cps.fmi</groupId>
             <artifactId>fmi2</artifactId>
         </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.into-cps.fmi</groupId>
             <artifactId>jnifmuapi</artifactId>
@@ -131,6 +143,7 @@
             <scope>test</scope>
         </dependency>
 
+
         <!-- https://mvnrepository.com/artifact/log4j/apache-log4j-extras -->
         <dependency>
             <groupId>log4j</groupId>
@@ -138,6 +151,11 @@
             <version>1.2.17</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.22.0</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
         <dependency>
