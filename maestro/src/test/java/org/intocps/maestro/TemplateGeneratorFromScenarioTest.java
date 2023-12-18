@@ -89,7 +89,7 @@ import static org.intocps.maestro.JacobianStepBuilderTest.csvCompare;
 //                 jsonMapper.readValue(jsonMapper.treeAsTokens(executableMM.get("executionParameters").get("stepSize")), new TypeReference<>() {
 //                 });
 
-//         MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes()));
+//         MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(executableMM.get("masterModel").textValue().getBytes()));
 
 //         // Setup scenarioConfiguration
 //         Fmi2SimulationEnvironment simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, errorReporter);
