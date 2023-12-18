@@ -60,7 +60,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
         }
 
         File tempDir = Files.createTempDirectory("tmpDir").toFile();
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
         File uppaalFile = Path.of(tempDir.getPath(), "uppaal.xml").toFile();
         File traceFile = Path.of(tempDir.getPath(), "trace.log").toFile();
         ModelEncoding modelEncoding = new ModelEncoding(masterModel);
@@ -115,7 +115,7 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
         if (output == null) {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
@@ -166,7 +166,7 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
         if (FilenameUtils.getExtension(filePath.toString()).equals("conf")) {
             System.out.println("Generating algorithm from scenario");
             String scenario = Files.readString(filePath);
-            masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
+            masterModel = MasterModelMapper.Companion.scenarioToFMI2MasterModel(scenario);
         } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
             System.out.println("Generating algorithm from multi-model");
             ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
@@ -318,7 +318,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         if (masterModelAsString.equals("")) {
             throw new RuntimeException("Cannot create configuration from empty master model");
         }
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("parameters")), new TypeReference<>() {
         });
