@@ -22,7 +22,9 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
+import org.intocps.verification.scenarioverifier.core.masterModel.*;
 import org.intocps.verification.scenarioverifier.core.*;
+import org.intocps.verification.scenarioverifier.core.FMI3.AdaptiveModel;
 import org.intocps.verification.scenarioverifier.synthesizer.LoopStrategy;
 import org.intocps.verification.scenarioverifier.synthesizer.SynthesizerSimple;
 
@@ -106,8 +108,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // GENERATE MaBL
         try {
-            MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
-            ScenarioModel scenarioModel = masterModel.scenario();
+            MasterModelFMI2 masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
+            FMI2ScenarioModel scenarioModel = masterModel.scenario();
             adaptiveModel = scenarioModel.config();
 
             MablApiBuilder builder = (MablApiBuilder) providedBuilder;
@@ -134,7 +136,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             });
 
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
-            if (masterModel.initialization().length() == 0) {
+            if (masterModel.initialization().isEmpty()) {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(scenarioModel, LoopStrategy.maximum());
                 masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }

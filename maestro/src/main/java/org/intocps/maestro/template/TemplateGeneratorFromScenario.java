@@ -1,7 +1,7 @@
 package org.intocps.maestro.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;

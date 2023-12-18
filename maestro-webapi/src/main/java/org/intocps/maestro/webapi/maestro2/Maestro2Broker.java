@@ -2,7 +2,7 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
-import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
 import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;

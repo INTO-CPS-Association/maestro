@@ -1,6 +1,6 @@
 package org.intocps.maestro.template;
 
-import org.intocps.verification.scenarioverifier.core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
