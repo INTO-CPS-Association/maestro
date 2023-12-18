@@ -114,8 +114,7 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-
-        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
         if (output == null) {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
