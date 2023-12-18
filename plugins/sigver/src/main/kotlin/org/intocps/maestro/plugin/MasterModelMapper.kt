@@ -2,7 +2,6 @@ package org.intocps.maestro.plugin
 
 import org.intocps.maestro.core.dto.ExtendedMultiModel
 import org.intocps.maestro.fmi.Fmi2ModelDescription
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration
 import scala.jdk.javaapi.CollectionConverters
@@ -11,7 +10,7 @@ import org.intocps.verification.scenarioverifier.core.masterModel.*
 import org.intocps.verification.scenarioverifier.core.*
 import org.intocps.verification.scenarioverifier.core.FMI3.AdaptiveModel
 import org.intocps.verification.scenarioverifier.core.FMI3.ConfigurationModel
-import org.intocps.verification.scenarioverifier.core.FMI3.ScenarioLoaderFMI3
+import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI3
 import scala.collection.immutable.Map
 
 class MasterModelMapper {
@@ -36,7 +35,7 @@ class MasterModelMapper {
 
         fun scenarioToFMI2MasterModel(scenario: String): MasterModel {
             // Load master model without algorithm
-            val masterModel = ScenarioLoader.load(scenario.byteInputStream())
+            val masterModel = ScenarioLoaderFMI2.load(scenario.byteInputStream())
             return GenerationAPI.synthesizeAlgorithm(masterModel.name(), masterModel.scenario())
         }
 
@@ -73,7 +72,7 @@ class MasterModelMapper {
         }
 
 
-        fun multiModelToMasterModel(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModelFMI2 {
+        fun multiModelToMasterModel(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModel? {
             // Map multi model connections type to scenario connections type
             val connectionModelList = extendedMultiModel.connections.entries.map { (key, value) ->
                 value.map { targetPortName ->
@@ -168,10 +167,11 @@ class MasterModelMapper {
             )
 
             // Generate the master model from the scenario
-            return GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)
+            val masterModel = GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)
+            return masterModel
         }
 
-        fun multiModelToMasterModelFMI3(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModelFMI3 {
+        fun multiModelToMasterModelFMI3(extendedMultiModel: ExtendedMultiModel, maxPossibleStepSize: Int): MasterModelFMI3? {
             // Map multi model connections type to scenario connections type
             val connectionModelList = extendedMultiModel.connections.entries.map { (key, value) ->
                 value.map { targetPortName ->
@@ -292,7 +292,10 @@ class MasterModelMapper {
             )
 
             // Generate the master model from the scenario
-            return GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)
+            return when(GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel)){
+                is MasterModelFMI3 -> GenerationAPI.synthesizeAlgorithm("generatedFromMultiModel", scenarioModel) as MasterModelFMI3
+                else -> null
+            }
         }
     }
 }

@@ -108,7 +108,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // GENERATE MaBL
         try {
-            MasterModelFMI2 masterModel = ScenarioLoader.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
+            MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
             FMI2ScenarioModel scenarioModel = masterModel.scenario();
             adaptiveModel = scenarioModel.config();
 
