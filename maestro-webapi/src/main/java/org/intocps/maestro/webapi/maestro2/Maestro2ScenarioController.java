@@ -1,6 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
-import org.intocps.verification.scenarioverifier.core.MasterModel;
-import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI2;
+import org.intocps.verification.scenarioverifier.core.masterModel.*;
 import org.intocps.verification.scenarioverifier.core.ModelEncoding;
 import org.intocps.verification.scenarioverifier.core.ScenarioGenerator;
 import org.intocps.verification.scenarioverifier.api.TraceResult;
@@ -42,7 +42,7 @@ public class Maestro2ScenarioController {
     @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
-        MasterModel masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
+        MasterModel masterModel = MasterModelMapper.Companion.scenarioToFMI2MasterModel(scenario);
         return masterModel.toConf(0);
     }
 
@@ -65,7 +65,7 @@ public class Maestro2ScenarioController {
         }
 
         // Load the master model, verify the algorithm and return success and any error message.
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         ModelEncoding encoding = new ModelEncoding(masterModel);
         String encodedModel = ScenarioGenerator.generateUppaalEncoding(encoding);
@@ -90,7 +90,7 @@ public class Maestro2ScenarioController {
 
     @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE, produces = "video/mp4")
     public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) throws Exception {
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
         TraceResult traceResult = VerificationAPI.generateTraceVideo(masterModel);
 
         if (!traceResult.isGenerated()) {
@@ -112,7 +112,7 @@ public class Maestro2ScenarioController {
         if (executableModel.getMasterModel().equals("")) {
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(executableModel.getMultiModel(), 3);
         } else {
-            masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+            masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
         }
 
         // Only verify the algorithm if the verification flag is set.
