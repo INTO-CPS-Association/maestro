@@ -116,3 +116,11 @@ __pycache__/
 
 *.ci-friendly-pom.xml
 .venv
+.metals/metals.mv.db
+.bloop/ast-test.json
+.bloop/ast.json
+.bloop/bloop.settings.json
+.bloop/core-test.json
+.bloop/core.json
+.bloop/root-test.json
+.bloop/root.json

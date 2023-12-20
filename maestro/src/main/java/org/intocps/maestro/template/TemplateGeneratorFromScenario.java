@@ -1,7 +1,7 @@
 package org.intocps.maestro.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.MasterModel;
+import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -20,7 +20,6 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.plugin.Sigver;
 import org.intocps.maestro.plugin.SigverConfig;
 import scala.jdk.javaapi.CollectionConverters;
-import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import java.net.URI;
 import java.util.*;
@@ -132,12 +131,13 @@ public class TemplateGeneratorFromScenario {
 
         // Setup and add scenario verifier config
         SigverConfig expansionConfig = new SigverConfig();
-        expansionConfig.masterModel = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+        expansionConfig.masterModel = masterModel.toConf(0);
         expansionConfig.parameters = configuration.getParameters();
         expansionConfig.relTol = configuration.getExecutionParameters().getConvergenceRelativeTolerance();
         expansionConfig.absTol = configuration.getExecutionParameters().getConvergenceAbsoluteTolerance();
         expansionConfig.convergenceAttempts = configuration.getExecutionParameters().getConvergenceAttempts();
 
+        // TODO Kenneth: Take a look at this
         AConfigStm configStm = new AConfigStm(StringEscapeUtils.escapeJava((new ObjectMapper()).writeValueAsString(expansionConfig)));
         dynamicScope.add(configStm);
 

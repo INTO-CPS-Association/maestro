@@ -1,18 +1,17 @@
 package org.intocps.maestro.webapi.maestro2;
-
-import api.TraceResult;
-import api.VerificationAPI;
-import cli.VerifyTA;
-import core.MasterModel;
-import core.ModelEncoding;
-import core.ScenarioGenerator;
-import core.ScenarioLoader;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI2;
+import org.intocps.verification.scenarioverifier.core.masterModel.*;
+import org.intocps.verification.scenarioverifier.core.ModelEncoding;
+import org.intocps.verification.scenarioverifier.core.ScenarioGenerator;
+import org.intocps.verification.scenarioverifier.api.TraceResult;
+import org.intocps.verification.scenarioverifier.api.VerificationAPI;
+import org.intocps.verification.scenarioverifier.cli.VerifyTA;
 import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.webapi.dto.ExecutableMasterAndMultiModelTDO;
-import org.intocps.maestro.webapi.dto.VerificationDTO;
 import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
+import org.intocps.maestro.webapi.maestro2.dto.VerificationResult;
 import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -21,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
-import synthesizer.ConfParser.ScenarioConfGenerator;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,8 +42,8 @@ public class Maestro2ScenarioController {
     @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
-        MasterModel masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
-        return ScenarioConfGenerator.generate(masterModel, masterModel.name());
+        MasterModel masterModel = MasterModelMapper.Companion.scenarioToFMI2MasterModel(scenario);
+        return masterModel.toConf(0);
     }
 
     @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -53,47 +51,47 @@ public class Maestro2ScenarioController {
     public String generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
         // MaxPossibleStepSize is related to verification in Uppaal.
         MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
-        return ScenarioConfGenerator.generate(masterModel, masterModel.name());
+        return masterModel.toConf(0);
     }
 
     @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public VerificationDTO verifyAlgorithm(@RequestBody String masterModelAsString) throws IOException {
+    public VerificationResult verifyAlgorithm(@RequestBody String masterModelAsString) throws IOException {
         // Check that UPPAAL is available
         try {
-            VerificationAPI.checkUppaalVersion();
+            VerifyTA.isInstalled();
         } catch (Exception e) {
-            return new VerificationDTO(false, "", "UPPAAL v.4.1 is not in PATH - please install it and try again!");
+            return new VerificationResult(false, "", "UPPAAL v.4.1 is not in PATH - please install it and try again!");
         }
 
         // Load the master model, verify the algorithm and return success and any error message.
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         ModelEncoding encoding = new ModelEncoding(masterModel);
-        String encodedModel = ScenarioGenerator.generate(encoding);
+        String encodedModel = ScenarioGenerator.generateUppaalEncoding(encoding);
         File tempFile = Files.createTempFile(null, ".xml").toFile();
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
             writer.write(encodedModel);
         }
-        int verificationCode = VerifyTA.verify(tempFile);
+        int verificationCode = VerifyTA.verify(tempFile, false);
         tempFile.delete();
         switch (verificationCode) {
             case 0:
-                return new VerificationDTO(true, encodedModel, "");
+                return new VerificationResult(true, encodedModel, "");
             case 1:
-                return new VerificationDTO(false, encodedModel, "Model is not valid. Generate the trace and use it to correct the algorithm.");
+                return new VerificationResult(false, encodedModel, "Model is not valid. Generate the trace and use it to correct the algorithm.");
             case 2:
-                return new VerificationDTO(false, encodedModel,
+                return new VerificationResult(false, encodedModel,
                         "The verification in Uppaal failed most likely due to a syntax error in the " + "UPPAAL model.");
             default:
-                return new VerificationDTO(false, encodedModel, "");
+                return new VerificationResult(false, encodedModel, "");
         }
     }
 
     @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE, produces = "video/mp4")
     public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) throws Exception {
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
-        TraceResult traceResult = VerificationAPI.generateTraceFromMasterModel(masterModel);
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        TraceResult traceResult = VerificationAPI.generateTraceVideo(masterModel);
 
         if (!traceResult.isGenerated()) {
             throw new Exception("Unable to generate trace results - the algorithm is probably successfully verified");
@@ -114,7 +112,7 @@ public class Maestro2ScenarioController {
         if (executableModel.getMasterModel().equals("")) {
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(executableModel.getMultiModel(), 3);
         } else {
-            masterModel = ScenarioLoader.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
+            masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(executableModel.getMasterModel().getBytes()));
         }
 
         // Only verify the algorithm if the verification flag is set.
@@ -130,8 +128,7 @@ public class Maestro2ScenarioController {
             Maestro2Broker broker = new Maestro2Broker(zipDir, reporter, () -> false);
 
             SigverSimulateRequestBody requestBody = new SigverSimulateRequestBody(executableModel.getExecutionParameters().getStartTime(),
-                    executableModel.getExecutionParameters().getEndTime(), Map.of(), false, 0d,
-                    ScenarioConfGenerator.generate(masterModel, masterModel.name()));
+                    executableModel.getExecutionParameters().getEndTime(), Map.of(), false, 0d, masterModel.toConf(0));
 
             broker.buildAndRunMasterModel(null, null, executableModel.getMultiModel(), requestBody, new File(zipDir, "outputs.csv"));
 

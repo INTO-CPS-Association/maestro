@@ -21,11 +21,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.ugos</groupId>
-            <artifactId>JIProlog</artifactId>
-            <version>4.1.6.1</version>
-        </dependency>
-        <dependency>
             <groupId>guru.nidi</groupId>
             <artifactId>graphviz-java</artifactId>
             <version>0.17.0</version>
@@ -41,4 +36,6 @@
             <artifactId>junit-jupiter</artifactId>
         </dependency>
     </dependencies>
+
+
 </project>

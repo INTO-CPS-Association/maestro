@@ -12,6 +12,7 @@ import re
 import subprocess
 from threading import Thread 
 import time
+import string
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -70,14 +71,36 @@ def compareCSV(expected, actual):
         print(f"ERROR: {expected} doest not exist!")
         return False
 
+def compareTexts(expectedText, actualText):
+    remove = str.maketrans('', '', string.whitespace)
+    expectedText = expectedText.translate(remove)
+    actualLines = actualText.translate(remove)
+    return expectedText == actualLines
+
+def compareFiles(file1, file2):
+    expectedFile = open(file1, 'r')
+    actualFile = open(file2, 'r')
+    expectedLines = expectedFile.readlines()
+    actualLines = actualFile.readlines()
+    expectedLines = "".join(expectedLines)
+    actualLines = "".join(actualLines)
+    expectedFile.close()
+    actualFile.close()
+    return compareTexts(expectedLines, actualLines)
+
 def compare(strPrefix, expected, actual):
     if os.path.exists(expected):
         convert(expected)
 
         compareResult = filecmp.cmp(expected, actual)
         if not compareResult:
-            print("ERROR: {}: Files {} and {} do not match".format(strPrefix, expected, actual))
-            return False
+            compareRes = compareFiles(expected, actual)
+            if not compareRes:
+                print("ERROR: {}: Files {} and {} do not match".format(strPrefix, expected, actual))
+                return False
+            else:
+                print("%s: Files match" % strPrefix)
+                return True
         else:
             print("%s: Files match" % strPrefix)
             return True

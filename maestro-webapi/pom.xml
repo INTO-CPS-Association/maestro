@@ -23,8 +23,9 @@
             <version>3.11</version>
         </dependency>
         <dependency>
-            <groupId>INTO-CPS-Association</groupId>
-            <artifactId>scenario_verifier_2.13</artifactId>
+            <groupId>org.into-cps.verification</groupId>
+            <artifactId>scenario_verifier</artifactId>
+            <version>0.2.22-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

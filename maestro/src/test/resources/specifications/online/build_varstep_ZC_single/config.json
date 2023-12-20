@@ -10,8 +10,7 @@
         "{pump}.pump.tBegin": 4,
         "{pump}.pump.tLength": 2,
         "{pump}.pump.h": -5
-      },
-      "verifyAgainstProlog": false
+      }
     }
   }
 ]

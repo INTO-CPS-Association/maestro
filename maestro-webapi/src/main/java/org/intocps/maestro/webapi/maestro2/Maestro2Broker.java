@@ -2,8 +2,9 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
-import core.MasterModel;
-import core.ScenarioLoader;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI2;
+import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
+import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -74,7 +75,7 @@ public class Maestro2Broker {
 
     public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel,
             SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
                 new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
                         multiModel.getFmus());

@@ -37,21 +37,21 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>maestro2-third-party</id>
-            <name>maestro2-third-party</name>
-            <url>https://overture.au.dk/artifactory/maestro2-third-party</url>
-        </repository>
-        <repository>
-            <id>overture.au.dk</id>
-            <name>overture.au.dk-releases</name>
-            <url>https://overture.au.dk/artifactory/into-cps</url>
-        </repository>
-        <repository>
-            <id>vdmj</id>
-            <name>overture.au.dk-vdmj</name>
-            <url>https://overture.au.dk/artifactory/vdmj</url>
-        </repository>
+<!--        <repository>-->
+<!--            <id>maestro2-third-party</id>-->
+<!--            <name>maestro2-third-party</name>-->
+<!--            <url>https://overture.au.dk/artifactory/maestro2-third-party</url>-->
+<!--        </repository>-->
+<!--        <repository>-->
+<!--            <id>overture.au.dk</id>-->
+<!--            <name>overture.au.dk-releases</name>-->
+<!--            <url>https://overture.au.dk/artifactory/into-cps</url>-->
+<!--        </repository>-->
+<!--        <repository>-->
+<!--            <id>vdmj</id>-->
+<!--            <name>overture.au.dk-vdmj</name>-->
+<!--            <url>https://overture.au.dk/artifactory/vdmj</url>-->
+<!--        </repository>-->
     </repositories>
 
     <modules>
@@ -279,8 +279,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.1.2</version>
-
+                    <version>3.2.3</version>
                     <configuration>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
@@ -354,7 +353,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>3.2.3</version>
             </plugin>
             <!--            <plugin>-->
             <!--                <groupId>org.jetbrains.dokka</groupId>-->
@@ -367,9 +366,9 @@
         <dependencies>
 
             <dependency>
-                <groupId>INTO-CPS-Association</groupId>
-                <artifactId>scenario_verifier_2.13</artifactId>
-                <version>0.2.6</version>
+                <groupId>org.into-cps.verification</groupId>
+                <artifactId>scenario_verifier</artifactId>
+                <version>0.2.21-SNAPSHOT</version>
             </dependency>
 
             <dependency>
@@ -746,30 +745,30 @@
             </activation>
             <repositories>
 
-                <repository>
-                    <id>maestro2-third-party</id>
-                    <name>maestro2-third-party</name>
-                    <url>https://overture.au.dk/artifactory/maestro2-third-party</url>
-                    <snapshots>
-                        <updatePolicy>interval:30</updatePolicy>
-                    </snapshots>
-                </repository>
-                <repository>
-                    <id>overture.au.dk</id>
-                    <name>overture.au.dk-releases</name>
-                    <url>https://overture.au.dk/artifactory/into-cps</url>
-                    <snapshots>
-                        <updatePolicy>interval:30</updatePolicy>
-                    </snapshots>
-                </repository>
-                <repository>
-                    <id>vdmj</id>
-                    <name>overture.au.dk-vdmj</name>
-                    <url>https://overture.au.dk/artifactory/vdmj</url>
-                    <snapshots>
-                        <updatePolicy>interval:30</updatePolicy>
-                    </snapshots>
-                </repository>
+<!--                <repository>-->
+<!--                    <id>maestro2-third-party</id>-->
+<!--                    <name>maestro2-third-party</name>-->
+<!--                    <url>https://overture.au.dk/artifactory/maestro2-third-party</url>-->
+<!--                    <snapshots>-->
+<!--                        <updatePolicy>interval:30</updatePolicy>-->
+<!--                    </snapshots>-->
+<!--                </repository>-->
+<!--                <repository>-->
+<!--                    <id>overture.au.dk</id>-->
+<!--                    <name>overture.au.dk-releases</name>-->
+<!--                    <url>https://overture.au.dk/artifactory/into-cps</url>-->
+<!--                    <snapshots>-->
+<!--                        <updatePolicy>interval:30</updatePolicy>-->
+<!--                    </snapshots>-->
+<!--                </repository>-->
+<!--                <repository>-->
+<!--                    <id>vdmj</id>-->
+<!--                    <name>overture.au.dk-vdmj</name>-->
+<!--                    <url>https://overture.au.dk/artifactory/vdmj</url>-->
+<!--                    <snapshots>-->
+<!--                        <updatePolicy>interval:30</updatePolicy>-->
+<!--                    </snapshots>-->
+<!--                </repository>-->
             </repositories>
         </profile>
     </profiles>

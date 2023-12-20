@@ -1,10 +1,11 @@
 package org.intocps.maestro.cli;
 
-import cli.VerifyTA;
+import org.intocps.verification.scenarioverifier.cli.VerifyTA;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.*;
+import org.intocps.verification.scenarioverifier.core.*;
+import org.intocps.verification.scenarioverifier.core.masterModel.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
@@ -13,12 +14,11 @@ import org.intocps.maestro.core.dto.ExtendedMultiModel;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
-import org.intocps.maestro.plugin.MasterModelMapper;
+import org.intocps.maestro.plugin.*;
 import org.intocps.maestro.template.ScenarioConfiguration;
 import picocli.CommandLine;
 import scala.jdk.javaapi.CollectionConverters;
-import synthesizer.ConfParser.ScenarioConfGenerator;
-import trace_analyzer.TraceAnalyzer;
+import org.intocps.verification.scenarioverifier.traceanalyzer.TraceAnalyzer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -54,17 +54,18 @@ class VisualizeTracesCmd implements Callable<Integer> {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
 
-        if (!VerifyTA.checkEnvironment()) {
+        if (!VerifyTA.isInstalled()) {
             System.out.println("Verification environment is not setup correctly");
             return -1;
         }
 
         File tempDir = Files.createTempDirectory("tmpDir").toFile();
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
         File uppaalFile = Path.of(tempDir.getPath(), "uppaal.xml").toFile();
         File traceFile = Path.of(tempDir.getPath(), "trace.log").toFile();
+        ModelEncoding modelEncoding = new ModelEncoding(masterModel);
         try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
-            fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
+            fileWriter.write(ScenarioGenerator.generateUppaalEncoding(modelEncoding));
         } catch (Exception e) {
             System.out.println("Unable to write encoded master model to file: " + e);
             return -1;
@@ -76,7 +77,6 @@ class VisualizeTracesCmd implements Callable<Integer> {
         // from which a visualization can be made.
         if (resultCode == 1) {
             Path videoTraceFolder = output.toPath();
-            ModelEncoding modelEncoding = new ModelEncoding(masterModel);
             try (BufferedReader bufferedReader = new BufferedReader(new FileReader(traceFile))) {
                 TraceAnalyzer.AnalyseScenario(masterModel.name(), CollectionConverters.asScala(bufferedReader.lines().iterator()), modelEncoding,
                         videoTraceFolder.toString());
@@ -114,19 +114,18 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
+        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
         if (output == null) {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
         File uppaalFile = output.toPath().resolve("uppaal.xml").toFile();
-        if (VerifyTA.checkEnvironment()) {
+        if (VerifyTA.isInstalled()) {
             try (FileWriter fileWriter = new FileWriter(uppaalFile)) {
-                fileWriter.write(ScenarioGenerator.generate(new ModelEncoding(masterModel)));
+                fileWriter.write(ScenarioGenerator.generateUppaalEncoding(new ModelEncoding(masterModel)));
             } catch (Exception e) {
                 System.out.println("Unable to write encoded master model to file: " + e);
             }
-            resultCode = VerifyTA.verify(uppaalFile);
+            resultCode = VerifyTA.verify(uppaalFile, false);
         } else {
             System.out.println("Verification environment is not setup correctly");
             return -1;
@@ -160,19 +159,23 @@ class GenerateAlgorithmCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        System.out.println("Generating algorithm from scenario or multi-model");
         Path filePath = file.toPath();
         MasterModel masterModel;
         if (FilenameUtils.getExtension(filePath.toString()).equals("conf")) {
+            System.out.println("Generating algorithm from scenario");
             String scenario = Files.readString(filePath);
-            masterModel = MasterModelMapper.Companion.scenarioToMasterModel(scenario);
+            masterModel = MasterModelMapper.Companion.scenarioToFMI2MasterModel(scenario);
         } else if (FilenameUtils.getExtension(filePath.toString()).equals("json")) {
+            System.out.println("Generating algorithm from multi-model");
             ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(file, ExtendedMultiModel.class);
             masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
         } else {
+            System.out.println("Unable to generate algorithm from file: " + filePath.toString() + " - file extension must be .conf or .json");
             return -1;
         }
 
-        String algorithm = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+        String algorithm = masterModel.toConf(0);
         Path algorithmPath = output.toPath().resolve("masterModel.conf");
         Files.write(algorithmPath, algorithm.getBytes(StandardCharsets.UTF_8));
 
@@ -239,7 +242,6 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
             }
         }
 
-
         String masterModelAsString;
         Path algorithmPath;
         if (algorithmFile == null) {
@@ -249,7 +251,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
                 ExtendedMultiModel multiModel = (new ObjectMapper()).readValue(extendedMultiModelFile, ExtendedMultiModel.class);
                 MasterModel masterModel = MasterModelMapper.Companion.multiModelToMasterModel(multiModel, 3);
 
-                masterModelAsString = ScenarioConfGenerator.generate(masterModel, masterModel.name());
+                masterModelAsString = masterModel.toConf(0);
 
                 Files.write(algorithmPath, masterModelAsString.getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
@@ -315,7 +317,7 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         if (masterModelAsString.equals("")) {
             throw new RuntimeException("Cannot create configuration from empty master model");
         }
-        MasterModel masterModel = ScenarioLoader.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         Map<String, Object> parameters = jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("parameters")), new TypeReference<>() {
         });

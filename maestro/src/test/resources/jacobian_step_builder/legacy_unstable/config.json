@@ -13,7 +13,6 @@
     "{m1}.mi1.d1": 1,
     "{m1}.mi1.c1": 1
   },
-  "verifyAgainstProlog": false,
   "stabilisation": false,
   "fixedPointIteration": 5,
   "absoluteTolerance": 0.0,

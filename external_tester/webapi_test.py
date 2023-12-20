@@ -174,6 +174,8 @@ def testScenarioController(basicUrl):
         f.write(response.text)
 
     if(not testutils.compare("Generate from scenario", expectedResult, actualResult)):
+        print("ERROR: actual and expected algorithm do not match")
+        print("Actual:" +  response.text)
         raise Exception("Expected algorithm does not match the actual algorithm.")
 
     #Test generate algorithm from multi model
@@ -196,7 +198,7 @@ def testScenarioController(basicUrl):
 
     expectedMasterModel = bytes(expectedMasterModel, "utf-8").decode("unicode_escape")
 
-    if(not actualMasterModel == expectedMasterModel):
+    if(not testutils.compareTexts(expectedMasterModel, actualMasterModel)):
         print("ERROR: actual and expected master model do not match")
         print("Actual:")
         print(json.dumps(actualMasterModel, indent=2))

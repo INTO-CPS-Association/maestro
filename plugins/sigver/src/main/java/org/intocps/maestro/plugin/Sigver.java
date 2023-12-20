@@ -1,7 +1,6 @@
 package org.intocps.maestro.plugin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import core.*;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
@@ -23,8 +22,11 @@ import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
-import synthesizer.LoopStrategy;
-import synthesizer.SynthesizerSimple;
+import org.intocps.verification.scenarioverifier.core.masterModel.*;
+import org.intocps.verification.scenarioverifier.core.*;
+import org.intocps.verification.scenarioverifier.core.FMI3.AdaptiveModel;
+import org.intocps.verification.scenarioverifier.synthesizer.LoopStrategy;
+import org.intocps.verification.scenarioverifier.synthesizer.SynthesizerSimple;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
@@ -111,10 +113,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // GENERATE MaBL
         try {
-
-            MasterModel masterModel = ScenarioLoader.load(
-                    new ByteArrayInputStream(configuration.masterModel.getBytes()));
-            ScenarioModel scenarioModel = masterModel.scenario();
+            MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(configuration.masterModel.getBytes()));
+            FMI2ScenarioModel scenarioModel = masterModel.scenario();
             adaptiveModel = scenarioModel.config();
 
             MablApiBuilder builder = (MablApiBuilder) providedBuilder;
@@ -144,7 +144,7 @@ public class Sigver extends BasicMaestroExpansionPlugin {
             });
 
             // If the initialization section is missing use the SynthesizerSimple to generate it from the scenario model.
-            if (masterModel.initialization().length() == 0) {
+            if (masterModel.initialization().isEmpty()) {
                 SynthesizerSimple synthesizer = new SynthesizerSimple(scenarioModel, LoopStrategy.maximum());
                 masterModel.initialization().concat(synthesizer.synthesizeInitialization());
             }
@@ -338,8 +338,8 @@ public class Sigver extends BasicMaestroExpansionPlugin {
 
         // Loop over step instructions and map them to MaBL
         coSimStepInstructions.forEach(instruction -> {
-            if (instruction instanceof core.Set) {
-                mapSetInstruction(((core.Set) instruction).port(), sharedPortVars, fmuInstances, connections);
+            if (instruction instanceof org.intocps.verification.scenarioverifier.core.Set) {
+                mapSetInstruction(((org.intocps.verification.scenarioverifier.core.Set) instruction).port(), sharedPortVars, fmuInstances, connections);
             } else if (instruction instanceof Get) {
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsWithGets = mapGetInstruction(((Get) instruction).port(),
                         fmuInstances);
