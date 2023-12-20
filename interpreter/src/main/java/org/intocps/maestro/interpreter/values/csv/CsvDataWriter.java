@@ -62,9 +62,9 @@ public class CsvDataWriter implements IDataListener {
 
             Object value = null;
             if (d.isNumericDecimal()) {
-                if (floatFormatter == null)
+                if (floatFormatter == null) {
                     value = ((NumericValue) d).doubleValue();
-                else {
+                } else {
                     value = String.format(Locale.US, floatFormatter, ((NumericValue) d).doubleValue());
                 }
             } else if (d.isNumeric()) {
