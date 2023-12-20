@@ -70,19 +70,23 @@ def compareCSV(expected, actual):
     else:
         print(f"ERROR: {expected} doest not exist!")
         return False
-    
-def comparText(file1, file2):
+
+def compareTexts(expectedText, actualText):
+    remove = str.maketrans('', '', string.whitespace)
+    expectedText = expectedText.translate(remove)
+    actualLines = actualText.translate(remove)
+    return expectedText == actualLines
+
+def compareFiles(file1, file2):
     expectedFile = open(file1, 'r')
     actualFile = open(file2, 'r')
-    remove = str.maketrans('', '', string.whitespace)    
     expectedLines = expectedFile.readlines()
     actualLines = actualFile.readlines()
-    expectedLines = "".join(expectedLines).translate(remove)
-    actualLines = "".join(actualLines).translate(remove)
+    expectedLines = "".join(expectedLines)
+    actualLines = "".join(actualLines)
     expectedFile.close()
     actualFile.close()
-
-    return expectedLines == actualLines
+    return compareTexts(expectedLines, actualLines)
 
 def compare(strPrefix, expected, actual):
     if os.path.exists(expected):
@@ -90,7 +94,7 @@ def compare(strPrefix, expected, actual):
 
         compareResult = filecmp.cmp(expected, actual)
         if not compareResult:
-            compareRes = comparText(expected, actual)
+            compareRes = compareFiles(expected, actual)
             if not compareRes:
                 print("ERROR: {}: Files {} and {} do not match".format(strPrefix, expected, actual))
                 return False
