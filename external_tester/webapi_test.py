@@ -198,7 +198,7 @@ def testScenarioController(basicUrl):
 
     expectedMasterModel = bytes(expectedMasterModel, "utf-8").decode("unicode_escape")
 
-    if(not actualMasterModel == expectedMasterModel):
+    if(not testutils.compare("Generate from scenario", expectedMasterModel, actualMasterModel)):
         print("ERROR: actual and expected master model do not match")
         print("Actual:")
         print(json.dumps(actualMasterModel, indent=2))
