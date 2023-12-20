@@ -207,7 +207,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 long stopInstantiateTime = System.nanoTime();
                 System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
 
-                return getFmuInstanceValue(fmuLogOutputStream, instance, resolver);
+                return getFmuInstanceValue(fmuLogOutputStream, instance, name, resolver);
 
 
             } catch (IOException | NoSuchMethodException e) {
@@ -317,7 +317,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
 
     private static Value getFmuInstanceValue(BufferedOutputStream fmuLogOutputStream, IFmi3Instance instance,
-                                             Function<String, AModuleDeclaration> resolver) throws NoSuchMethodException {
+                                             String name, Function<String, AModuleDeclaration> resolver) throws NoSuchMethodException {
 
         //populate component functions
         var module = resolver.apply("FMI3Instance");
@@ -872,7 +872,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             autobindWarnings.forEach(logger::warn);
         }
 
-        return new Fmu3InstanceValue(functions, instance, fmuLogOutputStream);
+        return new Fmu3InstanceValue(functions, instance, name, fmuLogOutputStream);
     }
 
     private static ExternalReflectCallHelper handleResultReturns(ExternalReflectCallHelper builder) {
