@@ -32,7 +32,6 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-
 @SuppressWarnings("rawtypes")
 public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVariable<PStm>> implements FmiBuilder.Fmi3InstanceVariable<PStm, Fmi3ModelDescription.Fmi3ScalarVariable> {
     final static Logger logger = LoggerFactory.getLogger(InstanceVariableFmi3Api.class);
@@ -50,6 +49,9 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     private final Map<IMablScope, Map<PType, ArrayVariableFmi2Api<Object>>> tentativeBuffer = new HashMap<>();
     private final Map<IMablScope, Map<PortFmi3Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
     private final String environmentName;
+
+
+    private final Buffers<Fmi3TypeEnum> buffers;
     Predicate<FmiBuilder.Port> isLinked = p -> ((PortFmi3Api) p).getSourcePort() != null;
     ModelDescriptionContext3 modelDescriptionContext;
     private ArrayVariableFmi2Api<Object> derSharedBuffer;
@@ -83,6 +85,11 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                 .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
 
         this.environmentName = environmentName;
+
+        Map<Fmi3TypeEnum, Integer> svTypeMaxCount = modelDescriptionContext.valRefToSv.values()
+                .stream().collect(Collectors.groupingBy(i -> i.getVariable().getTypeIdentifier())).entrySet().stream().collect(
+                        Collectors.toMap(Map.Entry::getKey, l -> l.getValue().size()));
+        this.buffers = new Buffers<>(builder, name, getDeclaringStm(), (ScopeFmi2Api) getDeclaredScope(), svTypeMaxCount);
     }
 
     public Fmi3ModelDescription getModelDescription() {
@@ -94,7 +101,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     }
 
     public void setVariablesToLog(List<RelationVariable> variablesToLog) {
-        this.variabesToLog = variablesToLog.stream().map(x -> x.getName()).collect(Collectors.toList());
+        this.variabesToLog = variablesToLog.stream().map(RelationVariable::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -134,22 +141,19 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         return this.valueRefBuffer;
     }
 
-    private ArrayVariableFmi2Api<Object> getBuffer(Map<PType, ArrayVariableFmi2Api<Object>> buffer, PType type, String prefix, int size,
-                                                   IMablScope scope) {
-        Optional<PType> first = buffer.keySet().stream().filter(x -> x.toString().equals(type.toString())).findFirst();
-        if (first.isEmpty()) {
-            ArrayVariableFmi2Api<Object> value = createBuffer(type, prefix, size, scope);
-            buffer.put(type, value);
-            return value;
+//    private ArrayVariableFmi2Api<Object> getBuffer(Map<PType, ArrayVariableFmi2Api<Object>> buffer, PType type, String prefix, int size,
+//                                                   IMablScope scope) {
+//        Optional<PType> first = buffer.keySet().stream().filter(x -> x.toString().equals(type.toString())).findFirst();
+//        if (first.isEmpty()) {
+//            ArrayVariableFmi2Api<Object> value = createBuffer(type, prefix, size, scope);
+//            buffer.put(type, value);
+//            return value;
+//
+//        } else {
+//            return buffer.get(first.get());
+//        }
+//    }
 
-        } else {
-            return buffer.get(first.get());
-        }
-    }
-
-    private ArrayVariableFmi2Api<Object> getIOBuffer(PType type, Fmi3TypeEnum fmiType) {
-        return getBuffer(this.ioBuffer, type, "IO" + fmiType.name(), modelDescriptionContext.valRefToSv.size(), getDeclaredScope());
-    }
 
     @SuppressWarnings("unchecked")
     private ArrayVariableFmi2Api<Object> getSharedDerBuffer() {
@@ -163,10 +167,6 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         return this.derSharedBuffer;
     }
 
-
-    private ArrayVariableFmi2Api<Object> getSharedBuffer(PType type, Fmi3TypeEnum fmiType) {
-        return this.getBuffer(this.sharedBuffer, type, "Share" + fmiType.name(), 0, getDeclaredScope());
-    }
 
     @SuppressWarnings("unchecked")
     private ArrayVariableFmi2Api createMDArrayRecursively(List<Integer> arraySizes, PStm declaringStm, PStateDesignatorBase stateDesignator,
@@ -612,17 +612,19 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
             }
 
 //all ports should have the same type so lets use the first port to define the io array type
-            PType type = e.getValue().get(0).getType();
+            PortFmi3Api firstTargetPort = e.getValue().get(0);
+            PType type = firstTargetPort.getType();
 
-            ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type, e.getValue().get(0).getSourceObject().getVariable().getTypeIdentifier());
+            ArrayVariableFmi2Api<Object> valBuf = this.buffers.getBuffer(Buffers.BufferTypes.IO, type,
+                    firstTargetPort.getSourceObject().getVariable().getTypeIdentifier());
 
             AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
-                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, e.getValue().get(0)),
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, firstTargetPort),
                             vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), newARefExp(valBuf.getReferenceExp().clone()),
                             newAUIntLiteralExp((long) e.getValue().size())));
             scope.add(stm);
 
-            handleError(scope, createFunctionName(FmiFunctionType.GET, e.getValue().get(0)));
+            handleError(scope, createFunctionName(FmiFunctionType.GET, firstTargetPort));
 
             if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
                 derivativePortsToShare = getDerivatives(e.getValue(), scope);
@@ -908,14 +910,16 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
         sortedPorts.stream().collect(Collectors.groupingBy(i -> i.getSourceObject().getVariable().getTypeIdentifier().toString())).forEach((key, value) -> {
             ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
-            PType type = value.get(0).getType();
+            PortFmi3Api firstTargetPort = value.get(0);
+            PType type = firstTargetPort.getType();
             for (int i = 0; i < value.size(); i++) {
                 FmiBuilder.Port p = value.get(i);
                 PStateDesignator designator = vrefBuf.items().get(i).getDesignator().clone();
                 scope.add(newAAssignmentStm(designator, newAIntLiteralExp(p.getPortReferenceValue().intValue())));
             }
 
-            ArrayVariableFmi2Api<Object> valBuf = getIOBuffer(type, value.get(0).getSourceObject().getVariable().getTypeIdentifier());
+            ArrayVariableFmi2Api<Object> valBuf = this.buffers.getBuffer(Buffers.BufferTypes.IO, type,
+                    firstTargetPort.getSourceObject().getVariable().getTypeIdentifier());
             for (int i = 0; i < value.size(); i++) {
                 PortFmi3Api p = value.get(i);
                 PStateDesignator designator = valBuf.items().get(i).getDesignator();
@@ -925,11 +929,11 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
             }
 
             AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
-                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, value.get(0)), vrefBuf.getReferenceExp().clone(),
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, firstTargetPort), vrefBuf.getReferenceExp().clone(),
                             newAIntLiteralExp(value.size()), valBuf.getReferenceExp().clone(), newAIntLiteralExp(value.size())));
             scope.add(stm);
 
-            handleError(scope, createFunctionName(FmiFunctionType.SET, sortedPorts.get(0)));
+            handleError(scope, createFunctionName(FmiFunctionType.SET, firstTargetPort));
 
             // TODO: IntermediateUpdateMode instead of CanInterpolateInputs?
             // TODO: commented out for no so it compiles
@@ -1194,8 +1198,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                                 //this is the sorted set of assignments, these can be replaced by a memcopy later
                                 ArrayVariableFmi2Api<Object> buffer = getSharedBuffer(type, port.getSourceObject().getVariable().getTypeIdentifier());
                                 if (port.getSharedAsVariable() == null) {
-                                    ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
-                                    this.setSharedBuffer(newBuf, type, port.getSourceObject().getVariable().getTypeIdentifier());
+                                    ArrayVariableFmi2Api<Object> newBuf = this.buffers.growBuffer(Buffers.BufferTypes.Share, buffer, 1);
 
                                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                                     port.setSharedAsVariable(newShared);
@@ -1305,35 +1308,6 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     }
 
-    private void setSharedBuffer(ArrayVariableFmi2Api<Object> newBuf, PType type, Fmi3TypeEnum typeIdentifier) {
-        this.sharedBuffer.entrySet().removeIf(x -> x.getKey().toString().equals(type.toString()));
-        this.sharedBuffer.put(type, newBuf);
-
-    }
-
-    private ArrayVariableFmi2Api<Object> growBuffer(ArrayVariableFmi2Api<Object> buffer, int increaseByCount) {
-
-        String ioBufName = ((AIdentifierExp) buffer.getReferenceExp()).getName().getText();
-
-        int length = buffer.size() + increaseByCount;
-        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), buffer.type, length, null));
-
-        buffer.getDeclaringStm().parent().replaceChild(buffer.getDeclaringStm(), var);
-        // getDeclaredScope().addAfter(getDeclaringStm(), var);
-
-        List<VariableFmi2Api<Object>> items = IntStream.range(buffer.size(), length).mapToObj(
-                        i -> new VariableFmi2Api<>(var, buffer.type, this.getDeclaredScope(), builder.getDynamicScope(),
-                                newAArayStateDesignator(newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIntLiteralExp(i)),
-                                newAArrayIndexExp(newAIdentifierExp(ioBufName), Collections.singletonList(newAIntLiteralExp(i)))))
-                .collect(Collectors.toList());
-
-        //we can not replace these as some of them may be used and could potential have reference problems (they should not but just to be sure)
-        items.addAll(0, buffer.items());
-
-        return new ArrayVariableFmi2Api<>(var, buffer.type, getDeclaredScope(), builder.getDynamicScope(),
-                newAIdentifierStateDesignator(newAIdentifier(ioBufName)), newAIdentifierExp(ioBufName), items);
-
-    }
 
     @Override
     public FmiBuilder.StateVariable<PStm> getState() throws XPathExpressionException {
