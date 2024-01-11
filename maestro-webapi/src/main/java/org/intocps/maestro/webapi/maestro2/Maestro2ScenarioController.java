@@ -65,7 +65,7 @@ public class Maestro2ScenarioController {
         }
 
         // Load the master model, verify the algorithm and return success and any error message.
-        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModelFMI2 masterModel = (MasterModelFMI2)ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
 
         ModelEncoding encoding = new ModelEncoding(masterModel);
         String encodedModel = ScenarioGenerator.generateUppaalEncoding(encoding);
@@ -90,7 +90,7 @@ public class Maestro2ScenarioController {
 
     @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE, produces = "video/mp4")
     public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) throws Exception {
-        MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
+        MasterModel masterModel = (MasterModelFMI2)ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
         TraceResult traceResult = VerificationAPI.generateTraceVideo(masterModel);
 
         if (!traceResult.isGenerated()) {
