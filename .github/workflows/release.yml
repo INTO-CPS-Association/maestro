@@ -230,11 +230,11 @@ jobs:
         run: mvn validate dependency:resolve-plugins -B --quiet
 
       - name: Maven Build Final
-        run: mvn -B package --file pom.xml -Dmaven.test.skip=true
+        run: mvn -B package -Psonatype -Prelease --file pom.xml -Dmaven.test.skip=true
 
       - name: Maven Deploy RELEASE
         # If autorelease is false then it must be released from here: https://oss.sonatype.org/#stagingRepositories
-        run: mvn -B deploy -Dchangelist= -Dsha1= -Dmaven.test.skip=true -DskipITs -fae -Prelease -DautoReleaseAfterClose=true
+        run: mvn -B deploy -Dchangelist= -Dsha1= -Dmaven.test.skip=true -DskipITs -fae -Prelease -Psonatype -DautoReleaseAfterClose=true
         env:
           MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
