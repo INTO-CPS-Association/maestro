@@ -368,7 +368,7 @@
             <dependency>
                 <groupId>org.into-cps.verification</groupId>
                 <artifactId>scenario_verifier</artifactId>
-                <version>0.2.21-SNAPSHOT</version>
+                <version>0.2.22</version>
             </dependency>
 
             <dependency>

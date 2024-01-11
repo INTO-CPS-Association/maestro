@@ -25,7 +25,7 @@
         <dependency>
             <groupId>org.into-cps.verification</groupId>
             <artifactId>scenario_verifier</artifactId>
-            <version>0.2.22-SNAPSHOT</version>
+
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

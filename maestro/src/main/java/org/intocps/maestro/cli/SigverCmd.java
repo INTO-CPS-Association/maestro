@@ -60,7 +60,7 @@ class VisualizeTracesCmd implements Callable<Integer> {
         }
 
         File tempDir = Files.createTempDirectory("tmpDir").toFile();
-        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
+        MasterModelFMI2 masterModel = (MasterModelFMI2)ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(file.toPath()).getBytes()));
         File uppaalFile = Path.of(tempDir.getPath(), "uppaal.xml").toFile();
         File traceFile = Path.of(tempDir.getPath(), "trace.log").toFile();
         ModelEncoding modelEncoding = new ModelEncoding(masterModel);
@@ -114,7 +114,7 @@ class VerifyAlgorithmCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        MasterModelFMI2 masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
+        MasterModelFMI2 masterModel =(MasterModelFMI2) ScenarioLoaderFMI2.load(new ByteArrayInputStream(Files.readString(masterModelFile.toPath()).getBytes()));
         if (output == null) {
             output = Files.createTempDirectory("tmpDir").toFile();
         }
