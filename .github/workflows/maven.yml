@@ -12,7 +12,7 @@ on:
 
 env:
   JAVA_VERSION: 11.0.3
-  SERVER_ID: overture.au.dk
+  SERVER_ID: ossrh
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
@@ -174,16 +174,16 @@ jobs:
         if: github.event_name == 'push' && (github.ref != 'refs/heads/development' && github.ref != 'refs/heads/master' )
         run: mvn -Psonatype -B package -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g;s|#||g;s|<||g;s|>||g;s|:||g;s|\"||g;s|/||g;s|\|||g;s|?||g;s|*||g;s|;||g"`   -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
-          MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
 
       - name: Maven Package SNAPSHOT
         if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
         run: mvn -Psonatype -B deploy -Dsha1= -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
-          MAVEN_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
 
 
