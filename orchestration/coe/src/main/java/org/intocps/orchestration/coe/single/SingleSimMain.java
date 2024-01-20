@@ -37,17 +37,13 @@ package org.intocps.orchestration.coe.single;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.cli.*;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.intocps.fmi.IFmu;
 import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.util.SimulationExecutionUtil;
@@ -230,8 +226,9 @@ public class SingleSimMain
 
 		if (cmd.hasOption(logLevelOpt.getOpt()))
 		{
-			Logger l = Logger.getRootLogger();
-			l.setLevel(Level.toLevel(cmd.getOptionValue(logLevelOpt.getOpt())));
+//			Logger l = Logger.getRootLogger();
+//			l.setLevel(Level.toLevel(cmd.getOptionValue(logLevelOpt.getOpt())));
+			org.intocps.orchestration.coe.util.Util.setLogLevel(cmd.getOptionValue(logLevelOpt.getOpt()));
 		}
 
 		URI fmuUri = new File(fmuPath).toURI();

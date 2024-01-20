@@ -42,14 +42,11 @@
 */
 package org.intocps.orchestration.coe.qmtest.build_varstep;
 
-import java.io.IOException;
-
-import org.intocps.orchestration.coe.BasicTest;
-import org.intocps.orchestration.coe.ConditionalIgnoreRule.ConditionalIgnore;
+import fi.iki.elonen.NanoHTTPD;
 import org.intocps.orchestration.coe.OnlineModelsCoSimTest;
 import org.junit.Test;
 
-import fi.iki.elonen.NanoHTTPD;
+import java.io.IOException;
 
 public class BD_multi_Test extends OnlineModelsCoSimTest
 {

@@ -37,8 +37,8 @@ package org.intocps.orchestration.coe.hierarchical
 
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
-import org.intocps.orchestration.coe.scala.{CoeObject, InstanceState}
 import org.intocps.orchestration.coe.scala.CoeObject.GlobalState
+import org.intocps.orchestration.coe.scala.InstanceState
 
 import scala.collection.JavaConversions._
 

@@ -36,7 +36,6 @@ package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeFactory;
 import org.intocps.orchestration.coe.util.FolderCompressor;
 import org.junit.AfterClass;

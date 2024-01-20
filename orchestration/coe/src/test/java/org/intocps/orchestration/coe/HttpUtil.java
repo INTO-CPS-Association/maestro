@@ -34,13 +34,15 @@
 */
 package org.intocps.orchestration.coe;
 
-import java.io.*;
+import org.intocps.orchestration.coe.httpserver.Response;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
-
-import org.apache.commons.io.IOUtils;
-import org.intocps.orchestration.coe.httpserver.Response;
 
 public class HttpUtil
 {

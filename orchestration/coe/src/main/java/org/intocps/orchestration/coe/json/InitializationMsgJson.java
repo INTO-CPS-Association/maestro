@@ -41,11 +41,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintType;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.samplingrate.Sampling;
-import org.intocps.orchestration.coe.cosim.varstep.valuetracker.DoubleValueTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashMap;

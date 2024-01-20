@@ -34,48 +34,17 @@
 */
 package org.intocps.orchestration.coe.scala
 
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import scala.collection.JavaConversions.asJavaCollection
-import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.bufferAsJavaList
-import scala.collection.JavaConversions.seqAsJavaList
-import scala.collection.JavaConverters.mapAsScalaMapConverter
-import scala.collection.immutable.Map
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-import org.apache.log4j.FileAppender
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
-import org.apache.log4j.spi.Filter
-import org.apache.log4j.spi.LoggingEvent
-import org.intocps.fmi.Fmi2Status
-import org.intocps.fmi.Fmi2StatusKind
-import org.intocps.fmi.IFmiComponent
-import org.intocps.fmi.IFmu
-import org.intocps.fmi.IFmuCallback
+import org.intocps.fmi.{Fmi2Status, IFmiComponent}
 import org.intocps.orchestration.coe.AbortSimulationException
-import org.intocps.orchestration.coe.FmuFactory
 import org.intocps.orchestration.coe.config.ModelConnection
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
-import org.intocps.orchestration.coe.cosim.base.FmiInstanceConfig
-import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
+import org.intocps.orchestration.coe.cosim.base.{FmiInstanceConfig, FmiSimulationInstance}
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Causality
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.LogCategory
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ModelDescriptionParseException
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types
-import org.intocps.orchestration.coe.util.Util
-import org.intocps.orchestration.fmi.VdmSvChecker
-import org.intocps.orchestration.fmi.VdmSvChecker.ScalarVariableConfigException
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription.{ScalarVariable, Types}
 import org.slf4j.LoggerFactory
-import org.xml.sax.SAXParseException
-import java.io.OutputStream
-import scala.util.Success
-import scala.util.Success
+
+import scala.collection.JavaConversions.seqAsJavaList
+import scala.util.{Failure, Success, Try}
 
 object CoeObject
 {
@@ -152,28 +121,5 @@ object CoeObject
     }
   }
 
-  def getCoSimInstanceLogger(root: File,logName:String): org.slf4j.Logger =
-  {
-    //Define log pattern layout
-    val layout = new PatternLayout("%d{ISO8601} %-5p - %m%n")
-    val logger = LoggerFactory.getLogger("fmi.instance."+logName)
-    //Define file appender with layout and output log file name
-    val fileAppender = new FileAppender(layout, new File(root, logName+".log").getAbsolutePath, false)
 
-    val f = new Filter()
-    {
-      def decide(event: LoggingEvent): Int =
-      {
-        if (event.getLoggerName.equals(logger.getName))
-        {
-          return Filter.ACCEPT
-        }
-        return Filter.DENY
-      }
-    }
-    fileAppender.addFilter(f)
-    Logger.getRootLogger().addAppender(fileAppender)
-
-    return logger
-  }
 }

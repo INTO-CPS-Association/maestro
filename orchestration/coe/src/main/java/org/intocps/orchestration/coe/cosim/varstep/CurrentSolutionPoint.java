@@ -42,14 +42,14 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Observable;
-
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Observable;
 
 public class CurrentSolutionPoint extends Observable
 {

@@ -42,11 +42,6 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.samplingrate;
 
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintHandler;
@@ -55,6 +50,11 @@ import org.intocps.orchestration.coe.cosim.varstep.constraint.zerocrossing.Linea
 import org.intocps.orchestration.coe.cosim.varstep.constraint.zerocrossing.ScalarFunction;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 public class SamplingRateHandlerTest
 {

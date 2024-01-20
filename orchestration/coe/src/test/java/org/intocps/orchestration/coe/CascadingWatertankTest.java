@@ -34,11 +34,11 @@
 */
 package org.intocps.orchestration.coe;
 
-import java.io.IOException;
-
 import fi.iki.elonen.NanoHTTPD;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class CascadingWatertankTest extends OnlineModelsCoSimTest
 {

@@ -5,9 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
+
+import org.apache.logging.log4j.core.config.Configurator;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
@@ -16,6 +15,7 @@ import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
+import org.intocps.orchestration.coe.util.Util;
 import org.intocps.orchestration.coe.util.ZipDirectory;
 import org.intocps.orchestration.coe.webapi.services.CoeService;
 import org.slf4j.Logger;
@@ -70,7 +70,8 @@ public class EsaSimulationController {
         mapper.writeValue(new File(coeService.get().getResultRoot(), "initialize.json"), body);
 
         if (body.simulatorLogLevel != null) {
-            LogManager.getRootLogger().setLevel(Level.toLevel(body.simulatorLogLevel.name()));
+//            LogManager.getRootLogger().setLevel(Level.toLevel(body.simulatorLogLevel.name()));
+            Configurator.setLevel("root", org.apache.logging.log4j.Level.getLevel(body.simulatorLogLevel.name()));
         }
 
         CoSimStepSizeCalculator stepSizeCalculator = new BasicFixedStepSizeCalculator(body.stepSize);
@@ -198,34 +199,34 @@ public class EsaSimulationController {
             throw new Exception("bad session");
         }
 
-        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        ArrayList<FileAppender> appendersToRemove = new ArrayList<>();
-        Enumeration appenders = rootLogger.getAllAppenders();
-
-        if (appenders != null) {
-            while (appenders.hasMoreElements()) {
-                try {
-                    Object element = appenders.nextElement();
-                    if (element != null && element instanceof FileAppender) {
-                        FileAppender fileAppender = (FileAppender) element;
-                        //                        if (fileAppender.getFile() != null && fileAppender.getFile()
-                        //                                .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
-                        //                            // Log files for fmu instances.
-                        //                            // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
-                        //                            fileAppender.close();
-                        //                            appendersToRemove.add(fileAppender);
-                        //                        }
-                    }
-                } catch (NoSuchElementException e) {
-                    //this is not synchronized so this can happen
-                }
-            }
-            appendersToRemove.forEach(fa -> {
-                rootLogger.removeAppender(fa);
-            });
-
-        }
-
+//        LoggerContext context = LoggerContext.getContext(false);
+//        Configuration configuration = context.getConfiguration();
+//
+//
+//        ArrayList<String> appendersToRemove = new ArrayList<>();
+//        Map<String, Appender> appenders = configuration.getAppenders();
+//
+//        if (appenders != null) {
+//
+//            for(Map.Entry<String, Appender> appender :appenders.entrySet()) {
+//                if (appender.getValue() instanceof FileAppender) {
+//                    FileAppender fileAppender = (FileAppender) appender.getValue();
+//                    //                    if (fileAppender.getFileName() != null && fileAppender.getFileName()
+//                    //                            .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
+//                    // Log files for fmu instances.
+//                    // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
+//                    fileAppender.stop();
+//                    appendersToRemove.add(fileAppender.getName());
+//                    //                    }
+//                }
+//
+//
+//                appendersToRemove.forEach(fa -> {
+//                    configuration.getRootLogger().removeAppender(fa);
+//                });
+//            }
+//        }
+      if(  Util.removeCoSimInstanceLogAppenders(null))
 
         FileUtils.deleteDirectory(coe.getResultRoot());
     }

@@ -34,22 +34,9 @@
 */
 package org.intocps.orchestration.coe.hierarchical;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fi.iki.elonen.NanoHTTPD;
-import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.*;
-import org.intocps.orchestration.coe.FmuFactory;
-import org.intocps.orchestration.coe.IFmuFactory;
-import org.intocps.orchestration.coe.httpserver.RequestProcessors;
-import org.intocps.orchestration.coe.httpserver.SessionController;
-import org.intocps.orchestration.coe.json.ProdSessionLogicFactory;
-import org.intocps.orchestration.coe.scala.Coe;
-import org.intocps.orchestration.coe.scala.CoeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * Created by kel on 04/10/2017.

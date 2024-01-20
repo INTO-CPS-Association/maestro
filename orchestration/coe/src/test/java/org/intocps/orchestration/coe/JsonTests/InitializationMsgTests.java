@@ -36,12 +36,10 @@ package org.intocps.orchestration.coe.JsonTests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.internal.util.io.IOUtil;
 
 import java.io.File;
 import java.io.IOException;

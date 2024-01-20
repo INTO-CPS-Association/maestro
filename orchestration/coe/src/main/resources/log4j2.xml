@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%5p [%t] (%F:%L) - %m%n"/>
+        </Console>
+
+        <RollingFile name="RollingFile" fileName="coe.log" filePattern="coe-%i.log.gz">
+            <FixedWindowRollingPolicy maxIndex="13"/>
+            <SizeBasedTriggeringPolicy size="100 MB"/>
+            <PatternLayout pattern="%5p [%t] (%F:%L) - %m%n"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+
+        <Logger name="fmi.instance" level="ALL" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+    </Loggers>
+</Configuration>

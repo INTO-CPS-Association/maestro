@@ -36,25 +36,26 @@ package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.*;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
+import org.apache.logging.log4j.core.config.*;
 import org.intocps.fmi.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -63,20 +64,28 @@ import static org.mockito.Mockito.*;
 /**
  * Created by kel on 01/09/16.
  */
+@PowerMockIgnore("javax.management.*")
 @RunWith(PowerMockRunner.class) public class MinMaxTest extends BasicTest
 {
 
 	@After public void cleanup()
 	{
 		FmuFactory.customFactory = null;
+		LoggerContext lc = (LoggerContext) LogManager.getContext(false);
+		lc.getRootLogger().removeAppender(appender);
+		lc.updateLoggers();
 
 	}
 
-	public static class MyAppender extends AppenderSkeleton
+	public static class MyAppender extends AbstractAppender
 	{
-		ArrayList<LoggingEvent> eventsList = new ArrayList();
+		ArrayList<LogEvent> eventsList = new ArrayList();
 
-		@Override protected void append(LoggingEvent event)
+		protected MyAppender() {
+			super(UUID.randomUUID().toString(), null, null,true,null);
+		}
+
+		@Override public void append(LogEvent event)
 		{
 			if (event.getLevel() == Level.WARN
 					|| event.getLevel() == Level.ERROR
@@ -85,33 +94,53 @@ import static org.mockito.Mockito.*;
 
 		}
 
-		public void close()
-		{
-		}
 
-		public boolean requiresLayout()
-		{
-			return false;
-		}
 
 	}
 
 	MyAppender appender;
 
+
 	@Before public void setup()
 	{
-		Logger l = Logger.getRootLogger();
 
-		appender = new MyAppender();
+		Configurator.setRootLevel(Level.WARN);
+		appender =  new MyAppender();
+		appender.start();
+		LoggerContext lc = (LoggerContext) LogManager.getContext(false);
+		lc.getConfiguration().addAppender(appender);
+		lc.getRootLogger().addAppender(lc.getConfiguration().getAppender(appender.getName()));
+		lc.updateLoggers();
 
-		l.addAppender(appender);
+//
+////		Logger l = Logger.getRootLogger();
+//		Configurator.setRootLevel(Level.TRACE);
+//		appender =  new MyAppender();
+//
+////		l.addAppender(appender);
+//
+//		LoggerContext context = (LoggerContext) LogManager.getContext(false);
+//		Configuration config = context.getConfiguration();
+//		LoggerConfig loggerConfig = LoggerConfig.newBuilder().withLoggerName("test").withConfig(config).withLevel(Level.ALL).build();
+//		 a =OutputStreamAppender.newBuilder().setBufferedIo(false).setImmediateFlush(true).setName("dd").setTarget(ou).build();//
+//a.start();
+//		loggerConfig.addAppender(a, null,null);
+//		appender.start();
+//		//		.createLogger(false, org.apache.logging.log4j.Level.INFO, loggerName, "true", Array(appender), Array(filter), config, null)
+//
+//		// Add the LoggerConfig to the configuration
+//		config.addLogger("test", loggerConfig);
+//
+//		// Update the configuration
+//		context.updateLoggers();
+
 	}
 
 	boolean checkLogFor(String content)
 	{
-		for (LoggingEvent le : appender.eventsList)
+		for (LogEvent le : appender.eventsList)
 		{
-			if (le.getMessage().toString().contains(content))
+			if (le.getMessage().getFormattedMessage().contains(content))
 				return true;
 		}
 		return false;
@@ -131,7 +160,9 @@ import static org.mockito.Mockito.*;
 	{
 
 		configureInstances(REAL_DEFAULT, INTEGER_DEFAULT);
-		LogManager.getRootLogger().setLevel(Level.WARN);
+//		LogManager.getRootLogger().setLevel(Level.WARN);
+//		Configurator.setLevel("root", Level.WARN);
+
 
 		test("/derivativeInOutTest/config.json", 0, 1);
 
@@ -146,6 +177,10 @@ import static org.mockito.Mockito.*;
 
 		test("/derivativeInOutTest/config.json", 0, 1);
 
+		AppenderControl appenderControl = new AppenderControl(appender, null, null);
+
+		// Flush the appender
+		appenderControl.callAppender(null);
 		Assert.assertTrue("Missing value out of bounds warning", checkLogFor("is out of bounds"));
 	}
 
