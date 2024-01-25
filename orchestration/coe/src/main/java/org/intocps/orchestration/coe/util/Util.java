@@ -41,7 +41,9 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
 import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
@@ -54,10 +56,7 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVari
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.*;
 
 public class Util {
@@ -214,6 +213,7 @@ public class Util {
         return list.toArray(new String[list.size()]);
     }
 
+    final static Map<OutputStreamAppender, Map.Entry<File, FileOutputStream>> appenderStreams = new HashMap<>();
 
     public static Logger getCoSimInstanceLogger(File root, String logName) {
         //Define log pattern layout
@@ -237,8 +237,20 @@ public class Util {
 
         };
         root.mkdirs();
-        FileAppender appender = FileAppender.newBuilder().withName(loggerName + ".file_appender").setLayout(layout)
-                .withFileName(new File(root, logName + ".log").getAbsolutePath()).withLocking(false).withFilter(filter).build();
+        OutputStreamAppender appender = null;
+        try {
+            File logFile = new File(root, logName + ".log");
+            FileOutputStream fileOutputStream = new FileOutputStream(logFile);
+            appender = OutputStreamAppender.newBuilder().withName(loggerName + ".file_appender").setLayout(layout).setTarget(fileOutputStream)
+                    .withFilter(filter).build();
+
+            synchronized (appenderStreams) {
+                appenderStreams.put(appender, new AbstractMap.SimpleEntry<>(logFile, fileOutputStream));
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         appender.start();
 
         // Create a LoggerConfig with the appender and filter
@@ -265,13 +277,26 @@ public class Util {
         if (appenders != null) {
 
             for (Map.Entry<String, Appender> appender : appenders.entrySet()) {
-                if (appender.getValue() instanceof FileAppender) {
-                    FileAppender fileAppender = (FileAppender) appender.getValue();
-                    if (fileAppender.getFileName() != null && (sessionId == null || fileAppender.getFileName()
+                if (appender.getValue() instanceof OutputStreamAppender) {
+                    OutputStreamAppender fileAppender = (OutputStreamAppender) appender.getValue();
+
+                    Map.Entry<File, FileOutputStream> map = appenderStreams.get(fileAppender);
+
+                    if (map != null && map.getKey().getPath() != null && (sessionId == null || map.getKey().getPath()
                             .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$"))) {
                         // Log files for fmu instances.
                         // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
+                        try {
+                            map.getValue().flush();
+                        } catch (IOException e) {
+                            //ignore
+                        }
                         fileAppender.stop();
+                        try {
+                            map.getValue().close();
+                        } catch (IOException e) {
+                            //ignore
+                        }
                         appendersToRemove.add(fileAppender.getName());
                         found = true;
                     }
@@ -286,6 +311,10 @@ public class Util {
                         final Configuration config = ctx.getConfiguration();
                         config.removeLogger(configuration.getName());
                         ctx.updateLoggers();
+
+                        synchronized (appenderStreams) {
+                            appenderStreams.remove(appender);
+                        }
                     }
                 });
             }
