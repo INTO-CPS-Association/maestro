@@ -77,9 +77,9 @@ public class Util {
         BufferedReader br = new BufferedReader(new FileReader(new File("src/test/resources/links.property".replace('/', File.separatorChar))));
         String line;
         while ((line = br.readLine()) != null) {
-			if (line.trim().startsWith("//")) {
-				continue;
-			}
+            if (line.trim().startsWith("//")) {
+                continue;
+            }
             connections.add(ModelConnection.parse(line));
         }
         br.close();
@@ -219,36 +219,10 @@ public class Util {
         //Define log pattern layout
         PatternLayout layout = PatternLayout.newBuilder().withPattern("%d{ISO8601} %-5p - %m%n").build();
         String loggerName = "fmi.instance." + logName;
-        //    val logger = LoggerFactory.getLogger(loggerName)
-        //Define file appender with layout and output log file name
-        //    val fileAppender = new FileAppender(layout, new File(root, logName+".log").getAbsolutePath, false)
-        //
-        //    val f = new Filter()
-        //    {
-        //      def decide(event: LoggingEvent): Int =
-        //      {
-        //        if (event.getLoggerName.equals(logger.getName))
-        //        {
-        //          return Filter.ACCEPT
-        //        }
-        //        return Filter.DENY
-        //      }
-        //    }
-        //    fileAppender.addFilter(f)
-        //    Logger.getRootLogger().addAppender(fileAppender)
-
-        //    return logger
-
 
         // Initialize the logger context
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
         Configuration config = context.getConfiguration();
-
-        // Create a console appender
-        //    val appender: ConsoleAppender = ConsoleAppender.newBuilder()
-        //      .setLayout(PatternLayout.newBuilder().withPattern("%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n").build())
-        //      .setName("ConsoleAppender")
-        //      .build()
 
         // Create a LoggerNameFilter
         Filter filter = new AbstractFilter() {
@@ -263,16 +237,14 @@ public class Util {
 
         };
         root.mkdirs();
-        FileAppender appender =
-                FileAppender.newBuilder().withName(loggerName+".file_appender").setLayout(layout).withFileName(new File(root, logName + ".log").getAbsolutePath()).withLocking(false).withFilter(filter)
-                .build();
+        FileAppender appender = FileAppender.newBuilder().withName(loggerName + ".file_appender").setLayout(layout)
+                .withFileName(new File(root, logName + ".log").getAbsolutePath()).withLocking(false).withFilter(filter).build();
         appender.start();
 
         // Create a LoggerConfig with the appender and filter
-        LoggerConfig loggerConfig =
-                LoggerConfig.newBuilder().withLoggerName(loggerName).withtFilter(filter).withLevel(Level.ALL).withConfig(config).build();
-        loggerConfig.addAppender(appender, Level.ALL,filter);
-        //		.createLogger(false, org.apache.logging.log4j.Level.INFO, loggerName, "true", Array(appender), Array(filter), config, null)
+        LoggerConfig loggerConfig = LoggerConfig.newBuilder().withLoggerName(loggerName).withtFilter(filter).withLevel(Level.ALL).withConfig(config)
+                .build();
+        loggerConfig.addAppender(appender, Level.ALL, filter);
 
         // Add the LoggerConfig to the configuration
         config.addLogger(loggerName, loggerConfig);
@@ -280,18 +252,12 @@ public class Util {
         // Update the configuration
         context.updateLoggers();
 
+
         // Get the logger
-        //		val logger = LogManager.getLogger(loggerName)
-        Logger logger = LoggerFactory.getLogger(loggerName);
-//        logger.debug("test");
-//        System.out.println(appender.getFileName());
-        return logger;
+        return LoggerFactory.getLogger(loggerName);
     }
 
-    public static boolean removeCoSimInstanceLogAppenders(String sessionId) {
-        LoggerContext context = LoggerContext.getContext(false);
-        Configuration configuration = context.getConfiguration();
-
+    private static boolean removeAppender(String sessionId, org.apache.logging.log4j.core.Logger configuration) {
         boolean found = false;
         ArrayList<String> appendersToRemove = new ArrayList<>();
         Map<String, Appender> appenders = configuration.getAppenders();
@@ -313,20 +279,36 @@ public class Util {
 
 
                 appendersToRemove.forEach(fa -> {
-                    configuration.getRootLogger().removeAppender(fa);
+                    configuration.removeAppender(appender.getValue());
+                    if (configuration.getAppenders().isEmpty()) {
+                        //lets clean up the logger as well
+                        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+                        final Configuration config = ctx.getConfiguration();
+                        config.removeLogger(configuration.getName());
+                        ctx.updateLoggers();
+                    }
                 });
             }
         }
         return found;
     }
 
-    public static void setLogLevel(String level)
-    {
+
+    public static boolean removeCoSimInstanceLogAppenders(String sessionId) {
+        LoggerContext context = LoggerContext.getContext(false);
+
+        boolean found = removeAppender(sessionId, context.getRootLogger());
+        if (!found) {
+            found = context.getLoggers().stream().anyMatch(l -> removeAppender(sessionId, l));
+        }
+        return found;
+    }
+
+    public static void setLogLevel(String level) {
         Configurator.setLevel("root", org.apache.logging.log4j.Level.valueOf(level));
     }
 
-    public static void setLogLevel(org.apache.logging.log4j.Level level)
-    {
+    public static void setLogLevel(org.apache.logging.log4j.Level level) {
         Configurator.setLevel("root", level);
     }
 }
