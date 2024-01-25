@@ -218,7 +218,7 @@ public class Util {
     public static Logger getCoSimInstanceLogger(File root, String logName) {
         //Define log pattern layout
         PatternLayout layout = PatternLayout.newBuilder().withPattern("%d{ISO8601} %-5p - %m%n").build();
-        String loggerName = "fmi.instance." + logName;
+        String loggerName = "fmi.instance." + logName+"_"+root.getPath().hashCode();
 
         // Initialize the logger context
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
@@ -327,9 +327,9 @@ public class Util {
         LoggerContext context = LoggerContext.getContext(false);
 
         boolean found = removeAppender(sessionId, context.getRootLogger());
-        if (!found) {
-            found = context.getLoggers().stream().anyMatch(l -> removeAppender(sessionId, l));
-        }
+
+        found |= context.getLoggers().stream().anyMatch(l -> removeAppender(sessionId, l));
+
         return found;
     }
 
