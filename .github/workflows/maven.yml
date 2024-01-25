@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        os: [ubuntu-20.04, macos-latest, windows-2019]
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.8
