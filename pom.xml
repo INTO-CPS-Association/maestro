@@ -13,7 +13,7 @@
     <groupId>org.into-cps</groupId>
     <artifactId>root</artifactId>
 
-    <version>1.0.10</version>
+    <version>1.0.11-SNAPSHOT</version>
 
     <name>The INTO CPS Tool Platform root</name>
     <description>
@@ -451,7 +451,7 @@ http://mojo.codehaus.org/versions-maven-plugin/
         <developerConnection>
             scm:git:git@github.com:INTO-CPS-Association/maestro
         </developerConnection>
-        <tag>Release/1.0.10</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>

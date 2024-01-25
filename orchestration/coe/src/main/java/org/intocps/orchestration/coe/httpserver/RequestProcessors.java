@@ -420,39 +420,13 @@ public class RequestProcessors {
     }
 
     public NanoHTTPD.Response processDestroy(String sessionId) throws IOException {
-//        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-//        ArrayList<FileAppender> appendersToRemove = new ArrayList<>();
-//        Enumeration appenders = rootLogger.getAllAppenders();
-//
-//        if (appenders != null) {
-//            while (appenders.hasMoreElements()) {
-//                try {
-//                    Object element = appenders.nextElement();
-//                    if (element != null && element instanceof FileAppender) {
-//                        FileAppender fileAppender = (FileAppender) element;
-//                        if (fileAppender.getFile() != null && fileAppender.getFile()
-//                                .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
-//                            // Log files for fmu instances.
-//                            // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
-//                            fileAppender.close();
-//                            appendersToRemove.add(fileAppender);
-//                        }
-//                    }
-//                } catch (NoSuchElementException e) {
-//                    //this is not synchronized so this can happen
-//                }
-//            }
-//            appendersToRemove.forEach(fa -> {
-//                rootLogger.removeAppender(fa);
-//            });
-//
-//        }
         Util.removeCoSimInstanceLogAppenders(sessionId);
         File resultFile = this.sessionController.getSessionRootDir(sessionId);
+        logger.debug("Deleting directory {}.", resultFile.getPath());
         FileUtils.deleteDirectory(resultFile);
         this.sessionController.removeSession(sessionId);
+        logger.debug("Session {} destroyed.", sessionId);
         return ProcessingUtils.newFixedLengthPlainResponse(NanoHTTPD.Response.Status.OK, "Session " + sessionId + " destroyed");
-
     }
 
     public NanoHTTPD.Response processVersion() {
