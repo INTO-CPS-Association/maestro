@@ -40,6 +40,7 @@ import org.intocps.fmi.*;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayInputStream;
@@ -55,7 +56,7 @@ import static org.mockito.Mockito.*;
 /**
  * Created by kel on 01/09/16.
  */
-@RunWith(PowerMockRunner.class) public class DerivativeInOutTest
+@RunWith(PowerMockRunner.class) @PowerMockIgnore("javax.management.*") public class DerivativeInOutTest
 		extends BasicTest
 {
 
