@@ -41,8 +41,6 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.AbstractOutputStreamAppender;
-import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.appender.OutputStreamAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -58,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 
 public class Util {
     final static Logger logger = LoggerFactory.getLogger(Util.class);
@@ -240,6 +239,7 @@ public class Util {
         OutputStreamAppender appender = null;
         try {
             File logFile = new File(root, logName + ".log");
+            logger.debug("Opening log file: {}",logFile);
             FileOutputStream fileOutputStream = new FileOutputStream(logFile);
             appender = OutputStreamAppender.newBuilder().withName(loggerName + ".file_appender").setLayout(layout).setTarget(fileOutputStream)
                     .withFilter(filter).build();
@@ -294,6 +294,7 @@ public class Util {
                         fileAppender.stop();
                         try {
                             map.getValue().close();
+                            logger.debug("Closed log file: {}",map.getKey());
                         } catch (IOException e) {
                             //ignore
                         }
@@ -313,7 +314,7 @@ public class Util {
                         ctx.updateLoggers();
 
                         synchronized (appenderStreams) {
-                            appenderStreams.remove(appender);
+                            appenderStreams.remove(appender.getValue());
                         }
                     }
                 });
@@ -324,12 +325,14 @@ public class Util {
 
 
     public static boolean removeCoSimInstanceLogAppenders(String sessionId) {
+        logger.debug("Close loggers for session: {}",sessionId);
         LoggerContext context = LoggerContext.getContext(false);
 
         boolean found = removeAppender(sessionId, context.getRootLogger());
 
-        found |= context.getLoggers().stream().anyMatch(l -> removeAppender(sessionId, l));
-
+        for(org.apache.logging.log4j.core.Logger l :context.getLoggers()) {
+            found |=  removeAppender(sessionId, l);
+        }
         return found;
     }
 
