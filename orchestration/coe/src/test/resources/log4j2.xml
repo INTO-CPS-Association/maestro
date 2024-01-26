@@ -14,6 +14,9 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="org.intocps.orchestration.coe.util.Util" level="debug">
+            <AppenderRef ref="CONSOLE"/>
+        </Logger>
         <Root level="info">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFile"/>
