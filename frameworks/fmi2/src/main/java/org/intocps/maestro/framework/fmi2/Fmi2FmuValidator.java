@@ -1,6 +1,7 @@
 package org.intocps.maestro.framework.fmi2;
 
 import maestro.MaestroCheck;
+import maestro.MaestroCheckFMI2;
 import maestro.OnFailError;
 import org.intocps.fmi.IFmu;
 import org.intocps.maestro.ast.LexToken;
@@ -32,7 +33,7 @@ public class Fmi2FmuValidator implements IFmuValidator {
         try {
             logger.trace("Validating: {} at {}", id, path);
             IFmu fmu = FmuFactory.create(null, path);
-            MaestroCheck checker = new MaestroCheck();
+            MaestroCheckFMI2 checker = new MaestroCheckFMI2();
             List<OnFailError> onFailErrors = checker.check(fmu.getModelDescription());
 
             onFailErrors.forEach(onFailError -> {
