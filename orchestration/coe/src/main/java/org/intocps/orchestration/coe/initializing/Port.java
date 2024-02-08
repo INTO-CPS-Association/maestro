@@ -35,7 +35,6 @@
 package org.intocps.orchestration.coe.initializing;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.intocps.orchestration.coe.BasicInitializer;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;

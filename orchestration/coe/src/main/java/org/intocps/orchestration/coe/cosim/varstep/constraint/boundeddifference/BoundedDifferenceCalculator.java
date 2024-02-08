@@ -42,13 +42,13 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference;
 
+import org.intocps.orchestration.coe.config.ModelConnection.Variable;
+import org.intocps.orchestration.coe.cosim.varstep.valuetracker.DoubleValueTracker;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 import java.util.Vector;
-
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
-import org.intocps.orchestration.coe.cosim.varstep.valuetracker.DoubleValueTracker;
 
 public class BoundedDifferenceCalculator
 {

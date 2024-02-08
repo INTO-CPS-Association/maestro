@@ -38,6 +38,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.io.FileUtils;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
 import org.junit.BeforeClass;
@@ -47,8 +48,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Vector;
-
-import fi.iki.elonen.NanoHTTPD;
 public abstract class OnlineModelsCoSimTest extends BasicTest
 {
 	final static String prefix = "/online-models";

@@ -34,10 +34,10 @@
 */
 package org.intocps.orchestration.coe.json;
 
+import org.intocps.orchestration.coe.modeldefinition.ModelDescription.LogCategory;
+
 import java.util.List;
 import java.util.Map;
-
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription.LogCategory;
 
 public class InitializationStatusJson extends StatusMsgJson
 {

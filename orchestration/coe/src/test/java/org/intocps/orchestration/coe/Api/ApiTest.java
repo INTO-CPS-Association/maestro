@@ -46,11 +46,11 @@ import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
 import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
+import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.intocps.orchestration.coe.httpserver.SessionLogic;
 import org.intocps.orchestration.coe.json.SessionLogicFactory;
 import org.intocps.orchestration.coe.json.StartMsgJson;
 import org.intocps.orchestration.coe.json.StatusMsgJson;
-import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.CoeStatus;
@@ -62,6 +62,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -73,9 +74,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.anyMapOf;
 import static org.mockito.Mockito.*;
 
 /**
@@ -83,6 +83,7 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(FileUtils.class)
+@PowerMockIgnore("javax.management.*")
 public class ApiTest
 {
 	final static String DEFAULT_CONFIG_PATH = "/online-models/watertank-c/config.json";

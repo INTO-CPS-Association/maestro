@@ -35,11 +35,11 @@
 package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
+import org.intocps.orchestration.coe.ConditionalIgnoreRule.ConditionalIgnore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import org.intocps.orchestration.coe.ConditionalIgnoreRule.ConditionalIgnore;
 
 public class DymolaCompatibilityTests extends OnlineModelsCoSimTest
 {

@@ -42,17 +42,17 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Type;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestUtil
 {

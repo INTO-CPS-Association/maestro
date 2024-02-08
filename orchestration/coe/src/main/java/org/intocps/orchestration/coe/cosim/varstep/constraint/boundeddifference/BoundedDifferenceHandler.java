@@ -42,12 +42,9 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
-import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint.Operation;
+import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintHandler;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference.stepsize.BdStepsizeAdjustmentStrategy;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference.stepsize.SimpleBdStepsizeAdjustmentStrategy;
@@ -55,6 +52,9 @@ import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Observable;
+import java.util.Observer;
 
 public class BoundedDifferenceHandler implements Observer, ConstraintHandler
 {

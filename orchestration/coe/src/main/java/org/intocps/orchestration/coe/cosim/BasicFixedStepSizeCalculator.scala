@@ -35,12 +35,9 @@
 package org.intocps.orchestration.coe.cosim
 
 import org.intocps.orchestration.coe.config.ModelConnection
-import org.intocps.orchestration.coe.config.ModelConnection.Variable
-import org.intocps.orchestration.coe.scala.CoeObject
-import org.slf4j.LoggerFactory
-import scala.collection.JavaConverters._
-import org.intocps.orchestration.coe.scala.VariableResolver
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
+import org.intocps.orchestration.coe.scala.{CoeObject, VariableResolver}
+import org.slf4j.LoggerFactory
 
 class BasicFixedStepSizeCalculator(val size: Double) extends CoSimStepSizeCalculator {
 

@@ -34,7 +34,6 @@
 */
 package org.intocps.orchestration.coe.httpserver;
 
-import org.intocps.orchestration.coe.httpserver.SessionLogic;
 import org.intocps.orchestration.coe.json.SessionLogicFactory;
 import org.intocps.orchestration.coe.json.StatusMsgJson;
 import org.intocps.orchestration.coe.scala.Coe;

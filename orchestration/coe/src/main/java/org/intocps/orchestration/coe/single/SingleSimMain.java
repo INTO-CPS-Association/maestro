@@ -42,8 +42,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.intocps.fmi.IFmu;
 import org.intocps.orchestration.coe.FmuFactory;
 import org.intocps.orchestration.coe.json.InitializationMsgJson;
@@ -203,14 +201,14 @@ public class SingleSimMain {
         System.setProperty("coe.csv.quote.header", "true");
         System.setProperty("coe.csv.boolean.numeric", "true");
 
-        if (cmd.hasOption(logLevelOpt.getOpt())) {
-            Logger l = Logger.getRootLogger();
-            l.setLevel(Level.toLevel(cmd.getOptionValue(logLevelOpt.getOpt())));
-        }
+		if (cmd.hasOption(logLevelOpt.getOpt())) {
+			org.intocps.orchestration.coe.util.Util.setLogLevel(cmd.getOptionValue(logLevelOpt.getOpt()));
+		}
 
-        URI fmuUri = new File(fmuPath).toURI();
-        if (fmuUri.getScheme() == null || fmuUri.getScheme().equals("file")) {
-            if (!fmuUri.isAbsolute()) {
+		URI fmuUri = new File(fmuPath).toURI();
+		if (fmuUri.getScheme() == null || fmuUri.getScheme().equals("file")){
+
+           if (!fmuUri.isAbsolute()) {
                 System.out.println("resolving: " + fmuUri);
                 fmuUri = new File(".").toURI().resolve(fmuUri);
             }

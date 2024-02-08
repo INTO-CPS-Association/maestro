@@ -42,9 +42,6 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.zerocrossing;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint.Operation;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
@@ -58,6 +55,9 @@ import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Observable;
+import java.util.Observer;
 
 public class ZerocrossingHandler implements Observer, ConstraintHandler
 {

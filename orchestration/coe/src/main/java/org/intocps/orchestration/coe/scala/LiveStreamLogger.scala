@@ -34,11 +34,11 @@
 */
 package org.intocps.orchestration.coe.scala
 
+import argonaut.Argonaut._
+import argonaut._
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
 import org.intocps.orchestration.coe.scala.CoeObject.GlobalState
-import argonaut.Argonaut._
-import argonaut._
 
 /**
   * Created by kel on 18/07/16.

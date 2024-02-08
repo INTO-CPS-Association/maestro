@@ -34,17 +34,7 @@
 */
 package org.intocps.orchestration.coe;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.intocps.fmi.*;
-import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.base.CoSimInitializer;
@@ -63,11 +53,14 @@ import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.util.Util;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.CycleDetector;
-import org.jgrapht.ext.DOTExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class BasicInitializer implements CoSimInitializer
 {

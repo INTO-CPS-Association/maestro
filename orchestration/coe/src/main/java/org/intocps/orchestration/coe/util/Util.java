@@ -1,241 +1,347 @@
 /*
-* This file is part of the INTO-CPS toolchain.
-*
-* Copyright (c) 2017-CurrentYear, INTO-CPS Association,
-* c/o Professor Peter Gorm Larsen, Department of Engineering
-* Finlandsgade 22, 8200 Aarhus N.
-*
-* All rights reserved.
-*
-* THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
-* THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
-* ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
-* RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL 
-* VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
-*
-* The INTO-CPS toolchain  and the INTO-CPS Association Public License 
-* are obtained from the INTO-CPS Association, either from the above address,
-* from the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
-* GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
-*
-* This program is distributed WITHOUT ANY WARRANTY; without
-* even the implied warranty of  MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
-* BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
-* THE INTO-CPS ASSOCIATION.
-*
-* See the full INTO-CPS Association Public License conditions for more details.
-*/
+ * This file is part of the INTO-CPS toolchain.
+ *
+ * Copyright (c) 2017-CurrentYear, INTO-CPS Association,
+ * c/o Professor Peter Gorm Larsen, Department of Engineering
+ * Finlandsgade 22, 8200 Aarhus N.
+ *
+ * All rights reserved.
+ *
+ * THIS PROGRAM IS PROVIDED UNDER THE TERMS OF GPL VERSION 3 LICENSE OR
+ * THIS INTO-CPS ASSOCIATION PUBLIC LICENSE VERSION 1.0.
+ * ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS PROGRAM CONSTITUTES
+ * RECIPIENT'S ACCEPTANCE OF THE OSMC PUBLIC LICENSE OR THE GPL
+ * VERSION 3, ACCORDING TO RECIPIENTS CHOICE.
+ *
+ * The INTO-CPS toolchain  and the INTO-CPS Association Public License
+ * are obtained from the INTO-CPS Association, either from the above address,
+ * from the URLs: http://www.into-cps.org, and in the INTO-CPS toolchain distribution.
+ * GNU version 3 is obtained from: http://www.gnu.org/copyleft/gpl.html.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of  MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE, EXCEPT AS EXPRESSLY SET FORTH IN THE
+ * BY RECIPIENT SELECTED SUBSIDIARY LICENSE CONDITIONS OF
+ * THE INTO-CPS ASSOCIATION.
+ *
+ * See the full INTO-CPS Association Public License conditions for more details.
+ */
 
 /*
-* Author:
-*		Kenneth Lausdahl
-*		Casper Thule
-*/
+ * Author:
+ *		Kenneth Lausdahl
+ *		Casper Thule
+ */
 package org.intocps.orchestration.coe.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.intocps.fmi.Fmi2Status;
-import org.intocps.fmi.FmiInvalidNativeStateException;
-import org.intocps.fmi.FmuInvocationException;
-import org.intocps.fmi.FmuResult;
-import org.intocps.fmi.IFmiComponent;
-import org.intocps.fmi.InvalidParameterException;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.OutputStreamAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.filter.AbstractFilter;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.intocps.fmi.*;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Util
-{
-	final static Logger logger = LoggerFactory.getLogger(Util.class);
+import java.io.*;
+import java.util.*;
+import java.util.function.Function;
 
-	public static FilenameFilter fmuFileFilter = new FilenameFilter()
-	{
+public class Util {
+    final static Logger logger = LoggerFactory.getLogger(Util.class);
 
-		@Override public boolean accept(File dir, String name)
-		{
-			return name.endsWith(".fmu");
-		}
-	};
+    public static FilenameFilter fmuFileFilter = new FilenameFilter() {
 
-	public static List<ModelConnection> parseConnections() throws Exception
-	{
-		List<ModelConnection> connections = new Vector<ModelConnection>();
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".fmu");
+        }
+    };
 
-		BufferedReader br = new BufferedReader(new FileReader(new File("src/test/resources/links.property".replace('/', File.separatorChar))));
-		String line;
-		while ((line = br.readLine()) != null)
-		{
-			if (line.trim().startsWith("//"))
-				continue;
-			connections.add(ModelConnection.parse(line));
-		}
-		br.close();
+    public static List<ModelConnection> parseConnections() throws Exception {
+        List<ModelConnection> connections = new Vector<ModelConnection>();
 
-		return connections;
-	}
+        BufferedReader br = new BufferedReader(new FileReader(new File("src/test/resources/links.property".replace('/', File.separatorChar))));
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (line.trim().startsWith("//")) {
+                continue;
+            }
+            connections.add(ModelConnection.parse(line));
+        }
+        br.close();
 
-	/**
-	 * Method to set variables in an fmu instance
-	 *
-	 * @param comp
-	 * @param type
-	 * @param indices
-	 * @param values
-	 * @throws InvalidParameterException
-	 * @throws FmiInvalidNativeStateException
-	 */
-	public static void setRaw(IFmiComponent comp, ModelDescription.Types type,
-			Map<Long, Object> indexToValue)
-			throws InvalidParameterException, FmiInvalidNativeStateException
-	{
-		long[] a = new long[indexToValue.size()];
-		ArrayList<Object> values = new ArrayList<Object>(indexToValue.size());
+        return connections;
+    }
 
-		List<Long> indices = new Vector<Long>();
-		indices.addAll(indexToValue.keySet());
-		Collections.sort(indices);
+    /**
+     * Method to set variables in an fmu instance
+     *
+     * @param comp
+     * @param type
+     * @param indices
+     * @param values
+     * @throws InvalidParameterException
+     * @throws FmiInvalidNativeStateException
+     */
+    public static void setRaw(IFmiComponent comp, ModelDescription.Types type,
+            Map<Long, Object> indexToValue) throws InvalidParameterException, FmiInvalidNativeStateException {
+        long[] a = new long[indexToValue.size()];
+        ArrayList<Object> values = new ArrayList<Object>(indexToValue.size());
 
-		for (int i = 0; i < indices.size(); i++)
-		{
-			a[i] = indices.get(i);
-			values.add(i, indexToValue.get(a[i]));
-		}
+        List<Long> indices = new Vector<Long>();
+        indices.addAll(indexToValue.keySet());
+        Collections.sort(indices);
 
-		setRaw(comp, type, a, values);
-	}
+        for (int i = 0; i < indices.size(); i++) {
+            a[i] = indices.get(i);
+            values.add(i, indexToValue.get(a[i]));
+        }
 
-	private static void setRaw(IFmiComponent comp, ModelDescription.Types type,
-			long[] indices, List<Object> values)
-			throws InvalidParameterException, FmiInvalidNativeStateException
-	{
-		Fmi2Status status = Fmi2Status.Error;
-		logger.trace("setRaw with comp: {}, type: {}, indices: {}, values: {}", comp, type, indices, values);
-		switch (type)
-		{
-			case Boolean:
-				status = comp.setBooleans(indices, ArrayUtils.toPrimitive((Boolean[]) values.toArray(new Boolean[] {})));
-				break;
-			case Integer:
-			case Enumeration:
-				status = comp.setIntegers(indices, ArrayUtils.toPrimitive((Integer[]) values.toArray(new Integer[] {})));
-				break;
-			case Real:
-				status = comp.setReals(indices, ArrayUtils.toPrimitive((Double[]) values.toArray(new Double[] {})));
-				break;
-			case String:
-				status = comp.setStrings(indices, values.toArray(new String[] {}));
-				break;
-			default:
-				break;
+        setRaw(comp, type, a, values);
+    }
 
-		}
+    private static void setRaw(IFmiComponent comp, ModelDescription.Types type, long[] indices,
+            List<Object> values) throws InvalidParameterException, FmiInvalidNativeStateException {
+        Fmi2Status status = Fmi2Status.Error;
+        logger.trace("setRaw with comp: {}, type: {}, indices: {}, values: {}", comp, type, indices, values);
+        switch (type) {
+            case Boolean:
+                status = comp.setBooleans(indices, ArrayUtils.toPrimitive((Boolean[]) values.toArray(new Boolean[]{})));
+                break;
+            case Integer:
+            case Enumeration:
+                status = comp.setIntegers(indices, ArrayUtils.toPrimitive((Integer[]) values.toArray(new Integer[]{})));
+                break;
+            case Real:
+                status = comp.setReals(indices, ArrayUtils.toPrimitive((Double[]) values.toArray(new Double[]{})));
+                break;
+            case String:
+                status = comp.setStrings(indices, values.toArray(new String[]{}));
+                break;
+            default:
+                break;
 
-		logger.trace("setRaw complete. Type='" + type + "', indices {} values "
-				+ values + " Status returned='" + status + "'", indices);
+        }
 
-		if (!(status == Fmi2Status.OK || status==Fmi2Status.Warning))
-		{
-			logger.error("Error setting var of type='" + type
-					+ "', indices {} values " + values + " Status returned='"
-					+ status + "'", indices);
-		}
-	}
+        logger.trace("setRaw complete. Type='" + type + "', indices {} values " + values + " Status returned='" + status + "'", indices);
 
-	/**
-	 * MEthod to get variables in an fmu instance
-	 *
-	 * @param comp    the instance
-	 * @param indices the indices to get
-	 * @param type    the types
-	 * @return a map from index to read value
-	 * @throws FmuInvocationException
-	 */
-	public static Map<ScalarVariable, Object> getRaw(IFmiComponent comp,
-			ScalarVariable[] indicesSv, long[] indices,
-			ModelDescription.Types type) throws FmuInvocationException
-	{
-		if (indices.length <= 0)
-		{
-			return null;
-		}
-		FmuResult<?> res = null;
-		Object[] resVal = null;
+        if (!(status == Fmi2Status.OK || status == Fmi2Status.Warning)) {
+            logger.error("Error setting var of type='" + type + "', indices {} values " + values + " Status returned='" + status + "'", indices);
+        }
+    }
 
-		logger.trace("getRaw {}, comp: {} indices: {}", type, comp, indices);
-		switch (type)
-		{
-			case Boolean:
-			{
-				FmuResult<boolean[]> r = comp.getBooleans(indices);
-				res = r;
-				resVal = ArrayUtils.toObject(r.result);
-				break;
-			}
-			case Integer:
-			case Enumeration:
-			{
-				FmuResult<int[]> r = comp.getInteger(indices);
-				res = r;
-				resVal = ArrayUtils.toObject(r.result);
-				break;
-			}
-			case Real:
-			{
-				FmuResult<double[]> r = comp.getReal(indices);
-				res = r;
-				resVal = ArrayUtils.toObject(r.result);
-				break;
-			}
-			case String:
-			{
-				FmuResult<String[]> r = comp.getStrings(indices);
-				res = r;
-				resVal = r.result;
-				break;
-			}
-			default:
-				break;
+    /**
+     * MEthod to get variables in an fmu instance
+     *
+     * @param comp    the instance
+     * @param indices the indices to get
+     * @param type    the types
+     * @return a map from index to read value
+     * @throws FmuInvocationException
+     */
+    public static Map<ScalarVariable, Object> getRaw(IFmiComponent comp, ScalarVariable[] indicesSv, long[] indices,
+            ModelDescription.Types type) throws FmuInvocationException {
+        if (indices.length <= 0) {
+            return null;
+        }
+        FmuResult<?> res = null;
+        Object[] resVal = null;
 
-		}
-		logger.trace("getRaw {}, comp: {} indices: {} got values: {}", type, comp, indices, resVal);
+        logger.trace("getRaw {}, comp: {} indices: {}", type, comp, indices);
+        switch (type) {
+            case Boolean: {
+                FmuResult<boolean[]> r = comp.getBooleans(indices);
+                res = r;
+                resVal = ArrayUtils.toObject(r.result);
+                break;
+            }
+            case Integer:
+            case Enumeration: {
+                FmuResult<int[]> r = comp.getInteger(indices);
+                res = r;
+                resVal = ArrayUtils.toObject(r.result);
+                break;
+            }
+            case Real: {
+                FmuResult<double[]> r = comp.getReal(indices);
+                res = r;
+                resVal = ArrayUtils.toObject(r.result);
+                break;
+            }
+            case String: {
+                FmuResult<String[]> r = comp.getStrings(indices);
+                res = r;
+                resVal = r.result;
+                break;
+            }
+            default:
+                break;
 
-		Map<ScalarVariable, Object> readVars = new HashMap<ScalarVariable, Object>();
+        }
+        logger.trace("getRaw {}, comp: {} indices: {} got values: {}", type, comp, indices, resVal);
 
-		if (res != null && (res.status == Fmi2Status.OK|| res.status == Fmi2Status.Warning))
-		{
-			if(res.status==Fmi2Status.Warning)
-			{
-				logger.warn("received warning from getRaw {}, comp: {} indices: {} got values: {}", type, comp, indices, resVal);
-			}
-			for (int i = 0; i < indices.length; i++)
-			{
-				readVars.put(indicesSv[i], resVal[i]);
-			}
-		} else
-		{
-			return null;
-		}
+        Map<ScalarVariable, Object> readVars = new HashMap<ScalarVariable, Object>();
 
-		return readVars;
-	}
+        if (res != null && (res.status == Fmi2Status.OK || res.status == Fmi2Status.Warning)) {
+            if (res.status == Fmi2Status.Warning) {
+                logger.warn("received warning from getRaw {}, comp: {} indices: {} got values: {}", type, comp, indices, resVal);
+            }
+            for (int i = 0; i < indices.length; i++) {
+                readVars.put(indicesSv[i], resVal[i]);
+            }
+        } else {
+            return null;
+        }
 
-	public static String[] getArray(List<String> list)
-	{
-		return list.toArray(new String[list.size()]);
-	}
+        return readVars;
+    }
+
+    public static String[] getArray(List<String> list) {
+        return list.toArray(new String[list.size()]);
+    }
+
+    final static Map<OutputStreamAppender, Map.Entry<File, FileOutputStream>> appenderStreams = new HashMap<>();
+
+    public static Logger getCoSimInstanceLogger(File root, String logName) {
+        //Define log pattern layout
+        PatternLayout layout = PatternLayout.newBuilder().withPattern("%d{ISO8601} %-5p - %m%n").build();
+        String loggerName = "fmi.instance." + logName+"_"+root.getPath().hashCode();
+
+        // Initialize the logger context
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        Configuration config = context.getConfiguration();
+
+        // Create a LoggerNameFilter
+        Filter filter = new AbstractFilter() {
+
+            @Override
+            public Result filter(LogEvent event) {
+                if (event.getLoggerName().equals(loggerName)) {
+                    return Result.ACCEPT;
+                }
+                return Result.DENY;
+            }
+
+        };
+        root.mkdirs();
+        OutputStreamAppender appender = null;
+        try {
+            File logFile = new File(root, logName + ".log");
+            logger.debug("Opening log file: {}",logFile);
+            FileOutputStream fileOutputStream = new FileOutputStream(logFile);
+            appender = OutputStreamAppender.newBuilder().withName(loggerName + ".file_appender").setLayout(layout).setTarget(fileOutputStream)
+                    .withFilter(filter).build();
+
+            synchronized (appenderStreams) {
+                appenderStreams.put(appender, new AbstractMap.SimpleEntry<>(logFile, fileOutputStream));
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        appender.start();
+
+        // Create a LoggerConfig with the appender and filter
+        LoggerConfig loggerConfig = LoggerConfig.newBuilder().withLoggerName(loggerName).withtFilter(filter).withLevel(Level.ALL).withConfig(config)
+                .build();
+        loggerConfig.addAppender(appender, Level.ALL, filter);
+
+        // Add the LoggerConfig to the configuration
+        config.addLogger(loggerName, loggerConfig);
+
+        // Update the configuration
+        context.updateLoggers();
+
+
+        // Get the logger
+        return LoggerFactory.getLogger(loggerName);
+    }
+
+    private static boolean removeAppender(String sessionId, org.apache.logging.log4j.core.Logger configuration) {
+        boolean found = false;
+        ArrayList<String> appendersToRemove = new ArrayList<>();
+        Map<String, Appender> appenders = configuration.getAppenders();
+
+        if (appenders != null) {
+
+            for (Map.Entry<String, Appender> appender : appenders.entrySet()) {
+                if (appender.getValue() instanceof OutputStreamAppender) {
+                    OutputStreamAppender fileAppender = (OutputStreamAppender) appender.getValue();
+
+                    Map.Entry<File, FileOutputStream> map = appenderStreams.get(fileAppender);
+
+                    if (map != null && map.getKey().getPath() != null && (sessionId == null || map.getKey().getPath()
+                            .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$"))) {
+                        // Log files for fmu instances.
+                        // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
+                        try {
+                            map.getValue().flush();
+                        } catch (IOException e) {
+                            //ignore
+                        }
+                        fileAppender.stop();
+                        try {
+                            map.getValue().close();
+                            logger.debug("Closed log file: {}",map.getKey());
+                        } catch (IOException e) {
+                            //ignore
+                        }
+                        appendersToRemove.add(fileAppender.getName());
+                        found = true;
+                    }
+                }
+
+
+                appendersToRemove.forEach(fa -> {
+                    configuration.removeAppender(appender.getValue());
+                    if (configuration.getAppenders().isEmpty()) {
+                        //lets clean up the logger as well
+                        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+                        final Configuration config = ctx.getConfiguration();
+                        config.removeLogger(configuration.getName());
+                        ctx.updateLoggers();
+
+                        synchronized (appenderStreams) {
+                            appenderStreams.remove(appender.getValue());
+                        }
+                    }
+                });
+            }
+        }
+        return found;
+    }
+
+
+    public static boolean removeCoSimInstanceLogAppenders(String sessionId) {
+        logger.debug("Close loggers for session: {}",sessionId);
+        LoggerContext context = LoggerContext.getContext(false);
+
+        boolean found = removeAppender(sessionId, context.getRootLogger());
+
+        for(org.apache.logging.log4j.core.Logger l :context.getLoggers()) {
+            found |=  removeAppender(sessionId, l);
+        }
+        return found;
+    }
+
+    public static void setLogLevel(String level) {
+        Configurator.setLevel("root", org.apache.logging.log4j.Level.valueOf(level));
+    }
+
+    public static void setLogLevel(org.apache.logging.log4j.Level level) {
+        Configurator.setLevel("root", level);
+    }
 }
+

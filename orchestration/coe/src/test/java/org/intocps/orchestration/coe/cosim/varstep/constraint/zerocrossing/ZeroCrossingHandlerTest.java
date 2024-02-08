@@ -42,9 +42,6 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.zerocrossing;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintHandler;
@@ -52,6 +49,9 @@ import org.intocps.orchestration.coe.cosim.varstep.constraint.TestUtil;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Ignore
 public class ZeroCrossingHandlerTest

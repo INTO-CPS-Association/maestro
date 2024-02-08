@@ -42,14 +42,14 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.valuetracker;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint.Operation;
 import org.intocps.orchestration.coe.cosim.varstep.derivatives.ScalarDerivativeEstimator;
 import org.intocps.orchestration.coe.cosim.varstep.extrapolationerror.ExtrapolationErrorEstimator;
+
+import java.util.Observable;
+import java.util.Observer;
 
 public class DoubleValueTracker implements Observer, ValueTracker
 {

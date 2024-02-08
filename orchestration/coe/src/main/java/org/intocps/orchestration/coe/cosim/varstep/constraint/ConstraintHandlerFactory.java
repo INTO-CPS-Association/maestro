@@ -42,13 +42,6 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Observable;
-import java.util.Set;
-
 import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
@@ -58,6 +51,8 @@ import org.intocps.orchestration.coe.cosim.varstep.constraint.zerocrossing.Zeroc
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
 import org.slf4j.Logger;
+
+import java.util.*;
 
 public class ConstraintHandlerFactory
 {

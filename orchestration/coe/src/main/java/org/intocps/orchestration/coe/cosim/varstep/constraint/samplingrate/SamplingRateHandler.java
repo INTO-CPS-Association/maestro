@@ -42,13 +42,13 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.samplingrate;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.ConstraintHandler;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
+
+import java.util.Observable;
+import java.util.Observer;
 
 public class SamplingRateHandler implements Observer, ConstraintHandler
 {

@@ -34,10 +34,10 @@
 */
 package org.intocps.orchestration.coe.cosim.base;
 
-import java.util.List;
-
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
+
+import java.util.List;
 
 /**
  * Temporary class for a fmi component model description, It needs to fetch and cache the model description for faster

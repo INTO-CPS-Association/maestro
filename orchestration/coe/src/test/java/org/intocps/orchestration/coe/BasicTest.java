@@ -36,23 +36,21 @@ package org.intocps.orchestration.coe;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 import fi.iki.elonen.NanoHTTPD;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.orchestration.coe.Api.ApiTest;
 import org.intocps.orchestration.coe.httpserver.RequestHandler;
 import org.intocps.orchestration.coe.httpserver.RequestProcessors;
 import org.intocps.orchestration.coe.httpserver.Response;
+import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.intocps.orchestration.coe.json.InitializationStatusJson;
 import org.intocps.orchestration.coe.json.ProdSessionLogicFactory;
 import org.intocps.orchestration.coe.json.StartMsgJson;
 import org.intocps.orchestration.coe.json.StatusMsgJson;
-import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.junit.Assert;
 
 import java.io.*;

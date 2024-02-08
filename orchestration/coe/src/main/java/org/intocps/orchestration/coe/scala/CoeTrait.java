@@ -37,11 +37,7 @@ package org.intocps.orchestration.coe.scala;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.cosim.CoSimStepSizeCalculator;
-import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.LogCategory;
-import scala.Double;
-import scala.Long;
-import scala.collection.immutable.List;
 
 import java.util.Map;
 

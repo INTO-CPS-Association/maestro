@@ -34,30 +34,19 @@
 */
 package org.intocps.orchestration.coe.cosim
 
-import java.lang
-
-import org.intocps.orchestration.coe.json.InitializationMsgJson
-
-import scala.collection.JavaConverters.mapAsJavaMapConverter
-import scala.collection.JavaConverters.mapAsScalaMapConverter
+import org.intocps.fmi.Fmi2Status
 import org.intocps.orchestration.coe.config.ModelConnection
 import org.intocps.orchestration.coe.config.ModelConnection.Variable
-import org.intocps.orchestration.coe.scala.CoeObject
+import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
+import org.intocps.orchestration.coe.cosim.varstep.{StepsizeCalculator, StepsizeInterval}
+import org.intocps.orchestration.coe.json.InitializationMsgJson
+import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint
+import org.intocps.orchestration.coe.scala.CoeObject.FmiInstanceConfigScalaWrapper
+import org.intocps.orchestration.coe.scala.{CoeObject, VariableResolver}
 import org.slf4j.LoggerFactory
-import org.intocps.orchestration.coe.cosim.varstep.StepsizeCalculator
-import InitializationMsgJson.Constraint
-import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval
-import org.intocps.orchestration.coe.scala.VariableResolver
 
 import scala.collection.JavaConversions._
-import org.intocps.orchestration.coe.scala.CoeObject.FmiInstanceConfigScalaWrapper
-import org.intocps.orchestration.coe.cosim.varstep.StepsizeCalculator
-import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
-import org.intocps.orchestration.coe.cosim.varstep.StepsizeCalculator
-import InitializationMsgJson.Constraint
-import org.intocps.fmi.Fmi2Status
-
-import scala.collection.immutable
+import scala.collection.JavaConverters.mapAsJavaMapConverter
 
 class VariableStepSizeCalculator(constraints: java.util.Set[Constraint],
                                  val stepsizeInterval: StepsizeInterval,

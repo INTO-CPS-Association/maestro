@@ -34,9 +34,6 @@
 */
 package org.intocps.orchestration.coe.scala
 
-import java.io.File
-import java.util
-
 import org.apache.commons.lang3.StringUtils
 import org.intocps.fmi._
 import org.intocps.orchestration.coe.AbortSimulationException
@@ -48,6 +45,8 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.{ScalarVariable, Types}
 import org.intocps.orchestration.coe.util.{Numpy, Util}
 
+import java.io.File
+import java.util
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions.{asJavaCollection, _}
 import scala.collection.JavaConverters._

@@ -42,14 +42,14 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference.stepsize;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint.Operation;
 import org.intocps.orchestration.coe.cosim.varstep.StepsizeInterval;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference.BoundedDifferenceCalculator;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
+
+import java.util.Observable;
+import java.util.Observer;
 
 public class SimpleBdStepsizeAdjustmentStrategy implements Observer,
 		BdStepsizeAdjustmentStrategy

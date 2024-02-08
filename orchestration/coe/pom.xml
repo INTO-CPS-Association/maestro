@@ -10,11 +10,13 @@
 
     <properties>
         <jackson-2-version>2.9.10.3</jackson-2-version>
+        <log4j2.version>2.20.0</log4j2.version>
     </properties>
 
     <groupId>org.into-cps.orchestration</groupId>
     <artifactId>coe</artifactId>
     <name>The orchestration engine</name>
+
 
     <repositories>
         <repository>
@@ -90,6 +92,12 @@
         <dependency>
             <groupId>org.into-cps.fmi</groupId>
             <artifactId>jnifmuapi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -131,12 +139,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/log4j/apache-log4j-extras -->
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>apache-log4j-extras</artifactId>
-            <version>1.2.17</version>
-        </dependency>
 
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
@@ -175,7 +177,43 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version> <!-- Use the latest version available -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version> <!-- Use the same version as log4j-api -->
+        </dependency>
 
+        <!-- https://mvnrepository.com/artifact/log4j/apache-log4j-extras -->
+        <!--        <dependency>-->
+        <!--            <groupId>log4j</groupId>-->
+        <!--            <artifactId>apache-log4j-extras</artifactId>-->
+        <!--            <version>1.2.17</version>-->
+        <!--        </dependency>-->
+        <!-- From Log4j 1.x to Log4j 2.x API -->
+        <!-- From Log4j 1.x to SLF4J -->
+
+        <!-- From SLF4J 2.0+ to Log4j 2.x API -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${log4j2.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.7</version> <!-- Use the latest version available -->
+        </dependency>
     </dependencies>
 
 

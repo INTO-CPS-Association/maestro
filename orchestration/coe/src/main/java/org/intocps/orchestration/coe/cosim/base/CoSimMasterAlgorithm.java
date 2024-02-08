@@ -34,9 +34,9 @@
 */
 package org.intocps.orchestration.coe.cosim.base;
 
-import java.util.Set;
-
 import org.intocps.fmi.IFmiComponent;
+
+import java.util.Set;
 
 /**
  * The master algorithm on the COE that is responsible for calling

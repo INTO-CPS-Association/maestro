@@ -34,11 +34,9 @@
 */
 package org.intocps.orchestration.coe.cosim
 
-import org.intocps.fmi.IFmiComponent
-import org.intocps.orchestration.coe.scala.CoeObject
 import org.intocps.orchestration.coe.config.ModelConnection
-import org.intocps.orchestration.coe.scala.VariableResolver
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
+import org.intocps.orchestration.coe.scala.{CoeObject, VariableResolver}
 
 /**
  * Interface that provides features to determine a step size which can be taken

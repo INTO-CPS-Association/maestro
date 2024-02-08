@@ -34,14 +34,14 @@
 */
 package org.intocps.orchestration.coe.cosim.base;
 
-import java.util.List;
-import java.util.Map;
-
 import org.intocps.fmi.FmuInvocationException;
 import org.intocps.orchestration.coe.AbortSimulationException;
-import org.intocps.orchestration.coe.config.*;
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
+import org.intocps.orchestration.coe.config.ModelParameter;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * initializer interface responsible for initializing all components.</br> Methods on this interface will be called in

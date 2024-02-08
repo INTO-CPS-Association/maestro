@@ -50,7 +50,6 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription;
 import org.intocps.orchestration.coe.modeldefinition.xml.NodeIterator;
 import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.CoeObject;
-import org.intocps.orchestration.coe.scala.IStateChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;

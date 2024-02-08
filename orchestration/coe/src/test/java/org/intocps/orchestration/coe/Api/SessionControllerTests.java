@@ -34,16 +34,6 @@
 */
 package org.intocps.orchestration.coe.Api;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.util.List;
-import java.util.Vector;
-
 import org.intocps.orchestration.coe.httpserver.NanoWebSocketImpl;
 import org.intocps.orchestration.coe.httpserver.SessionController;
 import org.intocps.orchestration.coe.httpserver.SessionLogic;
@@ -53,6 +43,12 @@ import org.intocps.orchestration.coe.scala.Coe;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by ctha on 17-03-2016.

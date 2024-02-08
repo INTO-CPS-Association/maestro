@@ -42,12 +42,12 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep;
 
-import java.io.IOException;
-
 import fi.iki.elonen.NanoHTTPD;
 import org.intocps.orchestration.coe.BasicTest;
 import org.intocps.orchestration.coe.ConditionalIgnoreRule.ConditionalIgnore;
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class VarStepOnlyBdSrTest extends BasicTest
 {

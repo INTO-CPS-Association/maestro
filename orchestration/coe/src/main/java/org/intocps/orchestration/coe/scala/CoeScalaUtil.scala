@@ -36,6 +36,7 @@ package org.intocps.orchestration.coe.scala
 
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
+
 import java.util.HashMap
 
 object CoeScalaUtil {
