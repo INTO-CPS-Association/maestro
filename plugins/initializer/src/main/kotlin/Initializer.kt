@@ -469,13 +469,13 @@ class Initializer : BasicMaestroExpansionPlugin {
         comp: ComponentVariableFmi2Api,
         builder: MablApiBuilder
     ) {
-        val fmuName = comp.name
+//        val fmuName = comp.environmentName.name
 //        var value = findUseDefault(fmuName, port.scalarVariable, modelParameters)
 
         val useEnvForPort = this.envParameters?.contains(port.multiModelScalarVariableName)
         if (useEnvForPort == null || !useEnvForPort) {
 
-            var staticValue = findParameterOrDefault(fmuName, port.scalarVariable, modelParameters)
+            var staticValue = findParameterOrDefault(comp.environmentName, port.scalarVariable, modelParameters)
             when (port.scalarVariable.type.type!!) {
                 Fmi2ModelDescription.Types.Boolean -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
                 Fmi2ModelDescription.Types.Real -> {
