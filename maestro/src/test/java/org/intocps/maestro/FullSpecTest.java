@@ -189,7 +189,8 @@ public class FullSpecTest {
         if (useTemplate) {
             MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
                                         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder();
-            MaestroV1SimulationConfiguration configV1 = MaestroV1SimulationConfiguration.parse(new File(directory, "env.json"));
+            MaestroV1SimulationConfiguration configV1 = MaestroV1SimulationConfiguration.parse(new File(directory, "env.json"),new File(directory,
+                    "config.json"));
 
             configV1.configure(builder);
 

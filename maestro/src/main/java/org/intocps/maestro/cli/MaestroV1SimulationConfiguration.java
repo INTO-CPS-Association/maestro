@@ -83,7 +83,8 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
     }
 
     @JsonIgnore
-    public MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder configure(MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder) throws Exception {
+    public MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder configure(
+            MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder) throws Exception {
         MaestroV1SimulationConfiguration simulationConfiguration = this;
         if (simulationConfiguration.getLogLevels() != null) {
             // Loglevels from app consists of {key}.instance: [loglevel1, loglevel2,...] but have to be: instance: [loglevel1, loglevel2,...].
@@ -126,17 +127,20 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
     public static MaestroV1SimulationConfiguration parse(File... files) throws IOException {
         return parse(Arrays.asList(files));
     }
+
     @JsonIgnore
     public static MaestroV1SimulationConfiguration parse(List<File> files) throws IOException {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         JsonNode rootNode = null;
         for (File jsonFile : files) {
-            JsonNode tempNode = mapper.readTree(jsonFile);
-            rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
+            if (jsonFile != null && jsonFile.exists()) {
+                JsonNode tempNode = mapper.readTree(jsonFile);
+                rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
+            }
         }
 
-       return mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
+        return mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
     }
 
     // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
