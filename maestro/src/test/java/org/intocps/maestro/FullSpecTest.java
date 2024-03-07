@@ -8,16 +8,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.ARootDocument;
+import org.intocps.maestro.cli.MaestroV1SimulationConfiguration;
 import org.intocps.maestro.core.Framework;
-import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
-import org.intocps.maestro.framework.fmi2.Fmi2EnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
-import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +152,9 @@ public class FullSpecTest {
     }
 
     protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
-        interpretSpec(directory, workingDirectory, mabl, spec);
+        if (getTestJsonObject(directory).simulate) {
+            interpretSpec(directory, workingDirectory, mabl, spec);
+        }
     }
 
     protected void interpretSpec(File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
@@ -189,34 +187,14 @@ public class FullSpecTest {
         mabl.parse(getSpecificationFiles(specFolder));
         postParse(mabl);
         if (useTemplate) {
-
-            Fmi2EnvironmentConfiguration simulationConfiguration =
-                    new ObjectMapper().readValue(new File(directory, "env.json"), Fmi2EnvironmentConfiguration.class);
-
-            Fmi2SimulationEnvironmentConfiguration simulationEnvironmentConfiguration = Fmi2SimulationEnvironmentConfiguration.createFromJsonString(
-                    new String(Files.readAllBytes(Paths.get(new File(directory, "env.json").getAbsolutePath()))));
-
-
             MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder =
-                    MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder().useInitializer(testJsonObject.initialize, "{}")
-                            .setFramework(Framework.FMI2).setFrameworkConfig(Framework.FMI2, simulationEnvironmentConfiguration);
+                                        MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder();
+            MaestroV1SimulationConfiguration configV1 = MaestroV1SimulationConfiguration.parse(new File(directory, "env.json"));
 
-            Fmi2SimulationEnvironment environment = Fmi2SimulationEnvironment.of(simulationEnvironmentConfiguration, mabl.getReporter());
-            if (testJsonObject.useLogLevels) {
-                builder.setLogLevels(environment.getLogLevels());
-            }
+            configV1.configure(builder);
 
-            if (testJsonObject.simulate && simulationConfiguration.algorithm instanceof Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) {
-                Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig a =
-                        (Fmi2EnvironmentConfiguration.FixedStepAlgorithmConfig) simulationConfiguration.algorithm;
-
-                JacobianStepConfig algorithmConfig = new JacobianStepConfig();
-                algorithmConfig.startTime = 0.0;
-                algorithmConfig.endTime = simulationConfiguration.endTime;
-                algorithmConfig.stepAlgorithm = new FixedStepAlgorithmConfig(a.size);
-
-                builder.setStepAlgorithmConfig(algorithmConfig).setVisible(simulationConfiguration.visible)
-                        .setLoggingOn(simulationConfiguration.loggingOn);
+            if (!testJsonObject.useLogLevels) {
+                builder.setLogLevels(null);
             }
 
             MaBLTemplateConfiguration configuration = builder.build();
