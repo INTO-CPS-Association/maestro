@@ -8,7 +8,7 @@ on:
         description: 'Release tag'
         required: true
       previousreleasetag:
-        description: 'Release tag'
+        description: 'Previous Release tag'
         required: true
 
 
