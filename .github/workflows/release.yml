@@ -130,11 +130,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install Python Pipenv
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pipenv
-
       - name: Put MSYS2_MinGW64 on PATH for windows
         if: ${{matrix.os == env.WINDOWS_VERSION }}
         # there is not yet an environment variable for this path from msys2/setup-msys2
@@ -161,25 +156,27 @@ jobs:
       - name: Install Python Dependencies
         run: |
           cd external_tester
-          pipenv install
+          python -m pip install --upgrade pip
+          
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: CLI Test
         timeout-minutes: 5
         run: |
           cd external_tester
-          pipenv run python maestro_cli_test.py --includeSlowTests
+          python maestro_cli_test.py --includeSlowTests
 
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          pipenv run python webapi_test.py
+          python webapi_test.py
 
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          pipenv run python cli_legacy_test.py
+          python cli_legacy_test.py
 
 
   final:
