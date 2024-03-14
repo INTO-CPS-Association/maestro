@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<fmiModelDescription fmiVersion="2.0" modelName="tankcontroller"
+                     guid="{8c4e810f-3df3-4a00-8276-176fa3c9f000}" numberOfEventIndicators="0">
+
+    <CoSimulation modelIdentifier="tankcontroller"
+                  canHandleVariableCommunicationStepSize="true" />
+
+    <ModelVariables>
+
+        <ScalarVariable name="t1" valueReference="1" variability="fixed" causality="parameter" initial="exact">
+            <Boolean start="1"/>
+        </ScalarVariable>
+        <ScalarVariable name="f1" valueReference="2" variability="fixed" causality="parameter" initial="exact">
+            <Boolean start="0"/>
+        </ScalarVariable>
+        <ScalarVariable name="t2" valueReference="3" variability="fixed" causality="parameter" initial="exact">
+            <Boolean start="true"/>
+        </ScalarVariable>
+        <ScalarVariable name="f2" valueReference="4" variability="fixed" causality="parameter" initial="exact">
+            <Boolean start="false"/>
+        </ScalarVariable>
+    </ModelVariables>
+
+    <ModelStructure>
+
+    </ModelStructure>
+
+</fmiModelDescription>
