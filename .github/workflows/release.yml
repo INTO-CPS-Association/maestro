@@ -158,7 +158,7 @@ jobs:
           cd external_tester
           python -m pip install --upgrade pip
           
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
 
       - name: CLI Test
         timeout-minutes: 5
