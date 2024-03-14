@@ -116,6 +116,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd external_tester
+          pip3 install -r requirements.txt
           python3 webapi_test.py
 
       - name: Legacy CLI Test
