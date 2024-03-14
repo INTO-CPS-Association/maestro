@@ -327,7 +327,9 @@ public class Fmi2ModelDescription extends Fmi2ModelDescriptionUnit {
     private void parseBooleanType(BooleanType type, Node node) {
         String startValue = parseTypeStart(node);
         if (startValue != null) {
-            type.start = Boolean.valueOf(startValue);
+            String valTrueFalse = startValue.replaceAll("^1", "true").replaceAll("^0", "false");
+
+            type.start = Boolean.valueOf(valTrueFalse);
         }
     }
 
