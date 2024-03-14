@@ -21,7 +21,6 @@ env:
   PYTHON_VERSION: '3.9.7'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
-  UBUNTU_VERSION: 'ubuntu-latest'
   MACOS_VERSION: 'macos-latest'
 
 
@@ -110,7 +109,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, windows-2019, macos-latest ] # ubuntu-latest, , macos-latest
+        os: [ ubuntu-22.04, windows-2019, macos-latest ] # ubuntu-latest, , macos-latest
         platform: [ x64 ] #x32, x64 ]
         exclude:
           - os: macos-latest
@@ -185,7 +184,7 @@ jobs:
 
   final:
     name: Build and Deploy Combined Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     needs: [ version_change , build ]
     steps:
