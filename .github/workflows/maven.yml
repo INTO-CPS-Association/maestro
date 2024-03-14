@@ -101,30 +101,28 @@ jobs:
       - name: Install Python Dependencies
         run: |
           cd external_tester
-          python3 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
          
-          pip3 install -r requirements.txt
+          pip install -r requirements.txt
         
 
       - name: CLI Test
         timeout-minutes: 5
         run: |
           cd external_tester
-          python3 maestro_cli_test.py --includeSlowTests
+          python maestro_cli_test.py --includeSlowTests
 
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          pip3 install -r requirements.txt
-          pip3 install requests --upgrade
-          python3 webapi_test.py
+          python webapi_test.py
 
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          python3 cli_legacy_test.py
+          python cli_legacy_test.py
 
       #- name: Threaded Web API test
       #  timeout-minutes: 5
