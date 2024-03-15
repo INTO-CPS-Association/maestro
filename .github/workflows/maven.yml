@@ -43,12 +43,6 @@ jobs:
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-
       - name: Put MSYS2_MinGW64 on PATH for windows
         if: ${{matrix.os == env.WINDOWS_VERSION }}
         # there is not yet an environment variable for this path from msys2/setup-msys2
@@ -97,6 +91,10 @@ jobs:
             **/target/surefire-reports/*
           retention-days: 1
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python Dependencies
         run: |
