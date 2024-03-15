@@ -44,7 +44,7 @@ jobs:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
