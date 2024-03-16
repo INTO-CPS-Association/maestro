@@ -125,10 +125,7 @@ jobs:
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+
 
       - name: Put MSYS2_MinGW64 on PATH for windows
         if: ${{matrix.os == env.WINDOWS_VERSION }}
@@ -152,6 +149,11 @@ jobs:
         #        if: matrix.os == env.WINDOWS_VERSION
         #        shell: msys2 {0}
         run: mvn -Pinclude-fullSpecCppTest test
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python Dependencies
         run: |
