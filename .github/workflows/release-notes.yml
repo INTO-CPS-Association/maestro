@@ -1,0 +1,105 @@
+
+name: Manual Github Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releasetag:
+        description: 'Release tag'
+        required: true
+      previousreleasetag:
+        description: 'Previous Release tag'
+        required: true
+
+
+jobs:
+
+
+  final:
+    name: Create release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          ref: ${{ github.event.inputs.releasetag }}
+
+
+
+
+      - name: Create changelog config
+        run: echo '{"max_back_track_time_days":1095}' > configuration.json
+
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v3.2.0
+        with:
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+              "categories": [
+                {
+                    "title": "## 🚀 Features",
+                    "labels": ["feature"]
+                },
+                {
+                    "title": "## 🐛 Fixes",
+                    "labels": ["fix"]
+                },
+                {
+                    "title": "## 🧪 Tests",
+                    "labels": ["test"]
+                },
+                {
+                    "title": "## 💬 Other",
+                    "labels": ["other"]
+                },
+                {
+                    "title": "## 📦 Dependencies",
+                    "labels": ["dependencies"]
+                }
+              ]
+            }
+          toTag: ${{ github.event.inputs.releasetag }}
+          fromTag: ${{ github.event.inputs.previousreleasetag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.releasetag }}
+          release_name: ${{ github.event.inputs.releasetag }}
+          body: |
+            Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.maestro/maestro/${{ needs.version_change.outputs.build_version }}/jar 
+            and https://search.maven.org/artifact/org.into-cps.maestro/maestro-webapi/${{ needs.version_change.outputs.build_version }}/jar:
+
+            ```
+            <dependency>
+              <groupId>org.into-cps.maestro</groupId>
+              <artifactId>maestro</artifactId>
+              <version>${{ needs.version_change.outputs.build_version }}</version>
+            </dependency>
+            
+            <dependency>
+              <groupId>org.into-cps.maestro</groupId>
+              <artifactId>maestro-webapi</artifactId>
+              <version>${{ needs.version_change.outputs.build_version }}</version>
+            </dependency>
+            ```
+            
+          
+            
+            
+            ### Things that changed in this release
+            ${{ steps.changelog.outputs.changelog }}
+          draft: true
+          prerelease: true
+
+
+

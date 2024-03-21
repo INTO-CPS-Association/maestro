@@ -41,11 +41,14 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 
 public class ModelDefinitionSchemaValidatorTests {
     //TODO: What is this testing?
@@ -75,5 +78,22 @@ public class ModelDefinitionSchemaValidatorTests {
 
             Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream), new Fmi2Schema());
         });
+    }
+
+    @Test()
+    public void modelDescriptionBooleans() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException, InvocationTargetException, IllegalAccessException {
+        File f = new File("src/test/resources/modelDescriptionBoolean.xml".replace('/', File.separatorChar));
+
+
+        Fmi2ModelDescription md = new Fmi2ModelDescription(f);
+        for (Fmi2ModelDescription.ScalarVariable sv : md.getScalarVariables()) {
+            if (sv.name.startsWith("t")) {
+                Assertions.assertEquals(true, (Boolean) sv.getType().start, String.format("Sc %s must be true",sv.name));
+            } else if (sv.name.startsWith("f")) {
+                Assertions.assertEquals(false, (Boolean) sv.getType().start, String.format("Sc %s must be false",sv.name));
+            }
+        }
+
+
     }
 }

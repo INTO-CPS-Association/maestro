@@ -13,10 +13,9 @@ on:
 env:
   JAVA_VERSION: 11.0.3
   SERVER_ID: ossrh
-  PYTHON_VERSION: '3.9.7'
+  PYTHON_VERSION: '3.12.2'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-2019'
-  UBUNTU_VERSION: 'ubuntu-20.04'
   MACOS_VERSION: 'macos-latest'
 
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -30,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, windows-2019, macos-latest ]
+        os: [ ubuntu-22.04, windows-2019, macos-latest ]
 
     steps:
 
@@ -43,16 +42,6 @@ jobs:
         uses: stCarolas/setup-maven@v4.4
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Python Pipenv
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pipenv
 
       - name: Put MSYS2_MinGW64 on PATH for windows
         if: ${{matrix.os == env.WINDOWS_VERSION }}
@@ -95,36 +84,43 @@ jobs:
 
       - name: upload test reports ubuntu
         uses: actions/upload-artifact@v2
-        if: ${{ failure() && matrix.os == env.UBUNTU_VERSION}}
+        if: ${{ failure() && matrix.os == 'ubuntu-22.04' }}
         with:
           name: surfire-ubuntu
           path: |
             **/target/surefire-reports/*
           retention-days: 1
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python Dependencies
         run: |
           cd external_tester
-          pipenv install
+          python -m pip install --upgrade pip
+         
+          pip install -r requirements.txt
+        
 
       - name: CLI Test
         timeout-minutes: 5
         run: |
           cd external_tester
-          pipenv run python maestro_cli_test.py --includeSlowTests
+          python maestro_cli_test.py --includeSlowTests
 
       - name: Web API Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          pipenv run python webapi_test.py
+          python webapi_test.py
 
       - name: Legacy CLI Test
         timeout-minutes: 2
         run: |
           cd external_tester
-          pipenv run python cli_legacy_test.py
+          python cli_legacy_test.py
 
       #- name: Threaded Web API test
       #  timeout-minutes: 5
@@ -134,7 +130,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 

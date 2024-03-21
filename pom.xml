@@ -24,14 +24,14 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <log4j2.version>2.17.1</log4j2.version>
-        <fmu.api.version>1.4.1-SNAPSHOT</fmu.api.version>
+        <fmu.api.version>1.4.1</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
-        <kotlin.version>1.9.0</kotlin.version>
-        <scala.version>2.13.11</scala.version>
+        <kotlin.version>1.5.0</kotlin.version>
+        <scala.version>2.13.12</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
         <jackson.version>2.15.2</jackson.version>
-        <revision>2.3.1</revision>
+        <revision>3.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <sha1/>
     </properties>
@@ -485,6 +485,12 @@
                 <scope>test</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>${scala.version}</version>
+            </dependency>
+
             <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -666,7 +672,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.12</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
