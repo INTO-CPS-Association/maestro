@@ -31,7 +31,7 @@
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
         <jackson.version>2.15.2</jackson.version>
-        <revision>2.3.1</revision>
+        <revision>3.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <sha1/>
     </properties>
