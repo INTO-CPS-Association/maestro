@@ -1,0 +1,11 @@
+{
+  "parameters": {
+    "{x1}.crtlInstance.maxlevel": 5,
+    "{x1}.crtlInstance.minlevel": 3,
+    "{x2}.wtInstance.tank.Tank.volume_initial": 2
+  },
+  "stabilisation": false,
+  "fixedPointIteration": 5,
+  "absoluteTolerance": 0.1,
+  "relativeTolerance": 0.1
+}
