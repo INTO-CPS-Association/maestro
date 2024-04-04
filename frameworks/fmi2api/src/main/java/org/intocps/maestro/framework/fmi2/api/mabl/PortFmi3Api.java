@@ -175,7 +175,7 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
 
     @Override
     public boolean isLinkedAsOutputProvider() {
-        return targetPorts.isEmpty();
+        return !targetPorts.isEmpty();
     }
 
     @Override

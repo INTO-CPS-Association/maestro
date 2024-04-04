@@ -9,7 +9,7 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.fmi3.Fmi3Causality;
 import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.fmi.fmi3.Fmi3TypeEnum;
-import org.intocps.maestro.framework.fmi2.RelationVariable;
+import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -44,10 +44,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     private final FmuVariableFmi3Api owner;
     private final String name;
     private final MablApiBuilder builder;
-    private final Map<PType, ArrayVariableFmi2Api<Object>> ioBuffer = new HashMap<>();
-    private final Map<PType, ArrayVariableFmi2Api<Object>> sharedBuffer = new HashMap<>();
-    private final Map<IMablScope, Map<PType, ArrayVariableFmi2Api<Object>>> tentativeBuffer = new HashMap<>();
-    private final Map<IMablScope, Map<PortFmi3Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
+//    private final Map<IMablScope, Map<PType, ArrayVariableFmi2Api<Object>>> tentativeBuffer = new HashMap<>();
+//    private final Map<IMablScope, Map<PortFmi3Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
     private final String environmentName;
 
 
@@ -59,7 +57,9 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     private BooleanVariableFmi2Api currentTimeStepFullStepVar = null;
     private ArrayVariableFmi2Api<Object> valueRefBuffer;
     private Map<PortFmi3Api, List<VariableFmi2Api<Object>>> derivativePortsToShare;
-    private List<String> variabesToLog;
+    private List<String> variablesToLog;
+
+    Predicate<FmiBuilder.Port> obtainAsShared= p->p.isLinked() || (variablesToLog !=null && variablesToLog.contains(p.getName()));
 
     public InstanceVariableFmi3Api(PStm declaration, FmuVariableFmi3Api parent, String name, ModelDescriptionContext3 modelDescriptionContext,
                                    MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
@@ -97,11 +97,11 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     }
 
     public List<PortFmi3Api> getVariablesToLog() {
-        return this.getPorts(this.variabesToLog.toArray(new String[0]));
+        return this.getPorts(this.variablesToLog.toArray(new String[0]));
     }
 
-    public void setVariablesToLog(List<RelationVariable> variablesToLog) {
-        this.variabesToLog = variablesToLog.stream().map(RelationVariable::getName).collect(Collectors.toList());
+    public void setVariablesToLog(List<? extends RelationVariable> variablesToLog) {
+        this.variablesToLog = variablesToLog.stream().map(RelationVariable::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -534,48 +534,48 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     //TODO: Move tentative buffer and global share buffer logic to its own module so that it is not coupled with the component logic?
     @SuppressWarnings("unchecked")
-    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> getTentative(IMablScope scope, String... names) {
-        // Get filtered port values
-        FmiBuilder.Port[] filteredPorts = this.ports.stream()
-                .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output))
-                .toArray(FmiBuilder.Port[]::new);
-        Map<PortFmi3Api, VariableFmi2Api<Object>> portToValueMap = get(scope, filteredPorts);
-        if (portToValueMap.isEmpty()) {
-            return Map.of();
-        }
-
-        // Get tentative buffer index map for the scope
-        tentativeBufferIndexMap.computeIfAbsent(scope, (s) -> new HashMap<>());
-        Map<PortFmi3Api, Integer> portToVariableIndexMap = tentativeBufferIndexMap.get(scope);
-
-        // Return a port value map where the value is an index in a tentative buffer for the given scope instead of the global IO buffer
-        return portToValueMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            PType type = entry.getKey().getType();
-            PortFmi3Api port = entry.getKey();
-            VariableFmi2Api variable = entry.getValue();
-            VariableFmi2Api<V> varToReturn;
-
-            // Get the tentative buffer for the given scope
-            tentativeBuffer.computeIfAbsent(scope, (s) -> new HashMap<>());
-            ArrayVariableFmi2Api<Object> buffer =
-                    this.getBuffer(tentativeBuffer.getOrDefault(scope, new HashMap<>()), type, "TentativeBuffer", 0, scope);
-
-            // Expand the buffer if the port has not been indexed
-            if (!portToVariableIndexMap.containsKey(port)) {
-                portToVariableIndexMap.put(port, portToVariableIndexMap.entrySet().size());
-                ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
-                tentativeBuffer.get(scope).entrySet().removeIf(x -> x.getKey().toString().equals(type.toString()));
-                tentativeBuffer.get(scope).put(type, newBuf);
-                varToReturn = (VariableFmi2Api<V>) newBuf.items().get(newBuf.items().size() - 1);
-            } else {
-                varToReturn = (VariableFmi2Api<V>) buffer.items().get(portToVariableIndexMap.get(port));
-            }
-
-            // Create the assignment from the IO buffer to the tentative buffer in MaBL
-            scope.add(MableAstFactory.newAAssignmentStm(varToReturn.getDesignator(), variable.getExp()));
-            return varToReturn;
-        }));
-    }
+//    public <V> Map<PortFmi3Api, VariableFmi2Api<V>> getTentative(IMablScope scope, String... names) {
+//        // Get filtered port values
+//        FmiBuilder.Port[] filteredPorts = this.ports.stream()
+//                .filter(p -> Arrays.asList(names).contains(p.getName()) && (p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output))
+//                .toArray(FmiBuilder.Port[]::new);
+//        Map<PortFmi3Api, VariableFmi2Api<Object>> portToValueMap = get(scope, filteredPorts);
+//        if (portToValueMap.isEmpty()) {
+//            return Map.of();
+//        }
+//
+//        // Get tentative buffer index map for the scope
+//        tentativeBufferIndexMap.computeIfAbsent(scope, (s) -> new HashMap<>());
+//        Map<PortFmi3Api, Integer> portToVariableIndexMap = tentativeBufferIndexMap.get(scope);
+//
+//        // Return a port value map where the value is an index in a tentative buffer for the given scope instead of the global IO buffer
+//        return portToValueMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+//            PType type = entry.getKey().getType();
+//            PortFmi3Api port = entry.getKey();
+//            VariableFmi2Api variable = entry.getValue();
+//            VariableFmi2Api<V> varToReturn;
+//
+//            // Get the tentative buffer for the given scope
+//            tentativeBuffer.computeIfAbsent(scope, (s) -> new HashMap<>());
+//            ArrayVariableFmi2Api<Object> buffer =
+//                    this.buffers.getBuffer(tentativeBuffer.getOrDefault(scope, new HashMap<>()), type, "TentativeBuffer", 0, scope);
+//
+//            // Expand the buffer if the port has not been indexed
+//            if (!portToVariableIndexMap.containsKey(port)) {
+//                portToVariableIndexMap.put(port, portToVariableIndexMap.entrySet().size());
+//                ArrayVariableFmi2Api<Object> newBuf = growBuffer(buffer, 1);
+//                tentativeBuffer.get(scope).entrySet().removeIf(x -> x.getKey().toString().equals(type.toString()));
+//                tentativeBuffer.get(scope).put(type, newBuf);
+//                varToReturn = (VariableFmi2Api<V>) newBuf.items().get(newBuf.items().size() - 1);
+//            } else {
+//                varToReturn = (VariableFmi2Api<V>) buffer.items().get(portToVariableIndexMap.get(port));
+//            }
+//
+//            // Create the assignment from the IO buffer to the tentative buffer in MaBL
+//            scope.add(MableAstFactory.newAAssignmentStm(varToReturn.getDesignator(), variable.getExp()));
+//            return varToReturn;
+//        }));
+//    }
 
     @Override
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>... ports) {
@@ -764,7 +764,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     @Override
     public <V> Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>, ? extends FmiBuilder.Variable<PStm, V>> getAndShare() {
-        Map<PortFmi3Api, VariableFmi2Api<V>> values = get();
+        Map<PortFmi3Api, VariableFmi2Api<V>> values = get(getPorts().stream().filter(obtainAsShared).toArray(FmiBuilder.Port[]::new));
         share(values);
         return values;
     }
@@ -1190,15 +1190,21 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                 .forEach(map -> {
                     PType type = ((PortFmi3Api) map.getValue().get(0).getKey()).getType();
 
+
+
                     Map<FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>, FmiBuilder.Variable> data =
                             map.getValue().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                     data.keySet().stream().map(PortFmi3Api.class::cast).sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue))
-                            .forEach(port -> {
+                             .forEach(port -> {
                                 //this is the sorted set of assignments, these can be replaced by a memcopy later
-                                ArrayVariableFmi2Api<Object> buffer = getSharedBuffer(type, port.getSourceObject().getVariable().getTypeIdentifier());
+                                Fmi3TypeEnum fmiType = port.getSourceObject().getVariable().getTypeIdentifier();
+
+
+
+                                ArrayVariableFmi2Api<Object> buffer =buffers.getBuffer(Buffers.BufferTypes.Share,type, fmiType);
                                 if (port.getSharedAsVariable() == null) {
-                                    ArrayVariableFmi2Api<Object> newBuf = this.buffers.growBuffer(Buffers.BufferTypes.Share, buffer, 1);
+                                    ArrayVariableFmi2Api<Object> newBuf = this.buffers.growBuffer(Buffers.BufferTypes.Share, buffer, 1,fmiType);
 
                                     VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
                                     port.setSharedAsVariable(newShared);
