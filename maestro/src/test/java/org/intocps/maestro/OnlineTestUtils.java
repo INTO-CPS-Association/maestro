@@ -17,7 +17,7 @@ import java.util.Vector;
 
 public class OnlineTestUtils {
 
-    public final static String baseDownloadUrl = "https://overture.au.dk/into-cps/examples/public-coe-test-fmus/latest/";
+    public final static String baseDownloadUrl = "https://github.com/INTO-CPS-Association/maestro/releases/download/OnlineTestModels/";
     final static String prefix = "/online-models";
 
     public static void download(List<URL> urls) throws IOException {
@@ -27,8 +27,11 @@ public class OnlineTestUtils {
             file = file.substring(file.lastIndexOf('/') + 1);
             File destination = new File("target/online-cache/" + file);
             if (!destination.exists()) {
-                System.out.println("Downloading: " + url + " as: " + destination);
-                FileUtils.copyURLToFile(url, destination);
+
+                URL zipNameUrl =new URL( url.toString().replace(".fmu",".zip"));
+
+                System.out.println("Downloading: " + zipNameUrl + " as: " + destination);
+                FileUtils.copyURLToFile(zipNameUrl, destination);
             } else {
                 System.out.println("Skipped - Downloading: " + url + " as: " + destination);
             }
