@@ -129,3 +129,4 @@ Sub command: export
         -vi, --verify=<verify>
                              Verify the spec according to the following verifier
                                groups: FMI2, Any
+
