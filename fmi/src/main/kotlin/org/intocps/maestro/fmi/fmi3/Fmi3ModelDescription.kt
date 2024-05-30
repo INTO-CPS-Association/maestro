@@ -592,7 +592,7 @@ class Fmi3ModelDescription : ModelDescription {
             val typeDefinition: ClockTypeDefinition? =
                 getTypeDefinitionFromDeclaredType(declaredType ?: "") as ClockTypeDefinition?
 
-            val interval = node.attributes.getNamedItem("interval")?.nodeValue
+            val interval = node.attributes.getNamedItem("intervalVariability")?.nodeValue
 
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -610,15 +610,15 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.ClockType,
                 declaredType,
-                node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean()
-                    ?: typeDefinition?.canBeDeactivated,
+                when(node.attributes.getNamedItem("canBeDeactivated")?.nodeValue?.toBoolean()
+                    ?: typeDefinition?.canBeDeactivated){true->true;false,null->false},
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
                 if (interval == null) typeDefinition!!.interval else valueOf(interval),
                 node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat()
                     ?: typeDefinition?.intervalDecimal,
                 node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat() ?: typeDefinition?.shiftDecimal
                 ?: (0).toFloat(),
-                node.attributes.getNamedItem("supportsFraction").nodeValue?.toBoolean()
+                node.attributes.getNamedItem("supportsFraction")?.nodeValue?.toBoolean()
                     ?: typeDefinition?.supportsFraction ?: false,
                 node.attributes.getNamedItem("resolution")?.nodeValue?.toULong() ?: typeDefinition?.resolution,
                 node.attributes.getNamedItem("intervalCounter")?.nodeValue?.toULong()

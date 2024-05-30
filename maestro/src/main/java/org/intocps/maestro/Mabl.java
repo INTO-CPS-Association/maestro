@@ -112,8 +112,12 @@ public class Mabl {
         if (resourceAsStream == null) {
             return null;
         }
-        ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
+        try {
+            ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
         return parse;
+        }catch(IllegalStateException e){
+            throw new IllegalStateException(e.getMessage()+" in module "+module,e);
+        }
     }
 
     public static List<ARootDocument> getModuleDocuments(List<String> modules) throws IOException {

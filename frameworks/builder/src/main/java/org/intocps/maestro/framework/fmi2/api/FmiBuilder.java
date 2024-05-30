@@ -5,6 +5,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 
 import javax.xml.xpath.XPathExpressionException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -256,6 +257,8 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
 
         <CV> ArrayVariable<AST, CV> store(String name, CV[] value);
 
+         <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, IntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+
         /**
          * Store the given value and get a tag for it. Copy
          *
@@ -443,7 +446,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     }
 
 
-    interface NamedValue extends Value<Object> {
+    interface NamedValue extends Value<Object>,ProvidesTypedReferenceExp {
     }
 
 
@@ -452,6 +455,12 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
 
         void increment();
     }
+
+    interface UIntVariable<AST> extends Variable<AST, UIntExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp{
+        void decrement();
+
+        void increment();
+    };
 
 
     interface ProvidesTypedReferenceExp {
@@ -842,7 +851,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
                                                                DoubleVariable<AST> communicationStepSize);
     }
 
-    interface Variable<AST, V> {
+    interface Variable<AST, V> extends ProvidesTypedReferenceExp {
         String getName();
 
         void setValue(V value);
@@ -875,6 +884,9 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     }
 
     interface IntExpressionValue extends NumericExpressionValue {
+    }
+
+    interface UIntExpressionValue extends IntExpressionValue {
     }
 
     interface StringExpressionValue extends FmiBuilder.ExpressionValue {

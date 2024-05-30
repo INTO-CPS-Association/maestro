@@ -31,6 +31,7 @@ public class ArrayVariableFmi2Api<T> extends VariableFmi2Api<FmiBuilder.NamedVar
 
     @Override
     public void setValue(FmiBuilder.IntExpressionValue index, FmiBuilder.ExpressionValue value) {
-        AAssigmentStm stm = newAAssignmentStm(newAArayStateDesignator(this.getDesignator(), index.getExp()), value.getExp());
+        AAssigmentStm stm = newAAssignmentStm(newAArayStateDesignator(this.getDesignator().clone(), index.getExp().clone()), value.getExp());
+        this.dynamicScope.add(stm);
     }
 }

@@ -6,6 +6,7 @@ import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
@@ -183,6 +184,12 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V value[]) {
         return activeScope.store(name, value);
+    }
+
+    @Override
+    public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
+                                                         FmiBuilder.IntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return activeScope.createArray(name,type,sizes);
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AParallelBlockStm;
+import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
@@ -13,6 +14,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.*;
 import java.util.function.Supplier;
@@ -228,6 +230,12 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
 
+    @Override
+    public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
+                                                   FmiBuilder.IntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return newArray(() -> builder.getNameGenerator().getName(name), type, sizes);
+    }
+
 
     public DoubleVariableFmi2Api store(Supplier<String> nameProvider, double value) {
         String name = nameProvider.get();
@@ -263,6 +271,44 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
         add(var);
         return new StringVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
+    }
+
+    private <V> ArrayVariableFmi2Api<V> newArray(Supplier<String> nameProvider, Class<? extends V> type,
+                                                 FmiBuilder.IntVariable<PStm>... sizes) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
+        PType type_ = null;
+
+        if (FmiBuilder.IntVariable.class.isAssignableFrom(type)) {
+            type_ = new AIntNumericPrimitiveType();
+        } else if (FmiBuilder.UIntVariable.class.isAssignableFrom(type)) {
+            type_ = new AUIntNumericPrimitiveType();
+        } else if (FmiBuilder.BoolVariable.class.isAssignableFrom(type)) {
+            type_ = new ABooleanPrimitiveType();
+        } else if (FmiBuilder.DoubleVariable.class.isAssignableFrom(type)) {
+            type_ = new ARealNumericPrimitiveType();
+        } else if (FmiBuilder.StringVariable.class.isAssignableFrom(type)) {
+            type_ = new ABooleanPrimitiveType();
+        } else {
+            throw new IllegalArgumentException("Type not supported: " + type.getName());
+        }
+
+
+        String name = nameProvider.get();
+
+        List<PExp> size_ = Arrays.stream(sizes).map(FmiBuilder.ProvidesTypedReferenceExp::getExp).map(PExp::clone).collect(Collectors.toList());
+
+
+        AVariableDeclaration variableDeclaration = new AVariableDeclaration();
+        variableDeclaration.setName(newAIdentifier(name));
+        variableDeclaration.setType(type_);
+        variableDeclaration.setSize(size_);
+
+        PStm arrayVariableStm = newALocalVariableStm(variableDeclaration);
+        add(arrayVariableStm);
+
+        //the array is dynamic so we cannot do anything about the items
+        return new ArrayVariableFmi2Api<>(arrayVariableStm, type_.clone(), builder.getDynamicScope(),
+                builder.getDynamicScope(), newAIdentifierStateDesignator(name), newAIdentifierExp(name), Collections.emptyList());
     }
 
     /**
@@ -310,7 +356,7 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
      * @return an ArrayVariable representing the multidimensional array
      */
     private <V> ArrayVariableFmi2Api<V> instantiateMDArrayRecursively(V[] array, PStm declaringStm, PStateDesignatorBase stateDesignator,
-            PExpBase indexExp) {
+                                                                      PExpBase indexExp) {
 
         if (array.getClass().getComponentType().isArray()) {
             List<VariableFmi2Api> arrays = new ArrayList<>();

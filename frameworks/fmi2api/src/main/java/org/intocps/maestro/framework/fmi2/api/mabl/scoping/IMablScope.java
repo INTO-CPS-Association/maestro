@@ -1,11 +1,13 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
@@ -85,6 +87,9 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
     <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
 
     @Override
+ <V > ArrayVariableFmi2Api<V> createArray(String name,Class<? extends V> type, FmiBuilder.IntVariable<PStm>... sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+
+    @Override
     <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag);
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
@@ -92,6 +97,7 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
     DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable);
 
     ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
+
 
     FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception;
 

@@ -125,13 +125,7 @@ public class BuilderFmi3Test {
 
         controller.exitInitializationMode();
         tank.exitInitializationMode();
- /*
-        IMablScope scope1 = dynamicScope.getActiveScope();
-        for (int i = 0; i < 4; i++) {
-            dynamicScope.enterIf(null);
-            AMablFmi2ComponentAPI tank2 = tankFMU.create("tank");
-        }
-        scope1.activate();*/
+
         ComponentVariableFmi2Api tank2 = tankFMU.instantiate("tank");
 
 
