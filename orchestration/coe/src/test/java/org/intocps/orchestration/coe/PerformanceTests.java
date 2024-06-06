@@ -35,7 +35,6 @@
 package org.intocps.orchestration.coe;
 
 import fi.iki.elonen.NanoHTTPD;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;

@@ -38,21 +38,15 @@ import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.RootLogger;
+import org.apache.logging.log4j.Level;
 import org.intocps.orchestration.coe.BasicTest;
 import org.intocps.orchestration.coe.OnlineModelsCoSimTest;
-import org.intocps.orchestration.coe.scala.CoeObject;
-import org.intocps.orchestration.coe.scala.CoeSimulator;
+import org.intocps.orchestration.coe.util.Util;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.*;
@@ -196,7 +190,7 @@ public class StressTest extends BasicTest
 
 		final int replications = 100;
 
-		Logger.getRootLogger().setLevel(Level.ERROR);
+		Util.setLogLevel(Level.ERROR);
 
 		Map<Integer, Map<String, Object>> parametersArg = new HashedMap();
 		Map<String, Object> parameters = new HashedMap();
@@ -237,7 +231,7 @@ public class StressTest extends BasicTest
 
 		final int replications = 100;
 
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Util.setLogLevel(Level.DEBUG);
 
 		Map<Integer, Map<String, Object>> parametersArg = new HashedMap();
 		Map<String, Object> parameters = new HashedMap();

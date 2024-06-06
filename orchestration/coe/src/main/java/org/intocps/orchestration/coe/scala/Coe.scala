@@ -34,11 +34,6 @@
 */
 package org.intocps.orchestration.coe.scala
 
-import java.io.File
-import java.net.URI
-import java.util
-import java.util.List
-
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
@@ -53,6 +48,10 @@ import org.intocps.orchestration.coe.scala.CoeObject.{FmiSimulationInstanceScala
 import org.intocps.orchestration.coe.{AbortSimulationException, BasicInitializer}
 import org.slf4j.LoggerFactory
 
+import java.io.File
+import java.net.URI
+import java.util
+import java.util.List
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{LinkedList, ListBuffer}

@@ -42,12 +42,12 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.derivatives;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable;
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DerivativeEstimator
 {

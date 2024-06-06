@@ -34,15 +34,6 @@
 */
 package org.intocps.orchestration.coe.scala
 
-import org.apache.commons.io.FileUtils
-import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
-import java.io.BufferedOutputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
-import scala.collection.immutable.SortedMap
-
-import java.io.File
-
 object ResultStorage
 {
 

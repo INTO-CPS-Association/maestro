@@ -34,11 +34,6 @@
 */
 package org.intocps.orchestration.coe;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-
 import org.apache.commons.io.FileUtils;
 import org.intocps.fmi.FmuInvocationException;
 import org.intocps.fmi.IFmu;
@@ -46,6 +41,11 @@ import org.intocps.fmi.jnifmuapi.Factory;
 import org.intocps.orchestration.coe.hierarchical.HierarchicalCoeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
 
 public class FmuFactory
 {

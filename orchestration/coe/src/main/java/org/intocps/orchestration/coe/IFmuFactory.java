@@ -34,10 +34,10 @@
 */
 package org.intocps.orchestration.coe;
 
+import org.intocps.fmi.IFmu;
+
 import java.io.File;
 import java.net.URI;
-
-import org.intocps.fmi.IFmu;
 
 public interface IFmuFactory
 {

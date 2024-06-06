@@ -37,8 +37,8 @@ package org.intocps.orchestration.coe.cosim
 
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.cosim.base.FmiSimulationInstance
-import org.intocps.orchestration.coe.scala.{Coe, VariableResolver}
 import org.intocps.orchestration.coe.scala.CoeObject.{GlobalState, Inputs, Outputs}
+import org.intocps.orchestration.coe.scala.{Coe, VariableResolver}
 
 /**
   * Created by kel on 04/10/2017.

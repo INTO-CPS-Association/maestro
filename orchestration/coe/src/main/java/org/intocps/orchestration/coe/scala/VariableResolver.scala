@@ -35,10 +35,9 @@
 package org.intocps.orchestration.coe.scala
 
 import org.intocps.fmi.IFmu
+import org.intocps.orchestration.coe.config.ModelConnection.{ModelInstance, Variable}
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
-import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
-import org.intocps.orchestration.coe.config.ModelConnection.Variable
 
 class VariableResolver( fmuMap: Map[String, (IFmu, (ModelDescription, List[ScalarVariable]))]) {
 

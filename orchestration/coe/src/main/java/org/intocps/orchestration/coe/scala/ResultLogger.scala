@@ -34,20 +34,13 @@
 */
 package org.intocps.orchestration.coe.scala
 
-import java.io.{BufferedOutputStream, File, FileOutputStream, OutputStream}
-
+import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
 import org.intocps.orchestration.coe.scala.CoeObject.GlobalState
 import org.slf4j.LoggerFactory
 
-import org.apache.commons.io.FileUtils
-import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance
-import java.io.BufferedOutputStream
-import java.io.FileOutputStream
-import java.io.OutputStream
+import java.io.{BufferedOutputStream, File, FileOutputStream, OutputStream}
 import scala.collection.immutable.SortedMap
-
-import java.io.File
 
 /**
   * Created by kel on 18/07/16.
@@ -91,8 +84,7 @@ class ResultLogger(file: File, enabledVariables: Map[ModelInstance, Set[ScalarVa
   }
 
   override def stop(): Unit =
-  {
-    logger.debug("Closing file {}.", file)
+  { if (resultOutputStream != null)
     resultOutputStream.close()
   }
 

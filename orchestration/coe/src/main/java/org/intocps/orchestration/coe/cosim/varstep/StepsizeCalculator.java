@@ -42,14 +42,6 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
-
 import org.intocps.orchestration.coe.AbortSimulationException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelConnection.ModelInstance;
@@ -65,6 +57,8 @@ import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVari
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 public class StepsizeCalculator
 {

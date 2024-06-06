@@ -34,19 +34,17 @@
 */
 package org.intocps.orchestration.coe.httpserver;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoWSD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import fi.iki.elonen.NanoHTTPD;
-import fi.iki.elonen.NanoWSD;
 
 /**
  * Created by ctha on 29-03-2016.

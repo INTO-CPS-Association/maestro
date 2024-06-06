@@ -35,11 +35,8 @@
 package org.intocps.orchestration.coe.scala
 
 import org.intocps.orchestration.coe.modeldefinition.ModelDescription.ScalarVariable
-import org.intocps.fmi.IFmiComponentState
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters.mapAsJavaMapConverter
-import scala.collection.JavaConverters.mapAsScalaMapConverter
 
 class InstanceState(val time: Double,
                     val state: Map[ScalarVariable, Object],

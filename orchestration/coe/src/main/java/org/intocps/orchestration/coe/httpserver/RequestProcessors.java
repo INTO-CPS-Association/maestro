@@ -38,9 +38,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
 import org.intocps.orchestration.coe.config.InvalidVariableStringException;
 import org.intocps.orchestration.coe.config.ModelConnection;
 import org.intocps.orchestration.coe.config.ModelParameter;
@@ -56,6 +53,7 @@ import org.intocps.orchestration.coe.scala.Coe;
 import org.intocps.orchestration.coe.scala.CoeStatus;
 import org.intocps.orchestration.coe.scala.LogVariablesContainer;
 import org.intocps.orchestration.coe.util.DeleteOnCloseFileInputStream;
+import org.intocps.orchestration.coe.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,7 +190,8 @@ public class RequestProcessors {
             }
 
             if (st.overrideLogLevel != null) {
-                LogManager.getRootLogger().setLevel(Level.toLevel(st.overrideLogLevel));
+                org.intocps.orchestration.coe.util.Util.setLogLevel(st.overrideLogLevel);
+
             }
 
             if (st.getFmuFiles() == null) {
@@ -421,36 +420,7 @@ public class RequestProcessors {
     }
 
     public NanoHTTPD.Response processDestroy(String sessionId) throws IOException {
-        logger.debug("Destroying session {}.", sessionId);
-        org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        ArrayList<FileAppender> appendersToRemove = new ArrayList<>();
-        Enumeration appenders = rootLogger.getAllAppenders();
-
-        if (appenders != null) {
-            while (appenders.hasMoreElements()) {
-                try {
-                    Object element = appenders.nextElement();
-                    if (element != null && element instanceof FileAppender) {
-                        FileAppender fileAppender = (FileAppender) element;
-                        logger.debug("Checking if appender to file {} belongs to session {}", fileAppender.getFile(), sessionId);
-                        if (fileAppender.getFile() != null && fileAppender.getFile()
-                                .matches("(.*)(" + sessionId + ")[/\\\\](.*)[/\\\\].*(\\.log)$")) {
-                            // Log files for fmu instances.
-                            // Regex matches <anything>+sessionId+</OR\>+<anything>+</OR\>+anything.log
-                            logger.debug("Closing appender to file {}", fileAppender.getFile());
-                            fileAppender.close();
-                            appendersToRemove.add(fileAppender);
-                        }
-                    }
-                } catch (NoSuchElementException e) {
-                    //this is not synchronized so this can happen
-                }
-            }
-            appendersToRemove.forEach(fa -> {
-                rootLogger.removeAppender(fa);
-            });
-
-        }
+        Util.removeCoSimInstanceLogAppenders(sessionId);
         File resultFile = this.sessionController.getSessionRootDir(sessionId);
         logger.debug("Deleting directory {}.", resultFile.getPath());
         FileUtils.deleteDirectory(resultFile);

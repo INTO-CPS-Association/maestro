@@ -42,10 +42,10 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.valuetracker;
 
+import org.intocps.orchestration.coe.config.ModelConnection.Variable;
+
 import java.util.List;
 import java.util.Observable;
-
-import org.intocps.orchestration.coe.config.ModelConnection.Variable;
 
 public class OptionalDifferenceTracker implements ValueTracker
 {

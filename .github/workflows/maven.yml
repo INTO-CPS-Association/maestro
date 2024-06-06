@@ -5,9 +5,8 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ 1.x.x-development ]
+
   pull_request:
-    branches: [ 1.x.x-development ]
 
 
 
@@ -18,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        os: [ubuntu-20.04, macos-latest, windows-2019]
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.8
@@ -30,18 +29,8 @@ jobs:
     - name: Maven Test
       run: mvn test
     - name: Artifact Name
-      if: runner.os == 'macOS'
-      run: |
-           JARPATH=$(find . -type f -iname 'coe-*-SNAPSHOT-jar-with-dependencies.jar')
-           echo "Found jar path: ${JARPATH}"
-           echo "Setting artifactpath to ${JARPATH}"
-           echo "::set-env name=artifactpath::${JARPATH}"
-           JARNAME=$(basename $JARPATH)
-           echo "Setting artifactname to ${JARNAME}"
-           echo "::set-env name=artifactname::${JARNAME}"
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v3
       with:
-        name: ${{env.artifactname}}
-        path: ${{env.artifactpath}}
+        name: maestro.jar
+        path: orchestration/coe/target/coe-*-SNAPSHOT-jar-with-dependencies.jar
+        retention-days: 5

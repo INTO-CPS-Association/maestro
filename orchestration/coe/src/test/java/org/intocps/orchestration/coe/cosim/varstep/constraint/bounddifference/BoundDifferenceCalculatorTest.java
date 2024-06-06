@@ -42,14 +42,14 @@
 */
 package org.intocps.orchestration.coe.cosim.varstep.constraint.bounddifference;
 
-import static org.junit.Assert.assertEquals;
-
 import org.intocps.orchestration.coe.cosim.varstep.CurrentSolutionPoint;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.TestUtil;
 import org.intocps.orchestration.coe.cosim.varstep.constraint.boundeddifference.BoundedDifferenceCalculator;
 import org.intocps.orchestration.coe.json.InitializationMsgJson.Constraint;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class BoundDifferenceCalculatorTest
