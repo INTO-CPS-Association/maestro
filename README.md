@@ -98,3 +98,4 @@ for more see https://github.com/overturetool/overture/wiki/Release-Process
 remember to create github release from the released tag and upload: `target/checkout/orchestration/coe/target/coe-0.0.2-jar-with-dependencies.jar`.
 
 Furthermore, remember to update the download.json file in the development branch of INTO-CPS/github.io
+
