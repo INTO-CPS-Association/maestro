@@ -26,7 +26,7 @@
         <log4j2.version>2.17.1</log4j2.version>
         <fmu.api.version>1.4.1</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
-        <kotlin.version>1.5.0</kotlin.version>
+        <kotlin.version>1.7.21</kotlin.version>
         <scala.version>2.13.12</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
