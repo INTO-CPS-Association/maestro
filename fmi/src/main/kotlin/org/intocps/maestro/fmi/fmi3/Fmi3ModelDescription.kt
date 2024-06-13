@@ -284,7 +284,7 @@ class Fmi3ModelDescription : ModelDescription {
             return Fmi3ModelStructureElement(
                 valueOf(node.nodeName),
                 node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
-                node.attributes.getNamedItem("dependencies")?.nodeValue?.split(" ")
+                node.attributes.getNamedItem("dependencies")?.nodeValue?.split(" ")?.filter { value->value.trim().length>0 }
                     ?.map { value -> value.toUInt() },
                 (node.attributes.getNamedItem("dependenciesKind")?.nodeValue ?: "").let { dependencyKinds ->
                     if (dependencyKinds.isEmpty()) null else dependencyKinds.split(" ")
