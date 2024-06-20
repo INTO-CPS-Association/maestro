@@ -140,7 +140,7 @@ public class CMakeUtil {
     public boolean generate(File source, File build, File install) throws IOException, InterruptedException, CMakeGenerateException {
         String cmake = "cmake";
 
-        if (isMac() && !"true".equals(System.getenv("CI"))) {
+        if (isMac() && System.getenv("CI")==null) {
             cmake = "/usr/local/bin/cmake";
         }
 
