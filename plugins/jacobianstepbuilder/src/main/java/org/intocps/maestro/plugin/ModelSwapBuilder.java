@@ -28,7 +28,7 @@ class ModelSwapBuilder {
                 .findFirst();
         if (relation.isPresent()) {
             String source = relation.get().getSource().getInstance().getText();
-            sourcePort = fmuInstances.get(source).getPort(relation.get().getSource().getName());
+            sourcePort = fmuInstances.entrySet().stream().filter(pair->pair.getValue().getEnvironmentName().equals(source)).map(pair->pair.getValue().getPort(relation.get().getSource().getName())).findFirst().orElse(null);//)..getPort(relation.get().getSource().getName());
         }
         return sourcePort;
     }
