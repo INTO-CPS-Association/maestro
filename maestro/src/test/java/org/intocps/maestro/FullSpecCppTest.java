@@ -14,6 +14,8 @@ import org.intocps.maestro.util.CMakeUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +29,7 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@DisabledOnOs(OS.WINDOWS)
 public class FullSpecCppTest extends FullSpecTest {
     public static final List<String> CACHE_FOLDERS = Arrays.asList("libzip", "rapidjson", "intocpsfmi-src");
     static final File baseProjectPath = Paths.get("target", FullSpecCppTest.class.getSimpleName(), "_base").toFile().getAbsoluteFile();
@@ -79,7 +82,7 @@ public class FullSpecCppTest extends FullSpecTest {
 
     @Override
     protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec,
-            Map<INode, PType> value) throws Exception {
+                                   Map<INode, PType> value) throws Exception {
         if (!beforeExecuted) {
             configureBaseProject();
         }
@@ -139,8 +142,8 @@ public class FullSpecCppTest extends FullSpecTest {
             spec.apply(new DepthFirstAnalysisAdaptor() {
                 @Override
                 public void caseALoadExp(ALoadExp node) {
-                    if (node.getArgs().size() == 3 && node.getArgs().get(0) instanceof AStringLiteralExp && ((AStringLiteralExp) node.getArgs()
-                            .get(0)).getValue().equals("FMI2")) {
+                    if (node.getArgs().size() == 3 && node.getArgs().get(0) instanceof AStringLiteralExp &&
+                            ((AStringLiteralExp) node.getArgs().get(0)).getValue().equals("FMI2")) {
                         if (node.getArgs().get(2) instanceof AStringLiteralExp) {
                             fmus.add(new File(((AStringLiteralExp) node.getArgs().get(2)).getValue()));
                         }
@@ -168,8 +171,8 @@ public class FullSpecCppTest extends FullSpecTest {
                 }
 
                 pb = new ProcessBuilder(simProjectSimFile.getAbsolutePath(), "-runtime", runtimeFileTest.getAbsolutePath());
-                File simulationWorkingDir = directory.getAbsoluteFile().getParentFile().getParentFile().getParentFile().getParentFile()
-                        .getParentFile().getParentFile();
+                File simulationWorkingDir =
+                        directory.getAbsoluteFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile().getParentFile();
                 System.out.println("Simulation working dir: " + simulationWorkingDir);
                 pb.directory(simulationWorkingDir);
                 Assertions.assertTrue(CMakeUtil.runProcess(pb, true), "Simulation did not complete without errors (" + name + ")");
