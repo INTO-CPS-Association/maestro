@@ -79,7 +79,7 @@ public class Fmi2Interpreter {
         throw new InterpreterException("Value is not string");
     }
 
-  public  static void checkArgLength(List<Value> values, int size) {
+    public static void checkArgLength(List<Value> values, int size) {
         if (values == null) {
             throw new InterpreterException("No values passed");
         }
@@ -479,6 +479,111 @@ public class Fmi2Interpreter {
                     FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
                     Fmi2Status res = component.freeState(stateValue.getModule());
                     return new IntegerValue(res.value);
+                } catch (FmuInvocationException e) {
+                    throw new InterpreterException(e);
+                }
+            }
+
+            throw new InterpreterException("Invalid value");
+
+
+        }));
+
+        componentMembers.put("getSerializedFMUstateSize", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+            checkArgLength(fcargs, 2);
+
+            if (!(fcargs.get(1).isUpdatable())) {
+                throw new InterpreterException("size value not a reference value");
+            }
+
+            Value v = fcargs.get(0).deref();
+            Value sizeValue = fcargs.get(1);
+
+            if (v instanceof FmuComponentStateValue && sizeValue.isNumeric()) {
+                try {
+                    FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                    FmuResult<Long> res = component.getSerializedFMUstateSize(stateValue.getModule());
+                    if (res.status == Fmi2Status.OK) {
+                        ((UpdatableValue) sizeValue).setValue(new LongValue(res.result));
+                    }
+                    return new IntegerValue(res.status.value);
+                } catch (FmuInvocationException e) {
+                    throw new InterpreterException(e);
+                }
+            }
+
+            throw new InterpreterException("Invalid value");
+
+
+        }));
+
+        componentMembers.put("serializeFMUstate", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+            checkArgLength(fcargs, 3);
+
+            if (!(fcargs.get(2).isUpdatable())) {
+                throw new InterpreterException("bytes value not a reference value");
+            }
+
+            Value v = fcargs.get(0).deref();
+            Value sizeValue = fcargs.get(1).deref();
+            Value bytesValue = fcargs.get(2);
+
+            if (v instanceof FmuComponentStateValue && sizeValue.isNumeric()) {
+                try {
+                    FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
+                    NumericValue size = (NumericValue) sizeValue;
+                    FmuResult<byte[]> res = component.serializeFMUstate(stateValue.getModule(), size.longValue());
+
+                    if (res.status == Fmi2Status.OK) {
+                        List<ByteValue> byteValues = new Vector<>();
+                        for (byte b : res.result) {
+                            byteValues.add(new ByteValue(b));
+                        }
+
+                        ((UpdatableValue) bytesValue).setValue(new ArrayValue<>(byteValues));
+                    }
+                    return new IntegerValue(res.status.value);
+                } catch (FmuInvocationException e) {
+                    throw new InterpreterException(e);
+                }
+            }
+
+            throw new InterpreterException("Invalid value");
+
+
+        }));
+
+        componentMembers.put("deSerializeFMUstate", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+            checkArgLength(fcargs, 3);
+
+            if (!(fcargs.get(2).isUpdatable())) {
+                throw new InterpreterException("bytes value not a reference value");
+            }
+
+            Value bytesValue = fcargs.get(0).deref();
+            Value sizeValue = fcargs.get(1).deref();
+            Value stateValue = fcargs.get(2);
+
+            if (stateValue instanceof FmuComponentStateValue && sizeValue.isNumeric()) {
+                try {
+                    NumericValue size = (NumericValue) sizeValue;
+                    ArrayValue<ByteValue> byteArray = (ArrayValue<ByteValue>) bytesValue;
+                    byte[] bytes = new byte[byteArray.getValues().size()];
+                    for (int i = 0; i < bytes.length; i++) {
+                        bytes[i] = (byte) byteArray.getValues().get(i).getValue();
+                    }
+
+                    FmuResult<IFmiComponentState> res = component.deSerializeFMUstate(bytes, size.longValue());
+
+                    if (res.status == Fmi2Status.OK) {
+                        UpdatableValue ref = (UpdatableValue) stateValue;
+                        ref.setValue(new FmuComponentStateValue(res.result));
+                    }
+
+                    return new IntegerValue(res.status.value);
                 } catch (FmuInvocationException e) {
                     throw new InterpreterException(e);
                 }
