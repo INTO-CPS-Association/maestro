@@ -3,13 +3,13 @@ package org.intocps.maestro.framework.fmi2.api.mabl.values;
 import org.intocps.maestro.ast.node.AIntNumericPrimitiveType;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 
-public class IntExpressionValue extends NumericExpressionValueFmi2Api implements Fmi2Builder.IntExpressionValue {
+public class IntExpressionValue extends NumericExpressionValueFmi2Api implements FmiBuilder.IntExpressionValue {
 
     final PType type = new AIntNumericPrimitiveType();
     final PExp exp;
@@ -79,7 +79,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
     }
 
     @Override
-    public NumericExpressionValueFmi2Api addition(Fmi2Builder.NumericTypedReferenceExp v) {
+    public NumericExpressionValueFmi2Api addition(FmiBuilder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newPlusExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {
@@ -90,7 +90,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
     }
 
     @Override
-    public NumericExpressionValueFmi2Api divide(Fmi2Builder.NumericTypedReferenceExp v) {
+    public NumericExpressionValueFmi2Api divide(FmiBuilder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue || v instanceof IntExpressionValue) {
             return new DoubleExpressionValue(newDivideExp(this.getExp(), v.getExp()));
         } else {
@@ -99,7 +99,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
     }
 
     @Override
-    public NumericExpressionValueFmi2Api subtraction(Fmi2Builder.NumericTypedReferenceExp v) {
+    public NumericExpressionValueFmi2Api subtraction(FmiBuilder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newMinusExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {
@@ -110,7 +110,7 @@ public class IntExpressionValue extends NumericExpressionValueFmi2Api implements
     }
 
     @Override
-    public NumericExpressionValueFmi2Api multiply(Fmi2Builder.NumericTypedReferenceExp v) {
+    public NumericExpressionValueFmi2Api multiply(FmiBuilder.NumericTypedReferenceExp v) {
         if (v instanceof DoubleExpressionValue) {
             return new DoubleExpressionValue(newMultiplyExp(this.getExp(), v.getExp()));
         } else if (v instanceof IntExpressionValue) {

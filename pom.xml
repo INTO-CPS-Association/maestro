@@ -26,12 +26,12 @@
         <log4j2.version>2.17.1</log4j2.version>
         <fmu.api.version>1.4.1</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
-        <kotlin.version>1.5.0</kotlin.version>
+        <kotlin.version>1.7.21</kotlin.version>
         <scala.version>2.13.12</scala.version>
         <kotlin.jvmTarget>11</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
         <jackson.version>2.15.2</jackson.version>
-        <revision>2.4.2</revision>
+        <revision>3.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <sha1/>
     </properties>
@@ -280,7 +280,6 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.3</version>
-
                     <configuration>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <!-- Activate the use of TCP to transmit events to the plugin -->
@@ -317,7 +316,7 @@
                     <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>3.6.0</version>
                 </plugin>
 
 

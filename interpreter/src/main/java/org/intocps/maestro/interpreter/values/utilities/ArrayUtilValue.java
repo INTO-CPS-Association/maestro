@@ -61,15 +61,15 @@ public class ArrayUtilValue extends ExternalModuleValue<Object> {
 
             List<RealValue> from = getArrayValue(fcargs.get(0), RealValue.class);
 
-            int fromIndex = ((IntegerValue) fcargs.get(1).deref()).getValue();
-            int fromCount = ((IntegerValue) fcargs.get(2).deref()).getValue();
+            int fromIndex = ((NumericValue) fcargs.get(1).deref()).intValue();
+            int fromCount = ((NumericValue) fcargs.get(2).deref()).intValue();
 
             UpdatableValue to = (UpdatableValue) fcargs.get(3);
-            int toStartIndex = ((IntegerValue) fcargs.get(4).deref()).getValue();
+            int toStartIndex = ((NumericValue) fcargs.get(4).deref()).intValue();
 
-            ArrayValue<RealValue> toSource = (ArrayValue<RealValue>) to.deref();
+            ArrayValue<NumericValue> toSource = (ArrayValue<NumericValue>) to.deref();
 
-            RealValue[] values = new RealValue[toSource.getValues().size()];
+            NumericValue[] values = new NumericValue[toSource.getValues().size()];
             for (int i = 0; i < fromCount; i++) {
                 values[toStartIndex + i] = from.get(i + fromIndex);
             }
@@ -82,13 +82,19 @@ public class ArrayUtilValue extends ExternalModuleValue<Object> {
             }
 
 
-            ArrayValue<RealValue> newValue = new ArrayValue<>(Arrays.asList(values));
+            ArrayValue<NumericValue> newValue = new ArrayValue<>(Arrays.asList(values));
 
 
             to.setValue(newValue);
 
 
             return new VoidValue();
+        }));
+
+        componentMembers.put("createByteArrayArray", new FunctionValue.ExternalFunctionValue(fcargs -> {
+            checkArgLength(fcargs, 1);
+            int size = ((NumericValue) fcargs.get(0).deref()).intValue();
+            return new ByteArrayArrayValue(size);
         }));
 
         return componentMembers;

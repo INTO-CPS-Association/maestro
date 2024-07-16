@@ -51,17 +51,17 @@ public class GraphPlotterTest {
         var variable3 = createVariable("CE", "Level", unitRelationship);
         var variable4 = createVariable("Tank", "Level", unitRelationship);
 
-        HashMap<LexIdentifier, Fmi2SimulationEnvironment.Variable> target1 = new HashMap<>();
-        target1.put(new LexIdentifier(variable1.scalarVariable.instance.getText(), null), variable1);
-        HashMap<LexIdentifier, Fmi2SimulationEnvironment.Variable> target2 = new HashMap<>();
-        target2.put(new LexIdentifier(variable2.scalarVariable.instance.getText(), null), variable2);
-        HashMap<LexIdentifier, Fmi2SimulationEnvironment.Variable> target3 = new HashMap<>();
-        target3.put(new LexIdentifier(variable3.scalarVariable.instance.getText(), null), variable3);
-        HashMap<LexIdentifier, Fmi2SimulationEnvironment.Variable> target4 = new HashMap<>();
-        target4.put(new LexIdentifier(variable4.scalarVariable.instance.getText(), null), variable4);
+        HashMap<LexIdentifier, RelationVariable> target1 = new HashMap<>();
+        target1.put(new LexIdentifier(variable1.getInstance().getText(), null), variable1);
+        HashMap<LexIdentifier, RelationVariable> target2 = new HashMap<>();
+        target2.put(new LexIdentifier(variable2.getInstance().getText(), null), variable2);
+        HashMap<LexIdentifier, RelationVariable> target3 = new HashMap<>();
+        target3.put(new LexIdentifier(variable3.getInstance().getText(), null), variable3);
+        HashMap<LexIdentifier, RelationVariable> target4 = new HashMap<>();
+        target4.put(new LexIdentifier(variable4.getInstance().getText(), null), variable4);
         relations.add(new Fmi2SimulationEnvironment.Relation.RelationBuilder(variable1, target2).build());
-        relations.add(new Fmi2SimulationEnvironment.Relation.RelationBuilder(variable3, target2)
-                .setInternalOrExternal(Fmi2SimulationEnvironment.Relation.InternalOrExternal.Internal).build());
+        relations.add(new Fmi2SimulationEnvironment.Relation.RelationBuilder(variable3, target2).setInternalOrExternal(
+                Fmi2SimulationEnvironment.Relation.InternalOrExternal.Internal).build());
         relations.add(new Fmi2SimulationEnvironment.Relation.RelationBuilder(variable3, target1).build());
         relations.add(new Fmi2SimulationEnvironment.Relation.RelationBuilder(variable3, target4).build());
 
@@ -69,10 +69,10 @@ public class GraphPlotterTest {
     }
 
 
-    private Fmi2SimulationEnvironment.Variable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
+    private RelationVariable createVariable(String fmuName, String variableName, Fmi2SimulationEnvironment unitRelationship) {
         var scalarVar = new Fmi2ModelDescription.ScalarVariable();
         scalarVar.name = variableName;
-        return new Fmi2SimulationEnvironment.Variable(new RelationVariable(scalarVar, new LexIdentifier(fmuName, null)));
+        return new RelationVariable(scalarVar, scalarVar.getName(), new LexIdentifier(fmuName, null));
     }
 
 }

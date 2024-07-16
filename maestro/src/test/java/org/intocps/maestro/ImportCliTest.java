@@ -1,8 +1,10 @@
 package org.intocps.maestro;
 
 import org.apache.commons.io.FileUtils;
+import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -12,6 +14,12 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 public class ImportCliTest {
+
+    @BeforeAll
+    public static void downloadFmus() throws IOException {
+        Fmi3ModuleReferenceFmusTest.downloadReferenceFmus();
+
+    }
 
     final static File resourcesConfigPrefix = Paths.get("src", "test", "resources", "cli-test").toFile();
     File simulationConfigPath = new File(resourcesConfigPrefix, "simulation-config.json");
@@ -35,6 +43,30 @@ public class ImportCliTest {
 
     }
 
+    @Test
+    public void importTestExistingFmu3Mix() {
+
+        String arguments = String.format(Locale.US, "import sg1 --interpret --dump-intermediate --inline-framework-config -output %s %s %s",
+                getOutputPath().toAbsolutePath(), simulationConfigPath.getAbsolutePath(),
+                new File(resourcesConfigPrefix, "config-fmi3.json").toPath());
+        String[] s = arguments.split(" ");
+
+        int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
+        Assert.assertEquals(0, exitCode);
+
+    }
+
+    @Test
+    public void importTestExistingFmu3Ft() {
+
+        String arguments = String.format(Locale.US, "import sg1 --interpret --dump-intermediate --inline-framework-config -output %s %s",
+                getOutputPath().toAbsolutePath(), "/Users/kgl/data/au/into-cps-association/maestro/maestro/src/test/resources/fmi3/reference/siggen-feedthrough/mm.json");
+        String[] s = arguments.split(" ");
+
+        int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
+        Assert.assertEquals(0, exitCode);
+
+    }
 
     //    @Test
     //    public void importTestRelativeFmus() {

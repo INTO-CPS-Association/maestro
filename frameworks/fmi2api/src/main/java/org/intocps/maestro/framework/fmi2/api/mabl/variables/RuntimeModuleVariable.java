@@ -5,7 +5,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.RuntimeModule<PStm> {
+public class RuntimeModuleVariable extends VariableFmi2Api<FmiBuilder.NamedVariable<PStm>> implements FmiBuilder.RuntimeModule<PStm> {
     private final MablApiBuilder builder;
     private boolean external = false;
 
-    public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+    public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, FmiBuilder.DynamicActiveScope<PStm> dynamicScope,
             MablApiBuilder builder, PStateDesignator designator, PExp referenceExp) {
         this(declaration, type, declaredScope, dynamicScope, builder, designator, referenceExp, false);
     }
 
-    public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+    public RuntimeModuleVariable(PStm declaration, PType type, IMablScope declaredScope, FmiBuilder.DynamicActiveScope<PStm> dynamicScope,
             MablApiBuilder builder, PStateDesignator designator, PExp referenceExp, boolean external) {
         super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.builder = builder;
@@ -32,31 +32,31 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
     }
 
     @Override
-    public void initialize(List<Fmi2Builder.RuntimeFunction> declaredFuncs) {
+    public void initialize(List<FmiBuilder.RuntimeFunction> declaredFuncs) {
 
     }
 
     @Override
-    public void initialize(Fmi2Builder.RuntimeFunction... declaredFuncs) {
+    public void initialize(FmiBuilder.RuntimeFunction... declaredFuncs) {
     }
 
     @Override
-    public void callVoid(Fmi2Builder.RuntimeFunction functionId, Object... args) {
+    public void callVoid(FmiBuilder.RuntimeFunction functionId, Object... args) {
         callVoid(dynamicScope, functionId, args);
     }
 
     @Override
-    public void callVoid(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.RuntimeFunction functionId, Object... args) {
+    public void callVoid(FmiBuilder.Scope<PStm> scope, FmiBuilder.RuntimeFunction functionId, Object... args) {
         PStm stm = newExpressionStm(MableBuilder.call(this.getReferenceExp().clone(), functionId.getName(),
                 BuilderUtil.toExp(args).stream().map(PExp::clone).collect(Collectors.toList())));
         scope.add(stm);
     }
 
     @Override
-    public <V> Fmi2Builder.Variable<PStm, V> call(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.RuntimeFunction functionId, Object... args) {
+    public <V> FmiBuilder.Variable<PStm, V> call(FmiBuilder.Scope<PStm> scope, FmiBuilder.RuntimeFunction functionId, Object... args) {
 
         if (functionId.getReturnType().isNative() &&
-                functionId.getReturnType().getNativeType() == Fmi2Builder.RuntimeFunction.FunctionType.Type.Void) {
+                functionId.getReturnType().getNativeType() == FmiBuilder.RuntimeFunction.FunctionType.Type.Void) {
             callVoid(scope, functionId, args);
             return null;
         }
@@ -76,16 +76,16 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
                     return null;
                 case Int:
                 case UInt:
-                    return (Fmi2Builder.Variable<PStm, V>) new IntVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
+                    return (FmiBuilder.Variable<PStm, V>) new IntVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
                             newAIdentifierStateDesignator(name), newAIdentifierExp(name));
                 case Double:
-                    return (Fmi2Builder.Variable<PStm, V>) new DoubleVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
+                    return (FmiBuilder.Variable<PStm, V>) new DoubleVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
                             newAIdentifierStateDesignator(name), newAIdentifierExp(name));
                 case String:
-                    return (Fmi2Builder.Variable<PStm, V>) new StringVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
+                    return (FmiBuilder.Variable<PStm, V>) new StringVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
                             newAIdentifierStateDesignator(name), newAIdentifierExp(name));
                 case Boolean:
-                    return (Fmi2Builder.Variable<PStm, V>) new BooleanVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
+                    return (FmiBuilder.Variable<PStm, V>) new BooleanVariableFmi2Api(stm, (IMablScope) scope, dynamicScope,
                             newAIdentifierStateDesignator(name), newAIdentifierExp(name));
             }
         }
@@ -93,7 +93,7 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
                 newAIdentifierExp(name));
     }
 
-    private PType getMablType(Fmi2Builder.RuntimeFunction.FunctionType type) {
+    private PType getMablType(FmiBuilder.RuntimeFunction.FunctionType type) {
         if (!type.isNative()) {
             return newANameType(type.getNamedType());
         }
@@ -116,7 +116,7 @@ public class RuntimeModuleVariable extends VariableFmi2Api<Fmi2Builder.NamedVari
     }
 
     @Override
-    public <V> Fmi2Builder.Variable<PStm, V> call(Fmi2Builder.RuntimeFunction functionId, Object... args) {
+    public <V> FmiBuilder.Variable<PStm, V> call(FmiBuilder.RuntimeFunction functionId, Object... args) {
         return call(dynamicScope, functionId, args);
     }
 

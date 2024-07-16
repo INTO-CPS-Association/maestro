@@ -9,7 +9,7 @@ import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.framework.fmi2.FmuFactory;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -54,7 +54,7 @@ public class VariableCreatorFmi2Api {
     }
 
     public static VariableFmi2Api createVariableForPort(TagNameGenerator nameGenerator, PortFmi2Api port, IMablScope scope,
-            Fmi2Builder.DynamicActiveScope<PStm> dynamicScope) {
+            FmiBuilder.DynamicActiveScope<PStm> dynamicScope) {
         var name = nameGenerator.getName(port.toLexName());
         var type = MableAstFactory.newAArrayType(fmitypetomabltype(port.scalarVariable.type.type));
         var size = 1;

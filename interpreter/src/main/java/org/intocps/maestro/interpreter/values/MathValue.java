@@ -2,7 +2,6 @@ package org.intocps.maestro.interpreter.values;
 
 import org.intocps.maestro.interpreter.InterpreterException;
 import org.intocps.maestro.interpreter.ValueExtractionUtilities;
-import org.intocps.maestro.interpreter.values.fmi.FmuValue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,10 +15,10 @@ public class MathValue extends ExternalModuleValue<Object> {
     private static Map<String, Value> createMembers() {
         Map<String, Value> componentMembers = new HashMap<>();
         componentMembers.put("isClose", new FunctionValue.ExternalFunctionValue(fcArgs -> {
-            double a = ((RealValue) fcArgs.get(0).deref()).realValue();
-            double b = ((RealValue) fcArgs.get(1).deref()).realValue();
-            double absoluteTolerance = ((RealValue) fcArgs.get(2).deref()).realValue();
-            double relativeTolerance = ((RealValue) fcArgs.get(3).deref()).realValue();
+            double a = ((NumericValue) fcArgs.get(0).deref()).realValue();
+            double b = ((NumericValue) fcArgs.get(1).deref()).realValue();
+            double absoluteTolerance = ((NumericValue) fcArgs.get(2).deref()).realValue();
+            double relativeTolerance = ((NumericValue) fcArgs.get(3).deref()).realValue();
 
             return new BooleanValue(Math.abs(a - b) <= (absoluteTolerance + relativeTolerance * Math.abs(b)));
         }));

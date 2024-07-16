@@ -5,7 +5,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStateDesignator;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
@@ -14,7 +14,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 
-public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, Fmi2Builder.ProvidesTypedReferenceExp {
+public class VariableFmi2Api<V> implements FmiBuilder.Variable<PStm, V>, IndexedVariableFmi2Api<V>, FmiBuilder.ProvidesTypedReferenceExp {
 
     private final PStateDesignator designator;
     private final PExp referenceExp;
@@ -23,10 +23,10 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
      */
     private final PStm declaration;
     protected PType type;
-    protected Fmi2Builder.DynamicActiveScope<PStm> dynamicScope;
+    protected FmiBuilder.DynamicActiveScope<PStm> dynamicScope;
     IMablScope declaredScope;
 
-    public VariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope,
+    public VariableFmi2Api(PStm declaration, PType type, IMablScope declaredScope, FmiBuilder.DynamicActiveScope<PStm> dynamicScope,
             PStateDesignator designator, PExp referenceExp) {
         if (declaration != null && (declaredScope == null || declaredScope.indexOf(declaration) == -1)) {
             throw new IllegalArgumentException("Declared scope is illegal it does not declare the declaration");
@@ -63,18 +63,18 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
     }
 
     @Override
-    public void setValue(Fmi2Builder.Variable<PStm, V> variable) {
+    public void setValue(FmiBuilder.Variable<PStm, V> variable) {
         setValue(dynamicScope, variable);
     }
 
     @Override
-    public void setValue(Fmi2Builder.Scope<PStm> scope, Fmi2Builder.Variable<PStm, V> variable) {
+    public void setValue(FmiBuilder.Scope<PStm> scope, FmiBuilder.Variable<PStm, V> variable) {
         //TODO use  BuilderUtil.createTypeConvertingAssignment(bui)
         scope.add(newAAssignmentStm(this.designator.clone(), ((VariableFmi2Api<V>) variable).getReferenceExp().clone()));
     }
 
     @Override
-    public void setValue(Fmi2Builder.Scope<PStm> scope, V value) {
+    public void setValue(FmiBuilder.Scope<PStm> scope, V value) {
         if (!(value instanceof DoubleExpressionValue)) {
             throw new IllegalArgumentException();
         }
@@ -104,7 +104,7 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         return this.referenceExp.clone();
     }
 
-    protected void setValue(Fmi2Builder.Scope<PStm> scope, PExp exp) {
+    protected void setValue(FmiBuilder.Scope<PStm> scope, PExp exp) {
         scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), exp));
     }
 
@@ -127,11 +127,11 @@ public class VariableFmi2Api<V> implements Fmi2Builder.Variable<PStm, V>, Indexe
         }
     }
 
-    public void setValue(Fmi2Builder.ExpressionValue value) {
+    public void setValue(FmiBuilder.ExpressionValue value) {
         this.setValue(dynamicScope, value);
     }
 
-    private void setValue(Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, Fmi2Builder.ExpressionValue value) {
+    private void setValue(FmiBuilder.DynamicActiveScope<PStm> dynamicScope, FmiBuilder.ExpressionValue value) {
         this.dynamicScope.addAll(BuilderUtil.createTypeConvertingAssignment(this.designator, value.getExp(), value.getType(), this.getType()));
     }
 }

@@ -1,0 +1,109 @@
+simulation
+import FMI3;
+import Logger;
+{
+    FMI3 x1 =null;
+    try
+    {
+        Logger logger = load("Logger");
+        x1 = load("FMI3", "{1AE5E10D-9521-4DE3-80B9-D0EAAA7D5AF1}", "file:BouncingBall.fmu");
+        if (x1 == null)
+        {
+            error;
+        }
+
+        string instanceName="bb";
+
+        bool visible=true;
+        bool loggingOn=true;
+        bool eventModeUsed=true;
+        bool earlyReturnAllowed=true;
+        uint requiredIntermediateVariables[2]={1,2};
+
+        FMI3Instance instance = x1.instantiateCoSimulation( instanceName,  visible,  loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+        if (instance == null)
+        {
+            error "instance not created";
+        }
+
+        uint sv_out_h=1;
+        uint sv_out_v=3;
+        uint sv_par_g=5;
+        uint sv_par_e=6;
+        int res=0;
+
+        uint svs[2]={sv_par_g, sv_par_e};
+        float values_r[2]={-9.81,0.7};
+        res=instance.setFloat32(svs,2,values_r,2);
+        logger.log(3,"setFloat32 status %d",res);
+
+        res=instance.enterInitializationMode(false, 0.0, 0.0, true,10.0);
+        logger.log(3,"enterInitializationMode status %d",res);
+
+        res=instance.exitInitializationMode();
+        logger.log(3,"exitInitializationMode status %d",res);
+
+        res=instance.enterStepMode();
+        logger.log(3,"enterStepMode status %d",res);
+
+
+        real step =0.1;
+        real time=0;
+        real end=10;
+
+        bool nosetFMUStatePriorToCurrentPoint=false;
+        bool eventHandlingNeeded=false;
+        bool terminateSimulation=false;
+        bool earlyReturn=false;
+        real lastSuccessfulTime=0.0;
+
+        svs[0]=sv_out_h;
+        svs[1]=sv_out_v;
+        while(time < end-step)
+        {
+            res = instance.doStep(time,
+                                    step,
+                                    nosetFMUStatePriorToCurrentPoint,
+                                    ref eventHandlingNeeded,
+                                    ref terminateSimulation,
+                                    ref earlyReturn,
+                                    ref lastSuccessfulTime);
+            logger.log(3,"doStep status %d, earlyreturn %b, lassSuccessfulTime %f",res,earlyReturn, lastSuccessfulTime);
+
+
+            res = instance.getFloat64(svs,2,ref values_r,2);
+            logger.log(3,"doStep status %d, h %f, v %f",res,values_r[0], values_r[1]);
+
+
+            time = time + step;
+        }
+
+        //int doStep(real currentCommunicationPoint, real communicationStepSize, bool nosetFMUStatePriorToCurrentPoint,
+              //           out bool eventHandlingNeeded,out bool terminateSimulation,out bool earlyReturn,out real lastSuccessfulTime);
+
+
+        //int getFloat64(uint valueReferences[],  real values[]);
+
+        //int setFloat32(uint valueReferences[],  float values[]);
+
+        res = instance.terminate();
+        logger.log(3,"terminate status %d",res);
+
+
+        unload(logger);
+
+      /*  uint  sv[3]={0,1,2};
+        int i1 = 1;
+        float f1 = 1;
+        byte b1 = 2;
+        byte valu8[3]={100,0,0};
+        instance.setUInt8(sv,valu8);
+*/
+        x1.freeInstance(instance);
+
+    }
+    finally
+    {
+        unload(x1);
+    }
+}

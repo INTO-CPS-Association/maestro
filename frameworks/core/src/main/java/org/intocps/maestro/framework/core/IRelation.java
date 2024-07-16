@@ -7,11 +7,11 @@ import java.util.Map;
 public interface IRelation {
     InternalOrExternal getOrigin();
 
-    IVariable getSource();
+    RelationVariable getSource();
 
     Direction getDirection();
 
-    Map<LexIdentifier, ? extends IVariable> getTargets();
+    Map<LexIdentifier, ? extends RelationVariable> getTargets();
 
     public enum InternalOrExternal {
         Internal,

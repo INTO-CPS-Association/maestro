@@ -1,9 +1,12 @@
 package org.intocps.maestro.webapi.maestro2.interpreter;
 
 import com.spencerwi.either.Either;
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
+import org.intocps.maestro.interpreter.extensions.BaseLifecycleHandler;
+import org.intocps.maestro.interpreter.extensions.DataWriterLifecycleHandler;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
@@ -16,23 +19,24 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 public class WebApiInterpreterFactory extends DefaultExternalValueFactory {
 
 
     public WebApiInterpreterFactory(File workingDirectory, WebSocketSession ws, double interval, List<String> webSocketFilter, File csvOutputFile,
-            List<String> csvFilter,
+            List<String> csvFilter, Function<String, AModuleDeclaration> resolver,
             InputStream config) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        super(workingDirectory, config);
+        super(workingDirectory, resolver, config);
 
         this.lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new WebDataWriterAndWebsocketLifecycleHandler(csvFilter, csvOutputFile, ws, webSocketFilter, interval));
     }
 
 
-    public WebApiInterpreterFactory(File workingDirectory, File csvOutputFile, List<String> csvFilter,
+    public WebApiInterpreterFactory(File workingDirectory, File csvOutputFile, List<String> csvFilter, Function<String, AModuleDeclaration> resolver,
             InputStream config) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        super(workingDirectory, config);
+        super(workingDirectory, resolver, config);
         this.lifecycleHandlers.put(DataWriterLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name(),
                 new WebDataWriterLifecycleHandler(csvFilter, csvOutputFile));
     }

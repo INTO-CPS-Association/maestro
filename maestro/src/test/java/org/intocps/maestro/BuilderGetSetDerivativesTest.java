@@ -80,22 +80,22 @@ public class BuilderGetSetDerivativesTest {
         // Act
         // Get all ports
         fmuInstances.forEach((x, y) -> {
-            Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
-                            .map(PortFmi2Api::getName).collect(Collectors.toSet());
+            Set<String> scalarVariablesToShare = y.getPorts().stream()
+                    .filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName)
+                    .collect(Collectors.toSet());
 
             y.get(scalarVariablesToShare.toArray(String[]::new));
         });
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         // Assert
-        List<String> specAsList =
-                Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]")).collect(Collectors.toList());
+        List<String> specAsList = Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]"))
+                .collect(Collectors.toList());
         int derValOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("dval_out") ? 1 : 0).sum();
         int derOrderOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("dorder_out") ? 1 : 0).sum();
         int derRefOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("dref_out") ? 1 : 0).sum();
-        boolean setDerFuncIsPresent =
-                specAsList.stream().filter(s -> s.contains("pump.getRealOutputDerivatives")).collect(Collectors.toList()).size() == 1;
+        boolean setDerFuncIsPresent = specAsList.stream().filter(s -> s.contains("pump.getRealOutputDerivatives")).collect(Collectors.toList())
+                .size() == 1;
 
         Assertions.assertEquals(expected_derValOutSum, derValOutSum);
         Assertions.assertEquals(expected_derOrderOutSum, derOrderOutSum);
@@ -135,9 +135,9 @@ public class BuilderGetSetDerivativesTest {
         // Act
         // Get all ports and share them
         fmuInstances.forEach((x, y) -> {
-            Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
-                            .map(PortFmi2Api::getName).collect(Collectors.toSet());
+            Set<String> scalarVariablesToShare = y.getPorts().stream()
+                    .filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName)
+                    .collect(Collectors.toSet());
 
             Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
@@ -147,8 +147,8 @@ public class BuilderGetSetDerivativesTest {
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         // Assert
-        List<String> specAsList =
-                Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]")).collect(Collectors.toList());
+        List<String> specAsList = Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]"))
+                .collect(Collectors.toList());
         int derShareSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("dershare") ? 1 : 0).sum();
 
         Assertions.assertEquals(expected_derShareSum, derShareSum);
@@ -189,9 +189,9 @@ public class BuilderGetSetDerivativesTest {
         // Act
         // Get all ports and share them
         fmuInstances.forEach((x, y) -> {
-            Set<String> scalarVariablesToShare =
-                    y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
-                            .map(PortFmi2Api::getName).collect(Collectors.toSet());
+            Set<String> scalarVariablesToShare = y.getPorts().stream()
+                    .filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName()))).map(PortFmi2Api::getName)
+                    .collect(Collectors.toSet());
 
             Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
@@ -207,13 +207,13 @@ public class BuilderGetSetDerivativesTest {
         ASimulationSpecificationCompilationUnit program = builder.build();
 
         // Assert
-        List<String> specAsList =
-                Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]")).collect(Collectors.toList());
+        List<String> specAsList = Arrays.stream(PrettyPrinter.print(program).split("[\n\t]+")).filter(s -> !s.matches("[' '{}]"))
+                .collect(Collectors.toList());
         int derValOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkrealdval_in") ? 1 : 0).sum();
         int derOrderOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkintdorder_in") ? 1 : 0).sum();
         int derRefOutSum = specAsList.stream().mapToInt(s -> s.toLowerCase().contains("sinkuintdref_in") ? 1 : 0).sum();
-        boolean setDerFuncIsPresent =
-                specAsList.stream().filter(s -> s.toLowerCase().contains("sink.setrealinputderivatives")).collect(Collectors.toList()).size() == 1;
+        boolean setDerFuncIsPresent = specAsList.stream().filter(s -> s.toLowerCase().contains("sink.setrealinputderivatives"))
+                .collect(Collectors.toList()).size() == 1;
 
         Assertions.assertEquals(expected_derValOutSum, derValOutSum);
         Assertions.assertEquals(expected_derOrderOutSum, derOrderOutSum);
@@ -228,9 +228,8 @@ public class BuilderGetSetDerivativesTest {
         private final Path sinkMDPath = Paths.get(dirPath.toString(), "mocked_fmus", "sink_modelDescription.xml");
 
         private File getWorkingDirectory(File base) throws IOException {
-            String s = "target/" + base.getAbsolutePath().substring(
-                    base.getAbsolutePath().replace(File.separatorChar, '/').indexOf("src/test/resources/") +
-                            ("src" + "/test" + "/resources/").length());
+            String s = "target/" + base.getAbsolutePath().substring(base.getAbsolutePath().replace(File.separatorChar, '/')
+                    .indexOf("src/test/resources/") + ("src" + "/test" + "/resources/").length());
 
             File workingDir = new File(s.replace('/', File.separatorChar));
             if (workingDir.exists()) {
@@ -286,8 +285,8 @@ public class BuilderGetSetDerivativesTest {
                                 .setRealInputDerivatives(new long[]{1, 1, 2, 2}, new int[]{1, 2, 1, 2}, new double[]{11, 12, 21, 22});
                     }
 
-                    final InputStream md =
-                            new ByteArrayInputStream(IOUtils.toByteArray(new File(modelDescriptionPath.replace('/', File.separatorChar)).toURI()));
+                    final InputStream md = new ByteArrayInputStream(
+                            IOUtils.toByteArray(new File(modelDescriptionPath.replace('/', File.separatorChar)).toURI()));
                     when(fmu.getModelDescription()).thenReturn(md);
                     return fmu;
                 }
@@ -331,9 +330,9 @@ public class BuilderGetSetDerivativesTest {
             // Act
             // Get all ports and share them
             fmuInstances.forEach((x, y) -> {
-                Set<String> scalarVariablesToShare =
-                        y.getPorts().stream().filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
-                                .map(PortFmi2Api::getName).collect(Collectors.toSet());
+                Set<String> scalarVariablesToShare = y.getPorts().stream()
+                        .filter(p -> variablesOfInterest.stream().anyMatch(v -> v.equals(p.getMultiModelScalarVariableName())))
+                        .map(PortFmi2Api::getName).collect(Collectors.toSet());
 
                 Map<PortFmi2Api, VariableFmi2Api<Object>> portsToShare = y.get(scalarVariablesToShare.toArray(String[]::new));
 
@@ -378,8 +377,11 @@ public class BuilderGetSetDerivativesTest {
                 Assertions.fail();
             }
 
-            Assertions.assertDoesNotThrow(() -> new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
-                    IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit()));
+            var tcRes = mabl.typeCheck();
+
+            Assertions.assertDoesNotThrow(() -> new MableInterpreter(
+                    new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRes.getValue(), name),
+                            IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit()));
         }
     }
 }

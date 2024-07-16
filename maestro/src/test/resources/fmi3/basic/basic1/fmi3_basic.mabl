@@ -1,0 +1,39 @@
+simulation
+import FMI3;
+{
+    FMI3 x1 =null;
+    try
+    {
+        x1 = load("FMI3", "{FMI3_TEST_TOKEN}", "file:fmi3functiontest.fmu");
+        if (x1 == null)
+        {
+            error;
+        }
+        string instanceName="fmi3functiontest";
+
+        bool visible=true;
+        bool loggingOn=true;
+        bool eventModeUsed=true;
+        bool earlyReturnAllowed=true;
+        uint requiredIntermediateVariables[2]={1,2};
+
+        FMI3Instance instance = x1.instantiateCoSimulation( instanceName,  visible,  loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+        if (instance == null)
+        {
+            error "instance not created";
+        }
+        uint  sv[3]={0,1,2};
+        int i1 = 1;
+        float f1 = 1;
+        byte b1 = 2;
+        byte valu8[3]={100,0,0};
+        instance.setUInt8(sv,3,valu8,3);
+
+        x1.freeInstance(instance);
+
+    }
+    finally
+    {
+        unload(x1);
+    }
+}

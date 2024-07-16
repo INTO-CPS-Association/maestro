@@ -7,7 +7,7 @@ import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,7 +57,7 @@ public interface IMaestroExpansionPlugin extends IMaestroPlugin {
      * @throws ExpandException if generation fails
      */
     <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
-            Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
+            FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<FmiBuilder.Variable<PStm, ?>> formalArguments,
             IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException;
 
 

@@ -7,6 +7,7 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,14 +41,14 @@ public class DocumentationGettingStartedExamplesTest {
         mabl.setVerbose(true);
 
         mabl.parse(sourceFiles);
-        mabl.typeCheck();
+        var tcRes = mabl.typeCheck();
         mabl.verify(Framework.FMI2);
         if (reporter.getErrorCount() > 0) {
             reporter.printErrors(new PrintWriter(System.err, true));
             assert (false);
         } else {
             reporter.printWarnings(new PrintWriter(System.out, true));
-            new MableInterpreter(new DefaultExternalValueFactory(workingDirectory,
+            new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(tcRes.getValue(), name),
                     IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(mabl.getMainSimulationUnit());
             FullSpecTest.compareCsvResults(new File(testFilesDirectory, "expectedoutputs.csv"), new File(workingDirectory, "outputs.csv"));
         }

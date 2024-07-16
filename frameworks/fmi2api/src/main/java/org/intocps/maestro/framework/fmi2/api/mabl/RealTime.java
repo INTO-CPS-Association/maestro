@@ -4,7 +4,7 @@ import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.AExpressionStm;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.DoubleVariableFmi2Api;
 
@@ -25,7 +25,7 @@ public class RealTime {
         this.moduleIdentifier = "realTime";
     }
 
-    public RealTime(MablApiBuilder mablApiBuilder, Fmi2Builder.RuntimeModule<PStm> runtimeModule) {
+    public RealTime(MablApiBuilder mablApiBuilder, FmiBuilder.RuntimeModule<PStm> runtimeModule) {
         this(mablApiBuilder.getDynamicScope(), mablApiBuilder);
         this.moduleIdentifier = runtimeModule.getName();
     }

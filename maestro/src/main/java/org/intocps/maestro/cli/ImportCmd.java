@@ -167,11 +167,58 @@ public class ImportCmd implements Callable<Integer> {
         return 0;
     }
 
+    // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
+    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+
+        Iterator<String> fieldNames = updateNode.fieldNames();
+
+        while (fieldNames.hasNext()) {
+            String updatedFieldName = fieldNames.next();
+            JsonNode valueToBeUpdated = mainNode.get(updatedFieldName);
+            JsonNode updatedValue = updateNode.get(updatedFieldName);
+
+            // If the node is an @ArrayNode
+            if (valueToBeUpdated != null && valueToBeUpdated.isArray() && updatedValue.isArray()) {
+                // running a loop for all elements of the updated ArrayNode
+                for (int i = 0; i < updatedValue.size(); i++) {
+                    JsonNode updatedChildNode = updatedValue.get(i);
+                    // Create a new Node in the node that should be updated, if there was no corresponding node in it
+                    // Use-case - where the updateNode will have a new element in its Array
+                    if (valueToBeUpdated.size() <= i) {
+                        ((ArrayNode) valueToBeUpdated).add(updatedChildNode);
+                    }
+                    // getting reference for the node to be updated
+                    JsonNode childNodeToBeUpdated = valueToBeUpdated.get(i);
+                    merge(childNodeToBeUpdated, updatedChildNode);
+                }
+                // if the Node is an @ObjectNode
+            } else if (valueToBeUpdated != null && valueToBeUpdated.isObject()) {
+                merge(valueToBeUpdated, updatedValue);
+            } else {
+                if (mainNode instanceof ObjectNode) {
+                    ((ObjectNode) mainNode).replace(updatedFieldName, updatedValue);
+                }
+            }
+        }
+        return mainNode;
+    }
+
     private boolean importSg1(MablCliUtil util, List<File> fmuSearchPaths, List<File> files) throws Exception {
         if (!files.isEmpty()) {
 
+            ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            MaestroV1SimulationConfiguration config = MaestroV1SimulationConfiguration.parse(files);
+            JsonNode rootNode = null;
+            for (File jsonFile : files) {
+                if (!jsonFile.exists()) {
+                    System.err.println("JSON File does not exist " + jsonFile);
+                    return false;
+                }
+                JsonNode tempNode = mapper.readTree(jsonFile);
+                rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
+            }
+
+            MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
             resolveFmuPaths(fmuSearchPaths, config.getFmus());
 

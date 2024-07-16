@@ -1,10 +1,9 @@
 package org.intocps.maestro.framework.fmi2;
 
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.framework.core.FaultInject;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class ComponentInfo implements FrameworkUnitInfo {
@@ -31,5 +30,10 @@ public class ComponentInfo implements FrameworkUnitInfo {
 
     public String getFmuIdentifier() {
         return fmuIdentifier;
+    }
+
+    @Override
+    public String getOwnerIdentifier() {
+        return getFmuIdentifier();
     }
 }

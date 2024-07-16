@@ -1,7 +1,7 @@
 package org.intocps.maestro;
 
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
+import org.intocps.maestro.interpreter.extensions.MEnvLifecycleHandler;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public class MablRuntimeDataGenerator {
         }));
 
         if (this.runtimeEnvironmentVariables != null) {
-            data.put(DefaultExternalValueFactory.MEnvLifecycleHandler.ENVIRONMENT_VARIABLES, this.runtimeEnvironmentVariables);
+            data.put(MEnvLifecycleHandler.ENVIRONMENT_VARIABLES, this.runtimeEnvironmentVariables);
         }
 
         return data;

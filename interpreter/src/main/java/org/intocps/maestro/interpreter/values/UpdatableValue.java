@@ -29,4 +29,15 @@ public class UpdatableValue extends Value {
             this.value = newValue;
         }
     }
+
+    @Override
+    public String toString() {
+        return "" + deref();
+    }
+
+    @Override
+    public boolean isUpdatable() {
+        return true;
+    }
+    
 }

@@ -4,7 +4,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 
 public class Factory {
 
-    public Fmi2Builder get(Types type) {
+    public FmiBuilder get(Types type) {
         switch (type) {
             case Mabl:
             default:

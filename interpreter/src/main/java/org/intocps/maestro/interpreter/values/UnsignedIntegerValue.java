@@ -13,7 +13,7 @@ public class UnsignedIntegerValue extends NumericValue {
 
     @Override
     public String toString() {
-        return "IntegerValue{" + "value=" + value + '}';
+        return "" + value;
     }
 
     @Override
@@ -28,6 +28,16 @@ public class UnsignedIntegerValue extends NumericValue {
 
     @Override
     public double realValue() {
+        return value;
+    }
+
+    @Override
+    public double doubleValue() {
+        return value;
+    }
+
+    @Override
+    public float floatValue() {
         return value;
     }
 

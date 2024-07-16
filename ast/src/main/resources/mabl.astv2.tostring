@@ -89,3 +89,7 @@ import java.util.stream.Collectors;
 %type->#primitive->#numeric->real="real"
 %type->#primitive->#numeric->int="int"
 %type->#primitive->#numeric->uInt="uint"
+%type->#primitive->#numeric->long="long"
+%type->#primitive->#numeric->short="short"
+%type->#primitive->#numeric->float="float"
+%type->#primitive->#numeric->byte="byte"

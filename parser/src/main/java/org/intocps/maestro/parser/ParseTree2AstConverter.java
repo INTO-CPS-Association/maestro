@@ -545,6 +545,26 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
     @Override
+    public INode visitByteType(MablParser.ByteTypeContext ctx) {
+        return new AByteNumericPrimitiveType();
+    }
+
+    @Override
+    public INode visitShortType(MablParser.ShortTypeContext ctx) {
+        return new AShortNumericPrimitiveType();
+    }
+
+    @Override
+    public INode visitFloatType(MablParser.FloatTypeContext ctx) {
+        return new AFloatNumericPrimitiveType();
+    }
+
+    @Override
+    public INode visitLongType(MablParser.LongTypeContext ctx) {
+        return new ALongNumericPrimitiveType();
+    }
+
+    @Override
     public INode visitRealType(MablParser.RealTypeContext ctx) {
         return new ARealNumericPrimitiveType();
     }

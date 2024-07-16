@@ -35,6 +35,7 @@
 package org.intocps.maestro.fmi;
 
 import org.apache.commons.io.FileUtils;
+import org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
@@ -60,7 +61,7 @@ public class ModelDefinitionSchemaValidatorTests {
         InputStream resourceAsStream = Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
 
         try {
-            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream), new Fmi2Schema());
         } catch (SAXParseException e) {
 
         }
@@ -75,7 +76,7 @@ public class ModelDefinitionSchemaValidatorTests {
 
             InputStream resourceAsStream = Fmi2ModelDescription.class.getClassLoader().getResourceAsStream("fmi2ModelDescription.xsd");
 
-            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream));
+            Fmi2ModelDescription.Companion.validateAgainstXSD(new StreamSource(in), new StreamSource(resourceAsStream), new Fmi2Schema());
         });
     }
 

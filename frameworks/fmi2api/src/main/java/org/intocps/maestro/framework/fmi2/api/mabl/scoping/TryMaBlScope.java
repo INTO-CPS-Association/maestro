@@ -1,12 +1,12 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 
 import static org.intocps.maestro.ast.MableAstFactory.newABlockStm;
 
-public class TryMaBlScope implements Fmi2Builder.TryScope<PStm> {
+public class TryMaBlScope implements FmiBuilder.TryScope<PStm> {
     private final MablApiBuilder builder;
     private final PStm declaration;
     private final ScopeFmi2Api declaringScope;
@@ -72,8 +72,8 @@ public class TryMaBlScope implements Fmi2Builder.TryScope<PStm> {
     }
 
     @Override
-    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
-        Fmi2Builder.ScopeElement<PStm> parent = this;
+    public <P extends FmiBuilder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        FmiBuilder.ScopeElement<PStm> parent = this;
         while ((parent = parent.parent()) != null) {
             if (clz.isAssignableFrom(parent.getClass())) {
                 return clz.cast(parent());

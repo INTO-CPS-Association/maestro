@@ -12,6 +12,7 @@ public class ModelDescriptionContext {
     private final Fmi2ModelDescription modelDescription;
     public Map<String, Fmi2ModelDescription.ScalarVariable> nameToSv = new HashMap<>();
     public Map<Long, Fmi2ModelDescription.ScalarVariable> valRefToSv = new HashMap<>();
+
     public ModelDescriptionContext(
             Fmi2ModelDescription modelDescription) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         this.modelDescription = modelDescription;
@@ -25,3 +26,5 @@ public class ModelDescriptionContext {
         return modelDescription;
     }
 }
+
+

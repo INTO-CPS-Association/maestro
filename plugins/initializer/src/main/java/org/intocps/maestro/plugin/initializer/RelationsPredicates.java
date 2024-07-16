@@ -19,11 +19,11 @@ public class RelationsPredicates {
     }
 
     public static Predicate<Fmi2SimulationEnvironment.Relation> inputSource() {
-        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Input);
+        return o -> (o.getSource().has( Fmi2ModelDescription.Causality.Input));
     }
 
     public static Predicate<Fmi2SimulationEnvironment.Relation> outputSource() {
-        return o -> (o.getSource().scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output);
+        return o -> (o.getSource().has( Fmi2ModelDescription.Causality.Output));
     }
 
 }

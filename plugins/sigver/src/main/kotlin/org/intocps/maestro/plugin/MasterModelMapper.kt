@@ -12,6 +12,7 @@ import org.intocps.verification.scenarioverifier.core.FMI3.AdaptiveModel
 import org.intocps.verification.scenarioverifier.core.FMI3.ConfigurationModel
 import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI3
 import scala.collection.immutable.Map
+import java.util.stream.Collectors
 
 class MasterModelMapper {
     companion object {
@@ -94,7 +95,7 @@ class MasterModelMapper {
 
             // Map fmus to fmu models
             val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
-            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
+            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions.stream().filter{p->p.value is Fmi2ModelDescription}.map {p->Pair(p.key,p.value as Fmi2ModelDescription) }.collect(Collectors.toSet())
             val fmuInstanceNames = connectionModelList.map { connectionModel ->
                 listOf(
                     connectionModel.srcPort().fmu(),
@@ -102,9 +103,9 @@ class MasterModelMapper {
                 )
             }.flatten().distinct()
             val fmuNameToFmuModel = fmuInstanceNames.mapNotNull { fmuInstanceName ->
-                fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
+                fmusWithModelDescriptions.find { it.first.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
                     ?.let { fmuWithMD ->
-                        val scalarVariables = fmuWithMD.value.scalarVariables
+                        val scalarVariables = fmuWithMD.second.scalarVariables
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
                                 .associate { inputPort ->
@@ -147,8 +148,8 @@ class MasterModelMapper {
                             Map.from(
                                 scala.jdk.CollectionConverters.MapHasAsScala(outputs).asScala()
                             ),
-                            fmuWithMD.value.getCanGetAndSetFmustate(),
-                            simulationEnvironment.getUriFromFMUName(fmuWithMD.key).path
+                            fmuWithMD.second.getCanGetAndSetFmustate(),
+                            simulationEnvironment.getUriFromFMUName(fmuWithMD.first).path
                         )
                     }
             }.toMap()
@@ -209,7 +210,7 @@ class MasterModelMapper {
 
             // Map fmus to fmu models
             val simulationEnvironment = Fmi2SimulationEnvironment.of(simulationConfiguration, null)
-            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions
+            val fmusWithModelDescriptions = simulationEnvironment.fmusWithModelDescriptions.stream().filter{p->p.value is Fmi2ModelDescription}.map {p->Pair(p.key,p.value as Fmi2ModelDescription) }.collect(Collectors.toSet())
             val fmuInstanceNames = connectionModelList.map { connectionModel ->
                 listOf(
                     connectionModel.srcPort().fmu(),
@@ -217,9 +218,9 @@ class MasterModelMapper {
                 )
             }.flatten().distinct()
             val fmuNameToFmuModel = fmuInstanceNames.mapNotNull { fmuInstanceName ->
-                fmusWithModelDescriptions.find { it.key.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
+                fmusWithModelDescriptions.find { it.first.contains(getFmuNameFromFmuInstanceName(fmuInstanceName)) }
                     ?.let { fmuWithMD ->
-                        val scalarVariables = fmuWithMD.value.scalarVariables
+                        val scalarVariables = fmuWithMD.second.scalarVariables
                         val inputs =
                             scalarVariables.filter { port -> port.causality.equals(Fmi2ModelDescription.Causality.Input) }
                                 .associate { inputPort ->
@@ -276,8 +277,8 @@ class MasterModelMapper {
                             Map.from(
                                 scala.jdk.CollectionConverters.MapHasAsScala(outputClocks).asScala()
                             ),
-                            fmuWithMD.value.getCanGetAndSetFmustate(),
-                            simulationEnvironment.getUriFromFMUName(fmuWithMD.key).path
+                            fmuWithMD.second.getCanGetAndSetFmustate(),
+                            simulationEnvironment.getUriFromFMUName(fmuWithMD.first).path
                         )
                     }
             }.toMap()

@@ -10,16 +10,27 @@ import org.intocps.maestro.interpreter.values.utilities.ArrayUpdatableValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Vector;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
+
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
+    static final Map<Class<? extends PType>, Class<? extends Value>> typeValueMappings = new HashMap<>() {{
+        put(AIntNumericPrimitiveType.class, IntegerValue.class);
+        put(AByteNumericPrimitiveType.class, ByteValue.class);
+        put(AShortNumericPrimitiveType.class, ShortValue.class);
+        put(AUIntNumericPrimitiveType.class, UnsignedIntegerValue.class);
+        put(ALongNumericPrimitiveType.class, LongValue.class);
+        put(AFloatNumericPrimitiveType.class, FloatValue.class);
+        put(ARealNumericPrimitiveType.class, RealValue.class);
+        put(AStringPrimitiveType.class, StringValue.class);
+        put(ABooleanPrimitiveType.class, BooleanValue.class);
+        put(ANameType.class, ExternalModuleValue.class);
+    }};
     private final IExternalValueFactory loadFactory;
     private final ITransitionManager transitionManager;
+
     public Interpreter(IExternalValueFactory loadFactory) {
         this(loadFactory, null);
     }
@@ -189,28 +200,29 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
 
-    public UpdatableValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
+    public ArrayValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
         List<Value> arrayValues = new ArrayList<>();
-        for (int i = 0; i < ((IntegerValue) sizes.get(0).apply(this, question)).getValue(); i++) {
+        for (int i = 0; i < ((NumericValue) sizes.get(0).apply(this, question)).intValue(); i++) {
             if (sizes.size() > 1) {
                 List<PExp> nextSizes = sizes.subList(1, sizes.size());
                 // Call recursively
-                arrayValues.add(createArrayValue(nextSizes, type, question));
+                arrayValues.add(new UpdatableValue(createArrayValue(nextSizes, type, question)));
             } else {
-                if (type instanceof AIntNumericPrimitiveType) {
-                    arrayValues.add(new IntegerValue(0));
+
+                if (type instanceof AFunctionType || type instanceof ARealNumericPrimitiveType) {
+                    arrayValues.add(new RealValue(0.0));
+                } else if (type instanceof SNumericPrimitiveType) {
+                    arrayValues.add(new ByteValue(0));
                 } else if (type instanceof ABooleanPrimitiveType) {
                     arrayValues.add(new BooleanValue(false));
                 } else if (type instanceof AStringPrimitiveType) {
                     arrayValues.add(new StringValue(""));
-                } else if (type instanceof ARealNumericPrimitiveType) {
-                    arrayValues.add(new RealValue(0.0));
                 } else {
                     arrayValues.add(new NullValue());
                 }
             }
         }
-        return new UpdatableValue(new ArrayValue<>(arrayValues));
+        return new ArrayValue<>(arrayValues);
     }
 
     @Override
@@ -223,25 +235,72 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
         if (!node.getSize().isEmpty() /*lazy check for array type*/) {
 
-            UpdatableValue val;
+            ArrayValue arrayValue;
             if (node.getInitializer() != null) {
-                val = new UpdatableValue(node.getInitializer().apply(this, question));
+                arrayValue = (ArrayValue) node.getInitializer().apply(this, question);
             } else {
 
                 if (node.getSize() == null || node.getSize().isEmpty()) {
-                    throw new InterpreterException("Array size cannot be unspecified when no initializer is specified: " + node.getName());
+                    throw new InterpreterException("Array size cannot be unspecified when no .conlizer is specified: " + node.getName());
                 }
 
                 //array deceleration
-                val = createArrayValue(node.getSize(), node.getType(), question);
+                arrayValue = createArrayValue(node.getSize(), node.getType(), question);
             }
 
-            question.put(node.getName(), val);
+            //DTC: check that all values are of the right type
+            Class<? extends Value> targetValueType = typeValueMappings.get(node.getType().getClass());
+            for (int i = 0; i < arrayValue.getValues().size(); i++) {
+
+                Value v = (Value) arrayValue.getValues().get(i);
+                if (targetValueType == null || targetValueType.isAssignableFrom(v.getClass())) {
+                    continue;
+                } else if (v.isNumeric()) {
+                    //we need to upcast all values explicitly here
+                    NumericValue upcasted = ((NumericValue) v).upCast((Class<? extends NumericValue>) targetValueType);
+
+                    if (upcasted == null) {
+                        throw new InterpreterException(
+                                String.format("Array initializer value at index %d '%s' could not be upcasted. In ", i, v.toString()) +
+                                        "initializer is " + "specified: " + node.getName());
+                    }
+
+                    arrayValue.getValues().set(i, upcasted);
+                }
+
+
+            }
+            //            if (arrayValue.getValues().stream().anyMatch(v -> !targetValueType.isAssignableFrom(v.getClass()))) {
+            //
+            //                arrayValue.getValues().stream().filter(v -> !targetValueType.isAssignableFrom(v.getClass())).map(v -> v.toString())
+            //                        .collect(Collectors.joining(","));
+            //            }
+
+            question.put(node.getName(), new UpdatableValue(arrayValue));
 
         } else {
 
-            question.put(node.getName(),
-                    new UpdatableValue(node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question)));
+            Value initialValue = node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question);
+
+            if (initialValue.isNumeric()) {
+                Class<? extends Value> targetValueType = typeValueMappings.get(node.getType().getClass());
+
+                if (targetValueType != null) {
+
+                    //we need to upcast all values explicitly here
+                    NumericValue upcasted = ((NumericValue) initialValue).upCast((Class<? extends NumericValue>) targetValueType);
+
+                    if (upcasted == null) {
+                        throw new InterpreterException(
+                                String.format("Initializer value could not be upcasted. In ", initialValue.toString()) + "initializer is " +
+                                        "specified: " + node.getName() + " in " + node);
+                    }
+                    initialValue = upcasted;
+                }
+            }
+
+
+            question.put(node.getName(), new UpdatableValue(initialValue));
         }
         return new VoidValue();
     }
@@ -293,11 +352,11 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
 
-        if (left instanceof IntegerValue && right instanceof IntegerValue) {
+        if (!left.isNumericDecimal() && !right.isNumericDecimal()) {
             return new IntegerValue(left.intValue() + right.intValue());
+        } else {
+            return new RealValue(left.realValue() + right.realValue());
         }
-
-        return new RealValue(left.realValue() + right.realValue());
     }
 
 
@@ -307,7 +366,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         NumericValue right = (NumericValue) node.getRight().apply(this, question).deref();
 
 
-        if (left instanceof IntegerValue && right instanceof IntegerValue) {
+        if (!left.isNumericDecimal() && !right.isNumericDecimal()) {
             return new IntegerValue(left.intValue() - right.intValue());
         }
 
@@ -441,7 +500,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         rv = rv.deref();
 
         if (lv.equals(rv)) {
-            new BooleanValue(true);
+            return new BooleanValue(true);
         } else if (lv instanceof NumericValue && rv instanceof NumericValue) {
             NumericValue left = (NumericValue) lv;
             NumericValue right = (NumericValue) rv;
@@ -486,7 +545,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseARealLiteralExp(ARealLiteralExp node, Context question) throws AnalysisException {
-        return new RealValue(node.getValue());
+        return NumericValue.valueOf(node.getValue());
     }
 
     @Override
@@ -501,12 +560,12 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseAIntLiteralExp(AIntLiteralExp node, Context question) throws AnalysisException {
-        return new IntegerValue(node.getValue());
+        return NumericValue.valueOf(node.getValue());
     }
 
     @Override
     public Value caseAUIntLiteralExp(AUIntLiteralExp node, Context question) throws AnalysisException {
-        return new UnsignedIntegerValue(node.getValue());
+        return NumericValue.valueOf(node.getValue());
     }
 
     protected Value getInnerArrayValue(ArrayValue<Value> arrayValue, List<NumericValue> indices) {

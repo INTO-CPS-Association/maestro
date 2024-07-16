@@ -1,0 +1,35 @@
+FMI3 fmuFeedThrough = load("FMI3", "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}", "file:Feedthrough.fmu");
+FMI3Instance instance = fmuFeedThrough.instantiateCoSimulation( instanceName,  visible,  loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
+
+real var_108[1]={0};
+uint vref_108[1]={5};
+int status_108= instance.setFloat64(vref_108,1,var_108,1);
+
+bool nosetFMUStatePriorToCurrentPoint=false;
+bool eventHandlingNeeded=false;
+bool terminateSimulation=false;
+bool earlyReturn=false;
+real lastSuccessfulTime=0.0;
+
+while(time < end-step)
+{
+    res = instance.doStep(time,
+                            step,
+                            nosetFMUStatePriorToCurrentPoint,
+                            ref eventHandlingNeeded,
+                            ref terminateSimulation,
+                            ref earlyReturn,
+                            ref lastSuccessfulTime);
+    logger.log(3,"doStep status %d, earlyreturn %b, lassSuccessfulTime %f",res,earlyReturn, lastSuccessfulTime);
+
+    real var_205[1000];
+    uint vref_205[1]={0};
+
+    int status_205= instance.getFloat64(vref_205,1,ref var_205,1);
+
+    time = time + step;
+}
+
+res=instance.terminate();
+fmuFeedThrough.freeInstance(instance);
+

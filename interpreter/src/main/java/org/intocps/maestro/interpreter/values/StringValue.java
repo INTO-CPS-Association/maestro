@@ -22,4 +22,10 @@ public class StringValue extends Value {
 
         return super.compareTo(other);
     }
+
+    @Override
+    public String toString() {
+        return "\"" + value + "\"";
+    }
+
 }

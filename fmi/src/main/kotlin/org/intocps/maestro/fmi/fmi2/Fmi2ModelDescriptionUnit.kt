@@ -1,7 +1,7 @@
 package org.intocps.maestro.fmi.fmi2
 
+import org.intocps.fmi.jnifmuapi.fmi2.schemas.Fmi2Schema
 import org.intocps.maestro.fmi.ModelDescription
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi2.Fmi2Unit
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.xml.sax.SAXException
 import java.io.IOException
@@ -18,7 +18,7 @@ abstract class Fmi2ModelDescriptionUnit : ModelDescription {
         ParserConfigurationException::class
     )
     constructor(xmlInputStream: InputStream, schemaModelDescription: Source) : super(
-        xmlInputStream, schemaModelDescription
+        xmlInputStream, schemaModelDescription, Fmi2Schema()
     )
 
     // Unit definitions attribute
@@ -33,9 +33,11 @@ abstract class Fmi2ModelDescriptionUnit : ModelDescription {
                         "BaseUnit" -> {
                             setBaseUnit(parseBaseUnit(childNode))
                         }
+
                         "DisplayUnit" -> {
                             // displayUnits.add(parseDisplayUnit(childNode))
                         }
+
                         "Annotations" -> {
                         }
                     }

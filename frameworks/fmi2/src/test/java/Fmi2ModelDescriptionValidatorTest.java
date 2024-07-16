@@ -23,7 +23,7 @@ public class Fmi2ModelDescriptionValidatorTest {
         modelDescriptionValidator = new ModelDescriptionValidator();
         var iterator = env.getFmusWithModelDescriptions().iterator();
         iterator.next();
-        md = iterator.next().getValue();
+        md = (Fmi2ModelDescription) iterator.next().getValue();
         variables = md.getScalarVariables();
     }
 

@@ -1,4 +1,4 @@
-package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
+package org.intocps.maestro.fmi.fmi3
 
 data class Fmi3ModelStructureElement(val elementType: Fmi3ModelStructureElementEnum, val valueReference: UInt, val dependencies: List<UInt>?, val dependenciesKind: List<Fmi3DependencyKind>?)
 

@@ -39,8 +39,8 @@ public class StatementGeneratorContainer {
     private final Map<Integer, LexIdentifier> intArrays = new HashMap<>();
     private final Map<Integer, LexIdentifier> stringArrays = new HashMap<>();
 
-    private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> convergenceRefArray = new HashMap<>();
-    private final Map<Fmi2SimulationEnvironment.Variable, LexIdentifier> loopValueArray = new HashMap<>();
+    private final Map<org.intocps.maestro.framework.fmi2.RelationVariable, LexIdentifier> convergenceRefArray = new HashMap<>();
+    private final Map<org.intocps.maestro.framework.fmi2.RelationVariable, LexIdentifier> loopValueArray = new HashMap<>();
 
     private final EnumMap<Fmi2ModelDescription.Types, String> typesStringMap = new EnumMap<>(Fmi2ModelDescription.Types.class) {
         {
@@ -154,8 +154,8 @@ public class StatementGeneratorContainer {
                         (LexIdentifier) createLexIdentifier.apply("exitInitializationMode").clone(), null));
     }
 
-    public List<PStm> createFixedPointIteration(List<Fmi2SimulationEnvironment.Variable> loopVariables, int iterationMax, int sccNumber,
-            Fmi2SimulationEnvironment env) throws ExpandException {
+    public List<PStm> createFixedPointIteration(List<org.intocps.maestro.framework.fmi2.RelationVariable> loopVariables, int iterationMax,
+            int sccNumber, Fmi2SimulationEnvironment env) throws ExpandException {
         LexIdentifier end = newAIdentifier(String.format("end%d", sccNumber));
         LexIdentifier start = newAIdentifier(String.format("start%d", sccNumber));
         List<PStm> statements = new Vector<>();
@@ -164,13 +164,13 @@ public class StatementGeneratorContainer {
                 newALocalVariableStm(newAVariableDeclaration(start, newARealNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
         statements.add(newALocalVariableStm(
                 newAVariableDeclaration(end, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(iterationMax)))));
-        var outputs = loopVariables.stream().filter(o -> o.scalarVariable.getScalarVariable().causality == Fmi2ModelDescription.Causality.Output &&
-                o.scalarVariable.scalarVariable.getType().type == Fmi2ModelDescription.Types.Real).collect(Collectors.toList());
+        var outputs = loopVariables.stream()
+                .filter(o -> o.has(Fmi2ModelDescription.Causality.Output) && o.getType().hasType(Fmi2ModelDescription.Types.Real))
+                .collect(Collectors.toList());
 
-        for (Fmi2SimulationEnvironment.Variable output : outputs) {
-            var lexIdentifier = createLexIdentifier.apply(
-                    "Ref" + output.scalarVariable.instance.getText() + output.scalarVariable.scalarVariable.getName() + "ValueRef" +
-                            output.scalarVariable.scalarVariable.getValueReference());
+        for (org.intocps.maestro.framework.fmi2.RelationVariable output : outputs) {
+            var lexIdentifier =
+                    createLexIdentifier.apply("Ref" + output.getInstance().getText() + output.getName() + "ValueRef" + output.getValueReference());
             statements.add(createReferenceArray(output, lexIdentifier));
             //Create map to test references against
             convergenceRefArray.put(output, lexIdentifier);
@@ -204,28 +204,29 @@ public class StatementGeneratorContainer {
         return statements;
     }
 
-    private List<PStm> performLoopActions(List<Fmi2SimulationEnvironment.Variable> loopVariables, Fmi2SimulationEnvironment env) {
+    private List<PStm> performLoopActions(List<org.intocps.maestro.framework.fmi2.RelationVariable> loopVariables, Fmi2SimulationEnvironment env) {
         List<PStm> LoopStatements = new Vector<>();
         loopVariables.stream().forEach(variable -> {
-            long[] scalarValueIndices = new long[]{variable.scalarVariable.scalarVariable.valueReference};
+            long[] scalarValueIndices = new long[]{variable.getValueReference()};
 
             //All members of the same set has the same causality, type and comes from the same instance
-            if (variable.scalarVariable.scalarVariable.causality == Fmi2ModelDescription.Causality.Output) {
-                var lexId = createLexIdentifier.apply(variable.scalarVariable.instance + variable.scalarVariable.getScalarVariable().name);
-                LoopStatements.add(newALocalVariableStm(
-                        newAVariableDeclaration(lexId, newAArrayType(fmiTypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
-                                null)));
+            if (variable.has(Fmi2ModelDescription.Causality.Output)) {
+                var lexId = createLexIdentifier.apply(variable.getInstance().getText() + variable.getName());
+                LoopStatements.add(newALocalVariableStm(newAVariableDeclaration(lexId, newAArrayType(variable.getType().getLexType()), 1, null)));
                 loopValueArray.put(variable, lexId);
                 try {
-                    LoopStatements.addAll(getValueStm(variable.scalarVariable.instance.getText(), lexId, scalarValueIndices,
-                            variable.scalarVariable.scalarVariable.getType().type));
+                    LoopStatements.addAll(getValueStm(variable.getInstance().getText(), lexId, scalarValueIndices,
+                            ((Fmi2ModelDescription.Type) variable.getType().get()).type));
                 } catch (ExpandException e) {
                     e.printStackTrace();
                 }
             } else {
                 try {
-                    LoopStatements.addAll(setValueOnPortStm(variable.scalarVariable.instance, variable.scalarVariable.scalarVariable.getType().type,
-                            Collections.singletonList(variable.scalarVariable.scalarVariable), scalarValueIndices, env));
+                    LoopStatements.addAll(setValueOnPortStm(variable.getInstance(),
+                            ((Fmi2ModelDescription.Type)variable.getType().get()).type,
+                            Collections.singletonList(
+                                    (Fmi2ModelDescription.ScalarVariable) variable.getScalarVariable(Fmi2ModelDescription.ScalarVariable.class)),
+                            scalarValueIndices, env));
                 } catch (ExpandException e) {
                     e.printStackTrace();
                 }
@@ -257,17 +258,15 @@ public class StatementGeneratorContainer {
         }
     }
 
-    private PStm createReferenceArray(Fmi2SimulationEnvironment.Variable variable, LexIdentifier lexID) throws ExpandException {
+    private PStm createReferenceArray(org.intocps.maestro.framework.fmi2.RelationVariable variable, LexIdentifier lexID) throws ExpandException {
         List<PExp> args = new ArrayList<>();
-        args.add(getDefaultArrayValue(variable.scalarVariable.scalarVariable.getType().type));
+        args.add(variable.getType().getLexDefaultValue());
 
         PInitializer initializer = MableAstFactory.newAArrayInitializer(args);
-        return newALocalVariableStm(
-                newAVariableDeclaration(lexID, newAArrayType(fmiTypeToMablType(variable.scalarVariable.scalarVariable.getType().type)), 1,
-                        initializer));
+        return newALocalVariableStm(newAVariableDeclaration(lexID, newAArrayType(variable.getType().getLexType()), 1, initializer));
     }
 
-    private List<PStm> updateReferenceArray(List<Fmi2SimulationEnvironment.Variable> outputPorts) {
+    private List<PStm> updateReferenceArray(List<org.intocps.maestro.framework.fmi2.RelationVariable> outputPorts) {
         List<PStm> updateStmts = new Vector<>();
         outputPorts.forEach(o -> {
             var referenceValue = convergenceRefArray.get(o);
@@ -279,7 +278,7 @@ public class StatementGeneratorContainer {
     }
 
     //This method should check if all output of the Fixed Point iteration have stabilized/converged
-    private List<PStm> checkLoopConvergence(List<Fmi2SimulationEnvironment.Variable> outputPorts, LexIdentifier doesConverge) {
+    private List<PStm> checkLoopConvergence(List<org.intocps.maestro.framework.fmi2.RelationVariable> outputPorts, LexIdentifier doesConverge) {
         LexIdentifier index = newAIdentifier("index");
         List<PStm> result = new Vector<>();
         result.add(newALocalVariableStm(newAVariableDeclaration(index, newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(0)))));
@@ -497,7 +496,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(realArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(doubles.length, valueLocator, realArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Real, realArrays);
+            var value =
+                    createArray(doubles.length, valueLocator, realArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Real, realArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
         } else {
@@ -548,7 +548,8 @@ public class StatementGeneratorContainer {
         LexIdentifier valueArray = findArrayOfSize(intArrays, longs.length);
         // The array does not exist. Create it and initialize it.
         if (valueArray == null) {
-            var value = createArray(ints.length, valueLocator, intArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Integer, intArrays);
+            var value =
+                    createArray(ints.length, valueLocator, intArrayVariableName.apply(longs.length), Fmi2ModelDescription.Types.Integer, intArrays);
             valueArray = value.getLeft();
             statements.addAll(value.getRight());
         } else {
@@ -656,7 +657,8 @@ public class StatementGeneratorContainer {
         return newVal;
     }
 
-    public List<PStm> getValueStm(String instanceName, LexIdentifier valueArray, long[] longs, Fmi2ModelDescription.Types type) throws ExpandException {
+    public List<PStm> getValueStm(String instanceName, LexIdentifier valueArray, long[] longs,
+            Fmi2ModelDescription.Types type) throws ExpandException {
         if (!instancesLookupDependencies) {
             instancesLookupDependencies = true;
         }

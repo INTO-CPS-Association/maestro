@@ -1,16 +1,16 @@
-package org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi3
+package org.intocps.maestro.fmi.fmi3
 
 import org.apache.commons.io.IOUtils
+import org.intocps.fmi.jnifmuapi.fmi3.schemas.Fmi3Schema
 import org.intocps.maestro.fmi.ModelDescription
 import org.intocps.maestro.fmi.xml.NodeIterator
 import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
 import javax.xml.transform.stream.StreamSource
 import javax.xml.xpath.XPathExpressionException
+
 
 class Fmi3ModelDescription : ModelDescription {
     private var variables: Collection<Fmi3Variable>? = null
@@ -21,17 +21,17 @@ class Fmi3ModelDescription : ModelDescription {
     private var derivatives: List<Fmi3ScalarVariable>? = null
     private var derivativeToDerivativeSource: Map<Fmi3ScalarVariable, Fmi3ScalarVariable>? = null
 
-    constructor(file: File) : super(
-        ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
-            Fmi3ModelDescription::class.java.classLoader.getResourceAsStream(
-                "fmi3ModelDescription.xsd"
-            )
-        )
-    )
+//    constructor(file: File) : super(
+//        ByteArrayInputStream(IOUtils.toByteArray(FileInputStream(file))), StreamSource(
+//            Fmi3ModelDescription::class.java.classLoader.getResourceAsStream(
+//                "fmi3ModelDescription.xsd"
+//            )
+//        )
+//    )
 
     constructor(file: InputStream) : super(
         file,
-        StreamSource(Fmi3ModelDescription::class.java.classLoader.getResourceAsStream("fmi3ModelDescription.xsd"))
+        StreamSource(ByteArrayInputStream(IOUtils.toByteArray(Fmi3Schema().schema))), Fmi3Schema()
     )
 
     fun getScalarVariables(): List<Fmi3ScalarVariable> {
@@ -100,12 +100,15 @@ class Fmi3ModelDescription : ModelDescription {
                         Fmi3ModelStructureElementEnum.Output -> variable.outputDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
+
                         Fmi3ModelStructureElementEnum.ContinuousStateDerivative -> variable.derivativesDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
+
                         Fmi3ModelStructureElementEnum.ClockedState -> {
                             //TODO: Implement
                         }
+
                         Fmi3ModelStructureElementEnum.InitialUnknown -> variable.initialUnknownsDependencies.putAll(
                             dependencyScalarVariableToDependencyKinds
                         )
@@ -218,9 +221,11 @@ class Fmi3ModelDescription : ModelDescription {
                         "BaseUnit" -> {
                             setBaseUnit(parseBaseUnit(childNode))
                         }
+
                         "DisplayUnit" -> {
                             displayUnits.add(parseDisplayUnit(childNode))
                         }
+
                         "Annotations" -> {
                         }
                     }
@@ -279,7 +284,7 @@ class Fmi3ModelDescription : ModelDescription {
             return Fmi3ModelStructureElement(
                 valueOf(node.nodeName),
                 node.attributes.getNamedItem("valueReference").nodeValue.toUInt(),
-                node.attributes.getNamedItem("dependencies")?.nodeValue?.split(" ")
+                node.attributes.getNamedItem("dependencies")?.nodeValue?.split(" ")?.filter { value->value.trim().length>0 }
                     ?.map { value -> value.toUInt() },
                 (node.attributes.getNamedItem("dependenciesKind")?.nodeValue ?: "").let { dependencyKinds ->
                     if (dependencyKinds.isEmpty()) null else dependencyKinds.split(" ")
@@ -485,6 +490,9 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("previous")?.nodeValue?.toUInt(),
                 node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.StringType,
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.let { att ->
                     val startValues: MutableList<String> = mutableListOf()
                     for (i in 0 until att.length) {
@@ -565,6 +573,9 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("quantity")?.nodeValue ?: typeDefinition?.quantity,
                 node.attributes.getNamedItem("min")?.nodeValue?.toLong(),
                 node.attributes.getNamedItem("max")?.nodeValue?.toLong(),
+                (node.attributes.getNamedItem("initial")?.nodeValue ?: "").let {
+                    if (it.isEmpty()) null else valueOf<Initial>(it)
+                },
                 node.attributes.getNamedItem("start")?.nodeValue?.split(" ")?.map { value -> value.toLong() },
                 getDimensionsFromVariableNode(node)
             )
@@ -581,7 +592,7 @@ class Fmi3ModelDescription : ModelDescription {
             val typeDefinition: ClockTypeDefinition? =
                 getTypeDefinitionFromDeclaredType(declaredType ?: "") as ClockTypeDefinition?
 
-            val interval = node.attributes.getNamedItem("interval")?.nodeValue
+            val interval = node.attributes.getNamedItem("intervalVariability")?.nodeValue
 
             return ClockVariable(
                 node.attributes.getNamedItem("name").nodeValue,
@@ -599,15 +610,15 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("clocks")?.nodeValue?.split(" ")?.map { value -> value.toUInt() },
                 Fmi3TypeEnum.ClockType,
                 declaredType,
-                node.attributes.getNamedItem("canBeDeactivated").nodeValue?.toBoolean()
-                    ?: typeDefinition?.canBeDeactivated,
+                when(node.attributes.getNamedItem("canBeDeactivated")?.nodeValue?.toBoolean()
+                    ?: typeDefinition?.canBeDeactivated){true->true;false,null->false},
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
                 if (interval == null) typeDefinition!!.interval else valueOf(interval),
                 node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat()
                     ?: typeDefinition?.intervalDecimal,
                 node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat() ?: typeDefinition?.shiftDecimal
                 ?: (0).toFloat(),
-                node.attributes.getNamedItem("supportsFraction").nodeValue?.toBoolean()
+                node.attributes.getNamedItem("supportsFraction")?.nodeValue?.toBoolean()
                     ?: typeDefinition?.supportsFraction ?: false,
                 node.attributes.getNamedItem("resolution")?.nodeValue?.toULong() ?: typeDefinition?.resolution,
                 node.attributes.getNamedItem("intervalCounter")?.nodeValue?.toULong()

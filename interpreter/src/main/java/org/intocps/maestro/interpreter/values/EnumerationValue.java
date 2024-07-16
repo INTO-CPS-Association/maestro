@@ -2,6 +2,7 @@ package org.intocps.maestro.interpreter.values;
 
 public class EnumerationValue extends Value {
 
+    //TODO is this right?
     final Enum value;
 
     public EnumerationValue(Enum value) {
@@ -22,4 +23,10 @@ public class EnumerationValue extends Value {
 
         return super.compareTo(other);
     }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
+
 }

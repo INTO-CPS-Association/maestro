@@ -38,7 +38,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.intocps.maestro.fmi.fmi2.Fmi2ModelDescriptionUnit;
-import org.intocps.maestro.fmi.org.intocps.maestro.fmi.fmi2.Fmi2Unit;
+import org.intocps.maestro.fmi.fmi2.Fmi2Unit;
 import org.intocps.maestro.fmi.xml.NodeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

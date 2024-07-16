@@ -1,0 +1,1 @@
+grep output /Users/kgl/data/au/Reference-FMUs/Feedthrough/FMI3.xml |sed 's/^.*name="//' | cut -d'"' -f1 | while read -r line; do echo "\"{sgFmu}.sg.$line\": [ \"{ftFmu}.ft.$(echo $line|sed 's/output/input/')\" ],"; done

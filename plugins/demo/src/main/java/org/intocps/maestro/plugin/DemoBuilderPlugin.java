@@ -6,7 +6,7 @@ import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 
@@ -46,7 +46,7 @@ public class DemoBuilderPlugin extends BasicMaestroExpansionPlugin {
 
     @Override
     public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
-            Fmi2Builder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<Fmi2Builder.Variable<PStm, ?>> formalArguments,
+            FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> builder, List<FmiBuilder.Variable<PStm, ?>> formalArguments,
             IPluginConfiguration config, ISimulationEnvironment env, IErrorReporter errorReporter) throws ExpandException {
 
 

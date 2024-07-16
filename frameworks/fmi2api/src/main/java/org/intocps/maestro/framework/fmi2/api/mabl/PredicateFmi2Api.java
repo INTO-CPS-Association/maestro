@@ -2,13 +2,13 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableUtil;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
-public class PredicateFmi2Api implements Fmi2Builder.Predicate, Fmi2Builder.ProvidesTypedReferenceExp {
+public class PredicateFmi2Api implements FmiBuilder.Predicate, FmiBuilder.ProvidesTypedReferenceExp {
 
     private final PExp exp;
 
@@ -27,7 +27,7 @@ public class PredicateFmi2Api implements Fmi2Builder.Predicate, Fmi2Builder.Prov
     }
 
     @Override
-    public PredicateFmi2Api and(Fmi2Builder.Predicate p) {
+    public PredicateFmi2Api and(FmiBuilder.Predicate p) {
         if (p instanceof PredicateFmi2Api) {
             return this.and((PredicateFmi2Api) p);
         } else {
@@ -36,7 +36,7 @@ public class PredicateFmi2Api implements Fmi2Builder.Predicate, Fmi2Builder.Prov
     }
 
     @Override
-    public PredicateFmi2Api or(Fmi2Builder.Predicate p) {
+    public PredicateFmi2Api or(FmiBuilder.Predicate p) {
         if (p instanceof PredicateFmi2Api) {
             return this.or((PredicateFmi2Api) p);
         } else {

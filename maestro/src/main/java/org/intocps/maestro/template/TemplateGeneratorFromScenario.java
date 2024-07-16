@@ -7,7 +7,9 @@ import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.fmi2.ComponentInfo;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.fmi.ModelDescription;
+import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.mabl.FaultInject;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
@@ -19,6 +21,7 @@ import org.intocps.maestro.plugin.Sigver;
 import org.intocps.maestro.plugin.SigverConfig;
 import scala.jdk.javaapi.CollectionConverters;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,8 +60,13 @@ public class TemplateGeneratorFromScenario {
         List<FmuVariableFmi2Api> fmus = simulationEnvironment.getFmusWithModelDescriptions().stream()
                 .filter(entry -> simulationEnvironment.getUriFromFMUName(entry.getKey()) != null).map(entry -> {
                     try {
-                        return dynamicScope.createFMU(removeFmuKeyBraces(entry.getKey()), entry.getValue(),
-                                simulationEnvironment.getUriFromFMUName(entry.getKey()));
+                        String name = removeFmuKeyBraces(entry.getKey());
+                        ModelDescription md = entry.getValue();
+                        URI uri = simulationEnvironment.getUriFromFMUName(entry.getKey());
+                        if (md instanceof Fmi2ModelDescription) {
+                            return dynamicScope.createFMU(name, (Fmi2ModelDescription) md, uri);
+                        }
+                        throw new RuntimeException("Only supporting FMI2 got: " + md.getFmiVersion());
                     } catch (Exception e) {
                         throw new RuntimeException("Unable to create FMU variable: " + e);
                     }
@@ -86,7 +94,7 @@ public class TemplateGeneratorFromScenario {
             // We need to use the fault inject fmu instead of the original.
             fmuInstances = originalFmuInstances.entrySet().stream().map(entry -> {
                 String instanceNameInEnvironment = entry.getKey().split(Sigver.MASTER_MODEL_FMU_INSTANCE_DELIMITER)[1];
-                Optional<Map.Entry<String, ComponentInfo>> simEnvInstance =
+                Optional<? extends Map.Entry<String, ? extends FrameworkUnitInfo>> simEnvInstance =
                         simulationEnvironment.getInstances().stream().filter(ins -> Objects.equals(ins.getKey(), instanceNameInEnvironment))
                                 .findFirst();
                 if (simEnvInstance.isPresent() && simEnvInstance.get().getValue().getFaultInject().isPresent()) {
@@ -145,7 +153,11 @@ public class TemplateGeneratorFromScenario {
         if (doFaultInject) {
             originalFmuInstances.putAll(faultInjectInstances);
         }
-        originalFmuInstances.values().forEach(ComponentVariableFmi2Api::terminate);
+        originalFmuInstances.values().stream().filter(ComponentVariableFmi2Api.class::isInstance).map(ComponentVariableFmi2Api.class::cast)
+                .forEach(ComponentVariableFmi2Api::terminate);
+        //TODO: add terminal for fmi3
+        //        originalFmuInstances.values().stream().filter(InstanceVApi.class::isInstance).map(ComponentVariableFmi2Api.class::cast
+        //        ).forEach(ComponentVariableFmi2Api::terminate);
 
         // Build unit
         ASimulationSpecificationCompilationUnit unit = builder.build();
@@ -154,7 +166,7 @@ public class TemplateGeneratorFromScenario {
         List<LexIdentifier> imports = new ArrayList<>();
         imports.addAll(unit.getImports());
         imports.addAll(List.of(newAIdentifier(SIGVER_EXPANSION_MODULE_NAME), newAIdentifier(FRAMEWORK_MODULE_NAME)));
-        unit.setImports(imports);
+        unit.setImports(imports.stream().distinct().collect(Collectors.toList()));
 
         // Setup framework
         unit.setFramework(Collections.singletonList(new LexIdentifier(configuration.getFrameworkConfig().getLeft().toString(), null)));

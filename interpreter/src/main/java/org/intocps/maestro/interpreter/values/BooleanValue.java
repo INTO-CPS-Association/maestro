@@ -13,7 +13,7 @@ public class BooleanValue extends Value {
 
     @Override
     public String toString() {
-        return "BooleanValue{" + "value=" + value + '}';
+        return "" + value;
     }
 
     @Override

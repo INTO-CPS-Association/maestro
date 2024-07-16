@@ -1,10 +1,14 @@
 package org.intocps.maestro.typechecker;
 
 import org.intocps.maestro.ast.node.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class TypeComparator {
+    final static Logger logger = LoggerFactory.getLogger(TypeComparator.class);
 
     public synchronized boolean compatible(Class<? extends PType> to, PType from) {
         if (to == AUnknownType.class) {
@@ -50,6 +54,56 @@ public class TypeComparator {
         if (to instanceof AReferenceType && from instanceof AReferenceType) {
             return compatible(((AReferenceType) to).getType(), ((AReferenceType) from).getType());
         }
+
+        /*
+        * #primitive
+    =   {boolean}
+    |   {string}
+    |   #numeric
+    ;
+
+#numeric
+    =   {real}
+    |   {int}
+    |   {uInt}
+    |   {float}
+    |   {short}
+    |   {byte}
+    |   {long}
+    ;
+    *
+    * _Bool < char < short < int < long < long long
+    *
+    * float < double < long double
+*/
+        //ABooleanPrimitiveType.class,
+        Class types[] = new Class[]{AByteNumericPrimitiveType.class, AShortNumericPrimitiveType.class, AUIntNumericPrimitiveType.class, AIntNumericPrimitiveType.class, ALongNumericPrimitiveType.class, AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
+
+        //        Class typesDecimal[] = new Class[]{AFloatNumericPrimitiveType.class, ARealNumericPrimitiveType.class};
+        List<Class> primitiveTypeRanks = Arrays.asList(types);
+
+//        for (Class type : types) {
+//            primitiveTypeRanks.add(type);
+//        }
+        int toIndex = primitiveTypeRanks.indexOf(to.getClass());
+        int fromIndex = primitiveTypeRanks.indexOf(from.getClass());
+
+        //rank for int and uint shall be the same
+        int indexInt = primitiveTypeRanks.indexOf(AIntNumericPrimitiveType.class);
+        int indexUInt = primitiveTypeRanks.indexOf(AUIntNumericPrimitiveType.class);
+        if (toIndex == indexInt) {
+            toIndex = indexUInt;
+        }
+        if (fromIndex == indexInt) {
+            fromIndex = indexUInt;
+        }
+
+
+        if (toIndex > -1 && fromIndex > -1 && fromIndex <= toIndex) {
+            //            logger.info("Type compatability {} -> {} OK", from.getClass().getSimpleName(), to.getClass().getSimpleName());
+            return true;
+        }
+
 
         //numbers
         if (to instanceof ARealNumericPrimitiveType && (from instanceof ARealNumericPrimitiveType || from instanceof AIntNumericPrimitiveType)) {

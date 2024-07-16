@@ -7,10 +7,8 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
-import org.intocps.maestro.interpreter.values.ExternalModuleValue;
-import org.intocps.maestro.interpreter.values.FunctionValue;
-import org.intocps.maestro.interpreter.values.IntegerValue;
-import org.intocps.maestro.interpreter.values.Value;
+import org.intocps.maestro.interpreter.extensions.JavaClasspathLoaderLifecycleHandler;
+import org.intocps.maestro.interpreter.values.*;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
@@ -29,16 +27,15 @@ public class DefaultLoaderFactoryTest {
     @Test
     public void javaClasspathLoadMissingArgTest() throws AnalysisException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
         String moduleDef = "module A{}";
-        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" +
-                DefaultExternalValueFactory.JavaClasspathLoaderLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class)
-                        .name() + "\");}";
+        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" + JavaClasspathLoaderLifecycleHandler.class.getAnnotation(
+                IValueLifecycleHandler.ValueLifecycle.class).name() + "\");}";
 
         ErrorReporter reporter = new ErrorReporter();
         TypeChecker tc = new TypeChecker(reporter);
         ARootDocument parse = MablParserUtil.parse(CharStreams.fromString(moduleDef + spec), reporter);
         boolean tcRes = tc.typeCheck(Arrays.asList(parse), new Vector<>());
-        Throwable thrown = Assertions.assertThrows(AnalysisException.class, () ->  new MableInterpreter(new DefaultExternalValueFactory(new File("target"),
-                null)).execute(parse));
+        Throwable thrown = Assertions.assertThrows(AnalysisException.class,
+                () -> new MableInterpreter(new DefaultExternalValueFactory(new File("target"), tc::findModule, null)).execute(parse));
 
         Assertions.assertEquals("Load failed", thrown.getMessage());
     }
@@ -48,9 +45,8 @@ public class DefaultLoaderFactoryTest {
         String clz = MyCustomAValue.class.getName();
 
         String moduleDef = "module A{}";
-        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" +
-                DefaultExternalValueFactory.JavaClasspathLoaderLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class)
-                        .name() + "\",\"" + clz + "\");}";
+        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" + JavaClasspathLoaderLifecycleHandler.class.getAnnotation(
+                IValueLifecycleHandler.ValueLifecycle.class).name() + "\",\"" + clz + "\");}";
 
         ErrorReporter reporter = new ErrorReporter();
         TypeChecker tc = new TypeChecker(reporter);
@@ -58,7 +54,7 @@ public class DefaultLoaderFactoryTest {
         boolean tcRes = tc.typeCheck(Arrays.asList(parse), new Vector<>());
 
         MyCustomAValue.staticValue = 0;
-        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
+        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), tc::findModule, null)).execute(parse);
         Assertions.assertEquals(999, MyCustomAValue.staticValue.intValue());
     }
 
@@ -67,9 +63,8 @@ public class DefaultLoaderFactoryTest {
         String clz = MyCustomAValue.class.getName();
 
         String moduleDef = "module A{}";
-        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" +
-                DefaultExternalValueFactory.JavaClasspathLoaderLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class)
-                        .name() + "\",\"" + clz + "\",1000);}";
+        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" + JavaClasspathLoaderLifecycleHandler.class.getAnnotation(
+                IValueLifecycleHandler.ValueLifecycle.class).name() + "\",\"" + clz + "\",1000);}";
 
         ErrorReporter reporter = new ErrorReporter();
         TypeChecker tc = new TypeChecker(reporter);
@@ -77,7 +72,7 @@ public class DefaultLoaderFactoryTest {
         boolean tcRes = tc.typeCheck(Arrays.asList(parse), new Vector<>());
 
         MyCustomAValue.staticValue = 0;
-        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
+        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), tc::findModule, null)).execute(parse);
         Assertions.assertEquals(1000, MyCustomAValue.staticValue.intValue());
     }
 
@@ -86,9 +81,8 @@ public class DefaultLoaderFactoryTest {
         String clz = MyCustomAValue.class.getName();
 
         String moduleDef = "module A{ int getA();}";
-        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" +
-                DefaultExternalValueFactory.JavaClasspathLoaderLifecycleHandler.class.getAnnotation(IValueLifecycleHandler.ValueLifecycle.class)
-                        .name() + "\",\"" + clz + "\"); int v = obj.getA();}";
+        String spec = "simulation \n" + "import A;\n" + "{\n" + "A obj = load(\"" + JavaClasspathLoaderLifecycleHandler.class.getAnnotation(
+                IValueLifecycleHandler.ValueLifecycle.class).name() + "\",\"" + clz + "\"); int v = obj.getA();}";
 
         ErrorReporter reporter = new ErrorReporter();
         TypeChecker tc = new TypeChecker(reporter);
@@ -96,7 +90,7 @@ public class DefaultLoaderFactoryTest {
         boolean tcRes = tc.typeCheck(Arrays.asList(parse), new Vector<>());
 
         MyCustomAValue.staticValue = 0;
-        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), null)).execute(parse);
+        new MableInterpreter(new DefaultExternalValueFactory(new File("target"), tc::findModule, null)).execute(parse);
         Assertions.assertEquals(999, MyCustomAValue.staticValue.intValue());
     }
 
@@ -105,7 +99,7 @@ public class DefaultLoaderFactoryTest {
         static Integer staticValue;
 
         public MyCustomAValue(Value module) {
-            super(makeMembers(((IntegerValue) module).getValue()), ((IntegerValue) module).getValue());
+            super(makeMembers(((NumericValue) module).intValue()), ((NumericValue) module).intValue());
         }
 
         public MyCustomAValue() {

@@ -2,7 +2,8 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.fmi.Fmi2ModelDescription;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
@@ -14,20 +15,20 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariable<PStm>> implements Fmi2Builder.Fmu2Variable<PStm> {
+public class FmuVariableFmi2Api extends VariableFmi2Api<FmiBuilder.NamedVariable<PStm>> implements FmiBuilder.Fmu2Variable<PStm, Fmi2ModelDescription.ScalarVariable> {
 
     private final ModelDescriptionContext modelDescriptionContext;
     private final MablApiBuilder builder;
     private String fmuIdentifier;
 
     public FmuVariableFmi2Api(String fmuIdentifier, MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration,
-            PType type, IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
+            PType type, IMablScope declaredScope, FmiBuilder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
         this(builder, modelDescriptionContext, declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.fmuIdentifier = fmuIdentifier;
     }
 
     public FmuVariableFmi2Api(MablApiBuilder builder, ModelDescriptionContext modelDescriptionContext, PStm declaration, PType type,
-            IMablScope declaredScope, Fmi2Builder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
+            IMablScope declaredScope, FmiBuilder.DynamicActiveScope<PStm> dynamicScope, PStateDesignator designator, PExp referenceExp) {
         super(declaration, type, declaredScope, dynamicScope, designator, referenceExp);
         this.builder = builder;
         this.modelDescriptionContext = modelDescriptionContext;
@@ -83,14 +84,14 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     //        }
     //    }
     @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope,
+    public ComponentVariableFmi2Api instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope, FmiBuilder.Scope<PStm> scope,
             String environmentName) {
-            return instantiate(namePrefix, enclosingTryScope, scope, environmentName, true);
+        return instantiate(namePrefix, enclosingTryScope, scope, environmentName, true);
     }
 
     @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope,
-            Fmi2Builder.Scope<PStm> scope, String environmentName, boolean loggingOn) {
+    public ComponentVariableFmi2Api instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope, FmiBuilder.Scope<PStm> scope,
+            String environmentName, boolean loggingOn) {
 
         String name = builder.getNameGenerator().getName(namePrefix);
         //TODO: Extract bool visible and bool loggingOn from configuration
@@ -109,11 +110,10 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
         mTryScope.parent().addBefore(mTryScope.getDeclaration(), var);
 
         ComponentVariableFmi2Api compVar;
-        if(environmentName == null) {
+        if (environmentName == null) {
             compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
                     newAIdentifierStateDesignator(newAIdentifier(name)), newAIdentifierExp(name));
-        }
-        else {
+        } else {
 
             AInstanceMappingStm mapping = newAInstanceMappingStm(newAIdentifier(name), environmentName);
             compVar = new ComponentVariableFmi2Api(var, this, name, this.modelDescriptionContext, builder, mTryScope.parent(),
@@ -145,7 +145,7 @@ public class FmuVariableFmi2Api extends VariableFmi2Api<Fmi2Builder.NamedVariabl
     }
 
     @Override
-    public ComponentVariableFmi2Api instantiate(String namePrefix, Fmi2Builder.TryScope<PStm> enclosingTryScope, Fmi2Builder.Scope<PStm> scope) {
+    public ComponentVariableFmi2Api instantiate(String namePrefix, FmiBuilder.TryScope<PStm> enclosingTryScope, FmiBuilder.Scope<PStm> scope) {
         return instantiate(namePrefix, enclosingTryScope, scope, null);
     }
 

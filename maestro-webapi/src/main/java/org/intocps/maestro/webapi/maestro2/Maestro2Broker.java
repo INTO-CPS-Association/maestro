@@ -10,6 +10,8 @@ import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
+import org.intocps.maestro.ast.node.INode;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.cli.ImportCmd;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.MultiModel;
@@ -18,15 +20,16 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
-import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
+import org.intocps.maestro.interpreter.extensions.SimulationControlDefaultLifecycleHandler;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.simulationcontrol.SimulationControlValue;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.plugin.MasterModelMapper;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
 import org.intocps.maestro.template.ScenarioConfiguration;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.webapi.maestro2.dto.InitializationData;
 import org.intocps.maestro.webapi.maestro2.dto.SigverSimulateRequestBody;
 import org.intocps.maestro.webapi.maestro2.dto.SimulateRequestBody;
@@ -56,6 +59,7 @@ public class Maestro2Broker {
     private final Function<Map<String, List<String>>, List<String>> flattenFmuIds =
             map -> map.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))
                     .collect(Collectors.toList());
+    private Map.Entry<Boolean, Map<INode, PType>> typeCheckResult;
 
     public Maestro2Broker(File workingDirectory, ErrorReporter reporter, Supplier<Boolean> isStopRequsted) {
         this.workingDirectory = workingDirectory;
@@ -89,7 +93,9 @@ public class Maestro2Broker {
 
         String runtimeJsonConfigString = generateSpecification(configuration, null);
 
-        if (!mabl.typeCheck().getKey()) {
+        typeCheckResult = mabl.typeCheck();
+
+        if (!typeCheckResult.getKey()) {
             throw new Exception("Specification did not type check");
         }
 
@@ -99,7 +105,7 @@ public class Maestro2Broker {
 
         List<String> portsToLog = Stream.concat(simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.getName());
         }), multiModel.getLogVariables() == null ? Stream.of() : multiModel.getLogVariables().entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(v -> entry.getKey() + "." + v))).collect(Collectors.toList());
 
@@ -214,7 +220,7 @@ public class Maestro2Broker {
 
         List<String> connectedOutputs = simulationEnvironment.getConnectedOutputs().stream().map(x -> {
             ComponentInfo i = simulationEnvironment.getUnitInfo(new LexIdentifier(x.instance.getText(), null), Framework.FMI2);
-            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.scalarVariable.getName());
+            return String.format("%s.%s.%s", i.fmuIdentifier, x.instance.getText(), x.getName());
         }).collect(Collectors.toList());
 
 
@@ -250,14 +256,15 @@ public class Maestro2Broker {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
-                    csvFilter, config);
+                    csvFilter, name -> TypeChecker.findModule(typeCheckResult.getValue(), name), config);
         } else {
-            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter, config);
+            factory = new WebApiInterpreterFactory(workingDirectory, csvOutputFile, csvFilter,
+                    name -> TypeChecker.findModule(typeCheckResult.getValue(), name), config);
         }
 
         // create and install the overrides' simulation control lifecycle handler that links this simulation to the current session
         @IValueLifecycleHandler.ValueLifecycle(name = "SimulationControl")
-        class WebSimulationControlDefaultLifecycleHandler extends DefaultExternalValueFactory.SimulationControlDefaultLifecycleHandler {
+        class WebSimulationControlDefaultLifecycleHandler extends SimulationControlDefaultLifecycleHandler {
             @Override
             public Either<Exception, Value> instantiate(List<Value> args) {
                 return Either.right(new SimulationControlValue(isStopRequsted));

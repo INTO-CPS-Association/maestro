@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class TopologicalPlugin {
     //This method find the right instantiation order using the topological sort plugin. The plugin is in scala so some mapping between java and
     // scala is needed
-    public List<Fmi2SimulationEnvironment.Variable> findInstantiationOrder(Set<Fmi2SimulationEnvironment.Relation> relations,
+    public List<org.intocps.maestro.framework.fmi2.RelationVariable> findInstantiationOrder(Set<Fmi2SimulationEnvironment.Relation> relations,
             Set<LexIdentifier> filterTargets) throws ExpandException {
         TarjanGraph graphSolver = getTarjanGraph(relations, filterTargets);
 
@@ -25,27 +25,27 @@ public class TopologicalPlugin {
             throw new ExpandException("Cycles are present in the systems: " + cycles.cycle());
         }
 
-        return (List<Fmi2SimulationEnvironment.Variable>) JavaConverters
+        return (List<org.intocps.maestro.framework.fmi2.RelationVariable>) JavaConverters
                 .seqAsJavaListConverter(((AcyclicDependencyResult) topologicalOrderToInstantiate).totalOrder()).asJava();
     }
 
-    public List<Set<Fmi2SimulationEnvironment.Variable>> findInstantiationOrderStrongComponents(Set<Fmi2SimulationEnvironment.Relation> relations,
+    public List<Set<org.intocps.maestro.framework.fmi2.RelationVariable>> findInstantiationOrderStrongComponents(Set<Fmi2SimulationEnvironment.Relation> relations,
             Set<LexIdentifier> filterTargets) {
         TarjanGraph graphSolver = getTarjanGraph(relations, filterTargets);
 
         var topologicalOrderToInstantiate = graphSolver.topologicalSCC();
 
-        Map<Fmi2SimulationEnvironment.Variable, Integer> javaMap =
-                (Map<Fmi2SimulationEnvironment.Variable, Integer>) JavaConverters.mapAsJavaMapConverter(topologicalOrderToInstantiate).asJava();
+        Map<org.intocps.maestro.framework.fmi2.RelationVariable, Integer> javaMap =
+                (Map<org.intocps.maestro.framework.fmi2.RelationVariable, Integer>) JavaConverters.mapAsJavaMapConverter(topologicalOrderToInstantiate).asJava();
 
         return groupSCC(javaMap);
     }
 
-    private List<Set<Fmi2SimulationEnvironment.Variable>> groupSCC(Map<Fmi2SimulationEnvironment.Variable, Integer> javaMap) {
-        List<Set<Fmi2SimulationEnvironment.Variable>> sccs = new Vector<>();
+    private List<Set<org.intocps.maestro.framework.fmi2.RelationVariable>> groupSCC(Map<org.intocps.maestro.framework.fmi2.RelationVariable, Integer> javaMap) {
+        List<Set<org.intocps.maestro.framework.fmi2.RelationVariable>> sccs = new Vector<>();
         var list = javaMap.entrySet().stream().collect(Collectors.groupingBy(o -> o.getValue()));
         javaMap.values().stream().sorted().forEach(scc -> {
-            HashSet<Fmi2SimulationEnvironment.Variable> variablesSet = new HashSet<>();
+            HashSet<org.intocps.maestro.framework.fmi2.RelationVariable> variablesSet = new HashSet<>();
             list.get(scc).forEach(v -> variablesSet.add(v.getKey()));
             sccs.add(variablesSet);
         });
@@ -62,9 +62,9 @@ public class TopologicalPlugin {
                         .outputSource().and(o -> externalRelations.stream().anyMatch(i -> o.getSource() == i.getSource()))))
                 .collect(Collectors.toList());
 
-        var edges = new Vector<Edge11<Fmi2SimulationEnvironment.Variable, Fmi2SimulationEnvironment.Relation.InternalOrExternal>>();
+        var edges = new Vector<Edge11<org.intocps.maestro.framework.fmi2.RelationVariable, Fmi2SimulationEnvironment.Relation.InternalOrExternal>>();
         externalRelations.forEach(o -> o.getTargets().values().forEach(e -> {
-            if (filterTargets != null && filterTargets.contains(e.getScalarVariable().getInstance())) { return; }
+            if (filterTargets != null && filterTargets.contains(e.getInstance())) { return; }
             edges.add(new Edge11(o.getSource(), e, o.getOrigin()));
         }));
         internalRelations.forEach(o -> o.getTargets().values().forEach(e -> {

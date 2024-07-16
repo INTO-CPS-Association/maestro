@@ -1,8 +1,10 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
 import org.intocps.maestro.interpreter.*;
+import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -126,7 +128,7 @@ public class TransitionTest {
             }
         };
 
-        new MableInterpreter(new DefaultExternalValueFactory(stageOutput.toFile(), c), tm).execute(util.getMainSimulationUnit());
+        new MableInterpreter(new DefaultExternalValueFactory(stageOutput.toFile(), util::findModule, c), tm).execute(util.getMainSimulationUnit());
 
         // check that the two stages was taken
         Assertions.assertTrue(stageOutput.resolve("outputs.csv").toFile().exists());
@@ -165,6 +167,10 @@ public class TransitionTest {
 
         public ARootDocument getMainSimulationUnit() {
             return super.mabl.getMainSimulationUnit();
+        }
+
+        public AModuleDeclaration findModule(String name) {
+            return TypeChecker.findModule(typeCheckResult.getValue(), name);
         }
     }
 }

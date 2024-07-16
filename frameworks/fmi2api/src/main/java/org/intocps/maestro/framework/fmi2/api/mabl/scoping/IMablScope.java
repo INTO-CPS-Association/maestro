@@ -1,18 +1,21 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.ast.node.PType;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
-public interface IMablScope extends Fmi2Builder.Scope<PStm> {
+public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     @Override
-    Fmi2Builder.ScopeElement<PStm> parent();
+    FmiBuilder.ScopeElement<PStm> parent();
 
     IntVariableFmi2Api getFmiStatusVariable();
 
@@ -28,10 +31,10 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     BooleanVariableFmi2Api store(boolean value);
 
     @Override
-    WhileMaBLScope enterWhile(Fmi2Builder.Predicate predicate);
+    WhileMaBLScope enterWhile(FmiBuilder.Predicate predicate);
 
     @Override
-    IfMaBlScope enterIf(Fmi2Builder.Predicate predicate);
+    IfMaBlScope enterIf(FmiBuilder.Predicate predicate);
 
     @Override
     IMablScope parallel();
@@ -84,7 +87,10 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
     <V> ArrayVariableFmi2Api<V> store(String name, V value[]);
 
     @Override
-    <V> Fmi2Builder.Variable<PStm, V> store(Fmi2Builder.Value<V> tag);
+ <V > ArrayVariableFmi2Api<V> createArray(String name,Class<? extends V> type, FmiBuilder.IntVariable<PStm>... sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+
+    @Override
+    <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag);
 
     IntVariableFmi2Api store(String stabilisation_loop, IntVariableFmi2Api stabilisation_loop_max_iterations);
 
@@ -92,10 +98,15 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
 
     ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
 
+
     FmuVariableFmi2Api createFMU(String name, Fmi2ModelDescription modelDescription, URI path) throws Exception;
 
     @Override
     FmuVariableFmi2Api createFMU(String name, String loaderName, String... args) throws Exception;
+
+    FmuVariableFmi3Api createFMU(String name, Fmi3ModelDescription modelDescription, URI path) throws Exception;
+
+    FmuVariableFmi3Api createFMU3(String name, String loaderName, String... args) throws Exception;
 
     <Var extends VariableFmi2Api> Var copy(String name, Var variable);
 
@@ -110,6 +121,9 @@ public interface IMablScope extends Fmi2Builder.Scope<PStm> {
      * This is used to maintain a register of stored ComponentVariableFmi2API, such that they can be freed in case of an error.
      */
     void registerComponentVariableFmi2Api(ComponentVariableFmi2Api componentVariableFmi2Api);
+
+    void registerInstanceVariableFmi3Api(InstanceVariableFmi3Api instanceVariableFmi3Api);
+
 
     <S> S findParentScope(Class<S> type);
 }

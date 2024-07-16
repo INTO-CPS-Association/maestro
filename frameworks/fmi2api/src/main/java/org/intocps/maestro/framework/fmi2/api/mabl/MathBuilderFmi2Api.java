@@ -3,7 +3,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.node.ARealNumericPrimitiveType;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ArrayVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.BooleanVariableFmi2Api;
@@ -32,8 +32,8 @@ public class MathBuilderFmi2Api {
     }
 
 
-    private BooleanVariableFmi2Api checkConvergenceInternal(Fmi2Builder.ProvidesTypedReferenceExp a, Fmi2Builder.ProvidesTypedReferenceExp b,
-            Fmi2Builder.ProvidesTypedReferenceExp absoluteTolerance, Fmi2Builder.ProvidesTypedReferenceExp relativeTolerance) {
+    private BooleanVariableFmi2Api checkConvergenceInternal(FmiBuilder.ProvidesTypedReferenceExp a, FmiBuilder.ProvidesTypedReferenceExp b,
+            FmiBuilder.ProvidesTypedReferenceExp absoluteTolerance, FmiBuilder.ProvidesTypedReferenceExp relativeTolerance) {
         String variableName = dynamicScope.getName("convergence");
 
         PStm stm = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(variableName), newABoleanPrimitiveType(), newAExpInitializer(
@@ -45,8 +45,8 @@ public class MathBuilderFmi2Api {
 
     }
 
-    public BooleanVariableFmi2Api checkConvergence(Fmi2Builder.ProvidesTypedReferenceExp a, Fmi2Builder.ProvidesTypedReferenceExp b,
-            Fmi2Builder.DoubleVariable<PStm> absoluteTolerance, Fmi2Builder.DoubleVariable<PStm> relativeTolerance) {
+    public BooleanVariableFmi2Api checkConvergence(FmiBuilder.ProvidesTypedReferenceExp a, FmiBuilder.ProvidesTypedReferenceExp b,
+            FmiBuilder.DoubleVariable<PStm> absoluteTolerance, FmiBuilder.DoubleVariable<PStm> relativeTolerance) {
         if (Stream.of(a, b, absoluteTolerance, relativeTolerance).allMatch(x -> x.getType() instanceof ARealNumericPrimitiveType)) {
             return this.checkConvergenceInternal(a, b, absoluteTolerance, relativeTolerance);
         } else {

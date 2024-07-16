@@ -14,7 +14,7 @@ import org.intocps.maestro.util.CMakeUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
@@ -82,7 +82,8 @@ public class FullSpecCppTest extends FullSpecTest {
     }
 
     @Override
-    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec) throws Exception {
+    protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec,
+                                   Map<INode, PType> value) throws Exception {
         if (!beforeExecuted) {
             configureBaseProject();
         }

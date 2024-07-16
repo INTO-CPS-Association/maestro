@@ -1,0 +1,12 @@
+module Global {
+ 	int myFunc1( int a, long[] longs);
+ 	int myFunc2( int a, out long[] longs);
+ 	int myFunc3( uint a, out long[] longs);
+ 	bool[] identityBoolArrCStyle( bool a[]);
+ 	bool[] identityBoolArr( bool a[]);
+    bool identityBoolArrOut(out bool a[]);
+}
+
+simulation
+import Global;
+{}

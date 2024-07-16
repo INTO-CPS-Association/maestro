@@ -1,4 +1,4 @@
-package org.intocps.maestro.framework.fmi2;
+package org.intocps.maestro.framework.core;
 
 public class FaultInject {
     public String constraintId;

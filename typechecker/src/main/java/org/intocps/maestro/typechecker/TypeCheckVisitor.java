@@ -32,6 +32,36 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         astFactory = new MableAstFactory();
     }
 
+    static SNumericPrimitiveType detectType(int value) {
+        if (value <= 0xff) {
+            return new AByteNumericPrimitiveType();
+        } else if (value <= Short.MAX_VALUE) {
+            return new AShortNumericPrimitiveType();
+        } else {
+            return new AIntNumericPrimitiveType();
+        }
+    }
+
+    static SNumericPrimitiveType detectType(long value) {
+        if (value <= Integer.MAX_VALUE) {
+            return detectType((int) value);
+        } else {
+            return new ALongNumericPrimitiveType();
+        }
+    }
+
+    static SNumericPrimitiveType detectType(double value) {
+
+        if ((value % 1) == 0) {
+            //whole number
+            return detectType((long) value);
+        } else if (value <= Float.MAX_VALUE) {
+            return new AFloatNumericPrimitiveType();
+        } else {
+            return new ARealNumericPrimitiveType();
+        }
+    }
+
     @Override
     public PType createNewReturnValue(INode node, Context info) throws AnalysisException {
         return null;
@@ -46,7 +76,6 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     public PType defaultPInitializer(PInitializer node, Context ctxt) throws AnalysisException {
         return super.defaultPInitializer(node, ctxt);
     }
-
 
     @Override
     public PType caseAErrorStm(AErrorStm node, Context ctxt) throws AnalysisException {
@@ -113,7 +142,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         for (PExp index : node.getIndices()) {
             PType type = index.apply(this, ctxt);
-            if (!typeComparator.compatible(AIntNumericPrimitiveType.class, type)) {
+            if (!typeComparator.compatible(new AIntNumericPrimitiveType(), type)) {
                 errorReporter.report(-5, "Array index must be an integer actual: " + type, null);
             }
         }
@@ -129,7 +158,7 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         for (int i = 0; i < node.getIndices().size(); i++) {
             // If this happens, then we are finished already.
             if (!(iterationType instanceof AArrayType)) {
-                errorReporter.report(0, "Canont index none array expression", null);
+                errorReporter.report(0, "Cannot index none array expression", null);
                 return store(node, MableAstFactory.newAUnknownType());
             } else {
                 iterationType = ((AArrayType) iterationType).getType();
@@ -145,12 +174,6 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         if (node.getArgs() == null || node.getArgs().isEmpty()) {
             errorReporter.report(-5, "Wrong number of arguments to load. At least a type is required: " + node, null);
         } else {
-            // PType argType = node.getArgs().get(0).apply(this, ctxt);
-
-            //            PExp typeArg = node.getArgs().get(0);
-            //            if (!(typeArg instanceof AStringLiteralExp)) {
-            //                errorReporter.report(-5, "First argument must be a string.: " + node, null);
-            //            }
 
             PExp loaderNameArg = node.getArgs().get(0);
             if (!(loaderNameArg instanceof AStringLiteralExp)) {
@@ -227,12 +250,16 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
                 PType elementType = node.getExp().get(i).apply(this, ctxt);
                 if (!typeComparator.compatible(type, elementType)) {
                     //is ok
-                    errorReporter.warning(0, "Array initializer types mixed. Expected: " + type + " but found: " + elementType, null);
+                    if (!(node.parent() instanceof AVariableDeclaration &&
+                            ((AVariableDeclaration) node.parent()).getType() instanceof AUnknownType)) {
+                        //we only print this id the variable type is known
+                        errorReporter.warning(0, "Array initializer types mixed. Expected: " + type + " but found: " + elementType, null);
+                    }
                     type = newAUnknownType();
                 }
             }
         } else {
-            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
+//            errorReporter.report(0, "Array initializer must not be empty: " + node, null);
         }
         return store(node, newAArrayType(type).clone());
     }
@@ -243,14 +270,22 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
         }
 
         boolean isNumeric = types.stream().allMatch(t -> t instanceof SNumericPrimitiveType);
-        if (!isNumeric) {
-            return types.get(0);
-        }
+
+        //FIXME we allow bool to act as a numeric type in array initializers
+        isNumeric |= types.stream().anyMatch(t -> t instanceof ABooleanPrimitiveType);
+
         PType type = types.get(0);
         for (int i = 1; i < types.size(); i++) {
             PType from = types.get(i);
             if (!typeComparator.compatible(type, from)) {
-                type = from;
+                if (isNumeric) {
+                    //for numeric types we expand the type if not fitting
+                    type = from;
+                } else {
+                    errorReporter.report(-5,
+                            String.format("Array initializer contains mixed types. Expected '%s', got '%s' at position %d", type + "", from + "", i),
+                            null);
+                }
             }
         }
         return type;
@@ -621,16 +656,31 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
             return MableAstFactory.newARealNumericPrimitiveType();
         } else if (right instanceof ARealNumericPrimitiveType) {
             return MableAstFactory.newARealNumericPrimitiveType();
+        } else if (left instanceof AFloatNumericPrimitiveType) {
+            return MableAstFactory.newARealNumericPrimitiveType();
+        } else if (right instanceof AFloatNumericPrimitiveType) {
+            return MableAstFactory.newARealNumericPrimitiveType();
         } else if (left instanceof AUIntNumericPrimitiveType) {
             return MableAstFactory.newAUIntNumericPrimitiveType();
         } else if (right instanceof AUIntNumericPrimitiveType) {
             return MableAstFactory.newAUIntNumericPrimitiveType();
-        } else if (left instanceof AIntNumericPrimitiveType) {
-            return MableAstFactory.newAIntNumericPrimitiveType();
-        } else if (right instanceof AIntNumericPrimitiveType) {
+        } else {
             return MableAstFactory.newAIntNumericPrimitiveType();
         }
-        return null;
+        //            if (left instanceof AIntNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        } else if (right instanceof AIntNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        } else if (left instanceof AShortNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        } else if (right instanceof AShortNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        } else if (left instanceof AByteNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        } else if (right instanceof AByteNumericPrimitiveType) {
+        //            return MableAstFactory.newAIntNumericPrimitiveType();
+        //        }
+        //        return null;
     }
 
     public PType checkNumericComparizon(SBinaryExp node, Context ctxt) throws AnalysisException {
@@ -668,22 +718,22 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     @Override
     public PType caseARealLiteralExp(ARealLiteralExp node, Context ctxt) throws AnalysisException {
 
-        double value = node.getValue();
-        if (Math.round(value) == value) {
-            if (value < 0) {
-                return store(node, MableAstFactory.newIntType());
-            } else if (value == 0) {
-
-                //nat
-                return store(node, MableAstFactory.newIntType());
-            } else {
-                //natone
-                return store(node, MableAstFactory.newIntType());
-            }
-        } else {
-            return store(node, MableAstFactory.newRealType());  // Note, "1.234" is really "1234/1000" (a rat)
-        }
-
+        //        double value = node.getValue();
+        //        if (Math.round(value) == value) {
+        //            if (value < 0) {
+        //                return store(node, MableAstFactory.newIntType());
+        //            } else if (value == 0) {
+        //
+        //                //nat
+        //                return store(node, MableAstFactory.newIntType());
+        //            } else {
+        //                //natone
+        //                return store(node, MableAstFactory.newIntType());
+        //            }
+        //        } else {
+        //            return store(node, MableAstFactory.newRealType());  // Note, "1.234" is really "1234/1000" (a rat)
+        //        }
+        return store(node, detectType(node.getValue()));
     }
 
     @Override
@@ -699,16 +749,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseAIntLiteralExp(AIntLiteralExp node, Context ctxt) throws AnalysisException {
-        int value = node.getValue();
-        if (value < 0) {
-            return store(node, MableAstFactory.newIntType());
-        } else if (value == 0) {
-            //nat
-            return store(node, MableAstFactory.newIntType());
-        } else {
-            //natone
-            return store(node, MableAstFactory.newIntType());
-        }
+
+        return store(node, detectType(node.getValue()));
     }
 
     @Override
@@ -921,10 +963,13 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     }
 
     private ABooleanPrimitiveType checkEquality(INode node, PType left, PType right) {
-        //Commutative
-        if (!typeComparator.compatible(left, right) && !typeComparator.compatible(right, left)) {
-            errorReporter.report(-5, "Left and right part of expression are not compatible: " + node, null);
+        //first check for numbers as we can always compare these
+        if (!typeComparator.compatible(SNumericPrimitiveType.class, left) && !typeComparator.compatible(SNumericPrimitiveType.class, right)) {
+            //Commutative
+            if (!typeComparator.compatible(left, right) && !typeComparator.compatible(right, left)) {
+                errorReporter.report(-5, "Left and right part of expression are not compatible: " + node, null);
 
+            }
         }
         return store(node, MableAstFactory.newABoleanPrimitiveType());
     }
@@ -948,8 +993,8 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
     @Override
     public PType caseAArrayStateDesignator(AArrayStateDesignator node, Context ctxt) throws AnalysisException {
         PType indexType = node.getExp().apply(this, ctxt);
-        if (!(indexType instanceof AIntNumericPrimitiveType)) {
-            errorReporter.report(-5, "Index has to be of int type." + node, null);
+        if (!typeComparator.compatible(new AIntNumericPrimitiveType(), indexType)) {
+            errorReporter.report(-5, "Index has to be of int type: '" + indexType + "' node " + node, null);
         }
         // Peel of the array type
         PType targetType = node.getTarget().apply(this, ctxt);

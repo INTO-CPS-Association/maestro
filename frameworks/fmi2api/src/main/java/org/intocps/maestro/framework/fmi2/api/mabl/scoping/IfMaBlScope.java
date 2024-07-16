@@ -1,10 +1,10 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 
-public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
+public class IfMaBlScope implements FmiBuilder.IfScope<PStm> {
     private final MablApiBuilder builder;
     private final PStm declaration;
     private final ScopeFmi2Api declaringScope;
@@ -37,7 +37,7 @@ public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     }
 
     @Override
-    public Fmi2Builder.Scoping<PStm> parent() {
+    public FmiBuilder.Scoping<PStm> parent() {
         return this.declaringScope;
     }
 
@@ -47,8 +47,8 @@ public class IfMaBlScope implements Fmi2Builder.IfScope<PStm> {
     }
 
     @Override
-    public <P extends Fmi2Builder.ScopeElement<PStm>> P findParent(Class<P> clz) {
-        Fmi2Builder.ScopeElement<PStm> parent = this;
+    public <P extends FmiBuilder.ScopeElement<PStm>> P findParent(Class<P> clz) {
+        FmiBuilder.ScopeElement<PStm> parent = this;
         while ((parent = parent.parent()) != null) {
             if (clz.isAssignableFrom(parent.getClass())) {
                 return clz.cast(parent());

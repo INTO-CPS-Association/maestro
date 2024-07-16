@@ -115,6 +115,7 @@ __pycache__/
 /external_tester/venv/
 
 *.ci-friendly-pom.xml
+.venv
 .metals/metals.mv.db
 .bloop/ast-test.json
 .bloop/ast.json

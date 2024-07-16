@@ -3,14 +3,14 @@ package org.intocps.maestro.framework.fmi2.api.mabl.values;
 import org.intocps.maestro.ast.node.ARealNumericPrimitiveType;
 import org.intocps.maestro.ast.node.PExp;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.PredicateFmi2Api;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 
-public class DoubleExpressionValue extends NumericExpressionValueFmi2Api implements Fmi2Builder.DoubleExpressionValue {
+public class DoubleExpressionValue extends NumericExpressionValueFmi2Api implements FmiBuilder.DoubleExpressionValue {
 
     final PType type = new ARealNumericPrimitiveType();
     final PExp exp;
@@ -79,27 +79,27 @@ public class DoubleExpressionValue extends NumericExpressionValueFmi2Api impleme
     }
 
     @Override
-    public DoubleExpressionValue addition(Fmi2Builder.NumericTypedReferenceExp v) {
+    public DoubleExpressionValue addition(FmiBuilder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newPlusExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue divide(Fmi2Builder.NumericTypedReferenceExp v) {
+    public DoubleExpressionValue divide(FmiBuilder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newDivideExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue subtraction(Fmi2Builder.NumericTypedReferenceExp v) {
+    public DoubleExpressionValue subtraction(FmiBuilder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newMinusExp(getExp(), v.getExp()));
     }
 
     @Override
-    public DoubleExpressionValue multiply(Fmi2Builder.NumericTypedReferenceExp v) {
+    public DoubleExpressionValue multiply(FmiBuilder.NumericTypedReferenceExp v) {
         return new DoubleExpressionValue(newMultiplyExp(getExp(), v.getExp()));
     }
 
     @Override
-    public PredicateFmi2Api lessThan(Fmi2Builder.NumericTypedReferenceExp endTimeVar) {
+    public PredicateFmi2Api lessThan(FmiBuilder.NumericTypedReferenceExp endTimeVar) {
         return new PredicateFmi2Api(newALessBinaryExp(getExp(), endTimeVar.getExp()));
     }
 }

@@ -2,10 +2,10 @@ package org.intocps.maestro.framework.fmi2.api.mabl.scoping;
 
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.SBlockStm;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 
-public class WhileMaBLScope extends ScopeFmi2Api implements Fmi2Builder.WhileScope<PStm> {
+public class WhileMaBLScope extends ScopeFmi2Api implements FmiBuilder.WhileScope<PStm> {
     private final MablApiBuilder builder;
     private final PStm declaration;
     private final SBlockStm block;

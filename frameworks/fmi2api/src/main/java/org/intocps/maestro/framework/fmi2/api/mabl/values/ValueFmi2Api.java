@@ -1,9 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.values;
 
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.framework.fmi2.api.Fmi2Builder;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 
-public class ValueFmi2Api<V> implements Fmi2Builder.Value<V> {
+public class ValueFmi2Api<V> implements FmiBuilder.Value<V> {
     final V value;
     final PType type;
     private boolean primitive;
