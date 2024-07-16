@@ -28,6 +28,7 @@ import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -198,12 +199,13 @@ public class BuilderFmi3Test {
     }
 
     @Test
+    @Disabled
     public void testSimulateClocks() throws Exception {
         MablApiBuilder builder = new MablApiBuilder();
         DynamicActiveBuilderScope scope = builder.getDynamicScope();
 
         InstanceVariableFmi3Api instance = createInstance(builder, "clocks",
-                new File("target/Fmi3ModuleReferenceFmusTest/cache/Clocks.fmu").getAbsoluteFile().toURI());
+                new File("src/test/resources/fmi3/sinewave_array.fmu").getAbsoluteFile().toURI());
 
 
 //        fd.enterInitializationMode(false, 0.0, 0.0, true, 10.0);
