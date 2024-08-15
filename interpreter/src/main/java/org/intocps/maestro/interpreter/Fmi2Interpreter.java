@@ -500,7 +500,7 @@ public class Fmi2Interpreter {
             Value v = fcargs.get(0).deref();
             Value sizeValue = fcargs.get(1);
 
-            if (v instanceof FmuComponentStateValue && sizeValue.isNumeric()) {
+            if (v instanceof FmuComponentStateValue && sizeValue.deref().isNumeric()) {
                 try {
                     FmuComponentStateValue stateValue = (FmuComponentStateValue) v;
                     FmuResult<Long> res = component.getSerializedFMUstateSize(stateValue.getModule());
@@ -567,7 +567,7 @@ public class Fmi2Interpreter {
             Value sizeValue = fcargs.get(1).deref();
             Value stateValue = fcargs.get(2);
 
-            if (stateValue instanceof FmuComponentStateValue && sizeValue.isNumeric()) {
+            if ( sizeValue.isNumeric()) {
                 try {
                     NumericValue size = (NumericValue) sizeValue;
                     ArrayValue<ByteValue> byteArray = (ArrayValue<ByteValue>) bytesValue;
