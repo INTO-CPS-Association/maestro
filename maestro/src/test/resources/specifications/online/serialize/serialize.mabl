@@ -1,0 +1,85 @@
+simulation
+import Math;
+import FMI2;
+import DataWriter;
+import Logger;
+import FmiComponentState;
+{
+    Logger logger = load("Logger");
+    FMI2 fmu = load("FMI2", "{12345678-9999-9999-9999-000000000000}", "target/online-cache/fmi2functiontest.fmu");
+    FMI2Component comp = fmu.instantiate("crtlInstance", false, false);
+    int status=0;
+    status = comp.setupExperiment(false, 0.0, 0.0, true, 10.0);
+    logger.log(1, "Status setupExperiment:  %d", status);
+
+     status = comp.enterInitializationMode();
+     logger.log(1, "Status enterInitializationMode:  %d", status);
+
+     FmiComponentState state0;
+     status = comp.getState(ref state0);
+     logger.log(1, "Status getState:  %d", status);
+
+     uint vr[1]={0};
+     uint nvr=1;
+     real values[1]= {99.9};
+     status = comp.setReal(vr,nvr,values);
+     logger.log(1, "Status setReal:  %d", status);
+
+     status = comp.exitInitializationMode();
+     logger.log(1, "Status exitInitializationMode:  %d", status);
+
+     FmiComponentState state;
+     status = comp.getState(ref state);
+     logger.log(1, "Status getState:  %d", status);
+
+     int size=0;
+     status = comp.getSerializedFMUstateSize(state,ref size);
+     logger.log(1, "Status getSerializedFMUstateSize:  %d", status);
+     logger.log(1, "State size:  %d", size);
+
+     byte bytes[size];
+     status = comp.serializeFMUstate(state, size,ref bytes);
+     logger.log(1, "Status serializeFMUstate:  %d", status);
+     int i = 0;
+     logger.log(1, "The state bytes:","");
+     while(i<size)
+     {
+        logger.log(1, "%d", bytes[i]);
+        i = i +1;
+     }
+
+     FmiComponentState stateRestore;
+     status = comp.deSerializeFMUstate(bytes,size,ref stateRestore);
+     logger.log(1, "Status deSerializeFMUstate:  %d", status);
+
+     status = comp.getReal(vr,nvr,values);
+     logger.log(1, "Status setReal:  %d, value: %f", status,values[0]);
+
+
+    //lets try to check the initial state
+     logger.log(1, "Set base state", "");
+     status =comp.setState(state0);
+     logger.log(1, "Status setState:  %d", status);
+
+     status = comp.getReal(vr,nvr,values);
+     logger.log(1, "Status setReal:  %d, value: %f", status,values[0]);
+
+     //lets check the deserialized state
+      logger.log(1, "Set deserialized state", "");
+      status =comp.setState(stateRestore);
+      logger.log(1, "Status setState:  %d", status);
+
+      status = comp.getReal(vr,nvr,values);
+      logger.log(1, "Status setReal:  %d, value: %f", status,values[0]);
+
+      //clean up
+      comp.freeState(ref state0);
+      comp.freeState(ref state);
+      comp.freeState(ref stateRestore);
+
+
+    unload(logger);
+    fmu.freeInstance(comp);
+    unload(fmu);
+}
+

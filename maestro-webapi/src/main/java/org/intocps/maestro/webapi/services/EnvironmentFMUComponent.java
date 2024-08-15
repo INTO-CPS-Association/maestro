@@ -93,6 +93,21 @@ public class EnvironmentFMUComponent extends HierarchicalCoeStateComponent {
     }
 
     @Override
+    public FmuResult<Long> getSerializedFMUstateSize(IFmiComponentState iFmiComponentState) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
+    }
+
+    @Override
+    public FmuResult<byte[]> serializeFMUstate(IFmiComponentState iFmiComponentState, long l) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
+    }
+
+    @Override
+    public FmuResult<IFmiComponentState> deSerializeFMUstate(byte[] bytes, long l) throws FmuInvocationException {
+        return new FmuResult<>(Fmi2Status.Error, null);
+    }
+
+    @Override
     public boolean isValid() {
         return false;
     }

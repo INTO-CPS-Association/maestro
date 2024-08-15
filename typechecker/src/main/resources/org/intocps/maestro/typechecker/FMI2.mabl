@@ -51,6 +51,10 @@ import FmiComponentState;
     int setState(FmiComponentState state);
     int freeState(out FmiComponentState state);
 
+    int getSerializedFMUstateSize(FmiComponentState state, out long size);
+    int serializeFMUstate(FmiComponentState state, long size, out byte[] bytes);
+    int deSerializeFMUstate(byte[] bytes, long size, out FmiComponentState state);
+
 }
 
 module FmiComponentState {}

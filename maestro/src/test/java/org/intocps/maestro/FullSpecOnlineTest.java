@@ -26,6 +26,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
     public void test(String name, File directory) throws Exception {
+        OnlineTestUtils.downloadJniFmuTestFmus();
         for (INode spec : parse(getSpecificationFiles(directory))) {
             OnlineTestUtils.download(OnlineTestUtils.collectFmus(spec, false));
         }
