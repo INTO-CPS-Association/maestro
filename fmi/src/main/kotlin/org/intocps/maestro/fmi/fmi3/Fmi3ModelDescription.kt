@@ -614,10 +614,10 @@ class Fmi3ModelDescription : ModelDescription {
                     ?: typeDefinition?.canBeDeactivated){true->true;false,null->false},
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt() ?: typeDefinition?.priority,
                 if (interval == null) typeDefinition!!.interval else valueOf(interval),
-                node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat()
+                node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toDouble()
                     ?: typeDefinition?.intervalDecimal,
-                node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat() ?: typeDefinition?.shiftDecimal
-                ?: (0).toFloat(),
+                node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toDouble() ?: typeDefinition?.shiftDecimal
+                ?: (0).toDouble(),
                 node.attributes.getNamedItem("supportsFraction")?.nodeValue?.toBoolean()
                     ?: typeDefinition?.supportsFraction ?: false,
                 node.attributes.getNamedItem("resolution")?.nodeValue?.toULong() ?: typeDefinition?.resolution,
@@ -665,8 +665,8 @@ class Fmi3ModelDescription : ModelDescription {
                 node.attributes.getNamedItem("canBeDeactivated")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("priority")?.nodeValue?.toUInt(),
                 valueOf(node.attributes.getNamedItem("interval")!!.nodeValue),
-                node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toFloat(),
-                node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toFloat(),
+                node.attributes.getNamedItem("intervalDecimal")?.nodeValue?.toDouble(),
+                node.attributes.getNamedItem("shiftDecimal")?.nodeValue?.toDouble(),
                 node.attributes.getNamedItem("supportsFraction")?.nodeValue?.toBoolean(),
                 node.attributes.getNamedItem("resolution")?.nodeValue?.toULong(),
                 node.attributes.getNamedItem("intervalCounter")?.nodeValue?.toULong(),
