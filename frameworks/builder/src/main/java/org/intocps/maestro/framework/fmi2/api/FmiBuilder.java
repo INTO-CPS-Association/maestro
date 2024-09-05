@@ -240,7 +240,9 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         BoolVariable<AST> store(boolean value);
 
         IntVariable<AST> store(int value);
+        UIntVariable<AST> storeUInt(long value);
 
+        LongVariable<AST> store(long value);
         /**
          * Store a given value with a prefix name
          *
@@ -255,10 +257,13 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         BoolVariable<AST> store(String name, boolean value);
 
         IntVariable<AST> store(String name, int value);
+        UIntVariable<AST> storeUInt(String name, long value);
 
+        LongVariable<AST> store(String name, long value);
         <CV> ArrayVariable<AST, CV> store(String name, CV[] value);
 
          <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, IntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+        <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, UIntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -891,6 +896,9 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     }
 
     interface IntExpressionValue extends NumericExpressionValue {
+    }
+
+    interface LongExpressionValue extends NumericExpressionValue {
     }
 
     interface UIntExpressionValue extends IntExpressionValue {

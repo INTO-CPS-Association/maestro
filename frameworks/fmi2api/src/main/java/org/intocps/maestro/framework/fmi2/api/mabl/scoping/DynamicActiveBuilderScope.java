@@ -153,6 +153,17 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     }
 
     @Override
+    public UIntVariableFmi2Api storeUInt(long value) {
+        return activeScope.storeUInt(value);
+
+    }
+
+    @Override
+    public FmiBuilder.LongVariable<PStm> store(long value) {
+        return activeScope.store(value);
+    }
+
+    @Override
     public DoubleVariableFmi2Api store(String name, double value) {
         return activeScope.store(name, value);
 
@@ -179,6 +190,10 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
         return activeScope.store(name, value);
     }
 
+    @Override
+    public UIntVariableFmi2Api storeUInt(String name, long value) {
+        return activeScope.storeUInt(name, value);
+    }
 /*    @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
         return activeScope.store(name, value);
@@ -199,6 +214,12 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     @Override
     public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
                                                          FmiBuilder.IntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return activeScope.createArray(name,type,sizes);
+    }
+
+    @Override
+    public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
+                                                   FmiBuilder.UIntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         return activeScope.createArray(name,type,sizes);
     }
 

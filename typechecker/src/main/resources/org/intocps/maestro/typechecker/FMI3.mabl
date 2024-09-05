@@ -252,7 +252,7 @@ module FMI3Instance
         /* end::getDerivatives[] */
     
         /* tag::getEventIndicators[] */
-        int getEventIndicators(out uint[] eventIndicators, int nEventIndicators);
+        int getEventIndicators(out uint[] eventIndicators, uint nEventIndicators);
         /* end::getEventIndicators[] */
     
         /* tag::getContinuousStates[] */

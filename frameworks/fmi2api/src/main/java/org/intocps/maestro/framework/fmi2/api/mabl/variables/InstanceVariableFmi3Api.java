@@ -363,13 +363,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     }
 
     public void getEventIndicators(FmiBuilder.Scope<PStm> scope, FmiBuilder.ArrayVariable<PStm, ? extends FmiBuilder.UIntVariable<PStm>> eventIndicators,
-                                   FmiBuilder.IntVariable<PStm> nEventIndicators) {
+                                   FmiBuilder.UIntVariable<PStm> nEventIndicators) {
 
         fmiCall(scope, "getEventIndicators", new ARefExp(eventIndicators.getExp().clone()), nEventIndicators.getExp().clone());
 
     }
 
-    public void getNumberOfEventIndicators(FmiBuilder.Scope<PStm> scope, FmiBuilder.IntVariable<PStm> nEventIndicators) {
+    public void getNumberOfEventIndicators(FmiBuilder.Scope<PStm> scope, FmiBuilder.UIntVariable<PStm> nEventIndicators) {
         fmiCall(scope, "getNumberOfEventIndicators", new ARefExp(nEventIndicators.getExp().clone()));
     }
 

@@ -206,6 +206,17 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     }
 
     @Override
+    public UIntVariableFmi2Api storeUInt(long value) {
+        return storeUInt(() -> builder.getNameGenerator().getName(), value);
+    }
+
+
+    @Override
+    public LongVariableFmi2Api store(long value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
     public DoubleVariableFmi2Api store(String prefix, double value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
@@ -224,6 +235,10 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     public IntVariableFmi2Api store(String name, int value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }
+    @Override
+    public UIntVariableFmi2Api storeUInt(String name, long value) {
+        return storeUInt(() -> builder.getNameGenerator().getName(name), value);
+    }
 
     @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
@@ -233,6 +248,12 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     @Override
     public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
                                                    FmiBuilder.IntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return newArray(() -> builder.getNameGenerator().getName(name), type, sizes);
+    }
+
+    @Override
+    public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
+                                                   FmiBuilder.UIntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         return newArray(() -> builder.getNameGenerator().getName(name), type, sizes);
     }
 
@@ -264,6 +285,15 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
+    public UIntVariableFmi2Api storeUInt(Supplier<String> nameProvider, long value) {
+        String name = nameProvider.get();
+        AUIntLiteralExp initial = newAUIntLiteralExp(value);
+        PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
+        add(var);
+        return new UIntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
     public StringVariableFmi2Api store(Supplier<String> nameProvider, String value) {
         String name = nameProvider.get();
         AStringLiteralExp initial = newAStringLiteralExp(value);
@@ -273,8 +303,15 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
-    private <V> ArrayVariableFmi2Api<V> newArray(Supplier<String> nameProvider, Class<? extends V> type,
-                                                 FmiBuilder.IntVariable<PStm>... sizes) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+
+    private <V, S extends FmiBuilder.Variable> ArrayVariableFmi2Api<V> newArray(Supplier<String> nameProvider, Class<? extends V> type,
+                                                                                S... sizes) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        for (FmiBuilder.Variable v : sizes) {
+            if (!(v instanceof FmiBuilder.IntVariable || v instanceof FmiBuilder.UIntVariable)) {
+                throw new IllegalArgumentException("only int and uint variables allowed");
+            }
+        }
+
 
         PType type_ = null;
 

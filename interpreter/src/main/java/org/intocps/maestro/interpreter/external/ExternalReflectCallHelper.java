@@ -373,11 +373,11 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                     }
                     case Long: {
                         var n = ((NumericValue) v);
-                        return Integer.valueOf(n.intValue()).longValue();
+                        return n.realValue();// Integer.valueOf(n.intValue()).longValue();
                     }
                     case Real: {
                         var n = ((NumericValue) v);
-                        return Integer.valueOf(n.intValue()).doubleValue();
+                        return n.doubleValue();//Integer.valueOf(n.intValue()).doubleValue();
                     }
                     case Short: {
                         var n = ((NumericValue) v);
