@@ -268,7 +268,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
         ALocalVariableStm callStm = newALocalVariableStm(newAVariableDeclaration(statusIdentifier, newAIntNumericPrimitiveType(), newAExpInitializer(
                 newACallExp(newAIdentifierExp(name), newAIdentifier(method),
-                        Arrays.asList(newABoolLiteralExp(enableLogging), MableAstFactory.newAIntLiteralExp(categories.size()),
+                        Arrays.asList(newABoolLiteralExp(enableLogging),
                                 MableAstFactory.newAIdentifierExp(arrayName))))));
 
         scope.add(arrayContent, callStm);
