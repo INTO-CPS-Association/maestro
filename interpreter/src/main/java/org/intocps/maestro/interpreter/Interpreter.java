@@ -202,7 +202,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     public ArrayValue createArrayValue(List<PExp> sizes, PType type, Context question) throws AnalysisException {
         List<Value> arrayValues = new ArrayList<>();
-        for (int i = 0; i < ((NumericValue) sizes.get(0).apply(this, question)).intValue(); i++) {
+        for (int i = 0; i < ((NumericValue) sizes.get(0).apply(this, question).deref()).intValue(); i++) {
             if (sizes.size() > 1) {
                 List<PExp> nextSizes = sizes.subList(1, sizes.size());
                 // Call recursively
