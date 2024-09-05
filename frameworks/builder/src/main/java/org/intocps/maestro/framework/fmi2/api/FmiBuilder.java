@@ -234,7 +234,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          * @return
          */
         DoubleVariable<AST> store(double value);
-
+        FloatVariable<AST> store(float value);
         StringVariable<AST> store(String value);
 
         BoolVariable<AST> store(boolean value);
@@ -248,6 +248,7 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          * @return
          */
         DoubleVariable<AST> store(String name, double value);
+        FloatVariable<AST> store(String name, float value);
 
         StringVariable<AST> store(String name, String value);
 
@@ -476,6 +477,10 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     interface DoubleVariable<AST> extends Variable<AST, DoubleExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
 
         void set(Double value);
+    }
+    interface FloatVariable<AST> extends Variable<AST, FloatExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+
+        void set(Float value);
     }
 
     interface BoolVariable<AST> extends Variable<AST, BooleanExpressionValue>, ProvidesTypedReferenceExp {
@@ -881,6 +886,8 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     }
 
     interface DoubleExpressionValue extends NumericExpressionValue {
+    }
+    interface FloatExpressionValue extends NumericExpressionValue {
     }
 
     interface IntExpressionValue extends NumericExpressionValue {

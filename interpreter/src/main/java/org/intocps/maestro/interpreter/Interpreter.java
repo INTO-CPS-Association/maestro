@@ -549,6 +549,11 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     }
 
     @Override
+    public Value caseAFloatLiteralExp(AFloatLiteralExp node, Context question) throws AnalysisException {
+        return NumericValue.valueOf(node.getValue());
+    }
+
+    @Override
     public Value caseABoolLiteralExp(ABoolLiteralExp node, Context question) throws AnalysisException {
         return new BooleanValue(node.getValue());
     }

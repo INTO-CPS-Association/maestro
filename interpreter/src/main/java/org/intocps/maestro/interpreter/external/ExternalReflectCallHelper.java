@@ -365,7 +365,7 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                     }
                     case Float: {
                         var n = ((NumericValue) v);
-                        return Integer.valueOf(n.intValue()).floatValue();
+                        return n.floatValue();//Integer.valueOf(n.intValue()).floatValue();
                     }
                     case Int: {
                         var n = ((NumericValue) v);

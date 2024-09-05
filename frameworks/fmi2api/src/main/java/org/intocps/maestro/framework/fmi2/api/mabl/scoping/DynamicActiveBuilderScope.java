@@ -137,6 +137,11 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     }
 
     @Override
+    public FloatVariableFmi2Api store(float value) {
+        return activeScope.store(value);
+    }
+
+    @Override
     public StringVariableFmi2Api store(String value) {
         return activeScope.store(value);
     }
@@ -151,6 +156,11 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     public DoubleVariableFmi2Api store(String name, double value) {
         return activeScope.store(name, value);
 
+    }
+
+    @Override
+    public FloatVariableFmi2Api store(String name, float value) {
+        return activeScope.store(name,value);
     }
 
     @Override
@@ -205,6 +215,11 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     @Override
     public DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable) {
         return activeScope.store(namePrefix, variable);
+    }
+
+    @Override
+    public FloatVariableFmi2Api store(String namePrefix, FloatVariableFmi2Api variable) {
+        return activeScope.store(namePrefix,variable);
     }
 
     @Override

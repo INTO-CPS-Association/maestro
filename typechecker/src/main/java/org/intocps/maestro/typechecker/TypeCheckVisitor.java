@@ -717,22 +717,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseARealLiteralExp(ARealLiteralExp node, Context ctxt) throws AnalysisException {
+        return store(node, detectType(node.getValue()));
+    }
 
-        //        double value = node.getValue();
-        //        if (Math.round(value) == value) {
-        //            if (value < 0) {
-        //                return store(node, MableAstFactory.newIntType());
-        //            } else if (value == 0) {
-        //
-        //                //nat
-        //                return store(node, MableAstFactory.newIntType());
-        //            } else {
-        //                //natone
-        //                return store(node, MableAstFactory.newIntType());
-        //            }
-        //        } else {
-        //            return store(node, MableAstFactory.newRealType());  // Note, "1.234" is really "1234/1000" (a rat)
-        //        }
+    @Override
+    public PType caseAFloatLiteralExp(AFloatLiteralExp node, Context ctxt) throws AnalysisException {
         return store(node, detectType(node.getValue()));
     }
 

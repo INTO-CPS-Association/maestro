@@ -370,6 +370,11 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static AFloatLiteralExp newAFloatLiteralExp(Float value) {
+        AFloatLiteralExp exp = new AFloatLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
     public static AIntLiteralExp newAIntLiteralExp(Integer value) {
         AIntLiteralExp exp = new AIntLiteralExp();
         exp.setValue(value);
@@ -414,6 +419,10 @@ public class MableAstFactory {
 
     public static ARealNumericPrimitiveType newARealNumericPrimitiveType() {
         ARealNumericPrimitiveType type = new ARealNumericPrimitiveType();
+        return type;
+    }
+    public static AFloatNumericPrimitiveType newAFloatNumericPrimitiveType() {
+        AFloatNumericPrimitiveType type = new AFloatNumericPrimitiveType();
         return type;
     }
 

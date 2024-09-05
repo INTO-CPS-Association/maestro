@@ -507,6 +507,8 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         } else if (ctx.FLOAT_LITERAL() != null) {
             ARealLiteralExp literal = new ARealLiteralExp();
             literal.setValue(Double.parseDouble(ctx.FLOAT_LITERAL().getText()));
+            AFloatLiteralExp literal = new AFloatLiteralExp();
+            literal.setValue(Float.parseFloat(ctx.FLOAT_LITERAL().getText()));
             return literal;
 
         } else if (ctx.STRING_LITERAL() != null) {

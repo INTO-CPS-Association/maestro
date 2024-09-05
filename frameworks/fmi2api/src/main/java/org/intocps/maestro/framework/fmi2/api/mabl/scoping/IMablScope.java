@@ -64,6 +64,8 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     @Override
     DoubleVariableFmi2Api store(double value);
+    @Override
+    FloatVariableFmi2Api store(float value);
 
     @Override
     IntVariableFmi2Api store(int value);
@@ -73,6 +75,9 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     @Override
     DoubleVariableFmi2Api store(String name, double value);
+
+    @Override
+    FloatVariableFmi2Api store(String name, float value);
 
     @Override
     BooleanVariableFmi2Api store(String name, boolean value);
@@ -96,6 +101,7 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable);
 
+    FloatVariableFmi2Api store(String namePrefix, FloatVariableFmi2Api variable);
     ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
 
 
