@@ -194,6 +194,12 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     public UIntVariableFmi2Api storeUInt(String name, long value) {
         return activeScope.storeUInt(name, value);
     }
+
+    @Override
+    public FmiBuilder.LongVariable<PStm> store(String name, long value) {
+        return activeScope.store(name,value);
+    }
+
 /*    @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
         return activeScope.store(name, value);

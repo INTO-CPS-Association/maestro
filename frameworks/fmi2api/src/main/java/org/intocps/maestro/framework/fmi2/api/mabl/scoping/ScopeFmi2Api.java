@@ -191,6 +191,11 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     }
 
     @Override
+    public FloatVariableFmi2Api store(float value) {
+        return store(() -> builder.getNameGenerator().getName(), value);
+    }
+
+    @Override
     public StringVariableFmi2Api store(String value) {
         return store(() -> builder.getNameGenerator().getName(), value);
     }
@@ -218,6 +223,12 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
 
     @Override
     public DoubleVariableFmi2Api store(String prefix, double value) {
+        return store(() -> builder.getNameGenerator().getName(prefix), value);
+    }
+
+
+    @Override
+    public FloatVariableFmi2Api store(String prefix, float value) {
         return store(() -> builder.getNameGenerator().getName(prefix), value);
     }
 
@@ -267,6 +278,15 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
                 newAIdentifierExp(name));
     }
 
+    public FloatVariableFmi2Api store(Supplier<String> nameProvider, float value) {
+        String name = nameProvider.get();
+        AFloatLiteralExp initial = newAFloatLiteralExp(value);
+        PStm var = newVariable(name, newAFloatNumericPrimitiveType(), initial);
+        add(var);
+        return new FloatVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
     public BooleanVariableFmi2Api store(Supplier<String> nameProvider, boolean value) {
         String name = nameProvider.get();
         ABoolLiteralExp initial = newABoolLiteralExp(value);
@@ -291,6 +311,15 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
         PStm var = newVariable(name, newAIntNumericPrimitiveType(), initial);
         add(var);
         return new UIntVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
+                newAIdentifierExp(name));
+    }
+
+    public LongVariableFmi2Api store(Supplier<String> nameProvider, long value) {
+        String name = nameProvider.get();
+        ALongLiteralExp initial = newALongLiteralExp(value);
+        PStm var = newVariable(name, newALongNumericPrimitiveType(), initial);
+        add(var);
+        return new LongVariableFmi2Api(var, this, builder.getDynamicScope(), newAIdentifierStateDesignator(newAIdentifier(name)),
                 newAIdentifierExp(name));
     }
 
