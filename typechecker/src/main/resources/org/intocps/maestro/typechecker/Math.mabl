@@ -2,4 +2,6 @@ module Math {
     bool isClose(real a, real b, real absoluteTolerance, real relativeTolerance);
     real min(real a, real b);
     real minRealFromArray(real realArray[]);
+    real mod(real a, real b);
+    real modF(float a, float b);
 }

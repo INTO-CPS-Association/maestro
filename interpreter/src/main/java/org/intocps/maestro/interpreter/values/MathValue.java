@@ -32,6 +32,26 @@ public class MathValue extends ExternalModuleValue<Object> {
             }
 
         }));
+        componentMembers.put("mod", new FunctionValue.ExternalFunctionValue(args -> {
+
+            if (args.size() == 2 && args.get(0).deref().isNumeric() && args.get(1).deref().isNumeric()) {
+                NumericValue a = (NumericValue) args.get(0).deref();
+                NumericValue b = (NumericValue) args.get(1).deref();
+                return NumericValue.valueOf(a.doubleValue() % b.doubleValue());
+            }
+
+            throw new InterpreterException("Wrong arguments for mod:" + args);
+        }));
+        componentMembers.put("modF", new FunctionValue.ExternalFunctionValue(args -> {
+
+            if (args.size() == 2 && args.get(0).deref().isNumeric() && args.get(1).deref().isNumeric()) {
+                NumericValue a = (NumericValue) args.get(0).deref();
+                NumericValue b = (NumericValue) args.get(1).deref();
+                return NumericValue.valueOf(a.floatValue() % b.floatValue());
+            }
+
+            throw new InterpreterException("Wrong arguments for mod:" + args);
+        }));
         componentMembers.put("minRealFromArray", new FunctionValue.ExternalFunctionValue(args -> {
 
             if (args.get(0).deref() instanceof ArrayValue) {
