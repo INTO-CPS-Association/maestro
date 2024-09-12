@@ -469,6 +469,36 @@ public class ExternalReflectCallHelper extends Vector<IArgMapping> {
                         break;
                 }
                 ref.setValue(new ArrayValue<>(values));
+            }else if(dimension==1)
+            {
+                Value mappedValue = null;
+                switch (type){
+                    case Bool:
+                        mappedValue=new BooleanValue(value.getClass().isPrimitive()?(boolean)value:(Boolean)value);
+                        break;
+                    case Byte:
+                        mappedValue=new ByteValue(value.getClass().isPrimitive()?(byte)value:(Byte)value);
+                        break;
+                    case Float:
+                        mappedValue=new FloatValue(value.getClass().isPrimitive()?(float)value:(Float)value);
+                        break;
+                    case Int:
+                        mappedValue=new IntegerValue(value.getClass().isPrimitive()?(int)value:(Integer)value);
+                        break;
+                    case Long:
+                        mappedValue=new LongValue(value.getClass().isPrimitive()?(long)value:(Long)value);
+                        break;
+                    case Real:
+                        mappedValue=new RealValue(value.getClass().isPrimitive()?(double)value:(Double)value);
+                        break;
+                    case Short:
+                        mappedValue=new ShortValue(value.getClass().isPrimitive()?(short)value:(Short)value);
+                        break;
+                    case String:
+                        mappedValue=new StringValue((String)value);
+                        break;
+                }
+                ref.setValue(mappedValue);
             }
 
         }

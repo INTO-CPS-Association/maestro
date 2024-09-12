@@ -78,6 +78,10 @@ public class Fmi3Interpreter {
     static final ExternalReflectCallHelper.ArgMapping intArrayOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Int, 2,
             ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
 
+    static final ExternalReflectCallHelper.ArgMapping boolOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Bool, 1,
+            ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
+    static final ExternalReflectCallHelper.ArgMapping doubleOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Real, 1,
+            ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
 
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final File workingDirectory;
@@ -529,18 +533,19 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
         }));
 
         functions.put("updateDiscreteStates", new FunctionValue.ExternalFunctionValue(fcargs -> {
-//            int updateDiscreteStates(out bool[] discreteStatesNeedUpdate, out bool[] terminateSimulation,
-//            out bool[] nominalsOfContinuousStatesChanged, out bool[] valuesOfContinuousStatesChanged, out bool[] nextEventTimeDefined,
-//            out real[] nextEventTime);
+//            int updateDiscreteStates(out bool discreteStatesNeedUpdate, out bool terminateSimulation,
+//            out bool nominalsOfContinuousStatesChanged, out bool valuesOfContinuousStatesChanged, out bool nextEventTimeDefined,
+//            out real nextEventTime);
             checkArgLength(fcargs, 6);
             try {
                 FmuResult<IFmi3Instance.UpdateDiscreteStates> res = instance.updateDiscreteStates();
-                boolArrayOutArgMapper.mapOut(fcargs.get(0), new boolean[]{res.result.isDiscreteStatesNeedUpdate()});
-                boolArrayOutArgMapper.mapOut(fcargs.get(1), new boolean[]{res.result.isTerminateSimulation()});
-                boolArrayOutArgMapper.mapOut(fcargs.get(2), new boolean[]{res.result.isNominalsOfContinuousStatesChanged()});
-                boolArrayOutArgMapper.mapOut(fcargs.get(3), new boolean[]{res.result.isValuesOfContinuousStatesChanged()});
-                boolArrayOutArgMapper.mapOut(fcargs.get(4), new boolean[]{res.result.isNextEventTimeDefined()});
-                doubleArrayOutArgMapper.mapOut(fcargs.get(5), new double[]{res.result.getNextEventTime()});
+
+                boolOutArgMapper.mapOut(fcargs.get(0), res.result.isDiscreteStatesNeedUpdate());
+                boolOutArgMapper.mapOut(fcargs.get(1), res.result.isTerminateSimulation());
+                boolOutArgMapper.mapOut(fcargs.get(2), res.result.isNominalsOfContinuousStatesChanged());
+                boolOutArgMapper.mapOut(fcargs.get(3), res.result.isValuesOfContinuousStatesChanged());
+                boolOutArgMapper.mapOut(fcargs.get(4), res.result.isNextEventTimeDefined());
+                doubleOutArgMapper.mapOut(fcargs.get(5), res.result.getNextEventTime());
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
@@ -691,7 +696,11 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             checkArgLength(fcargs, 1);
             try {
                 FmuResult<Long> res = instance.getNumberOfEventIndicators();
-                intArrayOutArgMapper.mapOut(fcargs.get(0), res.result);
+                final ExternalReflectCallHelper.ArgMapping uintOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Long, 1,
+                        ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
+                uintOutArgMapper.mapOut(fcargs.get(0), res.result);
+                UpdatableValue v= (UpdatableValue) fcargs.get(0);
+                v.setValue(new UnsignedIntegerValue(((LongValue)v.deref()).getValue()));
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
