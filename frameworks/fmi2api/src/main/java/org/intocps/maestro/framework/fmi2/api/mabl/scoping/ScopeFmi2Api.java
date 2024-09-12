@@ -249,6 +249,11 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
     }
 
     @Override
+    public LongVariableFmi2Api store(String name, long value) {
+        return store(() -> builder.getNameGenerator().getName(name), value);
+    }
+
+    @Override
     public <V> ArrayVariableFmi2Api<V> store(String name, V[] value) {
         return store(() -> builder.getNameGenerator().getName(name), value);
     }

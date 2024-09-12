@@ -460,6 +460,12 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         void increment();
     }
 
+    interface LongVariable<AST> extends Variable<AST, LongExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+        void decrement();
+
+        void increment();
+    }
+
     interface UIntVariable<AST> extends Variable<AST, UIntExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp{
         void decrement();
 

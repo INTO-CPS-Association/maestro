@@ -381,6 +381,12 @@ public class MableAstFactory {
         return exp;
     }
 
+    public static ALongLiteralExp newALongLiteralExp(Long value) {
+        ALongLiteralExp exp = new ALongLiteralExp();
+        exp.setValue(value);
+        return exp;
+    }
+
 
     public static AStringLiteralExp newAStringLiteralExp(String value) {
         AStringLiteralExp exp = new AStringLiteralExp();
@@ -442,6 +448,11 @@ public class MableAstFactory {
 
     public static AIntNumericPrimitiveType newAIntNumericPrimitiveType() {
         AIntNumericPrimitiveType type = new AIntNumericPrimitiveType();
+        return type;
+    }
+
+    public static ALongNumericPrimitiveType newALongNumericPrimitiveType() {
+        ALongNumericPrimitiveType type = new ALongNumericPrimitiveType();
         return type;
     }
 
