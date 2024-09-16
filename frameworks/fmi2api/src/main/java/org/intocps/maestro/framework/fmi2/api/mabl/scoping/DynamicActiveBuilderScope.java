@@ -158,10 +158,6 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
 
     }
 
-    @Override
-    public FmiBuilder.LongVariable<PStm> store(long value) {
-        return activeScope.store(value);
-    }
 
     @Override
     public DoubleVariableFmi2Api store(String name, double value) {
@@ -195,10 +191,7 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
         return activeScope.storeUInt(name, value);
     }
 
-    @Override
-    public FmiBuilder.LongVariable<PStm> store(String name, long value) {
-        return activeScope.store(name,value);
-    }
+
 
 /*    @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {

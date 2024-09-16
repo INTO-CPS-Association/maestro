@@ -242,7 +242,6 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         IntVariable<AST> store(int value);
         UIntVariable<AST> storeUInt(long value);
 
-        LongVariable<AST> store(long value);
         /**
          * Store a given value with a prefix name
          *
@@ -259,7 +258,6 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         IntVariable<AST> store(String name, int value);
         UIntVariable<AST> storeUInt(String name, long value);
 
-        LongVariable<AST> store(String name, long value);
         <CV> ArrayVariable<AST, CV> store(String name, CV[] value);
 
          <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, IntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
