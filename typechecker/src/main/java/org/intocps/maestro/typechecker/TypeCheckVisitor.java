@@ -14,6 +14,7 @@ import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -490,7 +491,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         } else if (node.getInitializer() != null) {
             PType initType = node.getInitializer().apply(this, ctxt);
-            if (!typeComparator.compatible(type, initType)) {
+
+            BiFunction<PType,PType,Boolean> isDoubleToFloatAssignment = (declType, assignType)->
+                    typeComparator.compatible(declType,new AFloatNumericPrimitiveType())&&typeComparator.compatible(assignType,new ARealNumericPrimitiveType());
+
+            if (!typeComparator.compatible(type, initType) && !isDoubleToFloatAssignment.apply(type,initType)) {
                 errorReporter.report(0, type + " cannot be initialized with type: " + initType, node.getName().getSymbol());
             }
 
