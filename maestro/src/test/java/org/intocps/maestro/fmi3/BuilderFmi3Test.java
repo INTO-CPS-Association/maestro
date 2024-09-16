@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.condition.OS.LINUX;
+
 public class BuilderFmi3Test {
     @BeforeAll
     public static void before() throws IOException {
@@ -199,6 +201,7 @@ public class BuilderFmi3Test {
     }
 
     @Test
+    @EnabledOnOs({ LINUX })
     public void testSimulateClocks() throws Exception {
         MablApiBuilder builder = new MablApiBuilder();
         DynamicActiveBuilderScope scope = builder.getDynamicScope();
