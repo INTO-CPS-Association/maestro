@@ -48,6 +48,10 @@ public class IntegerValue extends NumericValue {
         if (other instanceof IntegerValue || other instanceof ByteValue || other instanceof ShortValue) {
             NumericValue io = (NumericValue) other;
             return (value < io.intValue() ? -1 : (value == io.intValue() ? 0 : 1));
+        }else if( other instanceof LongValue)
+        {
+            NumericValue io = (NumericValue) other;
+            return (value < io.longValue() ? -1 : (value == io.longValue() ? 0 : 1));
         }
 
         return super.compareTo(other);

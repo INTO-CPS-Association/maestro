@@ -27,7 +27,7 @@ SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 
 FetchContent_Declare(libzip
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
-        GIT_TAG  v1.7.3
+        GIT_TAG  v1.10.1
         GIT_SHALLOW ON
 
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"

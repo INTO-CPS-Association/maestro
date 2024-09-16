@@ -199,7 +199,6 @@ public class BuilderFmi3Test {
     }
 
     @Test
-    @EnabledOnOs(OS.LINUX)
     public void testSimulateClocks() throws Exception {
         MablApiBuilder builder = new MablApiBuilder();
         DynamicActiveBuilderScope scope = builder.getDynamicScope();
