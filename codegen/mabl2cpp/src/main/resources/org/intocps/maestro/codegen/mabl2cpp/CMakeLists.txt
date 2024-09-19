@@ -15,7 +15,7 @@ FetchContent_Declare(intocpsfmi
  SOURCE_DIR "${CMAKE_BINARY_DIR}/intocpsfmi-src"
 )
 
-FetchContent_Populate(intocpsfmi)
+FetchContent_MakeAvailable(intocpsfmi)
 set(intocpsfmi-src "intocpsfmi-src")
 
 
@@ -27,9 +27,8 @@ SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
 
 FetchContent_Declare(libzip
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
-        GIT_TAG  v1.10.1
+        GIT_TAG  v1.11
         GIT_SHALLOW ON
-
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
 )
 
@@ -51,7 +50,7 @@ SET(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "Build rapidjson examples" FORCE)
 SET(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "Build rapidjson perftests and unittests" FORCE)
 FetchContent_Declare(rapidjson
         GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-        GIT_TAG v1.1.0
+        GIT_TAG 7c73dd7de7c4f14379b781418c6e947ad464c818 # this hash seems to make it work on windows (nix works with v1.1.0)
      #   GIT_SHALLOW ON
         SOURCE_DIR "${CMAKE_BINARY_DIR}/rapidjson"
         BUILD_COMMAND ""
@@ -60,7 +59,7 @@ FetchContent_Declare(rapidjson
         TEST_COMMAND ""
         )
 
-FetchContent_Populate(rapidjson)
+FetchContent_MakeAvailable(rapidjson)
 
 #file(CHMOD_RECURSE "${CMAKE_BINARY_DIR}/rapidjson" PERMISSIONS OWNER_READ OWNER_WRITE  GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE )
 

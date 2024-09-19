@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@DisabledOnOs(OS.WINDOWS)
+
 public class FullSpecCppTest extends FullSpecTest {
     public static final List<String> CACHE_FOLDERS = Arrays.asList("libzip", "rapidjson", "intocpsfmi-src");
     static final File baseProjectPath = Paths.get("target", FullSpecCppTest.class.getSimpleName(), "_base").toFile().getAbsoluteFile();
