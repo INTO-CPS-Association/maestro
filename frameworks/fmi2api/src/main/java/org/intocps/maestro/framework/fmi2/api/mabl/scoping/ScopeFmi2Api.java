@@ -654,8 +654,7 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
 
     @Override
     public <Var extends VariableFmi2Api> Var copy(String name, Var variable) {
-        if (variable instanceof BooleanVariableFmi2Api || variable instanceof DoubleVariableFmi2Api || variable instanceof IntVariableFmi2Api ||
-                variable instanceof StringVariableFmi2Api) {
+        if (!(variable instanceof ArrayVariableFmi2Api) &&  variable instanceof VariableFmi2Api) {
             String varName = builder.getNameGenerator().getName(name);
             PStm variableDeclaration = newVariable(varName, variable.getType(), variable.getReferenceExp().clone());
             add(variableDeclaration);
