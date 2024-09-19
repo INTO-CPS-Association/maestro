@@ -12,11 +12,13 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.fmi3.*;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.DataWriter;
 import org.intocps.maestro.framework.fmi2.api.mabl.LoggerFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi3Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
@@ -27,7 +29,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.condition.OS.LINUX;
 
@@ -65,6 +67,155 @@ public class BuilderFmi3Test {
                 fmu.instantiate(name, visible, loggingOn, eventModeUsed, earlyReturnAllowed, requiredIntermediateVariables);
 
         return instance;
+    }
+
+    @Test
+    public void bouncingBallTest() throws Exception {
+        MablApiBuilder builder = new MablApiBuilder();
+
+        InstanceVariableFmi3Api instance = createInstance(builder, "ball",
+                new File("target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu").getAbsoluteFile().toURI(), true);
+
+
+
+
+        DynamicActiveBuilderScope scope = builder.getDynamicScope();
+//        DoubleVariableFmi2Api stepSize = scope.store("stepSize", instance.getModelDescription().getDefaultExperiment().getStepSize());
+//        stepSize.setValue(stepSize.toMath().multiply(10d));
+        DoubleVariableFmi2Api stepSize = scope.store("stepSize",0.1*10d);
+
+
+        instance.setDebugLogging(instance.getModelDescription().getLogCategories().stream().map(lc -> lc.getName()).collect(Collectors.toList()), true);
+
+
+//        instance.set(instance.getPort("v_min"),DoubleExpressionValue.of(0.1d));
+        //initialize
+        instance.enterInitializationMode(false, 0.0, 0.0, true,instance.getModelDescription().getDefaultExperiment().getStopTime() );
+
+        instance.set(   instance.getPort("g"),DoubleExpressionValue.of(-9.81));
+        instance.set(  instance.getPort("e"),DoubleExpressionValue.of(0.7d));
+        instance.exitInitializationMode();
+
+        DataWriter dw = builder.getDataWriter();
+        DataWriter.DataWriterInstance csv = dw.createDataWriterInstance();
+        List<PortFmi3Api> outputs = instance.getPorts().stream().filter(p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output).collect(
+                Collectors.toList());
+        instance.get(outputs.toArray(PortFmi3Api[]::new));
+        csv.initialize(
+                outputs.stream()
+                        .map(p -> new DataWriter.DataWriterInstance.LogEntry(p.getName(), () ->
+
+                            scope.copy(p.getName(),instance.get(p).values().iterator().next()).getReferenceExp().clone()
+
+
+
+                        )).collect(
+                                Collectors.toList()));
+
+
+        //prepare for event handling
+        BooleanVariableFmi2Api stopSimulation = scope.store(false);
+
+        BooleanVariableFmi2Api discreteStatesNeedUpdate = scope.store("discreteStatesNeedUpdate", true);
+        BooleanVariableFmi2Api terminateSimulation = scope.store("terminateSimulation", false);
+        BooleanVariableFmi2Api nominalsOfContinuousStatesChanged = scope.store("nominalsOfContinuousStatesChanged", false);
+        BooleanVariableFmi2Api valuesOfContinuousStatesChanged = scope.store("valuesOfContinuousStatesChanged", false);
+        BooleanVariableFmi2Api nextEventTimeDefined = scope.store("nextEventTimeDefined", false);
+        DoubleVariableFmi2Api nextEventTime = scope.store("nextEventTime", 0d);
+
+        Supplier<Object> updateDiscreteStates = () -> {
+
+            scope.enterWhile(discreteStatesNeedUpdate.toPredicate());
+            instance.updateDiscreteStates(scope, discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged,
+                    valuesOfContinuousStatesChanged,
+                    nextEventTimeDefined, nextEventTime);
+
+            scope.enterIf(terminateSimulation.toPredicate());
+            stopSimulation.setValue(scope, BooleanExpressionValue.of(true));
+            scope.add(new ABreakStm());
+            scope.leave();
+            scope.leave();
+            return scope;
+
+        };
+
+        //handle initial events
+        updateDiscreteStates.get();
+
+        //switch to step mode
+        instance.enterStepMode();
+
+
+        DoubleVariableFmi2Api currentCommunicationPoint = scope.store("time", 0d);
+        DoubleVariableFmi2Api endTime = scope.store(3d);
+
+        csv.log(currentCommunicationPoint);
+
+        //loop for co-simulation
+        scope.enterWhile(terminateSimulation.toPredicate().not().and(currentCommunicationPoint.toMath().lessThan(endTime)));
+
+        //determine a step size
+//        DoubleVariableFmi2Api stepSize = scope.store("stepSize", Collections.min(periodicConstInClocksInterval));
+
+
+//       //step the instance
+        Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
+                stepSize, new ABoolLiteralExp(false));
+
+        currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
+        csv.log(currentCommunicationPoint);
+
+
+        //handle events of required
+        scope.enterIf(
+                stepRes.getValue().getEventHandlingNeeded().toPredicate());
+        instance.enterEventMode();
+        updateDiscreteStates.get();
+
+        //exit to step mode
+        instance.enterStepMode();
+
+
+        ASimulationSpecificationCompilationUnit program = builder.build();
+
+//        String test = PrettyPrinter.print(program);
+
+        checkAndRunProgram(program);
+    }
+
+    private void checkAndRunProgram(ASimulationSpecificationCompilationUnit program) throws Exception {
+        System.out.println(PrettyPrinter.printLineNumbers(program));
+
+        File workingDirectory = new File(getWorkingDirectory(null, this.getClass()),Thread.currentThread().getStackTrace()[2].getMethodName());
+        workingDirectory.mkdirs();
+        File specFile = new File(workingDirectory, "spec.mabl");
+        FileUtils.write(specFile, PrettyPrinter.print(program), StandardCharsets.UTF_8);
+
+        IErrorReporter reporter = new ErrorReporter();
+        Mabl mabl = new Mabl(workingDirectory, workingDirectory);
+        mabl.setReporter(reporter);
+//        mabl.setVerbose(getMablVerbose());
+        mabl.parse(Collections.singletonList(specFile));
+        mabl.expand();
+        var tcRes = mabl.typeCheck();
+        mabl.verify(Framework.FMI2);
+
+
+
+        if (mabl.getReporter().getErrorCount() > 0) {
+            mabl.getReporter().printErrors(new PrintWriter(System.err, true));
+            Assertions.fail();
+        }
+        if (mabl.getReporter().getWarningCount() > 0) {
+            mabl.getReporter().printWarnings(new PrintWriter(System.out, true));
+        }
+
+        mabl.dump(workingDirectory);
+        Map<INode, PType> types = tcRes.getValue();
+
+        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(types, name),
+                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(
+                MablParserUtil.parse(CharStreams.fromString(PrettyPrinter.print(program))));
     }
 
     @Test
@@ -201,7 +352,7 @@ public class BuilderFmi3Test {
     }
 
     @Test
-    @EnabledOnOs({ LINUX })
+    @EnabledOnOs({LINUX})
     public void testSimulateClocks() throws Exception {
         MablApiBuilder builder = new MablApiBuilder();
         DynamicActiveBuilderScope scope = builder.getDynamicScope();
@@ -285,14 +436,15 @@ public class BuilderFmi3Test {
         BooleanVariableFmi2Api nextEventTimeDefined = scope.store("nextEventTimeDefined", false);
         DoubleVariableFmi2Api nextEventTime = scope.store("nextEventTime", 0d);
 
-        Supplier<Object> updateDiscreteStates=()->{
+        Supplier<Object> updateDiscreteStates = () -> {
 
             scope.enterWhile(discreteStatesNeedUpdate.toPredicate());
-            instance.updateDiscreteStates(scope, discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged,
+            instance.updateDiscreteStates(scope, discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged,
+                    valuesOfContinuousStatesChanged,
                     nextEventTimeDefined, nextEventTime);
 
             scope.enterIf(terminateSimulation.toPredicate());
-            stopSimulation.setValue(scope,BooleanExpressionValue.of(true));
+            stopSimulation.setValue(scope, BooleanExpressionValue.of(true));
             scope.add(new ABreakStm());
             scope.leave();
             scope.leave();
@@ -306,10 +458,12 @@ public class BuilderFmi3Test {
         //switch to step mode
         instance.enterStepMode();
 
-        List<PortFmi3Api> periodicConstInClocks = clocks.stream().filter(p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Input && p.scalarVariable.getVariable() instanceof ClockVariable && ((ClockVariable) p.scalarVariable.getVariable()).getInterval()== Fmi3ClockInterval.Constant)
+        List<PortFmi3Api> periodicConstInClocks = clocks.stream().filter(p -> p.scalarVariable.getVariable()
+                        .getCausality() == Fmi3Causality.Input && p.scalarVariable.getVariable() instanceof ClockVariable && ((ClockVariable) p.scalarVariable.getVariable()).getInterval() == Fmi3ClockInterval.Constant)
                 .collect(Collectors.toList());
-        List<Double> periodicConstInClocksInterval = clocks.stream().filter(p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Input && p.scalarVariable.getVariable() instanceof ClockVariable && ((ClockVariable) p.scalarVariable.getVariable()).getInterval()== Fmi3ClockInterval.Constant)
-                .map(p->((ClockVariable) p.scalarVariable.getVariable()).getIntervalDecimal()) .collect(Collectors.toList());
+        List<Double> periodicConstInClocksInterval = clocks.stream().filter(p -> p.scalarVariable.getVariable()
+                        .getCausality() == Fmi3Causality.Input && p.scalarVariable.getVariable() instanceof ClockVariable && ((ClockVariable) p.scalarVariable.getVariable()).getInterval() == Fmi3ClockInterval.Constant)
+                .map(p -> ((ClockVariable) p.scalarVariable.getVariable()).getIntervalDecimal()).collect(Collectors.toList());
 
         List<PortFmi3Api> constantPeriodicClocks = clocks.stream().filter(p -> p.scalarVariable.getVariable()
                         .getCausality() == Fmi3Causality.Input && p.scalarVariable.getVariable() instanceof ClockVariable && ((ClockVariable) p.scalarVariable.getVariable()).getInterval() == Fmi3ClockInterval.Constant)
@@ -347,36 +501,7 @@ public class BuilderFmi3Test {
 
 //        String test = PrettyPrinter.print(program);
 
-        System.out.println(PrettyPrinter.printLineNumbers(program));
-
-        File workingDirectory = getWorkingDirectory(null, this.getClass());
-        File specFile = new File(workingDirectory, "spec.mabl");
-        FileUtils.write(specFile, PrettyPrinter.print(program), StandardCharsets.UTF_8);
-
-        IErrorReporter reporter = new ErrorReporter();
-        Mabl mabl = new Mabl(workingDirectory, workingDirectory);
-        mabl.setReporter(reporter);
-//        mabl.setVerbose(getMablVerbose());
-        mabl.parse(Collections.singletonList(specFile));
-        mabl.expand();
-        var tcRes = mabl.typeCheck();
-        mabl.verify(Framework.FMI2);
-
-
-        if (mabl.getReporter().getErrorCount() > 0) {
-            mabl.getReporter().printErrors(new PrintWriter(System.err, true));
-            Assertions.fail();
-        }
-        if (mabl.getReporter().getWarningCount() > 0) {
-            mabl.getReporter().printWarnings(new PrintWriter(System.out, true));
-        }
-
-        mabl.dump(workingDirectory);
-        Map<INode, PType> types = tcRes.getValue();
-
-        new MableInterpreter(new DefaultExternalValueFactory(workingDirectory, name -> TypeChecker.findModule(types, name),
-                IOUtils.toInputStream(mabl.getRuntimeDataAsJsonString(), StandardCharsets.UTF_8))).execute(
-                MablParserUtil.parse(CharStreams.fromString(PrettyPrinter.print(program))));
+        checkAndRunProgram(program);
     }
 
     static File getWorkingDirectory(File base, Class cls) throws IOException {
