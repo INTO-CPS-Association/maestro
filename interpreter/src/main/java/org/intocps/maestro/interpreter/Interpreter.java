@@ -282,17 +282,17 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
             Value initialValue = node.getInitializer() == null ? new UndefinedValue() : node.getInitializer().apply(this, question);
 
-            if (initialValue.isNumeric()) {
+            if (initialValue.deref().isNumeric()) {
                 Class<? extends Value> targetValueType = typeValueMappings.get(node.getType().getClass());
 
                 if (targetValueType != null) {
 
                     //we need to upcast all values explicitly here
-                    NumericValue upcasted = ((NumericValue) initialValue).upCast((Class<? extends NumericValue>) targetValueType);
+                    NumericValue upcasted = ((NumericValue) initialValue.deref()).upCast((Class<? extends NumericValue>) targetValueType);
 
                     if (upcasted == null) {
                         throw new InterpreterException(
-                                String.format("Initializer value could not be upcasted. In ", initialValue.toString()) + "initializer is " +
+                                String.format("Initializer value could not be upcasted. In ", initialValue.deref().toString()) + "initializer is " +
                                         "specified: " + node.getName() + " in " + node);
                     }
                     initialValue = upcasted;
@@ -545,6 +545,11 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseARealLiteralExp(ARealLiteralExp node, Context question) throws AnalysisException {
+        return NumericValue.valueOf(node.getValue());
+    }
+
+    @Override
+    public Value caseAFloatLiteralExp(AFloatLiteralExp node, Context question) throws AnalysisException {
         return NumericValue.valueOf(node.getValue());
     }
 

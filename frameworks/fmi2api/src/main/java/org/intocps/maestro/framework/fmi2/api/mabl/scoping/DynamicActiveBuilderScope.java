@@ -137,6 +137,11 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     }
 
     @Override
+    public FloatVariableFmi2Api store(float value) {
+        return activeScope.store(value);
+    }
+
+    @Override
     public StringVariableFmi2Api store(String value) {
         return activeScope.store(value);
     }
@@ -148,9 +153,21 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     }
 
     @Override
+    public UIntVariableFmi2Api storeUInt(long value) {
+        return activeScope.storeUInt(value);
+
+    }
+
+
+    @Override
     public DoubleVariableFmi2Api store(String name, double value) {
         return activeScope.store(name, value);
 
+    }
+
+    @Override
+    public FloatVariableFmi2Api store(String name, float value) {
+        return activeScope.store(name,value);
     }
 
     @Override
@@ -168,6 +185,13 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     public IntVariableFmi2Api store(String name, int value) {
         return activeScope.store(name, value);
     }
+
+    @Override
+    public UIntVariableFmi2Api storeUInt(String name, long value) {
+        return activeScope.storeUInt(name, value);
+    }
+
+
 
 /*    @Override
     public <ValType, Val extends Fmi2Builder.Value<ValType>, Var extends Fmi2Builder.Variable<PStm, Val>> Var store(String name, Var value) {
@@ -193,6 +217,12 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     }
 
     @Override
+    public <V> ArrayVariableFmi2Api<V> createArray(String name, Class<? extends V> type,
+                                                   FmiBuilder.UIntVariable<PStm>... sizes) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return activeScope.createArray(name,type,sizes);
+    }
+
+    @Override
     public <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag) {
         return activeScope.store(tag);
     }
@@ -205,6 +235,11 @@ public class DynamicActiveBuilderScope implements IMablScope, FmiBuilder.Dynamic
     @Override
     public DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable) {
         return activeScope.store(namePrefix, variable);
+    }
+
+    @Override
+    public FloatVariableFmi2Api store(String namePrefix, FloatVariableFmi2Api variable) {
+        return activeScope.store(namePrefix,variable);
     }
 
     @Override

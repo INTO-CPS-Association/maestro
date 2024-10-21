@@ -64,9 +64,14 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     @Override
     DoubleVariableFmi2Api store(double value);
+    @Override
+    FloatVariableFmi2Api store(float value);
 
     @Override
     IntVariableFmi2Api store(int value);
+
+    @Override
+    UIntVariableFmi2Api storeUInt(long value);
 
     @Override
     StringVariableFmi2Api store(String value);
@@ -75,10 +80,16 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
     DoubleVariableFmi2Api store(String name, double value);
 
     @Override
+    FloatVariableFmi2Api store(String name, float value);
+
+    @Override
     BooleanVariableFmi2Api store(String name, boolean value);
 
     @Override
     IntVariableFmi2Api store(String name, int value);
+
+    @Override
+    UIntVariableFmi2Api storeUInt(String name, long value);
 
     @Override
     StringVariableFmi2Api store(String name, String value);
@@ -88,6 +99,7 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     @Override
  <V > ArrayVariableFmi2Api<V> createArray(String name,Class<? extends V> type, FmiBuilder.IntVariable<PStm>... sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+    <V > ArrayVariableFmi2Api<V> createArray(String name,Class<? extends V> type, FmiBuilder.UIntVariable<PStm>... sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
     @Override
     <V> FmiBuilder.Variable<PStm, V> store(FmiBuilder.Value<V> tag);
@@ -96,6 +108,7 @@ public interface IMablScope extends FmiBuilder.Scope<PStm> {
 
     DoubleVariableFmi2Api store(String namePrefix, DoubleVariableFmi2Api variable);
 
+    FloatVariableFmi2Api store(String namePrefix, FloatVariableFmi2Api variable);
     ArrayVariableFmi2Api storeInArray(String name, VariableFmi2Api[] variables);
 
 

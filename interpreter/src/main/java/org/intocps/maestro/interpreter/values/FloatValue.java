@@ -68,6 +68,10 @@ public class FloatValue extends NumericValue {
             FloatValue ro = (FloatValue) other;
             return (int) Math.round(Math.signum(this.value - ro.getValue()));
 
+        }  if (other instanceof RealValue) {
+            RealValue ro = (RealValue) other;
+            return (int) Math.round(Math.signum(this.value - ro.getValue()));
+
         } else if (other instanceof IntegerValue) {
             IntegerValue ro = (IntegerValue) other;
             return (int) Math.round(Math.signum(this.value - ro.getValue()));

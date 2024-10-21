@@ -15,6 +15,7 @@ Tokens
     java_Boolean = 'java:java.lang.Boolean';
     java_Integer = 'java:java.lang.Integer';
     java_Double = 'java:java.lang.Double';
+    java_Float = 'java:java.lang.Float';
     java_Long = 'java:java.lang.Long';
     lex_identifier='java:org.intocps.maestro.ast.LexIdentifier';
 
@@ -92,6 +93,8 @@ exp
     | {int} [value]:java_Integer
     | {uInt} [value]:java_Long
     | {real} [value]:java_Double
+    | {long} [value]:java_Long
+    | {float} [value]:java_Float
     ;
 
 #binary {-> package='org.intocps.maestro.ast'

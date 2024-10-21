@@ -75,11 +75,11 @@ public class VariableFmi2Api<V> implements FmiBuilder.Variable<PStm, V>, Indexed
 
     @Override
     public void setValue(FmiBuilder.Scope<PStm> scope, V value) {
-        if (!(value instanceof DoubleExpressionValue)) {
+        if (!(value instanceof FmiBuilder.ProvidesTypedReferenceExp)) {
             throw new IllegalArgumentException();
         }
 
-        scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), ((DoubleExpressionValue) value).getExp()));
+        scope.add(MableAstFactory.newAAssignmentStm(this.designator.clone(), ((FmiBuilder.ProvidesTypedReferenceExp) value).getExp()));
     }
 
     @Override

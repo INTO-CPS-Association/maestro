@@ -234,12 +234,13 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          * @return
          */
         DoubleVariable<AST> store(double value);
-
+        FloatVariable<AST> store(float value);
         StringVariable<AST> store(String value);
 
         BoolVariable<AST> store(boolean value);
 
         IntVariable<AST> store(int value);
+        UIntVariable<AST> storeUInt(long value);
 
         /**
          * Store a given value with a prefix name
@@ -248,16 +249,19 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
          * @return
          */
         DoubleVariable<AST> store(String name, double value);
+        FloatVariable<AST> store(String name, float value);
 
         StringVariable<AST> store(String name, String value);
 
         BoolVariable<AST> store(String name, boolean value);
 
         IntVariable<AST> store(String name, int value);
+        UIntVariable<AST> storeUInt(String name, long value);
 
         <CV> ArrayVariable<AST, CV> store(String name, CV[] value);
 
          <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, IntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+        <V > ArrayVariable<AST,V> createArray(String name,Class<? extends V> type, UIntVariable<AST>...sizes ) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
         /**
          * Store the given value and get a tag for it. Copy
@@ -476,6 +480,10 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
     interface DoubleVariable<AST> extends Variable<AST, DoubleExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
 
         void set(Double value);
+    }
+    interface FloatVariable<AST> extends Variable<AST, FloatExpressionValue>, ProvidesTypedReferenceExp, NumericTypedReferenceExp {
+
+        void set(Float value);
     }
 
     interface BoolVariable<AST> extends Variable<AST, BooleanExpressionValue>, ProvidesTypedReferenceExp {
@@ -882,8 +890,13 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
 
     interface DoubleExpressionValue extends NumericExpressionValue {
     }
+    interface FloatExpressionValue extends NumericExpressionValue {
+    }
 
     interface IntExpressionValue extends NumericExpressionValue {
+    }
+
+    interface LongExpressionValue extends NumericExpressionValue {
     }
 
     interface UIntExpressionValue extends IntExpressionValue {

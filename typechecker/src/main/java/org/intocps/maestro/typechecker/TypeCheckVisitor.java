@@ -14,6 +14,7 @@ import org.intocps.maestro.typechecker.context.LocalContext;
 import org.intocps.maestro.typechecker.context.ModulesContext;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -490,7 +491,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
         } else if (node.getInitializer() != null) {
             PType initType = node.getInitializer().apply(this, ctxt);
-            if (!typeComparator.compatible(type, initType)) {
+
+            BiFunction<PType,PType,Boolean> isDoubleToFloatAssignment = (declType, assignType)->
+                    typeComparator.compatible(declType,new AFloatNumericPrimitiveType())&&typeComparator.compatible(assignType,new ARealNumericPrimitiveType());
+
+            if (!typeComparator.compatible(type, initType) && !isDoubleToFloatAssignment.apply(type,initType)) {
                 errorReporter.report(0, type + " cannot be initialized with type: " + initType, node.getName().getSymbol());
             }
 
@@ -717,22 +722,11 @@ class TypeCheckVisitor extends QuestionAnswerAdaptor<Context, PType> {
 
     @Override
     public PType caseARealLiteralExp(ARealLiteralExp node, Context ctxt) throws AnalysisException {
+        return store(node, detectType(node.getValue()));
+    }
 
-        //        double value = node.getValue();
-        //        if (Math.round(value) == value) {
-        //            if (value < 0) {
-        //                return store(node, MableAstFactory.newIntType());
-        //            } else if (value == 0) {
-        //
-        //                //nat
-        //                return store(node, MableAstFactory.newIntType());
-        //            } else {
-        //                //natone
-        //                return store(node, MableAstFactory.newIntType());
-        //            }
-        //        } else {
-        //            return store(node, MableAstFactory.newRealType());  // Note, "1.234" is really "1234/1000" (a rat)
-        //        }
+    @Override
+    public PType caseAFloatLiteralExp(AFloatLiteralExp node, Context ctxt) throws AnalysisException {
         return store(node, detectType(node.getValue()));
     }
 
