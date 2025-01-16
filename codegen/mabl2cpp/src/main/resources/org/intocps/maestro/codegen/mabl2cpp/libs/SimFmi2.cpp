@@ -56,7 +56,7 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
 
 
 FMI2 load_FMI2_directory(const char *guid, std::filesystem::path dirPath,
-                         std::chrono::time_point<std::chrono::steady_clock> loadStartTime) {
+                         std::chrono::time_point<std::chrono::time_point> loadStartTime) {
     using namespace std;
     using namespace chrono;
 
