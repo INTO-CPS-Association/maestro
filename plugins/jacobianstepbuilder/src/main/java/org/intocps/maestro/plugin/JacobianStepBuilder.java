@@ -190,7 +190,7 @@ public class JacobianStepBuilder extends BasicMaestroExpansionPlugin {
             PredicateFmi2Api loopPredicate =
                     ctxt.externalEndTimeDefined.toPredicate().not()
                             .or(ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize)
-                                    .lessThan(ctxt.endTime));
+                                    .lessEqualTo(ctxt.endTime));
 
 
             // Get all variables related to outputs or logging.
