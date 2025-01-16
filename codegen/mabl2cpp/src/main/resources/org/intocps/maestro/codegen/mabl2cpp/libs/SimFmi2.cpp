@@ -9,6 +9,7 @@
 #include <cstring> //memcopy
 
 namespace fs = std::filesystem;
+
 extern "C" {
 #include "sim_support.h"
 #include "uri.h"
@@ -45,106 +46,119 @@ std::string GetLastErrorAsString()
 #endif
 
 
-bool hasEnding (std::string const &fullString, std::string const &ending) {
+bool hasEnding(std::string const &fullString, std::string const &ending) {
     if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
     } else {
         return false;
     }
 }
 
 
-FMI2 load_FMI2(const char *guid, const char *in_path) {
+FMI2 load_FMI2_directory(const char *guid, std::filesystem::path dirPath,
+                         std::chrono::time_point<std::chrono::steady_clock> loadStartTime) {
     using namespace std;
     using namespace chrono;
 
-    auto path =URIToNativePath(in_path);
+    auto fmu = new Fmi2Impl();
+    fmu->resource_path = (dirPath / "resources").u8string();
+    auto library_base = dirPath / "binaries";
 
-    if(!std::filesystem::exists(path))
-    {
-        std::cerr  << "FMU path not found. Cannot load it. "<<path<<std::endl;
-        return nullptr;
+
+#ifdef _WIN32
+    library_base=library_base/"win64";
+#elif __APPLE__
+#if TARGET_OS_MAC
+    library_base = library_base / "darwin64";
+#else
+    throwException(env, "Unsupported platform");
+#endif
+#elif __linux
+    library_base=library_base/"linux64";
+#endif
+
+    const char *extension = ".dylib";
+#ifdef _WIN32
+    extension =".dll";
+#elif __APPLE__
+    extension = ".dylib";
+#elif __linux
+    extension =".so";
+#endif
+
+
+    //  std::string firstFile;
+    bool modelLibFound = false;
+    for (const auto &entry: fs::directory_iterator(library_base)) {
+        std::cout << entry.path() << std::endl;
+        fmu->library_path = entry.path().u8string();
+        if (hasEnding(fmu->library_path, extension)) {
+            modelLibFound = true;
+            break;
+        }
     }
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    auto fmuDest = std::filesystem::path(fs::temp_directory_path());
-
-    std::string id=guid;
-    std::replace(id.begin(),id.end(),'{','_');
-    std::replace(id.begin(),id.end(),'}','_');
-    fmuDest =fmuDest/id;
-    std::filesystem::remove_all(fmuDest);
-    fs::create_directory(fmuDest);
-
-
-    std::cout << "Unpacked fmu " << path << " to " << fmuDest << std::endl;
-
-    unzip(path, fmuDest.u8string().c_str());
-
-      auto fmu = new Fmi2Impl();
-      fmu->resource_path = (fmuDest / "resources").u8string();
-      auto library_base = fmuDest / "binaries";
-
-
-  #ifdef _WIN32
-      library_base=library_base/"win64";
-  #elif __APPLE__
-  #if TARGET_OS_MAC
-      library_base = library_base / "darwin64";
-  #else
-      throwException(env, "Unsupported platform");
-  #endif
-  #elif __linux
-      library_base=library_base/"linux64";
-  #endif
-
-      const char *extension = ".dylib";
-  #ifdef _WIN32
-      extension =".dll";
-  #elif __APPLE__
-      extension = ".dylib";
-  #elif __linux
-      extension =".so";
-  #endif
-
-
-      //  std::string firstFile;
-      bool modelLibFound = false;
-      for (const auto &entry : fs::directory_iterator(library_base)) {
-          std::cout << entry.path() << std::endl;
-          fmu->library_path = entry.path().u8string();
-          if (hasEnding(fmu->library_path, extension)) {
-              modelLibFound = true;
-              break;
-          }
-      }
-
-    if(!modelLibFound)
-    {
-        std::cerr  << "FMU does not contain any suitable library. Cannot load it. " << path << std::endl;
+    if (!modelLibFound) {
+        std::cerr << "FMU does not contain any suitable library. Cannot load it. " << dirPath << std::endl;
         return nullptr;
     }
-    std::cout << "Loading library: "<< fmu->library_path << std::endl;
+    std::cout << "Loading library: " << fmu->library_path << std::endl;
 
     fmu->guid = guid;
     auto success = loadDll(fmu->library_path.c_str(), &fmu->fmu);
 
-    #ifdef _WIN32
+#ifdef _WIN32
     if(!success){
         std::cout << "LoadLibraryEx failed with: '" << GetLastErrorAsString()<< "'" <<std::endl;
     }
-    #endif
+#endif
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    auto dur = t2 - t1;
+    auto dur = t2 - loadStartTime;
     std::cout << "Load in nanoseconds: {" << duration_cast<nanoseconds>(dur).count() << "}" << std::endl;
 
     if (!success)
         return nullptr;
     return fmu;
+}
 
+FMI2 load_FMI2(const char *guid, const char *in_path) {
+    using namespace std;
+    using namespace chrono;
+
+    auto path = URIToNativePath(in_path);
+
+    if (!std::filesystem::exists(path)) {
+        std::cerr << "FMU path not found. Cannot load it. " << path << std::endl;
+        return nullptr;
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    if (fs::is_regular_file(path)) {
+        //ok it must be unpacked
+        auto fmuDest = std::filesystem::path(fs::temp_directory_path());
+
+        std::string id = guid;
+        std::replace(id.begin(), id.end(), '{', '_');
+        std::replace(id.begin(), id.end(), '}', '_');
+        fmuDest = fmuDest / id;
+        std::filesystem::remove_all(fmuDest);
+        fs::create_directory(fmuDest);
+
+
+        std::cout << "Unpacked fmu " << path << " to " << fmuDest << std::endl;
+
+        unzip(path, fmuDest.u8string().c_str());
+
+        return load_FMI2_directory(guid, fmuDest, t1);
+    }
+    if (fs::is_directory(path)) {
+        return load_FMI2_directory(guid, std::filesystem::path(path), t1);
+    }
+    std::cerr << "FMU path is not a file or directory. Cannot load it. " << path << std::endl;
+    return nullptr;
 }
 
 
@@ -152,18 +166,23 @@ void Fmi2Impl::freeInstance(fmi2Component c) {
     this->fmu.freeInstance(c);
 }
 
-void stepFinished(fmi2ComponentEnvironment, fmi2Status) {}
+void stepFinished(fmi2ComponentEnvironment, fmi2Status) {
+}
 
 Fmi2Comp *Fmi2Impl::instantiate(fmi2String instanceName, fmi2Boolean visible, fmi2Boolean loggingOn) {
     fmi2CallbackFunctions callback = {
-            .logger = &fmuLogger, .allocateMemory = calloc, .freeMemory = free, .stepFinished=&stepFinished, .componentEnvironment = this};
+        .logger = &fmuLogger, .allocateMemory = calloc, .freeMemory = free, .stepFinished = &stepFinished,
+        .componentEnvironment = this
+    };
 
     auto *comp = new Fmi2Comp();
     comp->fmu = &this->fmu;
     memcpy(&comp->callback, &callback, sizeof(fmi2CallbackFunctions));
 
-    std::string resource_uri = "file://";
+    std::string resource_uri = "file:";
     resource_uri.append(this->resource_path);
+    std::string path_separator(1, std::filesystem::path::preferred_separator);
+    resource_uri.append(path_separator);
     comp->comp =
             this->fmu.instantiate(instanceName, fmi2CoSimulation, this->guid.c_str(), resource_uri.c_str(),
                                   &comp->callback, visible,
@@ -173,7 +192,6 @@ Fmi2Comp *Fmi2Impl::instantiate(fmi2String instanceName, fmi2Boolean visible, fm
         return nullptr;
 
     return comp;
-
 }
 
 Fmi2Impl::~Fmi2Impl() {
@@ -192,6 +210,4 @@ Fmi2Impl::~Fmi2Impl() {
 #elif __linux
     dlclose(this->fmu.dllHandle);
 #endif
-
-
 }

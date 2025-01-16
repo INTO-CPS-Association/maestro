@@ -30,6 +30,7 @@ FetchContent_Declare(libzip
         GIT_TAG  v1.11
         GIT_SHALLOW ON
         SOURCE_DIR "${CMAKE_BINARY_DIR}/libzip"
+        EXCLUDE_FROM_ALL
 )
 
 
@@ -57,9 +58,10 @@ FetchContent_Declare(rapidjson
         CONFIGURE_COMMAND ""
         INSTALL_COMMAND ""
         TEST_COMMAND ""
+        EXCLUDE_FROM_ALL
         )
 
-FetchContent_MakeAvailable(rapidjson)
+FetchContent_MakeAvailable(rapidjson )
 
 #file(CHMOD_RECURSE "${CMAKE_BINARY_DIR}/rapidjson" PERMISSIONS OWNER_READ OWNER_WRITE  GROUP_READ GROUP_WRITE WORLD_READ WORLD_WRITE )
 
@@ -68,7 +70,7 @@ include_directories(${PROJECT_SOURCE_DIR}
     ${intocpsfmi_SOURCE_DIR}/jnifmuapi/src/main/native/src/external/shared
     ${intocpsfmi_SOURCE_DIR}/jnifmuapi/src/main/native/src
     ${PROJECT_SOURCE_DIR}/libs
-    ${CMAKE_BINARY_DIR}/rapidjson/include)
+    ${rapidjson_SOURCE_DIR}/include)
 
 
 add_executable(sim
@@ -86,7 +88,7 @@ add_executable(sim
     co-sim.cxx
     main.cpp)
 
-target_link_libraries(sim zip)
+target_link_libraries(sim zip )
 target_compile_definitions(sim PRIVATE -DFMI_COSIMULATION)
 
 if (UNIX)
@@ -98,6 +100,4 @@ if (UNIX)
 endif()
 
 
-install(TARGETS sim
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION bin)
+install(TARGETS sim)
