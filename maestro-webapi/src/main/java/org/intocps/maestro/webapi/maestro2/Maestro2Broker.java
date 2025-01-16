@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spencerwi.either.Either;
 import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI2;
 import org.intocps.verification.scenarioverifier.core.masterModel.MasterModel;
-import org.intocps.verification.scenarioverifier.core.ScenarioLoader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.ast.LexIdentifier;
@@ -19,7 +18,6 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
-import org.intocps.maestro.framework.fmi2.LegacyMMSupport;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
 import org.intocps.maestro.interpreter.extensions.SimulationControlDefaultLifecycleHandler;
@@ -74,7 +72,7 @@ public class Maestro2Broker {
     }
 
     public <T extends MultiModel> void buildAndRunMasterModel(Map<String, List<String>> livestreamVariables, WebSocketSession socket, T multiModel,
-            SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
+                                                              SigverSimulateRequestBody body, File csvOutputFile) throws Exception {
         MasterModel masterModel = ScenarioLoaderFMI2.load(new ByteArrayInputStream(body.getMasterModel().getBytes()));
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
                 new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
@@ -116,7 +114,7 @@ public class Maestro2Broker {
     }
 
     public void buildAndRun(InitializationData initializeRequest, SimulateRequestBody body, WebSocketSession socket,
-            File csvOutputFile) throws Exception {
+                            File csvOutputFile) throws Exception {
 
         //Initially resolve any FMUs to the local folder in case they are uploaded
         ImportCmd.resolveFmuPaths(Collections.singletonList(workingDirectory), initializeRequest.getFmus());
@@ -132,16 +130,11 @@ public class Maestro2Broker {
         simulationConfiguration.faultInjectInstances = initializeRequest.faultInjectInstances;
         simulationConfiguration.faultInjectConfigurationPath = initializeRequest.faultInjectConfigurationPath;
 
-        Map<String, String> instanceRemapping = LegacyMMSupport.adjustFmi2SimulationEnvironmentConfiguration(simulationConfiguration);
-
         Map<String, Object> initialize = new HashMap<>();
         Map<String, Object> parameters = initializeRequest.getParameters();
 
         if (parameters != null) {
             initialize.put("parameters", parameters);
-            if (instanceRemapping != null && instanceRemapping.size() > 0) {
-                LegacyMMSupport.fixVariableToXMap(instanceRemapping, parameters);
-            }
         }
 
         if (initializeRequest.getEnvironmentParameters() != null) {
@@ -251,8 +244,8 @@ public class Maestro2Broker {
     }
 
     public void executeInterpreter(WebSocketSession webSocket, List<String> csvFilter, List<String> webSocketFilter, double interval,
-            File csvOutputFile,
-            InputStream config) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+                                   File csvOutputFile,
+                                   InputStream config) throws IOException, AnalysisException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         WebApiInterpreterFactory factory;
         if (webSocket != null) {
             factory = new WebApiInterpreterFactory(workingDirectory, webSocket, interval, webSocketFilter, new File(workingDirectory, "outputs.csv"),
