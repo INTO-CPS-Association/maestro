@@ -9,7 +9,7 @@ public abstract class NumericValue extends Value {
 
     public static NumericValue valueOf(short value) {
         if (value <= 0xff) {
-            return valueOf(Integer.valueOf(value).byteValue());
+            return new ByteValue(value);
         } else {
             return new ShortValue(Integer.valueOf(value).shortValue());
         }
@@ -17,7 +17,7 @@ public abstract class NumericValue extends Value {
 
     public static NumericValue valueOf(int value) {
         if (value <= 0xff) {
-            return valueOf(Integer.valueOf(value).byteValue());
+            return new ByteValue(value);
         } else if (value <= Short.MAX_VALUE) {
             return new ShortValue(Integer.valueOf(value).shortValue());
         } else {
