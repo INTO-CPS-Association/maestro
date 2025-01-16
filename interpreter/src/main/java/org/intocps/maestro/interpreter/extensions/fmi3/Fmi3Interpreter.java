@@ -163,7 +163,8 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 Layout layout = PatternLayout.newBuilder().withPattern(pattern).withCharset(StandardCharsets.UTF_8).build();//
 
                 ILogMessageCallback logCallback = (instanceName, status, category, message) -> {
-                    logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
+                    logger.info("{} {} {} {}",category, status, instanceName , message);
+                    //logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
                     {
 
                         if (fmuLogOutputStream == null) {

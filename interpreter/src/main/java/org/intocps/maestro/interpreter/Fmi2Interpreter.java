@@ -727,7 +727,8 @@ public class Fmi2Interpreter {
                 IFmiComponent component = fmu.instantiate(guid, name, visible, logginOn, new IFmuCallback() {
                     @Override
                     public void log(String instanceName, Fmi2Status status, String category, String message) {
-                        logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
+                        logger.info("{} {} {} {}",category, status, instanceName , message);
+                        // logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
                         {
 
                             if (fmuLogOutputStream == null) {
