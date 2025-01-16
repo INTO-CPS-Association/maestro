@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
+import org.intocps.maestro.core.dto.MultiModel;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.plugin.JacobianStepConfig;
 import org.intocps.maestro.template.MaBLTemplateConfiguration;
@@ -14,6 +15,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,6 +35,9 @@ public class ImportCmd implements Callable<Integer> {
     ImportType type;
     @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
     boolean dumpIntermediate;
+
+    @CommandLine.Option(names = {"-ds", "--dump-schemas"}, description = "Dump the json schemas for the input files", negatable = true)
+    boolean dumpSchemas;
 
     //    @CommandLine.Option(names = {"-el", "--expansion-limit"}, description = "Stop expansion after this amount of loops")
     //    int expansionLimit;
@@ -105,6 +110,14 @@ public class ImportCmd implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
+        if (type == ImportType.Sg1) {
+
+            if (dumpSchemas) {
+                dumpSchemaFiles();
+                return 0;
+            }
+        }
+
         Mabl.MableSettings settings = new Mabl.MableSettings();
         settings.dumpIntermediateSpecs = dumpIntermediate;
         settings.preserveFrameworkAnnotations = preserveAnnotations;
@@ -128,6 +141,9 @@ public class ImportCmd implements Callable<Integer> {
 
 
         if (type == ImportType.Sg1) {
+
+
+
             if (!importSg1(util, fmuSearchPaths, sourceFiles)) {
                 return 1;
             }
@@ -165,6 +181,11 @@ public class ImportCmd implements Callable<Integer> {
             util.interpret();
         }
         return 0;
+    }
+
+    private void dumpSchemaFiles() throws IOException {
+        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MaestroV1SimulationConfiguration.class,output.toPath());
+        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MultiModel.class,output.toPath());
     }
 
     // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson

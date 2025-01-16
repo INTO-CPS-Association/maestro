@@ -1,14 +1,21 @@
 package org.intocps.maestro.cli;
 
+import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.victools.jsonschema.generator.*;
+import com.github.victools.jsonschema.module.jackson.JacksonModule;
+import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationModule;
+import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.core.dto.MultiModel;
@@ -19,33 +26,45 @@ import org.intocps.maestro.template.MaBLTemplateConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MaestroV1SimulationConfiguration extends MultiModel {
 
     @JsonProperty("startTime")
+    @JsonPropertyDescription("The start time of the simulation. Usually 0.")
     private final double startTime;
     @JsonProperty("endTime")
+    @JsonPropertyDescription("The duration of the simulation in seconds. This is used by the fmus to allocate memory.")
     private final Double endTime;
     @JsonProperty("reportProgress")
+    @JsonPropertyDescription("If true the simulation will attempt to report progress.")
     private final Boolean reportProgress;
 
     @JsonCreator
     public MaestroV1SimulationConfiguration(@JsonProperty("fmus") Map<String, String> fmus,
-            @JsonProperty("connections") Map<String, List<String>> connections, @JsonProperty("parameters") Map<String, Object> parameters,
-            @JsonProperty("logVariables") Map<String, List<String>> logVariables, @JsonProperty("parallelSimulation") boolean parallelSimulation,
-            @JsonProperty("stabalizationEnabled") boolean stabalizationEnabled,
-            @JsonProperty("global_absolute_tolerance") double global_absolute_tolerance,
-            @JsonProperty("global_relative_tolerance") double global_relative_tolerance, @JsonProperty("loggingOn") boolean loggingOn,
-            @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
-            @JsonProperty("algorithm") IAlgorithmConfig algorithm, @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
-            @JsonProperty("environmentParameters") List<String> environmentParameters, @JsonProperty("logLevels") Map<String, List<String>> logLevels,
-            @JsonProperty("startTime") double startTime, @JsonProperty("endTime") Double endTime,
-            @JsonProperty("reportProgress") Boolean reportProgress, @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
-            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
-            @JsonProperty("convergenceAttempts") int convergenceAttempts, @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
-            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
+                                            @JsonProperty("connections") Map<String, List<String>> connections,
+                                            @JsonProperty("parameters") Map<String, Object> parameters,
+                                            @JsonProperty("logVariables") Map<String, List<String>> logVariables,
+                                            @JsonProperty("parallelSimulation") boolean parallelSimulation,
+                                            @JsonProperty("stabalizationEnabled") boolean stabalizationEnabled,
+                                            @JsonProperty("global_absolute_tolerance") double global_absolute_tolerance,
+                                            @JsonProperty("global_relative_tolerance") double global_relative_tolerance,
+                                            @JsonProperty("loggingOn") boolean loggingOn,
+                                            @JsonProperty("visible") boolean visible, @JsonProperty("simulationProgramDelay") boolean simulationProgramDelay,
+                                            @JsonProperty("algorithm") IAlgorithmConfig algorithm,
+                                            @JsonProperty("overrideLogLevel") InitializeLogLevel overrideLogLevel,
+                                            @JsonProperty("environmentParameters") List<String> environmentParameters,
+                                            @JsonProperty("logLevels") Map<String, List<String>> logLevels,
+                                            @JsonProperty("startTime") double startTime, @JsonProperty("endTime") Double endTime,
+                                            @JsonProperty("reportProgress") Boolean reportProgress,
+                                            @JsonProperty("faultInjectConfigurationPath") String faultInjectConfigurationPath,
+                                            @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
+                                            @JsonProperty("convergenceAttempts") int convergenceAttempts,
+                                            @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
+                                            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
         super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels,
                 faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts, modelTransfers, modelSwaps);
@@ -177,5 +196,65 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
             }
         }
         return mainNode;
+    }
+
+    public static class JsonSchemaGenerator {
+        private static SchemaGenerator generator = null;
+
+        public static void generate(Class clz, Path location) throws IOException {
+            SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(
+                    SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+            configBuilder.with(new JacksonModule());
+            configBuilder.with(new JakartaValidationModule());
+
+            configBuilder.with(new CustomMapTypeResolver(() -> generator));
+
+            generator = new SchemaGenerator(configBuilder.build());
+            String schema = generator.generateSchema(clz).toPrettyString();
+
+
+            var schemaFile = location.resolve(clz.getSimpleName() + ".json").toFile();
+            if (schemaFile.getParentFile() != null) {
+                schemaFile.getParentFile().mkdirs();
+            }
+            FileUtils.write(schemaFile, schema, "UTF-8");
+        }
+
+
+        public static class CustomMapTypeResolver implements CustomDefinitionProvider {
+
+            final Supplier<SchemaGenerator> generator;
+
+            public CustomMapTypeResolver(Supplier<SchemaGenerator> generator) {
+                this.generator = generator;
+            }
+
+            @Override
+            public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, TypeContext context) {
+                if (javaType.isInstanceOf(Map.class) && javaType.getTypeBindings().size() == 2 && javaType.getTypeBindings().getBoundType(0)
+                        .isInstanceOf(String.class)) {
+                    ObjectNode customSchema = JsonNodeFactory.instance.objectNode();
+                    customSchema.put("type", "object");
+                    ObjectNode additionalProperties = JsonNodeFactory.instance.objectNode();
+                    ResolvedType mapTarget = javaType.getTypeBindings().getBoundType(1);
+                    if (mapTarget.isInstanceOf(String.class)) {
+                        additionalProperties.put("type", "string");
+                        customSchema.set("additionalProperties", additionalProperties);
+                        return new CustomDefinition(customSchema);
+                    } else if (mapTarget.isInstanceOf(List.class)) {
+                        additionalProperties.put("type", "array");
+                        additionalProperties.set("items", JsonNodeFactory.instance.objectNode().put("type", "string"));
+                        customSchema.set("additionalProperties", additionalProperties);
+                        return new CustomDefinition(customSchema);
+                    } else if (mapTarget.isInstanceOf(MultiModel.ModelSwap.class)) {
+                        customSchema.set("additionalProperties", generator.get().generateSchema(mapTarget));
+                        return new CustomDefinition(customSchema);
+                    }
+                }
+                return null;
+            }
+        }
+
+
     }
 }

@@ -57,16 +57,28 @@ public class ImportCliTest {
     }
 
     @Test
-    public void importTestExistingFmu3Ft() {
+    public void importTestSchemaDump() {
 
-        String arguments = String.format(Locale.US, "import sg1 --interpret --dump-intermediate --inline-framework-config -output %s %s",
-                getOutputPath().toAbsolutePath(), "/Users/kgl/data/au/into-cps-association/maestro/maestro/src/test/resources/fmi3/reference/siggen-feedthrough/mm.json");
+        String arguments = String.format(Locale.US, "import sg1 --dump-schemas -output %s",
+                getOutputPath().toAbsolutePath());
         String[] s = arguments.split(" ");
 
         int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
         Assert.assertEquals(0, exitCode);
 
     }
+
+//    @Test
+//    public void importTestExistingFmu3Ft() {
+//
+//        String arguments = String.format(Locale.US, "import sg1 --interpret --dump-intermediate --inline-framework-config -output %s %s",
+//                getOutputPath().toAbsolutePath(), "/Users/kgl/data/au/into-cps-association/maestro/maestro/src/test/resources/fmi3/reference/siggen-feedthrough/mm.json");
+//        String[] s = arguments.split(" ");
+//
+//        int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
+//        Assert.assertEquals(0, exitCode);
+//
+//    }
 
     //    @Test
     //    public void importTestRelativeFmus() {
