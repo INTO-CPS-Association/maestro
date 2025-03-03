@@ -210,7 +210,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                     return new NullValue();
                 }
                 long stopInstantiateTime = System.nanoTime();
-                System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
+                logger.info("Interpretation instantiate took: {}" , (stopInstantiateTime - startInstantiateTime));
 
                 return getFmuInstanceValue(fmuLogOutputStream, instance, name, resolver);
 
@@ -917,7 +917,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             long stopTime = System.nanoTime();
 
-            System.out.println("Interpretation load took: " + (stopTime - startExecTime));
+            logger.debug("Interpretation load took: {}" , (stopTime - startExecTime));
 
             return new Fmu3Value(functions, fmu);
 

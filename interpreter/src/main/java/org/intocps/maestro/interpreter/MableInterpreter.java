@@ -33,7 +33,7 @@ public class MableInterpreter {
         document.apply(new Interpreter(this.loadFactory, this.transitionManager), new Context(null));
         long stopTime = System.nanoTime();
         Instant end = Instant.now();
-        System.out.println("Interpretation time: " + (stopTime - startTime) + " " + Duration.between(start, end));
+        logger.info("Interpretation time: {} {}" , (stopTime - startTime) , Duration.between(start, end));
 
     }
 }
