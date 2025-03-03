@@ -6,6 +6,7 @@ import org.intocps.maestro.interpreter.values.NumericValue;
 import org.intocps.maestro.interpreter.values.StringValue;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.datawriter.DataFileRotater;
+import org.intocps.maestro.interpreter.values.datawriter.DataListenerUtilities;
 import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
 
 import java.io.File;
@@ -33,12 +34,11 @@ public class CsvDataWriter implements IDataListener {
     @Override
     public void writeHeader(UUID uuid, List<String> headers) {
         CsvDataWriterInstance instance = new CsvDataWriterInstance();
-        instance.headersOfInterest = filter == null ? headers : headers.stream().filter(filter::contains).collect(Collectors.toList());
-        // Discover the headers of interest and store the index of these
+        instance.indexToHeader = DataListenerUtilities.indicesToHeaders(headers, filter == null || filter.isEmpty() ? null : filter);
+        List<String> filteredHeaders = new Vector<>();
         for (int i = 0; i < headers.size(); i++) {
-            String header = headers.get(i);
-            if (filter == null || instance.headersOfInterest.contains(header)) {
-                instance.indicesOfInterest.add(i);
+            if (instance.indexToHeader.containsKey(i)) {
+                filteredHeaders.add(headers.get(i));
             }
         }
 
@@ -46,7 +46,7 @@ public class CsvDataWriter implements IDataListener {
             PrintWriter writer = new PrintWriter(new FileOutputStream(dataFileRotater.getNextOutputFile()));
             instance.printWriter = writer;
             instances.put(uuid, instance);
-            instance.println("time," + String.join(",", instance.headersOfInterest));
+            instance.println("time," + String.join(",", filteredHeaders));
         } catch (FileNotFoundException e) {
             throw new InterpreterException(e);
         }
@@ -57,7 +57,14 @@ public class CsvDataWriter implements IDataListener {
         List<String> data = new Vector<>();
         data.add(floatFormatter == null ? Double.toString(time) : String.format(Locale.US, floatFormatter, time));
 
-        for (Integer i : instances.get(uuid).indicesOfInterest) {
+        Map<Integer, String> indexToHeader = instances.get(uuid).indexToHeader;
+
+        for (int i = 0; i < dataPoint.size(); i++) {
+
+            if (!indexToHeader.containsKey(i)) {
+                continue;
+            }
+
             Value d = dataPoint.get(i).deref();
 
             Object value = null;
@@ -89,10 +96,8 @@ public class CsvDataWriter implements IDataListener {
     }
 
     static class CsvDataWriterInstance {
-        public final List<Integer> indicesOfInterest = new ArrayList<>();
-        public List<String> headersOfInterest;
+        Map<Integer, String> indexToHeader;
         public PrintWriter printWriter;
-
 
         public void println(String data) {
             this.printWriter.println(data);

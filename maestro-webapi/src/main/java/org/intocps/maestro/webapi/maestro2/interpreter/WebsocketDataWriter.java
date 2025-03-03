@@ -38,7 +38,7 @@ public class WebsocketDataWriter implements IDataListener {
         WebsocketDataWriterInstance wdwi = new WebsocketDataWriterInstance(hoi, ioi);
         wdwi.interval = interval;
         this.instances.put(uuid, wdwi);
-        this.webSocketConverter.configure(hoi);
+        this.webSocketConverter.configure(ith);
     }
 
     @Override

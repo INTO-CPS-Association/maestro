@@ -21,6 +21,13 @@ public class MaBLTemplateConfiguration {
     private String faultInjectionConfigurationPath;
     private IPluginConfiguration stepAlgorithmConfig;
 
+
+    public Integer getWebsocketPort() {
+        return websocketPort;
+    }
+
+    private Integer websocketPort;
+
     private MaBLTemplateConfiguration() {
     }
 
@@ -73,6 +80,16 @@ public class MaBLTemplateConfiguration {
         private Framework framework;
         private Pair<Framework, Fmi2SimulationEnvironmentConfiguration> frameworkConfig;
         private IPluginConfiguration stepAlgorithmConfig;
+
+        public Integer getWebsocketPort() {
+            return websocketPort;
+        }
+
+        public void setWebsocketPort(Integer websocketPort) {
+            this.websocketPort = websocketPort;
+        }
+
+        private Integer websocketPort;
 
         public static MaBLTemplateConfigurationBuilder getBuilder() {
             return new MaBLTemplateConfigurationBuilder();
@@ -149,6 +166,7 @@ public class MaBLTemplateConfiguration {
             config.simulationEnvironment = this.simulationEnvironment;
             config.loggingOn = this.loggingOn;
             config.visible = this.visible;
+            config.websocketPort = this.websocketPort;
             config.faultInjectionConfigurationPath = config.simulationEnvironment.getFaultInjectionConfigurationPath();
             config.stepAlgorithmConfig = this.stepAlgorithmConfig;
 

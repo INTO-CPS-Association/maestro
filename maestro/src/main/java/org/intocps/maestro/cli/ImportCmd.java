@@ -33,28 +33,28 @@ public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> mablFileFilter = f -> f.getName().toLowerCase().endsWith(".mabl");
     @CommandLine.Parameters(index = "0", description = "The valid import formats: ${COMPLETION-CANDIDATES}")
     ImportType type;
-    @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
+    @CommandLine.Option(names = {"-di", "--dump-intermediate" }, description = "Dump all intermediate expansions", negatable = true)
     boolean dumpIntermediate;
 
-    @CommandLine.Option(names = {"-ds", "--dump-schemas"}, description = "Dump the json schemas for the input files", negatable = true)
+    @CommandLine.Option(names = {"-ds", "--dump-schemas" }, description = "Dump the json schemas for the input files", negatable = true)
     boolean dumpSchemas;
 
     //    @CommandLine.Option(names = {"-el", "--expansion-limit"}, description = "Stop expansion after this amount of loops")
     //    int expansionLimit;
-    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Verbose")
+    @CommandLine.Option(names = {"-v", "--verbose" }, description = "Verbose")
     boolean verbose;
-    @CommandLine.Option(names = {"-vi", "--verify"},
+    @CommandLine.Option(names = {"-vi", "--verify" },
             description = "Verify the spec according to the following verifier groups: ${COMPLETION-CANDIDATES}")
     Framework verify;
-    @CommandLine.Option(names = {"-nop", "--disable-optimize"}, description = "Disable spec optimization", negatable = true)
+    @CommandLine.Option(names = {"-nop", "--disable-optimize" }, description = "Disable spec optimization", negatable = true)
     boolean disableOptimize;
-    @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
+    @CommandLine.Option(names = {"-pa", "--preserve-annotations" }, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
-    @CommandLine.Option(names = {"-if", "--inline-framework-config"}, description = "Inline all framework configs", negatable = true)
+    @CommandLine.Option(names = {"-if", "--inline-framework-config" }, description = "Inline all framework configs", negatable = true)
     boolean inlineFrameworkConfig;
-    @CommandLine.Option(names = {"-fsp", "--fmu-search-path"}, description = "One or more search paths used to resolve relative FMU paths.")
+    @CommandLine.Option(names = {"-fsp", "--fmu-search-path" }, description = "One or more search paths used to resolve relative FMU paths.")
     List<File> fmuSearchPaths;
-    @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
+    @CommandLine.Option(names = {"-i", "--interpret" }, description = "Interpret spec after import")
     boolean interpret;
     @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
     List<File> files;
@@ -63,10 +63,13 @@ public class ImportCmd implements Callable<Integer> {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    private static MaBLTemplateConfiguration generateTemplateSpecificationFromV1(
+    @CommandLine.Option(names = {"-ws", "--websocket" }, description = "Enable websocket for livestreaming")
+    Integer websocketPort;
+
+    private MaBLTemplateConfiguration generateTemplateSpecificationFromV1(
             MaestroV1SimulationConfiguration simulationConfiguration) throws Exception {
         MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder builder = MaBLTemplateConfiguration.MaBLTemplateConfigurationBuilder.getBuilder();
-
+        builder.setWebsocketPort(websocketPort);
         if (simulationConfiguration != null) {
             simulationConfiguration.configure(builder);
         }
@@ -143,7 +146,6 @@ public class ImportCmd implements Callable<Integer> {
         if (type == ImportType.Sg1) {
 
 
-
             if (!importSg1(util, fmuSearchPaths, sourceFiles)) {
                 return 1;
             }
@@ -184,8 +186,8 @@ public class ImportCmd implements Callable<Integer> {
     }
 
     private void dumpSchemaFiles() throws IOException {
-        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MaestroV1SimulationConfiguration.class,output.toPath());
-        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MultiModel.class,output.toPath());
+        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MaestroV1SimulationConfiguration.class, output.toPath());
+        MaestroV1SimulationConfiguration.JsonSchemaGenerator.generate(MultiModel.class, output.toPath());
     }
 
     // https://stackoverflow.com/questions/9895041/merging-two-json-documents-using-jackson
@@ -244,6 +246,7 @@ public class ImportCmd implements Callable<Integer> {
             resolveFmuPaths(fmuSearchPaths, config.getFmus());
 
             MaBLTemplateConfiguration templateConfig = generateTemplateSpecificationFromV1(config);
+
 
             util.mabl.generateSpec(templateConfig);
             util.mabl.setRuntimeEnvironmentVariables(config.getParameters());

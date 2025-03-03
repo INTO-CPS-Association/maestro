@@ -1,8 +1,10 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import com.fujitsu.vdmj.ast.statements.ASTIdentifierDesignator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.ABasicBlockStm;
 import org.intocps.maestro.ast.AVariableDeclaration;
+import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -14,6 +16,7 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.TryMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -41,6 +44,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     Set<String> importedModules = new TreeSet<>();
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
     Map<String, Object> instanceCache = new HashMap<>();
+    Map<String, RuntimeModuleVariable> fromExistingSpecInstanceCache = new HashMap<>();
     private MathBuilderFmi2Api mathBuilderApi;
 
     public MablApiBuilder() {
@@ -97,6 +101,25 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
                 globalFmiStatus = (IntVariableFmi2Api) createVariableExact(rootScope, newIntType(), null, decl.getName().getText(), true);
             }
 
+            //lets find the existing loaded instances
+            @NotNull List<AAssigmentStm> declaredAndLoadedAssignments = MablToMablAPI.getAncestors(lastNodePriorToBuilderTakeOver,
+                    n -> n instanceof AAssigmentStm).map(AAssigmentStm.class::cast).filter(n -> n.getExp() instanceof ALoadExp).collect(Collectors.toList());
+
+            @NotNull Map<AAssigmentStm, PStateDesignator> loadedDefinitions = declaredAndLoadedAssignments.stream()
+                    .collect(Collectors.toMap(n -> n, AAssigmentStm::getTarget));
+
+            Function<AAssigmentStm, String> loadedModuleName = n -> ((AStringLiteralExp) (((ALoadExp) n.getExp()).getArgs().get(0))).getValue();
+
+            @NotNull Map<String, RuntimeModuleVariable> c = loadedDefinitions.entrySet().stream()
+                    .filter(map -> (!loadedModuleName.apply(map.getKey()).startsWith("FMI")))
+                    .collect(Collectors.toMap(map -> loadedModuleName.apply(map.getKey()), map ->
+
+                            new RuntimeModuleVariable(null, new ANameType(new LexIdentifier(loadedModuleName.apply(map.getKey()), null)),
+                                   rootScope, getDynamicScope(), this, map.getValue().clone(),
+                                    newAIdentifierExp(((AIdentifierStateDesignator)map.getValue()).getName().getText()))
+                    ));
+            fromExistingSpecInstanceCache.putAll(c);
+
         } else {
 
             globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
@@ -147,7 +170,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     }
 
     private IntVariableFmi2Api getFmiStatusConstant_aux(FmiStatusInterface status) {
-        if(!this.fmiStatusVariables.containsKey(status)) {
+        if (!this.fmiStatusVariables.containsKey(status)) {
             IntVariableFmi2Api var = rootScope.store(status.getName(), status.getValue());
             rootScope.addAfterOrTop(null, var.getDeclaringStm());
             fmiStatusVariables.put(status, var);
@@ -155,8 +178,13 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return this.fmiStatusVariables.get(status);
     }
 
-    public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {return getFmiStatusConstant_aux(status);}
-    public IntVariableFmi2Api getFmiStatusConstant(Fmi3Status status) {return getFmiStatusConstant_aux(status);}
+    public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {
+        return getFmiStatusConstant_aux(status);
+    }
+
+    public IntVariableFmi2Api getFmiStatusConstant(Fmi3Status status) {
+        return getFmiStatusConstant_aux(status);
+    }
 
     public MablToMablAPI getMablToMablAPI() {
         return this.mablToMablAPI;
@@ -353,7 +381,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     //    }
 
     public RuntimeModuleVariable loadRuntimeModule(TryScope<PStm> scope, BiConsumer<Scope<PStm>, List<PStm>> variableStoreFunc, String name,
-            Object... args) {
+                                                   Object... args) {
         String varName = getNameGenerator().getName(name);
         List<PExp> argList = BuilderUtil.toExp(args);
         argList.add(0, newAStringLiteralExp(name));
@@ -553,6 +581,12 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     }
 
     <T> T load(String moduleType, Function<FmiBuilder.RuntimeModule<PStm>, T> creator, Object... args) {
+
+        if(fromExistingSpecInstanceCache.containsKey(moduleType)&& !instanceCache.containsKey(moduleType)) {
+            //lets convert the instance
+            instanceCache.put(moduleType,creator.apply(fromExistingSpecInstanceCache.get(moduleType)));
+        }
+
         if (instanceCache.containsKey(moduleType)) {
             return (T) instanceCache.get(moduleType);
         }
@@ -601,7 +635,10 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         private FmiStatus(final int value) {
             this.value = value;
         }
-        public int getValue() { return this.value; }
+
+        public int getValue() {
+            return this.value;
+        }
 
         // Interface method, not sure how to best preserve enum name() method.
         public String getName() {
@@ -621,9 +658,11 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         FMI_ERROR(3),
         FMI_FATAL(4);
         private final int value;
+
         private Fmi3Status(final int value) {
             this.value = value;
         }
+
         public int getValue() {
             return this.value;
         }

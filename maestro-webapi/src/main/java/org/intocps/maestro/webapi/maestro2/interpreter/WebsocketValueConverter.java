@@ -1,6 +1,9 @@
 package org.intocps.maestro.webapi.maestro2.interpreter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.intocps.maestro.interpreter.values.datawriter.DataListenerUtilities;
+import org.intocps.maestro.interpreter.values.datawriter.WebSocketDataWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
@@ -17,18 +20,17 @@ public class WebsocketValueConverter {
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(WebsocketValueConverter.class);
     final WebSocketSession ws;
-    Dto data = new Dto();
-    List<String> names = new ArrayList<>();
+    final WebSocketDataWriter.JsonLiveStreamValueConverter converter = new WebSocketDataWriter.JsonLiveStreamValueConverter();
 
     public WebsocketValueConverter(WebSocketSession ws) {
         this.ws = ws;
     }
 
     public void configure(List<String> names) {
-
-        this.names = names;
-
-
+        configure(DataListenerUtilities.indicesToHeaders(names, null));
+    }
+    public void configure(Map<Integer, String> ith) {
+     converter.configure(ith);
     }
 
     /**
@@ -38,30 +40,12 @@ public class WebsocketValueConverter {
      * @param updates
      */
     public void update(double time, List<Object> updates) {
-
-        this.data.time = time;
-        for (int i = 0; i < updates.size(); i++) {
-
-            String[] name = names.get(i).split("\\.");
-
-            Map<String, Object> dataMap = this.data.data;
-
-            for (int segement = 0; segement < name.length; segement++) {
-                String s = name[segement];
-
-                if (segement == name.length - 1) {
-                    dataMap.put(s, updates.get(i));
-                } else {
-                    dataMap = (Map<String, Object>) dataMap.computeIfAbsent(s, k -> new HashMap<>());
-                }
-            }
-
-        }
+        converter.update(time, updates);
     }
 
     public void send() {
         try {
-            String json = getJson();
+            String json = converter.getJson();
             logger.info("Sending: {}", json);
             this.ws.sendMessage(new TextMessage(json));
         } catch (IOException e) {
@@ -69,12 +53,8 @@ public class WebsocketValueConverter {
         }
     }
 
-    public String getJson() throws com.fasterxml.jackson.core.JsonProcessingException {
-        return mapper.writeValueAsString(data);
+    public String getJson() throws JsonProcessingException {
+        return converter.getJson();
     }
 
-    class Dto {
-        public double time;
-        public Map<String, Object> data = new HashMap<>();
-    }
 }
