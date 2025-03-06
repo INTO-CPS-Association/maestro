@@ -777,7 +777,7 @@ public class Fmi2Interpreter {
                     return new NullValue();
                 }
                 long stopInstantiateTime = System.nanoTime();
-                System.out.println("Interpretation instantiate took: " + (stopInstantiateTime - startInstantiateTime));
+                logger.info("Interpretation instantiate took: {}", (stopInstantiateTime - startInstantiateTime));
 
                 return getFmuComponentValue(fmuLogOutputStream, component);
 
@@ -852,7 +852,7 @@ public class Fmi2Interpreter {
 
             long stopTime = System.nanoTime();
 
-            System.out.println("Interpretation load took: " + (stopTime - startExecTime));
+            logger.debug("Interpretation load took: {}",  (stopTime - startExecTime));
             return new FmuValue(functions, fmu);
 
         } catch (Exception e) {
@@ -873,7 +873,7 @@ public class Fmi2Interpreter {
 
             long stopTime = System.nanoTime();
 
-            System.out.println("Interpretation load took: " + (stopTime - startExecTime));
+            logger.debug("Interpretation load took: {}" , (stopTime - startExecTime));
             return new FmuValue(functions, fmu);
 
         } catch (IOException | FmuInvocationException | FmuMissingLibraryException | NoSuchMethodException | IllegalAccessException |

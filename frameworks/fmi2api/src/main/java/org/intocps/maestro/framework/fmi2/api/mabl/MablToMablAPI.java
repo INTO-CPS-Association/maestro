@@ -3,10 +3,13 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.RuntimeModuleVariable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAIdentifierExp;
 import static org.intocps.maestro.ast.MableAstFactory.newANameType;
@@ -22,6 +25,31 @@ public class MablToMablAPI {
 
     public MablToMablAPI(MablApiBuilder mablApiBuilder) {
         this.mablApiBuilder = mablApiBuilder;
+    }
+
+    public static Stream<INode> getAncestors(INode node, Predicate<INode> filter) {
+        INode parent = node.parent();
+        if (parent == null) {
+            return Stream.empty();
+        } else if (parent instanceof SBlockStm) {
+            SBlockStm block = (SBlockStm) parent;
+            INode indexedNode = node;
+            while (indexedNode != null && !(indexedNode instanceof PStm)) {
+                indexedNode = indexedNode.parent();
+            }
+
+            int pos = block.getBody().indexOf(indexedNode);
+            if (pos < 0) {
+                return getAncestors(parent, filter);
+            }
+
+            return Stream.concat(block.getBody().stream().limit(pos).filter(filter), getAncestors(parent, filter));
+        } else if (filter.test(parent)) {
+            return Stream.concat(Stream.of(parent), getAncestors(parent, filter));
+        } else {
+            return getAncestors(parent, filter);
+        }
+
     }
 
 

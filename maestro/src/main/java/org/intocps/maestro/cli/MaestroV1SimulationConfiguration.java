@@ -43,6 +43,17 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
     @JsonPropertyDescription("If true the simulation will attempt to report progress.")
     private final Boolean reportProgress;
 
+
+    public Map<String, List<String>> getLiveStreamVariables() {
+        return liveStreamVariables;
+    }
+
+
+
+    @JsonProperty("livestream")
+    @JsonPropertyDescription("A map from fmu instance \"{FMU}.instanceName\" to a list of signal names that should be live streamed during the simulation.")
+    private final Map<String, List<String>> liveStreamVariables;
+
     @JsonCreator
     public MaestroV1SimulationConfiguration(@JsonProperty("fmus") Map<String, String> fmus,
                                             @JsonProperty("connections") Map<String, List<String>> connections,
@@ -64,13 +75,14 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
                                             @JsonProperty("faultInjectInstances") Map<String, String> faultInjectInstances,
                                             @JsonProperty("convergenceAttempts") int convergenceAttempts,
                                             @JsonProperty("modelTransfers") Map<String, String> modelTransfers,
-                                            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps) {
-        super(fmus, connections, parameters, logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
+                                            @JsonProperty("modelSwaps") Map<String, ModelSwap> modelSwaps,@JsonProperty("livestream") Map<String, List<String>> livestreamVariables) {
+        super(fmus, connections, parameters,logVariables, parallelSimulation, stabalizationEnabled, global_absolute_tolerance,
                 global_relative_tolerance, loggingOn, visible, simulationProgramDelay, algorithm, overrideLogLevel, environmentParameters, logLevels,
                 faultInjectConfigurationPath, faultInjectInstances, convergenceAttempts, modelTransfers, modelSwaps);
         this.startTime = startTime;
         this.endTime = endTime;
         this.reportProgress = reportProgress;
+        this.liveStreamVariables = livestreamVariables;
     }
 
     public double getStartTime() {
@@ -132,6 +144,7 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
         environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
         environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
         environmentConfiguration.logVariables = simulationConfiguration.getLogVariables();
+        environmentConfiguration.livestream = simulationConfiguration.getLiveStreamVariables();
         environmentConfiguration.modelTransfers = simulationConfiguration.getModelTransfers();
         environmentConfiguration.modelSwaps = simulationConfiguration.getModelSwaps();
 

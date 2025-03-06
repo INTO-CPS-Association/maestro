@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Data Graph (Optimized)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h2 id="status">🔴 Reconnecting...</h2>
+<canvas id="chart"></canvas>
+
+<script>
+    let socket;
+    let reconnectInterval = 1000; // 1 second
+    let maxDataPoints = 500; // Limit points stored to avoid memory overload
+    let datasets = {};
+    let updatePending = false;
+    let bufferedData = [];
+
+    // Create chart with optimizations
+    const ctx = document.getElementById("chart").getContext("2d");
+    const chart = new Chart(ctx, {
+        type: "line",
+        data: { datasets: [] },
+        options: {
+            responsive: true,
+            animation: false, // No animation for better performance
+            elements: {
+                line: { tension: 0 },
+                point: { radius: 0 } // Hide points for better performance
+            },
+            scales: {
+                x: { type: "linear", position: "bottom" },
+                y: { beginAtZero: false }
+            },
+            plugins: {
+                decimation: {
+                    enabled: true,
+                    algorithm: 'lttb', // Downsamples large datasets for performance
+                    samples: 100 // Keep only 100 points per dataset in view
+                }
+            }
+        }
+    });
+
+    function connectWebSocket() {
+        console.log("Connecting to WebSocket...");
+        socket = new WebSocket("ws://localhost:PORT");
+
+        socket.onopen = () => {
+            console.log("Connected to WebSocket");
+            document.getElementById("status").innerText = "🟢 Connected";
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                const time = message.time;
+                const newDataPoint = { time };
+
+                function extractSignals(obj, prefix = "data") {
+                    for (const key in obj) {
+                        if (typeof obj[key] === "object" && obj[key] !== null) {
+                            extractSignals(obj[key], `${prefix}.${key}`);
+                        } else {
+                            newDataPoint[`${prefix}.${key}`] = obj[key];
+                        }
+                    }
+                }
+                extractSignals(message.data);
+
+                bufferedData.push(newDataPoint);
+
+                if (!updatePending) {
+                    updatePending = true;
+                    requestAnimationFrame(processBufferedData);
+                }
+            } catch (error) {
+                console.error("Error parsing WebSocket data:", error);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log("WebSocket disconnected. Retrying in", reconnectInterval / 1000, "seconds...");
+            document.getElementById("status").innerText = "🔴 Reconnecting...";
+            setTimeout(connectWebSocket, reconnectInterval);
+        };
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error);
+            socket.close();
+        };
+    }
+
+    function processBufferedData() {
+        bufferedData.forEach((dataPoint) => {
+            updateChart(dataPoint.time, dataPoint);
+        });
+        bufferedData = [];
+        updatePending = false;
+    }
+
+    function updateChart(time, dataPoint) {
+        Object.keys(dataPoint).forEach((key) => {
+            if (key !== "time") {
+                if (!datasets[key]) {
+                    datasets[key] = {
+                        label: key,
+                        borderColor: `hsl(${Object.keys(datasets).length * 50}, 70%, 50%)`,
+                        borderWidth: 1,
+                        fill: false,
+                        data: []
+                    };
+                    chart.data.datasets.push(datasets[key]);
+                }
+
+                let dataset = datasets[key];
+                dataset.data.push({ x: time, y: dataPoint[key] });
+
+                if (dataset.data.length > maxDataPoints) {
+                    dataset.data.shift();
+                }
+            }
+        });
+
+        chart.update("none");
+    }
+
+    connectWebSocket();
+</script>
+</body>
+</html>

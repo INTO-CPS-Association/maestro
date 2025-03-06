@@ -12,7 +12,7 @@ public class DataListenerUtilities {
         // Discover the headers of interest and store the index of these
         for (int i = 0; i < headers.size(); i++) {
             String header = headers.get(i);
-            if (headersOfInterest.contains(header)) {
+            if (headersOfInterest==null||headersOfInterest.contains(header)) {
                 indicesToHeaders.put(i, header);
             }
         }

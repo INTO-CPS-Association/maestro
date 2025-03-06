@@ -7,14 +7,15 @@ import org.intocps.maestro.interpreter.api.IValueLifecycleHandler;
 import org.intocps.maestro.interpreter.values.Value;
 import org.intocps.maestro.interpreter.values.csv.CsvDataWriter;
 import org.intocps.maestro.interpreter.values.datawriter.DataWriterValue;
+import org.intocps.maestro.interpreter.values.datawriter.IDataListener;
+import org.intocps.maestro.interpreter.values.datawriter.IntervalDataWriter;
+import org.intocps.maestro.interpreter.values.datawriter.WebSocketDataWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -22,17 +23,24 @@ import java.util.stream.StreamSupport;
 public class DataWriterLifecycleHandler extends BaseLifecycleHandler {
 
     static final String DEFAULT_CSV_FILENAME = "outputs.csv";
-    final String DATA_WRITER_TYPE_NAME;
-    final String dataWriterFileNameFinal;
-    final List<String> dataWriterFilterFinal;
-    final private File workingDirectory;
+    final String DATA_WRITER_TYPE_NAME = this.getClass().getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name();
+
+    final List<Supplier<IDataListener>> writers = new Vector<>();
+
+    private boolean isTextEqual(JsonNode node, String text) {
+        return node.isTextual() && node.asText().equals(text);
+    }
+
+    private String getMemberText(JsonNode node, String memberName) {
+        if (node.hasNonNull(memberName) && node.get(memberName).isTextual()) {
+            return node.get(memberName).asText();
+        }
+        return null;
+    }
 
     public DataWriterLifecycleHandler(File workingDirectory, InputStream config) throws IOException {
-        this.workingDirectory = workingDirectory;
 
-        DATA_WRITER_TYPE_NAME = this.getClass().getAnnotation(IValueLifecycleHandler.ValueLifecycle.class).name();
-        String dataWriterFileName = DEFAULT_CSV_FILENAME;
-        List<String> dataWriterFilter = null;
+//        String dataWriterFileName = DEFAULT_CSV_FILENAME;
 
         if (config != null) {
             JsonNode configTree = new ObjectMapper().readTree(config);
@@ -41,29 +49,64 @@ public class DataWriterLifecycleHandler extends BaseLifecycleHandler {
                 JsonNode dwConfig = configTree.get(DATA_WRITER_TYPE_NAME);
 
                 for (JsonNode val : dwConfig) {
-                    if (val.has("type") && val.get("type").isTextual() && val.get("type").asText().equals("CSV")) {
-                        if (val.has("filename") && val.get("filename").isTextual()) {
-                            dataWriterFileName = val.get("filename").asText();
-                        }
-                        if (val.has("filter")) {
-                            dataWriterFilter =
-                                    StreamSupport.stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED),
-                                            false).map(v -> v.asText()).collect(Collectors.toList());
-                        }
+                    if (val.hasNonNull("type")) {
+                        JsonNode typeNode = val.get("type");
 
+                        if (isTextEqual(typeNode, "CSV")) {
+                            //we have CSV writer instance
+                            String filename = getMemberText(dwConfig, "filename");
+                            final String dataWriterFileName = filename == null ? DEFAULT_CSV_FILENAME : filename;
+
+                            final List<String> filter = getFilter(val);
+
+                            writers.add(() -> new CsvDataWriter(
+                                    workingDirectory == null ? new File(dataWriterFileName) : new File(workingDirectory, dataWriterFileName),
+                                    filter));
+                        } else if (isTextEqual(typeNode, "CSV_LiveStream")) {
+                            //we have CSV livestream  writer instance
+                            String filename = getMemberText(dwConfig, "filename");
+                            final String dataWriterFileName = filename == null ? "livestream.csv" : filename;
+
+                            final List<String> filter = getFilter(val);
+                            double interval = 0.1;
+                            if (val.hasNonNull("interval") && val.get("interval").isNumber()) {
+                                interval = val.get("interval").asDouble();
+                            }
+
+                            final double finalInterval = interval;
+                            writers.add(() ->new IntervalDataWriter(finalInterval, new CsvDataWriter(
+                                    workingDirectory == null ? new File(dataWriterFileName) : new File(workingDirectory, dataWriterFileName),
+                                    filter)));
+                        }else if (isTextEqual(typeNode, "WebSocket")) {
+
+                            int port = val.get("port").asInt(8082);
+
+                            final List<String> filter = getFilter(val);
+                            double interval = 0.1;
+                            if (val.hasNonNull("interval") && val.get("interval").isNumber()) {
+                                interval = val.get("interval").asDouble();
+                            }
+
+                            final double finalInterval = interval;
+                            writers.add(() ->new IntervalDataWriter(finalInterval, new WebSocketDataWriter(port,filter)));
+                        }
                     }
                 }
             }
         }
+    }
 
-        dataWriterFileNameFinal = dataWriterFileName;
-        dataWriterFilterFinal = dataWriterFilter;
+    private static List<String> getFilter(JsonNode val) {
+        if (val.hasNonNull("filter")) {
+            return
+                    StreamSupport.stream(Spliterators.spliteratorUnknownSize(val.get("filter").iterator(), Spliterator.ORDERED),
+                            false).map(JsonNode::asText).collect(Collectors.toList());
+        }
+        return Collections.emptyList();
     }
 
     @Override
     public Either<Exception, Value> instantiate(List<Value> args) {
-        return Either.right(new DataWriterValue(Collections.singletonList(new CsvDataWriter(
-                workingDirectory == null ? new File(dataWriterFileNameFinal) : new File(workingDirectory, dataWriterFileNameFinal),
-                dataWriterFilterFinal))));
+        return Either.right(new DataWriterValue(writers.stream().map(Supplier::get).collect(Collectors.toList())));
     }
 }

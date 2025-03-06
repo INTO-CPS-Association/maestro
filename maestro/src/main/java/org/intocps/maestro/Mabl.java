@@ -17,6 +17,8 @@ import org.intocps.maestro.core.StringAnnotationProcessor;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.core.ISimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
+import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
+import org.intocps.maestro.interpreter.values.datawriter.WebSocketDataWriter;
 import org.intocps.maestro.optimization.UnusedDeclarationOptimizer;
 import org.intocps.maestro.parser.MablLexer;
 import org.intocps.maestro.parser.MablParserUtil;
@@ -39,6 +41,37 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Mabl {
+
+    static class RuntimeData {
+        private Map<String, Object> runtimeEnvironmentVariables;
+        private Map<String, List<String>> outputVariables;
+        private Double liveStreamInterval;
+
+        public Integer getWebsocketPort() {
+            return websocketPort;
+        }
+
+        private Integer websocketPort;
+
+        public Double getLiveStreamInterval() {
+            return liveStreamInterval;
+        }
+
+        public Map<String, List<String>> getLivestreamVariables() {
+            return livestreamVariables;
+        }
+
+        public Map<String, List<String>> getOutputVariables() {
+            return outputVariables;
+        }
+
+        public Map<String, Object> getRuntimeEnvironmentVariables() {
+            return runtimeEnvironmentVariables;
+        }
+
+        private Map<String, List<String>> livestreamVariables;
+    }
+
     public static final String MAIN_SPEC_DEFAULT_FILENAME = "spec.mabl";
     public static final String MAIN_SPEC_DEFAULT_RUNTIME_FILENAME = "spec.runtime.json";
     final static Logger logger = LoggerFactory.getLogger(Mabl.class);
@@ -51,8 +84,10 @@ public class Mabl {
     private ARootDocument document;
     private Map<Framework, Map.Entry<AConfigFramework, String>> frameworkConfigs = new HashMap<>();
     private IErrorReporter reporter = new IErrorReporter.SilentReporter();
-    private Map<String, Object> runtimeEnvironmentVariables;
+
     private ISimulationEnvironment environment;
+
+    public RuntimeData runtimeData = new RuntimeData();
 
     public Mabl(File specificationFolder, File debugOutputFolder) {
         this(specificationFolder, debugOutputFolder, new MableSettings());
@@ -65,7 +100,7 @@ public class Mabl {
     }
 
     static Map.Entry<Boolean, Map<INode, PType>> typeCheck(final List<ARootDocument> documentList, List<? extends PDeclaration> globalFunctions,
-            final IErrorReporter reporter) {
+                                                           final IErrorReporter reporter) {
 
         try {
             TypeChecker typeChecker = new TypeChecker(reporter);
@@ -114,9 +149,9 @@ public class Mabl {
         }
         try {
             ARootDocument parse = MablParserUtil.parse(CharStreams.fromStream(resourceAsStream));
-        return parse;
-        }catch(IllegalStateException e){
-            throw new IllegalStateException(e.getMessage()+" in module "+module,e);
+            return parse;
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException(e.getMessage() + " in module " + module, e);
         }
     }
 
@@ -322,7 +357,7 @@ public class Mabl {
     }
 
     private void processTemplate(ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit,
-            Fmi2SimulationEnvironment simulationEnvironment) throws Exception {
+                                 Fmi2SimulationEnvironment simulationEnvironment) throws Exception {
         List<? extends LexIdentifier> imports = aSimulationSpecificationCompilationUnit.getImports();
         List<ARootDocument> moduleDocuments = getModuleDocuments(imports.stream().map(LexIdentifier::getText).collect(Collectors.toList()));
         String template = PrettyPrinter.print(aSimulationSpecificationCompilationUnit);
@@ -347,7 +382,23 @@ public class Mabl {
         if (configuration == null) {
             throw new Exception("No configuration");
         }
+        runtimeData.websocketPort = configuration.getWebsocketPort();
         ASimulationSpecificationCompilationUnit aSimulationSpecificationCompilationUnit = TemplateGenerator.generateTemplate(configuration);
+        if (configuration.getFrameworkConfig() != null) {
+            Fmi2SimulationEnvironmentConfiguration conf = configuration.getFrameworkConfig().getValue();
+            this.runtimeData.livestreamVariables = conf.livestream;
+            if ((conf.variablesToLog != null && conf.variablesToLog.size() > 0) || (conf.logVariables != null && conf.logVariables.size() > 0)) {
+                this.runtimeData.outputVariables = new HashMap<>();
+                if (conf.variablesToLog != null) {
+                    this.runtimeData.outputVariables.putAll(conf.variablesToLog);
+                }
+                if (conf.logVariables != null) {
+                    this.runtimeData.outputVariables.putAll(conf.logVariables);
+                }
+            }
+            this.runtimeData.liveStreamInterval = 0.1;
+
+        }
         processTemplate(aSimulationSpecificationCompilationUnit, configuration.getSimulationEnvironment());
     }
 
@@ -361,7 +412,7 @@ public class Mabl {
     }
 
     public Object getRuntimeData() throws Exception {
-        return new MablRuntimeDataGenerator(getSimulationEnv(), this.runtimeEnvironmentVariables).getRuntimeData();
+        return new MablRuntimeDataGenerator(getSimulationEnv(), this.runtimeData).getRuntimeData();
     }
 
     public String getRuntimeDataAsJsonString() throws Exception {
@@ -372,6 +423,9 @@ public class Mabl {
         FileUtils.write(new File(folder, MAIN_SPEC_DEFAULT_FILENAME), PrettyPrinter.print(getMainSimulationUnit()), StandardCharsets.UTF_8);
         new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
                 .writeValue(new File(folder, MAIN_SPEC_DEFAULT_RUNTIME_FILENAME), getRuntimeData());
+        if (runtimeData.getWebsocketPort() != null) {
+            WebSocketDataWriter.dumpWebsocketUi(folder.toPath().resolve("graph.html"), runtimeData.getWebsocketPort());
+        }
     }
 
     /**
@@ -383,7 +437,7 @@ public class Mabl {
      * @param runtimeEnvironmentVariables
      */
     public void setRuntimeEnvironmentVariables(Map<String, Object> runtimeEnvironmentVariables) {
-        this.runtimeEnvironmentVariables = runtimeEnvironmentVariables;
+        this.runtimeData.runtimeEnvironmentVariables = runtimeEnvironmentVariables;
     }
 
     public static class MableSettings {
