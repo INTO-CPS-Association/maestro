@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <log4j2.version>2.17.1</log4j2.version>
+        <log4j2.version>2.24.3</log4j2.version>
         <fmu.api.version>1.5.0</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
         <kotlin.version>1.7.21</kotlin.version>
@@ -390,7 +390,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
                 <version>${log4j2.version}</version>
             </dependency>
             <dependency>
