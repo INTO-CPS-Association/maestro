@@ -21,14 +21,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <log4j2.version>2.24.3</log4j2.version>
         <fmu.api.version>1.5.0</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
-        <kotlin.version>1.7.21</kotlin.version>
+        <kotlin.version>1.9.22</kotlin.version>
         <scala.version>2.13.12</scala.version>
-        <kotlin.jvmTarget>11</kotlin.jvmTarget>
+        <kotlin.jvmTarget>21</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
         <jackson.version>2.15.2</jackson.version>
         <revision>3.0.3</revision>
@@ -209,7 +209,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.6.3</version>
                     <executions>
                         <execution>
                             <id>attach-javadocs</id>
@@ -275,7 +275,13 @@
 
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <source>21</source>
+                        <target>21</target>
+                        <release>21</release>
+                        <encoding>UTF-8</encoding>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>

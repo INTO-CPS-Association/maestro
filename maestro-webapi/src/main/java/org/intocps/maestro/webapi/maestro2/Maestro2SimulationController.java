@@ -14,7 +14,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.intocps.fmi.IFmu;
-import org.intocps.maestro.cli.MablCmdVersionProvider;
+import org.intocps.maestro.Main;
 import org.intocps.maestro.core.dto.FixedStepAlgorithmConfig;
 import org.intocps.maestro.core.dto.VariableStepAlgorithmConfig;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -28,6 +28,7 @@ import org.intocps.maestro.webapi.controllers.JavaProcess;
 import org.intocps.maestro.webapi.controllers.ProdSessionLogicFactory;
 import org.intocps.maestro.webapi.controllers.SessionController;
 import org.intocps.maestro.webapi.controllers.SessionLogic;
+
 import org.intocps.maestro.webapi.maestro2.dto.*;
 import org.intocps.maestro.webapi.util.ZipDirectory;
 import org.slf4j.Logger;
@@ -43,7 +44,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.*;
 import java.net.URI;
 import java.util.*;
@@ -58,6 +60,18 @@ public class Maestro2SimulationController {
     public static final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
     final static ObjectMapper mapper = new ObjectMapper();
     private final static Logger logger = LoggerFactory.getLogger(Maestro2SimulationController.class);
+    static String version;
+
+    static {
+        try {
+            Properties prop = new Properties();
+            InputStream coeProp = Main.class.getResourceAsStream("maestro.properties");
+            prop.load(coeProp);
+            version = prop.getProperty("version");
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
 
     public void overrideRootLoggerLogLevel(Level level) {
         if (level == null) {
@@ -72,7 +86,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/upload/{sessionId}", method = RequestMethod.POST)
     public void uploadFile(@PathVariable String sessionId,
-            @ApiParam(value = "File", required = true) @RequestParam("file") MultipartFile file) throws IOException {
+                           @ApiParam(value = "File", required = true) @RequestParam("file") MultipartFile file) throws IOException {
         try (InputStream is = file.getInputStream()) {
             logger.debug("Uploaded file: {}", file.getOriginalFilename());
             File targetFile = new File(sessionController.getSessionLogic(sessionId).getRootDirectory(), file.getOriginalFilename());
@@ -137,8 +151,7 @@ public class Maestro2SimulationController {
             throw new Exception("Connections must not be null");
         }
 
-        if (body.getAlgorithm() instanceof FixedStepAlgorithmConfig) {
-            FixedStepAlgorithmConfig algorithm = (FixedStepAlgorithmConfig) body.getAlgorithm();
+        if (body.getAlgorithm() instanceof FixedStepAlgorithmConfig algorithm) {
 
             if (algorithm.size == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fixed-step size must be an integer or double");
@@ -146,8 +159,7 @@ public class Maestro2SimulationController {
 
             logger.info("Using Fixed-step size calculator with size = {}", algorithm.size);
 
-        } else if (body.getAlgorithm() instanceof VariableStepAlgorithmConfig) {
-            VariableStepAlgorithmConfig algorithm = (VariableStepAlgorithmConfig) body.getAlgorithm();
+        } else if (body.getAlgorithm() instanceof VariableStepAlgorithmConfig algorithm) {
 
             if (algorithm.getSize() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "min and max variable-step size must be integers or doubles");
@@ -238,7 +250,7 @@ public class Maestro2SimulationController {
 
             List<String> error = new ArrayList<>();
             List<String> out = new ArrayList<>();
-            List<String> command = JavaProcess.calculateCommand(Application.class, Arrays.asList(), arguments);
+            List<String> command = JavaProcess.calculateCommand(Application.class, List.of(), arguments);
             logger.info("Executing command: " + String.join(" ", command));
             preSimTime = System.currentTimeMillis();
             Process p = Runtime.getRuntime().exec(command.toArray(String[]::new));
@@ -259,7 +271,7 @@ public class Maestro2SimulationController {
             }
             int result = p.waitFor();
 
-            if (error.size() > 0) {
+            if (!error.isEmpty()) {
                 logic.setStatus(SessionLogic.SessionStatus.Error);
             } else {
                 logic.setStatus(SessionLogic.SessionStatus.Finished);
@@ -282,7 +294,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET, produces = "text/csv")
     public ResponseEntity<Resource> getResultPlain(@PathVariable String sessionId) throws Exception {
-        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
+        SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
 
         if (sessionLogic == null) {
             throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
@@ -295,7 +307,7 @@ public class Maestro2SimulationController {
 
     @RequestMapping(value = "/result/{sessionId}/zip", method = RequestMethod.GET, produces = "application/zip")
     public void getResultZip(@PathVariable String sessionId, HttpServletResponse response) throws Exception {
-        SessionLogic sessionLogic = this.sessionController.getSessionLogic(sessionId);
+        SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
 
         if (sessionLogic == null) {
             throw new IllegalArgumentException("The session with id: " + sessionId + " does not exist.");
@@ -319,9 +331,9 @@ public class Maestro2SimulationController {
     public String version() {
         final String message;
         try {
-            message = "{\"version\":\"" + new MablCmdVersionProvider().getVersion()[0] + "\"}";
+            message = "{\"version\":\"" + version + "\"}";
         } catch (Exception e) {
-            e.printStackTrace();
+           logger.error("Could not get maestro version.", e);
             return "unknown";
         }
         return message;
@@ -333,26 +345,16 @@ public class Maestro2SimulationController {
     }
 
     private Level convertLogLevel(InitializationData.InitializeLogLevel overrideLogLevel) {
-        switch (overrideLogLevel) {
-
-            case OFF:
-                return Level.OFF;
-            case FATAL:
-                return Level.FATAL;
-            case ERROR:
-                return Level.ERROR;
-            case WARN:
-                return Level.WARN;
-            case INFO:
-                return Level.INFO;
-            case DEBUG:
-                return Level.DEBUG;
-            case TRACE:
-                return Level.TRACE;
-            case ALL:
-                return Level.ALL;
-        }
-        return null;
+        return switch (overrideLogLevel) {
+            case OFF -> Level.OFF;
+            case FATAL -> Level.FATAL;
+            case ERROR -> Level.ERROR;
+            case WARN -> Level.WARN;
+            case INFO -> Level.INFO;
+            case DEBUG -> Level.DEBUG;
+            case TRACE -> Level.TRACE;
+            case ALL -> Level.ALL;
+        };
     }
 
     private StatusModel runSimulation(IBuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
@@ -365,7 +367,7 @@ public class Maestro2SimulationController {
 
         logic.setStopRequested(false);
         preSimTime = System.currentTimeMillis();
-        func.apply(new Maestro2Broker(logic.rootDirectory, reporter, () -> logic.isStopRequested()));
+        func.apply(new Maestro2Broker(logic.rootDirectory, reporter, logic::isStopRequested));
         postSimTime = System.currentTimeMillis();
         logic.setExecTime(postSimTime - preSimTime);
 
@@ -390,11 +392,5 @@ public class Maestro2SimulationController {
     private interface IBuildAndRun {
         void apply(Maestro2Broker broker) throws Exception;
     }
-
-    //    @RequestMapping(value = "/reset/{sessionId}", method = RequestMethod.GET)
-    //    public void reset(@PathVariable String sessionId) {
-    //
-    //    }
-
 
 }

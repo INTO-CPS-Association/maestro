@@ -114,7 +114,7 @@ public class CreateMablSpecTests {
         mockMvc.perform(get("/destroy/" + statusModel.sessionId)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse()
                 .getContentAsString();
 
-        List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
+        List<String> filesInZip = entries.stream().map(ZipEntry::getName).collect(Collectors.toList());
 
         assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
                 "crtlInstance.log", "wtInstance.log");
@@ -161,7 +161,7 @@ public class CreateMablSpecTests {
         mockMvc.perform(get("/destroy/" + statusModel.sessionId)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse()
                 .getContentAsString();
 
-        List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
+        List<String> filesInZip = entries.stream().map(ZipEntry::getName).collect(Collectors.toList());
 
         assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
                 "crtlInstance.log", "wtInstance.log");
@@ -216,7 +216,7 @@ public class CreateMablSpecTests {
         mockMvc.perform(get("/destroy/" + statusModel.sessionId)).andExpect(status().is(HttpStatus.OK.value())).andReturn().getResponse()
                 .getContentAsString();
 
-        List<String> filesInZip = entries.stream().map(l -> l.getName()).collect(Collectors.toList());
+        List<String> filesInZip = entries.stream().map(ZipEntry::getName).collect(Collectors.toList());
 
         assertThat(filesInZip).containsExactlyInAnyOrder("initialize.json", "simulate.json", "spec.mabl", "outputs.csv", "spec.runtime.json",
                 "crtlInstance.log", "wtInstance.log");
