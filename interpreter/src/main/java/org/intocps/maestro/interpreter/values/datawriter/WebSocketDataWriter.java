@@ -203,7 +203,7 @@ public class WebSocketDataWriter implements IDataListener {
             if (res != null) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(res, StandardCharsets.UTF_8));
                 var bytes = IOUtils.toString(reader).replace("PORT", String.valueOf(port)).getBytes(StandardCharsets.UTF_8);
-                Files.write(path, bytes, StandardOpenOption.TRUNCATE_EXISTING);
+                Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
