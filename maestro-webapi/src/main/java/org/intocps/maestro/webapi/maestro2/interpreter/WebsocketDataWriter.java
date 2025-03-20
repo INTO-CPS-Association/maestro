@@ -47,8 +47,7 @@ public class WebsocketDataWriter implements IDataListener {
         if (instance.shallLog(time)) {
             instance.updateNextReportTime();
             List<Object> data = new Vector<>();
-            for (Integer i : instance.indicesOfInterest) {
-                Value d = dataPoint.get(i);
+            for (var d : dataPoint) {
 
                 if (d instanceof IntegerValue) {
                     data.add(((IntegerValue) d).intValue());

@@ -46,7 +46,7 @@ public class WebsocketValueConverter {
     public void send() {
         try {
             String json = converter.getJson();
-            logger.info("Sending: {}", json);
+            logger.trace("Sending: {}", json);
             this.ws.sendMessage(new TextMessage(json));
         } catch (IOException e) {
             e.printStackTrace();
