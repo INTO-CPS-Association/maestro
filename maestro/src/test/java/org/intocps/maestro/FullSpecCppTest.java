@@ -38,7 +38,6 @@ public class FullSpecCppTest extends FullSpecTest {
 
     static final File baseSimProgram = getSimProgramFile(baseProjectPath);
 
-    static boolean beforeExecuted = false;
 
     private static File getSimProgramFile(File baseProjectPath) {
         String name = "sim";
@@ -51,9 +50,11 @@ public class FullSpecCppTest extends FullSpecTest {
     @BeforeAll
     public static void configureBaseProject() throws Exception {
 
-        if (CACHE_FOLDERS.stream().allMatch(n -> new File(baseProjectPath, n).exists())) {
-            return;
-        }
+//        if (CACHE_FOLDERS.stream().allMatch(n -> new File(baseProjectPath, n).exists())) {
+            if (new File(baseProjectPath, "build").exists()) {
+                return;
+            }
+//        }
 
         IErrorReporter reporter = new ErrorReporter();
         Mabl mabl = new Mabl(baseProjectPath, baseProjectPath);
@@ -61,7 +62,7 @@ public class FullSpecCppTest extends FullSpecTest {
         mabl.setVerbose(false);
         File spec = new File(baseProjectPath, "spec.mabl");
         FileUtils.write(spec, "simulation" + "{}", StandardCharsets.UTF_8);
-        mabl.parse(Arrays.asList(spec));
+        mabl.parse(List.of(spec));
 
         new MablCppCodeGenerator(baseProjectPath).generate(mabl.getMainSimulationUnit(), mabl.typeCheck().getValue());
         CMakeUtil cMakeUtil = new CMakeUtil().setVerbose(true);
@@ -73,7 +74,6 @@ public class FullSpecCppTest extends FullSpecTest {
             }
         }
 
-        beforeExecuted = true;
     }
 
     @Override
@@ -84,9 +84,7 @@ public class FullSpecCppTest extends FullSpecTest {
     @Override
     protected void postProcessSpec(String name, File directory, File workingDirectory, Mabl mabl, ARootDocument spec,
                                    Map<INode, PType> value) throws Exception {
-        if (!beforeExecuted) {
-            configureBaseProject();
-        }
+        configureBaseProject();
 
         mabl.optimize();
         Map.Entry<Boolean, Map<INode, PType>> tc = mabl.typeCheck();
@@ -207,7 +205,7 @@ public class FullSpecCppTest extends FullSpecTest {
     }
 
     private Map.Entry<File, List<File>> generateCpp(File directory, File workingDirectory, Mabl mabl, ARootDocument spec,
-            Map<INode, PType> tc) throws AnalysisException, IOException {
+                                                    Map<INode, PType> tc) throws AnalysisException, IOException {
         File output = new File(workingDirectory, "cpp");
         output.mkdirs();
         List<File> files = new MablCppCodeGenerator(output).generate(spec, tc);
