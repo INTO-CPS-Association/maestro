@@ -52,6 +52,15 @@ jobs:
         # We need this to get a gcc 11.2 that is new enough to compile the reference FMU3
         run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Install vcpkg
+        if: ${{matrix.os == env.WINDOWS_VERSION }}
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Install Zlib via vcpkg
+        if: ${{matrix.os == env.WINDOWS_VERSION }}
+        run: .\vcpkg\vcpkg install zlib
 
 
       - name: Cache local Maven repository
@@ -66,8 +75,14 @@ jobs:
         run: mvn -B package --file pom.xml -DskipTests -fae
 
       - name: Maven Test
-        #        if: matrix.os == env.WINDOWS_VERSION
+        if: matrix.os == env.WINDOWS_VERSION
         #        shell: msys2 {0}
+        run: |
+          set ZLIB_ROOT=${{ github.workspace }}\vcpkg\installed\x64-windows
+          mvn -Pinclude-fullSpecCppTest test
+
+      - name: Maven Test
+        if: matrix.os != env.WINDOWS_VERSION
         run: mvn -Pinclude-fullSpecCppTest test
 
       #      - name: Maven Test
