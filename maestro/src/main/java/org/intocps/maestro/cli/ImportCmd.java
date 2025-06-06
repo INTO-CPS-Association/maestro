@@ -241,8 +241,10 @@ public class ImportCmd implements Callable<Integer> {
                 rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
             }
 
-            extraceLivestreamFromGraphs(rootNode, mapper);
-
+            if (rootNode != null) {
+                extraceLivestreamFromGraphs(rootNode, mapper);
+                checkFaultInjectUndefinedNames(rootNode);
+            }
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
             resolveFmuPaths(fmuSearchPaths, config.getFmus());
@@ -261,6 +263,39 @@ public class ImportCmd implements Callable<Integer> {
         }
     }
 
+    private void checkFaultInjectUndefinedNames(JsonNode rootNode) {
+        var faultInjectedInstanceNames = new HashSet<String>();
+        if (rootNode.has("faultInjectInstances")) {
+            var faultInjectInstances = rootNode.get("faultInjectInstances");
+            for (Iterator<String> it = faultInjectInstances.fieldNames(); it.hasNext(); ) {
+                var faultInjectInstance = it.next();
+                faultInjectedInstanceNames.add(faultInjectInstance);
+            }
+        }
+
+        var instanceNames = new HashSet<String>();
+        if (rootNode.has("connections")) {
+            var connections = rootNode.get("connections");
+            for (Iterator<String> it = connections.fieldNames(); it.hasNext(); ) {
+                var connection = it.next();
+                if (connection.contains(".")) {
+                    var parts = connection.split("\\.");
+                    if (parts.length > 1) {
+                        instanceNames.add(parts[1]);
+                    }
+
+                }
+            }
+        }
+
+        var undefined = new HashSet<String>(faultInjectedInstanceNames);
+        undefined.removeAll(instanceNames);
+        if (!undefined.isEmpty()) {
+            System.err.println("The following fault inject instances are not defined in the connections section: " + undefined);
+            System.exit(1);
+        }
+    }
+
     private static void extraceLivestreamFromGraphs(JsonNode rootNode, ObjectMapper mapper) {
         if (rootNode != null && rootNode.has("graphs") && !rootNode.has("livestream")) {
             //ok we dont have live stream but mm graphs so lets construct the live stream from all graphs
@@ -270,15 +305,13 @@ public class ImportCmd implements Callable<Integer> {
             if (graphsNode.isArray()) {
                 for (var graphNode : graphsNode) {
                     if (graphNode.has("livestream")) {
-                    var livestreamNode = graphNode.get("livestream");
+                        var livestreamNode = graphNode.get("livestream");
                         for (Iterator<String> it = livestreamNode.fieldNames(); it.hasNext(); ) {
                             var fieldName = it.next();
                             var listNode = livestreamNode.get(fieldName);
-                            if (listNode.isArray())
-                            {
+                            if (listNode.isArray()) {
                                 var list = new ArrayList<String>();
-                                for(var name : listNode)
-                                {
+                                for (var name : listNode) {
                                     list.add(name.asText());
                                 }
                                 if (!list.isEmpty()) {
@@ -290,7 +323,7 @@ public class ImportCmd implements Callable<Integer> {
                 }
             }
 
-            if(!livestream.isEmpty()) {
+            if (!livestream.isEmpty()) {
                 ((ObjectNode) rootNode).set("livestream", mapper.valueToTree(livestream));
 
             }
