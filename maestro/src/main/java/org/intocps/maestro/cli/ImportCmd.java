@@ -33,28 +33,28 @@ public class ImportCmd implements Callable<Integer> {
     static final Predicate<File> mablFileFilter = f -> f.getName().toLowerCase().endsWith(".mabl");
     @CommandLine.Parameters(index = "0", description = "The valid import formats: ${COMPLETION-CANDIDATES}")
     ImportType type;
-    @CommandLine.Option(names = {"-di", "--dump-intermediate" }, description = "Dump all intermediate expansions", negatable = true)
+    @CommandLine.Option(names = {"-di", "--dump-intermediate"}, description = "Dump all intermediate expansions", negatable = true)
     boolean dumpIntermediate;
 
-    @CommandLine.Option(names = {"-ds", "--dump-schemas" }, description = "Dump the json schemas for the input files", negatable = true)
+    @CommandLine.Option(names = {"-ds", "--dump-schemas"}, description = "Dump the json schemas for the input files", negatable = true)
     boolean dumpSchemas;
 
     //    @CommandLine.Option(names = {"-el", "--expansion-limit"}, description = "Stop expansion after this amount of loops")
     //    int expansionLimit;
-    @CommandLine.Option(names = {"-v", "--verbose" }, description = "Verbose")
+    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Verbose")
     boolean verbose;
-    @CommandLine.Option(names = {"-vi", "--verify" },
+    @CommandLine.Option(names = {"-vi", "--verify"},
             description = "Verify the spec according to the following verifier groups: ${COMPLETION-CANDIDATES}")
     Framework verify;
-    @CommandLine.Option(names = {"-nop", "--disable-optimize" }, description = "Disable spec optimization", negatable = true)
+    @CommandLine.Option(names = {"-nop", "--disable-optimize"}, description = "Disable spec optimization", negatable = true)
     boolean disableOptimize;
-    @CommandLine.Option(names = {"-pa", "--preserve-annotations" }, description = "Preserve annotations", negatable = true)
+    @CommandLine.Option(names = {"-pa", "--preserve-annotations"}, description = "Preserve annotations", negatable = true)
     boolean preserveAnnotations;
-    @CommandLine.Option(names = {"-if", "--inline-framework-config" }, description = "Inline all framework configs", negatable = true)
+    @CommandLine.Option(names = {"-if", "--inline-framework-config"}, description = "Inline all framework configs", negatable = true)
     boolean inlineFrameworkConfig;
-    @CommandLine.Option(names = {"-fsp", "--fmu-search-path" }, description = "One or more search paths used to resolve relative FMU paths.")
+    @CommandLine.Option(names = {"-fsp", "--fmu-search-path"}, description = "One or more search paths used to resolve relative FMU paths.")
     List<File> fmuSearchPaths;
-    @CommandLine.Option(names = {"-i", "--interpret" }, description = "Interpret spec after import")
+    @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
     @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
     List<File> files;
@@ -63,7 +63,7 @@ public class ImportCmd implements Callable<Integer> {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    @CommandLine.Option(names = {"-ws", "--websocket" }, description = "Enable websocket for livestreaming")
+    @CommandLine.Option(names = {"-ws", "--websocket"}, description = "Enable websocket for livestreaming")
     Integer websocketPort;
 
     private MaBLTemplateConfiguration generateTemplateSpecificationFromV1(
@@ -241,6 +241,8 @@ public class ImportCmd implements Callable<Integer> {
                 rootNode = rootNode == null ? tempNode : merge(rootNode, tempNode);
             }
 
+            extraceLivestreamFromGraphs(rootNode, mapper);
+
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
 
             resolveFmuPaths(fmuSearchPaths, config.getFmus());
@@ -256,6 +258,42 @@ public class ImportCmd implements Callable<Integer> {
         } else {
             System.err.println("Missing configuration file for " + spec.name() + ". Please specify a json file.");
             return false;
+        }
+    }
+
+    private static void extraceLivestreamFromGraphs(JsonNode rootNode, ObjectMapper mapper) {
+        if (rootNode != null && rootNode.has("graphs") && !rootNode.has("livestream")) {
+            //ok we dont have live stream but mm graphs so lets construct the live stream from all graphs
+
+            Map<String, List<String>> livestream = new HashMap<>();
+            var graphsNode = rootNode.get("graphs");
+            if (graphsNode.isArray()) {
+                for (var graphNode : graphsNode) {
+                    if (graphNode.has("livestream")) {
+                    var livestreamNode = graphNode.get("livestream");
+                        for (Iterator<String> it = livestreamNode.fieldNames(); it.hasNext(); ) {
+                            var fieldName = it.next();
+                            var listNode = livestreamNode.get(fieldName);
+                            if (listNode.isArray())
+                            {
+                                var list = new ArrayList<String>();
+                                for(var name : listNode)
+                                {
+                                    list.add(name.asText());
+                                }
+                                if (!list.isEmpty()) {
+                                    livestream.computeIfAbsent(fieldName, k -> new ArrayList<>()).addAll(list);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(!livestream.isEmpty()) {
+                ((ObjectNode) rootNode).set("livestream", mapper.valueToTree(livestream));
+
+            }
         }
     }
 
