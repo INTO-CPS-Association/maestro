@@ -20,7 +20,7 @@ env:
   SERVER_ID: ossrh
   PYTHON_VERSION: '3.11.8'
   MAVEN_VERSION: 3.8.1
-  WINDOWS_VERSION: 'windows-2019'
+  WINDOWS_VERSION: 'windows-latest'
   MACOS_VERSION: 'macos-13'
 
 
@@ -111,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, windows-2019, macos-13 ] # ubuntu-latest, , macos-13
+        os: [ ubuntu-22.04, windows-latest, macos-13 ] # ubuntu-latest, , macos-13
         platform: [ x64 ] #x32, x64 ]
         exclude:
           - os: macos-13
