@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>maestro-webapi</artifactId>
+    <name>Maestro Web API</name>
     <properties>
         <sprintboot.version>3.4.3</sprintboot.version>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>

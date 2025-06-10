@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>fixedstep</artifactId>
+    <name>Fixed Step Plugin</name>
 
     <dependencies>
         <dependency>

@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>api</artifactId>
+    <name>API for Plugins</name>
 
     <dependencies>
         <dependency>

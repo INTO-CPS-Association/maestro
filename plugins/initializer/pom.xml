@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>initializer</artifactId>
+    <name>Initializer Plugin</name>
 
     <properties>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>

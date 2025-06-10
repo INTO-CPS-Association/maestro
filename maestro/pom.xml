@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>maestro</artifactId>
-
+    <name>Maestro</name>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->

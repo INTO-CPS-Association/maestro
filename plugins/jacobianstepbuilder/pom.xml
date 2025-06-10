@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>jacobianstepbuilder</artifactId>
+    <name>Jacobian Step Builder Plugin</name>
 
     <dependencies>
         <dependency>

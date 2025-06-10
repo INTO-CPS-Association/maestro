@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>typeconverter</artifactId>
+    <name>Type Converter Plugin</name>
 
     <dependencies>
         <dependency>

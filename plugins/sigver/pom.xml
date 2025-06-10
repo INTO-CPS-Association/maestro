@@ -11,6 +11,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>sigver</artifactId>
+    <name>Sigver Plugin</name>
 
     <properties>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>

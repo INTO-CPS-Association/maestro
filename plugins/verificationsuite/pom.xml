@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>verificationsuite</artifactId>
+    <name>Verification Suite</name>
 
     <dependencies>
         <dependency>

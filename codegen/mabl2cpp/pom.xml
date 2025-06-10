@@ -13,6 +13,7 @@
 
     <groupId>org.into-cps.maestro.codegen</groupId>
     <artifactId>mabl2cpp</artifactId>
+    <name>Mabl to Cpp</name>
 
     <dependencies>
         <dependency>

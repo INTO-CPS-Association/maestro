@@ -12,6 +12,7 @@
 
     <groupId>org.into-cps.maestro.plugins</groupId>
     <artifactId>demo</artifactId>
+    <name>Demo plugin</name>
 
     <dependencies>
         <dependency>

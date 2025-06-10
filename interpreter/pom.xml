@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>interpreter</artifactId>
+    <name>Interpreter</name>
 
 
     <dependencies>
