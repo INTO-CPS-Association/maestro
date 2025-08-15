@@ -32,10 +32,10 @@ public class Fmi2SimulationEnvironmentConfiguration {
     public Map<String, MultiModel.ModelSwap> modelSwaps;
 
     public Fmi2SimulationEnvironmentConfiguration(Map<String, List<String>> connections, Map<String, String> fmus) throws EnvironmentException {
-        if (connections == null || connections.size() < 1) {
-            throw new EnvironmentException("Cannot generate simulation environment configuration without any connections");
+        if (connections == null ) {
+            throw new EnvironmentException("Cannot generate simulation environment configuration if connections is null");
         }
-        if (fmus == null || fmus.size() < 1) {
+        if (fmus == null || fmus.isEmpty()) {
             throw new EnvironmentException("Cannot generate simulation environment configuration without FMUs");
         }
         validateFmusInConnectionsMatchesFmus(connections, fmus);
