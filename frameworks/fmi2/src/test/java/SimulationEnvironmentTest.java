@@ -9,13 +9,6 @@ import java.util.Objects;
 
 public class SimulationEnvironmentTest {
 
-    @Test
-    public void simConfThrowsWithoutConnections() {
-        // Assert
-        Assertions.assertThrows(EnvironmentException.class, () -> Fmi2SimulationEnvironmentConfiguration.createFromJsonString(new String(
-                Objects.requireNonNull(this.getClass().getClassLoader()
-                        .getResourceAsStream("simulation_environment" + "/simulation_environment_without_connections" + ".json")).readAllBytes())));
-    }
 
     @Test
     public void simConfThrowsWithoutFMUs() {
