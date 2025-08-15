@@ -77,8 +77,8 @@ public class Maestro2Broker {
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
                 new Fmi2SimulationEnvironmentConfiguration(MasterModelMapper.Companion.masterModelConnectionsToMultiModelConnections(masterModel),
                         multiModel.getFmus());
-        simulationConfiguration.logVariables = multiModel.getLogVariables();
-        if (simulationConfiguration.logVariables == null) {
+        simulationConfiguration.variablesToLog = multiModel.getLogVariables();
+        if (simulationConfiguration.variablesToLog == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
 
@@ -122,8 +122,8 @@ public class Maestro2Broker {
         Fmi2SimulationEnvironmentConfiguration simulationConfiguration =
                 new Fmi2SimulationEnvironmentConfiguration(initializeRequest.getConnections(), initializeRequest.getFmus());
 
-        simulationConfiguration.logVariables = initializeRequest.getLogVariables();
-        if (simulationConfiguration.logVariables == null) {
+        simulationConfiguration.variablesToLog = initializeRequest.getLogVariables();
+        if (simulationConfiguration.variablesToLog == null) {
             simulationConfiguration.variablesToLog = new HashMap<>();
         }
         simulationConfiguration.livestream = initializeRequest.getLivestream();

@@ -24,8 +24,6 @@ public class Fmi2SimulationEnvironmentConfiguration {
     private final Map<String, String> fmus;
     private final Map<String, List<String>> connections;
     @Deprecated
-    public Map<String, List<String>> logVariables;
-    @Deprecated
     public Map<String, List<String>> livestream;
     public Map<String, List<String>> variablesToLog;
     public String faultInjectConfigurationPath;

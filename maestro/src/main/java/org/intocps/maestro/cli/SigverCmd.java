@@ -361,10 +361,10 @@ class ExecuteAlgorithmCmd implements Callable<Integer> {
         }
 
         if (multiModelNode.has("logVariables")) {
-            simulationConfiguration.logVariables =
+            simulationConfiguration.variablesToLog =
                     jsonMapper.readValue(jsonMapper.treeAsTokens(multiModelNode.get("logVariables")), new TypeReference<>() {
                     });
-            if (simulationConfiguration.logVariables == null) {
+            if (simulationConfiguration.variablesToLog == null) {
                 simulationConfiguration.variablesToLog = new HashMap<>();
             }
         }

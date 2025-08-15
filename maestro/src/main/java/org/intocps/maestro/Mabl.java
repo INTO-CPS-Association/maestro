@@ -387,13 +387,10 @@ public class Mabl {
         if (configuration.getFrameworkConfig() != null) {
             Fmi2SimulationEnvironmentConfiguration conf = configuration.getFrameworkConfig().getValue();
             this.runtimeData.livestreamVariables = conf.livestream;
-            if ((conf.variablesToLog != null && conf.variablesToLog.size() > 0) || (conf.logVariables != null && conf.logVariables.size() > 0)) {
+            if ((conf.variablesToLog != null && !conf.variablesToLog.isEmpty()) ) {
                 this.runtimeData.outputVariables = new HashMap<>();
                 if (conf.variablesToLog != null) {
                     this.runtimeData.outputVariables.putAll(conf.variablesToLog);
-                }
-                if (conf.logVariables != null) {
-                    this.runtimeData.outputVariables.putAll(conf.logVariables);
                 }
             }
             this.runtimeData.liveStreamInterval = 0.1;
