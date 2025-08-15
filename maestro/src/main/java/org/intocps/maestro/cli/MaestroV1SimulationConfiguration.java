@@ -143,7 +143,7 @@ public class MaestroV1SimulationConfiguration extends MultiModel {
                 new Fmi2SimulationEnvironmentConfiguration(simulationConfiguration.getConnections(), simulationConfiguration.getFmus());
         environmentConfiguration.faultInjectInstances = simulationConfiguration.getFaultInjectInstances();
         environmentConfiguration.faultInjectConfigurationPath = simulationConfiguration.getFaultInjectConfigurationPath();
-        environmentConfiguration.logVariables = simulationConfiguration.getLogVariables();
+        environmentConfiguration.variablesToLog = simulationConfiguration.getLogVariables();
         environmentConfiguration.livestream = simulationConfiguration.getLiveStreamVariables();
         environmentConfiguration.modelTransfers = simulationConfiguration.getModelTransfers();
         environmentConfiguration.modelSwaps = simulationConfiguration.getModelSwaps();

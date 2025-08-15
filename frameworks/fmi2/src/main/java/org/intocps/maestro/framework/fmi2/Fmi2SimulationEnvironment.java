@@ -231,22 +231,34 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
             }
         }
 
+        // list of instances
+        Set<ModelConnection.ModelInstance> instances = new HashSet<>();
+
+        //extract instances from variables to log and livestream variables
+        var additionalInstances =parseInstances(msg.variablesToLog);
+        additionalInstances.addAll(parseInstances(msg.livestream));
+        for (ModelConnection.Variable additionalInstance : additionalInstances) {
+            addInstance(additionalInstance, msg);
+        }
+        instances.addAll(additionalInstances.stream().map(in->in.instance).toList());
+
         // Build map from InstanceName to InstanceComponentInfo
-        Set<ModelConnection.ModelInstance> instancesFromConnections = new HashSet<>();
-        for (ModelConnection instance : Stream.concat(connections.stream(), swapConnections.stream()).collect(Collectors.toList())) {
-            instancesFromConnections.add(instance.from.instance);
-            instancesFromConnections.add(instance.to.instance);
+
+        for (ModelConnection instance : Stream.concat(connections.stream(), swapConnections.stream()).toList()) {
+            instances.add(instance.from.instance);
+            instances.add(instance.to.instance);
 
             addInstance(instance.from, msg);
             addInstance(instance.to, msg);
-
         }
+
+
         // Build relations
-        this.variableToRelations = buildRelations(msg, connections, instancesFromConnections);
+        this.variableToRelations = buildRelations(msg, connections, instances);
 
         instanceToModelSwap.forEach((key, value) -> {
             try {
-                value.swapRelations = buildRelations(msg, buildConnections(value.swapConnections), instancesFromConnections);
+                value.swapRelations = buildRelations(msg, buildConnections(value.swapConnections), instances);
                 value.swapRelations.entrySet().forEach(e -> {
                     e.getValue().removeIf(r -> r.origin.name().equals("Internal"));
                 });
@@ -254,6 +266,22 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
                 e.printStackTrace();
             }
         });
+    }
+
+    private List<ModelConnection.Variable> parseInstances(Map<String, List<String>> fmuInstanceToVariable) {
+        if(fmuInstanceToVariable==null||fmuInstanceToVariable.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        return fmuInstanceToVariable.entrySet().stream().flatMap(map->map.getValue().stream().map(v-> {
+            try {
+                return ModelConnection.Variable.parse(map.getKey()+"."+v);
+            } catch (InvalidVariableStringException e) {
+                throw new RuntimeException(e);
+            }
+        })).collect(Collectors.toList());
+
+
     }
 
 
@@ -286,8 +314,8 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
 
             // Create a globalLogVariablesMap that is a merge between connected outputs, logVariables and livestream.
             HashMap<String, List<String>> globalLogVariablesMaps = new HashMap<>();
-            if (msg != null && msg.logVariables != null) {
-                globalLogVariablesMaps.putAll(msg.logVariables);
+            if (msg != null && msg.variablesToLog != null) {
+                globalLogVariablesMaps.putAll(msg.variablesToLog);
             }
             if (msg != null && msg.livestream != null) {
                 msg.livestream.forEach((k, v) -> globalLogVariablesMaps.merge(k, v, (v1, v2) -> {
