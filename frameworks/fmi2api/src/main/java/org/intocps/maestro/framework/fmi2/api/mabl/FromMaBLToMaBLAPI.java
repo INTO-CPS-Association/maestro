@@ -1,7 +1,9 @@
 package org.intocps.maestro.framework.fmi2.api.mabl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.IRelation;
@@ -11,6 +13,7 @@ import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
 import org.intocps.maestro.framework.fmi2.RelationVariable;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
+import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.ComponentVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.FmuVariableFmi3Api;
@@ -24,12 +27,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.framework.fmi2.api.mabl.ExpansionMableApiBuilder.findDecleration;
 
 public class FromMaBLToMaBLAPI {
     final static Logger logger = LoggerFactory.getLogger(FromMaBLToMaBLAPI.class);
 
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+                                                                                       Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
         if (exp instanceof AIdentifierExp) {
             return getComponentVariableFrom(builder, exp, env, ((AIdentifierExp) exp).getName().getText());
         } else {
@@ -38,7 +42,7 @@ public class FromMaBLToMaBLAPI {
     }
 
     public static Map.Entry<String, InstanceVariableFmi3Api> getInstanceVariableFrom(MablApiBuilder builder, PExp exp,
-                                                                                       Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
+                                                                                     Fmi2SimulationEnvironment env) throws XPathExpressionException, InvocationTargetException, IllegalAccessException {
         if (exp instanceof AIdentifierExp) {
             return getInstanceVariableFrom(builder, exp, env, ((AIdentifierExp) exp).getName().getText());
         } else {
@@ -47,8 +51,8 @@ public class FromMaBLToMaBLAPI {
     }
 
     public static Map.Entry<String, ComponentVariableFmi2Api> getComponentVariableFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env,
-            String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+                                                                                       Fmi2SimulationEnvironment env,
+                                                                                       String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
 
@@ -66,7 +70,8 @@ public class FromMaBLToMaBLAPI {
                 FmuVariableFmi2Api fmu =
                         new FmuVariableFmi2Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI2"),
                                 builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
+                                new AIdentifierExp(new LexLocation("", 0, 0),
+                                        new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
 
                 ComponentVariableFmi2Api a;
                 if (environmentComponentName == null) {
@@ -94,43 +99,61 @@ public class FromMaBLToMaBLAPI {
         }
     }
 
+//    public Map.Entry<IMablScope, Optional<PStm>> findDeclScopeAndDesignator(IMablScope scope, String name) {
+//        var blockStm = scope.getDeclaration();
+//        if (blockStm instanceof ABasicBlockStm block) {
+//            var declaredStm = block.getBody().reversed().stream()
+//                    .filter(decl -> decl instanceof AVariableDeclaration declVar && declVar.getName().getText().equals(name)).findFirst();
+//            if(declaredStm.isPresent())
+//                return Map.entry(scope,declaredStm);
+//        }
+//        IMablScope parent=        scope.parent().
+//
+//
+//        return null;
+//    }
+
     public static Map.Entry<String, InstanceVariableFmi3Api> getInstanceVariableFrom(MablApiBuilder builder, PExp exp, Fmi2SimulationEnvironment env,
-            String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+                                                                                     String environmentComponentName) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         if (exp instanceof AIdentifierExp) {
             String componentName = ((AIdentifierExp) exp).getName().getText();
 
             FrameworkUnitInfo inst = env.getInstanceByLexName(environmentComponentName);
-            if (inst instanceof InstanceInfo) {
-
-
-                InstanceInfo instance = (InstanceInfo) inst;
+            if (inst instanceof InstanceInfo instance) {
                 ModelDescriptionContext3 modelDescriptionContext = new ModelDescriptionContext3(instance.getModelDescription());
 
-                //This dummy statement is removed later. It ensures that the share variables are added to the root scope.
-                PStm dummyStm = newABlockStm();
-                builder.getDynamicScope().add(dummyStm);
+
+                var fmuScope2Name = findDecleration(builder.getRootScope(), componentName);
+                if (fmuScope2Name == null) {
+                    throw new RuntimeException("FMU declaration not found in scope: " + instance.fmuIdentifier);
+                }
 
                 FmuVariableFmi3Api fmu =
-                        new FmuVariableFmi3Api(instance.fmuIdentifier, builder, modelDescriptionContext, dummyStm, newANameType("FMI3"),
-                                builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                new AIdentifierExp(new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
+                        new FmuVariableFmi3Api(instance.fmuIdentifier, builder, modelDescriptionContext, fmuScope2Name.getValue(), newANameType("FMI3"),
+                                fmuScope2Name.getKey(), builder.getDynamicScope(), null,
+                                new AIdentifierExp(new LexLocation("", 0, 0),
+                                        new LexIdentifier(instance.fmuIdentifier.replace("{", "").replace("}", ""), null)));
+
+
+                var scope2Name = findDecleration(builder.getRootScope(), componentName);
+                if (scope2Name == null) {
+                    throw new RuntimeException("Instance declaration not found in scope: " + componentName);
+                }
+                var declaringScope = scope2Name.getLeft();
+                var declaredStm = scope2Name.getRight();
 
                 InstanceVariableFmi3Api a;
                 if (environmentComponentName == null) {
-                    a = new InstanceVariableFmi3Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                            builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName));
+                    a = new InstanceVariableFmi3Api(declaredStm, fmu, componentName, modelDescriptionContext, builder,
+                            declaringScope, null, newAIdentifierExp(componentName));
                 } else {
-                    a = new InstanceVariableFmi3Api(dummyStm, fmu, componentName, modelDescriptionContext, builder,
-                            builder.getDynamicScope().getActiveScope(), null, newAIdentifierExp(componentName), environmentComponentName);
+                    a = new InstanceVariableFmi3Api(declaredStm, fmu, componentName, modelDescriptionContext, builder,
+                            declaringScope, null, newAIdentifierExp(componentName), environmentComponentName);
                 }
-                List<RelationVariable> variablesToLog = null;
-                if (environmentComponentName == null) {
-                    variablesToLog = env.getVariablesToLog(componentName);
-                } else {
-                    variablesToLog = env.getVariablesToLog(environmentComponentName);
-                }
-                a.setVariablesToLog(variablesToLog.stream().filter(org.intocps.maestro.framework.fmi2.RelationVariable.class::isInstance)
-                        .map(org.intocps.maestro.framework.fmi2.RelationVariable.class::cast).collect(Collectors.toList()));
+
+                var variablesToLog = environmentComponentName == null? env.getVariablesToLog(componentName):env.getVariablesToLog(environmentComponentName);
+
+                a.setVariablesToLog(variablesToLog.stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
                 return Map.entry(componentName, a);
             } else {
@@ -141,8 +164,10 @@ public class FromMaBLToMaBLAPI {
         }
     }
 
+
+
     public static void createBindings(Map<String, ComponentVariableFmi2Api> instances,
-            ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
+                                      ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
         for (Map.Entry<String, ComponentVariableFmi2Api> entry : instances.entrySet()) {
             java.util.Set<? extends IRelation> relations = getRelations(entry, env);
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
@@ -183,11 +208,11 @@ public class FromMaBLToMaBLAPI {
     }
 
     public static void createBindings3(Map<String, InstanceVariableFmi3Api> instances,
-            ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
+                                       ISimulationEnvironment env) throws FmiBuilder.Port.PortLinkException {
         for (Map.Entry<String, InstanceVariableFmi3Api> entry : instances.entrySet()) {
             java.util.Set<? extends IRelation> relations = getRelations3(entry, env);
             for (IRelation relation : relations.stream().filter(x -> x.getDirection() == Fmi2SimulationEnvironment.Relation.Direction.OutputToInput &&
-                    x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).collect(Collectors.toList())) {
+                    x.getOrigin() == Fmi2SimulationEnvironment.Relation.InternalOrExternal.External).toList()) {
 
                 for (var targetVar : relation.getTargets().values()) {
                     String targetName = targetVar.getInstance().getText();
@@ -241,7 +266,7 @@ public class FromMaBLToMaBLAPI {
 
 
     public static Map<String, ComponentVariableFmi2Api> getComponentVariablesFrom(MablApiBuilder builder, PExp exp,
-            Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+                                                                                  Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
         SBlockStm containingBlock = exp.getAncestor(SBlockStm.class);
         Optional<AVariableDeclaration> componentDeclaration =
@@ -273,7 +298,7 @@ public class FromMaBLToMaBLAPI {
 
 
     public static Map<String, InstanceVariableFmi3Api> getInstanceVariablesFrom(MablApiBuilder builder, PExp exp,
-                                                                                  Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
+                                                                                Fmi2SimulationEnvironment env) throws IllegalAccessException, XPathExpressionException, InvocationTargetException {
         LexIdentifier componentsArrayName = ((AIdentifierExp) exp).getName();
         SBlockStm containingBlock = exp.getAncestor(SBlockStm.class);
         Optional<AVariableDeclaration> componentDeclaration =

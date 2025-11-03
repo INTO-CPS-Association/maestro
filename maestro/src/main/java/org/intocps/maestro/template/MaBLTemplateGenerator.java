@@ -12,6 +12,7 @@ import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.ModelDescription;
 import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3TypeEnum;
 import org.intocps.maestro.framework.core.FrameworkUnitInfo;
 import org.intocps.maestro.framework.core.IRelation;
 import org.intocps.maestro.framework.fmi2.*;
@@ -155,11 +156,16 @@ public class MaBLTemplateGenerator {
         } else if (instance.source instanceof InstanceInfo) {
             String requiredIntermediateVariablesLex = instanceLexName + "_requiredIntermediateVariables";
 
-            List<PStm> instantiate = Arrays.asList(newVariable(requiredIntermediateVariablesLex, new AUIntNumericPrimitiveType(), 0),
-                    newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
-                            call(fmuLexName, "instantiateCoSimulation", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
-                                    newABoolLiteralExp(loggingOn), newABoolLiteralExp(false), newABoolLiteralExp(false),
-                                    newAIdentifierExp(requiredIntermediateVariablesLex))), checkNullAndStop(instanceLexName));
+            List<PStm> instantiate = null;
+            try {
+                instantiate = Arrays.asList(newVariable(requiredIntermediateVariablesLex, new AUIntNumericPrimitiveType(), 0),
+                        newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(instanceLexName)),
+                                call(fmuLexName, "instantiateCoSimulation", newAStringLiteralExp(instanceEnvironmentKey), newABoolLiteralExp(visible),
+                                        newABoolLiteralExp(loggingOn), newABoolLiteralExp(((InstanceInfo) instance.source).modelDescription.getHasEventMode()|| ((InstanceInfo) instance.source).modelDescription.getModelVariables().stream().anyMatch(v->v.getTypeIdentifier()== Fmi3TypeEnum.ClockType)), newABoolLiteralExp(true),
+                                        newAIdentifierExp(requiredIntermediateVariablesLex))), checkNullAndStop(instanceLexName));
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException("Unable to process model description for "+instanceEnvironmentKey,e);
+            }
             tryBlockStatements.addAll(instantiate);
         }
 
@@ -552,12 +558,12 @@ public class MaBLTemplateGenerator {
         List<PStm> list = new ArrayList<>();
         BiFunction<String, Integer, PStm> createStatusVariable_ = (name, value) -> newALocalVariableStm(
                 newAVariableDeclaration(newLexIdentifier(name), newAIntNumericPrimitiveType(), newAExpInitializer(newAIntLiteralExp(value))));
-        list.add(createStatusVariable_.apply("FMI_STATUS_OK", 0));
-        list.add(createStatusVariable_.apply("FMI_STATUS_WARNING", 1));
-        list.add(createStatusVariable_.apply("FMI_STATUS_DISCARD", 2));
-        list.add(createStatusVariable_.apply("FMI_STATUS_ERROR", 3));
-        list.add(createStatusVariable_.apply("FMI_STATUS_FATAL", 4));
-        list.add(createStatusVariable_.apply("FMI_STATUS_PENDING", 5));
+        list.add(createStatusVariable_.apply("FMI_OK", 0));
+        list.add(createStatusVariable_.apply("FMI_WARNING", 1));
+        list.add(createStatusVariable_.apply("FMI_DISCARD", 2));
+        list.add(createStatusVariable_.apply("FMI_ERROR", 3));
+        list.add(createStatusVariable_.apply("FMI_FATAL", 4));
+        list.add(createStatusVariable_.apply("FMI_PENDING", 5));
         list.add(MableAstFactory.newALocalVariableStm(
                 MableAstFactory.newAVariableDeclaration(MableAstFactory.newAIdentifier(STATUS), MableAstFactory.newAIntNumericPrimitiveType(),
                         MableAstFactory.newAExpInitializer(MableAstFactory.newAIntLiteralExp(0)))));

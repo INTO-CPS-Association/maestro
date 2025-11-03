@@ -803,7 +803,14 @@ public interface FmiBuilder<AST, B, E, SETTINGS> {
         void terminate();
 
 
+         Map<? extends Port<PORT_SCALAR_TYPE, AST>, ? extends DoubleVariable<AST>> getClockInterval(Scope<AST> scope, Port<PORT_SCALAR_TYPE, AST>... port);
+        DoubleVariable<AST> getClockShift(FmiBuilder.Port<PORT_SCALAR_TYPE, AST> port);
+
+
+//        public <V> Map<PortFmi3Api, DoubleVariableFmi2Api<V>> getClockInterval(FmiBuilder.Scope<PStm> scope,
+//                                                                               FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>... ports)
     }
+
 
     /**
      * Interface for an fmi component.

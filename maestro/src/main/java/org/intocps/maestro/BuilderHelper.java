@@ -12,10 +12,7 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
-import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext3;
+import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.typechecker.TypeComparator;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -40,7 +37,7 @@ public class BuilderHelper {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = true;
-        this.builder = new MablApiBuilder(settings, callToBeReplaced);
+        this.builder = new ExpansionMableApiBuilder(settings, callToBeReplaced);
 
         // Build a graph from AInstanceMapping. I.e. if FMU instance A is faultinjected by B then the graph should be
         // B -> A

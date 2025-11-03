@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.AFunctionDeclaration;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
@@ -28,10 +29,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
+import static org.intocps.maestro.framework.fmi2.api.mabl.PortFmi3Api.PortFilters.*;
 import static org.intocps.maestro.plugin.JacobianStepBuilder.ARG_INDEX.*;
 
 @SimulationFramework(framework = Framework.FMI2)
 public class JacobianStepBuilder3 extends JacobianStepBuilder {
+
 
     final static Logger logger = LoggerFactory.getLogger(JacobianStepBuilder3.class);
 
@@ -102,13 +105,11 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                 settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
             }
 
-            if (!(parentBuilder instanceof MablApiBuilder)) {
+            if (!(parentBuilder instanceof MablApiBuilder builder)) {
                 throw new ExpandException(
                         "Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " + parentBuilder.getClass()
                                 .getSimpleName());
             }
-
-            MablApiBuilder builder = (MablApiBuilder) parentBuilder;
 
             DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
             MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
@@ -163,7 +164,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToFmuInstances = new LinkedHashMap<>();
 
             ArrayVariableFmi2Api<Double> fmuCommunicationPoints = dynamicScope.store("fmu_communicationpoints",
-                    new Double[fmuInstances.entrySet().size() + fmuInstances3.entrySet().size()]);
+                    new Double[fmuInstances.size() + fmuInstances3.size()]);
 
 //            int indexer = 0;
             for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
@@ -181,10 +182,10 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             }
 
             AtomicInteger indexer = new AtomicInteger();
-            Map<ComponentVariableFmi2Api, VariableFmi2Api<Double>> fmuInstanceToCommunicationPoint = fmuInstances.values().stream()
+           var fmuInstanceToCommunicationPoint = fmuInstances.values().stream()
                     .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
 
-            Map<InstanceVariableFmi3Api, VariableFmi2Api<Double>> fmuInstance3ToCommunicationPoint = fmuInstances3.values().stream()
+            var fmuInstance3ToCommunicationPoint = fmuInstances3.values().stream()
                     .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
 
 
@@ -214,6 +215,30 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             if (algorithm == StepAlgorithm.VARIABLESTEP) {
                 varStep = JacobianVariableStepBuilder.init(ctxt, jacobianStepConfig, dynamicScope, builder, fmuNamesToFmuInstances);
             }
+
+            // TODO: we need to handle the initial event loop for clocks
+
+            // Event Step 0: create time based clocks. We need to obtain the specific timing variables from
+//            fmuInstances3.values().stream().findFirst().get().
+
+            // Event Init step 1: get clocks from others
+            for(var instance : fmuInstances3.values()) {
+                instance.enterEventMode();
+                var clockPorts =instance.getPorts().stream().filter(isClock).toList();
+                clockPorts.stream().filter(isCausalityOutput).forEach(p-> instance.getAndShare(p));
+            }
+
+            // Event update the initial event states not sure if we should set clocks before this
+
+
+
+
+            //we need to make sure every instance is ready for step mode
+            for(var instance : fmuInstances3.values()) {
+                instance.enterStepMode();
+            }
+
+            //TODO: OK now clocked variables must be filtered as they are only available in event mode
 
             // Log values at t = start time
             dataWriterInstance.log(ctxt.currentCommunicationTime);
@@ -267,7 +292,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                 // SET ALL LINKED VARIABLES
                 // This has to be carried out regardless of stabilisation or not.
                 ModelSwapBuilder.setWithModelSwapLinking(fmuInstances, env, dynamicScope, modelSwapContext);
-                fmuInstances3.values().forEach(instance -> instance.setLinked());
+                fmuInstances3.values().forEach( instance -> instance.setLinked(instance.getPorts().stream().filter(InstanceVariableFmi3Api.isLinked.and(isClockedVariable.negate()).and(isClock.negate())).toArray(PortFmi3Api[]::new)));
 
                 if (algorithm == StepAlgorithm.VARIABLESTEP) {
                     // Get variable step
@@ -325,8 +350,8 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
 
 //                    stepPredicate.ifPresent(dynamicScope::enterIf);
 
-                    Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> discard = instance.step(builder.getDynamicScope(),
-                            communicationTime, ctxt.currentStepSize, new ABoolLiteralExp(false));
+                    var discard = instance.step(builder.getDynamicScope(),
+                            communicationTime, ctxt.currentStepSize, new ABoolLiteralExp(new LexLocation("",0,0),false));
 
                     communicationPoint.setValue(new DoubleExpressionValue(discard.getValue().getLastSuccessfulTime().getExp()));
 
@@ -349,17 +374,17 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                 });
 
                 // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
-                for (Map.Entry<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> entry : componentsToPortsWithValues.entrySet()) {
-                    Map<PortFmi2Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
+                for (var entry : componentsToPortsWithValues.entrySet()) {
+                    var portsToValues = entry.getValue();
                     portsToValues = entry.getKey().get(portsToValues.keySet().toArray(PortFmi2Api[]::new));
                 }
-                for (Map.Entry<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> entry : instancesToPortsWithValues.entrySet()) {
-                    Map<PortFmi3Api, VariableFmi2Api<Object>> portsToValues = entry.getValue();
+                for (var entry : instancesToPortsWithValues.entrySet()) {
+                    var portsToValues = entry.getValue();
 
                     InstanceVariableFmi3Api instance = entry.getKey();
 
-                    for (PortFmi3Api p : portsToValues.keySet().toArray(PortFmi3Api[]::new)) {
-                        Map<PortFmi3Api, VariableFmi2Api<Object>> val = instance.get(p);
+                    for (PortFmi3Api p : portsToValues.keySet().stream().filter(isClockedVariable.negate()).toArray(PortFmi3Api[]::new)) {
+                        var val = instance.get(p);
                         instance.share(val);
                     }
 

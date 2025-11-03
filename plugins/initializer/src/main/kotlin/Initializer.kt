@@ -18,8 +18,10 @@ import org.intocps.maestro.framework.fmi2.InvalidVariableStringException
 import org.intocps.maestro.framework.fmi2.ModelConnection
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder.ArrayVariable
+import org.intocps.maestro.framework.fmi2.api.FmiBuilder.ExpressionValue
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder.SimulationInstance
 import org.intocps.maestro.framework.fmi2.api.mabl.*
+import org.intocps.maestro.framework.fmi2.api.mabl.PortFmi3Api.PortFilters.isClock
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.DynamicActiveBuilderScope
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api
 import org.intocps.maestro.framework.fmi2.api.mabl.values.BooleanExpressionValue
@@ -290,16 +292,20 @@ class Initializer : BasicMaestroExpansionPlugin {
 
     private fun toCompMap(map: List<ComponentVariableFmi2Api>?): Map<String, ComponentVariableFmi2Api> {
         return if (map == null) emptyMap() else map.stream()
-            .collect(Collectors.toMap({ v: ComponentVariableFmi2Api -> v.name },
-                Function.identity(),
-                { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }) { LinkedHashMap() })
+            .collect(
+                Collectors.toMap(
+                    { v: ComponentVariableFmi2Api -> v.name },
+                    Function.identity(),
+                    { u: ComponentVariableFmi2Api?, v: ComponentVariableFmi2Api? -> u }) { LinkedHashMap() })
     }
 
     private fun toInstanceMap(map: List<InstanceVariableFmi3Api>?): Map<String, InstanceVariableFmi3Api> {
         return if (map == null) emptyMap() else map.stream()
-            .collect(Collectors.toMap({ v: InstanceVariableFmi3Api -> v.name },
-                Function.identity(),
-                { u: InstanceVariableFmi3Api?, v: InstanceVariableFmi3Api? -> u }) { LinkedHashMap() })
+            .collect(
+                Collectors.toMap(
+                    { v: InstanceVariableFmi3Api -> v.name },
+                    Function.identity(),
+                    { u: InstanceVariableFmi3Api?, v: InstanceVariableFmi3Api? -> u }) { LinkedHashMap() })
     }
 
     override fun <R : Any?> expandWithRuntimeAddition(
@@ -445,7 +451,7 @@ class Initializer : BasicMaestroExpansionPlugin {
 
 
         //TODO not sure what this is - stabilization maybe
-        val instructions = instantiationOrder.map { i ->
+        val instructions = instantiationOrder.map { s -> s.filter { p -> !isClockPort(p) } }.map { i ->
             createInitInstructions(
                 i.toList(), dynamicScope, fmuInstances, fmu3Instances, booleanLogic, math
             )
@@ -472,6 +478,59 @@ class Initializer : BasicMaestroExpansionPlugin {
         setRemainingInputs(fmuInstances, builder)
         setRemainingInputs3(fmu3Instances, builder)
 
+        //clocks
+        /* input clocks we need context info from the md description of these
+        *  periodic-constant:
+        *   get interval
+        *   get shift
+        *  periodic- fixed/turnable:
+        *   if md intervalDecimal -> set interval
+        *   if not intervalDecimal ->
+        *     get interval
+        *     get shift
+        *  aperiodic- changning/countdown
+        *    get interval
+        * */
+
+//set intervalDecimal if needed
+        fmu3Instances.values.forEach(Consumer { instance: InstanceVariableFmi3Api ->
+            instance.ports.filter { p -> isClock.test(p) }.filter { p ->
+                val variable = p.scalarVariable.variable;
+                variable.causality == Fmi3Causality.Input && variable is ClockVariable && (variable.interval == Fmi3ClockInterval.Fixed || variable.interval == Fmi3ClockInterval.Tunable) && variable.intervalDecimal != null
+            }.stream().forEach { port: PortFmi3Api ->
+                instance.set(
+                    port,
+                    DoubleExpressionValue.of((port.scalarVariable.variable as ClockVariable).intervalDecimal!!)
+                )
+            }
+        })
+
+        // get interval and shift
+
+        fmu3Instances.values.forEach(Consumer { instance: InstanceVariableFmi3Api ->
+            instance.ports.filter { p -> isClock.test(p) }.filter { p ->
+                val variable = p.scalarVariable.variable
+                variable.causality == Fmi3Causality.Input && variable is ClockVariable
+            }.stream().forEach { p: PortFmi3Api ->
+
+                val variable = p.scalarVariable.variable as ClockVariable
+
+                //get interval for all
+                //instance.getInterval
+                if (variable.interval != Fmi3ClockInterval.Triggered)
+                    instance.getClockInterval(builder.dynamicScope, p)
+
+                if (variable.interval == Fmi3ClockInterval.Constant || variable.interval == Fmi3ClockInterval.Fixed || variable.interval == Fmi3ClockInterval.Tunable) {
+//get shift
+                    instance.getClockShift(p)
+//                    instance.set(
+//                        p,
+//                        DoubleExpressionValue.of((p.scalarVariable.variable as ClockVariable).intervalDecimal!!)
+//                    )
+                }
+            }
+        })
+
         //Exit initialization Mode
         fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
         fmu3Instances.values.forEach(Consumer { obj: InstanceVariableFmi3Api -> obj.exitInitializationMode() })
@@ -492,7 +551,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         return try {
             val setting = MablApiBuilder.MablSettings()
             setting.fmiErrorHandlingEnabled = false
-            val builder = MablApiBuilder(setting, formalArguments[0])
+            val builder = ExpansionMableApiBuilder(setting, formalArguments[0])
             val dynamicScope = builder.dynamicScope
             val math = builder.mablToMablAPI.mathBuilder
             val booleanLogic = builder.mablToMablAPI.booleanBuilder
@@ -536,72 +595,6 @@ class Initializer : BasicMaestroExpansionPlugin {
                 booleanLogic,
                 math
             )
-//
-//            // Create bindings
-//            FromMaBLToMaBLAPI.createBindings(fmuInstances, env)
-//
-//            this.config = config as InitializationConfig
-//
-//            this.modelParameters = config.modelParameters
-//            this.envParameters = config.envParameters
-//
-//            // Convergence related variables
-//            absoluteTolerance = dynamicScope.store("absoluteTolerance", this.config!!.absoluteTolerance)
-//            relativeTolerance = dynamicScope.store("relativeTolerance", this.config!!.relativeTolerance)
-//            maxConvergeAttempts = dynamicScope.store("maxConvergeAttempts", this.config!!.maxIterations)
-//
-//            logger.debug("Setup experiment for all components")
-//            fmuInstances.values.forEach { i ->
-//                i.setupExperiment(
-//                    externalStartTime,
-//                    externalEndTime,
-//                    this.config!!.relativeTolerance
-//                )
-//            };
-//            val connections = createConnections(env, fmuInstances)
-//
-//            //Find the right order to instantiate dependentPorts and make sure where doesn't exist any cycles in the connections
-//            val instantiationOrder = topologicalPlugin.findInstantiationOrderStrongComponents(connections)
-//
-//
-//            //Set variables for all components in IniPhase
-//            setComponentsVariables(fmuInstances, PhasePredicates.iniPhase(), builder)
-//
-//            //Enter initialization Mode
-//            logger.debug("Enter initialization Mode")
-//            fmuInstances.values.forEach(Consumer { fmu: ComponentVariableFmi2Api -> fmu.enterInitializationMode() })
-//
-//            val instructions = instantiationOrder.map { i ->
-//                createInitInstructions(
-//                    i.toList(),
-//                    dynamicScope,
-//                    fmuInstances,
-//                    booleanLogic,
-//                    math
-//                )
-//            }
-//            var stabilisationScope: ScopeFmi2Api? = null
-//            var stabilisationLoop: IntVariableFmi2Api? = null
-//            if (this.config!!.stabilisation) {
-//                stabilisationLoop = dynamicScope.store("stabilisation_loop", this.config!!.maxIterations)
-//                stabilisationScope = dynamicScope.enterWhile(
-//                    stabilisationLoop!!.toMath().greaterThan(IntExpressionValue.of(0))
-//                )
-//            }
-//
-//            instructions.forEach { i -> i.perform() }
-//
-//            if (stabilisationScope != null) {
-//                stabilisationLoop!!.decrement();
-//                stabilisationScope.activate()
-//                stabilisationScope.leave();
-//            }
-//
-//
-//            setRemainingInputs(fmuInstances, builder)
-//
-//            //Exit initialization Mode
-//            fmuInstances.values.forEach(Consumer { obj: ComponentVariableFmi2Api -> obj.exitInitializationMode() })
 
             val algorithm = builder.buildRaw() as SBlockStm
             algorithm.apply(ToParExp())
@@ -640,6 +633,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         fmuInstances: Map<String, InstanceVariableFmi3Api>, builder: MablApiBuilder
     ) {
         for (comp in fmuInstances.values) {
+
             try {
                 val scalarVariables = comp.modelDescription.getScalarVariables()
                 val inputsScalars = scalarVariables.filter { x ->
@@ -736,16 +730,16 @@ class Initializer : BasicMaestroExpansionPlugin {
                 Fmi3TypeEnum.BooleanType -> comp.set(port, BooleanExpressionValue.of(staticValue as Boolean))
                 Fmi3TypeEnum.Float64Type -> {
 
-                    if (port.scalarVariable.variable.isScalar()) {
+                    if (staticValue is List<*>) {
                         staticValue = (staticValue as List<Any>).get(0)
-
-
-                        if (staticValue is Int) {
-                            staticValue = staticValue.toDouble()
-                        }
-                        val b: Double = staticValue as Double
-                        comp.set(port, DoubleExpressionValue.of(b))
                     }
+
+                    if (staticValue is Int) {
+                        staticValue = staticValue.toDouble()
+                    }
+                    val b: Double = staticValue as Double
+                    comp.set(port, DoubleExpressionValue.of(b))
+
                 }
 
                 Fmi3TypeEnum.Int32Type -> comp.set(port, IntExpressionValue.of(staticValue as Int))
@@ -792,6 +786,18 @@ class Initializer : BasicMaestroExpansionPlugin {
         }
     }
 
+
+    private fun isOutputPort(p: RelationVariable): Boolean {
+        return p.has(Fmi2ModelDescription.Causality.Output) || p.has(Fmi3Causality.Output)
+    }
+
+    private fun isClockPort(p: RelationVariable): Boolean {
+
+        return p.getScalarVariable(Fmi3ModelDescription::Fmi3ScalarVariable::class.java) != null && p.type.hasType(
+            Fmi3TypeEnum.ClockType
+        )
+    }
+
     private fun createInitInstructions(
         ports: List<org.intocps.maestro.framework.fmi2.RelationVariable<Any>>,
         dynamicScope: DynamicActiveBuilderScope,
@@ -806,7 +812,7 @@ class Initializer : BasicMaestroExpansionPlugin {
         } else {
             val actions = ports.map { c -> fmuCoSimInstruction(fmuInstances, fmu3Instances, c) }
             val outputPorts =
-                ports.filter { p -> p.has(Fmi2ModelDescription.Causality.Output) || p.has(Fmi3Causality.Output) }
+                ports.filter { p -> isOutputPort(p) && !isClockPort(p) }
                     .map { i -> i }
             LoopSimInstruction(
                 dynamicScope,

@@ -2,18 +2,31 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.LexIdentifier;
 import org.intocps.maestro.ast.node.*;
-import org.intocps.maestro.fmi.fmi3.Fmi3Causality;
-import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.*;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.InstanceVariableFmi3Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.VariableFmi2Api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm> {
+
+    public static class PortFilters {
+
+        public static final Predicate<FmiBuilder.Port> isClock = p -> p instanceof PortFmi3Api && ((PortFmi3Api) p).scalarVariable.getVariable()
+                .getTypeIdentifier() == Fmi3TypeEnum.ClockType;
+        public static final Predicate<PortFmi3Api> isCausalityOutput = p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output;
+        public static final Predicate<PortFmi3Api> isCausalityInput = p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Input;
+        public static final Predicate<FmiBuilder.Port> isClockedVariable = p -> p instanceof PortFmi3Api && (((PortFmi3Api) p).scalarVariable.getVariable()
+                .getClocks() != null && !((PortFmi3Api) p).scalarVariable.getVariable().getClocks().isEmpty());
+
+        public static final Predicate<FmiBuilder.Port> isClockTimeBased = p -> isClock.test(
+                p) && ((ClockVariable) ((PortFmi3Api) p).scalarVariable.getVariable()).getInterval() != Fmi3ClockInterval.Triggered;
+    }
 
     public final InstanceVariableFmi3Api aMablFmi3InstanceAPI;
     public final Fmi3ModelDescription.Fmi3ScalarVariable scalarVariable;
@@ -73,7 +86,7 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
             case Float64Type:
                 return new ARealNumericPrimitiveType();
             case Float32Type:
-            case ClockType:
+
                 return new AFloatNumericPrimitiveType();
             case Int8Type:
             case UInt8Type:
@@ -89,6 +102,7 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
             case EnumerationType:
                 return new ALongNumericPrimitiveType();
             case BooleanType:
+            case ClockType:
                 return newBoleanType();
             case StringType:
                 return newStringType();
