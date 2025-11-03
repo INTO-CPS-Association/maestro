@@ -483,7 +483,7 @@ public class BuilderFmi3Test {
 
 //       //step the instance
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false));
 
         currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
 
