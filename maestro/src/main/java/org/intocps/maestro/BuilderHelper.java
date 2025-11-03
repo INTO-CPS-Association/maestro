@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.node.*;
@@ -130,7 +131,7 @@ public class BuilderHelper {
 
                             return new FmuVariableFmi2Api(instance.getOwnerIdentifier(), builder, mdc, dummyStm, newANameType("FMI2"),
                                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                    new AIdentifierExp(new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
+                                    new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
 
                         } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
                             throw new RuntimeException(e);
@@ -142,7 +143,7 @@ public class BuilderHelper {
 
                             return new FmuVariableFmi3Api(instance.getOwnerIdentifier(), builder, mdc, dummyStm, newANameType("FMI3"),
                                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                    new AIdentifierExp(new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
+                                    new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
                         } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }

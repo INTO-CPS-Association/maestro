@@ -13,6 +13,8 @@ import java.util.Objects;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
+import static org.intocps.maestro.parser.MablParserUtil.getLexLocation;
+
 public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     final static Logger logger = LoggerFactory.getLogger(ParseTree2AstConverter.class);
 
@@ -135,12 +137,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     }
 
 
+
     @Override
     public INode visitTransfer(MablParser.TransferContext ctx) {
         ATransferStm stm = new ATransferStm();
 
         if (ctx.names != null && !ctx.names.isEmpty()) {
-            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(s.substring(1, s.length() - 1)))
+            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(getLexLocation(ctx),s.substring(1, s.length() - 1)))
                     .collect(Collectors.toList()));
         }
 
@@ -152,7 +155,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         ATransferAsStm stm = new ATransferAsStm();
 
         if (ctx.names != null && !ctx.names.isEmpty()) {
-            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(s.substring(1, s.length() - 1)))
+            stm.setNames(ctx.names.stream().map(Token::getText).map(s -> new AStringLiteralExp(getLexLocation(ctx),s.substring(1, s.length() - 1)))
                     .collect(Collectors.toList()));
         }
 
@@ -279,13 +282,16 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         exp.setLeft((PExp) this.visit(ctx.left));
         exp.setRight((PExp) this.visit(ctx.right));
+        exp.setLocation(getLexLocation(ctx));
 
         return exp;
     }
 
     @Override
     public INode visitParenExp(MablParser.ParenExpContext ctx) {
-        return new AParExp((PExp) this.visit(ctx.expression()));
+        var exp= new AParExp(getLexLocation(ctx),(PExp) this.visit(ctx.expression()));
+        exp.setLocation(getLexLocation(ctx));
+        return exp;
     }
 
     @Override
@@ -303,11 +309,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             AFieldExp fieldExp = new AFieldExp();
             fieldExp.setRoot(root);
             fieldExp.setField(convert(ctx.IDENTIFIER()));
+            fieldExp.setLocation(getLexLocation(ctx));
             return fieldExp;
         } else if (ctx.methodCall() != null) {
             //object call
             ACallExp call = (ACallExp) this.visit(ctx.methodCall());
             call.setObject(root);
+            call.setLocation(getLexLocation(ctx));
             return call;
         }
 
@@ -331,13 +339,13 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
             exp = new AMinusUnaryExp();
         }
         exp.setExp((PExp) this.visit(ctx.expression()));
-
+        exp.setLocation(getLexLocation(ctx));
         return exp;
     }
 
     @Override
     public INode visitIdentifierExp(MablParser.IdentifierExpContext ctx) {
-        return new AIdentifierExp(convert(ctx.IDENTIFIER()));
+        return new AIdentifierExp(getLexLocation(ctx),convert(ctx.IDENTIFIER()));
     }
 
     @Override
@@ -350,6 +358,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
         if (ctx.index != null) {
             apply.setIndices(ctx.index.stream().map(e -> (PExp) this.visit(e)).collect(Collectors.toList()));
         }
+        apply.setLocation(getLexLocation(ctx));
         return apply;
     }
 
@@ -360,7 +369,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
     @Override
     public INode visitParExpression(MablParser.ParExpressionContext ctx) {
-        return new AParExp((PExp) this.visit(ctx.expression()));
+        return new AParExp(getLexLocation(ctx),(PExp) this.visit(ctx.expression()));
     }
 
     void checkList(List source, List processed) {
@@ -383,6 +392,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitMethodCall(MablParser.MethodCallContext ctx) {
 
         ACallExp call = new ACallExp();
+        call.setLocation(getLexLocation(ctx));
 
         if (ctx.expressionList() != null && ctx.expressionList().expression() != null) {
             List<PExp> args = ctx.expressionList().expression().stream().map(this::visit).map(PExp.class::cast).collect(Collectors.toList());
@@ -398,10 +408,12 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
 
         if (call.getMethodName().getText().equals("load")) {
             ALoadExp load = new ALoadExp();
+            load.setLocation(getLexLocation(ctx));
             load.setArgs(call.getArgs());
             return load;
         } else if (call.getMethodName().getText().equals("unload")) {
             AUnloadExp unload = new AUnloadExp();
+            unload.setLocation(getLexLocation(ctx));
             unload.setArgs(call.getArgs());
             return unload;
         }
@@ -498,24 +510,29 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitLiteral(MablParser.LiteralContext ctx) {
         if (ctx.BOOL_LITERAL() != null) {
             ABoolLiteralExp literal = new ABoolLiteralExp();
+            literal.setLocation(getLexLocation(ctx));
             literal.setValue(Boolean.parseBoolean(ctx.BOOL_LITERAL().getText()));
             return literal;
         } else if (ctx.DECIMAL_LITERAL() != null) {
             AIntLiteralExp literal = new AIntLiteralExp();
+            literal.setLocation(getLexLocation(ctx));
             literal.setValue(Integer.parseInt(ctx.DECIMAL_LITERAL().getText()));
             return literal;
         } else if (ctx.FLOAT_LITERAL() != null) {
             ARealLiteralExp literal = new ARealLiteralExp();
+            literal.setLocation(getLexLocation(ctx));
             literal.setValue(Double.parseDouble(ctx.FLOAT_LITERAL().getText()));
             return literal;
 
         } else if (ctx.STRING_LITERAL() != null) {
             AStringLiteralExp literal = new AStringLiteralExp();
+            literal.setLocation(getLexLocation(ctx));
             //remove quotes
             literal.setValue((ctx.STRING_LITERAL().getText().substring(1, ctx.STRING_LITERAL().getText().length() - 1)));
             return literal;
         } else if (ctx.NULL_LITERAL() != null) {
             ANullExp literal = new ANullExp();
+            literal.setLocation(getLexLocation(ctx));
             //remove quotes
             literal.setToken(convertToLexToken(ctx.NULL_LITERAL().getSymbol()));
             return literal;
@@ -621,6 +638,7 @@ public class ParseTree2AstConverter extends MablParserBaseVisitor<INode> {
     public INode visitRefExpression(MablParser.RefExpressionContext ctx) {
         ARefExp exp = new ARefExp();
         exp.setExp((PExp) this.visit(ctx.expression()));
+        exp.setLocation(getLexLocation(ctx));
         return exp;
     }
 

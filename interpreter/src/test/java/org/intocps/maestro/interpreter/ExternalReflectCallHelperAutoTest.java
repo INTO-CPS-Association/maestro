@@ -7,6 +7,7 @@ import org.intocps.fmi.jnifmuapi.fmi3.Fmu3;
 import org.intocps.maestro.ast.AEqualBinaryExp;
 import org.intocps.maestro.ast.AFunctionDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -109,8 +110,8 @@ public class ExternalReflectCallHelperAutoTest {
 
         Interpreter interpreter = new Interpreter(null);
 
-        final AEqualBinaryExp eq = new AEqualBinaryExp(new AIdentifierExp(new LexIdentifier("a", null)),
-                new AIdentifierExp(new LexIdentifier("b", null)));
+        final AEqualBinaryExp eq = new AEqualBinaryExp(new LexLocation("d",1,1),new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("a", null)),
+                new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("b", null)));
         for (AFunctionDeclaration f : functions) {
             ExternalReflectCallHelper helper = new ExternalReflectCallHelper(f, this);
             System.out.println(helper);
@@ -126,12 +127,12 @@ public class ExternalReflectCallHelperAutoTest {
                     Value a = (Value) args.get(i).as(UpdatableValue.class).deref().as(ArrayValue.class).getValues().get(0);
                     Value b = (Value) argsRef.get(i).as(UpdatableValue.class).deref().as(ArrayValue.class).getValues().get(0);
                     Context c = new Context(null);
-                    c.put(new AIdentifierExp(new LexIdentifier("a", null)), a);
-                    c.put(new AIdentifierExp(new LexIdentifier("b", null)), b);
+                    c.put(new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("a", null)), a);
+                    c.put(new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("b", null)), b);
                     Assertions.assertFalse(((BooleanValue) interpreter.caseAEqualBinaryExp(eq, c)).getValue(), "value should have changed");
 
-                    c.put(new AIdentifierExp(new LexIdentifier("a", null)), b);
-                    c.put(new AIdentifierExp(new LexIdentifier("b", null)), b);
+                    c.put(new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("a", null)), b);
+                    c.put(new AIdentifierExp(new LexLocation("d",1,1),new LexIdentifier("b", null)), b);
                     Assertions.assertTrue(((BooleanValue) interpreter.caseAEqualBinaryExp(eq, c)).getValue(), "value should not have changed");
 
 

@@ -1,6 +1,7 @@
 package org.intocps.maestro.parser;
 
 import org.antlr.v4.runtime.*;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.LexToken;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.core.messages.IErrorReporter;
@@ -17,6 +18,11 @@ import java.util.Vector;
 public class MablParserUtil {
     final static Logger logger = LoggerFactory.getLogger(MablParserUtil.class);
 
+    public static LexLocation getLexLocation(ParserRuleContext context) {
+        var token = context.start;
+        return new LexLocation(token.getTokenSource().getSourceName(), token.getLine(), token.getCharPositionInLine());
+    }
+
     private static List<ARootDocument> parseStreams(List<CharStream> specStreams) {
         List<ARootDocument> documentList = new Vector<>();
         for (CharStream specStream : specStreams) {
@@ -31,7 +37,7 @@ public class MablParserUtil {
         p.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-                    RecognitionException e) {
+                                    RecognitionException e) {
                 System.out.println(specStreams);
                 throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
             }
@@ -48,7 +54,7 @@ public class MablParserUtil {
         p.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg,
-                    RecognitionException e) {
+                                    RecognitionException e) {
                 //throw new IllegalStateException("failed to parse at line " + line + " due to " + msg, e);
                 reporter.report(0, msg, new LexToken("", line, 0));
             }

@@ -396,7 +396,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             } catch (InterpreterTransitionException te) {
                 throw te;
             } catch (Exception e) {
-                throw new InterpreterException("Unable to evaluate node: " + node, e);
+                throw new InterpreterException("Unable to evaluate node: " + node + " at "+node.getLocation(), e);
             }
         }
 
@@ -446,6 +446,8 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             } else {
                 message = msg.toString();
             }
+
+            message +=" \""+node.getExp().getLocation().toString()+"\"";
         }
 
         throw new ErrorException(message);

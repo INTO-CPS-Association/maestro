@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.AExpInitializer;
@@ -56,7 +57,7 @@ public class FloatDeclTest extends BaseApiTest {
         dscope.add(stm);
 
 
-        assertModule.assertEquals(f, new VariableFmi2Api<>(stm, decl.getType().clone(), dscope,dscope, null, new AIdentifierExp(new LexIdentifier("fr", null))));
+        assertModule.assertEquals(f, new VariableFmi2Api<>(stm, decl.getType().clone(), dscope,dscope, null, new AIdentifierExp(new LexLocation("unknown",0,0),new LexIdentifier("fr", null))));
 
 
         String spec = PrettyPrinter.print(builder.build());

@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.AFieldExp;
@@ -48,7 +49,7 @@ class IdentifierReplacer {
         public void caseAIdentifierExp(AIdentifierExp node) throws AnalysisException {
             for (Map.Entry<String, String> replacing : old2New.entrySet()) {
                 if (node.getName().getText().equals(replacing.getKey())) {
-                    node.parent().replaceChild(node, new AIdentifierExp(new LexIdentifier(replacing.getValue(), null)));
+                    node.parent().replaceChild(node, new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier(replacing.getValue(), null)));
                 }
             }
         }

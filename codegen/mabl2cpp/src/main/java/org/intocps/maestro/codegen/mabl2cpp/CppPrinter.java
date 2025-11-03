@@ -55,7 +55,7 @@ class CppPrinter extends DepthFirstAnalysisAdaptorQuestion<Integer> {
         //inject config path for MEnv
         List<PExp> arguments =
                 name.getValue().equals("MEnv") || name.getValue().equals("DataWriter") ? Stream.concat(node.getArgs().stream().limit(1),
-                                Stream.concat(Stream.of(new AIdentifierExp(new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
+                                Stream.concat(Stream.of(new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier("__runtimeConfigPath", null))), node.getArgs().stream().skip(1)))
                         .collect(Collectors.toList()) : node.getArgs();
         for (int i = 1; i < arguments.size(); i++) {
             if (i > 1) {

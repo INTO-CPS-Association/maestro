@@ -635,7 +635,7 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
 
         List<AStringLiteralExp> strings = new ArrayList<>();
         if (names != null) {
-            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(s)).collect(Collectors.toList());
+            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(new LexLocation("",0,0),s)).collect(Collectors.toList());
         }
 
         add(new ATransferStm(strings));
@@ -646,7 +646,7 @@ public class ScopeFmi2Api implements IMablScope, FmiBuilder.WhileScope<PStm> {
 
         List<AStringLiteralExp> strings = new ArrayList<>();
         if (names != null) {
-            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(s)).collect(Collectors.toList());
+            strings = Arrays.stream(names).map(s -> new AStringLiteralExp(new LexLocation("",0,0),s)).collect(Collectors.toList());
         }
 
         add(new ATransferAsStm(strings));
