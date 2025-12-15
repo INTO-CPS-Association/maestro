@@ -161,7 +161,7 @@ public class BuilderFmi3Test {
 
 //       //step the instance
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
         currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
         csv.log(currentCommunicationPoint);
@@ -323,7 +323,7 @@ public class BuilderFmi3Test {
         FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint = scope.store("time", 0d);
         FmiBuilder.DoubleVariable<PStm> stepSize = scope.store("step", 0.1d);
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
 //        stepRes.getValue().getLastSuccessfulTime()
 
@@ -483,7 +483,7 @@ public class BuilderFmi3Test {
 
 //       //step the instance
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
         currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
 

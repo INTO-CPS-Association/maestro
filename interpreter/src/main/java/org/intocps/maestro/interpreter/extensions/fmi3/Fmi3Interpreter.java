@@ -443,7 +443,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 3);
             try {
-                FmuResult<double[]> res = instance.getShiftDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                FmuResult<double[]> res = instance.getShiftDecimal(subRang(fcargs.get(0),fcargs.get(1)));
                 doubleArrayOutArgMapper.mapOut(fcargs.get(2), res.result);
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
@@ -456,7 +456,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 4);
             try {
-                FmuResult<IFmi3Instance.GetShiftFractionResponse> res = instance.getShiftFraction((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                FmuResult<IFmi3Instance.GetShiftFractionResponse> res = instance.getShiftFraction(subRang(fcargs.get(0),fcargs.get(1)));
                 uintArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getShiftCounters());
                 uintArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getResolutions());
                 return status2IntValue(res.status);

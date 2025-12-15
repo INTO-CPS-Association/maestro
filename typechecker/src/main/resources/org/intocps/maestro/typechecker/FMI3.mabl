@@ -190,7 +190,7 @@ module FMI3Instance
         /* end::getIntervalFraction[] */
     
         /* tag::getShiftDecimal[] */
-        int getShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+        int getShiftDecimal(uint valueReferences[], int nValueReferences,out real shifts[]);
         /* end::getShiftDecimal[] */
     
         /* tag::getShiftFraction[] */

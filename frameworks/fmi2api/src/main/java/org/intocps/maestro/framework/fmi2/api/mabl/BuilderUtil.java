@@ -18,7 +18,14 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 public class BuilderUtil {
     final static Logger logger = LoggerFactory.getLogger(BuilderUtil.class);
 
-    public static List<PStm> createTypeConvertingAssignment(PStateDesignator designator, PExp value, PType valueType, PType targetType) {
+    public static List<PStm> createTypeConvertingAssignment(PStateDesignator designator, PExp value, PType valueType,final PType targetType) {
+
+        //make sure we dont take the nodes
+        designator = designator.clone();
+        value = value.clone();
+        valueType = valueType.clone();
+
+
 
         List<PStm> statements = new Vector<>();
         TypeComparator typeComparator = new TypeComparator();
@@ -46,11 +53,11 @@ public class BuilderUtil {
                     falseToken = newARealLiteralExp(0d);
                 }
 
-                statements.add(newIf(value, newAAssignmentStm(designator.clone(), trueToken), newAAssignmentStm(designator.clone(), falseToken)));
+                statements.add(newIf(value, newAAssignmentStm(designator, trueToken), newAAssignmentStm(designator, falseToken)));
             } else if (typeComparator.compatible(newBoleanType(), targetType) && (typeComparator.compatible(newRealType(), valueType)) ||
                     typeComparator.compatible(newRealType(), valueType) || typeComparator.compatible(newRealType(), valueType)) {
                 // number to bool
-                statements.add(newAAssignmentStm(designator.clone(), newEqual(value, newAIntLiteralExp(1))));
+                statements.add(newAAssignmentStm(designator, newEqual(value, newAIntLiteralExp(1))));
 
             } else if ((typeComparator.compatible(newIntType(), valueType) || typeComparator.compatible(newUIntType(), valueType)) &&
                     (typeComparator.compatible(newIntType(), targetType) || typeComparator.compatible(newUIntType(), targetType))) {

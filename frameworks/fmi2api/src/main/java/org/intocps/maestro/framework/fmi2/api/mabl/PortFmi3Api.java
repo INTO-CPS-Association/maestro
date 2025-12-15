@@ -26,6 +26,8 @@ public class PortFmi3Api implements FmiBuilder.Port<Fmi3ModelDescription.Fmi3Sca
 
         public static final Predicate<FmiBuilder.Port> isClockTimeBased = p -> isClock.test(
                 p) && ((ClockVariable) ((PortFmi3Api) p).scalarVariable.getVariable()).getInterval() != Fmi3ClockInterval.Triggered;
+        public static final Predicate<FmiBuilder.Port> isClockTriggered = p -> isClock.test(
+                p) && ((ClockVariable) ((PortFmi3Api) p).scalarVariable.getVariable()).getInterval() == Fmi3ClockInterval.Triggered;
     }
 
     public final InstanceVariableFmi3Api aMablFmi3InstanceAPI;

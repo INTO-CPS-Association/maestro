@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
@@ -380,7 +381,10 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (node.getObject() != null) {
             Value v = node.getObject().apply(this, question).deref();
             if (v instanceof NullValue) {
-                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node.toString() + "\"");
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node + "\"");
+                throw new InterpreterException("Unhandled node: " + node);
+            }else if(!(v instanceof ModuleValue)){
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is not a module. Related call: \"" + node + "\"");
                 throw new InterpreterException("Unhandled node: " + node);
             } else {
                 ModuleValue objectModule = (ModuleValue) v;
@@ -648,6 +652,34 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseATransferAsStm(ATransferAsStm node, Context question) {
         //this has no semantic meaning during normal execution
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseADebugStm(ADebugStm node, Context question) throws AnalysisException {
+
+        var tokens = node.getTokens()==null?Collections.emptyList():node.getTokens().stream().map(AStringLiteralExp::getValue).toList();
+        if(tokens.contains("context"))
+        {
+            Context ctxt= question;
+            Stack<Context> stack = new Stack<>();
+            stack.push(ctxt);
+            while((ctxt=ctxt.outer)!=null){stack.push(ctxt);}
+            StringBuilder sb = new StringBuilder();
+            sb.append("Context stack:\n");
+            while(!stack.isEmpty()){
+                var depth = stack.size();
+                var frame = stack.pop();
+                var prefix = Stream.generate(() -> "\t").limit(depth-1).collect(Collectors.joining());
+                for(var entry:frame.values.entrySet())
+                {
+                    sb.append(prefix).append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                }
+            }
+
+            logger.info(sb.toString());
+        }
+
         return new VoidValue();
     }
 

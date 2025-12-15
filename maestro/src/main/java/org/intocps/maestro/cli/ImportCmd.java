@@ -114,7 +114,6 @@ public class ImportCmd implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        System.out.println(ProcessHandle.current().pid());
 
         if (type == ImportType.Sg1) {
 

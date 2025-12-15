@@ -28,6 +28,7 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
+@SuppressWarnings("deprecation")
 public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
 
     ScopeFmi2Api rootScope;
@@ -45,7 +46,6 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
     Map<String, Object> instanceCache = new HashMap<>();
     Map<String, RuntimeModuleVariable> fromExistingSpecInstanceCache = new HashMap<>();
-    private MathBuilderFmi2Api mathBuilderApi;
 
     public MablApiBuilder() {
         this(new MablSettings());
@@ -56,7 +56,6 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
 
         this.settings = settings;
         rootScope = new ScopeFmi2Api(this);
-
 
         initializeGlobalStatusVariables();
 
@@ -131,13 +130,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     }
 
     public MathBuilderFmi2Api getMathBuilder() {
-        if (this.mathBuilderApi == null) {
-            RuntimeModuleVariable runtimeModule = this.loadRuntimeModule("Math");
-
-            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule.getReferenceExp());
-        }
-        return this.mathBuilderApi;
-
+        return load("Math", runtime -> new MathBuilderFmi2Api(this.dynamicScope, this, runtime.getExp()));
     }
 
     @Override
@@ -150,6 +143,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return this.dynamicScope;
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public <V, T> Variable<T, V> getCurrentLinkedValue(Port port) {
         PortFmi2Api mp = (PortFmi2Api) port;
@@ -196,6 +190,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return new BooleanVariableFmi2Api(null, rootScope, this.dynamicScope, t.getLeft(), t.getRight());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public FmuVariableFmi2Api getFmuVariableFrom(PExp exp) {
         return null;
@@ -420,11 +415,9 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
             @Override
             public void caseABasicBlockStm(ABasicBlockStm node) throws AnalysisException {
                 if (node.getBody().isEmpty()) {
-                    if (node.parent() instanceof SBlockStm) {
-                        SBlockStm pb = (SBlockStm) node.parent();
+                    if (node.parent() instanceof SBlockStm pb) {
                         pb.getBody().remove(node);
-                    } else if (node.parent() instanceof AIfStm) {
-                        AIfStm ifStm = (AIfStm) node.parent();
+                    } else if (node.parent() instanceof AIfStm ifStm) {
 
                         if (ifStm.getElse() == node) {
                             ifStm.setElse(null);
@@ -435,7 +428,6 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
                 }
             }
         });
-
     }
 
     public FunctionBuilder getFunctionBuilder() {
@@ -593,6 +585,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
          * Automatically perform FMI2ErrorHandling
          */
         public boolean fmiErrorHandlingEnabled = true;
+        public boolean fmiErrorHandlingDetailEnabled = false;
         /**
          * Automatically retrieves and sets derivatives if possible
          */

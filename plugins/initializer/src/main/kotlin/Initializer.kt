@@ -515,14 +515,32 @@ class Initializer : BasicMaestroExpansionPlugin {
 
                 val variable = p.scalarVariable.variable as ClockVariable
 
+
+                val sc =p.scalarVariable.variable as ClockVariable
+                if((variable.interval == Fmi3ClockInterval.Constant || variable.interval == Fmi3ClockInterval.Fixed || variable.interval == Fmi3ClockInterval.Tunable) && sc.intervalDecimal!=null) {
+                    instance.setClockInterval(
+                        builder.dynamicScope,
+                        p,
+                        DoubleExpressionValue.of(sc.intervalDecimal!!.toDouble())
+                    )
+                }
+
                 //get interval for all
                 //instance.getInterval
-                if (variable.interval != Fmi3ClockInterval.Triggered)
+                if (variable.interval != Fmi3ClockInterval.Triggered) {
                     instance.getClockInterval(builder.dynamicScope, p)
-
+                }
                 if (variable.interval == Fmi3ClockInterval.Constant || variable.interval == Fmi3ClockInterval.Fixed || variable.interval == Fmi3ClockInterval.Tunable) {
-//get shift
-                    instance.getClockShift(p)
+                //get shift
+                    val sc =p.scalarVariable.variable as ClockVariable
+                    if(sc.shiftDecimal!=null) {
+                        instance.setClockShift(
+                            builder.dynamicScope,
+                            p,
+                            DoubleExpressionValue.of(sc.shiftDecimal!!.toDouble())
+                        )
+                    }
+                        instance.getClockShift(builder.dynamicScope, p)
 //                    instance.set(
 //                        p,
 //                        DoubleExpressionValue.of((p.scalarVariable.variable as ClockVariable).intervalDecimal!!)

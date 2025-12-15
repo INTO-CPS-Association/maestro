@@ -35,7 +35,7 @@ public class MathValue extends ExternalModuleValue<Object> {
         componentMembers.put("minRealFromArray", new FunctionValue.ExternalFunctionValue(args -> {
 
             if (args.get(0).deref() instanceof ArrayValue) {
-                List<Value> valueArray = ValueExtractionUtilities.getArrayValue(args.get(0), Value.class);
+                List<Value> valueArray = ValueExtractionUtilities.getArrayValue(args.getFirst(), Value.class);
                 if (valueArray.size() < 1) {
                     return new IntegerValue(0);
                 } else if (valueArray.get(0).deref() instanceof RealValue) {
