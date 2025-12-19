@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <log4j2.version>2.24.3</log4j2.version>
+        <log4j2.version>2.25.3</log4j2.version>
         <fmu.api.version>1.5.0</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
         <kotlin.version>1.9.22</kotlin.version>
