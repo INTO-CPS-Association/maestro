@@ -77,6 +77,10 @@ public class InstanceClocksFmi3 {
         this.clocks = instance.getPorts().stream().filter(isClockTimeBased).filter(isCausalityInput).toList();
     }
 
+    public void deactivate(PortFmi3Api clock) {
+        getClockTimingVar().items().get(getClockIndex(clock, ClockInfo.Triggered)).setValue(DoubleExpressionValue.of(FALSE));
+    }
+
     enum ClockInfo {
         Shift(0),
         Interval(1),
