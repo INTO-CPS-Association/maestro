@@ -37,6 +37,7 @@ class JacobianInternalBuilder {
     public static class Jacobian3Context extends BaseJacobianContext {
         Map<String, InstanceVariableFmi3Api> fmu3Instances;
         BooleanVariableFmi2Api terminateSimulation;
+        BooleanVariableFmi2Api eventMode;
     }
 
     static <T extends BaseJacobianContext> T buildBaseCtxt(T ctxt, IndexedFunctionDeclarationContainer<JacobianStepBuilder.ARG_INDEX> selectedFun,
@@ -97,20 +98,8 @@ class JacobianInternalBuilder {
         ctxt.stepSizes = new ArrayVariableFmi2Api<>(stepSizesTmp.getDeclaringStm(), stepSizesTmp.getType(), stepSizesTmp.getDeclaredScope(), dynamicScope,
                 stepSizesTmp.getDesignator(), stepSizesTmp.getReferenceExp(), items);
         ctxt.terminateSimulation = dynamicScope.store("terminateSimulation", false);
+        ctxt.eventMode = dynamicScope.store("eventMode", false);
 
-//        if(totalTimeBasedClocks>1) {
-//            // preconfigure the step size to the shift only if we have clocks
-//            int clockIndex = 1;
-//            ctxt.stepSizes.items().getFirst().setValue(ctxt.stepSize);
-//            for (var instance : ctxt.fmu3Instances.entrySet()) {
-//                var clockTimePorts = instance.getValue().getPorts().stream().filter(isClockTimeBased).toList();
-//                for (var clockPort : clockTimePorts) {
-//                    ctxt.stepSizes.items().get(clockIndex++).setValue(instance.getValue().getClocksUtil().getShift(clockPort));
-//                }
-//            }
-//
-//            ctxt.currentStepSize.setValue(builder.getMathBuilder().minRealFromArray(ctxt.stepSizes));
-//        }
         return ctxt;
 
     }
