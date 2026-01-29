@@ -85,7 +85,7 @@ public class Fmi3Interpreter {
 
     static long[] subRang(Value arrayValue, Value lengthValue) {
         long[] vrefs = (long[]) longArrayInArgMapper.map(arrayValue);
-        int length = ((NumericValue) lengthValue).intValue();
+        int length = ((NumericValue) lengthValue.deref()).intValue();
 
         return
                 Arrays.copyOfRange(vrefs, 0, length);
