@@ -54,347 +54,6 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
         imports.add("FMI3");
     }
 
-
-    @Override
-    protected List<IndexedFunctionDeclarationContainer<ARG_INDEX>> getFunctions() {
-        return Collections.singletonList(fixedStep3Func);
-    }
-
-    private String blockMessage(String msg) {
-        String seperator = "#############################################";
-        return seperator + "## " + msg + " " + seperator;
-    }
-
-    @Override
-    public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
-                                                                  FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> parentBuilder,
-                                                                  List<FmiBuilder.Variable<PStm, ?>> formalArguments, IPluginConfiguration config,
-                                                                  ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
-
-
-        logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
-        JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
-
-        if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
-            throw new ExpandException("Unknown function declaration");
-        }
-
-        if (envIn == null) {
-            throw new ExpandException("Simulation environment must not be null");
-        }
-
-        IndexedFunctionDeclarationContainer<ARG_INDEX> selectedFun = getFunctions().stream()
-                .filter(f -> f.getDecl().getName().getText().equals(declaredFunction.getName().getText())).findFirst().orElse(null);
-
-        StepAlgorithm algorithm = StepAlgorithm.FIXEDSTEP;
-
-
-        if (selectedFun == variableStepFunc) {
-            algorithm = StepAlgorithm.VARIABLESTEP;
-            imports.add("VariableStep");
-        } else if (selectedFun == fixedStepTransferFunc) {
-            algorithm = StepAlgorithm.FIXEDSTEP;
-            logger.debug("Activated mode transfer");
-        }
-
-        if (formalArguments == null || formalArguments.size() != selectedFun.getDecl().getFormals().size()) {
-            throw new ExpandException("Invalid args");
-        }
-
-
-        Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
-
-        boolean setGetDerivativesRestore = false;
-        MablApiBuilder.MablSettings settings = null;
-        try {
-            if (parentBuilder.getSettings() instanceof MablApiBuilder.MablSettings) {
-                //FIXME we should probably not do this in a plugin as it changes this for all once the builder is reused!
-                settings = (MablApiBuilder.MablSettings) parentBuilder.getSettings();
-                setGetDerivativesRestore = settings.setGetDerivatives;
-                settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
-            }
-
-            if (!(parentBuilder instanceof MablApiBuilder builder)) {
-                throw new ExpandException(
-                        "Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " + parentBuilder.getClass()
-                                .getSimpleName());
-            }
-
-            DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
-            MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
-            BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
-
-            RealTimeSlowDownBuilder.RealTimeSlowDownContext ctsCtxt = null;
-            if (jacobianStepConfig.simulationProgramDelay) {
-                ctsCtxt = RealTimeSlowDownBuilder.init(builder, imports);
-            }
-
-            // Convert raw MaBL to API
-            var ctxt = JacobianInternalBuilder.buildBaseFmi3Ctxt(builder, selectedFun, formalArguments, dynamicScope);
-
-            var fmuInstances = ctxt.fmuInstances;
-            var fmuInstances3 = ctxt.fmu3Instances;
-
-            var timeBasedInputClockPorts = fmuInstances3.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue,
-                    m -> m.getValue().getPorts().stream().filter(isClock).filter(isCausalityInput.and(isClockTimeBased))));
-
-
-            // Create the logging
-            DataWriter dataWriter = builder.getDataWriter();
-            DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
-            List<DataWriter.DataWriterInstance.LogEntry> logVariables = Stream.concat(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()
-                    .map(xsv -> new DataWriter.DataWriterInstance.LogEntry(xsv.getMultiModelScalarVariableName(),
-                            () -> xsv.getSharedAsVariable().getReferenceExp().clone()))), fmuInstances3.values().stream().flatMap(
-                    x -> x.getVariablesToLog().stream().map(xsv -> new DataWriter.DataWriterInstance.LogEntry(xsv.getMultiModelScalarVariableName(),
-                            () -> xsv.getSharedAsVariable().getReferenceExp().clone())))
-
-            ).collect(Collectors.toList());
-            var timeBasedClocksLogVariables = timeBasedInputClockPorts.entrySet().stream().flatMap(m -> m.getValue()
-                    .map(clockPort -> new DataWriter.DataWriterInstance.LogEntry(clockPort.getMultiModelScalarVariableName(),
-                            () -> m.getKey().getClocksUtil().getClockTriggeredState(clockPort).getReferenceExp().clone()))).toList();
-            logVariables.addAll(timeBasedClocksLogVariables);
-            logVariables.addFirst(new DataWriter.DataWriterInstance.LogEntry("eventMode", () -> ctxt.eventMode.getReferenceExp().clone()));
-            dataWriterInstance.initialize(logVariables);
-
-            // Create simulation control to allow for user interactive loop stopping
-            SimulationControl simulationControl = builder.getSimulationControl();
-
-            // Create the iteration predicate
-            PredicateFmi2Api loopPredicate = ctxt.externalEndTimeDefined.toPredicate().not()
-                    .or(ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize).lessThan(ctxt.endTime));
-
-
-            // Get all variables related to outputs or logging.
-            Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = JacobianVariableStepBuilder.getAllComponentPortsWithOutputOrLog(
-                    fmuInstances, jacobianStepConfig, env);
-
-            Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> instancesToPortsWithValues = JacobianVariableStepBuilder.getAllInstancePortsWithOutputOrLog(
-                    fmuInstances3, jacobianStepConfig, env);
-
-            builder.getLogger().debug(blockMessage("Jaccobian start"));
-
-            // Share
-            componentsToPortsWithValues.forEach(ComponentVariableFmi2Api::share);
-            instancesToPortsWithValues.forEach(InstanceVariableFmi3Api::share);
-
-            // Build static FMU relations
-            Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToFmuInstances = new LinkedHashMap<>();
-
-            ArrayVariableFmi2Api<Double> fmuCommunicationPoints = dynamicScope.store("fmu_communicationpoints",
-                    new Double[fmuInstances.size() + fmuInstances3.size()]);
-
-            for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
-
-                FrameworkUnitInfo v = env.getInstanceByLexName(instance.getEnvironmentName());
-                if (v instanceof ComponentInfo) {
-                    StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null,
-                            MableAstFactory.newAStringLiteralExp(((ComponentInfo) v).getFmuIdentifier() + "." + instance.getName()));
-                    fmuNamesToFmuInstances.put(fullyQualifiedFMUInstanceName, instance);
-                } else {
-                    throw new RuntimeException("instance is not fmi2");
-                }
-
-
-            }
-
-            AtomicInteger indexer = new AtomicInteger();
-            var fmuInstanceToCommunicationPoint = fmuInstances.values().stream()
-                    .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
-
-            var fmuInstance3ToCommunicationPoint = fmuInstances3.values().stream()
-                    .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
-
-
-            // validate if all fmus can get state
-            boolean everyFMUSupportsGetState = isEveryFMUSupportsGetState(fmuInstances, fmuInstances3);
-
-
-            if (!everyFMUSupportsGetState && jacobianStepConfig.stabilisation) {
-                throw new RuntimeException("Cannot use stabilisation as not every FMU supports rollback");
-            }
-
-            BooleanVariableFmi2Api allFMUsSupportGetState = dynamicScope.store("all_fmus_support_get_state", everyFMUSupportsGetState);
-
-            JacobianVariableStepBuilder.JacobianVariableStepContext varStep = null;
-            if (algorithm == StepAlgorithm.VARIABLESTEP) {
-                varStep = JacobianVariableStepBuilder.init(ctxt, jacobianStepConfig, dynamicScope, builder, fmuNamesToFmuInstances);
-            }
-
-            // TODO: we need to handle the initial event loop for clocks
-
-            // Event Step 0: create time based clocks. We need to obtain the specific timing variables from
-//            fmuInstances3.values().stream().findFirst().get().
-
-
-            // Event Init step 1: get clocks from others
-            builder.getLogger().debug(blockMessage("Jaccobian Event handling before loop"));
-            builder.getLogger().debug("EVENT - Before step event handling");
-            var eventCapableInstances = fmuInstances3.values().stream().filter(hasEventMode).toList();
-            var eventUpdatingFlags = updateEventsInEventMode(builder, eventCapableInstances, fmuInstances3, dataWriterInstance, ctxt);
-
-            //TODO: OK now clocked variables must be filtered as they are only available in event mode
-
-            // Log values at t = start time
-            dataWriterInstance.log(ctxt.currentCommunicationTime);
-
-
-            StabilisationBuilder.StabilisationContext stabilisationCtxt = null;
-            if (jacobianStepConfig.stabilisation) {
-                stabilisationCtxt = StabilisationBuilder.init(dynamicScope, jacobianStepConfig);
-            }
-
-
-            if (jacobianStepConfig.simulationProgramDelay) {
-                RealTimeSlowDownBuilder.setStartTime(ctsCtxt, dynamicScope);
-
-            }
-
-            List<FmiBuilder.StateVariable<PStm>> fmuStates = new ArrayList<>();
-            BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
-
-            // Initialise swap and step condition variables
-            ModelSwapBuilder.ModelSwapContext modelSwapContext = ModelSwapBuilder.buildContext(env, dynamicScope);
-
-            builder.getLogger().debug(blockMessage("Jaccobian main loop"));
-            ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
-            {
-                ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
-                stoppingThenScope.add(new AErrorStm(newAStringLiteralExp("Simulation stopped by user")));
-                stoppingThenScope.leave();
-
-                //mark a safe point for a transfer to another specification
-                dynamicScope.markTransferPoint();
-
-
-                // Update all swap and step condition variables
-                ModelSwapBuilder.updateSwapConditionVariables(modelSwapContext, dynamicScope, componentsToPortsWithValues);
-
-                // Get fmu states
-                if (everyFMUSupportsGetState) {
-                    for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
-                        fmuStates.add(instance.getState());
-                    }
-                    for (InstanceVariableFmi3Api instance : fmuInstances3.values()) {
-                        fmuStates.add(instance.getState());
-                    }
-                }
-
-                if (jacobianStepConfig.stabilisation) {
-                    StabilisationBuilder.step(stabilisationCtxt, dynamicScope);
-
-                }
-
-                // SET ALL LINKED VARIABLES
-                // This has to be carried out regardless of stabilisation or not.
-                ModelSwapBuilder.setWithModelSwapLinking(fmuInstances, env, dynamicScope, modelSwapContext);
-                fmuInstances3.values().forEach(instance -> instance.setLinked(
-                        instance.getPorts().stream().filter(InstanceVariableFmi3Api.isLinked.and(isClockedVariable.negate()).and(isClock.negate()))
-                                .toArray(PortFmi3Api[]::new)));
-
-                if (algorithm == StepAlgorithm.VARIABLESTEP) {
-                    // Get variable step
-                    JacobianVariableStepBuilder.updateCurrentStepTiming(ctxt, varStep, dynamicScope, anyDiscards);
-
-                }
-
-                anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
-
-                // STEP ALL FMI2
-                stepAllFmi2(builder, fmuInstanceToCommunicationPoint, ctxt, modelSwapContext, env, dynamicScope, anyDiscards);
-
-                // STEP ALL FMI3
-                /**
-                 * FMI 3 step mode stepping
-                 * */
-                stepAllFmi3(builder, fmuInstance3ToCommunicationPoint, ctxt, fmuInstances3, eventUpdatingFlags, dynamicScope, anyDiscards);
-
-                // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
-                getStepOutputs(componentsToPortsWithValues, instancesToPortsWithValues);
-
-                // CONVERGENCE
-                if (jacobianStepConfig.stabilisation) {
-                    // CONVERGENCE
-                    StabilisationBuilder.convergence(dynamicScope, componentsToPortsWithValues, stabilisationCtxt, ctxt, builder, math, booleanLogic,
-                            fmuStates);
-
-                } else {
-                    // NORMAL SHARE - VALUE EXCHANGE
-                    componentsToPortsWithValues.forEach(ComponentVariableFmi2Api::share);
-//                    instancesToPortsWithValues.forEach(InstanceVariableFmi3Api::share);
-                }
-
-                if (everyFMUSupportsGetState) {
-                    // Discard
-                    IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
-                    {
-                        // Rollback FMUs
-                        fmuStates.forEach(FmiBuilder.StateVariable::set);
-
-                        // Set step-size to lowest
-                        ctxt.currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(ctxt.currentCommunicationTime));
-
-                        builder.getLogger().debug("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", ctxt.currentStepSize);
-
-                        dynamicScope.leave();
-                    }
-
-                    discardScope.enterElse();
-                }
-                {
-                    if (algorithm == StepAlgorithm.VARIABLESTEP) {
-                        // Validate step
-                        JacobianVariableStepBuilder.step(ctxt, varStep, dynamicScope, builder, allFMUsSupportGetState, fmuStates, anyDiscards);
-                    }
-
-                    // Slow-down to real-time
-                    if (jacobianStepConfig.simulationProgramDelay) {
-                        RealTimeSlowDownBuilder.slowDown(ctsCtxt, dynamicScope, ctxt, builder);
-                    }
-
-                    if (everyFMUSupportsGetState) {
-                        dynamicScope.leave();
-                    }
-                }
-
-                dynamicScope.enterIf(anyDiscards.toPredicate().not());
-                {
-                    // Update currentCommunicationTime
-                    ctxt.currentCommunicationTime.setValue(ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize));
-
-                    ModelSwapBuilder.updateDiscardStepTime(modelSwapContext, dynamicScope, ctxt.currentStepSize);
-
-                    // Log values at current communication point
-                    dataWriterInstance.log(ctxt.currentCommunicationTime);
-                    eventUpdatingFlags = updateEventsInEventMode(builder, eventCapableInstances, fmuInstances3, dataWriterInstance, ctxt);
-
-
-                    ctxt.currentStepSize.setValue(calculateNextStepSize(builder, ctxt, timeBasedInputClockPorts));
-                    var checkStepSizeScope = builder.getDynamicScope().enterIf(ctxt.currentStepSize.toMath().lessEqualTo(IntExpressionValue.of(0)));
-                    var checkStepSizeScopeThen = checkStepSizeScope.enterThen();
-                    builder.getLogger().debug("Step size must be positive: %f", ctxt.currentStepSize);
-//                    checkStepSizeScopeThen.add(new AErrorStm(newAStringLiteralExp("Step size must be positive")));
-                    checkStepSizeScope.leave();
-                    builder.getLogger().debug("## Step size: %f", ctxt.currentStepSize);
-                }
-
-                scopeFmi2Api.leave();
-            }
-
-            dataWriterInstance.close();
-
-            if (settings != null) {
-                //restore previous state
-                settings.setGetDerivatives = setGetDerivativesRestore;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            errorReporter.report(0, e.toString(), null);
-            throw new ExpandException("Internal error: ", e);
-        }
-
-        return new EmptyRuntimeConfig<>();
-    }
-
     private static DoubleVariableFmi2Api calculateNextStepSize(MablApiBuilder builder, JacobianInternalBuilder.Jacobian3Context ctxt,
                                                                Map<InstanceVariableFmi3Api, Stream<PortFmi3Api>> timeBasedInputClockPorts) {
         if (timeBasedInputClockPorts.isEmpty()) {
@@ -430,8 +89,11 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                                                                                List<InstanceVariableFmi3Api> eventCapableInstances,
                                                                                Map<String, InstanceVariableFmi3Api> fmuInstances3,
                                                                                DataWriter.DataWriterInstance dataWriterInstance,
-                                                                               JacobianInternalBuilder.Jacobian3Context ctxt) {
-        eventCapableInstances.forEach(InstanceVariableFmi3Api::enterEventMode);
+                                                                               JacobianInternalBuilder.Jacobian3Context ctxt, boolean firstCall) {
+        if (!firstCall) {
+            //all FMUs here have been created with eventModeUser and thus must be in event mode at initialization
+            eventCapableInstances.forEach(InstanceVariableFmi3Api::enterEventMode);
+        }
         ctxt.eventMode.setValue(BooleanExpressionValue.of(true));
         var eventUpdatingFlags = fmuInstances3.entrySet().stream().filter(map -> hasEventMode.test(map.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, map -> builder.getDynamicScope().store(map.getKey() + "ProcessEvents", true)));
@@ -714,6 +376,346 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    @Override
+    protected List<IndexedFunctionDeclarationContainer<ARG_INDEX>> getFunctions() {
+        return Collections.singletonList(fixedStep3Func);
+    }
+
+    private String blockMessage(String msg) {
+        String seperator = "#############################################";
+        return seperator + "## " + msg + " " + seperator;
+    }
+
+    @Override
+    public <R> RuntimeConfigAddition<R> expandWithRuntimeAddition(AFunctionDeclaration declaredFunction,
+                                                                  FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, ?> parentBuilder,
+                                                                  List<FmiBuilder.Variable<PStm, ?>> formalArguments, IPluginConfiguration config,
+                                                                  ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
+
+
+        logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
+        JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
+
+        if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
+            throw new ExpandException("Unknown function declaration");
+        }
+
+        if (envIn == null) {
+            throw new ExpandException("Simulation environment must not be null");
+        }
+
+        IndexedFunctionDeclarationContainer<ARG_INDEX> selectedFun = getFunctions().stream()
+                .filter(f -> f.getDecl().getName().getText().equals(declaredFunction.getName().getText())).findFirst().orElse(null);
+
+        StepAlgorithm algorithm = StepAlgorithm.FIXEDSTEP;
+
+
+        if (selectedFun == variableStepFunc) {
+            algorithm = StepAlgorithm.VARIABLESTEP;
+            imports.add("VariableStep");
+        } else if (selectedFun == fixedStepTransferFunc) {
+            algorithm = StepAlgorithm.FIXEDSTEP;
+            logger.debug("Activated mode transfer");
+        }
+
+        if (formalArguments == null || formalArguments.size() != selectedFun.getDecl().getFormals().size()) {
+            throw new ExpandException("Invalid args");
+        }
+
+
+        Fmi2SimulationEnvironment env = (Fmi2SimulationEnvironment) envIn;
+
+        boolean setGetDerivativesRestore = false;
+        MablApiBuilder.MablSettings settings = null;
+        try {
+            if (parentBuilder.getSettings() instanceof MablApiBuilder.MablSettings) {
+                //FIXME we should probably not do this in a plugin as it changes this for all once the builder is reused!
+                settings = (MablApiBuilder.MablSettings) parentBuilder.getSettings();
+                setGetDerivativesRestore = settings.setGetDerivatives;
+                settings.setGetDerivatives = jacobianStepConfig.setGetDerivatives;
+            }
+
+            if (!(parentBuilder instanceof MablApiBuilder builder)) {
+                throw new ExpandException(
+                        "Not supporting the given builder type. Expecting " + MablApiBuilder.class.getSimpleName() + " got " + parentBuilder.getClass()
+                                .getSimpleName());
+            }
+
+            DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
+            MathBuilderFmi2Api math = builder.getMablToMablAPI().getMathBuilder();
+            BooleanBuilderFmi2Api booleanLogic = builder.getBooleanBuilder();
+
+            RealTimeSlowDownBuilder.RealTimeSlowDownContext ctsCtxt = null;
+            if (jacobianStepConfig.simulationProgramDelay) {
+                ctsCtxt = RealTimeSlowDownBuilder.init(builder, imports);
+            }
+
+            // Convert raw MaBL to API
+            var ctxt = JacobianInternalBuilder.buildBaseFmi3Ctxt(builder, selectedFun, formalArguments, dynamicScope);
+
+            var fmuInstances = ctxt.fmuInstances;
+            var fmuInstances3 = ctxt.fmu3Instances;
+
+            var timeBasedInputClockPorts = fmuInstances3.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue,
+                    m -> m.getValue().getPorts().stream().filter(isClock).filter(isCausalityInput.and(isClockTimeBased))));
+
+
+            // Create the logging
+            DataWriter dataWriter = builder.getDataWriter();
+            DataWriter.DataWriterInstance dataWriterInstance = dataWriter.createDataWriterInstance();
+            List<DataWriter.DataWriterInstance.LogEntry> logVariables = Stream.concat(fmuInstances.values().stream().flatMap(x -> x.getVariablesToLog().stream()
+                    .map(xsv -> new DataWriter.DataWriterInstance.LogEntry(xsv.getMultiModelScalarVariableName(),
+                            () -> xsv.getSharedAsVariable().getReferenceExp().clone()))), fmuInstances3.values().stream().flatMap(
+                    x -> x.getVariablesToLog().stream().map(xsv -> new DataWriter.DataWriterInstance.LogEntry(xsv.getMultiModelScalarVariableName(),
+                            () -> xsv.getSharedAsVariable().getReferenceExp().clone())))
+
+            ).collect(Collectors.toList());
+            var timeBasedClocksLogVariables = timeBasedInputClockPorts.entrySet().stream().flatMap(m -> m.getValue()
+                    .map(clockPort -> new DataWriter.DataWriterInstance.LogEntry(clockPort.getMultiModelScalarVariableName(),
+                            () -> m.getKey().getClocksUtil().getClockTriggeredState(clockPort).getReferenceExp().clone()))).toList();
+            logVariables.addAll(timeBasedClocksLogVariables);
+            logVariables.addFirst(new DataWriter.DataWriterInstance.LogEntry("eventMode", () -> ctxt.eventMode.getReferenceExp().clone()));
+            dataWriterInstance.initialize(logVariables);
+
+            // Create simulation control to allow for user interactive loop stopping
+            SimulationControl simulationControl = builder.getSimulationControl();
+
+            // Create the iteration predicate
+            PredicateFmi2Api loopPredicate = ctxt.externalEndTimeDefined.toPredicate().not()
+                    .or(ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize).lessThan(ctxt.endTime));
+
+
+            // Get all variables related to outputs or logging.
+            Map<ComponentVariableFmi2Api, Map<PortFmi2Api, VariableFmi2Api<Object>>> componentsToPortsWithValues = JacobianVariableStepBuilder.getAllComponentPortsWithOutputOrLog(
+                    fmuInstances, jacobianStepConfig, env);
+
+            Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> instancesToPortsWithValues = JacobianVariableStepBuilder.getAllInstancePortsWithOutputOrLog(
+                    fmuInstances3, jacobianStepConfig, env);
+
+            builder.getLogger().debug(blockMessage("Jaccobian start"));
+
+            // Share
+            componentsToPortsWithValues.forEach(ComponentVariableFmi2Api::share);
+            instancesToPortsWithValues.forEach(InstanceVariableFmi3Api::share);
+
+            // Build static FMU relations
+            Map<StringVariableFmi2Api, ComponentVariableFmi2Api> fmuNamesToFmuInstances = new LinkedHashMap<>();
+
+            ArrayVariableFmi2Api<Double> fmuCommunicationPoints = dynamicScope.store("fmu_communicationpoints",
+                    new Double[fmuInstances.size() + fmuInstances3.size()]);
+
+            for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
+
+                FrameworkUnitInfo v = env.getInstanceByLexName(instance.getEnvironmentName());
+                if (v instanceof ComponentInfo) {
+                    StringVariableFmi2Api fullyQualifiedFMUInstanceName = new StringVariableFmi2Api(null, null, null, null,
+                            MableAstFactory.newAStringLiteralExp(((ComponentInfo) v).getFmuIdentifier() + "." + instance.getName()));
+                    fmuNamesToFmuInstances.put(fullyQualifiedFMUInstanceName, instance);
+                } else {
+                    throw new RuntimeException("instance is not fmi2");
+                }
+
+
+            }
+
+            AtomicInteger indexer = new AtomicInteger();
+            var fmuInstanceToCommunicationPoint = fmuInstances.values().stream()
+                    .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
+
+            var fmuInstance3ToCommunicationPoint = fmuInstances3.values().stream()
+                    .collect(Collectors.toMap(inst -> inst, instance -> fmuCommunicationPoints.items().get(indexer.getAndIncrement())));
+
+
+            // validate if all fmus can get state
+            boolean everyFMUSupportsGetState = isEveryFMUSupportsGetState(fmuInstances, fmuInstances3);
+
+
+            if (!everyFMUSupportsGetState && jacobianStepConfig.stabilisation) {
+                throw new RuntimeException("Cannot use stabilisation as not every FMU supports rollback");
+            }
+
+            BooleanVariableFmi2Api allFMUsSupportGetState = dynamicScope.store("all_fmus_support_get_state", everyFMUSupportsGetState);
+
+            JacobianVariableStepBuilder.JacobianVariableStepContext varStep = null;
+            if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                varStep = JacobianVariableStepBuilder.init(ctxt, jacobianStepConfig, dynamicScope, builder, fmuNamesToFmuInstances);
+            }
+
+            // TODO: we need to handle the initial event loop for clocks
+
+            // Event Step 0: create time based clocks. We need to obtain the specific timing variables from
+//            fmuInstances3.values().stream().findFirst().get().
+
+
+            // Event Init step 1: get clocks from others
+            builder.getLogger().debug(blockMessage("Jaccobian Event handling before loop"));
+            builder.getLogger().debug("EVENT - Before step event handling");
+            var eventCapableInstances = fmuInstances3.values().stream().filter(hasEventMode).toList();
+            var eventUpdatingFlags = updateEventsInEventMode(builder, eventCapableInstances, fmuInstances3, dataWriterInstance, ctxt, true);
+
+            //TODO: OK now clocked variables must be filtered as they are only available in event mode
+
+            // Log values at t = start time
+            dataWriterInstance.log(ctxt.currentCommunicationTime);
+
+
+            StabilisationBuilder.StabilisationContext stabilisationCtxt = null;
+            if (jacobianStepConfig.stabilisation) {
+                stabilisationCtxt = StabilisationBuilder.init(dynamicScope, jacobianStepConfig);
+            }
+
+
+            if (jacobianStepConfig.simulationProgramDelay) {
+                RealTimeSlowDownBuilder.setStartTime(ctsCtxt, dynamicScope);
+
+            }
+
+            List<FmiBuilder.StateVariable<PStm>> fmuStates = new ArrayList<>();
+            BooleanVariableFmi2Api anyDiscards = dynamicScope.store("any_discards", false);
+
+            // Initialise swap and step condition variables
+            ModelSwapBuilder.ModelSwapContext modelSwapContext = ModelSwapBuilder.buildContext(env, dynamicScope);
+
+            builder.getLogger().debug(blockMessage("Jaccobian main loop"));
+            ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
+            {
+                ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
+                stoppingThenScope.add(new AErrorStm(newAStringLiteralExp("Simulation stopped by user")));
+                stoppingThenScope.leave();
+
+                //mark a safe point for a transfer to another specification
+                dynamicScope.markTransferPoint();
+
+
+                // Update all swap and step condition variables
+                ModelSwapBuilder.updateSwapConditionVariables(modelSwapContext, dynamicScope, componentsToPortsWithValues);
+
+                // Get fmu states
+                if (everyFMUSupportsGetState) {
+                    for (ComponentVariableFmi2Api instance : fmuInstances.values()) {
+                        fmuStates.add(instance.getState());
+                    }
+                    for (InstanceVariableFmi3Api instance : fmuInstances3.values()) {
+                        fmuStates.add(instance.getState());
+                    }
+                }
+
+                if (jacobianStepConfig.stabilisation) {
+                    StabilisationBuilder.step(stabilisationCtxt, dynamicScope);
+
+                }
+
+                // SET ALL LINKED VARIABLES
+                // This has to be carried out regardless of stabilisation or not.
+                ModelSwapBuilder.setWithModelSwapLinking(fmuInstances, env, dynamicScope, modelSwapContext);
+                fmuInstances3.values().forEach(instance -> instance.setLinked(
+                        instance.getPorts().stream().filter(InstanceVariableFmi3Api.isLinked.and(isClockedVariable.negate()).and(isClock.negate()))
+                                .toArray(PortFmi3Api[]::new)));
+
+                if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                    // Get variable step
+                    JacobianVariableStepBuilder.updateCurrentStepTiming(ctxt, varStep, dynamicScope, anyDiscards);
+
+                }
+
+                anyDiscards.setValue(new BooleanVariableFmi2Api(null, null, dynamicScope, null, MableAstFactory.newABoolLiteralExp(false)));
+
+                // STEP ALL FMI2
+                stepAllFmi2(builder, fmuInstanceToCommunicationPoint, ctxt, modelSwapContext, env, dynamicScope, anyDiscards);
+
+                // STEP ALL FMI3
+                /**
+                 * FMI 3 step mode stepping
+                 * */
+                stepAllFmi3(builder, fmuInstance3ToCommunicationPoint, ctxt, fmuInstances3, eventUpdatingFlags, dynamicScope, anyDiscards);
+
+                // GET ALL LINKED OUTPUTS INCLUDING LOGGING OUTPUTS
+                getStepOutputs(componentsToPortsWithValues, instancesToPortsWithValues);
+
+                // CONVERGENCE
+                if (jacobianStepConfig.stabilisation) {
+                    // CONVERGENCE
+                    StabilisationBuilder.convergence(dynamicScope, componentsToPortsWithValues, stabilisationCtxt, ctxt, builder, math, booleanLogic,
+                            fmuStates);
+
+                } else {
+                    // NORMAL SHARE - VALUE EXCHANGE
+                    componentsToPortsWithValues.forEach(ComponentVariableFmi2Api::share);
+//                    instancesToPortsWithValues.forEach(InstanceVariableFmi3Api::share);
+                }
+
+                if (everyFMUSupportsGetState) {
+                    // Discard
+                    IfMaBlScope discardScope = dynamicScope.enterIf(anyDiscards.toPredicate());
+                    {
+                        // Rollback FMUs
+                        fmuStates.forEach(FmiBuilder.StateVariable::set);
+
+                        // Set step-size to lowest
+                        ctxt.currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(ctxt.currentCommunicationTime));
+
+                        builder.getLogger().debug("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", ctxt.currentStepSize);
+
+                        dynamicScope.leave();
+                    }
+
+                    discardScope.enterElse();
+                }
+                {
+                    if (algorithm == StepAlgorithm.VARIABLESTEP) {
+                        // Validate step
+                        JacobianVariableStepBuilder.step(ctxt, varStep, dynamicScope, builder, allFMUsSupportGetState, fmuStates, anyDiscards);
+                    }
+
+                    // Slow-down to real-time
+                    if (jacobianStepConfig.simulationProgramDelay) {
+                        RealTimeSlowDownBuilder.slowDown(ctsCtxt, dynamicScope, ctxt, builder);
+                    }
+
+                    if (everyFMUSupportsGetState) {
+                        dynamicScope.leave();
+                    }
+                }
+
+                dynamicScope.enterIf(anyDiscards.toPredicate().not());
+                {
+                    // Update currentCommunicationTime
+                    ctxt.currentCommunicationTime.setValue(ctxt.currentCommunicationTime.toMath().addition(ctxt.currentStepSize));
+
+                    ModelSwapBuilder.updateDiscardStepTime(modelSwapContext, dynamicScope, ctxt.currentStepSize);
+
+                    // Log values at current communication point
+                    dataWriterInstance.log(ctxt.currentCommunicationTime);
+                    eventUpdatingFlags = updateEventsInEventMode(builder, eventCapableInstances, fmuInstances3, dataWriterInstance, ctxt, false);
+
+
+                    ctxt.currentStepSize.setValue(calculateNextStepSize(builder, ctxt, timeBasedInputClockPorts));
+                    var checkStepSizeScope = builder.getDynamicScope().enterIf(ctxt.currentStepSize.toMath().lessEqualTo(IntExpressionValue.of(0)));
+                    var checkStepSizeScopeThen = checkStepSizeScope.enterThen();
+                    builder.getLogger().debug("Step size must be positive: %f", ctxt.currentStepSize);
+//                    checkStepSizeScopeThen.add(new AErrorStm(newAStringLiteralExp("Step size must be positive")));
+                    checkStepSizeScope.leave();
+                    builder.getLogger().debug("## Step size: %f", ctxt.currentStepSize);
+                }
+
+                scopeFmi2Api.leave();
+            }
+
+            dataWriterInstance.close();
+
+            if (settings != null) {
+                //restore previous state
+                settings.setGetDerivatives = setGetDerivativesRestore;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            errorReporter.report(0, e.toString(), null);
+            throw new ExpandException("Internal error: ", e);
+        }
+
+        return new EmptyRuntimeConfig<>();
     }
 
 

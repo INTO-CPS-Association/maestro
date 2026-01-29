@@ -24,10 +24,8 @@ import org.slf4j.LoggerFactory;
 import javax.xml.xpath.XPathExpressionException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,11 +53,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     public static final Predicate<InstanceVariableFmi3Api> hasEventMode = instance -> {
         try {
-            return instance.getModelDescription().getHasEventMode();
+            return instance.getModelDescription().getHasEventMode()|| instance.getModelDescription().getModelVariables().stream().anyMatch(v->v.getTypeIdentifier()== Fmi3TypeEnum.ClockType);
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);
         }
     };
+
 
     static ARefExp wrapAsRef(PExp exp) {
         return new ARefExp(new LexLocation(exp.getLocation()), exp.clone());
