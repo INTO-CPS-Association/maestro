@@ -17,26 +17,6 @@
     <properties>
         <overture.version>2.4.4</overture.version>
     </properties>
-
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>overture-m2-dev</id>
-            <url>
-                http://overture.au.dk/artifactory/simple/overture-development/
-            </url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <repositories>
-        <repository>
-            <id>overture-m2-dev</id>
-            <url>
-                http://overture.au.dk/artifactory/simple/overture-development/
-            </url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -170,28 +150,5 @@
             </plugins>
         </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>github</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <property>
-                    <name>env.CI</name>
-                </property>
-            </activation>
-            <repositories>
-                <repository>
-                    <id>overture-m2-dev</id>
-                    <url>
-                        http://overture.au.dk/artifactory/simple/overture-development/
-                    </url>
-                    <snapshots>
-                        <updatePolicy>interval:30</updatePolicy>
-                    </snapshots>
-                </repository>
-            </repositories>
-        </profile>
-    </profiles>
 </project>
 
