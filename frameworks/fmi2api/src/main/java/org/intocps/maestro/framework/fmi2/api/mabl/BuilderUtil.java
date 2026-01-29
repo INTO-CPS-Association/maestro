@@ -12,17 +12,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.function.Supplier;
 
 import static org.intocps.maestro.ast.MableAstFactory.*;
 
 public class BuilderUtil {
     final static Logger logger = LoggerFactory.getLogger(BuilderUtil.class);
 
-    public static List<PStm> createTypeConvertingAssignment(PStateDesignator designator, PExp value, PType valueType,final PType targetType) {
+    public static List<PStm> createTypeConvertingAssignment(PStateDesignator designator_, PExp value_, PType valueType,final PType targetType) {
 
         //make sure we dont take the nodes
-        designator = designator.clone();
-        value = value.clone();
+      Supplier<PStateDesignator>       designator =()-> designator_.clone();
+        Supplier<  PExp  > value=()-> value_.clone();
         valueType = valueType.clone();
 
 
@@ -30,7 +31,7 @@ public class BuilderUtil {
         List<PStm> statements = new Vector<>();
         TypeComparator typeComparator = new TypeComparator();
         if (typeComparator.compatible(targetType, valueType)) {
-            statements.add(newAAssignmentStm(designator, value));
+            statements.add(newAAssignmentStm(designator.get(), value.get()));
         } else {
 
             //   String varName = builder.getNameGenerator().getName();
@@ -39,7 +40,7 @@ public class BuilderUtil {
             if (typeComparator.compatible(newRealType(), valueType) && typeComparator.compatible(new AFloatNumericPrimitiveType(), targetType)) {
                 // real to float
 
-                statements.add(newAAssignmentStm(designator, value));
+                statements.add(newAAssignmentStm(designator.get(), value.get()));
 
             } else if (typeComparator.compatible(newBoleanType(), valueType) && (typeComparator.compatible(newRealType(), targetType)) ||
                     typeComparator.compatible(newRealType(), targetType) || typeComparator.compatible(newRealType(), targetType)) {
@@ -53,21 +54,21 @@ public class BuilderUtil {
                     falseToken = newARealLiteralExp(0d);
                 }
 
-                statements.add(newIf(value, newAAssignmentStm(designator, trueToken), newAAssignmentStm(designator, falseToken)));
+                statements.add(newIf(value.get(), newAAssignmentStm(designator.get(), trueToken), newAAssignmentStm(designator.get(), falseToken)));
             } else if (typeComparator.compatible(newBoleanType(), targetType) && (typeComparator.compatible(newRealType(), valueType)) ||
                     typeComparator.compatible(newRealType(), valueType) || typeComparator.compatible(newRealType(), valueType)) {
                 // number to bool
-                statements.add(newAAssignmentStm(designator, newEqual(value, newAIntLiteralExp(1))));
+                statements.add(newAAssignmentStm(designator.get(), newEqual(value.get(), newAIntLiteralExp(1))));
 
             } else if ((typeComparator.compatible(newIntType(), valueType) || typeComparator.compatible(newUIntType(), valueType)) &&
                     (typeComparator.compatible(newIntType(), targetType) || typeComparator.compatible(newUIntType(), targetType))) {
                 // (u)int to (u)int
-                statements.add(newAAssignmentStm(designator, value));
+                statements.add(newAAssignmentStm(designator.get(), value.get()));
             } else {
                 //FIXME type conversion missing
                 logger.error("No implementation for type conversion");
                 //no solution so lets make the type checker report this error for now
-                statements.add(newAAssignmentStm(designator, value));
+                statements.add(newAAssignmentStm(designator.get(), value.get()));
             }
 
 
