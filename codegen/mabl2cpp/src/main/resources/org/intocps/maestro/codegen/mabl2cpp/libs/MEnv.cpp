@@ -13,14 +13,12 @@ MEnvImpl::MEnvImpl(const char *runtimeConfigPath) {
         using namespace std;
 
         ifstream ifs(this->runtimeConfigPath);
-        IStreamWrapper isw(ifs);
 
-        Document d;
-        d.ParseStream(isw);
+        auto d = nj::parse(ifs);
 
-        if (d.IsObject()) {
-            if (d.HasMember("environment_variables") && d["environment_variables"].IsObject()) {
-                this->json.CopyFrom(d["environment_variables"], this->json.GetAllocator());
+        if (d.is_object()) {
+            if (d.contains("environment_variables") && d["environment_variables"].is_object()) {
+                this->json["environment_variables"]=d["environment_variables"];
             }
         }
     }
@@ -36,13 +34,13 @@ std::string toEnvName(const char *name) {
 
 fmi2Real MEnvImpl::getReal(const char *id) {
     auto value = std::getenv(toEnvName(id).c_str());
-    if (value == nullptr && this->json.IsObject()) {
-        if (this->json.HasMember(id)) {
-            if (this->json[id].IsNumber()) {
-                if (this->json[id].IsDouble()) {
-                    return this->json[id].GetDouble();
-                } else if (this->json[id].IsInt()) {
-                    return this->json[id].GetInt();
+    if (value == nullptr && this->json.is_object()) {
+        if (this->json.contains(id)) {
+            if (this->json[id].is_number()) {
+                if (this->json[id].is_number_float()) {
+                    return this->json[id].get<double>();
+                } else if (this->json[id].is_number_integer()) {
+                    return this->json[id].get<int>();
                 }
             }
         }
@@ -59,10 +57,10 @@ fmi2Real MEnvImpl::getReal(const char *id) {
 fmi2String MEnvImpl::getString(const char *id) {
     auto value = std::getenv(toEnvName(id).c_str());
 
-    if (value == nullptr && this->json.IsObject()) {
-        if (this->json.HasMember(id)) {
-            if (this->json[id].IsString()) {
-                return this->json[id].GetString();
+    if (value == nullptr && this->json.is_object()) {
+        if (this->json.contains(id)) {
+            if (this->json[id].is_string()) {
+                return strdup(this->json[id].get<std::string>().c_str());
             }
         }
     }
@@ -78,13 +76,13 @@ fmi2String MEnvImpl::getString(const char *id) {
 fmi2Boolean MEnvImpl::getBool(const char *id) {
     auto value = std::getenv(toEnvName(id).c_str());
 
-    if (value == nullptr && this->json.IsObject()) {
-        if (this->json.HasMember(id)) {
-            if (this->json[id].IsInt() || this->json[id].IsBool()) {
-                if (this->json[id].IsBool()) {
-                    return this->json[id].GetBool();
-                } else if (this->json[id].IsInt()) {
-                    return this->json[id].GetInt();
+    if (value == nullptr && this->json.is_object()) {
+        if (this->json.contains(id)) {
+            if (this->json[id].is_number_integer() || this->json[id].is_boolean()) {
+                if (this->json[id].is_boolean()) {
+                    return this->json[id].get<double>();
+                } else if (this->json[id].is_number_integer()) {
+                    return this->json[id].get<int>();
                 }
             }
         }
@@ -102,11 +100,11 @@ fmi2Boolean MEnvImpl::getBool(const char *id) {
 fmi2Integer MEnvImpl::getInt(const char *id) {
     auto value = std::getenv(toEnvName(id).c_str());
 
-    if (value == nullptr && this->json.IsObject()) {
-        if (this->json.HasMember(id)) {
-            if (this->json[id].IsNumber()) {
-                if (this->json[id].IsInt()) {
-                    return this->json[id].GetInt();
+    if (value == nullptr && this->json.is_object()) {
+        if (this->json.contains(id)) {
+            if (this->json[id].is_number()) {
+                if (this->json[id].is_number_integer()) {
+                    return this->json[id].get<int>();
                 }
             }
         }
