@@ -50,7 +50,13 @@ jobs:
         if: ${{matrix.os == env.WINDOWS_VERSION }}
         # there is not yet an environment variable for this path from msys2/setup-msys2
         # We need this to get a gcc 11.2 that is new enough to compile the reference FMU3
-        run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install C++ toolchain
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          pacman -S --noconfirm mingw-w64-ucrt-x86_64-gcc
 
       - name: Install vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
