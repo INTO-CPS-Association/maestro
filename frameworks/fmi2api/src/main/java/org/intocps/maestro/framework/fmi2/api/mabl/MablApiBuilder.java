@@ -101,7 +101,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
 
     private IntVariableFmi2Api getFmiStatusConstant_aux(FmiStatusInterface status) {
         if (!this.fmiStatusVariables.containsKey(status.getValue())) {
-            IntVariableFmi2Api var = rootScope.store(status.getName(), status.getValue());
+            IntVariableFmi2Api var = rootScope.store(status::getName, status.getValue());
             rootScope.addAfterOrTop(null, var.getDeclaringStm());
             fmiStatusVariables.put(status.getValue(), var);
         }

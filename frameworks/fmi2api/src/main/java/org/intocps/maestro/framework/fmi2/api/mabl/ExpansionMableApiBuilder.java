@@ -49,7 +49,8 @@ public class ExpansionMableApiBuilder extends MablApiBuilder {
                 var match = findDecleration(rootScope, s.name());
                 if (match == null) {
                     //create the status as it was not found
-                    fmiStatusVariables.put(s.getValue(), this.dynamicScope.getActiveScope().store( this.getNameGenerator().getNameIgnoreCase(s.name()), s.getValue()));
+                    ScopeFmi2Api scope = (ScopeFmi2Api) this.dynamicScope.getActiveScope();
+                    fmiStatusVariables.put(s.getValue(), scope.store(s::name, s.getValue()));
                 } else if (match.getValue() instanceof ALocalVariableStm local) {
                     //if exists then link to previous declaration
 //                    fmiStatusVariables.put(s, f.apply(local.getDeclaration().getName().getText()));
