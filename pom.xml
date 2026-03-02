@@ -30,7 +30,7 @@
         <scala.version>2.13.12</scala.version>
         <kotlin.jvmTarget>21</kotlin.jvmTarget>
         <dokka.version>1.7.10</dokka.version>
-        <jackson.version>2.15.2</jackson.version>
+        <jackson.version>2.18.6</jackson.version>
         <revision>4.0.3</revision>
         <changelist>-SNAPSHOT</changelist>
         <sha1/>
