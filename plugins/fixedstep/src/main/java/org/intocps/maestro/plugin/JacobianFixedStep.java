@@ -1,6 +1,7 @@
 package org.intocps.maestro.plugin;
 
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
@@ -88,7 +89,7 @@ public class JacobianFixedStep {
         Consumer<List<PStm>> terminate = list -> {
             list.addAll(componentNames.stream().map(comp -> newExpressionStm(
                             newACallExp(newAIdentifierExp((LexIdentifier) comp.clone()), newAIdentifier("terminate"), Collections.emptyList())))
-                    .collect(Collectors.toList()));
+                    .toList());
         };
 
 
@@ -192,7 +193,7 @@ public class JacobianFixedStep {
                                                                                                     newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
                                                                                                             Arrays.asList(newAIdentifierExp(
                                                                                                                     (LexIdentifier) compIndexVar.clone())))))),
-                                                                            new AErrorStm(new AStringLiteralExp("do step failed"))), null)),
+                                                                            new AErrorStm(new AStringLiteralExp(new LexLocation("",0,0),"do step failed"))), null)),
                                                     newIf(newEqual(newAArrayIndexExp(newAIdentifierExp(fixedStepStatus),
                                                                     Arrays.asList(newAIdentifierExp((LexIdentifier) compIndexVar.clone()))),
                                                             newAIntLiteralExp(FMI_DISCARD)), newABlockStm(newExpressionStm(
@@ -219,50 +220,42 @@ public class JacobianFixedStep {
                     newIf(newNot(newAIdentifierExp(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE))),
                             !stateHandler.supportsGetSetState ? new AErrorStm() : newIf(newAIdentifierExp("discardObserved"),
 
-                                    new Supplier<PStm>() {
-                                        @Override
-                                        public PStm get() {
-                                            List<PStm> list = new Vector<>();
-                                            list.add(loopComponents(beforeList -> {
-                                                beforeList.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
-                                                        newAIdentifierExp(newAIdentifier(fix_stepSize))));
+                                    ((Supplier<PStm>) () -> {
+                                        List<PStm> list1 = new Vector<>();
+                                        list1.add(loopComponents(beforeList -> {
+                                            beforeList.add(newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
+                                                    newAIdentifierExp(newAIdentifier(fix_stepSize))));
 
-                                                beforeList.add(newVariable("fix_recover_real_status", newARealNumericPrimitiveType(),
-                                                        newARealLiteralExp(0d)));
+                                            beforeList.add(newVariable("fix_recover_real_status", newARealNumericPrimitiveType(),
+                                                    newARealLiteralExp(0d)));
 
-                                            }, newAIdentifierExp(fixedStepStatus), newAIntLiteralExp(componentNames.size()), (index, comp) -> {
+                                        }, newAIdentifierExp(fixedStepStatus), newAIntLiteralExp(componentNames.size()), (index, comp) -> Arrays.asList(newIf(newEqual(
+                                                newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(index.clone())),
+                                                newAIntLiteralExp(FMI_DISCARD)), newABlockStm(Arrays.asList(
 
-                                                return Arrays.asList(newIf(newEqual(
-                                                        newAArrayIndexExp(newAIdentifierExp(fixedStepStatus), Arrays.asList(index.clone())),
-                                                        newAIntLiteralExp(FMI_DISCARD)), newABlockStm(Arrays.asList(
+                                                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recovering)),
+                                                        newABoolLiteralExp(true)),
 
-                                                        newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recovering)),
-                                                                newABoolLiteralExp(true)),
+                                                newAAssignmentStm(newAArayStateDesignator(
+                                                                newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)), index.clone()),
+                                                        call(arrayGet(componentsIdentifier, index.clone()), "getRealStatus",
+                                                                newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
+                                                                newARefExp(newAIdentifierExp("fix_recover_real_status")))),
+                                                newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
+                                                        call("math", "min", newAIdentifierExp(fix_recoveryStepSize),
+                                                                newMinusExp(newAIdentifierExp("fix_recover_real_status"),
+                                                                        newAIdentifierExp("time")))), newExpressionStm(
+                                                        simLog(LogUtil.SimLogLevel.DEBUG, "Recovery time set to: %f",
+                                                                newAIdentifierExp(fix_recoveryStepSize)))
 
-                                                        newAAssignmentStm(newAArayStateDesignator(
-                                                                        newAIdentifierStateDesignator(newAIdentifier(fixedStepStatus)), index.clone()),
-                                                                call(arrayGet(componentsIdentifier, index.clone()), "getRealStatus",
-                                                                        newAIntLiteralExp(FMI_STATUS_LAST_SUCCESSFUL),
-                                                                        newARefExp(newAIdentifierExp("fix_recover_real_status")))),
-                                                        newAAssignmentStm(newAIdentifierStateDesignator(newAIdentifier(fix_recoveryStepSize)),
-                                                                call("math", "min", newAIdentifierExp(fix_recoveryStepSize),
-                                                                        newMinusExp(newAIdentifierExp("fix_recover_real_status"),
-                                                                                newAIdentifierExp("time")))), newExpressionStm(
-                                                                simLog(LogUtil.SimLogLevel.DEBUG, "Recovery time set to: %f",
-                                                                        newAIdentifierExp(fix_recoveryStepSize)))
-
-                                                )), null), newExpressionStm(call(arrayGet(componentsIdentifier, index.clone()), "setState",
-                                                        arrayGet(stateHandler.fix_comp_states, index.clone()))));
-
-
-                                            }));
-                                            list.addAll(stateHandler.freeAllStates());
-                                            list.add(newAAssignmentStm(
-                                                    newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
-                                                    newABoolLiteralExp(true)));
-                                            return newABlockStm(list);
-                                        }
-                                    }.get()
+                                        )), null), newExpressionStm(call(arrayGet(componentsIdentifier, index.clone()), "setState",
+                                                arrayGet(stateHandler.fix_comp_states, index.clone()))))));
+                                        list1.addAll(stateHandler.freeAllStates());
+                                        list1.add(newAAssignmentStm(
+                                                newAIdentifierStateDesignator(newAIdentifier(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE)),
+                                                newABoolLiteralExp(true)));
+                                        return newABlockStm(list1);
+                                    }).get()
 
 
                                     , null), null), null)), null));
@@ -337,7 +330,7 @@ public class JacobianFixedStep {
         statements.addAll(dataWriter.write());
         //loop
         statements.add(newWhile(newAnd(newAIdentifierExp(IMaestroPlugin.GLOBAL_EXECUTION_CONTINUE),
-                (newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end)))), newABlockStm(loopStmts)));
+                newALessEqualBinaryExp(newAIdentifierExp(time), newAIdentifierExp(end))), newABlockStm(loopStmts)));
         //post simulation
         terminate.accept(statements);
         statements.addAll(dataWriter.deallocate());

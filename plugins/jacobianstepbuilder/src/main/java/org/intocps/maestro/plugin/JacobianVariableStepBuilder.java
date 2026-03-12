@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.text.StringEscapeUtils;
 import org.intocps.maestro.ast.node.PStm;
+import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
+import org.intocps.maestro.fmi.fmi3.Fmi3TypeEnum;
 import org.intocps.maestro.framework.core.RelationVariable;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
@@ -13,7 +15,11 @@ import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IfMaBlScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.intocps.maestro.framework.fmi2.api.mabl.PortFmi3Api.PortFilters.isClock;
 
 public class JacobianVariableStepBuilder {
 
@@ -95,14 +101,16 @@ public class JacobianVariableStepBuilder {
 
      static Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> getAllInstancePortsWithOutputOrLog(Map<String, InstanceVariableFmi3Api> fmuInstances3, JacobianStepConfig jacobianStepConfig, Fmi2SimulationEnvironment env) {
 
+         Predicate<Fmi3ModelDescription.Fmi3ScalarVariable> noClocks =scalarVariable->scalarVariable.getVariable().getTypeIdentifier()!= Fmi3TypeEnum.ClockType;
+
         Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> instancesToPortsWithValues = new HashMap<>();
         fmuInstances3.forEach((identifier, instance) -> {
-            Set<String> scalarVariablesToGet = instance.getPorts().stream()
+            Set<String> scalarVariablesToGet = instance.getPorts().stream().filter(p->isClock.negate().test(p))
                     .filter(p -> jacobianStepConfig.getVariablesOfInterest().stream()
                             .anyMatch(p1 -> p1.equals(p.getMultiModelScalarVariableName())))
                     .map(PortFmi3Api::getName).collect(Collectors.toSet());
             scalarVariablesToGet.addAll(
-                    env.getVariablesToLog(instance.getEnvironmentName()).stream().map(RelationVariable::getName)
+                    env.getVariablesToLog(instance.getEnvironmentName()).stream().filter(r->r.getFmi3ScalarVariable().filter( noClocks).isPresent()).map(RelationVariable::getName)
                             .collect(Collectors.toSet()));
 
             instancesToPortsWithValues.put(instance, instance.get(scalarVariablesToGet.toArray(String[]::new)));

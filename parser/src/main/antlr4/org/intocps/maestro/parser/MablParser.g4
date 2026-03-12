@@ -65,6 +65,8 @@ statement
                      name=STRING_LITERAL RPAREN ';'             #instanceMapping
     | AT_TRANSFER (LPAREN (names+=STRING_LITERAL
                     (',' names+=STRING_LITERAL)*)*  RPAREN)* ';'  #transfer
+    | AT_DEBUG (LPAREN (names+=STRING_LITERAL
+                        (',' names+=STRING_LITERAL)*)*  RPAREN)* ';'  #debug
     | AT_TRANSFER_AS (LPAREN (names+=STRING_LITERAL
                         (',' names+=STRING_LITERAL)*)*  RPAREN)* ';'  #transferAs
     | AT_CONFIG LPAREN  config=STRING_LITERAL  RPAREN ';'       #config

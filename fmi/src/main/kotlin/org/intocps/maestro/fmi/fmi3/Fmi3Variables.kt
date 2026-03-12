@@ -19,6 +19,10 @@ abstract class Fmi3Variable protected constructor(
         return valueReference.toLong()
     }
 
+    fun getClocksAsLong(): List<Long>? {
+        return clocks?.map { it.toLong() }
+    }
+
     override fun toString(): String {
         return "$name: ${typeIdentifier.name}"
     }

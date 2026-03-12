@@ -1,3 +1,5 @@
  module Logger {
     void log(int level, string message, ? values);
+
+    void logFmiCallVRefs(int level, uint vr[], uint nvr, string message, ? values);
 }

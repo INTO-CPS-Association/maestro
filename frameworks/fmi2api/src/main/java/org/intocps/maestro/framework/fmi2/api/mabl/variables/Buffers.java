@@ -3,7 +3,6 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 import org.intocps.maestro.ast.node.AIdentifierExp;
 import org.intocps.maestro.ast.node.PStm;
 import org.intocps.maestro.ast.node.PType;
-import org.intocps.maestro.fmi.fmi3.Fmi3TypeEnum;
 import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;

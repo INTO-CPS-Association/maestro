@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 %exp->#binary->plus = [left]+ " + " + [right]
 %exp->#binary->minus = [left]+ " - " + [right]
 %exp->#binary->lessEqual = [left]+ " <= " + [right]
-%exp->#binary->greaterEqual = [left]+ " > " + [right]
+%exp->#binary->greaterEqual = [left]+ " >= " + [right]
 %exp->#binary->less = [left]+ " < " + [right]
 %exp->#binary->greater = [left]+ " > " + [right]
 %exp->#binary->equal = [left]+ " == " + [right]
@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 %stm->fmuMapping = "@mapFmu(" + [identifier]+ " -> \""+[name] + "\")"
 %stm->transfer = "@Transfer("  +$$[names]$.stream().map(Object::toString).collect(Collectors.joining(","))$+   ")"
 %stm->transferAs = "@TransferAs("  +$$[names]$.stream().map(Object::toString).collect(Collectors.joining(","))$+   ")"
+%stm->debug = "@Debug("  +$$[tokens]$.stream().map(Object::toString).collect(Collectors.joining(","))$+   ")"
 %stm->config = "@Config(\"" + [config] + "\")"
 %stm->error = "error "+ $ ($[exp]$==null?"":$[exp]$)$
 %stm->try = "try" + [body] +  "finally"  +[finally]

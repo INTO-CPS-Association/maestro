@@ -41,7 +41,7 @@ public class SomePlugin extends BasicMaestroExpansionPlugin {
 
         if (config instanceof DemoConfig) {
             return Collections.singletonList(new AWhileStm(
-                    new ALessBinaryExp(new AIntLiteralExp(((DemoConfig) config).repeats), new AIntLiteralExp(((DemoConfig) config).repeats)),
+                    new ALessBinaryExp(new LexLocation("",0,0),new AIntLiteralExp(new LexLocation("",0,0),((DemoConfig) config).repeats), new AIntLiteralExp(new LexLocation("",0,0),((DemoConfig) config).repeats)),
                     new ABasicBlockStm()));
         }
         throw new ExpandException("Bad config type");

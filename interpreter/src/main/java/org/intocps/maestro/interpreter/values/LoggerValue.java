@@ -82,6 +82,58 @@ public class LoggerValue extends ExternalModuleValue<Object> {
 
             return new VoidValue();
         }));
+
+        componentMembers.put("logFmiCallVRefs", new FunctionValue.ExternalFunctionValue(fcargs -> {
+
+            if (fcargs == null) {
+                throw new InterpreterException("No values passed");
+            }
+
+            if (fcargs.stream().anyMatch(Objects::isNull)) {
+                throw new InterpreterException("Argument list contains null values");
+            }
+
+            if (fcargs.size() < 4) {
+                throw new InterpreterException("Too few arguments");
+            }
+
+            NumericValue level = (NumericValue) fcargs.get(0).deref();
+
+
+            var vr =(ArrayValue) fcargs.get(1).deref();
+            var nvr =(NumericValue) fcargs.get(2).deref();
+
+           var vnrs = vr.getValues().stream().limit(nvr.intValue()).map(Object::toString).collect(Collectors.joining(","));
+
+            StringValue msg = (StringValue) fcargs.get(3).deref();
+
+            DecimalFormat df = new DecimalFormat("0.00##");
+
+            String logMsg = String.format(msg.getValue(), getValues(fcargs.stream().skip(4).collect(Collectors.toList())));
+
+            logMsg+=". Variable references: "+vnrs;
+            switch (level.intValue()) {
+                case 0:
+                    logger.trace(logMsg);
+                    break;
+                case 1:
+                    logger.debug(logMsg);
+                    break;
+                case 2:
+                    logger.info(logMsg);
+                    break;
+                case 3:
+                    logger.warn(logMsg);
+                    break;
+                case 4:
+                    logger.error(logMsg);
+                    break;
+            }
+
+
+            return new VoidValue();
+        }));
+
         return componentMembers;
     }
 }

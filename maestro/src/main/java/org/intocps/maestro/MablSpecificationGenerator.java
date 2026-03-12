@@ -278,6 +278,7 @@ public class MablSpecificationGenerator {
             }
 
         } catch (ExpandException e) {
+            e.printStackTrace();
             logger.error(String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),
                     callToBeReplaced.getMethodName().toString(), e.getMessage()), e);
             reporter.report(999, String.format("Internal error in plug-in '%s' at %s. Message: %s", replacementPlugin.getName(),

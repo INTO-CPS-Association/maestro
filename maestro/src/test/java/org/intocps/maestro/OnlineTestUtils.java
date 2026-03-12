@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
 import org.intocps.maestro.ast.node.ALoadExp;
@@ -92,7 +93,7 @@ public class OnlineTestUtils {
                             if (updatePath) {
                                 List<PExp> newArgs = new Vector<>();
                                 newArgs.addAll(node.getArgs());
-                                newArgs.set(2, new AStringLiteralExp("target/online-cache/" + fmuName));
+                                newArgs.set(2, new AStringLiteralExp(new LexLocation("unknown",0,0),"target/online-cache/" + fmuName));
                                 node.setArgs(newArgs);
                             }
                         } catch (MalformedURLException e) {

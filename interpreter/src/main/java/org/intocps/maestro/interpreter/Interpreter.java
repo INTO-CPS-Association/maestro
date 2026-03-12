@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
@@ -72,7 +73,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
 
     @Override
     public Value caseASimulationSpecificationCompilationUnit(ASimulationSpecificationCompilationUnit node,
-            Context question) throws AnalysisException {
+                                                             Context question) throws AnalysisException {
         return node.getBody().apply(this, question);
 
     }
@@ -380,7 +381,10 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
         if (node.getObject() != null) {
             Value v = node.getObject().apply(this, question).deref();
             if (v instanceof NullValue) {
-                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node.toString() + "\"");
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is null. Related call: \"" + node + "\"");
+                throw new InterpreterException("Unhandled node: " + node);
+            } else if (!(v instanceof ModuleValue)) {
+                logger.error("The target object: \"" + node.getObject().toString() + "\" is not a module. Related call: \"" + node + "\"");
                 throw new InterpreterException("Unhandled node: " + node);
             } else {
                 ModuleValue objectModule = (ModuleValue) v;
@@ -396,7 +400,7 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             } catch (InterpreterTransitionException te) {
                 throw te;
             } catch (Exception e) {
-                throw new InterpreterException("Unable to evaluate node: " + node, e);
+                throw new InterpreterException("Unable to evaluate node: " + node + " at " + node.getLocation(), e);
             }
         }
 
@@ -446,6 +450,8 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
             } else {
                 message = msg.toString();
             }
+
+            message += " \"" + node.getExp().getLocation().toString() + "\"";
         }
 
         throw new ErrorException(message);
@@ -646,6 +652,43 @@ public class Interpreter extends QuestionAnswerAdaptor<Context, Value> {
     @Override
     public Value caseATransferAsStm(ATransferAsStm node, Context question) {
         //this has no semantic meaning during normal execution
+        return new VoidValue();
+    }
+
+    @Override
+    public Value caseADebugStm(ADebugStm node, Context question) throws AnalysisException {
+
+        var tokens = node.getTokens() == null ? Collections.emptyList() : node.getTokens().stream().map(AStringLiteralExp::getValue).toList();
+        if (tokens.contains("context")) {
+            Context ctxt = question;
+            Stack<Context> stack = new Stack<>();
+            stack.push(ctxt);
+            while ((ctxt = ctxt.outer) != null) {
+                stack.push(ctxt);
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("Context stack:\n");
+            int depth = 0;
+            for (var frame : stack.reversed()) {
+                var prefix = Stream.generate(() -> "\t").limit(depth++).collect(Collectors.joining());
+                if (depth > 1) {
+                    sb.append("\n");
+                }
+                sb.append(prefix).append("## Context depth: ").append(depth).append(" ##\n");
+                if(frame.values.isEmpty())
+                {
+                    sb.append(prefix).append("\t").append("-- empty --").append("\n");
+                }
+                for (var entry : frame.values.entrySet().stream()
+                        .sorted(Comparator.comparing(e -> e.getKey().getText()))
+                        .toList()) {
+                    sb.append(prefix).append("\t").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+                }
+            }
+
+            logger.info(sb.toString());
+        }
+
         return new VoidValue();
     }
 

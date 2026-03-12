@@ -56,6 +56,8 @@ public class ImportCmd implements Callable<Integer> {
     List<File> fmuSearchPaths;
     @CommandLine.Option(names = {"-i", "--interpret"}, description = "Interpret spec after import")
     boolean interpret;
+    @CommandLine.Option(names = {"-udsp", "--use-dumped-spec-positions"}, description = "Use the position (line) from the dumped spec for interpretation")
+    boolean useDumpedSpecPositions;
     @CommandLine.Parameters(index = "1..*", description = "One or more specification files")
     List<File> files;
     @CommandLine.Option(names = "-output", description = "Path to a directory where the imported spec will be stored")
@@ -180,7 +182,16 @@ public class ImportCmd implements Callable<Integer> {
         }
 
         if (interpret) {
-            util.interpret();
+            if (useDumpedSpecPositions) {
+                util = new MablCliUtil(output, output, settings);
+                util.setVerbose(verbose);
+                util.parse(List.of(new File(output, "spec.mabl")));
+                if (util.typecheck()) {
+                    util.interpret();
+                }
+            } else {
+                util.interpret();
+            }
         }
         return 0;
     }
@@ -270,15 +281,13 @@ public class ImportCmd implements Callable<Integer> {
             if (graphsNode.isArray()) {
                 for (var graphNode : graphsNode) {
                     if (graphNode.has("livestream")) {
-                    var livestreamNode = graphNode.get("livestream");
+                        var livestreamNode = graphNode.get("livestream");
                         for (Iterator<String> it = livestreamNode.fieldNames(); it.hasNext(); ) {
                             var fieldName = it.next();
                             var listNode = livestreamNode.get(fieldName);
-                            if (listNode.isArray())
-                            {
+                            if (listNode.isArray()) {
                                 var list = new ArrayList<String>();
-                                for(var name : listNode)
-                                {
+                                for (var name : listNode) {
                                     list.add(name.asText());
                                 }
                                 if (!list.isEmpty()) {
@@ -290,7 +299,7 @@ public class ImportCmd implements Callable<Integer> {
                 }
             }
 
-            if(!livestream.isEmpty()) {
+            if (!livestream.isEmpty()) {
                 ((ObjectNode) rootNode).set("livestream", mapper.valueToTree(livestream));
 
             }

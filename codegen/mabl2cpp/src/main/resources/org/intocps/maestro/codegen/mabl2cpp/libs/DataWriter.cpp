@@ -1,11 +1,11 @@
 #include "DataWriter.h"
 #include <filesystem>
 
-#include <rapidjson/document.h>
-#include <fstream>
-#include <rapidjson/istreamwrapper.h>
 
-using namespace rapidjson;
+#include <fstream>
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 DataWriter load_DataWriter(const char *runtimeConfigPath) {
 
@@ -17,20 +17,17 @@ DataWriter load_DataWriter(const char *runtimeConfigPath) {
         using namespace std;
 
         ifstream ifs(runtimeConfigPath);
-        IStreamWrapper isw(ifs);
+        json d = json::parse(ifs);
 
-        Document d;
-        d.ParseStream(isw);
+        if (d.is_object()) {
+            if (d.contains("DataWriter") && d["DataWriter"].is_array()) {
 
-        if (d.IsObject()) {
-            if (d.HasMember("DataWriter") && d["DataWriter"].IsArray()) {
+                for (auto &v : d["DataWriter"]) {
+                    if (v.is_object()) {
 
-                for (auto &v : d["DataWriter"].GetArray()) {
-                    if (v.IsObject()) {
-
-                        if(v.HasMember("type")&& strcmp(v["type"].GetString(),"CSV")==0 && v.HasMember("filename"))
+                        if(v.contains("type")&& strcmp(v["type"].get<std::string>().c_str(),"CSV")==0 && v.contains("filename"))
                         {
-                            csvPath=v["filename"].GetString();
+                            csvPath=v["filename"].get<std::string>();
                             break;
                         }
                     }

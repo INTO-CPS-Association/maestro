@@ -38,7 +38,7 @@ public class StateMablVariableFmi3Api extends VariableFmi2Api<Object> implements
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
             InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
-                    .generate(builder, "setState", this.owner, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    .generate(builder, builder.getSettings().fmiErrorHandlingDetailEnabled,this.owner, (IMablScope) scope,new InstanceVariableFmi3Api.CallContext("setState",null), MablApiBuilder.Fmi3Status.FMI_ERROR,
                             MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
     }
@@ -59,7 +59,7 @@ public class StateMablVariableFmi3Api extends VariableFmi2Api<Object> implements
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
             InstanceVariableFmi3Api.FmiStatusErrorHandlingBuilder
-                    .generate(builder, "freeState", this.owner, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+                    .generate(builder, builder.getSettings().fmiErrorHandlingDetailEnabled, this.owner, (IMablScope) scope,new InstanceVariableFmi3Api.CallContext("freeState",null), MablApiBuilder.Fmi3Status.FMI_ERROR,
                             MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 

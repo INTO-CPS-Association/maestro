@@ -15,13 +15,13 @@
 #include <cctype>
 #include <filesystem>
 
-#include <rapidjson/document.h>
 #include <fstream>
-#include <rapidjson/istreamwrapper.h>
+#include <nlohmann/json.hpp>
+
+using nj = nlohmann::json;
 
 
 
-using namespace rapidjson;
 class MEnvImpl {
 private:
     bool to_bool(std::string str) {
@@ -33,7 +33,7 @@ private:
     }
 
     const char* runtimeConfigPath;
-    Document json;
+    nj json;
 
 public:
     MEnvImpl(const char* runtimeConfigPath) ;

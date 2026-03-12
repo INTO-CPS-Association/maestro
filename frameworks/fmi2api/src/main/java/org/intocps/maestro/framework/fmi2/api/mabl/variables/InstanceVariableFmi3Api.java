@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.MableAstFactory;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptor;
@@ -14,6 +15,7 @@ import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.ScopeFmi2Api;
+import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueExpresssionMapImpl;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.PortValueMapImpl;
 import org.slf4j.Logger;
@@ -26,13 +28,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
 import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.call;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVariable<PStm>> implements FmiBuilder.Fmi3InstanceVariable<PStm, Fmi3ModelDescription.Fmi3ScalarVariable> {
     final static Logger logger = LoggerFactory.getLogger(InstanceVariableFmi3Api.class);
     private final static int FMI_STATUS_LAST_SUCCESSFUL = 2;
@@ -48,9 +51,21 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 //    private final Map<IMablScope, Map<PortFmi3Api, Integer>> tentativeBufferIndexMap = new HashMap<>();
     private final String environmentName;
 
+    public static final Predicate<InstanceVariableFmi3Api> hasEventMode = instance -> {
+        try {
+            return instance.getModelDescription().getHasEventMode()|| instance.getModelDescription().getModelVariables().stream().anyMatch(v->v.getTypeIdentifier()== Fmi3TypeEnum.ClockType);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+    };
+
+
+    static ARefExp wrapAsRef(PExp exp) {
+        return new ARefExp(new LexLocation(exp.getLocation()), exp.clone());
+    }
 
     private final Buffers<Fmi3TypeEnum> buffers;
-    Predicate<FmiBuilder.Port> isLinked = p -> ((PortFmi3Api) p).getSourcePort() != null;
+    public final static Predicate<FmiBuilder.Port> isLinked = p -> ((PortFmi3Api) p).getSourcePort() != null;
     ModelDescriptionContext3 modelDescriptionContext;
     private ArrayVariableFmi2Api<Object> derSharedBuffer;
     private DoubleVariableFmi2Api currentTimeVar = null;
@@ -60,6 +75,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     private List<String> variablesToLog;
 
     Predicate<FmiBuilder.Port> obtainAsShared = p -> p.isLinked() || (variablesToLog != null && variablesToLog.contains(p.getName()));
+
+    public InstanceClocksFmi3 getClocksUtil() {
+        return clocksUtil;
+    }
+
+    private final InstanceClocksFmi3 clocksUtil;
 
     public InstanceVariableFmi3Api(PStm declaration, FmuVariableFmi3Api parent, String name, ModelDescriptionContext3 modelDescriptionContext,
                                    MablApiBuilder builder, IMablScope declaringScope, PStateDesignator designator, PExp referenceExp) {
@@ -76,13 +97,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         this.builder = builder;
 
         ports = modelDescriptionContext.nameToSv.values().stream().map(sv -> new PortFmi3Api(this, sv))
-                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).toList();
 
         outputPorts = ports.stream().filter(p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output)
-                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).toList();
 
         inputPorts = ports.stream().filter(p -> p.scalarVariable.getVariable().getCausality() == Fmi3Causality.Input)
-                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).collect(Collectors.toUnmodifiableList());
+                .sorted(Comparator.comparing(PortFmi3Api::getPortReferenceValue)).toList();
 
         this.environmentName = environmentName;
 
@@ -90,6 +111,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                 .stream().collect(Collectors.groupingBy(i -> i.getVariable().getTypeIdentifier())).entrySet().stream().collect(
                         Collectors.toMap(Map.Entry::getKey, l -> l.getValue().size()));
         this.buffers = new Buffers<>(builder, name, getDeclaringStm(), (ScopeFmi2Api) getDeclaredScope(), svTypeMaxCount);
+        this.clocksUtil = new InstanceClocksFmi3(builder, this);
     }
 
     public Fmi3ModelDescription getModelDescription() {
@@ -228,7 +250,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         String ioBufName = builder.getNameGenerator().getName(name);
 
         PType type = new ABooleanPrimitiveType();
-        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, new AExpInitializer(new ABoolLiteralExp(initial))));
+        PStm var = newALocalVariableStm(
+                newAVariableDeclaration(newAIdentifier(ioBufName), type, new AExpInitializer(new ABoolLiteralExp(new LexLocation("", 0, 0), initial))));
 
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
@@ -241,7 +264,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         String ioBufName = builder.getNameGenerator().getName(name);
 
         PType type = new ARealNumericPrimitiveType();
-        PStm var = newALocalVariableStm(newAVariableDeclaration(newAIdentifier(ioBufName), type, new AExpInitializer(new ARealLiteralExp(initial))));
+        PStm var = newALocalVariableStm(
+                newAVariableDeclaration(newAIdentifier(ioBufName), type, new AExpInitializer(new ARealLiteralExp(new LexLocation("", 0, 0), initial))));
 
         getDeclaredScope().addAfter(getDeclaringStm(), var);
 
@@ -273,7 +297,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
         scope.add(arrayContent, callStm);
 
-        handleError(scope, method);
+        handleError(scope, new CallContext(name, null));
     }
 
     @Override
@@ -302,7 +326,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                         Arrays.asList(newABoolLiteralExp(tolerance != null), newARealLiteralExp(tolerance != null ? tolerance : 0d),
                                 startTime.clone(), endTimeDefined, endTime != null ? endTime.clone() : newARealLiteralExp(0d)))));
         scope.add(stm);
-        handleError(scope, method);
+        handleError(scope, new CallContext(name, null));
     }
 
     @Override
@@ -340,7 +364,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
         scope.add(stm);
 
-        handleError(scope, method);
+        handleError(scope, new CallContext(method, null));
     }
 
     public void enterEventMode() {
@@ -365,21 +389,22 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     public void getEventIndicators(FmiBuilder.Scope<PStm> scope, FmiBuilder.ArrayVariable<PStm, ? extends FmiBuilder.UIntVariable<PStm>> eventIndicators,
                                    FmiBuilder.UIntVariable<PStm> nEventIndicators) {
 
-        fmiCall(scope, "getEventIndicators", new ARefExp(eventIndicators.getExp().clone()), nEventIndicators.getExp().clone());
+        fmiCall(scope, "getEventIndicators", wrapAsRef(eventIndicators.getExp().clone()), nEventIndicators.getExp().clone());
 
     }
 
     public void getNumberOfEventIndicators(FmiBuilder.Scope<PStm> scope, FmiBuilder.UIntVariable<PStm> nEventIndicators) {
-        fmiCall(scope, "getNumberOfEventIndicators", new ARefExp(nEventIndicators.getExp().clone()));
+        fmiCall(scope, "getNumberOfEventIndicators", wrapAsRef(nEventIndicators.getExp().clone()));
     }
 
-    private void handleError(FmiBuilder.Scope<PStm> scope, String method) {
-        handleError(scope, method, MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
+    void handleError(FmiBuilder.Scope<PStm> scope, CallContext callContext) {
+        handleError(scope, callContext.name(), callContext, MablApiBuilder.Fmi3Status.FMI_ERROR, MablApiBuilder.Fmi3Status.FMI_FATAL);
     }
 
-    private void handleError(FmiBuilder.Scope<PStm> scope, String method, MablApiBuilder.Fmi3Status... statusesToFail) {
+    private void handleError(FmiBuilder.Scope<PStm> scope, String method, CallContext callContext, MablApiBuilder.Fmi3Status... statusesToFail) {
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, method, this, (IMablScope) scope, statusesToFail);
+            FmiStatusErrorHandlingBuilder.generate(builder, builder.getSettings().fmiErrorHandlingDetailEnabled, this, (IMablScope) scope, callContext,
+                    statusesToFail);
         }
     }
 
@@ -403,7 +428,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     @Override
     public void exitInitializationMode(FmiBuilder.Scope<PStm> scope) {
-        fmiCall(scope,"exitInitializationMode");
+        fmiCall(scope, "exitInitializationMode");
     }
 
     public void getClock(ArrayVariableFmi2Api<UIntVariableFmi2Api> vrs, FmiBuilder.IntVariable<PStm> nvr,
@@ -414,8 +439,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     public void getClock(FmiBuilder.Scope<PStm> scope, ArrayVariableFmi2Api<UIntVariableFmi2Api> vrs, FmiBuilder.IntVariable<PStm> nvr,
                          ArrayVariableFmi2Api<BooleanVariableFmi2Api> triggeredClocks) {
-        fmiCall(scope,"getClock", vrs.getReferenceExp().clone(), nvr.getExp().clone(),
-                                new ARefExp(triggeredClocks.getExp().clone()));
+        fmiCall(scope, "getClock", vrs.getReferenceExp().clone(), nvr.getExp().clone(),
+                wrapAsRef(triggeredClocks.getExp().clone()));
     }
 
     public void setClock(ArrayVariableFmi2Api<UIntVariableFmi2Api> vrs, FmiBuilder.IntVariable<PStm> nvr,
@@ -427,8 +452,8 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     public void setClock(FmiBuilder.Scope<PStm> scope, ArrayVariableFmi2Api<UIntVariableFmi2Api> vrs, FmiBuilder.IntVariable<PStm> nvr,
                          ArrayVariableFmi2Api<BooleanVariableFmi2Api> triggeredClocks) {
 
-        fmiCall(scope,"setClock", vrs.getReferenceExp().clone(), nvr.getExp().clone(),
-                                triggeredClocks.getExp().clone());
+        fmiCall(scope, "setClock", vrs.getReferenceExp().clone(), nvr.getExp().clone(),
+                triggeredClocks.getExp().clone());
 
     }
 
@@ -437,13 +462,13 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                                      BooleanVariableFmi2Api nominalsOfContinuousStatesChanged, BooleanVariableFmi2Api valuesOfContinuousStatesChanged,
                                      BooleanVariableFmi2Api nextEventTimeDefined, DoubleVariableFmi2Api nextEventTime) {
 
-        fmiCall(scope,"updateDiscreteStates",
-                                new ARefExp(discreteStatesNeedUpdate.getReferenceExp().clone()),
-                                new ARefExp(terminateSimulation.getReferenceExp().clone()),
-                                new ARefExp(nominalsOfContinuousStatesChanged.getReferenceExp().clone()),
-                                new ARefExp(valuesOfContinuousStatesChanged.getReferenceExp().clone()),
-                                new ARefExp(nextEventTimeDefined.getReferenceExp().clone()),
-                                new ARefExp(nextEventTime.getReferenceExp().clone()));
+        fmiCall(scope, "updateDiscreteStates",
+                wrapAsRef(discreteStatesNeedUpdate.getReferenceExp().clone()),
+                wrapAsRef(terminateSimulation.getReferenceExp().clone()),
+                wrapAsRef(nominalsOfContinuousStatesChanged.getReferenceExp().clone()),
+                wrapAsRef(valuesOfContinuousStatesChanged.getReferenceExp().clone()),
+                wrapAsRef(nextEventTimeDefined.getReferenceExp().clone()),
+                wrapAsRef(nextEventTime.getReferenceExp().clone()));
 
     }
 
@@ -472,20 +497,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 //        return step(dynamicScope, currentCommunicationPoint, communicationStepSize, newABoolLiteralExp(false));
 //    }
 
+
     public static class StepResult {
-        final BooleanVariableFmi2Api eventHandlingNeeded;
-        final BooleanVariableFmi2Api terminateSimulation;
-        final BooleanVariableFmi2Api earlyReturn;
-
-        public StepResult(BooleanVariableFmi2Api eventHandlingNeeded, BooleanVariableFmi2Api terminateSimulation, BooleanVariableFmi2Api earlyReturn,
-                          DoubleVariableFmi2Api lastSuccessfulTime) {
-            this.eventHandlingNeeded = eventHandlingNeeded;
-            this.terminateSimulation = terminateSimulation;
-            this.earlyReturn = earlyReturn;
-            this.lastSuccessfulTime = lastSuccessfulTime;
-        }
-
-        final DoubleVariableFmi2Api lastSuccessfulTime;
+        BooleanVariableFmi2Api eventHandlingNeeded;
+        BooleanVariableFmi2Api terminateSimulation;
+        BooleanVariableFmi2Api earlyReturn;
+        DoubleVariableFmi2Api lastSuccessfulTime;
 
         public BooleanVariableFmi2Api getEventHandlingNeeded() {
             return eventHandlingNeeded;
@@ -502,31 +519,71 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         public DoubleVariableFmi2Api getLastSuccessfulTime() {
             return lastSuccessfulTime;
         }
+
+        public StepResult(BooleanVariableFmi2Api eventHandlingNeeded, BooleanVariableFmi2Api terminateSimulation, BooleanVariableFmi2Api earlyReturn,
+                          DoubleVariableFmi2Api lastSuccessfulTime) {
+            this.eventHandlingNeeded = eventHandlingNeeded;
+            this.terminateSimulation = terminateSimulation;
+            this.earlyReturn = earlyReturn;
+            this.lastSuccessfulTime = lastSuccessfulTime;
+        }
     }
 
-    StepResult stepResult;
+    StepResult stepResult = new StepResult(null, null, null, null);
 
     public Map.Entry<FmiBuilder.BoolVariable<PStm>, StepResult> step(FmiBuilder.Scope<PStm> scope,
                                                                      FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint,
                                                                      FmiBuilder.DoubleVariable<PStm> communicationStepSize,
-                                                                     PExp noSetFMUStatePriorToCurrentPoint) {
 
-        if (stepResult == null) {
-            stepResult = new StepResult(createReusableBooleanVariable(false, this.getDeclaredScope(), this.name + "EventHandlingNeeded"),
-                    createReusableBooleanVariable(false, this.getDeclaredScope(), this.name + "TerminateSimulation"),
-                    createReusableBooleanVariable(false, this.getDeclaredScope(), this.name + "EarlyReturn"),
-                    createReusableDoubleVariable(0d, this.getDeclaredScope(), this.name + "LastSuccessfulTime"));
+                                                                     PExp noSetFMUStatePriorToCurrentPoint, StepResult optionalStepResult) {
+        final String namePrefix = this.name;
+        final IMablScope declareScope = this.getDeclaredScope();
+        Function<String, BooleanVariableFmi2Api> booleanVariableSupplier = n -> createReusableBooleanVariable(false, declareScope, namePrefix + n);
+
+        var evenHandlingNeeded = optionalStepResult == null ? null : optionalStepResult.eventHandlingNeeded;
+        if (evenHandlingNeeded == null) {
+            if (stepResult.eventHandlingNeeded == null) {
+                evenHandlingNeeded = booleanVariableSupplier.apply("EventHandlingNeeded");
+                stepResult.eventHandlingNeeded = evenHandlingNeeded;
+            }
         }
+
+        var terminateSimulation = optionalStepResult == null ? null : optionalStepResult.terminateSimulation;
+        if (terminateSimulation == null) {
+            if (stepResult.terminateSimulation == null) {
+                terminateSimulation = booleanVariableSupplier.apply("TerminateSimulation");
+                stepResult.terminateSimulation = terminateSimulation;
+            }
+        }
+
+        var earlyReturn = optionalStepResult == null ? null : optionalStepResult.earlyReturn;
+        if (earlyReturn == null) {
+            if (stepResult.earlyReturn == null) {
+                earlyReturn = booleanVariableSupplier.apply("EarlyReturn");
+                stepResult.earlyReturn = earlyReturn;
+            }
+        }
+
+        var lastSuccessfulTime = optionalStepResult == null ? null : optionalStepResult.lastSuccessfulTime;
+        if (lastSuccessfulTime == null) {
+            if (stepResult.lastSuccessfulTime == null) {
+                lastSuccessfulTime = createReusableDoubleVariable(0d, this.getDeclaredScope(), this.name + "LastSuccessfulTime");
+                stepResult.lastSuccessfulTime = lastSuccessfulTime;
+            }
+        }
+
+
+        var result = new StepResult(evenHandlingNeeded, terminateSimulation, earlyReturn, lastSuccessfulTime);
 
 
         scope.add(newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
                 newACallExp(this.getReferenceExp().clone(), newAIdentifier("doStep"),
                         Arrays.asList(((VariableFmi2Api) currentCommunicationPoint).getReferenceExp().clone(),
                                 ((VariableFmi2Api) communicationStepSize).getReferenceExp().clone(), noSetFMUStatePriorToCurrentPoint.clone(),
-                                new ARefExp(stepResult.eventHandlingNeeded.getReferenceExp()).clone(),
-                                new ARefExp(stepResult.terminateSimulation.getReferenceExp()).clone(),
-                                new ARefExp(stepResult.earlyReturn.getReferenceExp()).clone(),
-                                new ARefExp(stepResult.lastSuccessfulTime.getReferenceExp()).clone()))));
+                                wrapAsRef(result.eventHandlingNeeded.getReferenceExp()).clone(),
+                                wrapAsRef(result.terminateSimulation.getReferenceExp()).clone(),
+                                wrapAsRef(result.earlyReturn.getReferenceExp()).clone(),
+                                wrapAsRef(result.lastSuccessfulTime.getReferenceExp()).clone()))));
 
         /*
               int doStep(
@@ -546,7 +603,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
 
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "doStep", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+            FmiStatusErrorHandlingBuilder.generate(builder, builder.getSettings().fmiErrorHandlingDetailEnabled,this, (IMablScope) scope, new CallContext("doStep", null), MablApiBuilder.Fmi3Status.FMI_ERROR,
                     MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 
@@ -565,7 +622,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 //                                ((VariableFmi2Api<?>) communicationStepSize).getReferenceExp().clone())),
 //                newAAssignmentStm(getCurrentTimeFullStepVar().getDesignator().clone(), newABoolLiteralExp(true)))));
 
-        return Map.entry(getCurrentTimeFullStepVar(), this.stepResult);
+        return Map.entry(getCurrentTimeFullStepVar(), result);
     }
 
     @Override
@@ -581,18 +638,18 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
     @Override
     public List<PortFmi3Api> getPorts(int... valueReferences) {
-        List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
+        List<Integer> accept = Arrays.stream(valueReferences).boxed().toList();
         return ports.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).collect(Collectors.toList());
     }
 
     @Override
     public PortFmi3Api getPort(String name) {
-        return this.getPorts(name).get(0);
+        return this.getPorts(name).getFirst();
     }
 
     @Override
     public PortFmi3Api getPort(int valueReference) {
-        return this.getPorts(valueReference).get(0);
+        return this.getPorts(valueReference).getFirst();
     }
 
     //TODO: Move tentative buffer and global share buffer logic to its own module so that it is not coupled with the component logic?
@@ -654,7 +711,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         if (ports == null || ports.length == 0) {
             return Map.of();
         } else {
-            selectedPorts = Arrays.stream(ports).map(PortFmi3Api.class::cast).collect(Collectors.toList());
+            selectedPorts = Arrays.stream(ports).map(PortFmi3Api.class::cast).toList();
         }
 
         Map<PortFmi3Api, VariableFmi2Api<V>> results = new HashMap<>();
@@ -665,7 +722,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         selectedPorts.stream().map(p -> p.scalarVariable.getVariable().getTypeIdentifier()).distinct()
                 .map(t -> selectedPorts.stream().filter(p -> p.scalarVariable.getVariable().getTypeIdentifier().equals(t))
                         .sorted(Comparator.comparing(FmiBuilder.Port::getPortReferenceValue)).collect(Collectors.toList()))
-                .forEach(l -> typeToSortedPorts.put(l.get(0).scalarVariable.getVariable().getTypeIdentifier(), l));
+                .forEach(l -> typeToSortedPorts.put(l.getFirst().scalarVariable.getVariable().getTypeIdentifier(), l));
 
         for (Map.Entry<Fmi3TypeEnum, List<PortFmi3Api>> e : typeToSortedPorts.entrySet()) {
             for (int i = 0; i < e.getValue().size(); i++) {
@@ -675,19 +732,25 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
             }
 
 //all ports should have the same type so lets use the first port to define the io array type
-            PortFmi3Api firstTargetPort = e.getValue().get(0);
+            PortFmi3Api firstTargetPort = e.getValue().getFirst();
             PType type = firstTargetPort.getType();
 
             ArrayVariableFmi2Api<Object> valBuf = this.buffers.getBuffer(Buffers.BufferTypes.IO, type,
                     firstTargetPort.getSourceObject().getVariable().getTypeIdentifier());
 
+            List<PExp> args = new ArrayList<>(
+                    List.of(vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), newARefExp(valBuf.getReferenceExp().clone())));
+            if (firstTargetPort.scalarVariable != null && firstTargetPort.scalarVariable.getVariable().getTypeIdentifier() == Fmi3TypeEnum.ClockType) {
+                // clocks do not have the latter size included
+            } else {
+                args.add(
+                        newAUIntLiteralExp((long) e.getValue().size()));
+            }
             AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
-                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, firstTargetPort),
-                            vrefBuf.getReferenceExp().clone(), newAUIntLiteralExp((long) e.getValue().size()), newARefExp(valBuf.getReferenceExp().clone()),
-                            newAUIntLiteralExp((long) e.getValue().size())));
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.GET, firstTargetPort), args));
             scope.add(stm);
 
-            handleError(scope, createFunctionName(FmiFunctionType.GET, firstTargetPort));
+            handleError(scope, new CallContext(createFunctionName(FmiFunctionType.GET, firstTargetPort), args));
 
             if (builder.getSettings().setGetDerivatives && type.equals(new ARealNumericPrimitiveType())) {
                 derivativePortsToShare = getDerivatives(e.getValue(), scope);
@@ -792,7 +855,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     @SuppressWarnings("unchecked")
     @Override
     public <V> Map<PortFmi3Api, VariableFmi2Api<V>> get(int... valueReferences) {
-        List<Integer> accept = Arrays.stream(valueReferences).boxed().collect(Collectors.toList());
+        List<Integer> accept = Arrays.stream(valueReferences).boxed().toList();
         return get(builder.getDynamicScope(),
                 outputPorts.stream().filter(p -> accept.contains(p.getPortReferenceValue().intValue())).toArray(FmiBuilder.Port[]::new));
     }
@@ -968,12 +1031,12 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         }
 
         List<PortFmi3Api> sortedPorts =
-                selectedPorts.stream().sorted(Comparator.comparing(FmiBuilder.Port::getPortReferenceValue)).collect(Collectors.toList());
+                selectedPorts.stream().sorted(Comparator.comparing(FmiBuilder.Port::getPortReferenceValue)).toList();
 
         // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
         sortedPorts.stream().collect(Collectors.groupingBy(i -> i.getSourceObject().getVariable().getTypeIdentifier().toString())).forEach((key, value) -> {
             ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
-            PortFmi3Api firstTargetPort = value.get(0);
+            PortFmi3Api firstTargetPort = value.getFirst();
             PType type = firstTargetPort.getType();
             for (int i = 0; i < value.size(); i++) {
                 FmiBuilder.Port p = value.get(i);
@@ -991,12 +1054,22 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                         portToValue.apply(p).getValue(), valBuf.type));
             }
 
+
+            List<PExp> args = new ArrayList<>(
+                    List.of(vrefBuf.getReferenceExp().clone(),
+                            newAIntLiteralExp(value.size()), valBuf.getReferenceExp().clone()));
+            if (firstTargetPort.scalarVariable != null && firstTargetPort.scalarVariable.getVariable().getTypeIdentifier() == Fmi3TypeEnum.ClockType) {
+                // clocks do not have the latter size included
+            } else {
+                args.add(
+                        newAIntLiteralExp(value.size()));
+            }
+
             AAssigmentStm stm = newAAssignmentStm(((IMablScope) scope).getFmiStatusVariable().getDesignator().clone(),
-                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, firstTargetPort), vrefBuf.getReferenceExp().clone(),
-                            newAIntLiteralExp(value.size()), valBuf.getReferenceExp().clone(), newAIntLiteralExp(value.size())));
+                    call(this.getReferenceExp().clone(), createFunctionName(FmiFunctionType.SET, firstTargetPort), args));
             scope.add(stm);
 
-            handleError(scope, createFunctionName(FmiFunctionType.SET, firstTargetPort));
+            handleError(scope, new CallContext(createFunctionName(FmiFunctionType.SET, firstTargetPort), args));
 
             // TODO: IntermediateUpdateMode instead of CanInterpolateInputs?
             // TODO: commented out for no so it compiles
@@ -1098,7 +1171,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                         derOrderInBuf.getReferenceExp().clone(), derValInBuf.getReferenceExp().clone()));
         scope.add(ifStm);
 
-        handleError(scope, method);
+        handleError(scope, new CallContext(method, null));
     }
 
     @Override
@@ -1196,7 +1269,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     @SuppressWarnings("unchecked")
     @Override
     public void setLinked(long... filterValueReferences) {
-        List<Long> accept = Arrays.stream(filterValueReferences).boxed().collect(Collectors.toList());
+        List<Long> accept = Arrays.stream(filterValueReferences).boxed().toList();
         this.setLinked(dynamicScope, getPorts().stream().filter(p -> accept.contains(p.getPortReferenceValue())).toArray(FmiBuilder.Port[]::new));
 
     }
@@ -1214,6 +1287,48 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     @Override
     public void terminate() {
         this.terminate(builder.getDynamicScope());
+    }
+
+    @Override
+    public Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>, ? extends FmiBuilder.DoubleVariable<PStm>> getClockInterval(
+            FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>... ports) {
+        this.clocksUtil.updateClockIntervals(scope, getValueReferenceBuffer(), ports);
+        return Map.of();
+    }
+
+
+    @Override
+    public Map<? extends FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>, ? extends FmiBuilder.DoubleVariable<PStm>> getClockShift(
+            FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>... ports) {
+
+        this.clocksUtil.updateClockShifts(scope, getValueReferenceBuffer(), ports);
+        return Map.of();
+    }
+
+    @Override
+    public void setClockInterval(FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm> port,
+                                 FmiBuilder.DoubleExpressionValue value) {
+        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
+//        vrefBuf.items().getFirst().setValue(port.getPortReferenceValue());
+        PStateDesignator designator = vrefBuf.items().getFirst().getDesignator().clone();
+        scope.add(newAAssignmentStm(designator, newAIntLiteralExp(port.getPortReferenceValue().intValue())));
+        var values=        getClocksUtil().getIntervalBuffer();
+        values.setValue(IntExpressionValue.of(0),value);
+        fmiCall(scope, "setIntervalDecimal", vrefBuf.getReferenceExp().clone(), new AIntLiteralExp(null,1).clone(),
+                values.getExp().clone());
+    }
+
+    @Override
+    public void setClockShift(FmiBuilder.Scope<PStm> scope, FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm> port,
+                              FmiBuilder.DoubleExpressionValue value) {
+        ArrayVariableFmi2Api<Object> vrefBuf = getValueReferenceBuffer();
+//        vrefBuf.items().getFirst().setValue(port.getPortReferenceValue());
+        PStateDesignator designator = vrefBuf.items().getFirst().getDesignator().clone();
+        scope.add(newAAssignmentStm(designator, newAIntLiteralExp(port.getPortReferenceValue().intValue())));
+var values=        getClocksUtil().getShiftBuffer();
+values.setValue(IntExpressionValue.of(0),value);
+        fmiCall(scope, "setShiftDecimal", vrefBuf.getReferenceExp().clone(), new AIntLiteralExp(null,1).clone(),
+                values.getExp().clone());
     }
 
     @Override
@@ -1235,7 +1350,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
 
         scope.add(stm);
 
-        handleError(scope, methodName);
+        handleError(scope, new CallContext(methodName, Arrays.asList(args)));
     }
 
     // TODO: these are work in progress
@@ -1261,7 +1376,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
         // Group by the string value of the port type as grouping by the port type itself doesnt utilise equals
         values.entrySet().stream().collect(Collectors.groupingBy(map -> ((PortFmi3Api) map.getKey()).getType().toString())).entrySet().stream()
                 .forEach(map -> {
-                    PType type = ((PortFmi3Api) map.getValue().get(0).getKey()).getType();
+                    PType type = ((PortFmi3Api) map.getValue().getFirst().getKey()).getType();
 
 
                     Map<FmiBuilder.Port<Fmi3ModelDescription.Fmi3ScalarVariable, PStm>, FmiBuilder.Variable> data =
@@ -1277,7 +1392,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                                 if (port.getSharedAsVariable() == null) {
                                     ArrayVariableFmi2Api<Object> newBuf = this.buffers.growBuffer(Buffers.BufferTypes.Share, buffer, 1, fmiType);
 
-                                    VariableFmi2Api<Object> newShared = newBuf.items().get(newBuf.items().size() - 1);
+                                    VariableFmi2Api<Object> newShared = newBuf.items().getLast();
                                     port.setSharedAsVariable(newShared);
                                 }
 
@@ -1301,7 +1416,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                                             ArrayVariableFmi2Api<Object> sharedDerBuf = growSharedDerBuf(1);
 
                                             ArrayVariableFmi2Api newSharedArray =
-                                                    (ArrayVariableFmi2Api) sharedDerBuf.items().get(sharedDerBuf.items().size() - 1);
+                                                    (ArrayVariableFmi2Api) sharedDerBuf.items().getLast();
                                             derivativePort.setSharedAsVariable(newSharedArray);
                                         }
 
@@ -1409,7 +1524,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
                 call(this.getReferenceExp().clone(), "getState", Collections.singletonList(newARefExp(state.getReferenceExp().clone()))));
         scope.add(stm);
         if (builder.getSettings().fmiErrorHandlingEnabled) {
-            FmiStatusErrorHandlingBuilder.generate(builder, "getState", this, (IMablScope) scope, MablApiBuilder.Fmi3Status.FMI_ERROR,
+            FmiStatusErrorHandlingBuilder.generate(builder, builder.getSettings().fmiErrorHandlingDetailEnabled,this, (IMablScope) scope, new CallContext("getState", null), MablApiBuilder.Fmi3Status.FMI_ERROR,
                     MablApiBuilder.Fmi3Status.FMI_FATAL);
         }
 
@@ -1421,7 +1536,7 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     }
 
     public List<PortFmi3Api> getAllConnectedOutputs() {
-        return this.ports.stream().filter(x -> x.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output && x.getTargetPorts().size() > 0)
+        return this.ports.stream().filter(x -> x.scalarVariable.getVariable().getCausality() == Fmi3Causality.Output && !x.getTargetPorts().isEmpty())
                 .collect(Collectors.toList());
     }
 
@@ -1443,12 +1558,19 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
     /**
      * Error and Fatal should lead to freeInstance calls followed by subsequent termination.
      */
+    record CallContext(String name, List<PExp> args) {
+    }
+
     static class FmiStatusErrorHandlingBuilder {
-        static void generate(MablApiBuilder builder, String method, InstanceVariableFmi3Api instance, IMablScope scope,
+
+        @SuppressWarnings("deprecation")
+        static void generate(MablApiBuilder builder, boolean includeDetails, InstanceVariableFmi3Api instance, IMablScope scope, CallContext callContext,
                              MablApiBuilder.Fmi3Status... statusesToFail) {
             if (statusesToFail == null || statusesToFail.length == 0) {
                 return;
             }
+
+            final var method = callContext.name();
 
             Function<MablApiBuilder.Fmi3Status, PExp> checkStatusEq =
                     s -> newEqual(scope.getFmiStatusVariable().getReferenceExp().clone(), builder.getFmiStatusConstant(s).getReferenceExp().clone());
@@ -1462,11 +1584,20 @@ public class InstanceVariableFmi3Api extends VariableFmi2Api<FmiBuilder.NamedVar
             ScopeFmi2Api thenScope = scope.enterIf(new PredicateFmi2Api(exp)).enterThen();
 
             // thenScope.add(newAAssignmentStm(builder.getGlobalExecutionContinue().getDesignator().clone(), newABoolLiteralExp(false)));
-
-            for (MablApiBuilder.Fmi3Status status : statusesToFail) {
-                ScopeFmi2Api s = thenScope.enterIf(new PredicateFmi2Api(checkStatusEq.apply(status))).enterThen();
-                builder.getLogger()
-                        .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
+            if (includeDetails) {
+                for (MablApiBuilder.Fmi3Status status : statusesToFail) {
+                    ScopeFmi2Api s = thenScope.enterIf(new PredicateFmi2Api(checkStatusEq.apply(status))).enterThen();
+                    if (Stream.of("get", "set").anyMatch(
+                            p -> Fmi3TypeEnum.getEntries().stream().anyMatch(t -> method.startsWith(p + t.name().substring(0, t.name().indexOf("Type")))))) {
+                        //we have FMI get/set with vr and nvr
+                        builder.getLogger()
+                                .logFmiCallVRefs(s, callContext.args().get(0).clone(), callContext.args().get(1).clone(),
+                                        method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
+                    } else {
+                        builder.getLogger()
+                                .error(s, method.substring(0, 1).toUpperCase() + method.substring(1) + " failed on '%s' with status: " + status, instance);
+                    }
+                }
             }
 
             thenScope.add(new AErrorStm(newAStringLiteralExp("Failed to '" + method + "' on '" + instance.getName() + "'")));

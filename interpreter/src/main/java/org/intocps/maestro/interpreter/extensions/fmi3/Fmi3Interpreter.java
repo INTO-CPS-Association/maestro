@@ -83,6 +83,14 @@ public class Fmi3Interpreter {
     static final ExternalReflectCallHelper.ArgMapping doubleOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Real, 1,
             ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
 
+    static long[] subRang(Value arrayValue, Value lengthValue) {
+        long[] vrefs = (long[]) longArrayInArgMapper.map(arrayValue);
+        int length = ((NumericValue) lengthValue.deref()).intValue();
+
+        return
+                Arrays.copyOfRange(vrefs, 0, length);
+    }
+
     final static Logger logger = LoggerFactory.getLogger(Interpreter.class);
     private final File workingDirectory;
     private final Function<String, AModuleDeclaration> resolver;
@@ -163,7 +171,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 Layout layout = PatternLayout.newBuilder().withPattern(pattern).withCharset(StandardCharsets.UTF_8).build();//
 
                 ILogMessageCallback logCallback = (instanceName, status, category, message) -> {
-                    logger.info("{} {} {} {}",category, status, instanceName , message);
+                    logger.info("{} {} {} {}", category, status, instanceName, message);
                     //logger.info("NATIVE: instance: '{}', status: '{}', category: '{}', message: {}", instanceName, status, category, message);
                     {
 
@@ -210,7 +218,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                     return new NullValue();
                 }
                 long stopInstantiateTime = System.nanoTime();
-                logger.info("Interpretation instantiate took: {}" , (stopInstantiateTime - startInstantiateTime));
+                logger.info("Interpretation instantiate took: {}", (stopInstantiateTime - startInstantiateTime));
 
                 return getFmuInstanceValue(fmuLogOutputStream, instance, name, resolver);
 
@@ -279,7 +287,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
     static boolean checkRequiredFunctions(AModuleDeclaration module, Map<String, Value> functions) {
         var expectedFunctions = module.getFunctions().stream().map(f -> f.getName().getText()).collect(Collectors.toSet());
 
-        var missingFunctions=expectedFunctions.stream().filter(f->!functions.containsKey(f)).collect(Collectors.toList());
+        var missingFunctions = expectedFunctions.stream().filter(f -> !functions.containsKey(f)).collect(Collectors.toList());
 
         if (!missingFunctions.isEmpty()) {
             logger.warn("Runtime type '{}' does not match declaration. Missing: '{}'", module.getName().getText(),
@@ -435,7 +443,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 3);
             try {
-                FmuResult<double[]> res = instance.getShiftDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                FmuResult<double[]> res = instance.getShiftDecimal(subRang(fcargs.get(0),fcargs.get(1)));
                 doubleArrayOutArgMapper.mapOut(fcargs.get(2), res.result);
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
@@ -448,7 +456,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 4);
             try {
-                FmuResult<IFmi3Instance.GetShiftFractionResponse> res = instance.getShiftFraction((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                FmuResult<IFmi3Instance.GetShiftFractionResponse> res = instance.getShiftFraction(subRang(fcargs.get(0),fcargs.get(1)));
                 uintArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getShiftCounters());
                 uintArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getResolutions());
                 return status2IntValue(res.status);
@@ -462,7 +470,8 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             //              out uint elementIndicesOfIndependents[], out int dependencyKinds[], int nDependencies);
             checkArgLength(fcargs, 6);
             try {
-                FmuResult<IFmi3Instance.VariableDependency> res = instance.getVariableDependencies((long) longInArgMapper.map(fcargs.get(0)), (long) intInArgMapper.map(fcargs.get(5)));
+                FmuResult<IFmi3Instance.VariableDependency> res = instance.getVariableDependencies((long) longInArgMapper.map(fcargs.get(0)),
+                        (long) intInArgMapper.map(fcargs.get(5)));
                 intArrayOutArgMapper.mapOut(fcargs.get(1), res.result.getElementIndicesOfDependent());
                 longArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getIndependents());
                 longArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getElementIndicesOfIndependents());
@@ -499,7 +508,8 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 //            int setIntervalDecimal(uint valueReferences[], int nValueReferences, real interval[]);
             checkArgLength(fcargs, 3);
             try {
-                Fmi3Status res = instance.setIntervalDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)), (double[]) doubleArrayInArgMapper.map(fcargs.get(2)));
+                Fmi3Status res = instance.setIntervalDecimal((long[]) longArrayInArgMapper.map(fcargs.get(0)),
+                        (double[]) doubleArrayInArgMapper.map(fcargs.get(2)));
                 return new IntegerValue(res.value);
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
@@ -558,7 +568,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 3);
             try {
-                FmuResult<boolean[]> res = instance.getClock((long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                FmuResult<boolean[]> res = instance.getClock(subRang(fcargs.get(0),fcargs.get(1)));
                 boolArrayOutArgMapper.mapOut(fcargs.get(2), res.result);
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
@@ -634,10 +644,11 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             checkArgLength(fcargs, 4);
             try {
+
                 FmuResult<IFmi3Instance.GetIntervalDecimalResponse> res = instance.getIntervalDecimal(
-                        (long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                        subRang(fcargs.get(0),fcargs.get(1)));
                 doubleArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getIntervals());
-                doubleArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getQualifiers());
+                intArrayOutArgMapper.mapOut(fcargs.get(3), Arrays.stream(res.result.getQualifiers()).mapToInt(Fmi3IntervalQualifier::getValue).toArray());
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
@@ -652,7 +663,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             checkArgLength(fcargs, 5);
             try {
                 FmuResult<IFmi3Instance.IntervalFractionResponse> res = instance.getIntervalFraction(
-                        (long[]) longArrayInArgMapper.map(fcargs.get(0)));
+                        subRang(fcargs.get(0),fcargs.get(1)));
                 uintArrayOutArgMapper.mapOut(fcargs.get(2), res.result.getIntervalCounters());
                 uintArrayOutArgMapper.mapOut(fcargs.get(3), res.result.getResolutions());
                 intInArgMapper.mapOut(fcargs.get(3), Arrays.stream(res.result.getQualifiers()).map(q -> q.getValue()).toArray());
@@ -700,8 +711,8 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
                 final ExternalReflectCallHelper.ArgMapping uintOutArgMapper = new ExternalReflectCallHelper.ArgMapping(TP.Long, 1,
                         ExternalReflectCallHelper.ArgMapping.InOut.Output, null);
                 uintOutArgMapper.mapOut(fcargs.get(0), res.result);
-                UpdatableValue v= (UpdatableValue) fcargs.get(0);
-                v.setValue(new UnsignedIntegerValue(((LongValue)v.deref()).getValue()));
+                UpdatableValue v = (UpdatableValue) fcargs.get(0);
+                v.setValue(new UnsignedIntegerValue(((LongValue) v.deref()).getValue()));
                 return status2IntValue(res.status);
             } catch (FmuInvocationException e) {
                 throw new InterpreterException(e);
@@ -878,7 +889,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
         }));
 
 
-        if(!checkRequiredFunctions(module, functions)){
+        if (!checkRequiredFunctions(module, functions)) {
             autobindWarnings.forEach(logger::warn);
         }
 
@@ -909,7 +920,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
             }
             File file = new File(uri);
 
-            final IFmi3Fmu fmu = new Fmu3(file);
+            final IFmi3Fmu fmu = file.isFile() ? new Fmu3(file) : new DirectoryFmi3Fmu(file, file.getName());
 
             fmu.load();
 
@@ -917,7 +928,7 @@ FMI2Component instantiateCoSimulationWrapAsFmi2(string instanceName, string inst
 
             long stopTime = System.nanoTime();
 
-            logger.debug("Interpretation load took: {}" , (stopTime - startExecTime));
+            logger.debug("Interpretation load took: {}", (stopTime - startExecTime));
 
             return new Fmu3Value(functions, fmu);
 

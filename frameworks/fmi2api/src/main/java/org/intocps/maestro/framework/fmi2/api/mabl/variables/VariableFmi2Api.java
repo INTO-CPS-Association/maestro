@@ -1,16 +1,14 @@
 package org.intocps.maestro.framework.fmi2.api.mabl.variables;
 
 import org.intocps.maestro.ast.MableAstFactory;
-import org.intocps.maestro.ast.node.PExp;
-import org.intocps.maestro.ast.node.PStateDesignator;
-import org.intocps.maestro.ast.node.PStm;
-import org.intocps.maestro.ast.node.PType;
+import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.BuilderUtil;
 import org.intocps.maestro.framework.fmi2.api.mabl.NumericExpressionValueFmi2Api;
 import org.intocps.maestro.framework.fmi2.api.mabl.scoping.IMablScope;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.DoubleExpressionValue;
 import org.intocps.maestro.framework.fmi2.api.mabl.values.IntExpressionValue;
+import org.intocps.maestro.typechecker.TypeComparator;
 
 import static org.intocps.maestro.ast.MableAstFactory.newAAssignmentStm;
 
@@ -118,10 +116,12 @@ public class VariableFmi2Api<V> implements FmiBuilder.Variable<PStm, V>, Indexed
 
 
     public NumericExpressionValueFmi2Api toMath() {
-        if (this instanceof DoubleVariableFmi2Api) {
-            return new DoubleExpressionValue(this.getExp());
-        } else if (this instanceof IntVariableFmi2Api) {
-            return new IntExpressionValue(this.getExp());
+
+
+        if (new TypeComparator().compatible(ARealNumericPrimitiveType.class, this.getType())) {
+            return new DoubleExpressionValue(this.getExp().clone());
+        } else if (new TypeComparator().compatible(SNumericPrimitiveType.class, this.getType())) {
+            return new IntExpressionValue(this.getExp().clone());
         } else {
             throw new RuntimeException("Variable is not of Numeric Type but of type: " + this.getClass());
         }

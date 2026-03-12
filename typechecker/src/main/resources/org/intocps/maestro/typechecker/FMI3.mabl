@@ -180,8 +180,8 @@ module FMI3Instance
         /* end::setClock[] */
     
         /* tag::getIntervalDecimal[] */
-        int getIntervalDecimal(uint valueReferences[], int nValueReferences, real intervals[],
-                int qualifiers[]);
+        int getIntervalDecimal(uint valueReferences[], int nValueReferences,out real intervals[],
+               out int qualifiers[]);
         /* end::getIntervalDecimal[] */
     
         /* tag::getIntervalFraction[] */
@@ -190,7 +190,7 @@ module FMI3Instance
         /* end::getIntervalFraction[] */
     
         /* tag::getShiftDecimal[] */
-        int getShiftDecimal(uint valueReferences[], int nValueReferences, real shifts[]);
+        int getShiftDecimal(uint valueReferences[], int nValueReferences,out real shifts[]);
         /* end::getShiftDecimal[] */
     
         /* tag::getShiftFraction[] */

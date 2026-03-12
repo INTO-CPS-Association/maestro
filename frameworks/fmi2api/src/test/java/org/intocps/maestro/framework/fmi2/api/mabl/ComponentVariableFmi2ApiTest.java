@@ -71,7 +71,7 @@ public class ComponentVariableFmi2ApiTest extends BaseApiAssertTest {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = false;
-        MablApiBuilder builder = new MablApiBuilder(settings, null);
+        MablApiBuilder builder = new MablApiBuilder(settings);
         DynamicActiveBuilderScope dynamicScope = builder.getDynamicScope();
 
         FmuVariableFmi2Api tankFMU =

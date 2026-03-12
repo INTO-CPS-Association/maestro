@@ -28,121 +28,51 @@ import static org.intocps.maestro.ast.MableAstFactory.*;
 import static org.intocps.maestro.ast.MableBuilder.newVariable;
 
 
+@SuppressWarnings("deprecation")
 public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecificationCompilationUnit, PExp, MablApiBuilder.MablSettings> {
 
-    static ScopeFmi2Api rootScope;
+    ScopeFmi2Api rootScope;
     final ScopeFmi2Api externalScope = new ScopeFmi2Api(this);
-    final DynamicActiveBuilderScope dynamicScope;
+    protected DynamicActiveBuilderScope dynamicScope;
     final TagNameGenerator nameGenerator = new TagNameGenerator();
-    final TryMaBlScope mainErrorHandlingScope;
-    private final IntVariableFmi2Api globalFmiStatus;
+    protected TryMaBlScope mainErrorHandlingScope;
+    protected IntVariableFmi2Api globalFmiStatus;
     private final MablToMablAPI mablToMablAPI;
     private final MablSettings settings;
-    private final Map<FmiStatusInterface, IntVariableFmi2Api> fmiStatusVariables;
+    protected final Map<Integer, IntVariableFmi2Api> fmiStatusVariables = new HashMap<>();
     private final Set<String> externalLoadedModuleIdentifier = new HashSet<>();
     int dynamicScopeInitialSize;
     Set<String> importedModules = new TreeSet<>();
     List<RuntimeModuleVariable> loadedModules = new Vector<>();
     Map<String, Object> instanceCache = new HashMap<>();
     Map<String, RuntimeModuleVariable> fromExistingSpecInstanceCache = new HashMap<>();
-    private MathBuilderFmi2Api mathBuilderApi;
 
     public MablApiBuilder() {
-        this(new MablSettings(), null);
+        this(new MablSettings());
     }
 
 
     public MablApiBuilder(MablSettings settings) {
-        this(settings, null);
-    }
-
-    /**
-     * Create a MablApiBuilder
-     *
-     * @param settings
-     */
-    public MablApiBuilder(MablSettings settings, INode lastNodePriorToBuilderTakeOver) {
-
-        boolean createdFromExistingSpec = lastNodePriorToBuilderTakeOver != null;
-
 
         this.settings = settings;
         rootScope = new ScopeFmi2Api(this);
 
-        fmiStatusVariables = new HashMap<>();
-        if (settings.fmiErrorHandlingEnabled) {
-            if (createdFromExistingSpec) {
-                //create new variables
-                Function<String, IntVariableFmi2Api> f = (str) -> new IntVariableFmi2Api(null, null, null, null, newAIdentifierExp(str));
-                for (FmiStatus s : FmiStatus.values()) {
-                    //if not existing then create
-                    AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, s.name());
-                    if (decl == null) {
-                        //create the status as it was not found
-                        fmiStatusVariables.put(s, rootScope.store(() -> this.getNameGenerator().getNameIgnoreCase(s.name()), s.getValue()));
-                    } else {
-                        //if exists then link to previous declaration
-                        fmiStatusVariables.put(s, f.apply(decl.getName().getText()));
-                    }
-                }
-            }
-        }
-
-        String status_varname = "status";
-
-        if (createdFromExistingSpec) {
-
-            AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "global_execution_continue");
-
-            decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, status_varname);
-            if (decl == null) {
-                globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
-            } else {
-                globalFmiStatus = (IntVariableFmi2Api) createVariableExact(rootScope, newIntType(), null, decl.getName().getText(), true);
-            }
-
-            //lets find the existing loaded instances
-            @NotNull List<AAssigmentStm> declaredAndLoadedAssignments = MablToMablAPI.getAncestors(lastNodePriorToBuilderTakeOver,
-                    n -> n instanceof AAssigmentStm).map(AAssigmentStm.class::cast).filter(n -> n.getExp() instanceof ALoadExp).collect(Collectors.toList());
-
-            @NotNull Map<AAssigmentStm, PStateDesignator> loadedDefinitions = declaredAndLoadedAssignments.stream()
-                    .collect(Collectors.toMap(n -> n, AAssigmentStm::getTarget));
-
-            Function<AAssigmentStm, String> loadedModuleName = n -> ((AStringLiteralExp) (((ALoadExp) n.getExp()).getArgs().get(0))).getValue();
-
-            @NotNull Map<String, RuntimeModuleVariable> c = loadedDefinitions.entrySet().stream()
-                    .filter(map -> (!loadedModuleName.apply(map.getKey()).startsWith("FMI")))
-                    .collect(Collectors.toMap(map -> loadedModuleName.apply(map.getKey()), map ->
-
-                            new RuntimeModuleVariable(null, new ANameType(new LexIdentifier(loadedModuleName.apply(map.getKey()), null)),
-                                   rootScope, getDynamicScope(), this, map.getValue().clone(),
-                                    newAIdentifierExp(((AIdentifierStateDesignator)map.getValue()).getName().getText()))
-                    ));
-            fromExistingSpecInstanceCache.putAll(c);
-
-        } else {
-
-            globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
-        }
+        initializeGlobalStatusVariables();
 
         mainErrorHandlingScope = rootScope.enterTry();
         this.dynamicScope = new DynamicActiveBuilderScope(mainErrorHandlingScope.getBody());
         this.mablToMablAPI = new MablToMablAPI(this);
 
-        if (createdFromExistingSpec) {
-            AVariableDeclaration decl = MablToMablAPI.findDeclaration(lastNodePriorToBuilderTakeOver, null, false, "logger");
-            if (decl != null) {
-                this.getMablToMablAPI().createExternalRuntimeLogger();
-            }
-
-            //reserve all previously names to avoid clashing with these
-            MablToMablAPI.getPreviouslyUsedNamed(lastNodePriorToBuilderTakeOver).forEach(this.nameGenerator::addUsedIdentifier);
-        }
-
-
         resetDirty();
-
     }
+
+    protected void initializeGlobalStatusVariables() {
+
+        String status_varname = "status";
+
+        globalFmiStatus = rootScope.store(status_varname, FmiStatus.FMI_OK.getValue());
+    }
+
 
     @Override
     public boolean isDirty() {
@@ -170,12 +100,12 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
     }
 
     private IntVariableFmi2Api getFmiStatusConstant_aux(FmiStatusInterface status) {
-        if (!this.fmiStatusVariables.containsKey(status)) {
-            IntVariableFmi2Api var = rootScope.store(status.getName(), status.getValue());
+        if (!this.fmiStatusVariables.containsKey(status.getValue())) {
+            IntVariableFmi2Api var = rootScope.store(status::getName, status.getValue());
             rootScope.addAfterOrTop(null, var.getDeclaringStm());
-            fmiStatusVariables.put(status, var);
+            fmiStatusVariables.put(status.getValue(), var);
         }
-        return this.fmiStatusVariables.get(status);
+        return this.fmiStatusVariables.get(status.getValue());
     }
 
     public IntVariableFmi2Api getFmiStatusConstant(FmiStatus status) {
@@ -194,43 +124,13 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return globalFmiStatus;
     }
 
-    @SuppressWarnings("rawtypes")
-    private Variable createVariable(IMablScope scope, PType type, PExp initialValue, String... prefixes) {
-        String name = nameGenerator.getName(prefixes);
-        return createVariableExact(scope, type, initialValue, name, false);
-    }
-
-    private Variable createVariableExact(IMablScope scope, PType type, PExp initialValue, String name, boolean external) {
-        PStm var = newVariable(name, type, initialValue);
-        if (!external) {
-            scope.add(var);
-        }
-        this.externalScope.add(var);
-        if (type instanceof ARealNumericPrimitiveType) {
-            return new DoubleVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
-        } else if (type instanceof ABooleanPrimitiveType) {
-            return new BooleanVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
-        } else if (type instanceof AIntNumericPrimitiveType) {
-            return new IntVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
-        } else if (type instanceof AStringPrimitiveType) {
-            return new StringVariableFmi2Api(var, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
-        }
-
-        return new VariableFmi2Api(var, type, externalScope, dynamicScope, newAIdentifierStateDesignator(name), newAIdentifierExp(name));
-    }
 
     public TagNameGenerator getNameGenerator() {
         return nameGenerator;
     }
 
     public MathBuilderFmi2Api getMathBuilder() {
-        if (this.mathBuilderApi == null) {
-            RuntimeModuleVariable runtimeModule = this.loadRuntimeModule("Math");
-
-            this.mathBuilderApi = new MathBuilderFmi2Api(this.dynamicScope, this, runtimeModule.getReferenceExp());
-        }
-        return this.mathBuilderApi;
-
+        return load("Math", runtime -> new MathBuilderFmi2Api(this.dynamicScope, this, runtime.getExp()));
     }
 
     @Override
@@ -243,6 +143,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return this.dynamicScope;
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public <V, T> Variable<T, V> getCurrentLinkedValue(Port port) {
         PortFmi2Api mp = (PortFmi2Api) port;
@@ -289,6 +190,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
         return new BooleanVariableFmi2Api(null, rootScope, this.dynamicScope, t.getLeft(), t.getRight());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public FmuVariableFmi2Api getFmuVariableFrom(PExp exp) {
         return null;
@@ -409,7 +311,11 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
 
     @Override
     public ASimulationSpecificationCompilationUnit build() throws AnalysisException {
-        SBlockStm block = rootScope.getBlock().clone();
+        return internalBuild(rootScope);
+    }
+
+    public ASimulationSpecificationCompilationUnit internalBuild(ScopeFmi2Api scope) throws AnalysisException {
+        SBlockStm block = scope.getBlock().clone();
 
         //        SBlockStm errorHandingBlock = this.getErrorHandlingBlock(block);
 
@@ -509,11 +415,9 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
             @Override
             public void caseABasicBlockStm(ABasicBlockStm node) throws AnalysisException {
                 if (node.getBody().isEmpty()) {
-                    if (node.parent() instanceof SBlockStm) {
-                        SBlockStm pb = (SBlockStm) node.parent();
+                    if (node.parent() instanceof SBlockStm pb) {
                         pb.getBody().remove(node);
-                    } else if (node.parent() instanceof AIfStm) {
-                        AIfStm ifStm = (AIfStm) node.parent();
+                    } else if (node.parent() instanceof AIfStm ifStm) {
 
                         if (ifStm.getElse() == node) {
                             ifStm.setElse(null);
@@ -524,7 +428,6 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
                 }
             }
         });
-
     }
 
     public FunctionBuilder getFunctionBuilder() {
@@ -582,9 +485,9 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
 
     <T> T load(String moduleType, Function<FmiBuilder.RuntimeModule<PStm>, T> creator, Object... args) {
 
-        if(fromExistingSpecInstanceCache.containsKey(moduleType)&& !instanceCache.containsKey(moduleType)) {
+        if (fromExistingSpecInstanceCache.containsKey(moduleType) && !instanceCache.containsKey(moduleType)) {
             //lets convert the instance
-            instanceCache.put(moduleType,creator.apply(fromExistingSpecInstanceCache.get(moduleType)));
+            instanceCache.put(moduleType, creator.apply(fromExistingSpecInstanceCache.get(moduleType)));
         }
 
         if (instanceCache.containsKey(moduleType)) {
@@ -682,6 +585,7 @@ public class MablApiBuilder implements FmiBuilder<PStm, ASimulationSpecification
          * Automatically perform FMI2ErrorHandling
          */
         public boolean fmiErrorHandlingEnabled = true;
+        public boolean fmiErrorHandlingDetailEnabled = false;
         /**
          * Automatically retrieves and sets derivatives if possible
          */

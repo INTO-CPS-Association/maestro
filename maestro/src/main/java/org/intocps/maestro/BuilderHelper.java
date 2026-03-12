@@ -2,6 +2,7 @@ package org.intocps.maestro;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.analysis.DepthFirstAnalysisAdaptorQuestion;
 import org.intocps.maestro.ast.node.*;
@@ -11,10 +12,7 @@ import org.intocps.maestro.framework.fmi2.ComponentInfo;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.InstanceInfo;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.FromMaBLToMaBLAPI;
-import org.intocps.maestro.framework.fmi2.api.mabl.MablApiBuilder;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext;
-import org.intocps.maestro.framework.fmi2.api.mabl.ModelDescriptionContext3;
+import org.intocps.maestro.framework.fmi2.api.mabl.*;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.*;
 import org.intocps.maestro.typechecker.TypeComparator;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -39,7 +37,7 @@ public class BuilderHelper {
 
         MablApiBuilder.MablSettings settings = new MablApiBuilder.MablSettings();
         settings.fmiErrorHandlingEnabled = true;
-        this.builder = new MablApiBuilder(settings, callToBeReplaced);
+        this.builder = new ExpansionMableApiBuilder(settings, callToBeReplaced);
 
         // Build a graph from AInstanceMapping. I.e. if FMU instance A is faultinjected by B then the graph should be
         // B -> A
@@ -130,7 +128,7 @@ public class BuilderHelper {
 
                             return new FmuVariableFmi2Api(instance.getOwnerIdentifier(), builder, mdc, dummyStm, newANameType("FMI2"),
                                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                    new AIdentifierExp(new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
+                                    new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
 
                         } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
                             throw new RuntimeException(e);
@@ -142,7 +140,7 @@ public class BuilderHelper {
 
                             return new FmuVariableFmi3Api(instance.getOwnerIdentifier(), builder, mdc, dummyStm, newANameType("FMI3"),
                                     builder.getDynamicScope().getActiveScope(), builder.getDynamicScope(), null,
-                                    new AIdentifierExp(new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
+                                    new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier(instance.getOwnerIdentifier().replace("{", "").replace("}", ""), null)));
                         } catch (IllegalAccessException | XPathExpressionException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }

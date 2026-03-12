@@ -2,6 +2,7 @@ package org.intocps.maestro.framework.fmi2.api.mabl;
 
 import org.intocps.maestro.ast.AVariableDeclaration;
 import org.intocps.maestro.ast.LexIdentifier;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
 import org.intocps.maestro.framework.fmi2.api.mabl.variables.RuntimeModuleVariable;
@@ -192,7 +193,7 @@ public class MablToMablAPI {
     public MathBuilderFmi2Api getMathBuilder() {
         if (this.mathBuilderFmi2Api == null) {
             this.mathBuilderFmi2Api = new MathBuilderFmi2Api(this.mablApiBuilder.dynamicScope, this.mablApiBuilder,
-                    new AIdentifierExp(new LexIdentifier("math", null)));
+                    new AIdentifierExp(new LexLocation("",0,0),new LexIdentifier("math", null)));
         }
         return this.mathBuilderFmi2Api;
     }

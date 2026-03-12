@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.jnifmuapi.fmi3.Fmu3;
 import org.intocps.maestro.Mabl;
+import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
 import org.intocps.maestro.core.Framework;
@@ -160,7 +161,7 @@ public class BuilderFmi3Test {
 
 //       //step the instance
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
         currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
         csv.log(currentCommunicationPoint);
@@ -322,7 +323,7 @@ public class BuilderFmi3Test {
         FmiBuilder.DoubleVariable<PStm> currentCommunicationPoint = scope.store("time", 0d);
         FmiBuilder.DoubleVariable<PStm> stepSize = scope.store("step", 0.1d);
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
 //        stepRes.getValue().getLastSuccessfulTime()
 
@@ -482,7 +483,7 @@ public class BuilderFmi3Test {
 
 //       //step the instance
         Map.Entry<FmiBuilder.BoolVariable<PStm>, InstanceVariableFmi3Api.StepResult> stepRes = instance.step(scope, currentCommunicationPoint,
-                stepSize, new ABoolLiteralExp(false));
+                stepSize, new ABoolLiteralExp(new LexLocation("unknown",0,0),false),null);
 
         currentCommunicationPoint.setValue(currentCommunicationPoint.toMath().addition(stepSize));
 

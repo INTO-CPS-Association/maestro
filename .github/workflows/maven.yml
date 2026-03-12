@@ -16,7 +16,6 @@ env:
   PYTHON_VERSION: '3.12.2'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-latest'
-  MACOS_VERSION: 'macos-13'
 
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
@@ -29,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, windows-latest, macos-13 ]
+        os: [ ubuntu-22.04, windows-latest, macos-15-intel ]
 
     steps:
       - uses: actions/checkout@v2
@@ -46,11 +45,42 @@ jobs:
         with:
           maven-version: ${{ ENV.MAVEN_VERSION }}
 
-      - name: Put MSYS2_MinGW64 on PATH for windows
-        if: ${{matrix.os == env.WINDOWS_VERSION }}
-        # there is not yet an environment variable for this path from msys2/setup-msys2
-        # We need this to get a gcc 11.2 that is new enough to compile the reference FMU3
-        run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: '${{ matrix.icon }} Setup MSYS2'
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          path-type: inherit
+          install: >-
+            git
+            make
+            mingw-w64-ucrt-x86_64-zlib
+            mingw-w64-ucrt-x86_64-libzip
+            mingw-w64-ucrt-x86_64-gcc
+
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+
+#      - name: Put MSYS2 on PATH
+#        if: runner.os == 'Windows'
+#        run: |
+#          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#
+#      - name: Install C++ toolchain
+#        if: runner.os == 'Windows'
+#        shell: msys2 {0}
+#        run: |
+#          pacman -S --noconfirm mingw-w64-ucrt-x86_64-gcc
+#
+#      - name: Put MSYS2_MinGW64 on PATH for windows
+#        if: ${{matrix.os == env.WINDOWS_VERSION }}
+#        # there is not yet an environment variable for this path from msys2/setup-msys2
+#        # We need this to get a gcc 11.2 that is new enough to compile the reference FMU3
+#        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
 
       - name: Install vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
@@ -62,6 +92,9 @@ jobs:
         if: ${{matrix.os == env.WINDOWS_VERSION }}
         run: .\vcpkg\vcpkg install zlib
 
+      - name: Install latest CMake
+        if: matrix.os == 'macos-15-intel'
+        run: brew install cmake
 
       - name: Cache local Maven repository
         uses: actions/cache@v3
@@ -76,12 +109,16 @@ jobs:
 
       - name: Maven Test
         if: matrix.os == env.WINDOWS_VERSION
+        shell: msys2 {0}
         env:
           ZLIB_ROOT: ${{ github.workspace }}\vcpkg\installed\x64-windows
           ZLIB_LIBRARY: ${{ github.workspace }}\vcpkg\installed\x64-windows\lib\zlib.lib
           ZLIB_INCLUDE_DIR: ${{ github.workspace }}\vcpkg\installed\x64-windows\include
           CMAKE_PREFIX_PATH: ${{ github.workspace }}\vcpkg\installed\x64-windows
-        run: mvn -Pinclude-fullSpecCppTest test
+        run: |
+          export PATH="$(/usr/bin/cygpath -u "$PATH"):$PATH"
+
+          mvn -Pinclude-fullSpecCppTest test
 
       - name: Maven Test
         if: matrix.os != env.WINDOWS_VERSION

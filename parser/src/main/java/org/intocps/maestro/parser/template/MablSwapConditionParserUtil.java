@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import static org.intocps.maestro.parser.MablParserUtil.getLexLocation;
 public class MablSwapConditionParserUtil {
 
     public static PExp parse(CharStream specStreams) {
@@ -92,7 +92,7 @@ public class MablSwapConditionParserUtil {
 
         @Override
         public INode visitParenExp(MablSwapConditionParser.ParenExpContext ctx) {
-            return new AParExp((PExp) this.visit(ctx.expression()));
+            return new AParExp(getLexLocation(ctx),(PExp) this.visit(ctx.expression()));
         }
 
         @Override
@@ -144,7 +144,7 @@ public class MablSwapConditionParserUtil {
 
         @Override
         public INode visitIdentifierExp(MablSwapConditionParser.IdentifierExpContext ctx) {
-            return new AIdentifierExp(convert(ctx.IDENTIFIER()));
+            return new AIdentifierExp(getLexLocation(ctx),convert(ctx.IDENTIFIER()));
         }
 
         @Override
@@ -163,7 +163,7 @@ public class MablSwapConditionParserUtil {
 
         @Override
         public INode visitParExpression(MablSwapConditionParser.ParExpressionContext ctx) {
-            return new AParExp((PExp) this.visit(ctx.expression()));
+            return new AParExp(getLexLocation(ctx),(PExp) this.visit(ctx.expression()));
         }
 
         void checkList(List source, List processed) {

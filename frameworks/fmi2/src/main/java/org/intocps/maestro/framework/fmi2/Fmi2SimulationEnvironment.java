@@ -749,7 +749,11 @@ public class Fmi2SimulationEnvironment implements ISimulationEnvironment, ISimul
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
             doc.getDocumentElement().normalize();
-            return Double.parseDouble((String) xPath.compile("fmiModelDescription/@fmiVersion").evaluate(doc, XPathConstants.STRING));
+            var version =(String) xPath.compile("fmiModelDescription/@fmiVersion").evaluate(doc, XPathConstants.STRING);
+            if(version.contains("-")){
+                version = version.substring(0, version.indexOf("-"));
+            }
+            return Double.parseDouble(version);
         }
 
         @Override

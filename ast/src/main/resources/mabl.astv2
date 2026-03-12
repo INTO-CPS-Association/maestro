@@ -18,6 +18,7 @@ Tokens
     java_Float = 'java:java.lang.Float';
     java_Long = 'java:java.lang.Long';
     lex_identifier='java:org.intocps.maestro.ast.LexIdentifier';
+    lex_location='java:org.intocps.maestro.ast.LexLocation';
 
     parserToken = 'java:node:org.intocps.maestro.ast.LexToken';
 
@@ -72,7 +73,7 @@ parameter
 
 
 
-exp
+exp { -> package='org.intocps.maestro.ast.node' | [location]:lex_location}
     = {identifier} [name]:lex_identifier
     | #literal
     | {load} [args]:exp*
@@ -139,6 +140,7 @@ stm
     | {fmuMapping} [identifier]:lex_identifier [name]:java_String
     | {transfer} [names]:exp.#literal.string*
     | {transferAs} [names]:exp.#literal.string*
+    | {debug} [tokens]:exp.#literal.string*
     | {config} [config]:java_String
     | {error} [exp]:exp
     | {try} [body]:stm.#block.basic [finally]:stm.#block.basic
