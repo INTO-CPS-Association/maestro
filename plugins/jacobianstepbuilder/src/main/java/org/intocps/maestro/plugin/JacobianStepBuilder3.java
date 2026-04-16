@@ -65,7 +65,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
         // preconfigure the step size to the shift only if we have clocks
         int clockIndex = 1;
         ctxt.stepSizes.items().getFirst().setValue(ctxt.stepSize);
-        builder.getLogger().debug("## StepSizes[0]: %s", ctxt.stepSizes.items().get(0));
+        builder.getLogger().trace("## StepSizes[0]: %s", ctxt.stepSizes.items().get(0));
         for (var instance : ctxt.fmu3Instances.entrySet()) {
             var clockTimePorts = instance.getValue().getPorts().stream().filter(isClockTimeBased).toList();
             for (var clockPort : clockTimePorts) {
@@ -75,10 +75,10 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                 InstanceClocksFmi3 clocks = instance.getValue().getClocksUtil();
 
                 stepSizeVar.setValue(clocks.getTimeToTick(ctxt.currentCommunicationTime.toMath(), clockPort));
-                builder.getLogger().debug("## StepSizes[" + (clockIndex - 1) + "]: %s", stepSizeVar);
+                builder.getLogger().trace("## StepSizes[" + (clockIndex - 1) + "]: %s", stepSizeVar);
             }
         }
-        builder.getLogger().debug("## current time: %s", ctxt.currentCommunicationTime);
+        builder.getLogger().trace("## current time: %s", ctxt.currentCommunicationTime);
         return builder.getMathBuilder().minRealFromArray(ctxt.stepSizes);
 
 
@@ -97,7 +97,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
         ctxt.eventMode.setValue(BooleanExpressionValue.of(true));
         var eventUpdatingFlags = fmuInstances3.entrySet().stream().filter(map -> hasEventMode.test(map.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, map -> builder.getDynamicScope().store(map.getKey() + "ProcessEvents", true)));
-        builder.getLogger().debug("EVENT - Get and Share clocks");
+        builder.getLogger().trace("EVENT - Get and Share clocks");
 //            for (var instance : eventCapableInstances) {
 //                var clockPorts = instance.getPorts().stream().filter(isClock).toList();
 //                // initial get all output clocks
@@ -145,7 +145,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
 
     private static void deactivateAllClocks(MablApiBuilder builder, List<InstanceVariableFmi3Api> eventCapableInstances,
                                             JacobianInternalBuilder.Jacobian3Context ctxt) {
-        builder.getLogger().debug("EVENT - Deactivated all clocks");
+        builder.getLogger().trace("EVENT - Deactivated all clocks");
         eventCapableInstances.forEach(
                 instance -> instance.getPorts().stream().filter(isClock).filter(isCausalityOutput.and(isClockTriggered))
                         .forEach(port -> port.getSharedAsVariable().setValue(new BooleanExpressionValue(false))));
@@ -153,12 +153,12 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
         eventCapableInstances.forEach(
                 instance -> instance.getPorts().stream().filter(isClock).filter(isClockTimeBased).forEach(port ->
                         instance.getClocksUtil().deactivate(port)));
-        builder.getDynamicScope().add(new ADebugStm(Collections.singletonList(new AStringLiteralExp(null, "context"))));
+        //builder.getDynamicScope().add(new ADebugStm(Collections.singletonList(new AStringLiteralExp(null, "context"))));
     }
 
     private static void updateTriggeredClocks(MablApiBuilder builder, List<InstanceVariableFmi3Api> eventCapableInstances) {
         //get all triggered output clocks and make them available
-        builder.getLogger().debug("Processing clock (triggered clocks)");
+        builder.getLogger().trace("Processing clock (triggered clocks)");
         //noinspection unchecked
         eventCapableInstances.forEach(
                 instance -> {
@@ -209,7 +209,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             dynamicScope.enterIf(didDiscard);
             {
                 builder.getLogger()
-                        .debug("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", instance.getName(),
+                        .trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", instance.getName(),
                                 communicationTime, ctxt.currentStepSize,
                                 new VariableFmi2Api<>(null, discard.getValue().getType(), dynamicScope, dynamicScope, null,
                                         discard.getValue().getExp()));
@@ -255,7 +255,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             dynamicScope.enterIf(didDiscard);
             {
                 builder.getLogger()
-                        .debug("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", instance.getName(),
+                        .trace("## FMU: '%s' DISCARDED step at sim-time: %f for step-size: %f and proposed sim-time: %.15f", instance.getName(),
                                 communicationTime, ctxt.currentStepSize,
                                 new VariableFmi2Api<>(null, stepReturnData.getLastSuccessfulTime().getType(), dynamicScope, dynamicScope, null,
                                         stepReturnData.getLastSuccessfulTime().getExp()));
@@ -310,7 +310,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                     dontCareReal);
 
             var ifNeedsProcessing = builder.getDynamicScope().enterIf(processEvents.toPredicate());
-            builder.getLogger().info("## FMU: " + instance.getName() + " EVENTS UPDATED");
+            builder.getLogger().trace("## FMU: " + instance.getName() + " EVENTS UPDATED");
             ifNeedsProcessing.leave();
             //TODO check for terminate simulation
 
@@ -345,15 +345,15 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             if (timeBasedClockPorts.isEmpty()) {
                 continue;
             }
-            builder.getLogger().debug("Processing clock (time-based clocks) for " + instance.getName());
+            builder.getLogger().trace("Processing clock (time-based clocks) for " + instance.getName());
             timeBasedClockPorts.forEach(clockPort -> {
 
                 var ifScope = builder.getDynamicScope()
                         .enterIf(instance.getClocksUtil().check(builder.getDynamicScope(), ctxt.currentCommunicationTime.toMath(), clockPort));
-                builder.getLogger().debug("\tTimed clock of %s.%s TRIGGERED".formatted(instance.getName(), clockPort.getName()));
+                builder.getLogger().trace("\tTimed clock of %s.%s TRIGGERED".formatted(instance.getName(), clockPort.getName()));
                 instance.set(clockPort, BooleanExpressionValue.of(true));
                 synchronizeLinkedClockDependentVariables(instance, clockPort);
-                builder.getDynamicScope().add(new ADebugStm(Collections.singletonList(new AStringLiteralExp(null, "context"))));
+                //builder.getDynamicScope().add(new ADebugStm(Collections.singletonList(new AStringLiteralExp(null, "context"))));
                 ifScope.leave();
 
             });
@@ -395,7 +395,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                                                                   ISimulationEnvironment envIn, IErrorReporter errorReporter) throws ExpandException {
 
 
-        logger.info("Unfolding with jacobian step: {}", declaredFunction.toString());
+        logger.trace("Unfolding with jacobian step: {}", declaredFunction.toString());
         JacobianStepConfig jacobianStepConfig = config != null ? (JacobianStepConfig) config : new JacobianStepConfig();
 
         if (!getDeclaredUnfoldFunctions().contains(declaredFunction)) {
@@ -417,7 +417,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             imports.add("VariableStep");
         } else if (selectedFun == fixedStepTransferFunc) {
             algorithm = StepAlgorithm.FIXEDSTEP;
-            logger.debug("Activated mode transfer");
+            logger.trace("Activated mode transfer");
         }
 
         if (formalArguments == null || formalArguments.size() != selectedFun.getDecl().getFormals().size()) {
@@ -494,7 +494,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             Map<InstanceVariableFmi3Api, Map<PortFmi3Api, VariableFmi2Api<Object>>> instancesToPortsWithValues = JacobianVariableStepBuilder.getAllInstancePortsWithOutputOrLog(
                     fmuInstances3, jacobianStepConfig, env);
 
-            builder.getLogger().debug(blockMessage("Jaccobian start"));
+            builder.getLogger().trace(blockMessage("Jaccobian start"));
 
             // Share
             componentsToPortsWithValues.forEach(ComponentVariableFmi2Api::share);
@@ -550,8 +550,8 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
 
 
             // Event Init step 1: get clocks from others
-            builder.getLogger().debug(blockMessage("Jaccobian Event handling before loop"));
-            builder.getLogger().debug("EVENT - Before step event handling");
+            builder.getLogger().trace(blockMessage("Jaccobian Event handling before loop"));
+            builder.getLogger().trace("EVENT - Before step event handling");
             var eventCapableInstances = fmuInstances3.values().stream().filter(hasEventMode).toList();
             var eventUpdatingFlags = updateEventsInEventMode(builder, eventCapableInstances, fmuInstances3, dataWriterInstance, ctxt, true);
 
@@ -578,7 +578,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
             // Initialise swap and step condition variables
             ModelSwapBuilder.ModelSwapContext modelSwapContext = ModelSwapBuilder.buildContext(env, dynamicScope);
 
-            builder.getLogger().debug(blockMessage("Jaccobian main loop"));
+            builder.getLogger().trace(blockMessage("Jaccobian main loop"));
             ScopeFmi2Api scopeFmi2Api = dynamicScope.enterWhile(loopPredicate);
             {
                 ScopeFmi2Api stoppingThenScope = scopeFmi2Api.enterIf(simulationControl.stopRequested().toPredicate()).enterThen();
@@ -656,7 +656,7 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                         // Set step-size to lowest
                         ctxt.currentStepSize.setValue(math.minRealFromArray(fmuCommunicationPoints).toMath().subtraction(ctxt.currentCommunicationTime));
 
-                        builder.getLogger().debug("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", ctxt.currentStepSize);
+                        builder.getLogger().trace("## Discard occurred! FMUs are rolled back and step-size reduced to: %f", ctxt.currentStepSize);
 
                         dynamicScope.leave();
                     }
@@ -694,10 +694,10 @@ public class JacobianStepBuilder3 extends JacobianStepBuilder {
                     ctxt.currentStepSize.setValue(calculateNextStepSize(builder, ctxt, timeBasedInputClockPorts));
                     var checkStepSizeScope = builder.getDynamicScope().enterIf(ctxt.currentStepSize.toMath().lessEqualTo(IntExpressionValue.of(0)));
                     var checkStepSizeScopeThen = checkStepSizeScope.enterThen();
-                    builder.getLogger().debug("Step size must be positive: %f", ctxt.currentStepSize);
+                    builder.getLogger().trace("Step size must be positive: %f", ctxt.currentStepSize);
 //                    checkStepSizeScopeThen.add(new AErrorStm(newAStringLiteralExp("Step size must be positive")));
                     checkStepSizeScope.leave();
-                    builder.getLogger().debug("## Step size: %f", ctxt.currentStepSize);
+                    builder.getLogger().trace("## Step size: %f", ctxt.currentStepSize);
                 }
 
                 scopeFmi2Api.leave();

@@ -139,9 +139,9 @@ public class InstanceClocksFmi3 {
         var scope = builder.getDynamicScope();
 
         NumericExpressionValueFmi2Api tickTime = lastTickTime.toMath().addition(interval.toMath());
-        builder.getLogger().debug("Interval %f", getInterval(clock));
+        builder.getLogger().trace("Interval %f", getInterval(clock));
         var vd = new DoubleVariableFmi2Api(null, null, null, null, tickTime.subtraction(now).getExp());
-        builder.getLogger().debug("Time diff %f", vd);
+        builder.getLogger().trace("Time diff %f", vd);
 //        var v = new DoubleVariableFmi2Api(null, null, null, null, tickTime.subtraction(now).getExp());
         var timeToTickVar = scope.store("time2Tick", vd);
         var ifTicked = scope.enterIf(ticked.toMath().equalTo(DoubleExpressionValue.of(FALSE)));
