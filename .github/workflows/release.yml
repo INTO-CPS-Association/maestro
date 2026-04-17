@@ -21,7 +21,7 @@ env:
   PYTHON_VERSION: '3.11.8'
   MAVEN_VERSION: 3.8.1
   WINDOWS_VERSION: 'windows-latest'
-  MACOS_VERSION: 'macos-15'
+  MACOS_VERSION: 'macos-15-intel'
 
 
 
@@ -111,10 +111,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, windows-latest, macos-13 ] # ubuntu-latest, , macos-15
+        os: [ ubuntu-22.04, windows-latest, macos-15-intel ] # ubuntu-latest, , macos-15
         platform: [ x64 ] #x32, x64 ]
         exclude:
-          - os: macos-15
+          - os: macos-15-intel
             platform: x32
     steps:
       - uses: actions/checkout@v2
