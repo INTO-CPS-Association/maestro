@@ -108,7 +108,8 @@ public class FullSpecCppTest extends FullSpecTest {
 
             if (new File(new File(baseBuild, "CMakeFiles"), "sim.dir").exists()) {
                 for (File ofile : Objects.requireNonNull(
-                        new File(new File(baseBuild, "CMakeFiles"), "sim.dir").listFiles(pathname -> pathname.getName().endsWith(".o")))) {
+                        new File(new File(baseBuild, "CMakeFiles"), "sim.dir").listFiles(pathname ->
+                                pathname.getName().endsWith(".o") || pathname.getName().endsWith(".obj")))) {
                     ofile.delete();
                 }
             }
