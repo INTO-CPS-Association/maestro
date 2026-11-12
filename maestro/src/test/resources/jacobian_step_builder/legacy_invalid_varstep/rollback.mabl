@@ -18,8 +18,8 @@ real STEP_SIZE = 0.0;
 
 Logger logger = load("Logger");
 Math math = load("Math");
-FMI2 pumpF = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/pump.fmu");
-FMI2 sinkF = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/sink.fmu");
+FMI2 pumpF = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "target/online-cache/test-fmus-0.0.2/pump.fmu");
+FMI2 sinkF = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "target/online-cache/test-fmus-0.0.2/sink.fmu");
 FMI2Component pump = pumpF.instantiate("pump", false, false);;
 FMI2Component sink = sinkF.instantiate("sink", false, false);;
 

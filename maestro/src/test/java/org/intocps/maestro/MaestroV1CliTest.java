@@ -3,6 +3,7 @@ package org.intocps.maestro;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -13,6 +14,12 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 public class MaestroV1CliTest {
+
+    @BeforeAll
+    static void downloadFmus() throws Exception {
+        TestFmuDownloads.downloadFromDirectory(Paths.get("src", "test", "resources", "cli-test").toFile());
+    }
+
     final static File resourcesConfigPrefix = Paths.get("src", "test", "resources", "cli-test").toFile();
     File configPath = new File(resourcesConfigPrefix, "config.json");
     File simulationConfigPath = new File(resourcesConfigPrefix, "simulation-config.json");

@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-public class BuilderFmi3Test {
+public class MixedFmi2Fmi3BuilderTest {
 
     @BeforeAll
     public static void downloadFmus() throws IOException {
@@ -76,7 +76,7 @@ public class BuilderFmi3Test {
         // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
 
-        URI ballUri = new File("target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu").getAbsoluteFile().toURI();
+        URI ballUri = Fmi3ModuleReferenceFmusTest.destination.resolve("BouncingBall.fmu").toAbsolutePath().toUri();
         Fmu3 ball = new Fmu3(new File(ballUri));
         ArrayVariableFmi2Api requiredIntermediateVariables = builder.getDynamicScope().store("requiredIntermediateVariables", new Long[]{1L});
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());
@@ -125,9 +125,6 @@ public class BuilderFmi3Test {
 
         controller.exitInitializationMode();
         tank.exitInitializationMode();
-
-        ComponentVariableFmi2Api tank2 = tankFMU.instantiate("tank");
-
 
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));

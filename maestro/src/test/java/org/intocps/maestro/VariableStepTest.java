@@ -9,6 +9,7 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -20,6 +21,13 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class VariableStepTest {
+
+    @BeforeAll
+    static void downloadFmus() throws Exception {
+        TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("singlewatertank-20sim.fmu"),
+                TestFmuDownloads.fmuUrl("watertankcontroller-c.fmu")));
+    }
+
     @Test
     public void variableStepSizeMablTest() throws Exception {
         File testFilesDirectory = new File(Objects.requireNonNull(VariableStepTest.class.getClassLoader().getResource("variable_step")).getPath());

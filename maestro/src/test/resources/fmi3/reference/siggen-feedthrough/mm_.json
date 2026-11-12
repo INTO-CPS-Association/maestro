@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{ftFmu}": "/Users/kgl/data/au/Reference-FMUs/fmus/Feedthrough.fmu",
-    "{sgFmu}": "/Users/kgl/data/au/Reference-FMUs/fmus/SignalGenerator.fmu"
+    "{ftFmu}": "target/online-cache/test-fmus-0.0.2/Feedthrough.fmu",
+    "{sgFmu}": "target/online-cache/test-fmus-0.0.2/SignalGenerator.fmu"
   },
   "connections": {
     "{sgFmu}.sg.Float32_continuous_output": [ "{ftFmu}.ft.Float32_continuous_input" ],

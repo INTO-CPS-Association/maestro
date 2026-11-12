@@ -18,8 +18,8 @@ real STEP_SIZE = 0.1;
 
 Logger logger = load("Logger");
 Math math = load("Math");
-FMI2 FMU = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/rollback-test.fmu");
-FMI2 Controller = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/rollback-end.fmu");
+FMI2 FMU = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "target/online-cache/test-fmus-0.0.2/rollback-test.fmu");
+FMI2 Controller = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "target/online-cache/test-fmus-0.0.2/rollback-end.fmu");
 FMI2Component roller = FMU.instantiate("roller", false, false);;
 FMI2Component cont = Controller.instantiate("cont", false, false);;
 

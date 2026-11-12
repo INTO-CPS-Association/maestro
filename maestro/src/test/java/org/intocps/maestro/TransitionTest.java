@@ -8,6 +8,7 @@ import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,6 +22,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TransitionTest {
+
+    @BeforeAll
+    static void downloadFmus() throws Exception {
+        TestFmuDownloads.downloadFromDirectory(Paths.get("src", "test", "resources", "transition-tests").toFile());
+    }
+
     private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "transition-tests").toFile().listFiles()))
                 .map(f -> Arguments.arguments(f.getName(), f));

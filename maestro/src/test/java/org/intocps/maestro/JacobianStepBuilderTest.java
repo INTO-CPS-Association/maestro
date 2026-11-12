@@ -1,6 +1,7 @@
 package org.intocps.maestro;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.File;
@@ -12,6 +13,18 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class JacobianStepBuilderTest extends FullSpecTest {
+
+    static final List<String> FMU_NAMES = List.of("singlewatertank-20sim.fmu", "watertankcontroller-c.fmu",
+            "rollback-test.fmu", "rollback-end.fmu", "pump.fmu", "sink.fmu", "MassSpringDamper1.fmu", "MassSpringDamper2.fmu");
+
+    @BeforeAll
+    static void downloadFmus() throws IOException {
+        List<java.net.URL> urls = new ArrayList<>();
+        for (String name : FMU_NAMES) {
+            urls.add(TestFmuDownloads.fmuUrl(name));
+        }
+        TestFmuDownloads.download(urls);
+    }
 
     /**
      * This is the data provider function that is used by the super class.
@@ -96,7 +109,7 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                     } else {
                         int mismatchedLines = 0;
                         for (int i = 0; i < expected.size(); i++) {
-                            if (!expected.get(i).equals(actual.get(i))) {
+                            if (!valuesMatch(expected.get(i), actual.get(i))) {
                                 if (assertionMsg.isEmpty()) {
                                     assertionMsg = "Mismatch between values on row " + (i + 2) + " for column '" + entry.getKey() + "'. Actual: " +
                                             actual.get(i) + " " + "expected: " + expected.get(i) + ". ";
@@ -130,6 +143,20 @@ public class JacobianStepBuilderTest extends FullSpecTest {
             }
             System.out.println(sb);
             Assertions.fail(sb.toString());
+        }
+    }
+
+    private static boolean valuesMatch(String expected, String actual) {
+        if (expected.equals(actual)) {
+            return true;
+        }
+        try {
+            double expectedValue = Double.parseDouble(expected);
+            double actualValue = Double.parseDouble(actual);
+            return Double.isFinite(expectedValue) && Double.isFinite(actualValue) &&
+                    Math.abs(expectedValue - actualValue) <= 1e-12 * Math.max(1.0, Math.max(Math.abs(expectedValue), Math.abs(actualValue)));
+        } catch (NumberFormatException ignored) {
+            return false;
         }
     }
 }

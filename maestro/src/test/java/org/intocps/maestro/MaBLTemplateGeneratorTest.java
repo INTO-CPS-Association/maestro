@@ -27,6 +27,7 @@ import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.util.MablModuleProvider;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -45,6 +46,11 @@ import java.util.function.BiFunction;
 import static org.intocps.maestro.template.MaBLTemplateGenerator.FAULTINJECT_POSTFIX;
 
 public class MaBLTemplateGeneratorTest {
+
+    @BeforeAll
+    static void downloadFmus() throws Exception {
+        TestFmuDownloads.downloadFromDirectory(Paths.get("src", "test", "resources", "specifications", "full").toFile());
+    }
 
     /**
      * Fault injects the wtInstance and verifies that an instance mapping statement has been created above the wtInstance_m_fi variable

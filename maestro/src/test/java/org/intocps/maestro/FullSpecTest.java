@@ -159,6 +159,7 @@ public class FullSpecTest {
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
     public void test(String name, File directory) throws Exception {
+        TestFmuDownloads.downloadFromDirectory(directory);
 
         File workingDirectory = getWorkingDirectory(directory, this.getClass());
 
@@ -246,7 +247,12 @@ public class FullSpecTest {
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {
-
+        try {
+            TestFmuDownloads.download(TestFmuDownloads.collectFmus(mabl.getMainSimulationUnit(), false));
+        } catch (IOException exception) {
+            throw new AnalysisException(exception);
+        }
+        TestFmuDownloads.collectFmus(mabl.getMainSimulationUnit(), true);
     }
 
     protected List<File> getSpecificationFiles(File specFolder) {

@@ -20,8 +20,8 @@ int FMI_STATUS_PENDING = 5;
 int status = 0;
 Math math = load("Math");
 
-FMI2 fmu1 = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "src/test/resources/pump.fmu");
-FMI2 fmu2 = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "src/test/resources/sink.fmu");
+FMI2 fmu1 = load("FMI2", "{967faced-4a63-40a2-9e14-ec5034821404}", "target/online-cache/test-fmus-0.0.2/pump.fmu");
+FMI2 fmu2 = load("FMI2", "{921abe79-6885-4f4f-9663-4d7eb028d531}",  "target/online-cache/test-fmus-0.0.2/sink.fmu");
 FMI2Component pump = fmu1.instantiate("m1", false, false);
 FMI2Component sink = fmu2.instantiate("m2", false, false);
 DataWriter dataWriter = load("DataWriter");

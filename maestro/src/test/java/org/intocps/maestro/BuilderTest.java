@@ -23,6 +23,7 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -30,10 +31,17 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class BuilderTest {
+
+    @BeforeAll
+    static void downloadFmus() throws Exception {
+        TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("singlewatertank-20sim.fmu"),
+                TestFmuDownloads.fmuUrl("watertankcontroller-c.fmu")));
+    }
 
     @Test
     public void wt() throws Exception {
@@ -92,9 +100,6 @@ public class BuilderTest {
             AMablFmi2ComponentAPI tank2 = tankFMU.create("tank");
         }
         scope1.activate();*/
-        ComponentVariableFmi2Api tank2 = tankFMU.instantiate("tank");
-
-
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));
 
