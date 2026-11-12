@@ -19,10 +19,9 @@
     <dependencies>
 
         <dependency>
-            <groupId>org.into-cps.maestro.frameworks</groupId>
-            <artifactId>core</artifactId>
+            <groupId>org.into-cps.maestro</groupId>
+            <artifactId>fmu-test-utils</artifactId>
             <version>${project.version}</version>
-            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 

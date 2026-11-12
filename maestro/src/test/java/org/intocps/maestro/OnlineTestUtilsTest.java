@@ -20,7 +20,7 @@ class OnlineTestUtilsTest {
     Path directory;
 
     @Test
-    void mapsKnownModelsToPinnedReleaseAndKeepsUnknownFallback() throws Exception {
+    void mapsOnlyKnownModelsToPinnedRelease() throws Exception {
         assertEquals(TestFmuDownloads.TEST_FMU_RELEASE_URL + "fmi2--maestro--rollback-end.fmu",
             TestFmuDownloads.fmuUrl("rollback-end.fmu").toExternalForm());
         assertEquals(TestFmuDownloads.TEST_FMU_RELEASE_URL + "fmi2--jni--fmi2functiontest.fmu",
@@ -31,7 +31,8 @@ class OnlineTestUtilsTest {
             TestFmuDownloads.fmuUrl("fmi3functiontest.fmu").toExternalForm());
         assertEquals(TestFmuDownloads.TEST_FMU_RELEASE_URL + "fmi2--three-tank--WaterTankController_Standalone.fmu",
                 TestFmuDownloads.fmuUrl("WaterTankController_Standalone.fmu").toExternalForm());
-        assertEquals(TestFmuDownloads.ONLINE_MODELS_URL + "other.fmu", TestFmuDownloads.fmuUrl("other.fmu").toExternalForm());
+        assertThrows(IllegalArgumentException.class, () -> TestFmuDownloads.fmuUrl("other.fmu"));
+        assertThrows(IllegalArgumentException.class, () -> TestFmuDownloads.cachePath("other.fmu"));
     }
 
     @Test

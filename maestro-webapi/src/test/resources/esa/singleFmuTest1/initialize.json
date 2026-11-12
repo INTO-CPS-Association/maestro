@@ -1,6 +1,6 @@
 {
   "fmus": {
-    "{controllerFmu}": "src/test/resources/esa/fmus/watertankController-Standalone.fmu"
+    "{controllerFmu}": "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu"
   },
   "parameters": {
     "{controllerFmu}.crtlIns.maxLevel": 8,

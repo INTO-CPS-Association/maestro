@@ -58,6 +58,7 @@
         <module>core</module>
         <module>ast</module>
         <module>parser</module>
+        <module>fmu-test-utils</module>
         <module>typechecker</module>
         <module>maestro</module>
         <module>interpreter</module>

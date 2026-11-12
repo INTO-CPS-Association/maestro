@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{crtl}": "src/test/watertankexample/resources/maestro2/watertankexample/watertankcontroller-c.fmu",
-    "{wt}": "src/test/watertankexample/resources/maestro2/watertankexample/singlewatertank-20sim.fmu"
+    "{crtl}": "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu",
+    "{wt}": "target/online-cache/test-fmus-0.0.2/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{crtl}.crtlInstance.valve": [

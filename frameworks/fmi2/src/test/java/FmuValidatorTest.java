@@ -1,4 +1,4 @@
-import org.intocps.maestro.OnlineTestUtils;
+import org.intocps.maestro.testutils.FmuTestModelRepository;
 import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.framework.fmi2.Fmi2FmuValidator;
@@ -15,7 +15,7 @@ public class FmuValidatorTest {
 
     @BeforeAll
     static void downloadFmu() throws IOException {
-        OnlineTestUtils.download(List.of(OnlineTestUtils.fmuUrl(FMU_NAME)));
+        FmuTestModelRepository.download(List.of(FmuTestModelRepository.url(FMU_NAME)));
     }
 
     @Test
@@ -25,7 +25,7 @@ public class FmuValidatorTest {
         IErrorReporter errorReporter = new ErrorReporter();
 
         // Assert
-        Assertions.assertDoesNotThrow(() -> fmuValidator.validate("1", OnlineTestUtils.cachePath(FMU_NAME).toUri(), errorReporter));
+        Assertions.assertDoesNotThrow(() -> fmuValidator.validate("1", FmuTestModelRepository.cachePath(FMU_NAME).toUri(), errorReporter));
         Assertions.assertEquals(2, errorReporter.getWarnings().size());
     }
 }

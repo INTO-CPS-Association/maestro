@@ -1,15 +1,19 @@
 package org.intocps.maestro.webapi;
 
+import org.intocps.maestro.testutils.FmuTestModelRepository;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 
 public class CliTest {
 
     @Test
     public void oneShotTest() throws Exception {
+        FmuTestModelRepository.download(List.of(FmuTestModelRepository.url("singlewatertank-20sim.fmu"),
+            FmuTestModelRepository.url("watertankcontroller-c.fmu")));
 
         Path outFile = Paths.get("target", CliTest.class.getName(), "outputs.csv");
         outFile.toFile().getParentFile().mkdirs();

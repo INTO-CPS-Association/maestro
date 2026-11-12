@@ -1,6 +1,6 @@
 {
   "fmus": {
-    "{tankFmu}": "singlewatertank-20sim.fmu"
+    "{tankFmu}": "target/online-cache/test-fmus-0.0.2/singlewatertank-20sim.fmu"
   },
   "inputs": {
     "{tankFmu}.tankIns.valvecontrol": 1.0
