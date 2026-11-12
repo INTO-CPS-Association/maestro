@@ -121,6 +121,7 @@ jobs:
           ZLIB_INCLUDE_DIR: ${{ github.workspace }}\vcpkg\installed\x64-windows\include
           CMAKE_PREFIX_PATH: ${{ github.workspace }}\vcpkg\installed\x64-windows
         run: |
+          export PATH="$(cygpath -u "$ZLIB_ROOT")/bin:$PATH"
           mvn -Pinclude-fullSpecCppTest test
 
       - name: Maven Test

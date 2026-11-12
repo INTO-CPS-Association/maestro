@@ -157,12 +157,15 @@ jobs:
 
       - name: Maven Test
         if: matrix.os == env.WINDOWS_VERSION
+        shell: pwsh
         env:
           ZLIB_ROOT: ${{ github.workspace }}\vcpkg\installed\x64-windows
           ZLIB_LIBRARY: ${{ github.workspace }}\vcpkg\installed\x64-windows\lib\zlib.lib
           ZLIB_INCLUDE_DIR: ${{ github.workspace }}\vcpkg\installed\x64-windows\include
           CMAKE_PREFIX_PATH: ${{ github.workspace }}\vcpkg\installed\x64-windows
-        run: mvn -Pinclude-fullSpecCppTest test
+        run: |
+          $env:PATH = "$env:ZLIB_ROOT\bin;$env:PATH"
+          mvn -Pinclude-fullSpecCppTest test
 
       - name: Maven Test
         if: matrix.os != env.WINDOWS_VERSION
