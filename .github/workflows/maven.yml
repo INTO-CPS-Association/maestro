@@ -127,6 +127,16 @@ jobs:
         if: matrix.os != env.WINDOWS_VERSION
         run: mvn -Pinclude-fullSpecCppTest test
 
+      - name: Diagnose Windows native executable
+        if: failure() && runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          sim=maestro/target/FullSpecCppTest/_base/bin/sim.exe
+          if [[ -f "$sim" ]]; then
+            objdump -p "$sim" | grep 'DLL Name:' || true
+            ldd "$sim" || true
+          fi
+
       #      - name: Maven Test
       #        if: matrix.os != env.WINDOWS_VERSION
       #        run: mvn test -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
