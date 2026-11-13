@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 import static org.intocps.maestro.parser.MablParserUtil.parse;
 
-@RequiresFmu(TestFmu.FMI2_FUNCTION_TEST)
+@RequiresFmu({TestFmu.FMI2_FUNCTION_TEST, TestFmu.PUMP, TestFmu.SINK})
 public class FullSpecOnlineTest extends FullSpecTest {
 
     private static Stream<Arguments> data() {

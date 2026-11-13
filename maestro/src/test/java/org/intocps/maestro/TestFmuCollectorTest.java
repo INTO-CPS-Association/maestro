@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
 import org.intocps.maestro.testutils.TestFmu;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Arrays;
+import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,6 +38,18 @@ class TestFmuCollectorTest {
         String program = PrettyPrinter.print(document);
         assertTrue(program.contains("target/online-cache/test-fmus/rollback-end.fmu"));
         assertTrue(program.contains("target/online-cache/test-fmus/rollback-test.fmu"));
+    }
+
+    @Test
+    void onlineMockModelsAreDeclaredBeforeExecution() throws Exception {
+        EnumSet<TestFmu> declared = EnumSet.noneOf(TestFmu.class);
+        for (RequiresFmu requirement : FullSpecOnlineTest.class.getDeclaredAnnotationsByType(RequiresFmu.class)) {
+            declared.addAll(Arrays.asList(requirement.value()));
+        }
+        var document = MablParserUtil.parse(List.of(Path.of(
+                "src/test/resources/specifications/online/build_varstep_ZC_single/build_varstep_ZC_single.mabl").toFile())).get(0);
+        assertTrue(declared.containsAll(TestFmuCollector.collectFmus(document, false)),
+                "Online mock fixtures must not depend on another test populating the cache");
     }
 
     @Test
