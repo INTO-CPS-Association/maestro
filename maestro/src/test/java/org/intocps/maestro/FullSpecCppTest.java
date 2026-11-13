@@ -105,6 +105,7 @@ public class FullSpecCppTest extends FullSpecTest {
             if (baseSimProgram.exists()) {
                 baseSimProgram.delete();
             }
+            Files.deleteIfExists(new File(baseBuild, baseSimProgram.getName()).toPath());
 
             if (new File(new File(baseBuild, "CMakeFiles"), "sim.dir").exists()) {
                 for (File ofile : Objects.requireNonNull(

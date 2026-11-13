@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, windows-2025, macos-26-intel ]
+        os: [ ubuntu-24.04, windows-2025, macos-26-intel, macos-26 ]
 
     steps:
       - uses: actions/checkout@v7.0.1
@@ -98,7 +98,7 @@ jobs:
         run: .\vcpkg\vcpkg install zlib
 
       - name: Install latest CMake
-        if: matrix.os == 'macos-26-intel'
+        if: runner.os == 'macOS'
         run: brew install cmake
 
       - name: Cache local Maven repository
