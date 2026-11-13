@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -29,6 +30,20 @@ class FmuTestModelRepositoryTest {
         assertEquals(FmuTestModelRepository.TEST_FMU_RELEASE_URL + "fmi2--three-tank--WaterTankController_Standalone.fmu",
                 FmuTestModelRepository.url(TestFmu.THREE_WATER_TANK_CONTROLLER).toExternalForm());
             assertTrue(TestFmu.fromFileName("other.fmu").isEmpty());
+    }
+
+    @Test
+    void generatedPropertiesMatchEnumCatalog() throws Exception {
+        Properties properties = new Properties();
+        try (var input = TestFmu.class.getResourceAsStream("test-fmus.properties")) {
+            assertNotNull(input, "Maven must generate the Python metadata before tests run");
+            properties.load(input);
+        }
+        assertEquals(TestFmu.RELEASE_URL, properties.getProperty("release.url"));
+        assertEquals(TestFmu.values().length + 1, properties.size());
+        for (TestFmu model : TestFmu.values()) {
+            assertEquals(model.assetName(), properties.getProperty("asset." + model.fileName()));
+        }
     }
 
     @Test

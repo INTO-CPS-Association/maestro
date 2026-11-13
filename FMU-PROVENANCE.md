@@ -55,10 +55,14 @@ duplicate models are downloaded only once. Tests use
 string-based download calls. The Maestro-only `TestFmuCollector` handles MaBL
 load rewriting; it does not duplicate the shared downloader.
 
-The pinned release URL and canonical asset names are defined once in
-`fmu-test-utils/src/main/resources/org/intocps/maestro/testutils/test-fmus.properties`.
-Java and external Python tests read this same metadata. A release update changes
-that file, not every configuration path. The cache's `.release` marker causes
+The pinned release URL and canonical asset names are defined once in the
+`TestFmu` enum. Java tests use the enum directly. Maven generates
+`fmu-test-utils/target/classes/org/intocps/maestro/testutils/test-fmus.properties`
+from it during `process-classes`, packages the resource in the utility JAR,
+and external Python tests read that generated file. Do not edit or commit the
+generated properties; run `mvn -pl fmu-test-utils -am package` before running
+external tests separately. A release update changes the enum, not every
+configuration path. The cache's `.release` marker causes
 old fixtures to be invalidated when the pinned release URL changes. The cache
 path remains `target/online-cache/test-fmus`.
 

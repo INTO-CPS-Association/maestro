@@ -10,37 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public final class FmuTestModelRepository {
-    private static final Properties METADATA = readMetadata();
-    public static final String TEST_FMU_RELEASE_URL = metadata("release.url");
+    public static final String TEST_FMU_RELEASE_URL = TestFmu.RELEASE_URL;
     public static final Path TEST_FMU_CACHE = Paths.get("target", "online-cache", "test-fmus");
 
     private FmuTestModelRepository() {
-    }
-
-    private static Properties readMetadata() {
-        try (InputStream input = FmuTestModelRepository.class.getResourceAsStream("test-fmus.properties")) {
-            if (input == null) {
-                throw new IllegalStateException("Missing test FMU release metadata");
-            }
-            Properties properties = new Properties();
-            properties.load(input);
-            return properties;
-        } catch (IOException exception) {
-            throw new IllegalStateException("Cannot read test FMU release metadata", exception);
-        }
-    }
-
-    private static String metadata(String key) {
-        return java.util.Objects.requireNonNull(METADATA.getProperty(key), "Missing test FMU metadata: " + key);
-    }
-
-    static String assetName(TestFmu model) {
-        return metadata("asset." + model.fileName());
     }
 
     public static URL url(TestFmu model) throws MalformedURLException {

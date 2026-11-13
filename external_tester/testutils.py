@@ -26,7 +26,9 @@ mablExpansionExample="wt/expansion_example.mabl"
 
 def testFmuPath(fileName):
     root = pathlib.Path(__file__).resolve().parent.parent
-    metadataPath = root / "fmu-test-utils" / "src/main/resources/org/intocps/maestro/testutils/test-fmus.properties"
+    metadataPath = root / "fmu-test-utils" / "target/classes/org/intocps/maestro/testutils/test-fmus.properties"
+    if not metadataPath.is_file():
+        raise FileNotFoundError("Generated FMU catalog is missing; run mvn -pl fmu-test-utils -am package first")
     metadata = configparser.ConfigParser(interpolation=None)
     metadata.read_string("[release]\n" + metadataPath.read_text())
     releaseMetadata = metadata["release"]
