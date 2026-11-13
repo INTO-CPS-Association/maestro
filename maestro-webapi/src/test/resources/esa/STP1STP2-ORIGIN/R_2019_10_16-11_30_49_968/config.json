@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{crtl}": "file:////Users/casperthule/into-cps-projects/example-single_watertank/FMUs/watertankController.fmu",
-    "{wt}": "file:////Users/casperthule/into-cps-projects/example-single_watertank/FMUs/singlewatertank-20sim.fmu"
+    "{crtl}": "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu",
+    "{wt}": "target/online-cache/test-fmus-0.0.2/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{crtl}.crtlInstance.valve": [

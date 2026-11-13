@@ -1,12 +1,11 @@
 package org.intocps.maestro.fmi3;
 
-import org.apache.commons.io.FileUtils;
 import org.intocps.maestro.FullSpecTest;
+import org.intocps.maestro.TestFmuDownloads;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,8 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static org.intocps.maestro.fmi3.Fmi3ModuleTest.hasMablSpec;
 
@@ -53,45 +50,13 @@ public class Fmi3ModuleReferenceFmusTest extends FullSpecTest {
         return specFiles;
     }
 
-    final static Path destination = Paths.get("target", Fmi3ModuleReferenceFmusTest.class.getSimpleName(), "cache");
+    public final static Path destination = Paths.get("target", Fmi3ModuleReferenceFmusTest.class.getSimpleName(), "cache", "test-fmus-0.0.2");
 
     @BeforeAll
     public static void downloadReferenceFmus() throws IOException {
 
-        final String referenceFmuBundle = "https://github.com/modelica/Reference-FMUs/releases/download/v0.0.23/Reference-FMUs-0.0.23.zip";
-        Path referenceFmuZipPath = destination.resolve("Reference-FMUs.zip");
-        if (referenceFmuZipPath.toFile().exists()) {
-            return;
-        }
-
-        referenceFmuZipPath.toFile().getParentFile().mkdirs();
-
-        FileUtils.copyURLToFile(new URL(referenceFmuBundle), referenceFmuZipPath.toFile());
-
-        //        Path destination = referenceFmuZipPath.getParent();
-
-        ZipInputStream zipIn = new ZipInputStream(new FileInputStream(referenceFmuZipPath.toFile()));
-        ZipEntry entry = zipIn.getNextEntry();
-        while (entry != null) {
-            if (entry.getName().startsWith("3.0") && entry.getName().endsWith(".fmu")) {
-                extractFile(zipIn, destination.resolve(Paths.get(entry.getName()).getFileName().toString()));
-            }
-            zipIn.closeEntry();
-            entry = zipIn.getNextEntry();
-        }
-        zipIn.close();
-    }
-
-    private static final int BUFFER_SIZE = 4096;
-
-    static private void extractFile(ZipInputStream zipIn, Path filePath) throws IOException {
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
-        byte[] bytesIn = new byte[BUFFER_SIZE];
-        int read = 0;
-        while ((read = zipIn.read(bytesIn)) != -1) {
-            bos.write(bytesIn, 0, read);
-        }
-        bos.close();
+        TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("BouncingBall.fmu"), TestFmuDownloads.fmuUrl("Feedthrough.fmu"),
+            TestFmuDownloads.fmuUrl("SignalGenerator.fmu")), destination);
     }
 
 }

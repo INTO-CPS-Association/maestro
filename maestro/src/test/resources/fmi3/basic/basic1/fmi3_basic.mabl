@@ -4,7 +4,7 @@ import FMI3;
     FMI3 x1 =null;
     try
     {
-        x1 = load("FMI3", "{FMI3_TEST_TOKEN}", "file:fmi3functiontest.fmu");
+        x1 = load("FMI3", "{FMI3_TEST_TOKEN}", "target/online-cache/test-fmus-0.0.2/fmi3functiontest.fmu");
         if (x1 == null)
         {
             error;

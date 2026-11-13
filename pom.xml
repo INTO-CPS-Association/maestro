@@ -24,7 +24,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <log4j2.version>2.24.3</log4j2.version>
-        <fmu.api.version>1.5.0</fmu.api.version>
+        <fmu.api.version>1.6.1</fmu.api.version>
         <maestro.v1.version>1.0.10</maestro.v1.version>
         <kotlin.version>1.9.22</kotlin.version>
         <scala.version>2.13.12</scala.version>
@@ -58,6 +58,7 @@
         <module>core</module>
         <module>ast</module>
         <module>parser</module>
+        <module>fmu-test-utils</module>
         <module>typechecker</module>
         <module>maestro</module>
         <module>interpreter</module>
@@ -75,7 +76,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.7.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -85,7 +86,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.5</version>
+                                    <version>[3.9.0,4.0.0)</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -176,18 +177,6 @@
                 </plugin>
 
 
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>3.0.0-M1</version>
-                    <configuration>
-                        <releaseProfiles>release
-                        </releaseProfiles>
-                        <tagNameFormat>Release/@{project.version}</tagNameFormat>
-                    </configuration>
-                </plugin>
-
-
                 <!-- Attatch sources to all installed jars -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -264,7 +253,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.2.8</version>
                 </plugin>
 
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
@@ -280,6 +269,7 @@
                         <source>21</source>
                         <target>21</target>
                         <release>21</release>
+                        <proc>full</proc>
                         <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
@@ -451,7 +441,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.15.1</version>
+                <version>2.22.0</version>
                 <scope>compile</scope>
             </dependency>
 
@@ -714,7 +704,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.7.0</version>
+                        <version>0.12.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>ossrh</publishingServerId>

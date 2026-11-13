@@ -13,6 +13,7 @@ import subprocess
 from threading import Thread 
 import time
 import string
+from urllib.request import urlopen
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -22,11 +23,21 @@ mablExample = "wt/example1.mabl"
 folderWithModuleDefinitions =  "../typechecker/src/main/resources/org/intocps/maestro/typechecker/"
 mablExpansionExample="wt/expansion_example.mabl"
 
+def testFmuPath(fileName):
+    cache = pathlib.Path(__file__).resolve().parent.parent / "maestro" / "target" / "online-cache" / "test-fmus-0.0.2"
+    path = cache / fileName
+    if not path.is_file():
+        cache.mkdir(parents=True, exist_ok=True)
+        url = "https://github.com/INTO-CPS-Association/test-fmus/releases/download/Release%2F0.0.2/" + fileName
+        with urlopen(url, timeout=60) as response:
+            path.write_bytes(response.read())
+    return path
+
 # Update paths to FMUs
 def retrieveConfiguration():
     config = json.load(open(initializationConfigurationPath))
-    config["fmus"]["{crtl}"]=pathlib.Path(os.path.abspath('wt/watertankcontroller-c.fmu')).as_uri()
-    config["fmus"]["{wt}"]=pathlib.Path(os.path.abspath('wt/singlewatertank-20sim.fmu')).as_uri()
+    config["fmus"]["{crtl}"]=testFmuPath("watertankcontroller-c.fmu").as_uri()
+    config["fmus"]["{wt}"]=testFmuPath("singlewatertank-20sim.fmu").as_uri()
     return config
 
 def retrieveSimulationConfiguration():

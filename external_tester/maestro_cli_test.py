@@ -111,8 +111,8 @@ def cliGenerateAlgorithmFromMultiModel():
     with open(os.path.join(resourcesPath, "multimodel.json"), "r") as jsonFile:
         multiModel = json.load(jsonFile)
 
-    multiModel["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(resourcesPath, "rollback-test.fmu"))).as_uri()
-    multiModel["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(resourcesPath, "rollback-end.fmu"))).as_uri()
+    multiModel["fmus"]["{FMU}"]=testutils.testFmuPath("rollback-test.fmu").as_uri()
+    multiModel["fmus"]["{Controller}"]=testutils.testFmuPath("rollback-end.fmu").as_uri()
 
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multiModel, jsonFile)
@@ -133,8 +133,8 @@ def cliExecuteAlgorithmFromExtendedMultiModel():
     with open(os.path.join(resourcesPath,"extendedmultimodel.json"), "r") as jsonFile:
         multimodel = json.load(jsonFile)
 
-    multimodel["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-test.fmu"))).as_uri()
-    multimodel["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-end.fmu"))).as_uri()
+    multimodel["fmus"]["{FMU}"]=testutils.testFmuPath("rollback-test.fmu").as_uri()
+    multimodel["fmus"]["{Controller}"]=testutils.testFmuPath("rollback-end.fmu").as_uri()
 
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multimodel, jsonFile)
@@ -156,8 +156,8 @@ def cliExecuteAlgorithmFromMasterModel():
     with open(os.path.join(resourcesPath,"multimodel.json"), "r") as jsonFile:
         multimodel = json.load(jsonFile)
 
-    multimodel["fmus"]["{FMU}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-test.fmu"))).as_uri()
-    multimodel["fmus"]["{Controller}"]=pathlib.Path(os.path.abspath(os.path.join(SCR_path, "generate_from_multi_model", "rollback-end.fmu"))).as_uri()
+    multimodel["fmus"]["{FMU}"]=testutils.testFmuPath("rollback-test.fmu").as_uri()
+    multimodel["fmus"]["{Controller}"]=testutils.testFmuPath("rollback-end.fmu").as_uri()
 
     with open(multiModelPath, "w+") as jsonFile:
         json.dump(multimodel, jsonFile)

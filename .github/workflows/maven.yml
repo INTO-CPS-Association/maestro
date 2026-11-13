@@ -10,12 +10,15 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
 env:
 
   SERVER_ID: ossrh
-  PYTHON_VERSION: '3.12.2'
-  MAVEN_VERSION: 3.8.1
-  WINDOWS_VERSION: 'windows-latest'
+  PYTHON_VERSION: '3.12'
+  MAVEN_VERSION: 3.9.16
+  WINDOWS_VERSION: 'windows-2025'
 
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
@@ -28,24 +31,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, windows-latest, macos-15-intel ]
+        os: [ ubuntu-24.04, windows-2025, macos-26-intel, macos-26 ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
       - name: Use Java version 21 adopt
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6.2.0
         with:
-          java-version: '21.0.5'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.4
+        uses: stCarolas/setup-maven@v5.1
         with:
-          maven-version: ${{ ENV.MAVEN_VERSION }}
+          maven-version: ${{ env.MAVEN_VERSION }}
 
-      - name: '${{ matrix.icon }} Setup MSYS2'
+      - name: Setup MSYS2
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
@@ -84,20 +87,22 @@ jobs:
 
       - name: Install vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
+        shell: pwsh
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
 
       - name: Install Zlib via vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
+        shell: pwsh
         run: .\vcpkg\vcpkg install zlib
 
       - name: Install latest CMake
-        if: matrix.os == 'macos-15-intel'
+        if: runner.os == 'macOS'
         run: brew install cmake
 
       - name: Cache local Maven repository
-        uses: actions/cache@v3
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -116,20 +121,29 @@ jobs:
           ZLIB_INCLUDE_DIR: ${{ github.workspace }}\vcpkg\installed\x64-windows\include
           CMAKE_PREFIX_PATH: ${{ github.workspace }}\vcpkg\installed\x64-windows
         run: |
-          export PATH="$(/usr/bin/cygpath -u "$PATH"):$PATH"
-
+          export PATH="$(cygpath -u "$ZLIB_ROOT")/bin:$PATH"
           mvn -Pinclude-fullSpecCppTest test
 
       - name: Maven Test
         if: matrix.os != env.WINDOWS_VERSION
         run: mvn -Pinclude-fullSpecCppTest test
 
+      - name: Diagnose Windows native executable
+        if: failure() && runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          sim=maestro/target/FullSpecCppTest/_base/bin/sim.exe
+          if [[ -f "$sim" ]]; then
+            objdump -p "$sim" | grep 'DLL Name:' || true
+            ldd "$sim" || true
+          fi
+
       #      - name: Maven Test
       #        if: matrix.os != env.WINDOWS_VERSION
       #        run: mvn test -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
       - name: upload test reports win
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         if: ${{ failure() && matrix.os == env.WINDOWS_VERSION}}
 
         with:
@@ -141,8 +155,8 @@ jobs:
           retention-days: 1
 
       - name: upload test reports ubuntu
-        uses: actions/upload-artifact@v4
-        if: ${{ failure() && matrix.os == 'ubuntu-22.04' }}
+        uses: actions/upload-artifact@v7.0.2
+        if: ${{ failure() && matrix.os == 'ubuntu-24.04' }}
         with:
           name: surfire-ubuntu
           path: |
@@ -150,7 +164,7 @@ jobs:
           retention-days: 1
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -188,12 +202,12 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
       - name: Cache local Maven repository
-        uses: actions/cache@v3
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -210,33 +224,36 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: Use Java version 21 adopt
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6.2.0
         with:
-          java-version: '21.0.5'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
           server-id: ${{ env.SERVER_ID }}
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          server-username-env-var: MAVEN_USERNAME
+          server-password-env-var: MAVEN_PASSWORD
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.4
+        uses: stCarolas/setup-maven@v5.1
         with:
-          maven-version: ${{ ENV.MAVEN_VERSION }}
+          maven-version: ${{ env.MAVEN_VERSION }}
 
 
       - name: Maven Package feature SNAPSHOT
         if: github.event_name == 'push' && (github.ref != 'refs/heads/development' && github.ref != 'refs/heads/master' )
-        run: mvn -Psonatype -B package -Dsha1=-`git rev-parse --abbrev-ref HEAD | sed "s|/|-|g;s|#||g;s|<||g;s|>||g;s|:||g;s|\"||g;s|/||g;s|\|||g;s|?||g;s|*||g;s|;||g"`   -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
         env:
+          BUILD_BRANCH: ${{ github.ref_name }}
           MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run: |
+          SAFE_BRANCH=$(printf '%s' "$BUILD_BRANCH" | sed -E 's|[^A-Za-z0-9._-]+|-|g')
+          mvn -Psonatype -B package "-Dsha1=-${SAFE_BRANCH}" -fae
 
       - name: Maven Package SNAPSHOT
         if: github.event_name == 'push' && (github.ref == 'refs/heads/development' )
-        run: mvn -Psonatype -B deploy -Dsha1= -fae -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run: mvn -Psonatype -B deploy -Dsha1= -fae
         env:
           MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}

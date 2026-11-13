@@ -105,10 +105,12 @@ public class FullSpecCppTest extends FullSpecTest {
             if (baseSimProgram.exists()) {
                 baseSimProgram.delete();
             }
+            Files.deleteIfExists(new File(baseBuild, baseSimProgram.getName()).toPath());
 
             if (new File(new File(baseBuild, "CMakeFiles"), "sim.dir").exists()) {
                 for (File ofile : Objects.requireNonNull(
-                        new File(new File(baseBuild, "CMakeFiles"), "sim.dir").listFiles(pathname -> pathname.getName().endsWith(".o")))) {
+                        new File(new File(baseBuild, "CMakeFiles"), "sim.dir").listFiles(pathname ->
+                                pathname.getName().endsWith(".o") || pathname.getName().endsWith(".obj")))) {
                     ofile.delete();
                 }
             }
@@ -130,7 +132,13 @@ public class FullSpecCppTest extends FullSpecTest {
             ProcessBuilder pb = new ProcessBuilder(simProjectSimFile.getAbsolutePath(), "-sha1", specSha1);
 
 
-            Assertions.assertTrue(CMakeUtil.runProcess(pb, true), "The sha1 of the generated spec and the sim program did not match.");
+                Process shaProcess = pb.redirectErrorStream(true).start();
+                String shaOutput = new String(shaProcess.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                int shaExitCode = shaProcess.waitFor();
+                System.out.println(shaOutput);
+                Assertions.assertEquals(0, shaExitCode, String.format(
+                    "SHA check failed for %s with exit code 0x%08X. Expected SHA1: %s. Output: %s",
+                    simProjectSimFile.getAbsolutePath(), shaExitCode, specSha1, shaOutput));
 
             if (name.equals("initialize_jacobianstepbuilder_unfold_loop")) {
                 Assumptions.assumeTrue(false);

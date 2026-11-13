@@ -184,8 +184,8 @@ def testScenarioController(basicUrl):
 
     # Set FMU path to be a relative path
     multiModel = json.load(open(os.path.join(gamm_resourcesPath, "multimodel.json")))
-    relativeFMUPathUri = pathlib.Path(os.path.abspath(os.path.join(gamm_resourcesPath, "rollback-test.fmu"))).as_uri()
-    relativeControllerPathUri = pathlib.Path(os.path.abspath(os.path.join(gamm_resourcesPath, "rollback-end.fmu"))).as_uri()
+    relativeFMUPathUri = testutils.testFmuPath("rollback-test.fmu").as_uri()
+    relativeControllerPathUri = testutils.testFmuPath("rollback-end.fmu").as_uri()
     multiModel["fmus"]["{FMU}"]=relativeFMUPathUri
     multiModel["fmus"]["{Controller}"]=relativeControllerPathUri
 
@@ -257,7 +257,7 @@ if not os.path.isfile(jarPath):
 cmd = f"java -jar {jarPath} -p {str(port)}"
 
 # Start the server as a subprocess and pipe stderr
-proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+proc = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE if port == 0 else None)
 
 # If port '0' is specified the server will acquire the port and write the port number to stderr as: '{' + 'port-number' + '}'.
 if port == 0:
