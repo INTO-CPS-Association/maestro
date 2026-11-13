@@ -1,9 +1,11 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -13,12 +15,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.BOUNCING_BALL})
 public class MaestroV1CliTest {
-
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        TestFmuDownloads.downloadFromDirectory(Paths.get("src", "test", "resources", "cli-test").toFile());
-    }
 
     final static File resourcesConfigPrefix = Paths.get("src", "test", "resources", "cli-test").toFile();
     File configPath = new File(resourcesConfigPrefix, "config.json");

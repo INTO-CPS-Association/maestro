@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import configparser
 import os
 import filecmp
 import tempfile
@@ -24,11 +25,23 @@ folderWithModuleDefinitions =  "../typechecker/src/main/resources/org/intocps/ma
 mablExpansionExample="wt/expansion_example.mabl"
 
 def testFmuPath(fileName):
-    cache = pathlib.Path(__file__).resolve().parent.parent / "maestro" / "target" / "online-cache" / "test-fmus-0.0.2"
+    root = pathlib.Path(__file__).resolve().parent.parent
+    metadataPath = root / "fmu-test-utils" / "src/main/resources/org/intocps/maestro/testutils/test-fmus.properties"
+    metadata = configparser.ConfigParser(interpolation=None)
+    metadata.read_string("[release]\n" + metadataPath.read_text())
+    releaseMetadata = metadata["release"]
+    releaseUrl = releaseMetadata["release.url"]
+    assetName = releaseMetadata["asset." + fileName]
+    cache = root / "maestro" / "target" / "online-cache" / "test-fmus"
+    cache.mkdir(parents=True, exist_ok=True)
+    marker = cache / ".release"
+    if not marker.is_file() or marker.read_text() != releaseUrl:
+        for cachedFmu in cache.glob("*.fmu"):
+            cachedFmu.unlink()
+        marker.write_text(releaseUrl)
     path = cache / fileName
     if not path.is_file():
-        cache.mkdir(parents=True, exist_ok=True)
-        url = "https://github.com/INTO-CPS-Association/test-fmus/releases/download/Release%2F0.0.2/" + fileName
+        url = releaseUrl + assetName
         with urlopen(url, timeout=60) as response:
             path.write_bytes(response.read())
     return path

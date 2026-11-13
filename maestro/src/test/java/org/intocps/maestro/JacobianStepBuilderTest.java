@@ -1,7 +1,9 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.File;
@@ -12,19 +14,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
+@RequiresFmu({TestFmu.PUMP, TestFmu.SINK})
 public class JacobianStepBuilderTest extends FullSpecTest {
-
-    static final List<String> FMU_NAMES = List.of("singlewatertank-20sim.fmu", "watertankcontroller-c.fmu",
-            "rollback-test.fmu", "rollback-end.fmu", "pump.fmu", "sink.fmu", "MassSpringDamper1.fmu", "MassSpringDamper2.fmu");
-
-    @BeforeAll
-    static void downloadFmus() throws IOException {
-        List<java.net.URL> urls = new ArrayList<>();
-        for (String name : FMU_NAMES) {
-            urls.add(TestFmuDownloads.fmuUrl(name));
-        }
-        TestFmuDownloads.download(urls);
-    }
 
     /**
      * This is the data provider function that is used by the super class.

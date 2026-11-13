@@ -1,5 +1,9 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -24,7 +28,6 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,13 +35,8 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class WatertankApiTest {
-
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("singlewatertank-20sim.fmu"),
-                TestFmuDownloads.fmuUrl("watertankcontroller-c.fmu")));
-    }
 
     @Test
     public void test() throws Exception {
@@ -49,10 +47,10 @@ public class WatertankApiTest {
         DynamicActiveBuilderScope ds = builder.getDynamicScope();
 
         FmuVariableFmi2Api controllerFmu = ds.createFMU("controllerFmu", "FMI2",
-            TestFmuDownloads.cachePath("watertankcontroller-c.fmu").toUri().toASCIIString());
+            FmuTestModelRepository.cachePath(TestFmu.WATER_TANK_CONTROLLER).toUri().toASCIIString());
 
         FmuVariableFmi2Api tankFmu = ds.createFMU("tankFmu", "FMI2",
-            TestFmuDownloads.cachePath("singlewatertank-20sim.fmu").toUri().toASCIIString());
+            FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toUri().toASCIIString());
 
 
         ComponentVariableFmi2Api controller = controllerFmu.instantiate("controller");

@@ -3,9 +3,9 @@ package org.intocps.maestro.webapi.maestro2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
-import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,13 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @SpringBootTest
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class InitializeTests {
-
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        FmuTestModelRepository.download(List.of(FmuTestModelRepository.url("singlewatertank-20sim.fmu"),
-            FmuTestModelRepository.url("watertankcontroller-c.fmu")));
-    }
 
     @Autowired
     private WebApplicationContext webApplicationContext;
