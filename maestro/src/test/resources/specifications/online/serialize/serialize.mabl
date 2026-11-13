@@ -6,7 +6,7 @@ import Logger;
 import FmiComponentState;
 {
     Logger logger = load("Logger");
-    FMI2 fmu = load("FMI2", "{12345678-9999-9999-9999-000000000000}", "target/online-cache/test-fmus-0.0.2/fmi2functiontest.fmu");
+    FMI2 fmu = load("FMI2", "{12345678-9999-9999-9999-000000000000}", "target/online-cache/test-fmus/fmi2functiontest.fmu");
     FMI2Component comp = fmu.instantiate("crtlInstance", false, false);
     int status=0;
     status = comp.setupExperiment(false, 0.0, 0.0, true, 10.0);

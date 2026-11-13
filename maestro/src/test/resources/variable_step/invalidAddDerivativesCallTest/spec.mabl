@@ -20,8 +20,8 @@ import VariableStep;
     // #############################
     // Load the FMUs and instantiate instances
     // #############################
-    FMI2 tankController = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu");
-    FMI2 singleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "target/online-cache/test-fmus-0.0.2/singlewatertank-20sim.fmu");
+    FMI2 tankController = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "target/online-cache/test-fmus/watertankcontroller-c.fmu");
+    FMI2 singleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "target/online-cache/test-fmus/singlewatertank-20sim.fmu");
     FMI2Component crtlInstance = tankController.instantiate("crtlInstance", false, false);
     FMI2Component wtInstance = singleWatertank.instantiate("wtInstance", false, false);
 

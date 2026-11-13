@@ -1,5 +1,9 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+import org.intocps.maestro.testutils.FmuTestModelRepository;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.jnifmuapi.fmi3.Fmu3;
@@ -11,7 +15,6 @@ import org.intocps.maestro.core.messages.ErrorReporter;
 import org.intocps.maestro.core.messages.IErrorReporter;
 import org.intocps.maestro.fmi.Fmi2ModelDescription;
 import org.intocps.maestro.fmi.fmi3.Fmi3ModelDescription;
-import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironment;
 import org.intocps.maestro.framework.fmi2.Fmi2SimulationEnvironmentConfiguration;
 import org.intocps.maestro.framework.fmi2.api.FmiBuilder;
@@ -24,7 +27,6 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -37,13 +39,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.BOUNCING_BALL,
+        TestFmu.FEEDTHROUGH, TestFmu.SIGNAL_GENERATOR})
 public class MixedFmi2Fmi3BuilderTest {
-
-    @BeforeAll
-    public static void downloadFmus() throws IOException {
-        Fmi3ModuleReferenceFmusTest.downloadReferenceFmus();
-
-    }
 
     @Test
     public void wt() throws Exception {
@@ -76,7 +74,7 @@ public class MixedFmi2Fmi3BuilderTest {
         // Fmi2Builder.Variable<PStm, Object> logReturnValue = logger.call(func2, "ddd", 6, v8);
 
 
-        URI ballUri = Fmi3ModuleReferenceFmusTest.destination.resolve("BouncingBall.fmu").toAbsolutePath().toUri();
+        URI ballUri = FmuTestModelRepository.cachePath(TestFmu.BOUNCING_BALL).toAbsolutePath().toUri();
         Fmu3 ball = new Fmu3(new File(ballUri));
         ArrayVariableFmi2Api requiredIntermediateVariables = builder.getDynamicScope().store("requiredIntermediateVariables", new Long[]{1L});
         Fmi3ModelDescription md3Ball = new Fmi3ModelDescription(ball.getModelDescription());

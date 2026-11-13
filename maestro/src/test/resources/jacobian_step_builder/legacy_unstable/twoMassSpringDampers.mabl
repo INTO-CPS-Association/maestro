@@ -18,8 +18,8 @@ real STEP_SIZE = 0.001;
 
 Logger logger = load("Logger");
 Math math = load("Math");
-FMI2 m1 = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}", "target/online-cache/test-fmus-0.0.2/MassSpringDamper1.fmu");
-FMI2 m2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}",  "target/online-cache/test-fmus-0.0.2/MassSpringDamper2.fmu");
+FMI2 m1 = load("FMI2", "{da03fa66-a02a-43d6-a906-db865e2ea044}", "target/online-cache/test-fmus/MassSpringDamper1.fmu");
+FMI2 m2 = load("FMI2", "{9113a387-2c02-42ae-ae68-5073bf845034}",  "target/online-cache/test-fmus/MassSpringDamper2.fmu");
 FMI2Component mi1 = m1.instantiate("mi1", false, false);;
 FMI2Component mi2 = m2.instantiate("mi2", false, false);;
 

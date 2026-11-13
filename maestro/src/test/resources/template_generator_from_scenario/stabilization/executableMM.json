@@ -2,8 +2,8 @@
   "masterModel": "name = fromMultiModel\nscenario = {\nfmus = {\nm2_mi2 = { \n can-reject-step = true,\n inputs = {\nx1 = {reactivity=reactive}\nv1 = {reactivity=reactive}},\n outputs = {\nfk = {dependencies-init=[x1,v1], dependencies=[x1,v1]}\nx2 = {dependencies-init=[x1,v1], dependencies=[x1,v1]}\nv2 = {dependencies-init=[x1,v1], dependencies=[x1,v1]}}\n }\nm1_mi1 = { \n can-reject-step = true,\n inputs = {\nfk = {reactivity=reactive}},\n outputs = {\nx1 = {dependencies-init=[], dependencies=[]}\nv1 = {dependencies-init=[], dependencies=[]}}\n }}\nconnections = [\nm2_mi2.fk -> m1_mi1.fk\nm1_mi1.x1 -> m2_mi2.x1\nm1_mi1.v1 -> m2_mi2.v1]\n}\ninitialization = [{get: m1_mi1.v1}\n\n{get: m1_mi1.x1}\n\n{set: m2_mi2.x1}\n\n{set: m2_mi2.v1}\n\n{get: m2_mi2.x2}\n\n{get: m2_mi2.fk}\n\n{set: m1_mi1.fk}\n\n{get: m2_mi2.v2}\n]\ncosim-step = [{save-state: m2_mi2}\n\n{save-state: m1_mi1}\n\n{loop: { \n until-step-accept: [m2_mi2,m1_mi1] \n iterate: [{loop: { \n until-converged: [m2_mi2.fk,m1_mi1.x1,m1_mi1.v1] \n iterate: [{set: m2_mi2.v1}\n\n{set: m2_mi2.x1}\n\n{step: m2_mi2 }\n\n{get-tentative: m2_mi2.fk}\n\n{set: m1_mi1.fk}\n\n{step: m1_mi1 }\n\n{get-tentative: m1_mi1.x1}\n\n{get-tentative: m1_mi1.v1}\n] \n if-retry-needed: [{restore-state: m2_mi2}\n\n{restore-state: m1_mi1}\n]} \n }\n] \n if-retry-needed: [{restore-state: m2_mi2}\n\n{restore-state: m1_mi1}\n]} \n }\n\n{get: m2_mi2.x2}\n\n{get: m2_mi2.v2}\n]\n",
   "multiModel": {
     "fmus": {
-      "{m2}": "target/online-cache/test-fmus-0.0.2/MassSpringDamper2.fmu",
-      "{m1}": "target/online-cache/test-fmus-0.0.2/MassSpringDamper1.fmu"
+      "{m2}": "target/online-cache/test-fmus/MassSpringDamper2.fmu",
+      "{m1}": "target/online-cache/test-fmus/MassSpringDamper1.fmu"
     },
     "connections": {
       "{m2}.mi2.fk": [
