@@ -1,14 +1,15 @@
 package org.intocps.maestro.webapi.maestro2;
 
 import org.apache.commons.io.FileUtils;
-import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
 import org.intocps.maestro.webapi.Application;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
 
+@RequiresFmu({TestFmu.MASS_SPRING_DAMPER_1, TestFmu.MASS_SPRING_DAMPER_2})
 public class StabilisationExampleTests {
     File folder_stabilisation_example_resources = new File("src/test/resources/maestro2/stabilisation_example");
     File folder_stabilisation_example_target = new File("target/stabilisation_example");
@@ -17,11 +18,6 @@ public class StabilisationExampleTests {
     File stableMMConfig = new File(folder_stabilisation_example_resources, "stablemm.json");
     File unstableMMConfig = new File(folder_stabilisation_example_resources, "unstablemm.json");
 
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        FmuTestModelRepository.download(List.of(FmuTestModelRepository.url("MassSpringDamper1.fmu"),
-            FmuTestModelRepository.url("MassSpringDamper2.fmu")));
-    }
 
     @Test
     void configurationBasedExample() throws Exception {

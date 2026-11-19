@@ -5,7 +5,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.fmi.jnifmuapi.fmi3.Fmu3;
 import org.intocps.maestro.Mabl;
-import org.intocps.maestro.TestFmuDownloads;
+import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
 import org.intocps.maestro.ast.LexLocation;
 import org.intocps.maestro.ast.display.PrettyPrinter;
 import org.intocps.maestro.ast.node.*;
@@ -28,7 +30,6 @@ import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.parser.MablParserUtil;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 
@@ -47,12 +48,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.condition.OS.LINUX;
 
+@RequiresFmu({TestFmu.BOUNCING_BALL, TestFmu.FEEDTHROUGH, TestFmu.SIGNAL_GENERATOR})
 public class BuilderFmi3Test {
-    @BeforeAll
-    public static void before() throws IOException {
-        Fmi3ModuleReferenceFmusTest.downloadReferenceFmus();
-                TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("SignalGenerator.fmu")));
-    }
 
 
     public static InstanceVariableFmi3Api createInstance(MablApiBuilder builder, String name, URI uri, boolean eventModeUsed) throws Exception {
@@ -77,7 +74,7 @@ public class BuilderFmi3Test {
         MablApiBuilder builder = new MablApiBuilder();
 
         InstanceVariableFmi3Api instance = createInstance(builder, "ball",
-                Fmi3ModuleReferenceFmusTest.destination.resolve("BouncingBall.fmu").toAbsolutePath().toUri(), true);
+                FmuTestModelRepository.cachePath(TestFmu.BOUNCING_BALL).toAbsolutePath().toUri(), true);
 
 
 
@@ -226,9 +223,9 @@ public class BuilderFmi3Test {
         MablApiBuilder builder = new MablApiBuilder();
 
         InstanceVariableFmi3Api fd = createInstance(builder, "fd",
-                Fmi3ModuleReferenceFmusTest.destination.resolve("Feedthrough.fmu").toAbsolutePath().toUri(), false);
+                FmuTestModelRepository.cachePath(TestFmu.FEEDTHROUGH).toAbsolutePath().toUri(), false);
         InstanceVariableFmi3Api sg = createInstance(builder, "sg",
-                TestFmuDownloads.cachePath("SignalGenerator.fmu").toAbsolutePath().toUri(), false);
+                FmuTestModelRepository.cachePath(TestFmu.SIGNAL_GENERATOR).toAbsolutePath().toUri(), false);
 
 
 //        fd.enterInitializationMode(false, 0.0, 0.0, true, 10.0);

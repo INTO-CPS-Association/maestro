@@ -1,8 +1,8 @@
 {
   "fmus": {
-    "{x1}": "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu",
-    "{x2}": "target/online-cache/test-fmus-0.0.2/singlewatertank-20sim.fmu",
-    "{x3}": "target/online-cache/test-fmus-0.0.2/watertankcontroller-c.fmu"
+    "{x1}": "target/online-cache/test-fmus/watertankcontroller-c.fmu",
+    "{x2}": "target/online-cache/test-fmus/singlewatertank-20sim.fmu",
+    "{x3}": "target/online-cache/test-fmus/watertankcontroller-c.fmu"
   },
   "connections": {
     "{x1}.controller.valve": [

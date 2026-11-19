@@ -4,8 +4,8 @@
 
 The standalone `INTO-CPS-Association/test-fmus` repository now publishes
 `Release/0.0.2`. Maestro's online test-FMU downloads use
-`maestro/target/online-cache/test-fmus-0.0.2`; the FMI 3 reference tests download
-BouncingBall and Feedthrough into their own versioned cache. The existing
+`target/online-cache/test-fmus` relative to each test module, including the
+FMI 3 reference tests. External CLI/API tests share Maestro's cache. The existing
 checked-in FMUs remain available to other tests. The temporary Maven `test-fmus`
 module has been removed.
 
@@ -28,14 +28,48 @@ The release is **not a replacement for every Maestro fixture**:
 
 The test-FMUs release now replaces the source-backed FMI 2 and selected FMI 3
 models used by Maestro tests, including the three-tank controller. Resource
-configs and MaBL loads use the versioned online cache, and their owning tests
-download referenced release assets before execution. Source-less mocks,
+configs and MaBL loads use the stable online cache, and their owning tests
+declare required release assets before execution. Source-less mocks,
 VDM-RT-only controllers, and binary-only FMI 3 exports remain local where
 needed. The Jacobian CSV comparison permits floating-point rounding differences
 with a `1e-12` absolute and relative tolerance while preserving exact text
 comparisons. The release builds and native-load checks do not prove
 numerical equivalence or complete FMI conformance; release notes contain the
 per-FMU FMPy diagnostic results.
+
+## Declaring test fixtures
+
+The `fmu-test-utils` module owns the `TestFmu` catalog, repository tests, and
+the repeatable, inherited JUnit Jupiter `@RequiresFmu` annotation:
+
+```java
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
+class WaterTankTest {
+}
+```
+
+The extension downloads declared models before `@BeforeAll` initialization.
+Subclasses combine their requirements with those of their superclasses;
+duplicate models are downloaded only once. Tests use
+`FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK)` rather than
+string-based download calls. The Maestro-only `TestFmuCollector` handles MaBL
+load rewriting; it does not duplicate the shared downloader.
+
+The pinned release URL and canonical asset names are defined once in the
+`TestFmu` enum. Java tests use the enum directly. Maven generates
+`fmu-test-utils/target/classes/org/intocps/maestro/testutils/test-fmus.properties`
+from it during `process-classes`, packages the resource in the utility JAR,
+and external Python tests read that generated file. Do not edit or commit the
+generated properties; run `mvn -pl fmu-test-utils -am package` before running
+external tests separately. A release update changes the enum, not every
+configuration path. The cache's `.release` marker causes
+old fixtures to be invalidated when the pinned release URL changes. The cache
+path remains `target/online-cache/test-fmus`.
+
+## Earlier JNI investigation
+
+The observations below predate the JNI 1.6.1 upgrade and successful four-platform
+verification; they are retained as investigation history.
 
 On macOS ARM with the jenv Java 21 JDK, the downloader tests, the FMI 3 reference
 simulation, and the FMI 3 builder tests pass. The FMI 2 online tests pass three

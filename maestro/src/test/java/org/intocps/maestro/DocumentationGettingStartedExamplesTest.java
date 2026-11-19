@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.core.Framework;
@@ -9,7 +12,6 @@ import org.intocps.maestro.interpreter.DefaultExternalValueFactory;
 import org.intocps.maestro.interpreter.MableInterpreter;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -22,13 +24,8 @@ import java.util.List;
 /**
  * This test class uses files within resources/documentation_example_files
  */
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class DocumentationGettingStartedExamplesTest {
-
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        TestFmuDownloads.download(List.of(TestFmuDownloads.fmuUrl("singlewatertank-20sim.fmu"),
-                TestFmuDownloads.fmuUrl("watertankcontroller-c.fmu")));
-    }
 
     File testFilesDirectory = new File("src/test/resources/documentation_example_files");
 

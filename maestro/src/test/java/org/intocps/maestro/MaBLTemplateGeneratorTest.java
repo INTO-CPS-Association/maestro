@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
@@ -27,7 +30,6 @@ import org.intocps.maestro.template.MaBLTemplateGenerator;
 import org.intocps.maestro.typechecker.TypeChecker;
 import org.intocps.maestro.util.MablModuleProvider;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -45,12 +47,10 @@ import java.util.function.BiFunction;
 
 import static org.intocps.maestro.template.MaBLTemplateGenerator.FAULTINJECT_POSTFIX;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.MASS_SPRING_DAMPER_1,
+        TestFmu.MASS_SPRING_DAMPER_2, TestFmu.THREE_WATER_TANK_1, TestFmu.THREE_WATER_TANK_2,
+        TestFmu.THREE_WATER_TANK_CONTROLLER})
 public class MaBLTemplateGeneratorTest {
-
-    @BeforeAll
-    static void downloadFmus() throws Exception {
-        TestFmuDownloads.downloadFromDirectory(Paths.get("src", "test", "resources", "specifications", "full").toFile());
-    }
 
     /**
      * Fault injects the wtInstance and verifies that an instance mapping statement has been created above the wtInstance_m_fi variable

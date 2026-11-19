@@ -6,7 +6,7 @@ import Logger;
     try
     {
         Logger logger = load("Logger");
-        x1 = load("FMI3", "{1AE5E10D-9521-4DE3-80B9-D0EAAA7D5AF1}", "target/online-cache/test-fmus-0.0.2/BouncingBall.fmu");
+        x1 = load("FMI3", "{1AE5E10D-9521-4DE3-80B9-D0EAAA7D5AF1}", "target/online-cache/test-fmus/BouncingBall.fmu");
         if (x1 == null)
         {
             error;

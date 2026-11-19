@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
 import org.intocps.maestro.webapi.maestro2.dto.InitializeStatusModel;
 import org.intocps.maestro.webapi.maestro2.dto.StatusModel;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,21 +44,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @SpringBootTest
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class CreateMablSpecTests {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
-        @BeforeAll
-        static void downloadFmus() throws Exception {
-                FmuTestModelRepository.download(List.of(FmuTestModelRepository.url("singlewatertank-20sim.fmu"),
-                        FmuTestModelRepository.url("watertankcontroller-c.fmu")));
-        }
 
     public static String getWaterTankMMJson(boolean useFixedStep) {
-                String singlewatertank_20simfmu = FmuTestModelRepository.cachePath("singlewatertank-20sim.fmu").toAbsolutePath().toUri().toASCIIString();
-                String watertankcontroller_cfmu = FmuTestModelRepository.cachePath("watertankcontroller-c.fmu").toAbsolutePath().toUri().toASCIIString();
+                String singlewatertank_20simfmu = FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toAbsolutePath().toUri().toASCIIString();
+                String watertankcontroller_cfmu = FmuTestModelRepository.cachePath(TestFmu.WATER_TANK_CONTROLLER).toAbsolutePath().toUri().toASCIIString();
 
         String VariableStepalgorithm = "\"algorithm\":{\"type\":\"var-step\",\"initsize\":0,\"size\":[1e-16,1]," +
                 "\"constraints\":{\"max\":{\"type\":\"zerocrossing\",\"ports\":[\"{wt}.wtInstance.level\",\"{crtl}.crtlInstance.maxlevel\"],\"order\":1,\"abstol\":0" +
