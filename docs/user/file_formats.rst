@@ -143,9 +143,9 @@ The following properties are used in maestro using sg1 import/ web api:
 * :code:`livestream`: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be transmitted over the web socket while simulating (similar to the output.csv but just live | only for the webapi)
 * :code:`logVariables`: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be logged (included in the output.csv)
 * :code:`visible`: fmu visible flag
-* :code:`loggingOn`: fmu logging on flag
-* :code:`overrideLogLevel`: override the maestro log level
-* :code:`enableAllLogCategoriesPerInstance`: automatically enable all log categories in all fmus
+* :code:`loggingOn`: enable FMU diagnostic logging
+* :code:`logLevels`: map :code:`"{FMU}.instanceName"` to a list of FMU-defined logging categories; these are not Java severity levels
+* :code:`overrideLogLevel`: override the Java root logger level for SG1 import or web API initialization; omitted or null leaves the configured level unchanged
 * :code:`algorithm`: the algorithm to be used, default is type='fixed-step' with size=<decimal number>
 * :code:`parallelSimulation`: run the simulation steps in parallel when ever possible. Eg in jaccobian all instances can get/set/doStep in parallel
 * :code:`stabalizationEnabled`: if algebraic loops exists then attempt stabilisation (will use global_absolute_tolerance, global_relative_tolerance)
@@ -153,3 +153,6 @@ The following properties are used in maestro using sg1 import/ web api:
 * :code:`global_relative_tolerance`: for stabilisation
 * :code:`simulationProgramDelay`: slow down simulation doStep to make sure its not faster than the step time itself
 * :code:`reportProgress`: Not used in maestroV2
+
+See :ref:`logging` for examples, log destinations, and logging configuration when
+using Maestro as a Java dependency.

@@ -5,12 +5,24 @@ import org.intocps.maestro.testutils.RequiresFmu;
 import org.intocps.maestro.testutils.TestFmu;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.intocps.maestro.core.dto.MultiModel;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -40,6 +52,51 @@ public class ImportCliTest {
         int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(s);
         Assert.assertEquals(0, exitCode);
 
+    }
+
+    @ParameterizedTest
+    @EnumSource(MultiModel.InitializeLogLevel.class)
+    @NullSource
+    public void importTestOverrideLogLevel(MultiModel.InitializeLogLevel level, @TempDir Path tempDir) throws IOException {
+        Level originalLevel = LogManager.getRootLogger().getLevel();
+        try {
+            Configurator.setRootLevel(Level.INFO);
+            Path override = tempDir.resolve("logging.json");
+            Files.writeString(override, "{\"overrideLogLevel\":" + (level == null ? "null" : "\"" + level.name() + "\"") + "}");
+
+            int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(
+                    "import", "sg1", "-output", tempDir.resolve("output").toString(),
+                    simulationConfigPath.getPath(), new File(resourcesConfigPrefix, "config.json").getPath(), override.toString());
+
+            Assert.assertEquals(0, exitCode);
+            Assert.assertEquals(level == null ? Level.INFO : Level.valueOf(level.name()), LogManager.getRootLogger().getLevel());
+        } finally {
+            Configurator.setRootLevel(originalLevel);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL", "null", "", "INVALID"})
+    public void importTestLogLevelBeforeFmuResolution(String level, @TempDir Path tempDir) throws IOException {
+        Level originalLevel = LogManager.getRootLogger().getLevel();
+        try {
+            Configurator.setRootLevel(Level.INFO);
+            Path config = tempDir.resolve("config.json");
+            String override = level.isEmpty() ? "" : ",\"overrideLogLevel\":" + ("null".equals(level) ? "null" : "\"" + level + "\"");
+            Files.writeString(config, "{\"fmus\":{\"{missing}\":\"missing.fmu\"}" + override + "}");
+            StringWriter errors = new StringWriter();
+
+            int exitCode = new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true)
+                    .setErr(new PrintWriter(errors)).execute("import", "sg1", "--fmu-search-path", tempDir.toString(), config.toString());
+
+            Assert.assertNotEquals(0, exitCode);
+            boolean unchanged = level.isEmpty() || "null".equals(level) || "INVALID".equals(level);
+            Assert.assertEquals(unchanged ? Level.INFO : Level.valueOf(level), LogManager.getRootLogger().getLevel());
+            Assert.assertTrue(errors.toString(), errors.toString().contains(
+                    "INVALID".equals(level) ? "InvalidFormatException" : "FileNotFoundException"));
+        } finally {
+            Configurator.setRootLevel(originalLevel);
+        }
     }
 
     @Test
