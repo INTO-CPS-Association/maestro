@@ -31,7 +31,7 @@ release = '2.0.0 Alpha'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "recommonmark",
+    "myst_parser",
     "sphinx_rtd_theme",
     "sphinxcontrib.plantuml",
 #    "sphinx.ext.autosectionlabel"
@@ -40,7 +40,7 @@ extensions = [
 # source files to generate documentation
 source_suffix = {
     '.rst': 'restructuredtext',
-    '.md': 'markdown',
+    '.md': 'myst',
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -69,4 +69,4 @@ html_theme = 'sphinx_rtd_theme'
 if os.environ.get("READTHEDOCS") != None:
     plantuml = 'java -Djava.awt.headless=true -jar /usr/share/plantuml/plantuml.jar'
 else:
-    plantuml = 'java -jar ../plantuml.jar'
+    plantuml = 'java -jar ' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'plantuml.jar')
