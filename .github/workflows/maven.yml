@@ -17,7 +17,6 @@ env:
 
   SERVER_ID: ossrh
   PYTHON_VERSION: '3.12'
-  MAVEN_VERSION: 3.9.16
   WINDOWS_VERSION: 'windows-2025'
 
   MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -43,10 +42,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Set up maven
-        uses: stCarolas/setup-maven@v5.1
-        with:
-          maven-version: ${{ env.MAVEN_VERSION }}
+      - name: Show runner Maven version
+        run: mvn --version
 
       - name: Setup MSYS2
         if: runner.os == 'Windows'
@@ -234,10 +231,8 @@ jobs:
           server-password-env-var: MAVEN_PASSWORD
           gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
 
-      - name: Set up maven
-        uses: stCarolas/setup-maven@v5.1
-        with:
-          maven-version: ${{ env.MAVEN_VERSION }}
+      - name: Show runner Maven version
+        run: mvn --version
 
 
       - name: Maven Package feature SNAPSHOT
@@ -258,5 +253,4 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-
 

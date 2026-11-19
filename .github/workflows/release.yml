@@ -14,7 +14,6 @@ env:
 
   SERVER_ID: ossrh
   PYTHON_VERSION: '3.12'
-  MAVEN_VERSION: 3.9.16
   WINDOWS_VERSION: 'windows-2025'
 
 
@@ -118,10 +117,8 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Set up maven
-        uses: stCarolas/setup-maven@v5.1
-        with:
-          maven-version: ${{ env.MAVEN_VERSION }}
+      - name: Show runner Maven version
+        run: mvn --version
 
 
 
@@ -237,10 +234,8 @@ jobs:
           server-password-env-var: MAVEN_PASSWORD
           gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
 
-      - name: Set up maven
-        uses: stCarolas/setup-maven@v5.1
-        with:
-          maven-version: ${{ env.MAVEN_VERSION }}
+      - name: Show runner Maven version
+        run: mvn --version
 
       - name: Cache local Maven repository
         uses: actions/cache@v6.1.0
