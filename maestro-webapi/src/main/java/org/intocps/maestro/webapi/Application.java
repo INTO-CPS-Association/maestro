@@ -32,7 +32,9 @@ public class Application {
     public static void main(String[] args) throws Exception {
 
         if (args.length > 0 && args[0].equals("cliMain")) {
-            org.intocps.maestro.Main.argumentHandler(Arrays.stream(args).skip(1).toArray(String[]::new));
+            if (!org.intocps.maestro.Main.argumentHandler(Arrays.stream(args).skip(1).toArray(String[]::new))) {
+                System.exit(1);
+            }
         } else {
             CommandLine cmd = MaestroV1CliProxy.parse(args);
             if (!MaestroV1CliProxy.process(cmd, new MableV1ToV2ProxyRunner(), port -> {

@@ -240,8 +240,8 @@ public class Maestro2SimulationController {
     }
 
     @Operation(summary = "Run co-simulation", description = "Generates and executes a specification using the session configuration and requested times. " +
-            "The request blocks until execution completes. Thrown exceptions normally return HTTP 500, but CLI-mode failures may still return HTTP 200; " +
-            "inspect errors and session status as well (known issue #189).")
+            "The request blocks until execution completes. Execution failures return a non-2xx response and mark the session Error. " +
+            "A nonzero CLI exit code is a failure; stderr alone does not indicate failure.")
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"},
             produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
@@ -250,52 +250,57 @@ public class Maestro2SimulationController {
             return runSimulation((Maestro2Broker broker) -> broker.buildAndRun(logic.getInitializationData(), body, logic.getSocket(),
                     new File(logic.rootDirectory, "outputs.csv")), logic, body, sessionId);
         } else {
-            mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
-
-            long preSimTime;
-            long postSimTime;
+            long preSimTime = System.currentTimeMillis();
             logic.setStatus(SessionLogic.SessionStatus.Simulating);
-            String simulateJsonPath = new File(logic.rootDirectory, "simulate.json").getAbsolutePath();
-            String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
-            String dumpDirectory = logic.rootDirectory.getAbsolutePath();
-            List<String> arguments = new ArrayList<>(
-                    List.of("cliMain", "import", "-output", dumpDirectory, "--dump-intermediate", "sg1", initializeJsonPath, simulateJsonPath, "-i",
-                            "-v", "FMI2", "--fmu-search-path", sessionController.getSessionLogic(sessionId).getRootDirectory().getAbsolutePath()));
-
-            List<String> error = new ArrayList<>();
-            List<String> out = new ArrayList<>();
-            List<String> command = JavaProcess.calculateCommand(Application.class, List.of(), arguments);
-            logger.info("Executing command: " + String.join(" ", command));
-            preSimTime = System.currentTimeMillis();
-            Process p = Runtime.getRuntime().exec(command.toArray(String[]::new));
-            Scanner outputStreamSc = new Scanner(p.getInputStream());
-            Scanner errorStream = new Scanner(p.getErrorStream());
-
-            while (outputStreamSc.hasNextLine() || errorStream.hasNext()) {
-                if (outputStreamSc.hasNextLine()) {
-                    String outLine = outputStreamSc.nextLine();
-                    out.add(outLine);
-                    System.out.println(outLine);
-                }
-                if (errorStream.hasNext()) {
-                    var line = errorStream.nextLine();
-                    error.add(line);
-                    System.out.println(line);
-                }
+            try {
+                return runCliSimulation(logic, body, sessionId);
+            } finally {
+                recordSimulationCompletion(logic, preSimTime);
             }
-            int result = p.waitFor();
-
-            if (!error.isEmpty()) {
-                logic.setStatus(SessionLogic.SessionStatus.Error);
-            } else {
-                logic.setStatus(SessionLogic.SessionStatus.Finished);
-            }
-            postSimTime = System.currentTimeMillis();
-            logic.setExecTime(postSimTime - preSimTime);
-
-            return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
         }
+    }
 
+    private StatusModel runCliSimulation(SessionLogic logic, SimulateRequestBody body, String sessionId) throws Exception {
+        mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
+        String simulateJsonPath = new File(logic.rootDirectory, "simulate.json").getAbsolutePath();
+        String initializeJsonPath = new File(logic.rootDirectory, "initialize.json").getAbsolutePath();
+        String dumpDirectory = logic.rootDirectory.getAbsolutePath();
+        List<String> arguments = new ArrayList<>(
+                List.of("cliMain", "import", "-output", dumpDirectory, "--dump-intermediate", "sg1", initializeJsonPath, simulateJsonPath, "-i",
+                        "-v", "FMI2", "--fmu-search-path", sessionController.getSessionLogic(sessionId).getRootDirectory().getAbsolutePath()));
+
+        List<String> error = new ArrayList<>();
+        List<String> out = new ArrayList<>();
+        List<String> command = JavaProcess.calculateCommand(Application.class, List.of(), arguments);
+        logger.info("Executing command: " + String.join(" ", command));
+        Process p = startSimulationProcess(command);
+        Scanner outputStreamSc = new Scanner(p.getInputStream());
+        Scanner errorStream = new Scanner(p.getErrorStream());
+
+        while (outputStreamSc.hasNextLine() || errorStream.hasNext()) {
+            if (outputStreamSc.hasNextLine()) {
+                String outLine = outputStreamSc.nextLine();
+                out.add(outLine);
+                System.out.println(outLine);
+            }
+            if (errorStream.hasNext()) {
+                var line = errorStream.nextLine();
+                error.add(line);
+                System.out.println(line);
+            }
+        }
+        int result = p.waitFor();
+
+        if (result != 0) {
+            throw new Exception("Simulation failed with exit code " + result + ": " + String.join(System.lineSeparator(), error));
+        }
+        logic.setStatus(SessionLogic.SessionStatus.Finished);
+
+        return new StatusModel(result + " - Simulation completed", sessionId, 0, error, out);
+    }
+
+    Process startSimulationProcess(List<String> command) throws IOException {
+        return Runtime.getRuntime().exec(command.toArray(String[]::new));
     }
 
     @Operation(summary = "Request simulation stop", description = "Sets the session stop flag. Execution stops when the running algorithm checks it; " +
@@ -374,34 +379,38 @@ public class Maestro2SimulationController {
     }
 
     private StatusModel runSimulation(IBuildAndRun func, SessionLogic logic, BaseSimulateRequestBody body, String sessionId) throws Exception {
-        mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
-
-        ErrorReporter reporter = new ErrorReporter();
-        long preSimTime;
-        long postSimTime;
+        long preSimTime = System.currentTimeMillis();
         logic.setStatus(SessionLogic.SessionStatus.Simulating);
+        try {
+            mapper.writeValue(new File(logic.rootDirectory, "simulate.json"), body);
+            ErrorReporter reporter = new ErrorReporter();
+            logic.setStopRequested(false);
+            func.apply(new Maestro2Broker(logic.rootDirectory, reporter, logic::isStopRequested));
 
-        logic.setStopRequested(false);
-        preSimTime = System.currentTimeMillis();
-        func.apply(new Maestro2Broker(logic.rootDirectory, reporter, logic::isStopRequested));
-        postSimTime = System.currentTimeMillis();
-        logic.setExecTime(postSimTime - preSimTime);
+            if (reporter.getErrorCount() > 0) {
+                reporter.getErrors().forEach(x -> logger.error(x.toString()));
+                StringWriter out = new StringWriter();
+                PrintWriter writer = new PrintWriter(out);
+                reporter.printWarnings(writer);
+                reporter.printErrors(writer);
+                throw new Exception(out.toString());
+            }
 
-        if (reporter.getErrorCount() > 0) {
-            logic.setStatus(SessionLogic.SessionStatus.Error);
-            reporter.getErrors().forEach(x -> logger.error(x.toString()));
-            StringWriter out = new StringWriter();
-            PrintWriter writer = new PrintWriter(out);
-            reporter.printWarnings(writer);
-            reporter.printErrors(writer);
-            throw new Exception(out.toString());
+            reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
+            logic.setStatus(SessionLogic.SessionStatus.Finished);
+            return new StatusModel("Simulation completed", sessionId, 0,
+                    reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
+                    reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+        } finally {
+            recordSimulationCompletion(logic, preSimTime);
         }
+    }
 
-        reporter.getWarnings().forEach(x -> logger.warn(x.toString()));
-        logic.setStatus(SessionLogic.SessionStatus.Finished);
-        return new StatusModel("Simulation completed", sessionId, 0,
-                reporter.getErrors().stream().map(MableError::toString).collect(Collectors.toList()),
-                reporter.getWarnings().stream().map(MableWarning::toString).collect(Collectors.toList()));
+    private void recordSimulationCompletion(SessionLogic logic, long startTime) {
+        if (logic.getStatus() == SessionLogic.SessionStatus.Simulating) {
+            logic.setStatus(SessionLogic.SessionStatus.Error);
+        }
+        logic.setExecTime(System.currentTimeMillis() - startTime);
     }
 
     @FunctionalInterface

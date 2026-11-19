@@ -58,7 +58,7 @@ continue to accept JSON encoded as ``text/plain`` for legacy clients.
 The ``/ping`` endpoint is plain text, and ``/result/{sessionId}/plain`` returns
 ``text/csv`` rather than JSON.
 
-Errors and current limitations
+Errors and execution status
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Thrown exceptions normally produce a non-2xx response through the controller
@@ -68,14 +68,11 @@ exception handler (usually HTTP 500). Some exceptions have different mappings:
 information and, for internal failures, a log reference. These mappings reflect
 current behavior and do not imply that every malformed request returns 400.
 
-.. warning::
-
-   Failure reporting is not yet consistent (issue #189). In CLI execution mode,
-   an unsuccessful child-process exit can still return HTTP 200 with a
-   ``Simulation completed`` message. The session state is selected using stderr
-   rather than the exit code. In-process exceptions can also leave the recorded
-   state as ``Simulating``. Do not treat HTTP 200 or session state alone as
-   definitive proof of successful execution.
+Simulation exceptions and nonzero CLI exit codes return a non-2xx response and
+leave the session in ``Error`` rather than ``Simulating`` or ``Finished``.
+The elapsed execution time is recorded on both success and failure.
+CLI stderr is retained for diagnostics, but does not by itself indicate failure:
+tools may write warnings to stderr while exiting successfully.
 
 Algorithm verification has a separate result contract: inspect ``correct`` and
 ``errorMessage`` in the response even when HTTP status is 200.
