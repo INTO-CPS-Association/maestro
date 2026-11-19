@@ -127,11 +127,14 @@ To execute the specification execute the following command:
 
 .. code-block:: none
 
-    java -jar maestro2.jar --interpret spec.mabl
+    java -jar maestro2.jar interpret spec.mabl -runtime spec.runtime.json
 
-Where :code:`--interpret` instructs Maestro2 to interpret the subsequent specifications, in this case `spec.mabl`.
+The :code:`interpret` subcommand executes the specification using the supplied
+runtime configuration.
 
-The interpreter will automatically look for :code:`*.runtime.json` files within the same directory as the jar file.
+Pass the runtime file explicitly with :code:`-runtime`; the current subcommand
+does not automatically discover :code:`*.runtime.json` files beside the JAR.
+For runtime environment variables, see :ref:`menv_runtime`.
 
 Similar to above in :ref:`getting_started_part1`, the results can be viewed and plotted with the accompanying python script: :code:`python part2pythoncsvplotter.py`
 

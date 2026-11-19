@@ -1,0 +1,14 @@
+simulation
+import MEnv;
+import ConsolePrinter;
+{
+    MEnv env = load("MEnv");
+    ConsolePrinter console = load("ConsolePrinter");
+    int count = env.getInt("sample.count");
+    real step = env.getReal("step_size");
+    bool enabled = env.getBool("enabled");
+    string label = env.getString("label");
+    console.println("count=%d step=%.2f enabled=%b label=%s", count, step, enabled, label);
+    unload(console);
+    unload(env);
+}
