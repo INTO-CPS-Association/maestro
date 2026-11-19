@@ -155,7 +155,7 @@
       "post" : {
         "tags" : [ "Simulation" ],
         "summary" : "Run co-simulation",
-        "description" : "Generates and executes a specification using the session configuration and requested times. The request blocks until execution completes. Thrown exceptions normally return HTTP 500, but CLI-mode failures may still return HTTP 200; inspect errors and session status as well (known issue #189).",
+        "description" : "Generates and executes a specification using the session configuration and requested times. The request blocks until execution completes. Execution failures return a non-2xx response and mark the session Error. A nonzero CLI exit code is a failure; stderr alone does not indicate failure.",
         "operationId" : "simulate",
         "parameters" : [ {
           "name" : "sessionId",
