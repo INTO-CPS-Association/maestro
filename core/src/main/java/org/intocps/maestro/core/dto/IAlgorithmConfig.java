@@ -1,10 +1,9 @@
 package org.intocps.maestro.core.dto;
 
 import com.fasterxml.jackson.annotation.*;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel(subTypes = {FixedStepAlgorithmConfig.class, VariableStepAlgorithmConfig.class}, discriminator = "type",
-        description = "Simulation algorithm.")
+@Schema(description = "Simulation step algorithm. Select fixed-step or var-step using the type property.")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({@JsonSubTypes.Type(value = FixedStepAlgorithmConfig.class, name = "fixed-step"),
         @JsonSubTypes.Type(value = VariableStepAlgorithmConfig.class, name = "var-step")})

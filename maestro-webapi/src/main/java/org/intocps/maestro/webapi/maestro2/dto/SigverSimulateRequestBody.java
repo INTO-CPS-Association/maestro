@@ -2,14 +2,15 @@ package org.intocps.maestro.webapi.maestro2.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Map;
 
+@Schema(description = "Execution options and an explicit scenario master model.")
 public class SigverSimulateRequestBody extends BaseSimulateRequestBody {
 
-    @ApiModelProperty(value = "The sigver master model containing both the scenario, connections, initialization and co-sim steps")
+    @Schema(description = "Master-model configuration text containing the scenario, connections, initialization, and co-simulation steps.")
     @JsonProperty("masterModel")
     final String masterModel;
 

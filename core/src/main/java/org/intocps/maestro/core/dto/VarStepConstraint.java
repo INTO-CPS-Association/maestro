@@ -1,13 +1,11 @@
 package org.intocps.maestro.core.dto;
 
 import com.fasterxml.jackson.annotation.*;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-@ApiModel(subTypes = {VarStepConstraint.BoundedDifferenceConstraint.class, VarStepConstraint.ZeroCrossingConstraint.class,
-        VarStepConstraint.SamplingConstraint.class, VarStepConstraint.FmuMaxStepSizeConstraint.class}, discriminator = "type",
-        description = "Simulation variable step algorithm constraint.", value = "VarStepConstraint")
+@Schema(description = "Variable-step constraint. Select the constraint kind using the type property.")
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
 @JsonSubTypes({@JsonSubTypes.Type(value = VarStepConstraint.BoundedDifferenceConstraint.class, name = "boundeddifference"),
@@ -17,13 +15,17 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class VarStepConstraint {
     @JsonProperty
+    @Schema(description = "Constraint kind: boundeddifference, zerocrossing, samplingrate, or fmumaxstepsize.")
     public String type;
     public abstract void validate() throws Exception;
 
-    @ApiModel(parent = VarStepConstraint.class)
+    @Schema(description = "Sampling-rate constraint (type samplingrate).")
     public static class SamplingConstraint extends VarStepConstraint {
+        @Schema(description = "Base of the sampling-rate constraint.")
         Integer base;
+        @Schema(description = "Sampling rate relative to the base.")
         Integer rate;
+        @Schema(description = "Start time of the sampling constraint.")
         Integer startTime;
 
         public SamplingConstraint() {
@@ -53,7 +55,7 @@ public abstract class VarStepConstraint {
         }
     }
 
-    @ApiModel(parent = VarStepConstraint.class)
+    @Schema(description = "FMU maximum-step-size constraint (type fmumaxstepsize).")
     public static class FmuMaxStepSizeConstraint extends VarStepConstraint {
 
         @Override
@@ -62,12 +64,17 @@ public abstract class VarStepConstraint {
         }
     }
 
-    @ApiModel(parent = VarStepConstraint.class)
+    @Schema(description = "Bounded-difference constraint (type boundeddifference).")
     public static class BoundedDifferenceConstraint extends VarStepConstraint {
+        @Schema(description = "Qualified signal names monitored by the constraint.")
         List<String> ports;
+        @Schema(description = "Relative tolerance for the bounded difference.")
         Double reltol;
+        @Schema(description = "Absolute tolerance for the bounded difference.")
         Double abstol;
+        @Schema(description = "Safety factor used when adapting the step size.")
         Double safety;
+        @Schema(description = "Whether to skip discrete signals.")
         Boolean skipDiscrete;
 
         public BoundedDifferenceConstraint() {
@@ -107,11 +114,15 @@ public abstract class VarStepConstraint {
         }
     }
 
-    @ApiModel(parent = VarStepConstraint.class)
+    @Schema(description = "Zero-crossing constraint (type zerocrossing).")
     public static class ZeroCrossingConstraint extends VarStepConstraint {
+        @Schema(description = "Qualified signal names monitored for zero crossings.")
         List<String> ports;
+        @Schema(description = "Prediction order for zero-crossing detection.")
         Integer order;
+        @Schema(description = "Absolute tolerance for zero-crossing detection.")
         Double abstol;
+        @Schema(description = "Safety factor used when adapting the step size.")
         Double safety;
 
         public ZeroCrossingConstraint() {

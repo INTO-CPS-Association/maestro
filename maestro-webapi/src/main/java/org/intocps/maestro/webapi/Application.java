@@ -1,6 +1,8 @@
 package org.intocps.maestro.webapi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import org.apache.commons.cli.CommandLine;
 import org.intocps.maestro.MaestroV1CliProxy;
 import org.intocps.maestro.core.messages.ErrorReporter;
@@ -20,6 +22,8 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 @SpringBootApplication
+@OpenAPIDefinition(info = @Info(title = "Maestro Web API",
+        description = "Session-based FMI co-simulation and scenario algorithm generation, verification, and execution."))
 public class Application {
 
     final static ObjectMapper mapper = new ObjectMapper();

@@ -1,18 +1,25 @@
 package org.intocps.maestro.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Map;
 
-@ApiModel(parent = IAlgorithmConfig.class)
+@Schema(description = "Variable-step algorithm. Set type to var-step.")
 public class VariableStepAlgorithmConfig implements IAlgorithmConfig {
 
     @JsonProperty("size")
+    @JsonPropertyDescription("Minimum and maximum communication step sizes, in that order.")
+    @Schema(description = "Minimum and maximum communication step sizes, in that order.")
     final Double[] size;
     @JsonProperty("initsize")
+    @JsonPropertyDescription("Initial communication step size in simulation time units.")
+    @Schema(description = "Initial communication step size in simulation time units.")
     final Double initsize;
     @JsonProperty("constraints")
+    @JsonPropertyDescription("Named constraints used to select communication step sizes.")
+    @Schema(description = "Named constraints used to select communication step sizes.")
     final Map<String, VarStepConstraint> constraints;
 
     public VariableStepAlgorithmConfig(@JsonProperty("size") Double[] size, @JsonProperty("initsize") Double initsize,

@@ -3,13 +3,18 @@ package org.intocps.maestro.core.dto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Multi-model with scenario-verification options.")
 public class ExtendedMultiModel extends MultiModel {
     @JsonProperty("sigver")
+    @JsonPropertyDescription("Scenario-verification and input-reactivity options.")
+    @Schema(description = "Scenario-verification and input-reactivity options.")
     public final Sigver sigver;
 
     @JsonCreator
@@ -35,9 +40,13 @@ public class ExtendedMultiModel extends MultiModel {
 
     public static class Sigver {
         @JsonProperty("reactivity")
+        @JsonPropertyDescription("Input reactivity by qualified signal name: Reactive or Delayed.")
+        @Schema(description = "Input reactivity by qualified signal name: Reactive or Delayed.")
         public final Map<String, Reactivity> reactivity;
 
         @JsonProperty("verification")
+        @JsonPropertyDescription("Whether to verify the generated or supplied algorithm before execution.")
+        @Schema(description = "Whether to verify the generated or supplied algorithm before execution.")
         public final boolean verification;
 
         public Sigver(@JsonProperty("reactivity") Map<String, Reactivity> reactivity, @JsonProperty("verification") boolean verification) {

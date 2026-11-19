@@ -2,8 +2,9 @@ package org.intocps.maestro.webapi.maestro2;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -54,6 +55,8 @@ import java.util.zip.ZipOutputStream;
 
 @RestController
 @Component
+@Tag(name = "Simulation", description = "Create a session, initialize its multi-model, run co-simulation, and download results. " +
+        "Session identifiers are supplied in the URL. Simulation requests block until execution completes.")
 public class Maestro2SimulationController {
 
     public static final SessionController sessionController = new SessionController(new ProdSessionLogicFactory());
@@ -83,9 +86,11 @@ public class Maestro2SimulationController {
         ctx.updateLoggers();
     }
 
+    @Operation(summary = "Upload a file to a session", description = "Stores the multipart file in the session working directory for later use.")
     @RequestMapping(value = "/upload/{sessionId}", method = RequestMethod.POST)
     public void uploadFile(@PathVariable String sessionId,
-                           @ApiParam(value = "File", required = true) @RequestParam("file") MultipartFile file) throws IOException {
+                           @Parameter(description = "File to store in the session working directory", required = true)
+                           @RequestParam("file") MultipartFile file) throws IOException {
         try (InputStream is = file.getInputStream()) {
             logger.debug("Uploaded file: {}", file.getOriginalFilename());
             File targetFile = new File(sessionController.getSessionLogic(sessionId).getRootDirectory(), file.getOriginalFilename());
@@ -94,16 +99,19 @@ public class Maestro2SimulationController {
 
     }
 
+    @Operation(summary = "Check server availability", description = "Returns the plain-text response OK.")
     @RequestMapping(value = "/ping", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
     public String ping() {
         return "OK";
     }
 
+    @Operation(summary = "Get session status", description = "Returns the current state and last execution duration of one session.")
     @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
         return sessionController.getStatus(sessionId);
     }
 
+    @Operation(summary = "List session statuses", description = "Returns one status object for every active session.")
     @RequestMapping(value = "/status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StatusModel> getStatuses() {
         return sessionController.getStatus();
@@ -117,12 +125,16 @@ public class Maestro2SimulationController {
         }
     }
 
+    @Operation(summary = "Create a session", description = "Allocates a new session and returns its sessionId for subsequent requests.")
     @RequestMapping(value = "/createSession", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel createSession() {
         String session = sessionController.createNewSession();
         return getStatus(session);
     }
 
+    @Operation(summary = "Initialize a session", description = "Stores the multi-model configuration and reports available FMU log categories. " +
+            "The specification is generated later when simulation times are supplied. Prefer application/json; text/plain JSON is accepted for legacy clients. " +
+            "parallelSimulation and hasExternalSignals are currently rejected.")
     @RequestMapping(value = "/initialize/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"},
             produces = MediaType.APPLICATION_JSON_VALUE)
     public InitializeStatusModel initializeSession(@PathVariable String sessionId, @RequestBody InitializationData body) throws Exception {
@@ -216,7 +228,8 @@ public class Maestro2SimulationController {
         return new InitializeStatusModel("initialized", sessionId, logcategoryKeyToLogCategories, 0);
     }
 
-    @ApiOperation(value = "This request executes the algorithm provided in the master model")
+    @Operation(summary = "Simulate a supplied master model", description = "Executes the supplied scenario master model using the initialized session. " +
+            "The request blocks until execution completes; results are stored in the session directory.")
     @RequestMapping(value = "/sigverSimulate/{sessionId}", method = RequestMethod.POST, consumes = {"application/json"},
             produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel sigverSimulate(@PathVariable String sessionId, @RequestBody SigverSimulateRequestBody body) throws Exception {
@@ -226,7 +239,9 @@ public class Maestro2SimulationController {
                         logic.getInitializationData(), body, new File(logic.rootDirectory, "outputs.csv")), logic, body, sessionId);
     }
 
-    @ApiOperation(value = "This request begins the co-simulation")
+    @Operation(summary = "Run co-simulation", description = "Generates and executes a specification using the session configuration and requested times. " +
+            "The request blocks until execution completes. Thrown exceptions normally return HTTP 500, but CLI-mode failures may still return HTTP 200; " +
+            "inspect errors and session status as well (known issue #189).")
     @RequestMapping(value = "/simulate/{sessionId}", method = RequestMethod.POST, consumes = {"text/plain", "application/json"},
             produces = MediaType.APPLICATION_JSON_VALUE)
     public StatusModel simulate(@PathVariable String sessionId, @RequestBody SimulateRequestBody body) throws Exception {
@@ -283,6 +298,8 @@ public class Maestro2SimulationController {
 
     }
 
+    @Operation(summary = "Request simulation stop", description = "Sets the session stop flag. Execution stops when the running algorithm checks it; " +
+            "this is not a forced process termination. Prefer POST; GET is retained for compatibility.")
     @RequestMapping(value = "/stopsimulation/{sessionId}", method = {RequestMethod.POST, RequestMethod.GET})
     public void stop(@PathVariable String sessionId) {
         SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
@@ -291,6 +308,7 @@ public class Maestro2SimulationController {
         }
     }
 
+    @Operation(summary = "Download CSV results", description = "Downloads the session outputs.csv file. Results must have been produced by simulation.")
     @RequestMapping(value = "/result/{sessionId}/plain", method = RequestMethod.GET, produces = "text/csv")
     public ResponseEntity<Resource> getResultPlain(@PathVariable String sessionId) throws Exception {
         SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
@@ -304,6 +322,8 @@ public class Maestro2SimulationController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "outputs.csv" + "\"").body(resource);
     }
 
+    @Operation(summary = "Download session archive", description = "Downloads the session working directory, including generated specifications, " +
+            "configuration, and available results, as a ZIP archive.")
     @RequestMapping(value = "/result/{sessionId}/zip", method = RequestMethod.GET, produces = "application/zip")
     public void getResultZip(@PathVariable String sessionId, HttpServletResponse response) throws Exception {
         SessionLogic sessionLogic = sessionController.getSessionLogic(sessionId);
@@ -321,16 +341,20 @@ public class Maestro2SimulationController {
         zipOutputStream.close();
     }
 
+    @Operation(summary = "Destroy a session", description = "Deletes the session working directory and removes the session. Download results first.")
     @RequestMapping(value = "/destroy/{sessionId}", method = RequestMethod.GET)
     public void destroy(@PathVariable String sessionId) throws Exception {
         this.sessionController.deleteSession(sessionId);
     }
 
+    @Operation(summary = "Get Maestro version", description = "Returns the version of the running Maestro build.")
     @RequestMapping(value = "/version", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public VersionModel version() {
         return new VersionModel(version);
     }
 
+    @Operation(summary = "Select CLI execution mode", description = "Controls whether subsequent /simulate requests run via a child Java process " +
+            "instead of the in-process broker. Does not itself start a simulation.")
     @RequestMapping(value = "/executeViaCLI/{sessionId}", method = RequestMethod.POST)
     public void executeViaCLI(@PathVariable String sessionId, @RequestBody CliExecutionRequestBody cliExecutionRequestBody) {
         sessionController.getSessionLogic(sessionId).setCliExecution(cliExecutionRequestBody.executeViaCLI);
