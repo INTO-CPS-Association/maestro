@@ -1,6 +1,5 @@
 package org.intocps.maestro.webapi.maestro2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
@@ -100,14 +99,14 @@ public class Maestro2SimulationController {
         return "OK";
     }
 
-    @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public String getStatuses(@PathVariable String sessionId) throws Exception {
-        return new ObjectMapper().writeValueAsString(sessionController.getStatus(sessionId));
+    @RequestMapping(value = "/status/{sessionId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public StatusModel getStatuses(@PathVariable String sessionId) throws Exception {
+        return sessionController.getStatus(sessionId);
     }
 
-    @RequestMapping(value = "/status", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public String getStatuses() throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(sessionController.getStatus());
+    @RequestMapping(value = "/status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<StatusModel> getStatuses() {
+        return sessionController.getStatus();
     }
 
     private StatusModel getStatus(String sessionId) {
@@ -301,7 +300,7 @@ public class Maestro2SimulationController {
         }
 
         ByteArrayResource resource = new ByteArrayResource(FileUtils.readFileToByteArray(new File(sessionLogic.rootDirectory, "outputs.csv")));
-        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN)
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/csv"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "outputs.csv" + "\"").body(resource);
     }
 
@@ -327,16 +326,9 @@ public class Maestro2SimulationController {
         this.sessionController.deleteSession(sessionId);
     }
 
-    @RequestMapping(value = "/version", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN_VALUE)
-    public String version() {
-        final String message;
-        try {
-            message = "{\"version\":\"" + version + "\"}";
-        } catch (Exception e) {
-           logger.error("Could not get maestro version.", e);
-            return "unknown";
-        }
-        return message;
+    @RequestMapping(value = "/version", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public VersionModel version() {
+        return new VersionModel(version);
     }
 
     @RequestMapping(value = "/executeViaCLI/{sessionId}", method = RequestMethod.POST)
