@@ -8,20 +8,14 @@ on:
     inputs:
       releaseversion:
         description: 'Release version'
-#        required: true
-#        default: '2.4.0'
-#      snapshotversion:
-#        description: 'Next snapshot version'
-#        required: true
-#        default: '2.4.1'
+        required: true
 
 env:
 
   SERVER_ID: ossrh
-  PYTHON_VERSION: '3.11.8'
-  MAVEN_VERSION: 3.8.1
-  WINDOWS_VERSION: 'windows-latest'
-  MACOS_VERSION: 'macos-15-intel'
+  PYTHON_VERSION: '3.12'
+  MAVEN_VERSION: 3.9.16
+  WINDOWS_VERSION: 'windows-2025'
 
 
 
@@ -29,7 +23,9 @@ jobs:
 
   version_change:
     name: Create version and tag
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     outputs:
       build_tag: ${{ steps.tagging.outputs.build_tag }} # map step output to job output
       build_tag_created: ${{ steps.tagging.outputs.build_tag_created }}
@@ -37,14 +33,14 @@ jobs:
       build_branch: ${{ steps.tagging.outputs.build_branch }}
       previous_release_tag: ${{ steps.tagging.outputs.previous_release_tag }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Use Java version 21 adopt
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6.2.0
         with:
-          java-version: '21.0.5'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
 
 
@@ -59,47 +55,45 @@ jobs:
 
       - name: Set release version
         id: tagging
+        env:
+          RELEASE_VERSION_INPUT: ${{ inputs.releaseversion }}
         run: |
-          # make sure we are at the head of development
-          NEW_RELEASE_VERSION=${{ github.event.inputs.releaseversion }}
+          NEW_RELEASE_VERSION="$RELEASE_VERSION_INPUT"
           echo "Input version is $NEW_RELEASE_VERSION"
-          # remove all but the release version
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=changelist "-DnewVersion="
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=sha1 "-DnewVersion="
-          # detect if a override version is given
-          if [ "$NEW_RELEASE_VERSION" == "" ]; then
-            echo "Input version not set. Use current version"
-            NEW_RELEASE_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          if [[ ! "$NEW_RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release version: $NEW_RELEASE_VERSION" >&2
+            exit 1
           fi
-          # set the version to be released
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=changelist" "-DnewVersion="
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=sha1" "-DnewVersion="
           NEW_RELEASE_TAG="Release/${NEW_RELEASE_VERSION}"
           NEW_RELEASE_BRANCH="prepare-release/${NEW_RELEASE_VERSION}"
-          
-          echo "::set-output name=build_tag::${NEW_RELEASE_TAG}"
-          echo "::set-output name=build_version::${NEW_RELEASE_VERSION}"
-          echo "::set-output name=build_branch::${NEW_RELEASE_BRANCH}"
-          PREVIOUS_RELEASE_TAG=$(git tag  | grep Release | sort -V | tail -1)
-          echo "::set-output name=previous_release_tag::${PREVIOUS_RELEASE_TAG}"
-          
-          
+          {
+            printf 'build_tag=%s\n' "$NEW_RELEASE_TAG"
+            printf 'build_version=%s\n' "$NEW_RELEASE_VERSION"
+            printf 'build_branch=%s\n' "$NEW_RELEASE_BRANCH"
+          } >> "$GITHUB_OUTPUT"
+          PREVIOUS_RELEASE_TAG=$(git tag | grep '^Release/' | sort -V | tail -1)
+          printf 'previous_release_tag=%s\n' "$PREVIOUS_RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
           echo "release version is $NEW_RELEASE_VERSION"
           echo "Tag release version is now $NEW_RELEASE_TAG"
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=revision "-DnewVersion=${NEW_RELEASE_VERSION}"
-          git checkout -b $NEW_RELEASE_BRANCH
-          git push -f --set-upstream origin $NEW_RELEASE_BRANCH
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=revision" "-DnewVersion=${NEW_RELEASE_VERSION}"
+          git checkout -b "$NEW_RELEASE_BRANCH"
+          git push -f --set-upstream origin "$NEW_RELEASE_BRANCH"
           git add pom.xml
           git commit -m "New release version ${NEW_RELEASE_VERSION}"
           git tag -a "${NEW_RELEASE_TAG}" -m "Release version ${NEW_RELEASE_VERSION}"
           git push origin "${NEW_RELEASE_TAG}"
-          echo "::set-output name=build_tag_created::YES"
+          echo "build_tag_created=YES" >> "$GITHUB_OUTPUT"
           # prepare next snapshot for development
-          mvn  -B --quiet ci-friendly-flatten:version -Dprefix.regex="Release/*"
+          mvn -B --quiet ci-friendly-flatten:version "-Dprefix.regex=Release/*"
           SNAPSHOTVERSION=$(cat revision.txt)
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=revision "-DnewVersion=$SNAPSHOTVERSION"
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=changelist "-DnewVersion=-SNAPSHOT"
-          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property -Dproperty=sha1 "-DnewVersion="
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=revision" "-DnewVersion=${SNAPSHOTVERSION}"
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=changelist" "-DnewVersion=-SNAPSHOT"
+          mvn -B --quiet org.codehaus.mojo:versions-maven-plugin:2.8.1:set-property "-Dproperty=sha1" "-DnewVersion="
           git add pom.xml
-          git commit -m "Next snapshot version $SNAPSHOTVERSION"
+          git commit -m "Next snapshot version ${SNAPSHOTVERSION}"
           git push
 
 
@@ -111,46 +105,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04, windows-latest, macos-15-intel ] # ubuntu-latest, , macos-15
-        platform: [ x64 ] #x32, x64 ]
-        exclude:
-          - os: macos-15-intel
-            platform: x32
+        os: [ ubuntu-24.04, windows-2025, macos-26-intel, macos-26 ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.version_change.outputs.build_tag }}
 
       - name: Use Java version 21 adopt
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6.2.0
         with:
-          java-version: '21.0.5'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.4
+        uses: stCarolas/setup-maven@v5.1
         with:
-          maven-version: ${{ ENV.MAVEN_VERSION }}
+          maven-version: ${{ env.MAVEN_VERSION }}
 
 
 
       - name: Put MSYS2_MinGW64 on PATH for windows
         if: ${{matrix.os == env.WINDOWS_VERSION }}
+        shell: pwsh
         # there is not yet an environment variable for this path from msys2/setup-msys2
         run: echo "C:\msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
+        shell: pwsh
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
 
       - name: Install Zlib via vcpkg
         if: ${{matrix.os == env.WINDOWS_VERSION }}
+        shell: pwsh
         run: .\vcpkg\vcpkg install zlib
 
 
       - name: Cache local Maven repository
-        uses: actions/cache@v3
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -162,12 +157,15 @@ jobs:
 
       - name: Maven Test
         if: matrix.os == env.WINDOWS_VERSION
+        shell: pwsh
         env:
           ZLIB_ROOT: ${{ github.workspace }}\vcpkg\installed\x64-windows
           ZLIB_LIBRARY: ${{ github.workspace }}\vcpkg\installed\x64-windows\lib\zlib.lib
           ZLIB_INCLUDE_DIR: ${{ github.workspace }}\vcpkg\installed\x64-windows\include
           CMAKE_PREFIX_PATH: ${{ github.workspace }}\vcpkg\installed\x64-windows
-        run: mvn -Pinclude-fullSpecCppTest test
+        run: |
+          $env:PATH = "$env:ZLIB_ROOT\bin;$env:PATH"
+          mvn -Pinclude-fullSpecCppTest test
 
       - name: Maven Test
         if: matrix.os != env.WINDOWS_VERSION
@@ -175,7 +173,7 @@ jobs:
 
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -207,11 +205,14 @@ jobs:
 
   final:
     name: Build and Deploy Combined Release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
 
     needs: [ version_change , build ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
         with:
           submodules: 'true'
           ref: ${{ needs.version_change.outputs.build_tag }}
@@ -226,23 +227,23 @@ jobs:
         run: echo ${{ env.SERVER_ID }}
 
       - name: Use Java version 21 adopt
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v6.2.0
         with:
-          java-version: '21.0.5'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
           cache: 'maven'
           server-id: ${{ env.SERVER_ID }}
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          server-username-env-var: MAVEN_USERNAME
+          server-password-env-var: MAVEN_PASSWORD
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
 
       - name: Set up maven
-        uses: stCarolas/setup-maven@v4.4
+        uses: stCarolas/setup-maven@v5.1
         with:
-          maven-version: ${{ ENV.MAVEN_VERSION }}
+          maven-version: ${{ env.MAVEN_VERSION }}
 
       - name: Cache local Maven repository
-        uses: actions/cache@v3
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -270,7 +271,7 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v3.2.0
+        uses: mikepenz/release-changelog-builder-action@v6.5.0
         with:
           configurationJson: |
             {
@@ -306,17 +307,16 @@ jobs:
       - name: md5sum
         id: release_asserts_md5sum
         run: |
-          echo "::set-output name=maestro_md5::$(md5sum  maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar)"
-          echo "::set-output name=maestro_web_md5::$(md5sum  maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar)"
+          echo "maestro_md5=$(md5sum maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar)" >> "$GITHUB_OUTPUT"
+          echo "maestro_web_md5=$(md5sum maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v3.0.4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ needs.version_change.outputs.build_tag }}
-          release_name: ${{ needs.version_change.outputs.build_tag }}
+          name: ${{ needs.version_change.outputs.build_tag }}
           body: |
             Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.maestro/maestro/${{ needs.version_change.outputs.build_version }}/jar 
             and https://search.maven.org/artifact/org.into-cps.maestro/maestro-webapi/${{ needs.version_change.outputs.build_version }}/jar:
@@ -343,38 +343,22 @@ jobs:
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset - maestro
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
-          asset_name: maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
-          asset_content_type: application/zip
-
-      - name: Upload Release Asset - maestro-webapi-bundle
-        id: upload-release-asset-web
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
-          asset_name: maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
-          asset_content_type: application/zip
+          fail_on_unmatched_files: true
+          files: |
+            maestro/target/maestro-${{ needs.version_change.outputs.build_version }}-jar-with-dependencies.jar
+            maestro-webapi/target/maestro-webapi-${{ needs.version_change.outputs.build_version }}-bundle.jar
 
 
   rollback:
     name: Rollback on error
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     needs: [ version_change , build, final ]
     if: always() && (needs.version_change.result == 'failure' || needs.build.result == 'failure' || needs.final.result == 'failure')
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
       - name: Rolling back tag
         continue-on-error: true
@@ -388,11 +372,13 @@ jobs:
 
   cleanup:
     name: Update development and master with new release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     needs: [ final,version_change ]
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 

@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.intocps.maestro.ast.AModuleDeclaration;
 import org.intocps.maestro.ast.node.ARootDocument;
 import org.intocps.maestro.cli.MablCliUtil;
@@ -20,7 +23,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class TransitionTest {
+
     private static Stream<Arguments> data() {
         return Arrays.stream(Objects.requireNonNull(Paths.get("src", "test", "resources", "transition-tests").toFile().listFiles()))
                 .map(f -> Arguments.arguments(f.getName(), f));

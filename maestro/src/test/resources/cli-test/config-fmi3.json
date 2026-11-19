@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{x1}": "target/Fmi3ModuleReferenceFmusTest/cache/BouncingBall.fmu",
-    "{x2}": "src/test/resources/singlewatertank-20sim.fmu"
+    "{x1}": "target/online-cache/test-fmus/BouncingBall.fmu",
+    "{x2}": "target/online-cache/test-fmus/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{x1}.controller.h": [

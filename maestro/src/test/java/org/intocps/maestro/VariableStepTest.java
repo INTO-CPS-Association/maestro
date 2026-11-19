@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.core.Framework;
@@ -19,7 +22,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class VariableStepTest {
+
     @Test
     public void variableStepSizeMablTest() throws Exception {
         File testFilesDirectory = new File(Objects.requireNonNull(VariableStepTest.class.getClassLoader().getResource("variable_step")).getPath());

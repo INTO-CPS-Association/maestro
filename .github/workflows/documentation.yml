@@ -1,23 +1,20 @@
 name: Docs
-on: [  workflow_dispatch ]
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
 permissions:
   contents: write
-env:
-  JAVA_VERSION: 11.0.3
 jobs:
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v7.1.0
         with:
-          python-version: '3.10'
-          
-      - name: Set up Java
-        uses: actions/setup-java@v1.4.3
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -31,8 +28,8 @@ jobs:
           ls
           sphinx-build . _build
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/development' }}
+        uses: peaceiris/actions-gh-pages@v4.1.0
+        if: ${{ github.ref == 'refs/heads/development' }}
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}

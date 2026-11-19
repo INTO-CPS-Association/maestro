@@ -15,8 +15,8 @@ real STEP_SIZE = 0.1;
   	int FMI_STATUS_PENDING = 5;
 Math Math = load("Math");
 
-FMI2 fmu1 = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/MassSpringDamper1.fmu");
-FMI2 fmu2 = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/MassSpringDamper2.fmu");
+FMI2 fmu1 = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "target/online-cache/test-fmus-0.0.1/MassSpringDamper1.fmu");
+FMI2 fmu2 = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "target/online-cache/test-fmus-0.0.1/MassSpringDamper2.fmu");
 FMI2Component m2 = fmu1.instantiate("m1", false, false);
 FMI2Component m1 = fmu2.instantiate("m2", false, false);
 DataWriter dataWriter = load("DataWriter");

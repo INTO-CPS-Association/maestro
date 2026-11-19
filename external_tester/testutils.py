@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import configparser
 import os
 import filecmp
 import tempfile
@@ -13,6 +14,7 @@ import subprocess
 from threading import Thread 
 import time
 import string
+from urllib.request import urlopen
 
 TempDirectoryData = namedtuple('TempDirectoryData', 'dirPath initializationPath resultPath mablSpecPath')
 
@@ -22,11 +24,35 @@ mablExample = "wt/example1.mabl"
 folderWithModuleDefinitions =  "../typechecker/src/main/resources/org/intocps/maestro/typechecker/"
 mablExpansionExample="wt/expansion_example.mabl"
 
+def testFmuPath(fileName):
+    root = pathlib.Path(__file__).resolve().parent.parent
+    metadataPath = root / "fmu-test-utils" / "target/classes/org/intocps/maestro/testutils/test-fmus.properties"
+    if not metadataPath.is_file():
+        raise FileNotFoundError("Generated FMU catalog is missing; run mvn -pl fmu-test-utils -am package first")
+    metadata = configparser.ConfigParser(interpolation=None)
+    metadata.read_string("[release]\n" + metadataPath.read_text())
+    releaseMetadata = metadata["release"]
+    releaseUrl = releaseMetadata["release.url"]
+    assetName = releaseMetadata["asset." + fileName]
+    cache = root / "maestro" / "target" / "online-cache" / "test-fmus"
+    cache.mkdir(parents=True, exist_ok=True)
+    marker = cache / ".release"
+    if not marker.is_file() or marker.read_text() != releaseUrl:
+        for cachedFmu in cache.glob("*.fmu"):
+            cachedFmu.unlink()
+        marker.write_text(releaseUrl)
+    path = cache / fileName
+    if not path.is_file():
+        url = releaseUrl + assetName
+        with urlopen(url, timeout=60) as response:
+            path.write_bytes(response.read())
+    return path
+
 # Update paths to FMUs
 def retrieveConfiguration():
     config = json.load(open(initializationConfigurationPath))
-    config["fmus"]["{crtl}"]=pathlib.Path(os.path.abspath('wt/watertankcontroller-c.fmu')).as_uri()
-    config["fmus"]["{wt}"]=pathlib.Path(os.path.abspath('wt/singlewatertank-20sim.fmu')).as_uri()
+    config["fmus"]["{crtl}"]=testFmuPath("watertankcontroller-c.fmu").as_uri()
+    config["fmus"]["{wt}"]=testFmuPath("singlewatertank-20sim.fmu").as_uri()
     return config
 
 def retrieveSimulationConfiguration():

@@ -1,25 +1,24 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.FmuTestModelRepository;
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.apache.commons.io.FileUtils;
-import org.intocps.maestro.fmi3.Fmi3ModuleReferenceFmusTest;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.BOUNCING_BALL,
+        TestFmu.FEEDTHROUGH, TestFmu.SIGNAL_GENERATOR})
 public class ImportCliTest {
-
-    @BeforeAll
-    public static void downloadFmus() throws IOException {
-        Fmi3ModuleReferenceFmusTest.downloadReferenceFmus();
-
-    }
 
     final static File resourcesConfigPrefix = Paths.get("src", "test", "resources", "cli-test").toFile();
     File simulationConfigPath = new File(resourcesConfigPrefix, "simulation-config.json");
@@ -101,8 +100,10 @@ public class ImportCliTest {
 
         File destFile = new File(new File(outputPath.toFile(), "other"), "singlewatertank-20sim.fmu");
         destFile.getParentFile().mkdirs();
-        FileUtils.copyFile(Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toFile(), destFile);
-        FileUtils.copyFile(Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toFile(),
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toFile(), destFile);
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toFile(),
+            new File(outputPath.toFile(), "singlewatertank-20sim.fmu"));
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.WATER_TANK_CONTROLLER).toFile(),
                 new File(outputPath.toFile(), "watertankcontroller-c.fmu"));
 
         String arguments = String.format(Locale.US, "import sg1 --inline-framework-config --fmu-search-path %s --fmu-search-path %s -output %s %s %s",
@@ -123,8 +124,10 @@ public class ImportCliTest {
 
         File destFile = new File(new File(outputPath.toFile(), "other"), "singlewatertank-20sim.fmu");
         destFile.getParentFile().mkdirs();
-        FileUtils.copyFile(Paths.get("src", "test", "resources", "singlewatertank-20sim.fmu").toFile(), destFile);
-        FileUtils.copyFile(Paths.get("src", "test", "resources", "watertankcontroller-c.fmu").toFile(),
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toFile(), destFile);
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.SINGLE_WATER_TANK).toFile(),
+            new File(outputPath.toFile(), "singlewatertank-20sim.fmu"));
+        FileUtils.copyFile(FmuTestModelRepository.cachePath(TestFmu.WATER_TANK_CONTROLLER).toFile(),
                 new File(outputPath.toFile(), "watertankcontroller-c.fmu"));
 
         String arguments = String.format(Locale.US, "import sg1 --inline-framework-config --fmu-search-path %s --fmu-search-path %s -output %s %s %s",

@@ -1,7 +1,7 @@
 {
   "fmus": {
-    "{controllerFmu}": "src/test/resources/esa/fmus/watertankController-Standalone.fmu",
-    "{tankFmu}": "src/test/resources/esa/fmus/singlewatertank-20sim.fmu"
+    "{controllerFmu}": "target/online-cache/test-fmus/watertankcontroller-c.fmu",
+    "{tankFmu}": "target/online-cache/test-fmus/singlewatertank-20sim.fmu"
   },
   "connections": {
     "{tankFmu}.tankIns.level": [

@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.intocps.maestro.ast.analysis.AnalysisException;
 import org.intocps.maestro.ast.node.INode;
 import org.junit.jupiter.api.Disabled;
@@ -15,6 +18,7 @@ import java.util.stream.Stream;
 
 import static org.intocps.maestro.parser.MablParserUtil.parse;
 
+@RequiresFmu({TestFmu.FMI2_FUNCTION_TEST, TestFmu.PUMP, TestFmu.SINK})
 public class FullSpecOnlineTest extends FullSpecTest {
 
     private static Stream<Arguments> data() {
@@ -23,18 +27,7 @@ public class FullSpecOnlineTest extends FullSpecTest {
     }
     
     @Override
-    @ParameterizedTest(name = "{index} \"{0}\"")
-    @MethodSource("data")
-    public void test(String name, File directory) throws Exception {
-        OnlineTestUtils.downloadJniFmuTestFmus();
-        for (INode spec : parse(getSpecificationFiles(directory))) {
-            OnlineTestUtils.download(OnlineTestUtils.collectFmus(spec, false));
-        }
-        super.test(name, directory);
-    }
-
-    @Override
     protected void postParse(Mabl mabl) throws AnalysisException {
-        OnlineTestUtils.collectFmus(mabl.getMainSimulationUnit(), true);
+        super.postParse(mabl);
     }
 }

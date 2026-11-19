@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.core.Framework;
@@ -21,6 +24,7 @@ import java.util.List;
 /**
  * This test class uses files within resources/documentation_example_files
  */
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class DocumentationGettingStartedExamplesTest {
 
     File testFilesDirectory = new File("src/test/resources/documentation_example_files");

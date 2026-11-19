@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import difflib.Delta;
 import difflib.DiffUtils;
@@ -38,6 +41,9 @@ import java.util.stream.Stream;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.MASS_SPRING_DAMPER_1,
+    TestFmu.MASS_SPRING_DAMPER_2, TestFmu.ROLLBACK_TEST, TestFmu.ROLLBACK_END, TestFmu.THREE_WATER_TANK_1,
+    TestFmu.THREE_WATER_TANK_2, TestFmu.THREE_WATER_TANK_CONTROLLER, TestFmu.FMI3_FUNCTION_TEST})
 public class FullSpecTest {
 
     private static Stream<Arguments> data() {
@@ -159,7 +165,6 @@ public class FullSpecTest {
     @ParameterizedTest(name = "{index} \"{0}\"")
     @MethodSource("data")
     public void test(String name, File directory) throws Exception {
-
         File workingDirectory = getWorkingDirectory(directory, this.getClass());
 
         IErrorReporter reporter = new ErrorReporter();
@@ -246,7 +251,7 @@ public class FullSpecTest {
     }
 
     protected void postParse(Mabl mabl) throws AnalysisException {
-
+        TestFmuCollector.collectFmus(mabl.getMainSimulationUnit(), true);
     }
 
     protected List<File> getSpecificationFiles(File specFolder) {

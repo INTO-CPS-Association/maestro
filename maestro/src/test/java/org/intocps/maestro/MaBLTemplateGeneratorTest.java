@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.io.FileUtils;
@@ -44,6 +47,9 @@ import java.util.function.BiFunction;
 
 import static org.intocps.maestro.template.MaBLTemplateGenerator.FAULTINJECT_POSTFIX;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER, TestFmu.MASS_SPRING_DAMPER_1,
+        TestFmu.MASS_SPRING_DAMPER_2, TestFmu.THREE_WATER_TANK_1, TestFmu.THREE_WATER_TANK_2,
+        TestFmu.THREE_WATER_TANK_CONTROLLER})
 public class MaBLTemplateGeneratorTest {
 
     /**

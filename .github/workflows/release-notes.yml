@@ -17,23 +17,34 @@ jobs:
 
   final:
     name: Create release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
         with:
           submodules: 'true'
           ref: ${{ github.event.inputs.releasetag }}
 
-
-
-
+      - name: Resolve release version
+        id: release_version
+        env:
+          RELEASE_TAG: ${{ inputs.releasetag }}
+        run: |
+          RELEASE_VERSION="${RELEASE_TAG#Release/}"
+          if [[ "$RELEASE_VERSION" == "$RELEASE_TAG" || -z "$RELEASE_VERSION" ]]; then
+            echo "Expected a tag in the form Release/<version>" >&2
+            exit 1
+          fi
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
       - name: Create changelog config
         run: echo '{"max_back_track_time_days":1095}' > configuration.json
 
       - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v3.2.0
+        uses: mikepenz/release-changelog-builder-action@v6.5.0
         with:
           configurationJson: |
             {
@@ -69,27 +80,26 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v3.0.4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.event.inputs.releasetag }}
-          release_name: ${{ github.event.inputs.releasetag }}
+          name: ${{ github.event.inputs.releasetag }}
           body: |
-            Grab the new version from Maven central https://search.maven.org/artifact/org.into-cps.maestro/maestro/${{ needs.version_change.outputs.build_version }}/jar 
-            and https://search.maven.org/artifact/org.into-cps.maestro/maestro-webapi/${{ needs.version_change.outputs.build_version }}/jar:
+            Grab the new version from Maven Central https://central.sonatype.com/artifact/org.into-cps.maestro/maestro/${{ steps.release_version.outputs.version }}
+            and https://central.sonatype.com/artifact/org.into-cps.maestro/maestro-webapi/${{ steps.release_version.outputs.version }}:
 
             ```
             <dependency>
               <groupId>org.into-cps.maestro</groupId>
               <artifactId>maestro</artifactId>
-              <version>${{ needs.version_change.outputs.build_version }}</version>
+              <version>${{ steps.release_version.outputs.version }}</version>
             </dependency>
             
             <dependency>
               <groupId>org.into-cps.maestro</groupId>
               <artifactId>maestro-webapi</artifactId>
-              <version>${{ needs.version_change.outputs.build_version }}</version>
+              <version>${{ steps.release_version.outputs.version }}</version>
             </dependency>
             ```
             

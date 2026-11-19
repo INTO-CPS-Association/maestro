@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.intocps.maestro.ast.display.PrettyPrinter;
@@ -30,9 +33,11 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@RequiresFmu({TestFmu.SINGLE_WATER_TANK, TestFmu.WATER_TANK_CONTROLLER})
 public class BuilderTest {
 
     @Test
@@ -92,9 +97,6 @@ public class BuilderTest {
             AMablFmi2ComponentAPI tank2 = tankFMU.create("tank");
         }
         scope1.activate();*/
-        ComponentVariableFmi2Api tank2 = tankFMU.instantiate("tank");
-
-
         controller.getPort("valve").linkTo(tank.getPort("valvecontrol"));
         tank.getPort("level").linkTo(controller.getPort("level"));
 

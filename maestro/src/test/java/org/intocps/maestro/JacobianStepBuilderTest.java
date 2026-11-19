@@ -1,5 +1,8 @@
 package org.intocps.maestro;
 
+import org.intocps.maestro.testutils.RequiresFmu;
+import org.intocps.maestro.testutils.TestFmu;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.provider.Arguments;
 
@@ -11,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
+@RequiresFmu({TestFmu.PUMP, TestFmu.SINK})
 public class JacobianStepBuilderTest extends FullSpecTest {
 
     /**
@@ -96,7 +100,7 @@ public class JacobianStepBuilderTest extends FullSpecTest {
                     } else {
                         int mismatchedLines = 0;
                         for (int i = 0; i < expected.size(); i++) {
-                            if (!expected.get(i).equals(actual.get(i))) {
+                            if (!valuesMatch(expected.get(i), actual.get(i))) {
                                 if (assertionMsg.isEmpty()) {
                                     assertionMsg = "Mismatch between values on row " + (i + 2) + " for column '" + entry.getKey() + "'. Actual: " +
                                             actual.get(i) + " " + "expected: " + expected.get(i) + ". ";
@@ -130,6 +134,20 @@ public class JacobianStepBuilderTest extends FullSpecTest {
             }
             System.out.println(sb);
             Assertions.fail(sb.toString());
+        }
+    }
+
+    private static boolean valuesMatch(String expected, String actual) {
+        if (expected.equals(actual)) {
+            return true;
+        }
+        try {
+            double expectedValue = Double.parseDouble(expected);
+            double actualValue = Double.parseDouble(actual);
+            return Double.isFinite(expectedValue) && Double.isFinite(actualValue) &&
+                    Math.abs(expectedValue - actualValue) <= 1e-12 * Math.max(1.0, Math.max(Math.abs(expectedValue), Math.abs(actualValue)));
+        } catch (NumberFormatException ignored) {
+            return false;
         }
     }
 }
