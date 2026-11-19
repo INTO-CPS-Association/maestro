@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.intocps.maestro.Mabl;
 import org.intocps.maestro.core.Framework;
 import org.intocps.maestro.core.dto.MultiModel;
@@ -255,6 +257,10 @@ public class ImportCmd implements Callable<Integer> {
             extraceLivestreamFromGraphs(rootNode, mapper);
 
             MaestroV1SimulationConfiguration config = mapper.treeToValue(rootNode, MaestroV1SimulationConfiguration.class);
+
+            if (config.getOverrideLogLevel() != null) {
+                Configurator.setRootLevel(Level.valueOf(config.getOverrideLogLevel().name()));
+            }
 
             resolveFmuPaths(fmuSearchPaths, config.getFmus());
 
