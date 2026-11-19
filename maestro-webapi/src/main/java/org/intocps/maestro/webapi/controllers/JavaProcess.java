@@ -32,7 +32,7 @@ public class JavaProcess {
         command.addAll(jvmArgs); // todo: java properties -D arguments
         command.add("-cp");
         command.add(classpath);
-        command.add("org.springframework.boot.loader.JarLauncher");
+        command.add("org.springframework.boot.loader.launch.JarLauncher");
         command.addAll(args);
 
         return command;
