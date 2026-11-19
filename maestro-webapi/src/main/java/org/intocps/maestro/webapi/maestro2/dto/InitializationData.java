@@ -3,6 +3,7 @@ package org.intocps.maestro.webapi.maestro2.dto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.intocps.maestro.core.dto.IAlgorithmConfig;
 import org.intocps.maestro.core.dto.MultiModel;
 
@@ -11,14 +12,19 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "Session multi-model configuration. FMU paths and external specifications are resolved on the server. " +
+        "FMU, connection, parameter, and algorithm fields are inherited from MultiModel.")
 public class InitializationData extends MultiModel {
 
+    @Schema(description = "Signals to stream over the session WebSocket, mapped from {FMU}.instanceName to signal names.")
     @JsonProperty("livestream")
     private final Map<String, List<String>> livestream;
 
+    @Schema(description = "External-signal mode. Currently rejected by the initialization endpoint when true.")
     @JsonProperty("hasExternalSignals")
     private final boolean hasExternalSignals;
 
+    @Schema(description = "Paths to additional MaBL specifications available on the server, for example FaultInject.mabl.")
     @JsonProperty("externalSpecs")
     private final List<File> externalSpecs;
 

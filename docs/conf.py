@@ -34,8 +34,11 @@ extensions = [
     "myst_parser",
     "sphinx_rtd_theme",
     "sphinxcontrib.plantuml",
+    "sphinxcontrib.openapi",
 #    "sphinx.ext.autosectionlabel"
 ]
+
+openapi_default_renderer = "httpdomain"
 
 # source files to generate documentation
 source_suffix = {

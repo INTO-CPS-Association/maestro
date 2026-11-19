@@ -3,3 +3,4 @@ sphinx-rtd-theme==3.1.0
 sphinxcontrib-plantuml==0.31
 myst-parser==5.2.0
 Jinja2>=3.1.6,<4
+sphinxcontrib-openapi==0.10.0

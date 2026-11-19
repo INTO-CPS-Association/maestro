@@ -1,4 +1,6 @@
 package org.intocps.maestro.webapi.maestro2;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.intocps.verification.scenarioverifier.core.ScenarioLoaderFMI2;
 import org.intocps.verification.scenarioverifier.core.masterModel.*;
 import org.intocps.verification.scenarioverifier.core.ModelEncoding;
@@ -32,6 +34,8 @@ import java.util.zip.ZipOutputStream;
 
 @RestController
 @Component
+@Tag(name = "Scenario", description = "Generate, verify, visualize, and execute FMI2 scenario master models. " +
+        "Scenario and master-model text is in the scenario verifier's configuration format, not JSON.")
 public class Maestro2ScenarioController {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -39,6 +43,7 @@ public class Maestro2ScenarioController {
         return new ResponseEntity(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @Operation(summary = "Generate an algorithm from a scenario", description = "Converts scenario configuration text to a master-model configuration.")
     @RequestMapping(value = "/generateAlgorithmFromScenario", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromScenario(@RequestBody String scenario) {
@@ -46,6 +51,7 @@ public class Maestro2ScenarioController {
         return masterModel.toConf(0);
     }
 
+    @Operation(summary = "Generate an algorithm from a multi-model", description = "Converts an extended JSON multi-model into master-model configuration text.")
     @RequestMapping(value = "/generateAlgorithmFromMultiModel", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public String generateAlgorithmFromMultiModel(@RequestBody ExtendedMultiModel multiModel) {
@@ -54,6 +60,8 @@ public class Maestro2ScenarioController {
         return masterModel.toConf(0);
     }
 
+    @Operation(summary = "Verify a master-model algorithm", description = "Requires UPPAAL verifyta in PATH. Returns a result object, including correct=false " +
+            "and an errorMessage when verification fails or UPPAAL is unavailable; HTTP 200 alone does not mean the algorithm verified.")
     @RequestMapping(value = "/verifyAlgorithm", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public VerificationResult verifyAlgorithm(@RequestBody String masterModelAsString) throws IOException {
@@ -88,6 +96,8 @@ public class Maestro2ScenarioController {
         }
     }
 
+    @Operation(summary = "Visualize a verification trace", description = "Generates an MP4 counterexample trace for a master model. " +
+            "Requires the scenario verifier's external verification and video tools; fails if a trace cannot be generated.")
     @RequestMapping(value = "/visualizeTrace", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE, produces = "video/mp4")
     public FileSystemResource visualizeTrace(@RequestBody String masterModelAsString) throws Exception {
         MasterModel masterModel = (MasterModelFMI2)ScenarioLoaderFMI2.load(new ByteArrayInputStream(masterModelAsString.getBytes()));
@@ -100,6 +110,9 @@ public class Maestro2ScenarioController {
         return new FileSystemResource(traceResult.file());
     }
 
+    @Operation(summary = "Execute an algorithm and download results", description = "Runs an extended multi-model with the supplied master model and times. " +
+            "An empty masterModel requests algorithm generation. If sigver.verification is true, verifies before execution. " +
+            "Returns a ZIP archive of the working directory as application/octet-stream.")
     @RequestMapping(value = "/executeAlgorithm", method = RequestMethod.POST, consumes = {MediaType.APPLICATION_JSON_VALUE},
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public void executeAlgorithm(@RequestBody ExecutableMasterAndMultiModelTDO executableModel, HttpServletResponse response) throws Exception {
