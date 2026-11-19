@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. Command Line Interface &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. Web Interface (API)" href="web-api.html" />
+    <link rel="prev" title="2. Getting Started" href="getting-started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3. Command Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sub-command-import">3.1. Sub command: import</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sub-command-interpret">3.2. Sub command: interpret</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sub-command-export">3.3. Sub command: export</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">3. </span>Command Line Interface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/cli.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="command-line-interface">
+<span id="cli"></span><h1><span class="section-number">3. </span>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading"></a></h1>
+<p>The command line interface options is available via the cli option <code class="code docutils literal notranslate"><span class="pre">--help</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Usage:
+
+
+maestro<span class="w"> </span><span class="o">[</span>-hV<span class="o">]</span><span class="w"> </span><span class="o">[</span>COMMAND<span class="o">]</span>
+
+Description:
+
+Mable<span class="w"> </span><span class="k">for</span><span class="w"> </span>co-simulating<span class="w"> </span>models
+
+Options:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">      </span>Show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">  </span>-V,<span class="w"> </span>--version<span class="w">   </span>Print<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span>exit.
+Commands:
+<span class="w">  </span>interpret<span class="w">  </span>Interpret<span class="w"> </span>a<span class="w"> </span>specification<span class="w"> </span>using<span class="w"> </span>the<span class="w"> </span>build<span class="w"> </span><span class="k">in</span><span class="w"> </span>Java<span class="w"> </span>interpreter.<span class="w"> </span>Remember<span class="w"> </span>to<span class="w"> </span>place<span class="w"> </span>all<span class="w"> </span>necessary<span class="w"> </span>runtime<span class="w"> </span>extensions<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>classpath
+<span class="w">  </span><span class="nb">export</span><span class="w">     </span>Specification<span class="w"> </span><span class="nb">export</span>
+<span class="w">  </span>import<span class="w">     </span>Created<span class="w"> </span>a<span class="w"> </span>specification<span class="w"> </span>from<span class="w"> </span>various<span class="w"> </span>import<span class="w"> </span>types.<span class="w"> </span>Remember<span class="w"> </span>to<span class="w"> </span>place<span class="w"> </span>all<span class="w"> </span>necessary<span class="w"> </span>plugin<span class="w"> </span>extensions<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>classpath.
+
+<span class="w">             </span>Hint<span class="w"> </span><span class="k">for</span><span class="w"> </span>sg1<span class="w"> </span>import<span class="w"> </span>where<span class="w"> </span>menv<span class="w"> </span>should<span class="w"> </span>be<span class="w"> </span>enabled.<span class="w"> </span>Use<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>to<span class="w"> </span>generate<span class="w"> </span>the<span class="w"> </span>extra<span class="w"> </span>input<span class="w"> </span>file:<span class="s1">'jq '</span>.parameters<span class="p">|</span>keys<span class="p">|</span><span class="o">{</span><span class="s2">"environmentParameters"</span>:.<span class="o">}</span><span class="s1">' mm.json &gt; menv.json'</span>
+<span class="w">  </span>sigver<span class="w">     </span>Utilise<span class="w"> </span>the<span class="w"> </span>scenario<span class="w"> </span>verifier<span class="w"> </span>tool<span class="w"> </span>to<span class="w"> </span>generate<span class="w"> </span>and<span class="w"> </span>verify<span class="w"> </span>algorithms.<span class="w"> </span>It<span class="w"> </span>is<span class="w"> </span>also<span class="w"> </span>possible<span class="w"> </span>to<span class="w"> </span>execute<span class="w"> </span>scenarios<span class="w"> </span>and<span class="w"> </span>extended<span class="w"> </span>multi-models.
+</pre></div>
+</div>
+<section id="sub-command-import">
+<h2><span class="section-number">3.1. </span>Sub command: import<a class="headerlink" href="#sub-command-import" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Usage:<span class="w"> </span>maestro<span class="w"> </span>import<span class="w"> </span><span class="o">[</span>-hivV<span class="o">]</span><span class="w"> </span><span class="o">[</span>-di<span class="o">]</span><span class="w"> </span><span class="o">[</span>-if<span class="o">]</span><span class="w"> </span><span class="o">[</span>-nop<span class="o">]</span><span class="w"> </span><span class="o">[</span>-pa<span class="o">]</span><span class="w"> </span><span class="o">[</span>-output<span class="o">=</span>&lt;output&gt;<span class="o">]</span>
+<span class="w">                      </span><span class="o">[</span>-vi<span class="o">=</span>&lt;verify&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-fsp<span class="o">=</span>&lt;fmuSearchPaths&gt;<span class="o">]</span>...<span class="w"> </span>&lt;type&gt;
+<span class="w">                      </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span>
+Created<span class="w"> </span>a<span class="w"> </span>specification<span class="w"> </span>from<span class="w"> </span>various<span class="w"> </span>import<span class="w"> </span>types.<span class="w"> </span>Remember<span class="w"> </span>to<span class="w"> </span>place<span class="w"> </span>all
+necessary<span class="w"> </span>plugin<span class="w"> </span>extensions<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>classpath.
+
+Hint<span class="w"> </span><span class="k">for</span><span class="w"> </span>sg1<span class="w"> </span>import<span class="w"> </span>where<span class="w"> </span>menv<span class="w"> </span>should<span class="w"> </span>be<span class="w"> </span>enabled.<span class="w"> </span>Use<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>to<span class="w"> </span>generate
+the<span class="w"> </span>extra<span class="w"> </span>input<span class="w"> </span>file:<span class="s1">'jq '</span>.parameters<span class="p">|</span>keys<span class="p">|</span><span class="o">{</span><span class="s2">"environmentParameters"</span>:.<span class="o">}</span><span class="s1">' mm.json</span>
+<span class="s1">&gt; menv.json'</span>
+<span class="w">      </span>&lt;type&gt;<span class="w">             </span>The<span class="w"> </span>valid<span class="w"> </span>import<span class="w"> </span>formats:<span class="w"> </span>Sg1
+<span class="w">      </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span><span class="w">       </span>One<span class="w"> </span>or<span class="w"> </span>more<span class="w"> </span>specification<span class="w"> </span>files
+<span class="w">      </span>-di,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>dump-intermediate
+<span class="w">                         </span>Dump<span class="w"> </span>all<span class="w"> </span>intermediate<span class="w"> </span>expansions
+<span class="w">      </span>-fsp,<span class="w"> </span>--fmu-search-path<span class="o">=</span>&lt;fmuSearchPaths&gt;
+<span class="w">                         </span>One<span class="w"> </span>or<span class="w"> </span>more<span class="w"> </span>search<span class="w"> </span>paths<span class="w"> </span>used<span class="w"> </span>to<span class="w"> </span>resolve<span class="w"> </span>relative<span class="w"> </span>FMU
+<span class="w">                           </span>paths.
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">             </span>Show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">  </span>-i,<span class="w"> </span>--interpret<span class="w">        </span>Interpret<span class="w"> </span>spec<span class="w"> </span>after<span class="w"> </span>import
+<span class="w">      </span>-if,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>inline-framework-config
+<span class="w">                         </span>Inline<span class="w"> </span>all<span class="w"> </span>framework<span class="w"> </span>configs
+<span class="w">      </span>-nop,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>disable-optimize
+<span class="w">                         </span>Disable<span class="w"> </span>spec<span class="w"> </span>optimization
+<span class="w">      </span>-output<span class="o">=</span>&lt;output&gt;<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>directory<span class="w"> </span>where<span class="w"> </span>the<span class="w"> </span>imported<span class="w"> </span>spec<span class="w"> </span>will<span class="w"> </span>be
+<span class="w">                           </span>stored
+<span class="w">      </span>-pa,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>preserve-annotations
+<span class="w">                         </span>Preserve<span class="w"> </span>annotations
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">          </span>Verbose
+<span class="w">  </span>-V,<span class="w"> </span>--version<span class="w">          </span>Print<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">      </span>-vi,<span class="w"> </span>--verify<span class="o">=</span>&lt;verify&gt;
+<span class="w">                         </span>Verify<span class="w"> </span>the<span class="w"> </span>spec<span class="w"> </span>according<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>verifier
+<span class="w">                           </span>groups:<span class="w"> </span>FMI2,<span class="w"> </span>Any
+</pre></div>
+</div>
+</section>
+<section id="sub-command-interpret">
+<h2><span class="section-number">3.2. </span>Sub command: interpret<a class="headerlink" href="#sub-command-interpret" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Usage:<span class="w"> </span>maestro<span class="w"> </span>interpret<span class="w"> </span><span class="o">[</span>-hvV<span class="o">]</span><span class="w"> </span><span class="o">[</span>-di<span class="o">]</span><span class="w"> </span><span class="o">[</span>--<span class="o">[</span>no-<span class="o">]</span>expand<span class="o">]</span><span class="w"> </span><span class="o">[</span>--<span class="o">[</span>no-<span class="o">]</span>typecheck<span class="o">]</span><span class="w"> </span><span class="o">[</span>-nop<span class="o">]</span>
+<span class="w">                         </span><span class="o">[</span>-pa<span class="o">]</span><span class="w"> </span><span class="o">[</span>-output<span class="o">=</span>&lt;output&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-runtime<span class="o">=</span>&lt;runtime&gt;<span class="o">]</span>
+<span class="w">                         </span><span class="o">[</span>-thz<span class="o">=</span>&lt;transitionCheckFrequency&gt;<span class="o">]</span>
+<span class="w">                         </span><span class="o">[</span>-tms<span class="o">=</span>&lt;transitionMinStep&gt;<span class="o">]</span>
+<span class="w">                         </span><span class="o">[</span>-transition<span class="o">=</span>&lt;transitionPath&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-vi<span class="o">=</span>&lt;verify&gt;<span class="o">]</span>
+<span class="w">                         </span><span class="o">[</span>-wait<span class="o">=</span>&lt;wait&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span>
+Interpret<span class="w"> </span>a<span class="w"> </span>specification<span class="w"> </span>using<span class="w"> </span>the<span class="w"> </span>build<span class="w"> </span><span class="k">in</span><span class="w"> </span>Java<span class="w"> </span>interpreter.<span class="w"> </span>Remember<span class="w"> </span>to
+place<span class="w"> </span>all<span class="w"> </span>necessary<span class="w"> </span>runtime<span class="w"> </span>extensions<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>classpath
+<span class="w">      </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span><span class="w">         </span>One<span class="w"> </span>or<span class="w"> </span>more<span class="w"> </span>specification<span class="w"> </span>files
+<span class="w">      </span>-di,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>dump-intermediate
+<span class="w">                           </span>Dump<span class="w"> </span>all<span class="w"> </span>intermediate<span class="w"> </span>expansions
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">               </span>Show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">      </span>--<span class="o">[</span>no-<span class="o">]</span>expand<span class="w">        </span>Perform<span class="w"> </span>expand
+<span class="w">      </span>--<span class="o">[</span>no-<span class="o">]</span>typecheck<span class="w">     </span>Perform<span class="w"> </span><span class="nb">type</span><span class="w"> </span>check
+<span class="w">      </span>-nop,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>disable-optimize
+<span class="w">                           </span>Disable<span class="w"> </span>spec<span class="w"> </span>optimization
+<span class="w">      </span>-output<span class="o">=</span>&lt;output&gt;<span class="w">     </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>directory<span class="w"> </span>where<span class="w"> </span>the<span class="w"> </span><span class="nb">export</span><span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>stored
+<span class="w">      </span>-pa,<span class="w"> </span>--<span class="o">[</span>no-<span class="o">]</span>preserve-annotations
+<span class="w">                           </span>Preserve<span class="w"> </span>annotations
+<span class="w">      </span>-runtime<span class="o">=</span>&lt;runtime&gt;<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>runtime<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>should<span class="w"> </span>be<span class="w"> </span>included<span class="w"> </span><span class="k">in</span>
+<span class="w">                             </span>the<span class="w"> </span><span class="nb">export</span>
+<span class="w">      </span>-thz,<span class="w"> </span>--transition-check-frequency<span class="o">=</span>&lt;transitionCheckFrequency&gt;
+<span class="w">                           </span>The<span class="w"> </span>interval<span class="w"> </span>which<span class="w"> </span>transition<span class="w"> </span>spec<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>checked
+<span class="w">                             </span>at.
+<span class="w">      </span>-tms,<span class="w"> </span>--transition-minimum-step<span class="o">=</span>&lt;transitionMinStep&gt;
+<span class="w">                           </span>The<span class="w"> </span>minimum<span class="w"> </span>step<span class="w"> </span>per<span class="w"> </span><span class="k">for</span><span class="w"> </span>each<span class="w"> </span>none<span class="w"> </span>empty<span class="w"> </span>offering<span class="w"> </span>of
+<span class="w">                             </span>candidates.<span class="w"> </span>It<span class="w"> </span>reset<span class="w"> </span>once<span class="w"> </span>a<span class="w"> </span>candidate<span class="w"> </span>is
+<span class="w">                             </span>removedchecked<span class="w"> </span>at.
+<span class="w">      </span>-transition<span class="o">=</span>&lt;transitionPath&gt;
+<span class="w">                           </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>directory<span class="w"> </span>with<span class="w"> </span>a<span class="w"> </span>transition<span class="w"> </span>specification
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">            </span>Verbose
+<span class="w">  </span>-V,<span class="w"> </span>--version<span class="w">            </span>Print<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">      </span>-vi,<span class="w"> </span>--verify<span class="o">=</span>&lt;verify&gt;
+<span class="w">                           </span>Verify<span class="w"> </span>the<span class="w"> </span>spec<span class="w"> </span>according<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>verifier
+<span class="w">                             </span>groups:<span class="w"> </span>FMI2,<span class="w"> </span>Any
+<span class="w">      </span>-wait<span class="o">=</span>&lt;wait&gt;<span class="w">         </span>Wait<span class="w"> </span>the<span class="w"> </span>specified<span class="w"> </span>seconds<span class="w"> </span>before<span class="w"> </span>processing.
+<span class="w">                             </span>Intended<span class="w"> </span><span class="k">for</span><span class="w"> </span>allowing<span class="w"> </span>a<span class="w"> </span>debugger<span class="w"> </span>or<span class="w"> </span>profiler<span class="w"> </span>to<span class="w"> </span>be
+<span class="w">                             </span>attached<span class="w"> </span>before<span class="w"> </span>the<span class="w"> </span>processing<span class="w"> </span>starts.
+</pre></div>
+</div>
+</section>
+<section id="sub-command-export">
+<h2><span class="section-number">3.3. </span>Sub command: export<a class="headerlink" href="#sub-command-export" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Usage:<span class="w"> </span>maestro<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>-hvV<span class="o">]</span><span class="w"> </span><span class="o">[</span>-output<span class="o">=</span>&lt;output&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-runtime<span class="o">=</span>&lt;runtime&gt;<span class="o">]</span>
+<span class="w">                      </span><span class="o">[</span>-vi<span class="o">=</span>&lt;verify&gt;<span class="o">]</span><span class="w"> </span>&lt;type&gt;<span class="w"> </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span>
+Specification<span class="w"> </span><span class="nb">export</span>
+<span class="w">      </span>&lt;type&gt;<span class="w">               </span>The<span class="w"> </span>valid<span class="w"> </span>exporters:<span class="w"> </span>Cpp
+<span class="w">      </span><span class="o">[</span>&lt;files&gt;...<span class="o">]</span><span class="w">         </span>One<span class="w"> </span>or<span class="w"> </span>more<span class="w"> </span>specification<span class="w"> </span>files
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">               </span>Show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">      </span>-output<span class="o">=</span>&lt;output&gt;<span class="w">     </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>directory<span class="w"> </span>where<span class="w"> </span>the<span class="w"> </span><span class="nb">export</span><span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>stored
+<span class="w">      </span>-runtime<span class="o">=</span>&lt;runtime&gt;<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>a<span class="w"> </span>runtime<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>should<span class="w"> </span>be<span class="w"> </span>included<span class="w"> </span><span class="k">in</span>
+<span class="w">                             </span>the<span class="w"> </span><span class="nb">export</span>
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">            </span>Verbose
+<span class="w">  </span>-V,<span class="w"> </span>--version<span class="w">            </span>Print<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span>exit.
+<span class="w">      </span>-vi,<span class="w"> </span>--verify<span class="o">=</span>&lt;verify&gt;
+<span class="w">                           </span>Verify<span class="w"> </span>the<span class="w"> </span>spec<span class="w"> </span>according<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>verifier
+<span class="w">                             </span>groups:<span class="w"> </span>FMI2,<span class="w"> </span>Any
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting-started.html" class="btn btn-neutral float-left" title="2. Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="web-api.html" class="btn btn-neutral float-right" title="4. Web Interface (API)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. Configuration File Formats &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developer documentation" href="../dev/index.html" />
+    <link rel="prev" title="7. Runtime Components" href="runtime_components.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8. Configuration File Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#legacy-configuration-into-cps-multi-model-and-coe-config-file-format">8.1. Legacy Configuration / INTO-CPS Multi-model and coe config File Format</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">8. </span>Configuration File Formats</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/file_formats.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration-file-formats">
+<span id="sec-config-file-formats"></span><h1><span class="section-number">8. </span>Configuration File Formats<a class="headerlink" href="#configuration-file-formats" title="Link to this heading"></a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These configuration files was in maestro v1 / coe called multi-model (<code class="code docutils literal notranslate"><span class="pre">*.mm.json</span></code>) and co-simulation configuration (<code class="code docutils literal notranslate"><span class="pre">*.coe.json</span></code>) files. Maestro v2 just accept any json files during its (<code class="code docutils literal notranslate"><span class="pre">sg1</span></code>) import phase and merges them into one object for processing.</p>
+</div>
+<p>These properties are new to maestro V2</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">faultInjectInstances</span></code>: Used for fault injection</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">faultInjectConfigurationPath</span></code>: Used for fault injection</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">faultInjectInstances</span></code>: Used for fault injection</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">modelTransfers</span></code>: Used for model swapping during simulation</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">modelSwaps</span></code>: Used for model swapping during simulation</p></li>
+</ul>
+<p>For more on fault injection see the paper “Fault Injecting Co-simulations for Safety” at <a class="reference external" href="https://ieeexplore.ieee.org/document/9660728">https://ieeexplore.ieee.org/document/9660728</a></p>
+<p>For more on model swapping se the paper “fmiSwap: Run-time Swapping of Models for Co-simulation and Digital Twins” at <a class="reference external" href="https://arxiv.org/pdf/2304.07328.pdf">https://arxiv.org/pdf/2304.07328.pdf</a></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"modelSwaps"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"controller"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"swapInstance"</span><span class="p">:</span><span class="w"> </span><span class="s2">"crtlInstance3"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"stepCondition"</span><span class="p">:</span><span class="w"> </span><span class="s2">"(true)"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"swapCondition"</span><span class="p">:</span><span class="w"> </span><span class="s2">"(controller.valve ==true)"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"swapConnections"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"{x3}.crtlInstance3.valve"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="s2">"{x2}.tank.valvecontrol"</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">        </span><span class="nt">"{x2}.tank.level"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="s2">"{x3}.crtlInstance3.level"</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"modelTransfers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"controller"</span><span class="p">:</span><span class="w"> </span><span class="s2">"controller"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"tank"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tank"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="legacy-configuration-into-cps-multi-model-and-coe-config-file-format">
+<span id="sec-legacy-config-format"></span><h2><span class="section-number">8.1. </span>Legacy Configuration / INTO-CPS Multi-model and coe config File Format<a class="headerlink" href="#legacy-configuration-into-cps-multi-model-and-coe-config-file-format" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This file is a multi-model (<code class="code docutils literal notranslate"><span class="pre">*.mm.json</span></code>) file and originally developed for maestro v1</p>
+</div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"fmus"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{control}"</span><span class="p">:</span><span class="w"> </span><span class="s2">"watertankcontroller-c.fmu"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"{tank}"</span><span class="p">:</span><span class="w"> </span><span class="s2">"singlewatertank-20sim.fmu"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"connections"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{control}.c.valve"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"{tank}.t.valvecontrol"</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"{tank}.t.level"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"{control}.c.level"</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"parameters"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{control}.c.maxlevel"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"{control}.c.minlevel"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The multi model shown above contains the following:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">fmus</span></code>: This is a mapping from fmu name specified in <code class="code docutils literal notranslate"><span class="pre">{}</span></code> to a either path from the FMUs folder or a URI using a custom format*</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">connections</span></code>: The is a mapping between triples to a list of triples. The triples takes the form (fmu name, instance name, scalar variable name). The domain of the map must only contain scalar variables with causality output where the scalar variables in the list in the range of the map all must be of causality input</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">parameters</span></code>: The is also a mapping from triples but with causality parameter. The range must contain the value that should be used instead of the value specified in the model description.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This file is a co-simulation configuration (<code class="code docutils literal notranslate"><span class="pre">*.coe.json</span></code>) file and originally developed for maestro v1.</p>
+</div>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"startTime"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"endTime"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"multimodel_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Multi-models/mm/mm.mm.json"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"liveGraphColumns"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"liveGraphVisibleRowCount"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"graphs"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"livestreamInterval"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"livestream"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{Controller}.cont"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"valve"</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"{WaterTank}.wt"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"level"</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"logVariables"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{WaterTank}.wt"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"level"</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"{Controller}.cont"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"valve"</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"visible"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"loggingOn"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"overrideLogLevel"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"enableAllLogCategoriesPerInstance"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"algorithm"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fixed-step"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"postProcessingScript"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"multimodel_crc"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"parallelSimulation"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"stabalizationEnabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"global_absolute_tolerance"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"global_relative_tolerance"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.01</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"simulationProgramDelay"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The following shows the coe config aka simulation configuration. Note that these properties are only used by the app and not maestro:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">multimodel_path</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">liveGraphColumns</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">liveGraphVisibleRowCount</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">graphs</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">postProcessingScript</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">multimodel_crc</span></code></p></li>
+</ul>
+<p>The following properties are used in maestro using sg1 import/ web api:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">startTime</span></code>: the simulation start time</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">endTime</span></code>: the simulation end time (could be left out)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">livestreamInterval</span></code>: the live stream max report interval. This is used to skip updates if the simulation perform many updates withing a very short time frame</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">livestream</span></code>: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be transmitted over the web socket while simulating (similar to the output.csv but just live | only for the webapi)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">logVariables</span></code>: this is a mapping from tuples of fmu name and instance to a list of scalar variables that should be logged (included in the output.csv)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">visible</span></code>: fmu visible flag</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">loggingOn</span></code>: enable FMU diagnostic logging</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">logLevels</span></code>: map <code class="code docutils literal notranslate"><span class="pre">&quot;{FMU}.instanceName&quot;</span></code> to a list of FMU-defined logging categories; these are not Java severity levels</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">overrideLogLevel</span></code>: override the Java root logger level for SG1 import or web API initialization; omitted or null leaves the configured level unchanged</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">algorithm</span></code>: the algorithm to be used, default is type=’fixed-step’ with size=&lt;decimal number&gt;</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">parallelSimulation</span></code>: run the simulation steps in parallel when ever possible. Eg in jaccobian all instances can get/set/doStep in parallel</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">stabalizationEnabled</span></code>: if algebraic loops exists then attempt stabilisation (will use global_absolute_tolerance, global_relative_tolerance)</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">global_absolute_tolerance</span></code>: for stabilisation</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">global_relative_tolerance</span></code>: for stabilisation</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">simulationProgramDelay</span></code>: slow down simulation doStep to make sure its not faster than the step time itself</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">reportProgress</span></code>: Not used in maestroV2</p></li>
+</ul>
+<p>See <a class="reference internal" href="logging.html#logging"><span class="std std-ref">Logging</span></a> for examples, log destinations, and logging configuration when
+using Maestro as a Java dependency.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="runtime_components.html" class="btn btn-neutral float-left" title="7. Runtime Components" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../dev/index.html" class="btn btn-neutral float-right" title="Developer documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

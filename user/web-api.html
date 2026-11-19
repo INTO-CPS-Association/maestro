@@ -1,0 +1,752 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. Web Interface (API) &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5. Logging" href="logging.html" />
+    <link rel="prev" title="3. Command Line Interface" href="cli.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">4. Web Interface (API)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#session-workflow">4.1. Session workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#content-types">4.2. Content types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#errors-and-execution-status">4.3. Errors and execution status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maintaining-the-reference">4.4. Maintaining the reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#endpoint-reference">4.5. Endpoint reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">4. </span>Web Interface (API)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/web-api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="web-interface-api">
+<span id="web-api"></span><h1><span class="section-number">4. </span>Web Interface (API)<a class="headerlink" href="#web-interface-api" title="Link to this heading"></a></h1>
+<p>The reference below is available without running Maestro. It is generated from
+the same controller and model annotations used by the live API.
+Download the <a class="reference download internal" download="" href="../_downloads/eacecbbfc3aeb0d3a7fb9c5f81e1f2aa/openapi.json"><code class="xref download docutils literal notranslate"><span class="pre">OpenAPI</span> <span class="pre">JSON</span> <span class="pre">document</span></code></a> for use with
+API clients and documentation tools.</p>
+<p>On a running server (replace the host and port as needed), interactive Swagger
+UI is at <code class="docutils literal notranslate"><span class="pre">http://localhost:8082/swagger-ui.html</span></code> and the machine-readable
+description is at <code class="docutils literal notranslate"><span class="pre">http://localhost:8082/v3/api-docs</span></code>.
+The older <code class="docutils literal notranslate"><span class="pre">/v2/api-docs</span></code> address is no longer used.</p>
+<section id="session-workflow">
+<h2><span class="section-number">4.1. </span>Session workflow<a class="headerlink" href="#session-workflow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Call <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/createSession</span></code> and retain the returned <code class="docutils literal notranslate"><span class="pre">sessionId</span></code>.</p></li>
+<li><p>Optionally upload FMUs or other files with <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/upload/{sessionId}</span></code>
+using a multipart field named <code class="docutils literal notranslate"><span class="pre">file</span></code>. Paths in configurations refer to
+files on the server, not on the client.</p></li>
+<li><p>Send a multi-model configuration to <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/initialize/{sessionId}</span></code>.
+It contains FMU locations, connections, parameters, and algorithm options.
+The response reports any discovered FMU logging categories.</p></li>
+<li><p>Send start/end times and logging options to <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/simulate/{sessionId}</span></code>,
+or supply a master model to <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/sigverSimulate/{sessionId}</span></code>.
+These requests are synchronous and may take the duration of the simulation.</p></li>
+<li><p>Download <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/result/{sessionId}/plain</span></code> (CSV) or
+<code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/result/{sessionId}/zip</span></code> (the session archive).</p></li>
+<li><p>Call <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/destroy/{sessionId}</span></code> when results are no longer needed.
+This removes the session and its files.</p></li>
+</ol>
+<p>For example, after initializing a session, submit simulation times with:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8082/simulate/SESSION_ID<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'Accept: application/json'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"startTime":0,"endTime":10,"logLevels":{},"reportProgress":false,"liveLogInterval":0.1}'</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/status</span></code> lists active sessions; <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/status/{sessionId}</span></code> reports one
+session. <code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/stopsimulation/{sessionId}</span></code> requests a cooperative stop, not
+forced process termination. The <code class="docutils literal notranslate"><span class="pre">Scenario</span></code> operations below generate,
+verify, visualize, or execute master models without the same session workflow.</p>
+</section>
+<section id="content-types">
+<h2><span class="section-number">4.2. </span>Content types<a class="headerlink" href="#content-types" title="Link to this heading"></a></h2>
+<p>JSON endpoints, including <code class="docutils literal notranslate"><span class="pre">/status</span></code>, <code class="docutils literal notranslate"><span class="pre">/status/{sessionId}</span></code>, and <code class="docutils literal notranslate"><span class="pre">/version</span></code>,
+return <code class="docutils literal notranslate"><span class="pre">application/json</span></code> with structured response schemas in the OpenAPI
+document at <code class="docutils literal notranslate"><span class="pre">/v3/api-docs</span></code>. Their JSON body shapes are unchanged; clients should
+request <code class="docutils literal notranslate"><span class="pre">application/json</span></code> rather than <code class="docutils literal notranslate"><span class="pre">text/plain</span></code>.</p>
+<p>Send initialization and simulation request bodies as <code class="docutils literal notranslate"><span class="pre">application/json</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">/initialize/{sessionId}</span></code> and <code class="docutils literal notranslate"><span class="pre">/simulate/{sessionId}</span></code> endpoints also
+continue to accept JSON encoded as <code class="docutils literal notranslate"><span class="pre">text/plain</span></code> for legacy clients.
+The <code class="docutils literal notranslate"><span class="pre">/ping</span></code> endpoint is plain text, and <code class="docutils literal notranslate"><span class="pre">/result/{sessionId}/plain</span></code> returns
+<code class="docutils literal notranslate"><span class="pre">text/csv</span></code> rather than JSON.</p>
+</section>
+<section id="errors-and-execution-status">
+<h2><span class="section-number">4.3. </span>Errors and execution status<a class="headerlink" href="#errors-and-execution-status" title="Link to this heading"></a></h2>
+<p>Thrown exceptions normally produce a non-2xx response through the controller
+exception handler (usually HTTP 500). Some exceptions have different mappings:
+<code class="docutils literal notranslate"><span class="pre">IllegalArgumentException</span></code> maps to 404 and
+<code class="docutils literal notranslate"><span class="pre">UnsupportedOperationException</span></code> maps to 422. Error responses include diagnostic
+information and, for internal failures, a log reference. These mappings reflect
+current behavior and do not imply that every malformed request returns 400.</p>
+<p>Simulation exceptions and nonzero CLI exit codes return a non-2xx response and
+leave the session in <code class="docutils literal notranslate"><span class="pre">Error</span></code> rather than <code class="docutils literal notranslate"><span class="pre">Simulating</span></code> or <code class="docutils literal notranslate"><span class="pre">Finished</span></code>.
+The elapsed execution time is recorded on both success and failure.
+CLI stderr is retained for diagnostics, but does not by itself indicate failure:
+tools may write warnings to stderr while exiting successfully.</p>
+<p>Algorithm verification has a separate result contract: inspect <code class="docutils literal notranslate"><span class="pre">correct</span></code> and
+<code class="docutils literal notranslate"><span class="pre">errorMessage</span></code> in the response even when HTTP status is 200.
+Verification and trace visualization depend on external tools, including
+UPPAAL <code class="docutils literal notranslate"><span class="pre">verifyta</span></code>; they are not supplied by the REST API.</p>
+</section>
+<section id="maintaining-the-reference">
+<h2><span class="section-number">4.4. </span>Maintaining the reference<a class="headerlink" href="#maintaining-the-reference" title="Link to this heading"></a></h2>
+<p>Endpoint descriptions use OpenAPI 3 <code class="docutils literal notranslate"><span class="pre">&#64;Operation</span></code> annotations and model
+descriptions use <code class="docutils literal notranslate"><span class="pre">&#64;Schema</span></code>. Existing Jackson <code class="docutils literal notranslate"><span class="pre">&#64;JsonPropertyDescription</span></code>
+annotations are retained for JSON-schema consumers. When changing endpoints or
+models, regenerate the checked-in
+reference from the repository root:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mvn<span class="w"> </span>-B<span class="w"> </span>-ntp<span class="w"> </span>-pl<span class="w"> </span>maestro-webapi<span class="w"> </span>-am<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-Dtest<span class="o">=</span>OpenApiDocumentationTests,ContentTypeTests<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-Dsurefire.failIfNoSpecifiedTests<span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-Dmaestro.openapi.update<span class="o">=</span><span class="nb">true</span><span class="w"> </span>package
+</pre></div>
+</div>
+<p>Commit <code class="docutils literal notranslate"><span class="pre">docs/user/api/openapi.json</span></code> with the source changes.
+<code class="docutils literal notranslate"><span class="pre">OpenApiDocumentationTests</span></code> checks the reference against the generated API
+on subsequent test runs. Sphinx renders that local snapshot, so Read the Docs
+does not need a running Java server, FMUs, or UPPAAL to build this page.</p>
+</section>
+<section id="endpoint-reference">
+<h2><span class="section-number">4.5. </span>Endpoint reference<a class="headerlink" href="#endpoint-reference" title="Link to this heading"></a></h2>
+<dl class="http get">
+<dt class="sig sig-object http" id="get--stopsimulation-sessionId">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/stopsimulation/{sessionId}</span></span><a class="headerlink" href="#get--stopsimulation-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Request simulation stop</strong></p>
+<p>Sets the session stop flag. Execution stops when the running algorithm checks it; this is not a forced process termination. Prefer POST; GET is retained for compatibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--stopsimulation-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/stopsimulation/{sessionId}</span></span><a class="headerlink" href="#post--stopsimulation-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Request simulation stop</strong></p>
+<p>Sets the session stop flag. Execution stops when the running algorithm checks it; this is not a forced process termination. Prefer POST; GET is retained for compatibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--visualizeTrace">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/visualizeTrace</span></span><a class="headerlink" href="#post--visualizeTrace" title="Link to this definition"></a></dt>
+<dd><p><strong>Visualize a verification trace</strong></p>
+<p>Generates an MP4 counterexample trace for a master model. Requires the scenario verifier’s external verification and video tools; fails if a trace cannot be generated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--verifyAlgorithm">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/verifyAlgorithm</span></span><a class="headerlink" href="#post--verifyAlgorithm" title="Link to this definition"></a></dt>
+<dd><p><strong>Verify a master-model algorithm</strong></p>
+<p>Requires UPPAAL verifyta in PATH. Returns a result object, including correct=false and an errorMessage when verification fails or UPPAAL is unavailable; HTTP 200 alone does not mean the algorithm verified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>correct</strong> (<em>boolean</em>) – True only when verification succeeded.</p></li>
+<li><p><strong>masterModel</strong> (<em>string</em>) – Generated UPPAAL XML encoding, or an empty string when unavailable.</p></li>
+<li><p><strong>errorMessage</strong> (<em>string</em>) – Verification failure or missing-tool message; empty on success.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--upload-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/upload/{sessionId}</span></span><a class="headerlink" href="#post--upload-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Upload a file to a session</strong></p>
+<p>Stores the multipart file in the session working directory for later use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>file</strong> (<em>string:binary, required</em>) – File to store in the session working directory</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--simulate-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/simulate/{sessionId}</span></span><a class="headerlink" href="#post--simulate-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Run co-simulation</strong></p>
+<p>Generates and executes a specification using the session configuration and requested times. The request blocks until execution completes. Execution failures return a non-2xx response and mark the session Error. A nonzero CLI exit code is a failure; stderr alone does not indicate failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>startTime</strong> (<em>number:double</em>) – Start time of the co-simulation in simulation time units.</p></li>
+<li><p><strong>endTime</strong> (<em>number:double</em>) – End time of the co-simulation in simulation time units.</p></li>
+<li><p><strong>logLevels</strong> (<em>object</em>) – Enabled FMI logging categories by instance, using keys such as {FMU}.instanceName.</p></li>
+<li><p><strong>reportProgress</strong> (<em>boolean</em>) – Request progress reporting during execution.</p></li>
+<li><p><strong>liveLogInterval</strong> (<em>number:double</em>) – Simulation-time interval between WebSocket data updates; zero allows updates at every step.</p></li>
+<li><p><strong>masterModel</strong> (<em>string</em>) – Scenario master-model configuration text, used by scenario-based simulation.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--sigverSimulate-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/sigverSimulate/{sessionId}</span></span><a class="headerlink" href="#post--sigverSimulate-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Simulate a supplied master model</strong></p>
+<p>Executes the supplied scenario master model using the initialized session. The request blocks until execution completes; results are stored in the session directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>startTime</strong> (<em>number:double</em>) – Start time of the co-simulation in simulation time units.</p></li>
+<li><p><strong>endTime</strong> (<em>number:double</em>) – End time of the co-simulation in simulation time units.</p></li>
+<li><p><strong>logLevels</strong> (<em>object</em>) – Enabled FMI logging categories by instance, using keys such as {FMU}.instanceName.</p></li>
+<li><p><strong>reportProgress</strong> (<em>boolean</em>) – Request progress reporting during execution.</p></li>
+<li><p><strong>liveLogInterval</strong> (<em>number:double</em>) – Simulation-time interval between WebSocket data updates; zero allows updates at every step.</p></li>
+<li><p><strong>masterModel</strong> (<em>string</em>) – Master-model configuration text containing the scenario, connections, initialization, and co-simulation steps.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--initialize-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/initialize/{sessionId}</span></span><a class="headerlink" href="#post--initialize-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Initialize a session</strong></p>
+<p>Stores the multi-model configuration and reports available FMU log categories. The specification is generated later when simulation times are supplied. Prefer application/json; text/plain JSON is accepted for legacy clients. parallelSimulation and hasExternalSignals are currently rejected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>fmus</strong> (<em>object</em>) – Map from FMU identifiers such as {FMU} to FMU file locations on the server.</p></li>
+<li><p><strong>connections</strong> (<em>object</em>) – Output-to-input connections. Keys and values use {FMU}.instanceName.signal; each output can feed multiple inputs.</p></li>
+<li><p><strong>parameters</strong> (<em>object</em>) – Parameter values keyed by {FMU}.instanceName.signal, with values matching the FMI scalar type.</p></li>
+<li><p><strong>logVariables</strong> (<em>object</em>) – Signals to record, mapped from {FMU}.instanceName to signal names.</p></li>
+<li><p><strong>parallelSimulation</strong> (<em>boolean</em>) – Request parallel stepping. The web API currently rejects true.</p></li>
+<li><p><strong>stabalizationEnabled</strong> (<em>boolean</em>) – Enable stabilization during initialization. The historical JSON spelling is retained.</p></li>
+<li><p><strong>global_absolute_tolerance</strong> (<em>number:double</em>) – Global absolute tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>global_relative_tolerance</strong> (<em>number:double</em>) – Global relative tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>loggingOn</strong> (<em>boolean</em>) – Enable FMI logging.</p></li>
+<li><p><strong>visible</strong> (<em>boolean</em>) – Request visible FMU instances during instantiation.</p></li>
+<li><p><strong>simulationProgramDelay</strong> (<em>boolean</em>) – Pace simulation steps towards real-time execution.</p></li>
+<li><p><strong>algorithm</strong> (<em>object</em>) – Simulation step algorithm. Select fixed-step or var-step using the type property.</p></li>
+<li><p><strong>algorithm.type</strong> (<em>string, required</em>)</p></li>
+<li><p><strong>algorithm.size</strong> (<em>number:double</em>) – Fixed communication step size in simulation time units.</p></li>
+<li><p><strong>overrideLogLevel</strong> (<em>string:enum</em>) – Override the server’s global log level.</p></li>
+<li><p><strong>environmentParameters[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>logLevels</strong> (<em>object</em>) – Enabled FMI log-category names by {FMU}.instanceName.</p></li>
+<li><p><strong>livestream</strong> (<em>object</em>) – Signals to stream over the session WebSocket, mapped from {FMU}.instanceName to signal names.</p></li>
+<li><p><strong>hasExternalSignals</strong> (<em>boolean</em>) – External-signal mode. Currently rejected by the initialization endpoint when true.</p></li>
+<li><p><strong>faultInjectConfigurationPath</strong> (<em>string</em>) – Path to the fault-injection configuration on the server.</p></li>
+<li><p><strong>faultInjectInstances</strong> (<em>object</em>) – Fault-injection instance configuration, keyed by instance name.</p></li>
+<li><p><strong>convergenceAttempts</strong> (<em>integer:int32</em>) – Maximum number of convergence attempts used during initialization.</p></li>
+<li><p><strong>externalSpecs[]</strong> (<em>string:binary</em>)</p></li>
+<li><p><strong>modelTransfers</strong> (<em>object</em>) – Mapping from current instance names to transferred instance names.</p></li>
+<li><p><strong>modelSwaps</strong> (<em>object</em>) – Model-swap configuration keyed by the instance being replaced.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionid</strong> (<em>string</em>)</p></li>
+<li><p><strong>availableLogLevels</strong> (<em>object</em>) – Available FMI logging categories, keyed by FMU identifier. May be incomplete if FMU inspection failed.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--generateAlgorithmFromScenario">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/generateAlgorithmFromScenario</span></span><a class="headerlink" href="#post--generateAlgorithmFromScenario" title="Link to this definition"></a></dt>
+<dd><p><strong>Generate an algorithm from a scenario</strong></p>
+<p>Converts scenario configuration text to a master-model configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--generateAlgorithmFromMultiModel">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/generateAlgorithmFromMultiModel</span></span><a class="headerlink" href="#post--generateAlgorithmFromMultiModel" title="Link to this definition"></a></dt>
+<dd><p><strong>Generate an algorithm from a multi-model</strong></p>
+<p>Converts an extended JSON multi-model into master-model configuration text.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fmus</strong> (<em>object</em>) – Map from FMU identifiers such as {FMU} to FMU file locations on the server.</p></li>
+<li><p><strong>connections</strong> (<em>object</em>) – Output-to-input connections. Keys and values use {FMU}.instanceName.signal; each output can feed multiple inputs.</p></li>
+<li><p><strong>parameters</strong> (<em>object</em>) – Parameter values keyed by {FMU}.instanceName.signal, with values matching the FMI scalar type.</p></li>
+<li><p><strong>logVariables</strong> (<em>object</em>) – Signals to record, mapped from {FMU}.instanceName to signal names.</p></li>
+<li><p><strong>parallelSimulation</strong> (<em>boolean</em>) – Request parallel stepping. The web API currently rejects true.</p></li>
+<li><p><strong>stabalizationEnabled</strong> (<em>boolean</em>) – Enable stabilization during initialization. The historical JSON spelling is retained.</p></li>
+<li><p><strong>global_absolute_tolerance</strong> (<em>number:double</em>) – Global absolute tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>global_relative_tolerance</strong> (<em>number:double</em>) – Global relative tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>loggingOn</strong> (<em>boolean</em>) – Enable FMI logging.</p></li>
+<li><p><strong>visible</strong> (<em>boolean</em>) – Request visible FMU instances during instantiation.</p></li>
+<li><p><strong>simulationProgramDelay</strong> (<em>boolean</em>) – Pace simulation steps towards real-time execution.</p></li>
+<li><p><strong>algorithm</strong> (<em>object</em>) – Simulation step algorithm. Select fixed-step or var-step using the type property.</p></li>
+<li><p><strong>algorithm.type</strong> (<em>string, required</em>)</p></li>
+<li><p><strong>algorithm.size</strong> (<em>number:double</em>) – Fixed communication step size in simulation time units.</p></li>
+<li><p><strong>overrideLogLevel</strong> (<em>string:enum</em>) – Override the server’s global log level.</p></li>
+<li><p><strong>environmentParameters[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>logLevels</strong> (<em>object</em>) – Enabled FMI log-category names by {FMU}.instanceName.</p></li>
+<li><p><strong>sigver</strong> (<em>object</em>)</p></li>
+<li><p><strong>sigver.reactivity</strong> (<em>object</em>) – Input reactivity by qualified signal name: Reactive or Delayed.</p></li>
+<li><p><strong>sigver.verification</strong> (<em>boolean</em>) – Whether to verify the generated or supplied algorithm before execution.</p></li>
+<li><p><strong>faultInjectConfigurationPath</strong> (<em>string</em>) – Path to the fault-injection configuration on the server.</p></li>
+<li><p><strong>faultInjectInstances</strong> (<em>object</em>) – Fault-injection instance configuration, keyed by instance name.</p></li>
+<li><p><strong>convergenceAttempts</strong> (<em>integer:int32</em>) – Maximum number of convergence attempts used during initialization.</p></li>
+<li><p><strong>modelTransfers</strong> (<em>object</em>) – Mapping from current instance names to transferred instance names.</p></li>
+<li><p><strong>modelSwaps</strong> (<em>object</em>) – Model-swap configuration keyed by the instance being replaced.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--executeViaCLI-sessionId">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/executeViaCLI/{sessionId}</span></span><a class="headerlink" href="#post--executeViaCLI-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Select CLI execution mode</strong></p>
+<p>Controls whether subsequent /simulate requests run via a child Java process instead of the in-process broker. Does not itself start a simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>executeViaCLI</strong> (<em>boolean</em>) – True to launch a child Java process; false to execute in-process.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http post">
+<dt class="sig sig-object http" id="post--executeAlgorithm">
+<span class="sig-name descname"><span class="pre">POST</span> </span><span class="sig-name descname"><span class="pre">/executeAlgorithm</span></span><a class="headerlink" href="#post--executeAlgorithm" title="Link to this definition"></a></dt>
+<dd><p><strong>Execute an algorithm and download results</strong></p>
+<p>Runs an extended multi-model with the supplied master model and times. An empty masterModel requests algorithm generation. If sigver.verification is true, verifies before execution. Returns a ZIP archive of the working directory as application/octet-stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Request JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>masterModel</strong> (<em>string</em>) – Master-model configuration text. Use an empty string to generate an algorithm from the multi-model.</p></li>
+<li><p><strong>multiModel</strong> (<em>object</em>) – Multi-model with scenario-verification options.</p></li>
+<li><p><strong>multiModel.fmus</strong> (<em>object</em>) – Map from FMU identifiers such as {FMU} to FMU file locations on the server.</p></li>
+<li><p><strong>multiModel.connections</strong> (<em>object</em>) – Output-to-input connections. Keys and values use {FMU}.instanceName.signal; each output can feed multiple inputs.</p></li>
+<li><p><strong>multiModel.parameters</strong> (<em>object</em>) – Parameter values keyed by {FMU}.instanceName.signal, with values matching the FMI scalar type.</p></li>
+<li><p><strong>multiModel.logVariables</strong> (<em>object</em>) – Signals to record, mapped from {FMU}.instanceName to signal names.</p></li>
+<li><p><strong>multiModel.parallelSimulation</strong> (<em>boolean</em>) – Request parallel stepping. The web API currently rejects true.</p></li>
+<li><p><strong>multiModel.stabalizationEnabled</strong> (<em>boolean</em>) – Enable stabilization during initialization. The historical JSON spelling is retained.</p></li>
+<li><p><strong>multiModel.global_absolute_tolerance</strong> (<em>number:double</em>) – Global absolute tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>multiModel.global_relative_tolerance</strong> (<em>number:double</em>) – Global relative tolerance for initialization and simulation generation.</p></li>
+<li><p><strong>multiModel.loggingOn</strong> (<em>boolean</em>) – Enable FMI logging.</p></li>
+<li><p><strong>multiModel.visible</strong> (<em>boolean</em>) – Request visible FMU instances during instantiation.</p></li>
+<li><p><strong>multiModel.simulationProgramDelay</strong> (<em>boolean</em>) – Pace simulation steps towards real-time execution.</p></li>
+<li><p><strong>multiModel.algorithm</strong> (<em>object</em>) – Simulation step algorithm. Select fixed-step or var-step using the type property.</p></li>
+<li><p><strong>multiModel.algorithm.type</strong> (<em>string, required</em>)</p></li>
+<li><p><strong>multiModel.algorithm.size</strong> (<em>number:double</em>) – Fixed communication step size in simulation time units.</p></li>
+<li><p><strong>multiModel.overrideLogLevel</strong> (<em>string:enum</em>) – Override the server’s global log level.</p></li>
+<li><p><strong>multiModel.environmentParameters[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>multiModel.logLevels</strong> (<em>object</em>) – Enabled FMI log-category names by {FMU}.instanceName.</p></li>
+<li><p><strong>multiModel.sigver</strong> (<em>object</em>)</p></li>
+<li><p><strong>multiModel.sigver.reactivity</strong> (<em>object</em>) – Input reactivity by qualified signal name: Reactive or Delayed.</p></li>
+<li><p><strong>multiModel.sigver.verification</strong> (<em>boolean</em>) – Whether to verify the generated or supplied algorithm before execution.</p></li>
+<li><p><strong>multiModel.faultInjectConfigurationPath</strong> (<em>string</em>) – Path to the fault-injection configuration on the server.</p></li>
+<li><p><strong>multiModel.faultInjectInstances</strong> (<em>object</em>) – Fault-injection instance configuration, keyed by instance name.</p></li>
+<li><p><strong>multiModel.convergenceAttempts</strong> (<em>integer:int32</em>) – Maximum number of convergence attempts used during initialization.</p></li>
+<li><p><strong>multiModel.modelTransfers</strong> (<em>object</em>) – Mapping from current instance names to transferred instance names.</p></li>
+<li><p><strong>multiModel.modelSwaps</strong> (<em>object</em>) – Model-swap configuration keyed by the instance being replaced.</p></li>
+<li><p><strong>executionParameters</strong> (<em>object</em>) – Execution settings accompanying a scenario multi-model.</p></li>
+<li><p><strong>executionParameters.convergenceRelativeTolerance</strong> (<em>number:double</em>) – Relative convergence tolerance requested by the client.</p></li>
+<li><p><strong>executionParameters.convergenceAbsoluteTolerance</strong> (<em>number:double</em>) – Absolute convergence tolerance requested by the client.</p></li>
+<li><p><strong>executionParameters.convergenceAttempts</strong> (<em>integer:int32</em>) – Requested maximum convergence attempts.</p></li>
+<li><p><strong>executionParameters.startTime</strong> (<em>number:double</em>) – Simulation start time.</p></li>
+<li><p><strong>executionParameters.endTime</strong> (<em>number:double</em>) – Simulation end time.</p></li>
+<li><p><strong>executionParameters.stepSize</strong> (<em>number:double</em>) – Requested communication step size.</p></li>
+<li><p><strong>executionParameters.liveLogInterval</strong> (<em>number:double</em>) – Requested simulation-time interval for live logging.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--version">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/version</span></span><a class="headerlink" href="#get--version" title="Link to this definition"></a></dt>
+<dd><p><strong>Get Maestro version</strong></p>
+<p>Returns the version of the running Maestro build.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>version</strong> (<em>string</em>) – Build version from maestro.properties.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--status">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/status</span></span><a class="headerlink" href="#get--status" title="Link to this definition"></a></dt>
+<dd><p><strong>List session statuses</strong></p>
+<p>Returns one status object for every active session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Response JSON Array of Objects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--status-sessionId">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/status/{sessionId}</span></span><a class="headerlink" href="#get--status-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Get session status</strong></p>
+<p>Returns the current state and last execution duration of one session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--result-sessionId-zip">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/result/{sessionId}/zip</span></span><a class="headerlink" href="#get--result-sessionId-zip" title="Link to this definition"></a></dt>
+<dd><p><strong>Download session archive</strong></p>
+<p>Downloads the session working directory, including generated specifications, configuration, and available results, as a ZIP archive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--result-sessionId-plain">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/result/{sessionId}/plain</span></span><a class="headerlink" href="#get--result-sessionId-plain" title="Link to this definition"></a></dt>
+<dd><p><strong>Download CSV results</strong></p>
+<p>Downloads the session outputs.csv file. Results must have been produced by simulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--ping">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/ping</span></span><a class="headerlink" href="#get--ping" title="Link to this definition"></a></dt>
+<dd><p><strong>Check server availability</strong></p>
+<p>Returns the plain-text response OK.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Status Codes<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--destroy-sessionId">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/destroy/{sessionId}</span></span><a class="headerlink" href="#get--destroy-sessionId" title="Link to this definition"></a></dt>
+<dd><p><strong>Destroy a session</strong></p>
+<p>Deletes the session working directory and removes the session. Download results first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sessionId</strong> (<em>string, required</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="http get">
+<dt class="sig sig-object http" id="get--createSession">
+<span class="sig-name descname"><span class="pre">GET</span> </span><span class="sig-name descname"><span class="pre">/createSession</span></span><a class="headerlink" href="#get--createSession" title="Link to this definition"></a></dt>
+<dd><p><strong>Create a session</strong></p>
+<p>Allocates a new session and returns its sessionId for subsequent requests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Response JSON Object<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>string</em>) – Current session state or operation message.</p></li>
+<li><p><strong>sessionId</strong> (<em>string</em>) – Session identifier returned by createSession.</p></li>
+<li><p><strong>lastExecTime</strong> (<em>integer:int64</em>) – Duration of the last execution in milliseconds.</p></li>
+<li><p><strong>warnings[]</strong> (<em>string</em>)</p></li>
+<li><p><strong>errors[]</strong> (<em>string</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Status Codes<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/200">200 OK</a></span> – OK</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cli.html" class="btn btn-neutral float-left" title="3. Command Line Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="logging.html" class="btn btn-neutral float-right" title="5. Logging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

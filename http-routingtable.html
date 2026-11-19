@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTTP Routing Table &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+ 
+
+    <script>
+      DOCUMENTATION_OPTIONS.COLLAPSE_INDEX = true;
+    </script>
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="user/index.html">User documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">HTTP Routing Table</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+   <h1>HTTP Routing Table</h1>
+
+   <div class="modindex-jumpbox">
+   <a href="#cap-/createSession"><strong>/createSession</strong></a> | 
+   <a href="#cap-/destroy"><strong>/destroy</strong></a> | 
+   <a href="#cap-/executeAlgorithm"><strong>/executeAlgorithm</strong></a> | 
+   <a href="#cap-/executeViaCLI"><strong>/executeViaCLI</strong></a> | 
+   <a href="#cap-/generateAlgorithmFromMultiModel"><strong>/generateAlgorithmFromMultiModel</strong></a> | 
+   <a href="#cap-/generateAlgorithmFromScenario"><strong>/generateAlgorithmFromScenario</strong></a> | 
+   <a href="#cap-/initialize"><strong>/initialize</strong></a> | 
+   <a href="#cap-/ping"><strong>/ping</strong></a> | 
+   <a href="#cap-/result"><strong>/result</strong></a> | 
+   <a href="#cap-/sigverSimulate"><strong>/sigverSimulate</strong></a> | 
+   <a href="#cap-/simulate"><strong>/simulate</strong></a> | 
+   <a href="#cap-/status"><strong>/status</strong></a> | 
+   <a href="#cap-/stopsimulation"><strong>/stopsimulation</strong></a> | 
+   <a href="#cap-/upload"><strong>/upload</strong></a> | 
+   <a href="#cap-/verifyAlgorithm"><strong>/verifyAlgorithm</strong></a> | 
+   <a href="#cap-/version"><strong>/version</strong></a> | 
+   <a href="#cap-/visualizeTrace"><strong>/visualizeTrace</strong></a>
+   </div>
+
+   <table class="indextable modindextable">
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/createSession"><td></td><td>
+       <strong>/createSession</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--createSession"><code class="xref">GET /createSession</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/destroy"><td></td><td>
+       <strong>/destroy</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--destroy-sessionId"><code class="xref">GET /destroy/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/executeAlgorithm"><td></td><td>
+       <strong>/executeAlgorithm</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--executeAlgorithm"><code class="xref">POST /executeAlgorithm</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/executeViaCLI"><td></td><td>
+       <strong>/executeViaCLI</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--executeViaCLI-sessionId"><code class="xref">POST /executeViaCLI/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/generateAlgorithmFromMultiModel"><td></td><td>
+       <strong>/generateAlgorithmFromMultiModel</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--generateAlgorithmFromMultiModel"><code class="xref">POST /generateAlgorithmFromMultiModel</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/generateAlgorithmFromScenario"><td></td><td>
+       <strong>/generateAlgorithmFromScenario</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--generateAlgorithmFromScenario"><code class="xref">POST /generateAlgorithmFromScenario</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/initialize"><td></td><td>
+       <strong>/initialize</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--initialize-sessionId"><code class="xref">POST /initialize/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/ping"><td></td><td>
+       <strong>/ping</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--ping"><code class="xref">GET /ping</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/result"><td></td><td>
+       <strong>/result</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--result-sessionId-plain"><code class="xref">GET /result/{sessionId}/plain</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--result-sessionId-zip"><code class="xref">GET /result/{sessionId}/zip</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/sigverSimulate"><td></td><td>
+       <strong>/sigverSimulate</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--sigverSimulate-sessionId"><code class="xref">POST /sigverSimulate/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/simulate"><td></td><td>
+       <strong>/simulate</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--simulate-sessionId"><code class="xref">POST /simulate/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/status"><td></td><td>
+       <strong>/status</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--status"><code class="xref">GET /status</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--status-sessionId"><code class="xref">GET /status/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/stopsimulation"><td></td><td>
+       <strong>/stopsimulation</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--stopsimulation-sessionId"><code class="xref">GET /stopsimulation/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--stopsimulation-sessionId"><code class="xref">POST /stopsimulation/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/upload"><td></td><td>
+       <strong>/upload</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--upload-sessionId"><code class="xref">POST /upload/{sessionId}</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/verifyAlgorithm"><td></td><td>
+       <strong>/verifyAlgorithm</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--verifyAlgorithm"><code class="xref">POST /verifyAlgorithm</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/version"><td></td><td>
+       <strong>/version</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#get--version"><code class="xref">GET /version</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
+     <tr class="cap" id="cap-/visualizeTrace"><td></td><td>
+       <strong>/visualizeTrace</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="user/web-api.html#post--visualizeTrace"><code class="xref">POST /visualizeTrace</code></a></td><td>
+       <em></em></td></tr>
+   </table>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

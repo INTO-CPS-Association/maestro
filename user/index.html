@@ -1,0 +1,201 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User documentation &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="1. Overview" href="overview.html" />
+    <link rel="prev" title="INTO-CPS Maestro2" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">User documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="user-documentation">
+<span id="id1"></span><h1>User documentation<a class="headerlink" href="#user-documentation" title="Link to this heading"></a></h1>
+<p>The Maestro2 approach is to create a specification in the domain specific language MaBL, verify the specification and finally, execute the specification.
+There is a particular focus on making the FMI-commands explicit in the specification, but it is possible to define runtime behaviour that is not limited to MaBL.</p>
+<p>The Maestro2 approach to co-simulation is presented and described in <a class="reference internal" href="overview.html#overview"><span class="std std-ref">Overview</span></a>.</p>
+<p>The ideal place to get a first impression of co-simulation with Maestro2 is <a class="reference internal" href="getting-started.html#getting-started"><span class="std std-ref">Getting Started</span></a>.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Table of Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">1. Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#creating-a-specification">1.1. Creating a specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#expansion-of-a-specification">1.2. Expansion of a Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#executing-a-specification">1.3. Executing a specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#outline-of-the-co-simulation-process-with-maestro2">1.4. Outline of the Co-simulation Process with Maestro2</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">2. Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#development-branch">2.1. DEVELOPMENT BRANCH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#setup">2.2. Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#example">2.3. Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#part-1-first-mabl-specification">2.4. Part 1: First MaBL Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#part-2-specification-generation-and-expansion">2.5. Part 2: Specification Generation and Expansion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting-started.html#configuration-file">2.5.1. Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started.html#specification-generation">2.5.2. Specification Generation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started.html#final-specification-and-execution">2.5.3. Final specification and Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started.html#execution">2.5.4. Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting-started.html#extra-expansion">2.5.5. Extra: Expansion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">3. Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#sub-command-import">3.1. Sub command: import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#sub-command-interpret">3.2. Sub command: interpret</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#sub-command-export">3.3. Sub command: export</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html#session-workflow">4.1. Session workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html#content-types">4.2. Content types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html#errors-and-execution-status">4.3. Errors and execution status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html#maintaining-the-reference">4.4. Maintaining the reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html#endpoint-reference">4.5. Endpoint reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">5. Logging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#maestro-logging">5.1. Maestro logging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging.html#sg1-json-override">5.1.1. SG1 JSON override</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#fmu-diagnostic-logging">5.2. FMU diagnostic logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html#simulation-variable-recording">5.3. Simulation variable recording</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="specification_components.html">6. Specification Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html#expansion">6.1. Expansion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html#specification-generator">6.2. Specification Generator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html#execution-environment-component-menv">7.1. Execution Environment Component (MEnv)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="runtime_components.html#runtime-configuration">7.1.1. Runtime configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="runtime_components.html#mabl-and-command-line-execution">7.1.2. MaBL and command-line execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="runtime_components.html#using-mablapibuilder">7.1.3. Using MablApiBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html#console-printer-component">7.2. Console Printer Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html#variable-step-component">7.3. Variable Step Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html#runtime-plugins">7.4. Runtime Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html#legacy-configuration-into-cps-multi-model-and-coe-config-file-format">8.1. Legacy Configuration / INTO-CPS Multi-model and coe config File Format</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="INTO-CPS Maestro2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral float-right" title="1. Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

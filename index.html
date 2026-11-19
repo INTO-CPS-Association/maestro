@@ -1,0 +1,156 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INTO-CPS Maestro2 &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="User documentation" href="user/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="user/index.html">User documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">INTO-CPS Maestro2</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="into-cps-maestro2">
+<h1>INTO-CPS Maestro2<a class="headerlink" href="#into-cps-maestro2" title="Link to this heading"></a></h1>
+<p>Maestro2 is a Co-simulation Orchestration Engine based on The Functional Mockup Interface 2.0 for Co-simulation.
+It consists of a domain specific language (DSL) called Maestro Base Language (MaBL), an interpreter of the language and utilities to assist in specifying co-simulations in MaBL.</p>
+<p>It is cross-platform as it is based on the JVM and offers interaction through a web interface and a command line interface.
+Furthermore, Maestro 2 has a companion application in the INTO-CPS Application, which offers a graphical user interface and
+utilises the web interface of Maestro 2. This documentation concerns Maestro 2 and not the INTO-CPS Application.
+For more information on the INTO-CPS Application, please see <a class="reference external" href="https://into-cps-association.github.io/simulation/app.html">https://into-cps-association.github.io/simulation/app.html</a>.</p>
+<p>Maestro2 Releases are available at the <a class="reference external" href="https://github.com/INTO-CPS-Association/maestro/releases/tag/Release%2F2.0.2">Maestro Repository</a>.</p>
+<div class="line-block">
+<div class="line">If you are interested in Maestro2 from a user’s perspective, then please see <a class="reference internal" href="user/index.html#user-documentation"><span class="std std-ref">User documentation</span></a></div>
+<div class="line">If you are interested in Maestro2 as a contributor in the software development sense,  please see <a class="reference internal" href="dev/index.html#developer-documentation"><span class="std std-ref">Developer documentation</span></a></div>
+</div>
+<section id="feature-overview">
+<span id="id1"></span><h2>Feature Overview<a class="headerlink" href="#feature-overview" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Supports The Functional Mockup Interface 2 for Co-simulation</p></li>
+<li><p>Supports Maestro Base Language (MaBL) for specifying Co-simulations</p></li>
+<li><p>Interpreter for Maestro Base Language for executing co-simulations</p></li>
+<li><p>Auto generation of co-simulation specifications in MaBL from configuration files (from INTO-CPS Application)</p></li>
+<li><p>Expansion plugins to assist with writing MaBL specifications</p></li>
+<li><p>Supports iterative initialization of FMU connections forming strongly connected components</p></li>
+<li><p>Supports Jacobi fixed step iteration with rollback</p></li>
+<li><p>Supports Variable Step functionality without rollback</p></li>
+<li><p>Provides CLI and Web-API with legacy (Maestro1) support</p></li>
+<li><p>Provides live-logging via Web-API and websockets</p></li>
+</ul>
+</section>
+<section id="features-in-progress">
+<span id="id2"></span><h2>Features in Progress<a class="headerlink" href="#features-in-progress" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Stabilisation throughout simulation</p></li>
+<li><p>Distributed FMI capabilities</p></li>
+<li><p>Slow-down simulation to real time</p></li>
+<li><p>JVM FMU</p></li>
+<li><p>Maestro as co-simulation worker instaed of leader.</p></li>
+<li><p>C-code generation</p></li>
+<li><p>Digital Twin Capabilities</p></li>
+<li><p>Formal Verification of MaBL specifications</p></li>
+<li><p>Auto-generation of MaBL from Simulator Contracts</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="user/index.html" class="btn btn-neutral float-right" title="User documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

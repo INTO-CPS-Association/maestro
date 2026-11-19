@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. Runtime Components &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="8. Configuration File Formats" href="file_formats.html" />
+    <link rel="prev" title="6. Specification Components" href="specification_components.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">7. Runtime Components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#execution-environment-component-menv">7.1. Execution Environment Component (MEnv)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#runtime-configuration">7.1.1. Runtime configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mabl-and-command-line-execution">7.1.2. MaBL and command-line execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-mablapibuilder">7.1.3. Using MablApiBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#console-printer-component">7.2. Console Printer Component</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variable-step-component">7.3. Variable Step Component</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runtime-plugins">7.4. Runtime Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">7. </span>Runtime Components</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/runtime_components.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="runtime-components">
+<span id="id1"></span><h1><span class="section-number">7. </span>Runtime Components<a class="headerlink" href="#runtime-components" title="Link to this heading"></a></h1>
+<section id="execution-environment-component-menv">
+<span id="menv-runtime"></span><h2><span class="section-number">7.1. </span>Execution Environment Component (MEnv)<a class="headerlink" href="#execution-environment-component-menv" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MEnv</span></code> reads named values from the interpreter’s runtime JSON configuration.
+These are not operating-system environment variables and are distinct from the
+generation-time configuration describing FMUs, connections, and parameters.
+Lookups happen during execution, so values can change between runs without
+regenerating the MaBL specification.</p>
+<section id="runtime-configuration">
+<h3><span class="section-number">7.1.1. </span>Runtime configuration<a class="headerlink" href="#runtime-configuration" title="Link to this heading"></a></h3>
+<p>Put the values in a top-level <code class="docutils literal notranslate"><span class="pre">environment_variables</span></code> object:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"environment_variables"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"sample.count"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"step_size"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"enabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"water tank"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Names are literal, case-sensitive strings. For example, <code class="docutils literal notranslate"><span class="pre">sample.count</span></code> is one
+key, not a lookup inside a nested <code class="docutils literal notranslate"><span class="pre">sample</span></code> object. Other runtime settings, such
+as <code class="docutils literal notranslate"><span class="pre">DataWriter</span></code>, can be sibling keys in the same JSON file.</p>
+<p>The module exposes these methods:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>JSON value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">getInt(string</span> <span class="pre">id)</span></code></p></td>
+<td><p>Integer within the signed 32-bit range</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">real</span> <span class="pre">getReal(string</span> <span class="pre">id)</span></code></p></td>
+<td><p>Number (integer or decimal)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">getBool(string</span> <span class="pre">id)</span></code></p></td>
+<td><p>Boolean: <code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">string</span> <span class="pre">getString(string</span> <span class="pre">id)</span></code></p></td>
+<td><p>String</p></td>
+</tr>
+</tbody>
+</table>
+<p>Use JSON booleans rather than numeric encodings for <code class="docutils literal notranslate"><span class="pre">getBool</span></code>. Missing keys or
+incompatible types cause an interpreter error; these methods do not provide
+default values. Loading <code class="docutils literal notranslate"><span class="pre">MEnv</span></code> without the <code class="docutils literal notranslate"><span class="pre">environment_variables</span></code> runtime
+key fails. MaBL type checking checks the method calls, not the contents of the
+runtime JSON.</p>
+</section>
+<section id="mabl-and-command-line-execution">
+<h3><span class="section-number">7.1.2. </span>MaBL and command-line execution<a class="headerlink" href="#mabl-and-command-line-execution" title="Link to this heading"></a></h3>
+<p>Import the module, load it without arguments, read the values, and unload it:</p>
+<div class="highlight-c# notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span>
+<span class="n">import</span><span class="w"> </span><span class="n">MEnv</span><span class="p">;</span>
+<span class="n">import</span><span class="w"> </span><span class="n">ConsolePrinter</span><span class="p">;</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">MEnv</span><span class="w"> </span><span class="n">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"MEnv"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ConsolePrinter</span><span class="w"> </span><span class="n">console</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"ConsolePrinter"</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">env</span><span class="p">.</span><span class="n">getInt</span><span class="p">(</span><span class="s">"sample.count"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">env</span><span class="p">.</span><span class="n">getReal</span><span class="p">(</span><span class="s">"step_size"</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">env</span><span class="p">.</span><span class="n">getBool</span><span class="p">(</span><span class="s">"enabled"</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">env</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">"label"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">console</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"count=%d step=%.2f enabled=%b label=%s"</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="n">step</span><span class="p">,</span><span class="w"> </span><span class="n">enabled</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="p">);</span>
+<span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">console</span><span class="p">);</span>
+<span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">env</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Download <a class="reference download internal" download="" href="../_downloads/27a67cb501beeda67c129753f0830eda/environment.mabl"><code class="xref download docutils literal notranslate"><span class="pre">environment.mabl</span></code></a> and
+<a class="reference download internal" download="" href="../_downloads/da3143139c4a611d5cd6a420cb2cbe90/environment.runtime.json"><code class="xref download docutils literal notranslate"><span class="pre">environment.runtime.json</span></code></a>
+into your working directory. With a current Maestro CLI JAR named
+<code class="docutils literal notranslate"><span class="pre">maestro.jar</span></code>, run:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>java<span class="w"> </span>-jar<span class="w"> </span>maestro.jar<span class="w"> </span>interpret<span class="w"> </span>environment.mabl<span class="w"> </span>-runtime<span class="w"> </span>environment.runtime.json
+</pre></div>
+</div>
+<p>The example prints <code class="docutils literal notranslate"><span class="pre">count=3</span> <span class="pre">step=0.10</span> <span class="pre">enabled=true</span> <span class="pre">label=water</span> <span class="pre">tank</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">-runtime</span></code> option accepts a path relative to the process working directory,
+or an absolute path. The file does not have to be beside the JAR or have a
+particular name. Pass it explicitly: the current <code class="docutils literal notranslate"><span class="pre">interpret</span></code> command does not
+automatically discover sibling <code class="docutils literal notranslate"><span class="pre">*.runtime.json</span></code> files. An explicitly supplied
+file is the runtime configuration, not an overlay, so include any other required
+runtime settings in it as well.</p>
+</section>
+<section id="using-mablapibuilder">
+<h3><span class="section-number">7.1.3. </span>Using MablApiBuilder<a class="headerlink" href="#using-mablapibuilder" title="Link to this heading"></a></h3>
+<p>The builder’s execution-environment API emits the corresponding runtime lookups:</p>
+<div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="n">MablApiBuilder</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MablApiBuilder</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">MablApiBuilder</span><span class="p">.</span><span class="na">MablSettings</span><span class="p">());</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">scope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">getDynamicScope</span><span class="p">();</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scope</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="s">"count"</span><span class="p">,</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">getExecutionEnvironment</span><span class="p">().</span><span class="na">getInt</span><span class="p">(</span><span class="s">"sample.count"</span><span class="p">));</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scope</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="s">"step"</span><span class="p">,</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">getExecutionEnvironment</span><span class="p">().</span><span class="na">getReal</span><span class="p">(</span><span class="s">"step_size"</span><span class="p">));</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scope</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="s">"enabled"</span><span class="p">,</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">getExecutionEnvironment</span><span class="p">().</span><span class="na">getBool</span><span class="p">(</span><span class="s">"enabled"</span><span class="p">));</span>
+<span class="kd">var</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scope</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="s">"label"</span><span class="p">,</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">getExecutionEnvironment</span><span class="p">().</span><span class="na">getString</span><span class="p">(</span><span class="s">"label"</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>Provide the same <code class="docutils literal notranslate"><span class="pre">environment_variables</span></code> JSON when interpreting the generated
+specification. For embedded Java execution, pass the runtime JSON input stream
+to <code class="docutils literal notranslate"><span class="pre">DefaultExternalValueFactory</span></code> along with the working directory and module
+resolver. See <code class="docutils literal notranslate"><span class="pre">EnvTest</span></code> in <code class="docutils literal notranslate"><span class="pre">frameworks/fmi2api</span></code> and <code class="docutils literal notranslate"><span class="pre">WatertankApiTest</span></code> in
+<code class="docutils literal notranslate"><span class="pre">maestro</span></code> for executable examples.</p>
+</section>
+</section>
+<section id="console-printer-component">
+<h2><span class="section-number">7.2. </span>Console Printer Component<a class="headerlink" href="#console-printer-component" title="Link to this heading"></a></h2>
+<p>The console printer component is used for printing directly to the system console utilizing the Java format string syntax and conversions. The component has the following methods:</p>
+<aside class="topic">
+<p class="topic-title">print</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>String message, ? values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Void</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method prints the message formatted with the values to the console WITHOUT a new line.</p>
+</dd>
+</dl>
+</aside>
+<aside class="topic">
+<p class="topic-title">println</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>String message, ? values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Void</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method prints the message formatted with the values to the console WITH a new line.</p>
+</dd>
+</dl>
+</aside>
+<p><a class="reference internal" href="#consoleprinter-mabl-spec"><span class="std std-ref">Following is a MaBL spec</span></a> ( <a class="reference download internal" download="" href="../_downloads/438f4266fe03453b75400a8763e5a384/consolePrinterSpec.mabl"><code class="xref download docutils literal notranslate"><span class="pre">MaBL</span> <span class="pre">spec</span></code></a> ) that demonstrates how to initialize the component and use it.</p>
+<p>To utilize the component the following steps are necessary:</p>
+<ul class="simple">
+<li><p>Import the component at the top of the MaBL spec (line 3).</p></li>
+<li><p>Load the ConsolePrinter component by calling <code class="code docutils literal notranslate"><span class="pre">load(...)</span></code> with the component name (line 6).</p></li>
+</ul>
+<div class="literal-block-wrapper docutils container" id="id2">
+<span id="consoleprinter-mabl-spec"></span><div class="code-block-caption"><span class="caption-text">MaBL spec showcasing the console printer component.</span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-c# notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">simulation</span><span class="w"> </span>
+<span class="linenos"> 2</span><span class="n">import</span><span class="w"> </span><span class="n">FMI2</span><span class="p">;</span>
+<span class="linenos"> 3</span><span class="n">import</span><span class="w"> </span><span class="n">ConsolePrinter</span><span class="p">;</span>
+<span class="linenos"> 4</span><span class="n">@Framework</span><span class="p">(</span><span class="s">"FMI2"</span><span class="p">);</span>
+<span class="linenos"> 5</span><span class="p">{</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="n">ConsolePrinter</span><span class="w"> </span><span class="n">consoleprinter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"ConsolePrinter"</span><span class="p">);</span>
+<span class="linenos"> 7</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">string_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"a string"</span><span class="p">;</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"String value: %s"</span><span class="p">,</span><span class="w"> </span><span class="n">string_val</span><span class="p">);</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">int_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">12</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">print</span><span class="p">(</span><span class="s">"Integer value: %d"</span><span class="p">,</span><span class="w"> </span><span class="n">int_val</span><span class="p">);</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">boolean_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+<span class="linenos">15</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">print</span><span class="p">(</span><span class="s">"Boolean value: %b"</span><span class="p">,</span><span class="w"> </span><span class="n">boolean_val</span><span class="p">);</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">double_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">18</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"Double value: %.1f"</span><span class="p">,</span><span class="w"> </span><span class="n">double_val</span><span class="p">);</span>
+<span class="linenos">19</span>
+<span class="linenos">20</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"All raw values: %d, %.1f, %b, %s"</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">,</span><span class="w"> </span><span class="s">"a string"</span><span class="p">);</span>
+<span class="linenos">21</span><span class="w">    </span>
+<span class="linenos">22</span><span class="w">    </span><span class="n">consoleprinter</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">"All variables: %d, %.1f, %b, %s"</span><span class="p">,</span><span class="w"> </span><span class="n">int_val</span><span class="p">,</span><span class="w"> </span><span class="n">double_val</span><span class="p">,</span><span class="w"> </span><span class="n">boolean_val</span><span class="p">,</span><span class="w"> </span><span class="n">string_val</span><span class="p">);</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">consoleprinter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="p">)</span>
+<span class="linenos">25</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">26</span><span class="w">        </span><span class="n">unload</span><span class="p">(</span><span class="n">consoleprinter</span><span class="p">);</span>
+<span class="linenos">27</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">28</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="variable-step-component">
+<h2><span class="section-number">7.3. </span>Variable Step Component<a class="headerlink" href="#variable-step-component" title="Link to this heading"></a></h2>
+<p>The variable step component is used for calculating a variable step size during simulation. The component has the following methods:</p>
+<aside class="topic">
+<p class="topic-title">setFMUs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string names[], FMI2 fmus[]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VariableStepConfig</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method specifies the FMUs that are of relevance for the ports that are to be used for calculating the step size. An array of fully qualifying FMU names, i.e. <cite>{&lt;name of FMU&gt;}.&lt;name of instance&gt;</cite>, should be passed together with an array of the FMUs. The method returns a VariableStepConfig object.</p>
+</dd>
+</dl>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>It is expected that the indices of the arrays are matching. I.e. the name found on the first index in the array of names is the name of the first FMU in the array of FMUs.</p>
+</div>
+</aside>
+<aside class="topic">
+<p class="topic-title">initializePortNames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VariableStepConfig configuration, string portNames[]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Void</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method specifies the names of the ports from which values are used to calculate a step. A VariableStepConfig and an array of port names are expected to be passed.</p>
+</dd>
+</dl>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>It is expected that the port names matches port values that are passed in the function <cite>addDataPoint</cite>. I.e. the first index in the array of port names are the port name of the value that are found on the first index in the array of port values.</p>
+</div>
+</aside>
+<aside class="topic">
+<p class="topic-title">addDataPoint</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VariableStepConfig configuration, real time, ? values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Void</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method adds a data point, i.e. port values, to a given time. A VariableStepConfig, a real value representing the time and a collection of port values are expected to be passed.</p>
+</dd>
+</dl>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>It is expected that the port values matches the port names that are passed in the function <cite>initializePortNames</cite>. I.e. the first index in the array of port values are the value of the port name that are found on the first index in the array of port names.</p>
+</div>
+</aside>
+<aside class="topic">
+<p class="topic-title">getStepSize</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VariableStepConfig configuration</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Real</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method returns a step size as a real. It is expected that port names have been initialized and that a data point has been added for the given time. A VariableStepConfig is expected to be passed.</p>
+</dd>
+</dl>
+</aside>
+<aside class="topic">
+<p class="topic-title">setEndTime</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VariableStepConfig configuration, real endTime</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Void</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method sets the end time of the simulation. A VariableStepConfig and a real representing the end time of the simulation are expected to be passed.</p>
+</dd>
+</dl>
+</aside>
+<aside class="topic">
+<p class="topic-title">isStepValid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p>VariableStepConfig configuration, real nextTime, ? values</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+<dt class="field-odd">Description<span class="colon">:</span></dt>
+<dd class="field-odd"><p>This method validates if a given step is valid. A VariableStepConfig, a real representing the time and an a collection of port values are expected to be passed. The method returns a boolean indicating if the step is valid or not.</p>
+</dd>
+</dl>
+</aside>
+<p><a class="reference internal" href="#variablestep-mabl-snippet"><span class="std std-ref">Following is a snippet</span></a> of a <a class="reference download internal" download="" href="../_downloads/addadaa6e63da029ea291e5cdb58204b/spec.mabl"><code class="xref download docutils literal notranslate"><span class="pre">MaBL</span> <span class="pre">spec</span></code></a> that demonstrates how to initialize the component and use it.</p>
+<p>To initialize the component the following steps are necessary:</p>
+<ul class="simple">
+<li><p>Import the component at the top of the MaBL spec.</p></li>
+<li><p>Load the VariableStep component by calling <code class="code docutils literal notranslate"><span class="pre">load(...)</span></code> with the component name and a path to the config.json file (line 98).</p></li>
+<li><p>Retrieve a VariableStepConfig object by calling <code class="code docutils literal notranslate"><span class="pre">setFMUs(...)</span></code> with FMUs and their corresponding names (line 99).</p></li>
+<li><p>Specify the port names of values that are to be passed subsequently by calling <code class="code docutils literal notranslate"><span class="pre">initializePortNames(...)</span></code> (line 101).</p></li>
+<li><p>Specify the end time of the simulation by calling <code class="code docutils literal notranslate"><span class="pre">setEndTime(...)</span></code> (102).</p></li>
+</ul>
+<p>To calculate a step-size after initialization of the component the following steps are necessary:</p>
+<ul class="simple">
+<li><p>Add a datapoint for the current simulation time by calling <code class="code docutils literal notranslate"><span class="pre">addDataPoint(...)</span></code> (line 135).</p></li>
+<li><p>Get the step-size by calling <code class="code docutils literal notranslate"><span class="pre">getStepSize(...)</span></code> (line 136).</p></li>
+</ul>
+<p>It is also possible to validate a step-size by calling <code class="code docutils literal notranslate"><span class="pre">isStepValid(...)</span></code> with the new port values and simulation time after stepping each FMU (line 157).</p>
+<p>Lastly the component should be unloaded by calling <code class="code docutils literal notranslate"><span class="pre">unload(varaibleStep)</span></code> (line 183).</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<span id="variablestep-mabl-snippet"></span><div class="code-block-caption"><span class="caption-text">Snippet of a MaBL spec showcasing the variable step component.</span><a class="headerlink" href="#id3" title="Link to this code"></a></div>
+<div class="highlight-c# notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 93</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos"> 94</span><span class="w">    </span><span class="c1">// Setup of variable step</span>
+<span class="linenos"> 95</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos"> 96</span><span class="w">    </span><span class="n">FMI2</span><span class="w"> </span><span class="n">FMUs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">tankController</span><span class="p">,</span><span class="w"> </span><span class="n">singleWatertank</span><span class="p">};</span>
+<span class="linenos"> 97</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">FMUInstanceNames</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"{control}.c"</span><span class="p">,</span><span class="w"> </span><span class="s">"{tank}.t"</span><span class="p">};</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="n">VariableStep</span><span class="w"> </span><span class="n">variableStep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"VariableStep"</span><span class="p">,</span><span class="w"> </span><span class="s">"src/test/resources/variable_step/config.json"</span><span class="p">);</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="n">VariableStepConfig</span><span class="w"> </span><span class="n">variableStepConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">variableStep</span><span class="p">.</span><span class="n">setFMUs</span><span class="p">(</span><span class="n">FMUInstanceNames</span><span class="p">,</span><span class="w"> </span><span class="n">FMUs</span><span class="p">);</span>
+<span class="linenos">100</span><span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">portNames</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"{tank}.t.level"</span><span class="p">,</span><span class="s">"{control}.c.maxlevel"</span><span class="p">,</span><span class="w"> </span><span class="s">"{control}.c.minlevel"</span><span class="p">};</span>
+<span class="linenos">101</span><span class="w">    </span><span class="n">variableStep</span><span class="p">.</span><span class="n">initializePortNames</span><span class="p">(</span><span class="n">variableStepConfig</span><span class="p">,</span><span class="w"> </span><span class="n">portNames</span><span class="p">);</span>
+<span class="linenos">102</span><span class="w">    </span><span class="n">variableStep</span><span class="p">.</span><span class="n">setEndTime</span><span class="p">(</span><span class="n">variableStepConfig</span><span class="p">,</span><span class="w"> </span><span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos">103</span><span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">portValues</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">};</span>
+<span class="linenos">104</span>
+<span class="linenos">105</span>
+<span class="linenos">106</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos">107</span><span class="w">    </span><span class="c1">// Simulation Loop until END_TIME</span>
+<span class="linenos">108</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos">109</span><span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">START_TIME</span><span class="p">;</span>
+<span class="linenos">110</span><span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="n">time</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">END_TIME</span><span class="p">)</span>
+<span class="linenos">111</span><span class="w">    </span><span class="p">{</span>
+<span class="linenos">112</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">113</span><span class="w">        </span><span class="c1">// Convert valve state from boolean to real</span>
+<span class="linenos">114</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">115</span><span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="p">)</span>
+<span class="linenos">116</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">117</span><span class="w">            </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">118</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">119</span><span class="w">        </span><span class="k">else</span>
+<span class="linenos">120</span><span class="w">        </span><span class="p">{</span>
+<span class="linenos">121</span><span class="w">            </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">122</span><span class="w">        </span><span class="p">}</span>
+<span class="linenos">123</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">124</span><span class="w">        </span><span class="c1">// Set the valve state on the tank</span>
+<span class="linenos">125</span><span class="w">        </span><span class="c1">// Set the level on the controller</span>
+<span class="linenos">126</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">127</span><span class="w">        </span><span class="n">wtValveStateInputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wtValveStateInput</span><span class="p">;</span>
+<span class="linenos">128</span><span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">wtValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtValveStateInputs</span><span class="p">);</span>
+<span class="linenos">129</span><span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">crtlLevelInputValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+<span class="linenos">130</span>
+<span class="linenos">131</span>
+<span class="linenos">132</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">133</span><span class="w">        </span><span class="c1">// Get step size from variable step</span>
+<span class="linenos">134</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">135</span><span class="w">        </span><span class="n">variableStep</span><span class="p">.</span><span class="n">addDataPoint</span><span class="p">(</span><span class="n">variableStepConfig</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">portValues</span><span class="p">);</span>
+<span class="linenos">136</span><span class="w">        </span><span class="n">STEP_SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">variableStep</span><span class="p">.</span><span class="n">getStepSize</span><span class="p">(</span><span class="n">variableStepConfig</span><span class="p">);</span>
+<span class="linenos">137</span>
+<span class="linenos">138</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">139</span><span class="w">        </span><span class="c1">// Step the tank</span>
+<span class="linenos">140</span><span class="w">        </span><span class="c1">// Step the controller</span>
+<span class="linenos">141</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">142</span><span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">doStep</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+<span class="linenos">143</span><span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">doStep</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+<span class="linenos">144</span>
+<span class="linenos">145</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">146</span><span class="w">        </span><span class="c1">// Get the valve state from the controller</span>
+<span class="linenos">147</span><span class="w">        </span><span class="c1">// Get the level from the tank</span>
+<span class="linenos">148</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">149</span><span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">getBoolean</span><span class="p">(</span><span class="n">crtlValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">);</span>
+<span class="linenos">150</span><span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">getReal</span><span class="p">(</span><span class="n">wtLevelValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+<span class="linenos">151</span>
+<span class="linenos">152</span>
+<span class="linenos">153</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">154</span><span class="w">        </span><span class="c1">// Validate step size</span>
+<span class="linenos">155</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">156</span><span class="w">        </span><span class="n">portValues</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="linenos">157</span><span class="w">        </span><span class="kt">bool</span><span class="w"> </span><span class="n">validStepSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">variableStep</span><span class="p">.</span><span class="n">isStepValid</span><span class="p">(</span><span class="n">variableStepConfig</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">,</span><span class="w"> </span><span class="n">portValues</span><span class="p">);</span>
+<span class="linenos">158</span><span class="w">        </span><span class="c1">//if(!validStepSize)</span>
+<span class="linenos">159</span><span class="w">        </span><span class="c1">//    break;</span>
+<span class="linenos">160</span>
+<span class="linenos">161</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">162</span><span class="w">        </span><span class="c1">// Increase the time with STEP_SIZE</span>
+<span class="linenos">163</span><span class="w">        </span><span class="c1">// Write the valve state and the water level to the results</span>
+<span class="linenos">164</span><span class="w">        </span><span class="c1">// #############################</span>
+<span class="linenos">165</span><span class="w">        </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">;</span>
+<span class="linenos">166</span><span class="w">        </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">writeDataPoint</span><span class="p">(</span><span class="n">dataWriterConfiguration</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="linenos">167</span>
+<span class="linenos">168</span><span class="w">    </span><span class="p">}</span>
+<span class="linenos">169</span>
+<span class="linenos">170</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos">171</span><span class="w">    </span><span class="c1">// Clean up</span>
+<span class="linenos">172</span><span class="w">    </span><span class="c1">// #############################</span>
+<span class="linenos">173</span><span class="w">    </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<span class="linenos">174</span><span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">terminate</span><span class="p">();</span>
+<span class="linenos">175</span><span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">terminate</span><span class="p">();</span>
+<span class="linenos">176</span><span class="w">    </span><span class="n">tankController</span><span class="p">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">crtlInstance</span><span class="p">);</span>
+<span class="linenos">177</span><span class="w">    </span><span class="n">singleWatertank</span><span class="p">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">wtInstance</span><span class="p">);</span>
+<span class="linenos">178</span>
+<span class="linenos">179</span><span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">tankController</span><span class="p">);</span>
+<span class="linenos">180</span><span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">singleWatertank</span><span class="p">);</span>
+<span class="linenos">181</span><span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">dataWriter</span><span class="p">);</span>
+<span class="linenos">182</span>
+<span class="linenos">183</span><span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">variableStep</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="runtime-plugins">
+<span id="sec-runtime-plugins"></span><h2><span class="section-number">7.4. </span>Runtime Plugins<a class="headerlink" href="#runtime-plugins" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This section has yet to be filled out</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="specification_components.html" class="btn btn-neutral float-left" title="6. Specification Components" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="file_formats.html" class="btn btn-neutral float-right" title="8. Configuration File Formats" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

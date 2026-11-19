@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Developer Overview &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plugins" href="plugins/index.html" />
+    <link rel="prev" title="Developer documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../user/index.html">User documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Developer documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Developer Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parsing-and-expanding-a-specification">Parsing and Expanding a Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#verifying-a-specification">Verifying a Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#executing-a-specification">Executing a Specification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugins/index.html">Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Developer documentation</a></li>
+      <li class="breadcrumb-item active">Developer Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/dev/overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="developer-overview">
+<h1>Developer Overview<a class="headerlink" href="#developer-overview" title="Link to this heading"></a></h1>
+<p>This page presents an extended overview of the Maestro 2 approach to co-simulation and the different components.
+The figures presented on this page is to outline the implementation and not does not correspond one-to-one.
+Furthermore, the figures mainly presents sunny-day scenarios.</p>
+<p>An initial MaBL specification is passed to Maestro.
+A MaBL specification can be non-expanded in the sense that it relies on expansion plugins to expand statements until
+the specification has been fully expanded, in which case it should be executable. This is similar in nature to <cite>macro expansion</cite>.</p>
+<p>The example below shows a non-expanded MaBL specification, as it contains statements marked with <code class="code docutils literal notranslate"><span class="pre">external</span></code>, which means they have to be expanded.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>simulation
+import FixedStep;
+import TypeConverter;
+import InitializerUsingCOE;
+import FMI2;
+import CSV;
+{
+    real START_TIME = 10.0;
+    real END_TIME = 10.0;
+    real STEP_SIZE = 0.1;
+
+    FMI2 tankcontroller = load("FMI2", "{8c4e810f-3df3-4a00-8276-176fa3c9f000}", "src/test/resources/watertankcontroller-c.fmu");
+    FMI2 SingleWatertank = load("FMI2", "{cfc65592-9ece-4563-9705-1581b6e7071c}",  "src/test/resources/singlewatertank-20sim.fmu");
+    FMI2Component crtlInstance = tankcontroller.instantiate("crtlInstance", false, false);;
+    FMI2Component wtInstance = SingleWatertank.instantiate("wtInstance", false, false);;
+
+    IFmuComponent components[2]={wtInstance,crtlInstance};
+
+    external initialize(components,START_TIME, END_TIME);
+
+    external fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,"mm.csv");
+
+    tankcontroller.freeInstance(crtlInstance);
+    SingleWatertank.freeInstance(wtInstance);
+
+    unload(tankcontroller);
+    unload(SingleWatertank);
+}
+</pre></div>
+</div>
+<p>The imports <code class="code docutils literal notranslate"><span class="pre">FixedStep</span></code>, <code class="code docutils literal notranslate"><span class="pre">TypeConverter</span></code> and <code class="code docutils literal notranslate"><span class="pre">InitializerUsingCOE</span></code> refer to expansion plugins.
+Expansion plugins export functions as Function Declarations, from which the types can be derived.</p>
+<p>The imports <code class="code docutils literal notranslate"><span class="pre">FMI2</span></code> and <code class="code docutils literal notranslate"><span class="pre">CSV</span></code> refer to interpreter plugins.
+Interpreter plugins come with a companion MaBL modules that gives the type definitions. This is elaborated on below in <a class="reference internal" href="#executing-a-specification"><span class="std std-ref">Executing a Specification</span></a>.</p>
+<p>In this example, there are two statements to expand: <code class="code docutils literal notranslate"><span class="pre">external</span> <span class="pre">initialize(components,START_TIME,</span> <span class="pre">END_TIME)</span></code> and <code class="code docutils literal notranslate"><span class="pre">external</span> <span class="pre">fixedStepCsv(components,STEP_SIZE,0.0,END_TIME,&quot;mm.csv&quot;)</span></code>.
+<code class="code docutils literal notranslate"><span class="pre">...</span> <span class="pre">initialize(...)</span></code> is implemented in the plugin <code class="code docutils literal notranslate"><span class="pre">InitializerUsingCOE</span></code>, and <code class="code docutils literal notranslate"><span class="pre">..</span> <span class="pre">fixedStepCsv(...)</span></code> is implemented in <code class="code docutils literal notranslate"><span class="pre">FixedStep</span></code>.
+Upon expanding these statements new <code class="code docutils literal notranslate"><span class="pre">external</span></code> statements can appear, and the process repeats.
+For example, the <code class="code docutils literal notranslate"><span class="pre">initialize</span></code> and <code class="code docutils literal notranslate"><span class="pre">fixedStepCsv</span></code> possibly makes use of the <code class="code docutils literal notranslate"><span class="pre">TypeConverter</span></code> expansion plugin to convert types.</p>
+<p>It is also necessary to supply an environment configuration (<code class="code docutils literal notranslate"><span class="pre">environment.json</span></code>) containing the FMUs to use in the given co-simulation and the connections between instances of the FMUs.
+Furthermore, if the expansion plugins used in a MaBL specification require configuration in order to perform expansion, then it is supplied within a plugin configuration file (<code class="code docutils literal notranslate"><span class="pre">configuration.json</span></code>).</p>
+<section id="parsing-and-expanding-a-specification">
+<h2>Parsing and Expanding a Specification<a class="headerlink" href="#parsing-and-expanding-a-specification" title="Link to this heading"></a></h2>
+<p>The process of parsing and expanding is presented below.</p>
+<p class="plantuml">
+<img src="../_images/plantuml-e28bd0e48d415455ae7f08723bf3f6a65ffb212a.png" alt="title Parsing a MaBL Specification and an environment
+hide footbox
+
+actor User #red
+participant Maestro
+participant FMI2FrameworkEnvParser
+participant &quot;MablSpecification\nGenerator&quot; as MablSpecGen
+
+User -&gt; Maestro: PerformCosimulation(environment.json, \nconfiguration.json, spec.mabl)
+Maestro -&gt; FMI2FrameworkEnvParser: parse(environment.json)
+Maestro &lt;-- FMI2FrameworkEnvParser: environment
+Maestro -&gt; MablSpecGen: parse(spec.mabl)
+MablSpecGen -&gt; ANTLR4 : LexAndParse(spec.mabl)
+MablSpecGen &lt;-- ANTLR4 : parsedNodes
+MablSpecGen -&gt; ParseTree2AstConverter : visit(parsedNodes)
+MablSpecGen &lt;-- ParseTree2AstConverter : AST"/>
+</p>
+<p>Once the MaBL specification has been parsed into an AST it is time to perform the expansion.
+The expansion plugins are located via (1) classes that implement the interface <code class="code docutils literal notranslate"><span class="pre">IMaestroExpansionPlugin</span></code>,
+(2) support a certain Framework (currently only FMI2 is supported) via an annotation <code class="code docutils literal notranslate"><span class="pre">&#64;SimulationFramework(framework</span> <span class="pre">=</span> <span class="pre">Framework.FMI2)</span></code>, and
+(3) are imported in the MaBL specification.
+The <code class="code docutils literal notranslate"><span class="pre">external</span></code> function calls are then matched with the functions exported by the expansion plugins located as described above.</p>
+<p class="plantuml">
+<img src="../_images/plantuml-923ab48032baf3666d21605aaf68445a1d1ac213.png" alt="title Utilizing plugins to expand statements
+hide footbox
+
+actor User #red
+participant Maestro
+participant &quot;MablSpecification\nGenerator&quot; as MablSpecGen
+
+MablSpecGen -&gt; PluginFactory: GetPlugins(IMaestroExpansionPlugin.class, framework, imports)
+MablSpecGen &lt;-- PluginFactory: expansionPlugins
+MablSpecGen -&gt; TypeChecker: BuildExportedFunctionsMap(expansionPlugins.exportedFunctions)
+MablSpecGen &lt;-- TypeChecker: exportedExpansionFunctions
+    loop externalFunctions in AST.externalFunctionCalls
+        loop externalFunc in externalFunctions
+            MablSpecGen -&gt; MablSpecGen: expansionPlugin = getCorrespondingExpansionPlugin(exportedExpansionFunctions, externalFunc)
+            MablSpecGen -&gt; expansionPlugin: requireConfig()
+            alt plugin requires configuration
+                MablSpecGen &lt;-- expansionPlugin: true
+                MablSpecGen -&gt; expansionPlugin: parseConfig(pluginSpecificPartOfConfiguration)
+                MablSpecGen &lt;-- expansionPlugin: parsedConfig
+            else plugin does not require configuration
+                MablSpecGen &lt;-- expansionPlugin: false
+            end
+            MablSpecGen -&gt; expansionPlugin: expand(function, arguments, parsedConfig || null)
+            MablSpecGen &lt;-- expansionPlugin: expandedStatements
+            MablSpecGen -&gt; MablSpecGen: AST = UpdateAST(Replace externalFunc with expandedStatements)
+        end
+    end"/>
+</p>
+</section>
+<section id="verifying-a-specification">
+<h2>Verifying a Specification<a class="headerlink" href="#verifying-a-specification" title="Link to this heading"></a></h2>
+<p>The verification a specification consists of two concepts: Type checking and verification plugins.
+The diagram below continues from where the diagram above ended, where AST represents a fully-expanded AST.</p>
+<p class="plantuml">
+<img src="../_images/plantuml-9a86ee23ac1b7dc0664f527d22cfcd0532aa3805.png" alt="title Verifying a MaBL Specificatino
+hide footbox
+
+participant &quot;MablSpecification\nGenerator&quot; as MablSpecGen
+
+MablSpecGen -&gt; TypeChecker: TypeCheck(AST)
+MablSpecGen &lt;-- TypeChecker: OK
+MablSpecGen -&gt; PluginFactory: GetPlugins(IMaestroVerifier, framework)
+MablSpecGen &lt;-- PluginFactory: verificationPlugins
+    loop verificationPlugin in verificationPlugins
+        MablSpecGen -&gt; verificationPlugin: verify(AST)
+        MablSpecGen &lt;-- verificationPlugin: OK
+    end
+MablSpecGen -&gt; MablSpecGen: verifiedSpecification = true"/>
+</p>
+</section>
+<section id="executing-a-specification">
+<span id="id1"></span><h2>Executing a Specification<a class="headerlink" href="#executing-a-specification" title="Link to this heading"></a></h2>
+<p>The execution is carried out via interpretation of the AST and by utilising the interpretation plugins.</p>
+<p>As mentioned, an interpreter plugin has a companion MaBL module that defines the available functions of the module.</p>
+<p>As an example, consider the <code class="code docutils literal notranslate"><span class="pre">FMI2</span></code> and <code class="code docutils literal notranslate"><span class="pre">FMI2Component</span></code> interpreter plugins below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module FMI2 {
+    FMI2Component instantiate(string name, bool logging);
+    void freeInstance(FMI2Component comp);
+}
+
+module FMI2Component {
+    int setupExperiment( bool toleranceDefined, real tolerance, real startTime, bool stopTimeDefined, real stopTime);
+    int doStep(real currentCommunicationPoint, real communicationStepSize, bool noSetFMUStatePriorToCurrentPoint);
+    ...
+}
+</pre></div>
+</div>
+<p>Currently, an interpreter plugin has to be loaded with the <code class="code docutils literal notranslate"><span class="pre">load</span></code> expression, which returns a value of the given module type. For example, <code class="code docutils literal notranslate"><span class="pre">FMI2</span> <span class="pre">tankcontroller</span> <span class="pre">=</span> <span class="pre">load(&quot;FMI2&quot;,</span> <span class="pre">&quot;{8c4e810f-3df3-4a00-8276-176fa3c9f000}&quot;,</span> <span class="pre">&quot;src/test/resources/watertankcontroller-c.fmu&quot;);</span></code> returns a value of type <code class="code docutils literal notranslate"><span class="pre">FMI2</span></code>. This is also how the interpreter maps the MaBL <code class="code docutils literal notranslate"><span class="pre">load</span></code> expression to the <code class="code docutils literal notranslate"><span class="pre">FMI2</span></code> interpreter plugin. It is now possible to call the function <code class="code docutils literal notranslate"><span class="pre">instantiate</span></code> on <code class="code docutils literal notranslate"><span class="pre">tankcontroller</span></code>, which then returns a value of type <code class="code docutils literal notranslate"><span class="pre">FMI2Component</span></code>.</p>
+<p>Another example of an interpreter plugin is the <code class="code docutils literal notranslate"><span class="pre">CSV</span></code> plugin:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module CSV {
+     CSVFile open( string path);
+     CSVFile close(CSVFile file);
+ }
+
+ module CSVFile {
+     void writeHeader( string[] columnTitles);
+     void writeRow(real time,  ?[] values);
+ }
+</pre></div>
+</div>
+<p>The <code class="code docutils literal notranslate"><span class="pre">FMI2</span></code> and <code class="code docutils literal notranslate"><span class="pre">CSV</span></code> interpreter plugins are currently hardcoded within the interpreter evaluation of the <code class="code docutils literal notranslate"><span class="pre">load</span></code> expression, but it is envisioned that the approach will be similar to the approach used for expansion plugins - see <a class="reference external" href="https://github.com/INTO-CPS-Association/maestro/issues/48">https://github.com/INTO-CPS-Association/maestro/issues/48</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Developer documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plugins/index.html" class="btn btn-neutral float-right" title="Plugins" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

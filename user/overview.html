@@ -1,0 +1,247 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Overview &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="2. Getting Started" href="getting-started.html" />
+    <link rel="prev" title="User documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">1. Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-specification">1.1. Creating a specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#expansion-of-a-specification">1.2. Expansion of a Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#executing-a-specification">1.3. Executing a specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#outline-of-the-co-simulation-process-with-maestro2">1.4. Outline of the Co-simulation Process with Maestro2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">2. Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">1. </span>Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="overview">
+<span id="id1"></span><h1><span class="section-number">1. </span>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h1>
+<p>This section presents an overview of the Maestro 2 approach to co-simulation. Roughly, the approach is to generate a specification expressed in the Domain Specfic Language called Maestro Base Language (MaBL) and then execute it in order to conduct a co-simulation.
+This specification is a recipe of what is going to be executed in order to conduct a co-simulation.
+By seperating the specification and execution it is possible to verify the specification prior to executing it.</p>
+<section id="creating-a-specification">
+<h2><span class="section-number">1.1. </span>Creating a specification<a class="headerlink" href="#creating-a-specification" title="Link to this heading"></a></h2>
+<p>A specification can be written completely by hand if so desired, but Maestro2 also features a <cite>Specification Generator</cite> that can assist in creating a co-simulation according to a given configuration. For more information on how to use the <cite>Specification Generator</cite> please see <a class="reference internal" href="specification_components.html#sec-specification-generator"><span class="std std-ref">Specification Generator</span></a>.</p>
+<p>Maestro2 also contains a plugin system of <cite>expansion plugins</cite> that can assist in creating a specification. An expansion plugin offers one or more functions that can be invoked in the specification. If a specifiation makes use of expansion plugins, then Maestro2 replaces <cite>expand</cite> function calls with the behaviour of the function call, which is provided by a given expansion plugin. For more information on <cite>expansion plugins</cite>, please see <a class="reference internal" href="specification_components.html#sec-expansion"><span class="std std-ref">Expansion</span></a>.</p>
+</section>
+<section id="expansion-of-a-specification">
+<h2><span class="section-number">1.2. </span>Expansion of a Specification<a class="headerlink" href="#expansion-of-a-specification" title="Link to this heading"></a></h2>
+<p>Once a specification has been created it goes through an expansion phase, where <code class="code docutils literal notranslate"><span class="pre">expand</span></code> statements related to the aforementioned <cite>Expansion Plugins</cite> are replaced with their corresponding behaviour.</p>
+<p>For example, if a specification passed to Maestro2 contains the statement <code class="code docutils literal notranslate"><span class="pre">expand</span> <span class="pre">convertBoolean2Real(booleanVariable,</span> <span class="pre">realVariable)</span></code>, then it will be replaced by the behaviour of the function <code class="code docutils literal notranslate"><span class="pre">convertBoolean2Real</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span> <span class="n">booleanVariable</span> <span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">realVariable</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">realVariable</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>Once a specification is free of <code class="code docutils literal notranslate"><span class="pre">expand</span></code> statements it is ready for execution.</p>
+</section>
+<section id="executing-a-specification">
+<h2><span class="section-number">1.3. </span>Executing a specification<a class="headerlink" href="#executing-a-specification" title="Link to this heading"></a></h2>
+<p>Maestro2 has an interpreter capable of executing a MaBL specification.
+It is possible to define runtime plugins that offer functionality to be used in a MaBL specification. The interpreter will then invoke these functions during execution of the specification.
+One such example is the CSV plugin, which writes values to a CSV file.</p>
+</section>
+<section id="outline-of-the-co-simulation-process-with-maestro2">
+<h2><span class="section-number">1.4. </span>Outline of the Co-simulation Process with Maestro2<a class="headerlink" href="#outline-of-the-co-simulation-process-with-maestro2" title="Link to this heading"></a></h2>
+<p>There are two main ways of creating a specification using Maestro2: Write it by hand or use the Specification Generator. However, several of the processes are the same.</p>
+<p>The sections outlines the process of how Maestro2 generates a MaBL specification and executes it.</p>
+<p class="plantuml">
+<img src="../_images/plantuml-291d476301c4e3eb5c592fabd9f2f0acd20c8a3f.png" alt="title Co-Simulation with Maestro 2.
+hide footbox
+
+actor User #red
+participant Maestro
+participant &quot;Specification\nGenerator&quot; as SpecGen
+participant MaestroExpand
+participant &quot;ExpansionPlugin : \n IMaestroExpansionPlugin&quot; as expPlugin
+participant Interpreter
+participant &quot;RuntimePlugin : \n ModuleValue&quot; as RuntimePlugin
+
+
+alt Using Specification Generator
+
+    User -&gt; Maestro: WithSpecificationGenerator(\nconfiguration.json)
+    Maestro -&gt; SpecGen: GenerateSpecification(\nconfiguration)
+    SpecGen --&gt; Maestro: Specification
+
+else Provides MaBL specification
+
+    User -&gt; Maestro: WithSpecification(specification.mabl)
+
+end
+
+
+alt Specification contains expand statements
+
+    Maestro -&gt; MaestroExpand: Expand(Specification)
+
+    loop until all Expand\nstatements has been expanded
+        MaestroExpand -&gt; expPlugin: invoke expPlugin with \n configuration and \nfunctional call with arguments
+        expPlugin --&gt; MaestroExpand: More expanded Specification
+    end
+
+    MaestroExpand --&gt; Maestro: ExpandedSpecification
+
+end
+
+Maestro -&gt; Interpreter: Execute(ExpandedSpecification)
+
+alt Specification contains runtime plugins
+
+    Interpreter -&gt; RuntimePlugin: function(args)
+    RuntimePlugin --&gt; Interpreter: Result
+
+end
+
+Interpreter -&gt; User: co-simulation results"/>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">configuration.json<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Configuration for the co-simulation</p>
+</dd>
+<dt class="field-even">specification.mabl<span class="colon">:</span></dt>
+<dd class="field-even"><p>Specification written in Maestro Base Language (MaBL).</p>
+</dd>
+<dt class="field-odd">SpecificationGenerator<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Controls the process of creating a MaBL Specification from configuration files. For more information, see <a class="reference internal" href="specification_components.html#sec-specification-generator"><span class="std std-ref">Specification Generator</span></a></p>
+</dd>
+<dt class="field-even">Expand<span class="colon">:</span></dt>
+<dd class="field-even"><p>Expand refers to the process of expansion. Expansion is where a <code class="code docutils literal notranslate"><span class="pre">expand</span> <span class="pre">function(args)</span></code> statements are replaced by the behaviour of the given function based on an expansion plugin. For more information, see <a class="reference internal" href="specification_components.html#sec-expansion"><span class="std std-ref">Expansion</span></a>.</p>
+</dd>
+<dt class="field-odd">IMaestroExpansion<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A plugin that provides one or more functions that can be used in context of expansion.</p>
+</dd>
+<dt class="field-even">ExpandedSpecification<span class="colon">:</span></dt>
+<dd class="field-even"><p>A MaBL Specification that is free from <code class="code docutils literal notranslate"><span class="pre">expand</span></code> statements.</p>
+</dd>
+<dt class="field-odd">Interpreter<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Can execute a MaBL Specification.</p>
+</dd>
+<dt class="field-even">RuntimePlugin<span class="colon">:</span></dt>
+<dd class="field-even"><p>A plugin that is executed by the interpreter during the interpretation of a MaBL Specification.</p>
+</dd>
+<dt class="field-odd">results<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An expanded MaBL specification and other results of the co-simulation efforts, i.e. a CSV file with results of the co-simulation.</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="User documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting-started.html" class="btn btn-neutral float-right" title="2. Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>

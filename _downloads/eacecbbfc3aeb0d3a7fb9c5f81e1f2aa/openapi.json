@@ -1,0 +1,1365 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "Maestro Web API",
+    "description" : "Session-based FMI co-simulation and scenario algorithm generation, verification, and execution."
+  },
+  "tags" : [ {
+    "name" : "Scenario",
+    "description" : "Generate, verify, visualize, and execute FMI2 scenario master models. Scenario and master-model text is in the scenario verifier's configuration format, not JSON."
+  }, {
+    "name" : "Simulation",
+    "description" : "Create a session, initialize its multi-model, run co-simulation, and download results. Session identifiers are supplied in the URL. Simulation requests block until execution completes."
+  } ],
+  "paths" : {
+    "/stopsimulation/{sessionId}" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Request simulation stop",
+        "description" : "Sets the session stop flag. Execution stops when the running algorithm checks it; this is not a forced process termination. Prefer POST; GET is retained for compatibility.",
+        "operationId" : "stop",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Request simulation stop",
+        "description" : "Sets the session stop flag. Execution stops when the running algorithm checks it; this is not a forced process termination. Prefer POST; GET is retained for compatibility.",
+        "operationId" : "stop_1",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/visualizeTrace" : {
+      "post" : {
+        "tags" : [ "Scenario" ],
+        "summary" : "Visualize a verification trace",
+        "description" : "Generates an MP4 counterexample trace for a master model. Requires the scenario verifier's external verification and video tools; fails if a trace cannot be generated.",
+        "operationId" : "visualizeTrace",
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "video/mp4" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verifyAlgorithm" : {
+      "post" : {
+        "tags" : [ "Scenario" ],
+        "summary" : "Verify a master-model algorithm",
+        "description" : "Requires UPPAAL verifyta in PATH. Returns a result object, including correct=false and an errorMessage when verification fails or UPPAAL is unavailable; HTTP 200 alone does not mean the algorithm verified.",
+        "operationId" : "verifyAlgorithm",
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerificationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/{sessionId}" : {
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Upload a file to a session",
+        "description" : "Stores the multipart file in the session working directory for later use.",
+        "operationId" : "uploadFile",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary",
+                    "description" : "File to store in the session working directory"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/simulate/{sessionId}" : {
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Run co-simulation",
+        "description" : "Generates and executes a specification using the session configuration and requested times. The request blocks until execution completes. Execution failures return a non-2xx response and mark the session Error. A nonzero CLI exit code is a failure; stderr alone does not indicate failure.",
+        "operationId" : "simulate",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimulateRequestBody"
+              }
+            },
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SimulateRequestBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sigverSimulate/{sessionId}" : {
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Simulate a supplied master model",
+        "description" : "Executes the supplied scenario master model using the initialized session. The request blocks until execution completes; results are stored in the session directory.",
+        "operationId" : "sigverSimulate",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SigverSimulateRequestBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/initialize/{sessionId}" : {
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Initialize a session",
+        "description" : "Stores the multi-model configuration and reports available FMU log categories. The specification is generated later when simulation times are supplied. Prefer application/json; text/plain JSON is accepted for legacy clients. parallelSimulation and hasExternalSignals are currently rejected.",
+        "operationId" : "initializeSession",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InitializationData"
+              }
+            },
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InitializationData"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InitializeStatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generateAlgorithmFromScenario" : {
+      "post" : {
+        "tags" : [ "Scenario" ],
+        "summary" : "Generate an algorithm from a scenario",
+        "description" : "Converts scenario configuration text to a master-model configuration.",
+        "operationId" : "generateAlgorithmFromScenario",
+        "requestBody" : {
+          "content" : {
+            "text/plain" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generateAlgorithmFromMultiModel" : {
+      "post" : {
+        "tags" : [ "Scenario" ],
+        "summary" : "Generate an algorithm from a multi-model",
+        "description" : "Converts an extended JSON multi-model into master-model configuration text.",
+        "operationId" : "generateAlgorithmFromMultiModel",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExtendedMultiModel"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executeViaCLI/{sessionId}" : {
+      "post" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Select CLI execution mode",
+        "description" : "Controls whether subsequent /simulate requests run via a child Java process instead of the in-process broker. Does not itself start a simulation.",
+        "operationId" : "executeViaCLI",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CliExecutionRequestBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/executeAlgorithm" : {
+      "post" : {
+        "tags" : [ "Scenario" ],
+        "summary" : "Execute an algorithm and download results",
+        "description" : "Runs an extended multi-model with the supplied master model and times. An empty masterModel requests algorithm generation. If sigver.verification is true, verifies before execution. Returns a ZIP archive of the working directory as application/octet-stream.",
+        "operationId" : "executeAlgorithm",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExecutableMasterAndMultiModelTDO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/version" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Get Maestro version",
+        "description" : "Returns the version of the running Maestro build.",
+        "operationId" : "version",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "List session statuses",
+        "description" : "Returns one status object for every active session.",
+        "operationId" : "getStatuses",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/StatusModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status/{sessionId}" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Get session status",
+        "description" : "Returns the current state and last execution duration of one session.",
+        "operationId" : "getStatuses_1",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/result/{sessionId}/zip" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Download session archive",
+        "description" : "Downloads the session working directory, including generated specifications, configuration, and available results, as a ZIP archive.",
+        "operationId" : "getResultZip",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/result/{sessionId}/plain" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Download CSV results",
+        "description" : "Downloads the session outputs.csv file. Results must have been produced by simulation.",
+        "operationId" : "getResultPlain",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/csv" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Check server availability",
+        "description" : "Returns the plain-text response OK.",
+        "operationId" : "ping",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/destroy/{sessionId}" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Destroy a session",
+        "description" : "Deletes the session working directory and removes the session. Download results first.",
+        "operationId" : "destroy",
+        "parameters" : [ {
+          "name" : "sessionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/createSession" : {
+      "get" : {
+        "tags" : [ "Simulation" ],
+        "summary" : "Create a session",
+        "description" : "Allocates a new session and returns its sessionId for subsequent requests.",
+        "operationId" : "createSession",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatusModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "VerificationResult" : {
+        "type" : "object",
+        "description" : "Algorithm verification outcome. Inspect correct and errorMessage even when HTTP status is 200.",
+        "properties" : {
+          "correct" : {
+            "type" : "boolean",
+            "description" : "True only when verification succeeded."
+          },
+          "masterModel" : {
+            "type" : "string",
+            "description" : "Generated UPPAAL XML encoding, or an empty string when unavailable."
+          },
+          "errorMessage" : {
+            "type" : "string",
+            "description" : "Verification failure or missing-tool message; empty on success."
+          }
+        }
+      },
+      "SimulateRequestBody" : {
+        "type" : "object",
+        "description" : "Times and logging settings for co-simulation of an initialized session.",
+        "properties" : {
+          "startTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Start time of the co-simulation in simulation time units.",
+            "example" : 0
+          },
+          "endTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "End time of the co-simulation in simulation time units.",
+            "example" : 10
+          },
+          "logLevels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Enabled FMI logging categories by instance, using keys such as {FMU}.instanceName."
+          },
+          "reportProgress" : {
+            "type" : "boolean",
+            "description" : "Request progress reporting during execution."
+          },
+          "liveLogInterval" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Simulation-time interval between WebSocket data updates; zero allows updates at every step.",
+            "example" : 0.1
+          },
+          "masterModel" : {
+            "type" : "string",
+            "description" : "Scenario master-model configuration text, used by scenario-based simulation."
+          }
+        }
+      },
+      "StatusModel" : {
+        "type" : "object",
+        "description" : "Session status or operation result. Status is a message, not an HTTP status code.",
+        "properties" : {
+          "status" : {
+            "type" : "string",
+            "description" : "Current session state or operation message.",
+            "example" : "Simulation completed"
+          },
+          "sessionId" : {
+            "type" : "string",
+            "description" : "Session identifier returned by createSession."
+          },
+          "lastExecTime" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Duration of the last execution in milliseconds."
+          },
+          "warnings" : {
+            "type" : "array",
+            "description" : "Warnings or captured process output, depending on execution mode. May be null.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "errors" : {
+            "type" : "array",
+            "description" : "Reported errors or captured child-process stderr. May be null; not all failure paths populate this field.",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "SigverSimulateRequestBody" : {
+        "type" : "object",
+        "description" : "Execution options and an explicit scenario master model.",
+        "properties" : {
+          "startTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Start time of the co-simulation in simulation time units.",
+            "example" : 0
+          },
+          "endTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "End time of the co-simulation in simulation time units.",
+            "example" : 10
+          },
+          "logLevels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Enabled FMI logging categories by instance, using keys such as {FMU}.instanceName."
+          },
+          "reportProgress" : {
+            "type" : "boolean",
+            "description" : "Request progress reporting during execution."
+          },
+          "liveLogInterval" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Simulation-time interval between WebSocket data updates; zero allows updates at every step.",
+            "example" : 0.1
+          },
+          "masterModel" : {
+            "type" : "string",
+            "description" : "Master-model configuration text containing the scenario, connections, initialization, and co-simulation steps."
+          }
+        }
+      },
+      "BoundedDifferenceConstraint" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VarStepConstraint"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "ports" : {
+              "type" : "array",
+              "description" : "Qualified signal names monitored by the constraint.",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "reltol" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Relative tolerance for the bounded difference."
+            },
+            "abstol" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Absolute tolerance for the bounded difference."
+            },
+            "safety" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Safety factor used when adapting the step size."
+            },
+            "skipDiscrete" : {
+              "type" : "boolean",
+              "description" : "Whether to skip discrete signals."
+            }
+          }
+        } ],
+        "description" : "Bounded-difference constraint (type boundeddifference)."
+      },
+      "FixedStepAlgorithmConfig" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/IAlgorithmConfig"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "size" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Fixed communication step size in simulation time units.",
+              "example" : 0.1
+            }
+          }
+        } ],
+        "description" : "Fixed-step algorithm. Set type to fixed-step."
+      },
+      "FmuMaxStepSizeConstraint" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VarStepConstraint"
+        } ],
+        "description" : "FMU maximum-step-size constraint (type fmumaxstepsize)."
+      },
+      "IAlgorithmConfig" : {
+        "type" : "object",
+        "description" : "Simulation step algorithm. Select fixed-step or var-step using the type property.",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "InitializationData" : {
+        "type" : "object",
+        "description" : "Session multi-model configuration. FMU paths and external specifications are resolved on the server. FMU, connection, parameter, and algorithm fields are inherited from MultiModel.",
+        "properties" : {
+          "fmus" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Map from FMU identifiers such as {FMU} to FMU file locations on the server."
+          },
+          "connections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Output-to-input connections. Keys and values use {FMU}.instanceName.signal; each output can feed multiple inputs."
+          },
+          "parameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "description" : "Parameter values keyed by {FMU}.instanceName.signal, with values matching the FMI scalar type."
+          },
+          "logVariables" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Signals to record, mapped from {FMU}.instanceName to signal names."
+          },
+          "parallelSimulation" : {
+            "type" : "boolean",
+            "description" : "Request parallel stepping. The web API currently rejects true."
+          },
+          "stabalizationEnabled" : {
+            "type" : "boolean",
+            "description" : "Enable stabilization during initialization. The historical JSON spelling is retained."
+          },
+          "global_absolute_tolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Global absolute tolerance for initialization and simulation generation."
+          },
+          "global_relative_tolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Global relative tolerance for initialization and simulation generation."
+          },
+          "loggingOn" : {
+            "type" : "boolean",
+            "description" : "Enable FMI logging."
+          },
+          "visible" : {
+            "type" : "boolean",
+            "description" : "Request visible FMU instances during instantiation."
+          },
+          "simulationProgramDelay" : {
+            "type" : "boolean",
+            "description" : "Pace simulation steps towards real-time execution."
+          },
+          "algorithm" : {
+            "description" : "Step algorithm configuration; type selects fixed-step or var-step.",
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/FixedStepAlgorithmConfig"
+            }, {
+              "$ref" : "#/components/schemas/VariableStepAlgorithmConfig"
+            } ]
+          },
+          "overrideLogLevel" : {
+            "type" : "string",
+            "description" : "Override the server's global log level.",
+            "enum" : [ "OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL" ]
+          },
+          "environmentParameters" : {
+            "type" : "array",
+            "description" : "Qualified parameter names whose values should be obtained from the execution environment.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "logLevels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Enabled FMI log-category names by {FMU}.instanceName."
+          },
+          "livestream" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Signals to stream over the session WebSocket, mapped from {FMU}.instanceName to signal names."
+          },
+          "hasExternalSignals" : {
+            "type" : "boolean",
+            "description" : "External-signal mode. Currently rejected by the initialization endpoint when true."
+          },
+          "faultInjectConfigurationPath" : {
+            "type" : "string",
+            "description" : "Path to the fault-injection configuration on the server."
+          },
+          "faultInjectInstances" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Fault-injection instance configuration, keyed by instance name."
+          },
+          "convergenceAttempts" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Maximum number of convergence attempts used during initialization."
+          },
+          "externalSpecs" : {
+            "type" : "array",
+            "description" : "Paths to additional MaBL specifications available on the server, for example FaultInject.mabl.",
+            "items" : {
+              "type" : "string",
+              "format" : "binary"
+            }
+          },
+          "modelTransfers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Mapping from current instance names to transferred instance names."
+          },
+          "modelSwaps" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ModelSwap"
+            },
+            "description" : "Model-swap configuration keyed by the instance being replaced."
+          }
+        }
+      },
+      "ModelSwap" : {
+        "type" : "object",
+        "properties" : {
+          "swapInstance" : {
+            "type" : "string",
+            "description" : "Name of the replacement instance."
+          },
+          "stepCondition" : {
+            "type" : "string",
+            "description" : "MaBL condition that permits stepping the replacement instance."
+          },
+          "swapCondition" : {
+            "type" : "string",
+            "description" : "MaBL condition that triggers replacement of the current instance."
+          },
+          "swapConnections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Connection changes for the replacement instance, from qualified outputs to inputs."
+          }
+        }
+      },
+      "SamplingConstraint" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VarStepConstraint"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "base" : {
+              "type" : "integer",
+              "format" : "int32",
+              "description" : "Base of the sampling-rate constraint."
+            },
+            "rate" : {
+              "type" : "integer",
+              "format" : "int32",
+              "description" : "Sampling rate relative to the base."
+            },
+            "startTime" : {
+              "type" : "integer",
+              "format" : "int32",
+              "description" : "Start time of the sampling constraint."
+            }
+          }
+        } ],
+        "description" : "Sampling-rate constraint (type samplingrate)."
+      },
+      "VarStepConstraint" : {
+        "type" : "object",
+        "description" : "Variable-step constraint. Select the constraint kind using the type property.",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "description" : "Constraint kind: boundeddifference, zerocrossing, samplingrate, or fmumaxstepsize."
+          }
+        }
+      },
+      "VariableStepAlgorithmConfig" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/IAlgorithmConfig"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "size" : {
+              "type" : "array",
+              "description" : "Minimum and maximum communication step sizes, in that order.",
+              "items" : {
+                "type" : "number",
+                "format" : "double"
+              }
+            },
+            "initsize" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Initial communication step size in simulation time units."
+            },
+            "constraints" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "oneOf" : [ {
+                  "$ref" : "#/components/schemas/BoundedDifferenceConstraint"
+                }, {
+                  "$ref" : "#/components/schemas/FmuMaxStepSizeConstraint"
+                }, {
+                  "$ref" : "#/components/schemas/SamplingConstraint"
+                }, {
+                  "$ref" : "#/components/schemas/ZeroCrossingConstraint"
+                } ]
+              },
+              "description" : "Named constraints used to select communication step sizes."
+            }
+          }
+        } ],
+        "description" : "Variable-step algorithm. Set type to var-step."
+      },
+      "ZeroCrossingConstraint" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/VarStepConstraint"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "ports" : {
+              "type" : "array",
+              "description" : "Qualified signal names monitored for zero crossings.",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "order" : {
+              "type" : "integer",
+              "format" : "int32",
+              "description" : "Prediction order for zero-crossing detection."
+            },
+            "abstol" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Absolute tolerance for zero-crossing detection."
+            },
+            "safety" : {
+              "type" : "number",
+              "format" : "double",
+              "description" : "Safety factor used when adapting the step size."
+            }
+          }
+        } ],
+        "description" : "Zero-crossing constraint (type zerocrossing)."
+      },
+      "InitializeStatusModel" : {
+        "type" : "object",
+        "description" : "Initialization result and log categories discovered from the FMUs.",
+        "properties" : {
+          "status" : {
+            "type" : "string",
+            "description" : "Current session state or operation message.",
+            "example" : "Simulation completed"
+          },
+          "sessionid" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "availableLogLevels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/LogLevelModel"
+              }
+            },
+            "description" : "Available FMI logging categories, keyed by FMU identifier. May be incomplete if FMU inspection failed."
+          },
+          "lastExecTime" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Duration of the last execution in milliseconds."
+          },
+          "sessionId" : {
+            "type" : "string",
+            "description" : "Session identifier returned by createSession."
+          },
+          "warnings" : {
+            "type" : "array",
+            "description" : "Warnings or captured process output, depending on execution mode. May be null.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "errors" : {
+            "type" : "array",
+            "description" : "Reported errors or captured child-process stderr. May be null; not all failure paths populate this field.",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "LogLevelModel" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "FMI log-category name."
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Log-category description from the FMU model description."
+          }
+        }
+      },
+      "ExtendedMultiModel" : {
+        "type" : "object",
+        "description" : "Multi-model with scenario-verification options.",
+        "properties" : {
+          "fmus" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Map from FMU identifiers such as {FMU} to FMU file locations on the server."
+          },
+          "connections" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Output-to-input connections. Keys and values use {FMU}.instanceName.signal; each output can feed multiple inputs."
+          },
+          "parameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "description" : "Parameter values keyed by {FMU}.instanceName.signal, with values matching the FMI scalar type."
+          },
+          "logVariables" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Signals to record, mapped from {FMU}.instanceName to signal names."
+          },
+          "parallelSimulation" : {
+            "type" : "boolean",
+            "description" : "Request parallel stepping. The web API currently rejects true."
+          },
+          "stabalizationEnabled" : {
+            "type" : "boolean",
+            "description" : "Enable stabilization during initialization. The historical JSON spelling is retained."
+          },
+          "global_absolute_tolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Global absolute tolerance for initialization and simulation generation."
+          },
+          "global_relative_tolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Global relative tolerance for initialization and simulation generation."
+          },
+          "loggingOn" : {
+            "type" : "boolean",
+            "description" : "Enable FMI logging."
+          },
+          "visible" : {
+            "type" : "boolean",
+            "description" : "Request visible FMU instances during instantiation."
+          },
+          "simulationProgramDelay" : {
+            "type" : "boolean",
+            "description" : "Pace simulation steps towards real-time execution."
+          },
+          "algorithm" : {
+            "description" : "Step algorithm configuration; type selects fixed-step or var-step.",
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/FixedStepAlgorithmConfig"
+            }, {
+              "$ref" : "#/components/schemas/VariableStepAlgorithmConfig"
+            } ]
+          },
+          "overrideLogLevel" : {
+            "type" : "string",
+            "description" : "Override the server's global log level.",
+            "enum" : [ "OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL" ]
+          },
+          "environmentParameters" : {
+            "type" : "array",
+            "description" : "Qualified parameter names whose values should be obtained from the execution environment.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "logLevels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : "Enabled FMI log-category names by {FMU}.instanceName."
+          },
+          "sigver" : {
+            "$ref" : "#/components/schemas/Sigver",
+            "description" : "Scenario-verification and input-reactivity options."
+          },
+          "faultInjectConfigurationPath" : {
+            "type" : "string",
+            "description" : "Path to the fault-injection configuration on the server."
+          },
+          "faultInjectInstances" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Fault-injection instance configuration, keyed by instance name."
+          },
+          "convergenceAttempts" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Maximum number of convergence attempts used during initialization."
+          },
+          "modelTransfers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Mapping from current instance names to transferred instance names."
+          },
+          "modelSwaps" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ModelSwap"
+            },
+            "description" : "Model-swap configuration keyed by the instance being replaced."
+          }
+        }
+      },
+      "Sigver" : {
+        "type" : "object",
+        "properties" : {
+          "reactivity" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string",
+              "enum" : [ "Reactive", "Delayed" ]
+            },
+            "description" : "Input reactivity by qualified signal name: Reactive or Delayed."
+          },
+          "verification" : {
+            "type" : "boolean",
+            "description" : "Whether to verify the generated or supplied algorithm before execution."
+          }
+        }
+      },
+      "CliExecutionRequestBody" : {
+        "type" : "object",
+        "description" : "Select the execution mode for subsequent simulations in a session.",
+        "properties" : {
+          "executeViaCLI" : {
+            "type" : "boolean",
+            "description" : "True to launch a child Java process; false to execute in-process."
+          }
+        }
+      },
+      "ExecutableMasterAndMultiModelTDO" : {
+        "type" : "object",
+        "description" : "Multi-model, master model, and times for sessionless algorithm execution. The current endpoint uses startTime and endTime; other executionParameters do not override the multi-model algorithm settings.",
+        "properties" : {
+          "masterModel" : {
+            "type" : "string",
+            "description" : "Master-model configuration text. Use an empty string to generate an algorithm from the multi-model."
+          },
+          "multiModel" : {
+            "$ref" : "#/components/schemas/ExtendedMultiModel",
+            "description" : "Extended multi-model containing FMUs, connections, and scenario-verification options."
+          },
+          "executionParameters" : {
+            "$ref" : "#/components/schemas/ExecutionParameters",
+            "description" : "Execution times and associated options; see the endpoint description for supported fields."
+          }
+        }
+      },
+      "ExecutionParameters" : {
+        "type" : "object",
+        "description" : "Execution settings accompanying a scenario multi-model.",
+        "properties" : {
+          "convergenceRelativeTolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Relative convergence tolerance requested by the client."
+          },
+          "convergenceAbsoluteTolerance" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Absolute convergence tolerance requested by the client."
+          },
+          "convergenceAttempts" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Requested maximum convergence attempts."
+          },
+          "startTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Simulation start time."
+          },
+          "endTime" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Simulation end time."
+          },
+          "stepSize" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Requested communication step size."
+          },
+          "liveLogInterval" : {
+            "type" : "number",
+            "format" : "double",
+            "description" : "Requested simulation-time interval for live logging."
+          }
+        }
+      },
+      "VersionModel" : {
+        "type" : "object",
+        "description" : "Version of the running Maestro build.",
+        "properties" : {
+          "version" : {
+            "type" : "string",
+            "description" : "Build version from maestro.properties.",
+            "example" : "4.1.1-SNAPSHOT"
+          }
+        }
+      }
+    }
+  }
+}

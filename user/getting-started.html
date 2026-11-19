@@ -1,0 +1,705 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. Getting Started &mdash; INTO-CPS Maestro 2.0.0 Alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0cfd1921"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. Command Line Interface" href="cli.html" />
+    <link rel="prev" title="1. Overview" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            INTO-CPS Maestro
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">1. Overview</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2. Getting Started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#development-branch">2.1. DEVELOPMENT BRANCH</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup">2.2. Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">2.3. Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#part-1-first-mabl-specification">2.4. Part 1: First MaBL Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#part-2-specification-generation-and-expansion">2.5. Part 2: Specification Generation and Expansion</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#configuration-file">2.5.1. Configuration file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#specification-generation">2.5.2. Specification Generation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#final-specification-and-execution">2.5.3. Final specification and Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#execution">2.5.4. Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extra-expansion">2.5.5. Extra: Expansion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">3. Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-api.html">4. Web Interface (API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">5. Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification_components.html">6. Specification Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime_components.html">7. Runtime Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html">8. Configuration File Formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../dev/index.html">Developer documentation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/INTO-CPS-Association/Documentation">https://github.com/INTO-CPS-Association/Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">INTO-CPS Maestro</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User documentation</a></li>
+      <li class="breadcrumb-item active"><span class="section-number">2. </span>Getting Started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/getting-started.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<span id="id1"></span><h1><span class="section-number">2. </span>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<p>This section takes you through a the entire process of conducting a co-simulation with Maestro2.</p>
+<div class="line-block">
+<div class="line">This guide is based on the command line interface (CLI) of Maestro2 and consists of two parts:</div>
+<div class="line">The first part <a class="reference internal" href="#getting-started-part1"><span class="std std-ref">Part 1: First MaBL Specification</span></a> concerns writing a MaBL Specification by hand and executing it.</div>
+<div class="line">The second part <a class="reference internal" href="#getting-started-part2"><span class="std std-ref">Part 2: Specification Generation and Expansion</span></a> concerns using the specification generation feature of Maestro for generating the specification.</div>
+</div>
+<p>Note that Maestro2 also features a web API presented in <a class="reference internal" href="web-api.html#web-api"><span class="std std-ref">Web Interface (API)</span></a>.</p>
+<section id="development-branch">
+<h2><span class="section-number">2.1. </span>DEVELOPMENT BRANCH<a class="headerlink" href="#development-branch" title="Link to this heading"></a></h2>
+<p>If you are using the development branch, then the documentation might not be up to date.
+However, you can consult the tests <code class="code docutils literal notranslate"><span class="pre">webapi_test.py</span></code>, <code class="code docutils literal notranslate"><span class="pre">maestro_cli_test.py</span></code> and <code class="code docutils literal notranslate"><span class="pre">cli_legacy_test.py</span></code>.
+These tests are run by our CI system, so if the build passes, then these are valid.</p>
+</section>
+<section id="setup">
+<h2><span class="section-number">2.2. </span>Setup<a class="headerlink" href="#setup" title="Link to this heading"></a></h2>
+<p>The first step is to install the dependencies along with the tools and resources that are to be used</p>
+<ul class="simple">
+<li><p>Download and install Java 11</p></li>
+<li><p>Download <cite>maestro-2.x.x-jar-with-dependencies.jar</cite> from the newest <cite>Maestro2 2.x.x</cite> release on the Maestro release page <a class="reference external" href="https://github.com/INTO-CPS-Association/maestro/releases">https://github.com/INTO-CPS-Association/maestro/releases</a>. To easier follow the tutorials below it is recommended to rename the jar file to <cite>maestro2.jar</cite>, such that the terminal commands can be copy-pasted.</p></li>
+<li><p>Optional: Python 3 for plotting capabilities</p></li>
+</ul>
+</section>
+<section id="example">
+<h2><span class="section-number">2.3. </span>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>The example throughout this getting started guide concerns a water tank.
+The tank (Continuous Time component) has a constant inflow of water and a valve that is controlled by a controller (Discrete-Event component). When the valve is open, the water level within the tank decreases, and whe the valve is closed, the water level increases.
+The controller determines when to open and close the valve based on a maximum and a minimum water level.</p>
+<figure class="align-center" id="id2">
+<span id="fig-watertankgraphic"></span><img alt="../_images/wt-example-graphic.png" src="../_images/wt-example-graphic.png" />
+<figcaption>
+<p><span class="caption-text">Water Tank Example</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>This is modelled as two FMUs with external connections, internal connections and parameters as presented in the figure below.</p>
+<figure class="align-center" id="id3">
+<span id="fig-watertankexample"></span><img alt="../_images/wt-example.png" src="../_images/wt-example.png" />
+<figcaption>
+<p><span class="caption-text">Water Tank FMUs and ports</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="part-1-first-mabl-specification">
+<span id="getting-started-part1"></span><h2><span class="section-number">2.4. </span>Part 1: First MaBL Specification<a class="headerlink" href="#part-1-first-mabl-specification" title="Link to this heading"></a></h2>
+<p>This part presents a MaBL specification written by hand with descriptive comments.</p>
+<p>To follow this part download the <a class="reference download internal" download="" href="../_downloads/8e65d1103bd9673f8b880f7627375cb5/getting-started-part1.zip"><code class="xref download docutils literal notranslate"><span class="pre">getting</span> <span class="pre">started</span> <span class="pre">part1</span> <span class="pre">resources</span></code></a> and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.</p>
+<p>The corresponding MaBL code, including descriptive comments, to execute this co-simulation is presented below:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">simulation</span>
+<span class="n">import</span><span class="w"> </span><span class="n">FMI2</span><span class="p">;</span>
+<span class="n">import</span><span class="w"> </span><span class="n">DataWriter</span><span class="p">;</span>
+<span class="n">import</span><span class="w"> </span><span class="n">Logger</span><span class="p">;</span>
+<span class="n">import</span><span class="w"> </span><span class="n">Math</span><span class="p">;</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">START_TIME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">END_TIME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.1</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// DataWriter for results</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">DataWriter</span><span class="w"> </span><span class="n">dataWriter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"DataWriter"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">string</span><span class="w"> </span><span class="n">data_headers</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"{crtl}.crtlInstance.valve"</span><span class="p">,</span><span class="s">"{wt}.wtInstance.level"</span><span class="p">};</span>
+<span class="w">    </span><span class="n">DataWriterConfig</span><span class="w"> </span><span class="n">dataWriterConfiguration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">writeHeader</span><span class="p">(</span><span class="n">data_headers</span><span class="p">);</span>
+
+
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Load the FMUs and instantiate instances</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">FMI2</span><span class="w"> </span><span class="n">tankController</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"FMI2"</span><span class="p">,</span><span class="w"> </span><span class="s">"{8c4e810f-3df3-4a00-8276-176fa3c9f000}"</span><span class="p">,</span><span class="w"> </span><span class="s">"watertankcontroller-c.fmu"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">FMI2</span><span class="w"> </span><span class="n">singleWatertank</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="p">(</span><span class="s">"FMI2"</span><span class="p">,</span><span class="w"> </span><span class="s">"{cfc65592-9ece-4563-9705-1581b6e7071c}"</span><span class="p">,</span><span class="w">  </span><span class="s">"singlewatertank-20sim.fmu"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">FMI2Component</span><span class="w"> </span><span class="n">crtlInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tankController</span><span class="p">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s">"crtlInstance"</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span>
+<span class="w">    </span><span class="n">FMI2Component</span><span class="w"> </span><span class="n">wtInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">singleWatertank</span><span class="p">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s">"wtInstance"</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">setupExperiment</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">START_TIME</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">END_TIME</span><span class="p">);</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">setupExperiment</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">START_TIME</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="n">END_TIME</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Set maximum level and minimum level parameters</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">crtlParameters</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">uint</span><span class="w"> </span><span class="n">crtlParameterValRefs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">crtlParameterValRefs</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">crtlParameters</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">enterInitializationMode</span><span class="p">();</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">enterInitializationMode</span><span class="p">();</span>
+
+
+<span class="w">    </span><span class="n">uint</span><span class="w"> </span><span class="n">crtlValveStateValRef</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">uint</span><span class="w"> </span><span class="n">crtlLevelInputValRef</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">crtlLevelInputValue</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">uint</span><span class="w"> </span><span class="n">wtValveStateValRef</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">16</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">wtValveStateInputs</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+<span class="w">    </span><span class="n">uint</span><span class="w"> </span><span class="n">wtLevelValRef</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mi">17</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Perform the Initialization:</span>
+<span class="w">    </span><span class="c1">// 1. Extract valve state from controller</span>
+<span class="w">    </span><span class="c1">// 2. Convert the valve state from boolean to real</span>
+<span class="w">    </span><span class="c1">// 3. Set the valve state on the tank</span>
+<span class="w">    </span><span class="c1">// 4. Extract the level from the tank</span>
+<span class="w">    </span><span class="c1">// 5. Set the level on the controller</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">getBoolean</span><span class="p">(</span><span class="n">crtlValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">);</span>
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">wtValveStateInput</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+
+<span class="w">    </span><span class="n">wtValveStateInputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wtValveStateInput</span><span class="p">;</span>
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">wtValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtValveStateInputs</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">getReal</span><span class="p">(</span><span class="n">wtLevelValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">crtlLevelInputValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">exitInitializationMode</span><span class="p">();</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">exitInitializationMode</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Get the valve state from the controller</span>
+<span class="w">    </span><span class="c1">// Get the level from the tank </span>
+<span class="w">    </span><span class="c1">// Write the valve state and the water level to the results</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">getBoolean</span><span class="p">(</span><span class="n">crtlValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">);</span>
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">getReal</span><span class="p">(</span><span class="n">wtLevelValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+<span class="w">    </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">writeDataPoint</span><span class="p">(</span><span class="n">dataWriterConfiguration</span><span class="p">,</span><span class="w"> </span><span class="n">START_TIME</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+
+<span class="w">    </span><span class="n">real</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">START_TIME</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Simulation Loop until END_TIME</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="n">time</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">END_TIME</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="c1">// Convert valve state from boolean to real</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">wtValveStateInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="c1">// Set the valve state on the tank</span>
+<span class="w">        </span><span class="c1">// Set the level on the controller</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="n">wtValveStateInputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wtValveStateInput</span><span class="p">;</span>
+<span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">wtValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtValveStateInputs</span><span class="p">);</span>
+<span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">crtlLevelInputValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="c1">// Step the tank</span>
+<span class="w">        </span><span class="c1">// Step the controller</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">doStep</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+<span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">doStep</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="c1">// Get the valve state from the controller</span>
+<span class="w">        </span><span class="c1">// Get the level from the tank</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">getBoolean</span><span class="p">(</span><span class="n">crtlValveStateValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">);</span>
+<span class="w">        </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">getReal</span><span class="p">(</span><span class="n">wtLevelValRef</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="c1">// Increase the time with STEP_SIZE</span>
+<span class="w">        </span><span class="c1">// Write the valve state and the water level to the results</span>
+<span class="w">        </span><span class="c1">// #############################</span>
+<span class="w">        </span><span class="n">time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">time</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">STEP_SIZE</span><span class="p">;</span>
+<span class="w">        </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">writeDataPoint</span><span class="p">(</span><span class="n">dataWriterConfiguration</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">crtlValveStateOutput</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">wtLevelOutputValue</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="c1">// Clean up</span>
+<span class="w">    </span><span class="c1">// #############################</span>
+<span class="w">    </span><span class="n">dataWriter</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<span class="w">    </span><span class="n">wtInstance</span><span class="p">.</span><span class="n">terminate</span><span class="p">();</span>
+<span class="w">    </span><span class="n">crtlInstance</span><span class="p">.</span><span class="n">terminate</span><span class="p">();</span>
+<span class="w">    </span><span class="n">tankController</span><span class="p">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">crtlInstance</span><span class="p">);</span>
+<span class="w">    </span><span class="n">singleWatertank</span><span class="p">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">wtInstance</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">tankController</span><span class="p">);</span>
+<span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">singleWatertank</span><span class="p">);</span>
+<span class="w">    </span><span class="n">unload</span><span class="p">(</span><span class="n">dataWriter</span><span class="p">);</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+<p>To execute this (one can use the file corresponding wt-example.mabl from the unzipped example resouces) run the following command from the terminal:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>java -jar maestro2.jar --interpret wt-example.mabl
+</pre></div>
+</div>
+<p>Where <code class="code docutils literal notranslate"><span class="pre">--interpret</span></code> is to interpret a specification</p>
+<p>The result is available in <cite>outputs.csv</cite>. This can be plotted with <code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">part1pythoncsvplotter.py</span></code>, and the result should look like the figure below.</p>
+<figure class="align-center" id="id4">
+<span id="fig-watertankexample-result"></span><img alt="../_images/wt-example-result.png" src="../_images/wt-example-result.png" />
+<figcaption>
+<p><span class="caption-text">Result from co-simulation</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="part-2-specification-generation-and-expansion">
+<span id="getting-started-part2"></span><h2><span class="section-number">2.5. </span>Part 2: Specification Generation and Expansion<a class="headerlink" href="#part-2-specification-generation-and-expansion" title="Link to this heading"></a></h2>
+<p>This part also concerns the water tank but uses the capabilities of specification generation and expansion to create the specification. Thus, the user does not have to write MaBL by hand. Specification generation and Expansion are not treated in detail in this guide, but more information is available in <a class="reference internal" href="specification_components.html#sec-specification-generator"><span class="std std-ref">Specification Generator</span></a> and <a class="reference internal" href="specification_components.html#sec-expansion"><span class="std std-ref">Expansion</span></a>.</p>
+<p>To follow this part download the <a class="reference download internal" download="" href="../_downloads/316549be0e6345127563b715b506f2d1/getting-started-part2.zip"><code class="xref download docutils literal notranslate"><span class="pre">getting</span> <span class="pre">started</span> <span class="pre">part2</span> <span class="pre">resources</span></code></a> and unzip into a directory. To easier follow this guide the downloaded jar file can be placed in the same directory as the resources has been unzipped into.</p>
+<p>The specification generator is based on JSON configuration files with the same structure as the ones used in Maestro1. For this reason, it is also possible to use the <a class="reference external" href="https://into-cps-association.readthedocs.io/projects/desktop-application/en/latest/">INTO-CPS Application</a> to create the specification files. These files are available in the folder of the given Multi-Model. This is also mentioned below where the actual terminal command is issued.</p>
+<section id="configuration-file">
+<h3><span class="section-number">2.5.1. </span>Configuration file<a class="headerlink" href="#configuration-file" title="Link to this heading"></a></h3>
+<p>The content of the configuration file is briefly described after the example below. A more detailed description is available at <a class="reference internal" href="file_formats.html#sec-legacy-config-format"><span class="std std-ref">Legacy Configuration / INTO-CPS Multi-model and coe config File Format</span></a>.
+The configuration for this example is:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"fmus"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{crtl}"</span><span class="p">:</span><span class="w"> </span><span class="s2">"watertankcontroller-c.fmu"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"{wt}"</span><span class="p">:</span><span class="w"> </span><span class="s2">"singlewatertank-20sim.fmu"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"connections"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{crtl}.crtlInstance.valve"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"{wt}.wtInstance.valvecontrol"</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"{wt}.wtInstance.level"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"{crtl}.crtlInstance.level"</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"parameters"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"{crtl}.crtlInstance.maxlevel"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"{crtl}.crtlInstance.minlevel"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"algorithm"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fixed-step"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"endTime"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">fmus</span></code> contains mappings between a key, enclosed in <code class="code docutils literal notranslate"><span class="pre">{}</span></code> and the corresponding FMU.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">connections</span></code> contains mappings from a single FMU output port to one or more FMU input ports. The format of a port is <code class="code docutils literal notranslate"><span class="pre">{fmuKey}.instance.scalarVariableName</span></code></p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">parameters</span></code> contains mappings from a single FMU parameter port and a value.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">algorithm</span></code> describes that the fixed-step algorithm should be used with the size 0.001. Currently only fixed-step is supported.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">end_time</span></code> is the end-time of the simulation</p></li>
+</ul>
+</section>
+<section id="specification-generation">
+<h3><span class="section-number">2.5.2. </span>Specification Generation<a class="headerlink" href="#specification-generation" title="Link to this heading"></a></h3>
+<p>The command below generates the specification based on the configuration file above:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>java -jar maestro2.jar --spec-generate1 wt-example-config.json --dump-simple "./"
+</pre></div>
+</div>
+<p>Where <code class="code docutils literal notranslate"><span class="pre">--spec-generate1</span></code> instructs Maestro2 to use specification generator for legacy configuration files (i.e. configuration files for maestro1) and <code class="code docutils literal notranslate"><span class="pre">--dump-simple</span></code> describes to dump the final specification at the current directory.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The INTO-CPS Application creates two configuration files in JSON format: a multimodel configuration file and a simulate configuration file. These files can both be added to the terminal command, i.e. <code class="code docutils literal notranslate"><span class="pre">--spec-generate1</span> <span class="pre">multimodel.json</span> <span class="pre">simulate.json</span></code>, and will be merged by Maestro. Thus, one does not have to merge these files manually.</p>
+</div>
+</section>
+<section id="final-specification-and-execution">
+<h3><span class="section-number">2.5.3. </span>Final specification and Execution<a class="headerlink" href="#final-specification-and-execution" title="Link to this heading"></a></h3>
+<p>The final specification is in the file <cite>spec.mabl</cite> and is not presented here but can be downloaded: <a class="reference download internal" download="" href="../_downloads/addadaa6e63da029ea291e5cdb58204b/spec.mabl"><code class="xref download docutils literal notranslate"><span class="pre">spec.mabl</span></code></a>.</p>
+<p>Furthermore, a <cite>spec.runtime.json</cite> file has been produced with information for the runtime DataWriter CSV plugin with information on where to store the csv result:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"DataWriter"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"filename"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"outputs.csv"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"CSV"</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="execution">
+<h3><span class="section-number">2.5.4. </span>Execution<a class="headerlink" href="#execution" title="Link to this heading"></a></h3>
+<p>To execute the specification execute the following command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>java -jar maestro2.jar interpret spec.mabl -runtime spec.runtime.json
+</pre></div>
+</div>
+<p>The <code class="code docutils literal notranslate"><span class="pre">interpret</span></code> subcommand executes the specification using the supplied
+runtime configuration.</p>
+<p>Pass the runtime file explicitly with <code class="code docutils literal notranslate"><span class="pre">-runtime</span></code>; the current subcommand
+does not automatically discover <code class="code docutils literal notranslate"><span class="pre">*.runtime.json</span></code> files beside the JAR.
+For runtime environment variables, see <a class="reference internal" href="runtime_components.html#menv-runtime"><span class="std std-ref">Execution Environment Component (MEnv)</span></a>.</p>
+<p>Similar to above in <a class="reference internal" href="#getting-started-part1"><span class="std std-ref">Part 1: First MaBL Specification</span></a>, the results can be viewed and plotted with the accompanying python script: <code class="code docutils literal notranslate"><span class="pre">python</span> <span class="pre">part2pythoncsvplotter.py</span></code></p>
+</section>
+<section id="extra-expansion">
+<h3><span class="section-number">2.5.5. </span>Extra: Expansion<a class="headerlink" href="#extra-expansion" title="Link to this heading"></a></h3>
+<p>This section gives a small insight into the expansion feature of Maestro. It is possible to use expansion plugins within in a MaBL specification. When Maestro encounters a MaBL expand statement during processing, it will replace the statement with MaBL code generated by the related expansion plugin. This happens automatically in the part2 example, but it can be made obvious.</p>
+<p>Run the command below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>java -jar maestro2.jar --spec-generate1 wt-example-config.json --dump-intermediate "./part2mabl-intermediate"
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">where</div>
+<div class="line"><code class="code docutils literal notranslate"><span class="pre">--dump-intermediate</span></code> describes to dump the specification after every expansion iteration at “./part2mabl-intermediate”</div>
+</div>
+<p>The directory <cite>part2mabl-intermediate</cite> now contains files with different numbers in increasing order due to the flag <code class="code docutils literal notranslate"><span class="pre">--dump-intermediate</span> <span class="pre">&quot;./part2mabl-intermediate&quot;</span></code>.
+The initial specification, <cite>spec00000.mabl</cite>, refers to the specification generated by the specification generator without any expansions carried out. <cite>spec00001.mabl</cite> is the specification after 1 expansion has been carried out and so forth. The larget number referes to the specification after all expansions has been carried out.</p>
+<p><cite>spec00000.mabl</cite> is the specification generated by the specification generator which contains several annotations (marked with <code class="code docutils literal notranslate"><span class="pre">&#64;</span></code>) and two expand statements (begins with: <code class="code docutils literal notranslate"><span class="pre">expand</span></code>): <code class="code docutils literal notranslate"><span class="pre">initialize</span></code> and <code class="code docutils literal notranslate"><span class="pre">fixedStep</span></code>.
+The reason for these annotations are that the file is self-contained. The relevant information to generate the final specification is added to the specifications via these annotations. See the example below and the description afterwards:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">simulation</span> 
+<span class="linenos"> 2</span><span class="kn">import</span><span class="w"> </span><span class="nn">FixedStep</span><span class="p">;</span>
+<span class="linenos"> 3</span><span class="kn">import</span><span class="w"> </span><span class="nn">Initializer</span><span class="p">;</span>
+<span class="linenos"> 4</span><span class="kn">import</span><span class="w"> </span><span class="nn">DebugLogging</span><span class="p">;</span>
+<span class="linenos"> 5</span><span class="kn">import</span><span class="w"> </span><span class="nn">TypeConverter</span><span class="p">;</span>
+<span class="linenos"> 6</span><span class="kn">import</span><span class="w"> </span><span class="nn">DataWriter</span><span class="p">;</span>
+<span class="linenos"> 7</span><span class="kn">import</span><span class="w"> </span><span class="nn">FMI2</span><span class="p">;</span>
+<span class="linenos"> 8</span><span class="kn">import</span><span class="w"> </span><span class="nn">Math</span><span class="p">;</span>
+<span class="linenos"> 9</span><span class="kn">import</span><span class="w"> </span><span class="nn">ArrayUtil</span><span class="p">;</span>
+<span class="linenos">10</span><span class="kn">import</span><span class="w"> </span><span class="nn">Logger</span><span class="p">;</span>
+<span class="linenos">11</span><span class="kn">import</span><span class="w"> </span><span class="nn">BooleanLogic</span><span class="p">;</span>
+<span class="linenos">12</span><span class="nd">@Framework</span><span class="p">(</span> <span class="s2">"FMI2"</span><span class="p">);</span>
+<span class="linenos">13</span><span class="nd">@FrameworkConfig</span><span class="p">(</span> <span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{</span><span class="se">\"</span><span class="s2">fmus</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">watertankcontroller-c.fmu</span><span class="se">\"</span><span class="s2">,</span><span class="se">\"</span><span class="si">{wt}</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">singlewatertank-20sim.fmu</span><span class="se">\"</span><span class="s2">},</span><span class="se">\"</span><span class="s2">connections</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.valve</span><span class="se">\"</span><span class="s2">:[</span><span class="se">\"</span><span class="si">{wt}</span><span class="s2">.wtInstance.valvecontrol</span><span class="se">\"</span><span class="s2">],</span><span class="se">\"</span><span class="si">{wt}</span><span class="s2">.wtInstance.level</span><span class="se">\"</span><span class="s2">:[</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.level</span><span class="se">\"</span><span class="s2">]},</span><span class="se">\"</span><span class="s2">parameters</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.maxlevel</span><span class="se">\"</span><span class="s2">:2,</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.minlevel</span><span class="se">\"</span><span class="s2">:1},</span><span class="se">\"</span><span class="s2">startTime</span><span class="se">\"</span><span class="s2">:0.0,</span><span class="se">\"</span><span class="s2">endTime</span><span class="se">\"</span><span class="s2">:10.0,</span><span class="se">\"</span><span class="s2">loggingOn</span><span class="se">\"</span><span class="s2">:false,</span><span class="se">\"</span><span class="s2">visible</span><span class="se">\"</span><span class="s2">:false,</span><span class="se">\"</span><span class="s2">algorithm</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="s2">type</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">fixed-step</span><span class="se">\"</span><span class="s2">,</span><span class="se">\"</span><span class="s2">size</span><span class="se">\"</span><span class="s2">:0.1}}"</span><span class="p">);</span>
+<span class="linenos">14</span><span class="p">{</span>
+<span class="linenos">15</span> 	<span class="nb">bool</span> <span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">true</span><span class="p">;</span>
+<span class="linenos">16</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_OK</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="linenos">17</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_WARNING</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="linenos">18</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_DISCARD</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="linenos">19</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_ERROR</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="linenos">20</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_FATAL</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="linenos">21</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_PENDING</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="linenos">22</span>	<span class="nb">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="linenos">23</span>	<span class="n">Math</span> <span class="n">math</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"Math"</span><span class="p">);</span>
+<span class="linenos">24</span>	<span class="n">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"Logger"</span><span class="p">);</span>
+<span class="linenos">25</span>	<span class="n">DataWriter</span> <span class="n">dataWriter</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"DataWriter"</span><span class="p">);</span>
+<span class="linenos">26</span>	<span class="n">BooleanLogic</span> <span class="n">booleanLogic</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"BooleanLogic"</span><span class="p">);</span>
+<span class="linenos">27</span>	<span class="n">FMI2</span> <span class="n">crtl</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{8c4e810f-3df3-4a00-8276-176fa3c9f000}"</span><span class="p">,</span> <span class="s2">"/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/watertankcontroller-c.fmu"</span><span class="p">);</span>
+<span class="linenos">28</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">crtl</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">29</span>	<span class="p">{</span>
+<span class="linenos">30</span>		<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">31</span>	<span class="p">}</span>
+<span class="linenos">32</span>	<span class="n">FMI2</span> <span class="n">wt</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{cfc65592-9ece-4563-9705-1581b6e7071c}"</span><span class="p">,</span> <span class="s2">"/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/singlewatertank-20sim.fmu"</span><span class="p">);</span>
+<span class="linenos">33</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">wt</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">34</span>	<span class="p">{</span>
+<span class="linenos">35</span>		<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">36</span>	<span class="p">}</span>
+<span class="linenos">37</span>	<span class="nd">@map</span> <span class="n">wtInstance</span> <span class="o">-&gt;</span> <span class="s2">"wtInstance"</span><span class="p">;</span>
+<span class="linenos">38</span>	<span class="n">FMI2Component</span> <span class="n">wtInstance</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+<span class="linenos">39</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">global_execution_continue</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">40</span>	<span class="p">{</span>
+<span class="linenos">41</span>			<span class="n">wtInstance</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s2">"wtInstance"</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
+<span class="linenos">42</span>			<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">wtInstance</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">43</span>			<span class="p">{</span>
+<span class="linenos">44</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">45</span>			<span class="p">}</span>
+<span class="linenos">46</span>	<span class="p">}</span>
+<span class="linenos">47</span>	<span class="nd">@map</span> <span class="n">crtlInstance</span> <span class="o">-&gt;</span> <span class="s2">"crtlInstance"</span><span class="p">;</span>
+<span class="linenos">48</span>	<span class="n">FMI2Component</span> <span class="n">crtlInstance</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+<span class="linenos">49</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">global_execution_continue</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">50</span>	<span class="p">{</span>
+<span class="linenos">51</span>			<span class="n">crtlInstance</span> <span class="o">=</span> <span class="n">crtl</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s2">"crtlInstance"</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
+<span class="linenos">52</span>			<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">crtlInstance</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos">53</span>			<span class="p">{</span>
+<span class="linenos">54</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">55</span>			<span class="p">}</span>
+<span class="linenos">56</span>	<span class="p">}</span>
+<span class="linenos">57</span>	<span class="n">FMI2Component</span> <span class="n">components</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">wtInstance</span> <span class="p">,</span> <span class="n">crtlInstance</span> <span class="p">};</span>
+<span class="linenos">58</span>	<span class="n">real</span> <span class="n">START_TIME</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos">59</span>	<span class="n">real</span> <span class="n">STEP_SIZE</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
+<span class="linenos">60</span>	<span class="n">real</span> <span class="n">END_TIME</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">;</span>
+<span class="linenos">61</span>	<span class="nd">@Config</span><span class="p">(</span><span class="s2">"{</span><span class="se">\"</span><span class="s2">parameters</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.maxlevel</span><span class="se">\"</span><span class="s2">:2,</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.minlevel</span><span class="se">\"</span><span class="s2">:1}}"</span><span class="p">);</span>
+<span class="linenos">62</span>	<span class="n">Initializer</span><span class="o">.</span><span class="n">expand</span> <span class="n">initialize</span><span class="p">(</span><span class="n">components</span><span class="p">,</span> <span class="n">START_TIME</span><span class="p">,</span> <span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos">63</span>	<span class="n">FixedStep</span><span class="o">.</span><span class="n">expand</span> <span class="n">fixedStep</span><span class="p">(</span><span class="n">components</span><span class="p">,</span> <span class="n">STEP_SIZE</span><span class="p">,</span> <span class="n">START_TIME</span><span class="p">,</span> <span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos">64</span>	<span class="n">wt</span><span class="o">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">wtInstance</span><span class="p">);</span>
+<span class="linenos">65</span>	<span class="n">crtl</span><span class="o">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">crtlInstance</span><span class="p">);</span>
+<span class="linenos">66</span>	<span class="n">unload</span><span class="p">(</span><span class="n">crtl</span><span class="p">);</span>
+<span class="linenos">67</span>	<span class="n">unload</span><span class="p">(</span><span class="n">wt</span><span class="p">);</span>
+<span class="linenos">68</span>	<span class="n">unload</span><span class="p">(</span><span class="n">math</span><span class="p">);</span>
+<span class="linenos">69</span>	<span class="n">unload</span><span class="p">(</span><span class="n">logger</span><span class="p">);</span>
+<span class="linenos">70</span>	<span class="n">unload</span><span class="p">(</span><span class="n">dataWriter</span><span class="p">);</span>
+<span class="linenos">71</span>	<span class="n">unload</span><span class="p">(</span><span class="n">booleanLogic</span><span class="p">);</span>
+<span class="linenos">72</span><span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Line 12-13 describes the framework and the JSON necessary to generate the configuration of the framework context, which is needed by the expansion plugins.</p></li>
+<li><p>Line 61 describes a configuration used specifically for the <code class="code docutils literal notranslate"><span class="pre">initialize</span></code> expansion plugin on the subsequent line</p></li>
+<li><p>Line 62 specifies that the initialize expansion plugin should be expanded.</p></li>
+<li><p>Line 63 specifies that the fixedStep expansion plugin should be expanded.</p></li>
+</ul>
+<p>The next example presents the intermediate expansion <cite>spec00002.mabl</cite> generated after the expansion of line 61 and 62 in <cite>spec00000.mabl</cite> containing <code class="code docutils literal notranslate"><span class="pre">&#64;Config(...)</span></code> and <code class="code docutils literal notranslate"><span class="pre">Initializer.expand</span> <span class="pre">initialize(...)</span></code> respectively.
+Thus the <code class="code docutils literal notranslate"><span class="pre">&#64;Config(...)</span></code> and <code class="code docutils literal notranslate"><span class="pre">Initializer.expand</span> <span class="pre">initialize(...)</span></code> have been replaced with the MaBL generated by the corresponding Initialize plugin as seen on line 61 to 158.
+As it can be seen on line 159, <code class="code docutils literal notranslate"><span class="pre">FixedStep.expand</span> <span class="pre">fixedStep(...)</span></code> has not been expanded yet.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="n">simulation</span> 
+<span class="linenos">  2</span><span class="kn">import</span><span class="w"> </span><span class="nn">FixedStep</span><span class="p">;</span>
+<span class="linenos">  3</span><span class="kn">import</span><span class="w"> </span><span class="nn">Initializer</span><span class="p">;</span>
+<span class="linenos">  4</span><span class="kn">import</span><span class="w"> </span><span class="nn">DebugLogging</span><span class="p">;</span>
+<span class="linenos">  5</span><span class="kn">import</span><span class="w"> </span><span class="nn">TypeConverter</span><span class="p">;</span>
+<span class="linenos">  6</span><span class="kn">import</span><span class="w"> </span><span class="nn">DataWriter</span><span class="p">;</span>
+<span class="linenos">  7</span><span class="kn">import</span><span class="w"> </span><span class="nn">FMI2</span><span class="p">;</span>
+<span class="linenos">  8</span><span class="kn">import</span><span class="w"> </span><span class="nn">Math</span><span class="p">;</span>
+<span class="linenos">  9</span><span class="kn">import</span><span class="w"> </span><span class="nn">ArrayUtil</span><span class="p">;</span>
+<span class="linenos"> 10</span><span class="kn">import</span><span class="w"> </span><span class="nn">Logger</span><span class="p">;</span>
+<span class="linenos"> 11</span><span class="kn">import</span><span class="w"> </span><span class="nn">BooleanLogic</span><span class="p">;</span>
+<span class="linenos"> 12</span><span class="nd">@Framework</span><span class="p">(</span> <span class="s2">"FMI2"</span><span class="p">);</span>
+<span class="linenos"> 13</span><span class="nd">@FrameworkConfig</span><span class="p">(</span> <span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{</span><span class="se">\"</span><span class="s2">fmus</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">watertankcontroller-c.fmu</span><span class="se">\"</span><span class="s2">,</span><span class="se">\"</span><span class="si">{wt}</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">singlewatertank-20sim.fmu</span><span class="se">\"</span><span class="s2">},</span><span class="se">\"</span><span class="s2">connections</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.valve</span><span class="se">\"</span><span class="s2">:[</span><span class="se">\"</span><span class="si">{wt}</span><span class="s2">.wtInstance.valvecontrol</span><span class="se">\"</span><span class="s2">],</span><span class="se">\"</span><span class="si">{wt}</span><span class="s2">.wtInstance.level</span><span class="se">\"</span><span class="s2">:[</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.level</span><span class="se">\"</span><span class="s2">]},</span><span class="se">\"</span><span class="s2">parameters</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.maxlevel</span><span class="se">\"</span><span class="s2">:2,</span><span class="se">\"</span><span class="si">{crtl}</span><span class="s2">.crtlInstance.minlevel</span><span class="se">\"</span><span class="s2">:1},</span><span class="se">\"</span><span class="s2">startTime</span><span class="se">\"</span><span class="s2">:0.0,</span><span class="se">\"</span><span class="s2">endTime</span><span class="se">\"</span><span class="s2">:10.0,</span><span class="se">\"</span><span class="s2">loggingOn</span><span class="se">\"</span><span class="s2">:false,</span><span class="se">\"</span><span class="s2">visible</span><span class="se">\"</span><span class="s2">:false,</span><span class="se">\"</span><span class="s2">algorithm</span><span class="se">\"</span><span class="s2">:{</span><span class="se">\"</span><span class="s2">type</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">fixed-step</span><span class="se">\"</span><span class="s2">,</span><span class="se">\"</span><span class="s2">size</span><span class="se">\"</span><span class="s2">:0.1}}"</span><span class="p">);</span>
+<span class="linenos"> 14</span><span class="p">{</span>
+<span class="linenos"> 15</span> 	<span class="nb">bool</span> <span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">true</span><span class="p">;</span>
+<span class="linenos"> 16</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_OK</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="linenos"> 17</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_WARNING</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="linenos"> 18</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_DISCARD</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="linenos"> 19</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_ERROR</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="linenos"> 20</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_FATAL</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="linenos"> 21</span>	<span class="nb">int</span> <span class="n">FMI_STATUS_PENDING</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="linenos"> 22</span>	<span class="nb">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="linenos"> 23</span>	<span class="n">Math</span> <span class="n">math</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"Math"</span><span class="p">);</span>
+<span class="linenos"> 24</span>	<span class="n">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"Logger"</span><span class="p">);</span>
+<span class="linenos"> 25</span>	<span class="n">DataWriter</span> <span class="n">dataWriter</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"DataWriter"</span><span class="p">);</span>
+<span class="linenos"> 26</span>	<span class="n">BooleanLogic</span> <span class="n">booleanLogic</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"BooleanLogic"</span><span class="p">);</span>
+<span class="linenos"> 27</span>	<span class="n">FMI2</span> <span class="n">crtl</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{8c4e810f-3df3-4a00-8276-176fa3c9f000}"</span><span class="p">,</span> <span class="s2">"/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/watertankcontroller-c.fmu"</span><span class="p">);</span>
+<span class="linenos"> 28</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">crtl</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 29</span>	<span class="p">{</span>
+<span class="linenos"> 30</span>		<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 31</span>	<span class="p">}</span>
+<span class="linenos"> 32</span>	<span class="n">FMI2</span> <span class="n">wt</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="s2">"FMI2"</span><span class="p">,</span> <span class="s2">"{cfc65592-9ece-4563-9705-1581b6e7071c}"</span><span class="p">,</span> <span class="s2">"/C:/Users/frdrk/AppData/Local/Temp/tmplaq3m7sj/singlewatertank-20sim.fmu"</span><span class="p">);</span>
+<span class="linenos"> 33</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">wt</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 34</span>	<span class="p">{</span>
+<span class="linenos"> 35</span>		<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 36</span>	<span class="p">}</span>
+<span class="linenos"> 37</span>	<span class="nd">@map</span> <span class="n">wtInstance</span> <span class="o">-&gt;</span> <span class="s2">"wtInstance"</span><span class="p">;</span>
+<span class="linenos"> 38</span>	<span class="n">FMI2Component</span> <span class="n">wtInstance</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+<span class="linenos"> 39</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">global_execution_continue</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 40</span>	<span class="p">{</span>
+<span class="linenos"> 41</span>			<span class="n">wtInstance</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s2">"wtInstance"</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
+<span class="linenos"> 42</span>			<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">wtInstance</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 43</span>			<span class="p">{</span>
+<span class="linenos"> 44</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 45</span>			<span class="p">}</span>
+<span class="linenos"> 46</span>	<span class="p">}</span>
+<span class="linenos"> 47</span>	<span class="nd">@map</span> <span class="n">crtlInstance</span> <span class="o">-&gt;</span> <span class="s2">"crtlInstance"</span><span class="p">;</span>
+<span class="linenos"> 48</span>	<span class="n">FMI2Component</span> <span class="n">crtlInstance</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+<span class="linenos"> 49</span>	<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">global_execution_continue</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 50</span>	<span class="p">{</span>
+<span class="linenos"> 51</span>			<span class="n">crtlInstance</span> <span class="o">=</span> <span class="n">crtl</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="s2">"crtlInstance"</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
+<span class="linenos"> 52</span>			<span class="k">if</span><span class="p">(</span> <span class="p">(</span><span class="n">crtlInstance</span> <span class="o">==</span> <span class="n">null</span><span class="p">)</span> <span class="p">)</span>
+<span class="linenos"> 53</span>			<span class="p">{</span>
+<span class="linenos"> 54</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 55</span>			<span class="p">}</span>
+<span class="linenos"> 56</span>	<span class="p">}</span>
+<span class="linenos"> 57</span>	<span class="n">FMI2Component</span> <span class="n">components</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="n">wtInstance</span> <span class="p">,</span> <span class="n">crtlInstance</span> <span class="p">};</span>
+<span class="linenos"> 58</span>	<span class="n">real</span> <span class="n">START_TIME</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+<span class="linenos"> 59</span>	<span class="n">real</span> <span class="n">STEP_SIZE</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">;</span>
+<span class="linenos"> 60</span>	<span class="n">real</span> <span class="n">END_TIME</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">;</span>
+<span class="linenos"> 61</span>	<span class="k">while</span><span class="p">(</span> <span class="n">global_execution_continue</span> <span class="p">)</span>
+<span class="linenos"> 62</span>	<span class="p">{</span>
+<span class="linenos"> 63</span>		<span class="nb">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="linenos"> 64</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">setupExperiment</span><span class="p">(</span><span class="n">false</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">START_TIME</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos"> 65</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos"> 66</span>		<span class="p">{</span>
+<span class="linenos"> 67</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"Setup Experiment Failed:  </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos"> 68</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 69</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 70</span>		<span class="p">}</span>
+<span class="linenos"> 71</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">setupExperiment</span><span class="p">(</span><span class="n">false</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">START_TIME</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos"> 72</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos"> 73</span>		<span class="p">{</span>
+<span class="linenos"> 74</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"Setup Experiment Failed:  </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos"> 75</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 76</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 77</span>		<span class="p">}</span>
+<span class="linenos"> 78</span>		<span class="n">real</span> <span class="n">realValueSize7</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mf">9.0</span> <span class="p">,</span> <span class="mf">1.0</span> <span class="p">,</span> <span class="mf">1.0</span> <span class="p">,</span> <span class="mf">9.81</span> <span class="p">,</span> <span class="mf">1.0</span> <span class="p">,</span> <span class="mf">0.0</span> <span class="p">,</span> <span class="mf">0.0</span> <span class="p">};</span>
+<span class="linenos"> 79</span>		<span class="n">uint</span> <span class="n">valRefsSize7</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">,</span> <span class="mi">1</span> <span class="p">,</span> <span class="mi">2</span> <span class="p">,</span> <span class="mi">3</span> <span class="p">,</span> <span class="mi">4</span> <span class="p">,</span> <span class="mi">5</span> <span class="p">,</span> <span class="mi">6</span> <span class="p">};</span>
+<span class="linenos"> 80</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="n">realValueSize7</span><span class="p">);</span>
+<span class="linenos"> 81</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos"> 82</span>		<span class="p">{</span>
+<span class="linenos"> 83</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos"> 84</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 85</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 86</span>		<span class="p">}</span>
+<span class="linenos"> 87</span>		<span class="n">real</span> <span class="n">realValueSize2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mf">2.0</span> <span class="p">,</span> <span class="mf">1.0</span> <span class="p">};</span>
+<span class="linenos"> 88</span>		<span class="n">uint</span> <span class="n">valRefsSize2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">,</span> <span class="mi">1</span> <span class="p">};</span>
+<span class="linenos"> 89</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">realValueSize2</span><span class="p">);</span>
+<span class="linenos"> 90</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos"> 91</span>		<span class="p">{</span>
+<span class="linenos"> 92</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos"> 93</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos"> 94</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos"> 95</span>		<span class="p">}</span>
+<span class="linenos"> 96</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">enterInitializationMode</span><span class="p">();</span>
+<span class="linenos"> 97</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">enterInitializationMode</span><span class="p">();</span>
+<span class="linenos"> 98</span>		<span class="n">real</span> <span class="n">realValueSize1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mf">0.0</span> <span class="p">};</span>
+<span class="linenos"> 99</span>		<span class="n">uint</span> <span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">16</span> <span class="p">};</span>
+<span class="linenos">100</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">realValueSize1</span><span class="p">);</span>
+<span class="linenos">101</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">102</span>		<span class="p">{</span>
+<span class="linenos">103</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">104</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">105</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">106</span>		<span class="p">}</span>
+<span class="linenos">107</span>		<span class="n">realValueSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+<span class="linenos">108</span>		<span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="linenos">109</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">realValueSize1</span><span class="p">);</span>
+<span class="linenos">110</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">111</span>		<span class="p">{</span>
+<span class="linenos">112</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">113</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">114</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">115</span>		<span class="p">}</span>
+<span class="linenos">116</span>		<span class="nb">bool</span> <span class="n">BooleanValueSize1</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="linenos">117</span>		<span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="linenos">118</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">getBoolean</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">BooleanValueSize1</span><span class="p">);</span>
+<span class="linenos">119</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">120</span>		<span class="p">{</span>
+<span class="linenos">121</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"get failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">122</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">123</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">124</span>		<span class="p">}</span>
+<span class="linenos">125</span>		<span class="nb">bool</span> <span class="n">crtlInstanceSvValRef4</span> <span class="o">=</span> <span class="n">BooleanValueSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="linenos">126</span>		<span class="n">real</span> <span class="n">wtInstanceSvValRef16Real</span><span class="p">;</span>
+<span class="linenos">127</span>		<span class="n">TypeConverter</span><span class="o">.</span><span class="n">expand</span> <span class="n">convertBoolean2Real</span><span class="p">(</span><span class="n">crtlInstanceSvValRef4</span><span class="p">,</span> <span class="n">wtInstanceSvValRef16Real</span><span class="p">);</span>
+<span class="linenos">128</span>		<span class="n">realValueSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">wtInstanceSvValRef16Real</span><span class="p">;</span>
+<span class="linenos">129</span>		<span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">16</span><span class="p">;</span>
+<span class="linenos">130</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">realValueSize1</span><span class="p">);</span>
+<span class="linenos">131</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">132</span>		<span class="p">{</span>
+<span class="linenos">133</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">134</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">135</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">136</span>		<span class="p">}</span>
+<span class="linenos">137</span>		<span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">17</span><span class="p">;</span>
+<span class="linenos">138</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">getReal</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">realValueSize1</span><span class="p">);</span>
+<span class="linenos">139</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">140</span>		<span class="p">{</span>
+<span class="linenos">141</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"get failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">142</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">143</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">144</span>		<span class="p">}</span>
+<span class="linenos">145</span>		<span class="n">real</span> <span class="n">wtInstanceSvValRef17</span> <span class="o">=</span> <span class="n">realValueSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="linenos">146</span>		<span class="n">realValueSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">wtInstanceSvValRef17</span><span class="p">;</span>
+<span class="linenos">147</span>		<span class="n">valRefsSize1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="linenos">148</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">setReal</span><span class="p">(</span><span class="n">valRefsSize1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">realValueSize1</span><span class="p">);</span>
+<span class="linenos">149</span>		<span class="k">if</span><span class="p">(</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">||</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">4</span> <span class="p">)</span>
+<span class="linenos">150</span>		<span class="p">{</span>
+<span class="linenos">151</span>				<span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"set failed </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+<span class="linenos">152</span>				<span class="n">global_execution_continue</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+<span class="linenos">153</span>				<span class="k">break</span><span class="p">;</span>
+<span class="linenos">154</span>		<span class="p">}</span>
+<span class="linenos">155</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">wtInstance</span><span class="o">.</span><span class="n">exitInitializationMode</span><span class="p">();</span>
+<span class="linenos">156</span>		<span class="n">status</span> <span class="o">=</span> <span class="n">crtlInstance</span><span class="o">.</span><span class="n">exitInitializationMode</span><span class="p">();</span>
+<span class="linenos">157</span>		<span class="k">break</span><span class="p">;</span>
+<span class="linenos">158</span>	<span class="p">}</span>
+<span class="linenos">159</span>	<span class="n">FixedStep</span><span class="o">.</span><span class="n">expand</span> <span class="n">fixedStep</span><span class="p">(</span><span class="n">components</span><span class="p">,</span> <span class="n">STEP_SIZE</span><span class="p">,</span> <span class="n">START_TIME</span><span class="p">,</span> <span class="n">END_TIME</span><span class="p">);</span>
+<span class="linenos">160</span>	<span class="n">wt</span><span class="o">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">wtInstance</span><span class="p">);</span>
+<span class="linenos">161</span>	<span class="n">crtl</span><span class="o">.</span><span class="n">freeInstance</span><span class="p">(</span><span class="n">crtlInstance</span><span class="p">);</span>
+<span class="linenos">162</span>	<span class="n">unload</span><span class="p">(</span><span class="n">crtl</span><span class="p">);</span>
+<span class="linenos">163</span>	<span class="n">unload</span><span class="p">(</span><span class="n">wt</span><span class="p">);</span>
+<span class="linenos">164</span>	<span class="n">unload</span><span class="p">(</span><span class="n">math</span><span class="p">);</span>
+<span class="linenos">165</span>	<span class="n">unload</span><span class="p">(</span><span class="n">logger</span><span class="p">);</span>
+<span class="linenos">166</span>	<span class="n">unload</span><span class="p">(</span><span class="n">dataWriter</span><span class="p">);</span>
+<span class="linenos">167</span>	<span class="n">unload</span><span class="p">(</span><span class="n">booleanLogic</span><span class="p">);</span>
+<span class="linenos">168</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="1. Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cli.html" class="btn btn-neutral float-right" title="3. Command Line Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, INTO-CPS Association.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>  
+
+<!--  <style>
+         .wy-nav-content { max-width: none; }
+  </style>-->
+
+
+
+</body>
+</html>
